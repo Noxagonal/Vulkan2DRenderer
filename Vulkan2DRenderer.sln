@@ -1,0 +1,39 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.29306.81
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Vulkan2DRenderer", "Vulkan2DRenderer\Vulkan2DRenderer.vcxproj", "{EE4A5E41-DC76-4883-811D-EFB71F0C8AC9}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Test01", "Tests\Test01\Test01.vcxproj", "{01C0BE26-6D8B-4D78-9FDA-3CEE264B92AB}"
+	ProjectSection(ProjectDependencies) = postProject
+		{EE4A5E41-DC76-4883-811D-EFB71F0C8AC9} = {EE4A5E41-DC76-4883-811D-EFB71F0C8AC9}
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{C9AEFCF0-DD28-47C8-95DA-BE3AB0D828D4}"
+	ProjectSection(SolutionItems) = preProject
+		README.md = README.md
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|x64 = Debug|x64
+		Release|x64 = Release|x64
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{EE4A5E41-DC76-4883-811D-EFB71F0C8AC9}.Debug|x64.ActiveCfg = Debug|x64
+		{EE4A5E41-DC76-4883-811D-EFB71F0C8AC9}.Debug|x64.Build.0 = Debug|x64
+		{EE4A5E41-DC76-4883-811D-EFB71F0C8AC9}.Release|x64.ActiveCfg = Release|x64
+		{EE4A5E41-DC76-4883-811D-EFB71F0C8AC9}.Release|x64.Build.0 = Release|x64
+		{01C0BE26-6D8B-4D78-9FDA-3CEE264B92AB}.Debug|x64.ActiveCfg = Debug|x64
+		{01C0BE26-6D8B-4D78-9FDA-3CEE264B92AB}.Debug|x64.Build.0 = Debug|x64
+		{01C0BE26-6D8B-4D78-9FDA-3CEE264B92AB}.Release|x64.ActiveCfg = Release|x64
+		{01C0BE26-6D8B-4D78-9FDA-3CEE264B92AB}.Release|x64.Build.0 = Release|x64
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {3186150C-0ECA-4D8F-B05D-80E82D101D81}
+	EndGlobalSection
+EndGlobal

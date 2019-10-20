@@ -1,0 +1,4 @@
+mkdir glfw-3.3-VisualStudio2019
+cd glfw-3.3-VisualStudio2019
+cmake -D BUILD_SHARED_LIBS=OFF -D GLFW_BUILD_EXAMPLES=OFF -D GLFW_BUILD_TESTS=OFF -D GLFW_BUILD_DOCS=OFF -D GLFW_VULKAN_STATIC=ON -G "Visual Studio 16 2019" -A "x64" ..\glfw-3.3
+pause

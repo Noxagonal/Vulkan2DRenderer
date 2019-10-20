@@ -1,0 +1,96 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="Include">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;hm;inl;inc;ipp;xsd</Extensions>
+    </Filter>
+    <Filter Include="Source">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Source\Headers">
+      <UniqueIdentifier>{8b840645-a429-4749-9b3e-f36b0dc2858b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Include\VK2D">
+      <UniqueIdentifier>{83051c54-2ef6-4736-aee1-cba6e5358a24}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\VK2D">
+      <UniqueIdentifier>{14ed13de-8c80-4695-a4f2-70b7a7762e5e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\Shaders">
+      <UniqueIdentifier>{8aa336e6-a4fc-42bf-a8eb-1589a91e299a}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\Include\Vulkan2DRenderer.h">
+      <Filter>Include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Source\Header\SourceCommon.h">
+      <Filter>Source\Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Include\VK2D\Common.h">
+      <Filter>Include\VK2D</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Include\VK2D\Platform.h">
+      <Filter>Include\VK2D</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Include\VK2D\Renderer.h">
+      <Filter>Include\VK2D</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Include\VK2D\Version.hpp">
+      <Filter>Include\VK2D</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Include\VK2D\BuildOptions.h">
+      <Filter>Include\VK2D</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Source\Header\QueueResolver.h">
+      <Filter>Source\Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Include\VK2D\Window.h">
+      <Filter>Include\VK2D</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Source\Header\WindowDataImpl.h">
+      <Filter>Source\Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Source\Header\RendererDataImpl.h">
+      <Filter>Source\Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Include\VK2D\RenderPrimitives.h">
+      <Filter>Include\VK2D</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Source\Shaders\shader.frag.spv.h">
+      <Filter>Source\Shaders</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Source\Shaders\shader.vert.spv.h">
+      <Filter>Source\Shaders</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\Source\VK2D\Platform.cpp">
+      <Filter>Source\VK2D</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\VK2D\Renderer.cpp">
+      <Filter>Source\VK2D</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\VK2D\QueueResolver.cpp">
+      <Filter>Source\VK2D</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\VK2D\Window.cpp">
+      <Filter>Source\VK2D</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="cpp.hint" />
+    <None Include="..\Source\Shaders\shader.vert">
+      <Filter>Source\Shaders</Filter>
+    </None>
+    <None Include="..\Source\Shaders\shader.frag">
+      <Filter>Source\Shaders</Filter>
+    </None>
+  </ItemGroup>
+</Project>
