@@ -105,14 +105,16 @@ glslangValidator -V -o "$(SolutionDir)Source\Shaders\shader.frag.spv.h" "$(Solut
     <ClInclude Include="..\Include\VK2D\Version.hpp" />
     <ClInclude Include="..\Include\VK2D\Window.h" />
     <ClInclude Include="..\Include\Vulkan2DRenderer.h" />
+    <ClInclude Include="..\Source\Header\MeshBuffer.h" />
     <ClInclude Include="..\Source\Header\QueueResolver.h" />
-    <ClInclude Include="..\Source\Header\RendererDataImpl.h" />
+    <ClInclude Include="..\Source\Header\RendererImpl.h" />
     <ClInclude Include="..\Source\Header\SourceCommon.h" />
-    <ClInclude Include="..\Source\Header\WindowDataImpl.h" />
+    <ClInclude Include="..\Source\Header\WindowImpl.h" />
     <ClInclude Include="..\Source\Shaders\shader.frag.spv.h" />
     <ClInclude Include="..\Source\Shaders\shader.vert.spv.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\Source\VK2D\MeshBuffer.cpp" />
     <ClCompile Include="..\Source\VK2D\Platform.cpp" />
     <ClCompile Include="..\Source\VK2D\QueueResolver.cpp" />
     <ClCompile Include="..\Source\VK2D\Renderer.cpp" />

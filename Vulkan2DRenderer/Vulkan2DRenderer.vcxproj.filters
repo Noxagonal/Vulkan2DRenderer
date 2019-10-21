@@ -54,12 +54,6 @@
     <ClInclude Include="..\Include\VK2D\Window.h">
       <Filter>Include\VK2D</Filter>
     </ClInclude>
-    <ClInclude Include="..\Source\Header\WindowDataImpl.h">
-      <Filter>Source\Headers</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Source\Header\RendererDataImpl.h">
-      <Filter>Source\Headers</Filter>
-    </ClInclude>
     <ClInclude Include="..\Include\VK2D\RenderPrimitives.h">
       <Filter>Include\VK2D</Filter>
     </ClInclude>
@@ -68,6 +62,15 @@
     </ClInclude>
     <ClInclude Include="..\Source\Shaders\shader.vert.spv.h">
       <Filter>Source\Shaders</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Source\Header\MeshBuffer.h">
+      <Filter>Source\Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Source\Header\RendererImpl.h">
+      <Filter>Source\Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Source\Header\WindowImpl.h">
+      <Filter>Source\Headers</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -81,6 +84,9 @@
       <Filter>Source\VK2D</Filter>
     </ClCompile>
     <ClCompile Include="..\Source\VK2D\Window.cpp">
+      <Filter>Source\VK2D</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\VK2D\MeshBuffer.cpp">
       <Filter>Source\VK2D</Filter>
     </ClCompile>
   </ItemGroup>

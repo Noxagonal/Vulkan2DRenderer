@@ -2,8 +2,8 @@
 #include "../Header/SourceCommon.h"
 
 #include "../../Include/VK2D/Window.h"
-#include "../Header/WindowDataImpl.h"
-#include "../Header/RendererDataImpl.h"
+#include "../Header/WindowImpl.h"
+#include "../Header/RendererImpl.h"
 
 #include "../../Include/VK2D/Renderer.h"
 
@@ -1381,28 +1381,7 @@ VK2D_API bool VK2D_APIENTRY Window::EndRender()
 
 	// Synchronize the previous frame here, this waits for the previous
 	// frame to finish fully rendering before continuing execution.
-	if( data->previous_frame_need_synchronization ) {
-		if( vkWaitForFences(
-			data->renderer->data->device,
-			1, &data->gpu_to_cpu_frame_fences[ data->previous_image ],
-			VK_TRUE,
-			UINT64_MAX
-		) != VK_SUCCESS ) {
-			if( data->report_function ) {
-				data->report_function( ReportSeverity::NON_CRITICAL_ERROR, "Error synchronizing frame!" );
-			}
-			return false;
-		}
-		if( vkResetFences(
-			data->renderer->data->device,
-			1, &data->gpu_to_cpu_frame_fences[ data->previous_image ]
-		) != VK_SUCCESS ) {
-			if( data->report_function ) {
-				data->report_function( ReportSeverity::NON_CRITICAL_ERROR, "Error synchronizing frame!" );
-			}
-			return false;
-		}
-	}
+	if( !SynchronizeFrame( data.get(), data->renderer->data->device ) ) return false;
 
 	data->previous_image						= data->next_image;
 	data->previous_frame_need_synchronization	= true;
@@ -1452,6 +1431,44 @@ VK2D_API void VK2D_APIENTRY Window::Draw_TriangleList(
 }
 
 
+
+
+
+
+
+
+
+bool SynchronizeFrame(
+	_internal::WindowDataImpl	*	data,
+	VkDevice						device
+)
+{
+	if( data->previous_frame_need_synchronization ) {
+		if( vkWaitForFences(
+			device,
+			1, &data->gpu_to_cpu_frame_fences[ data->previous_image ],
+			VK_TRUE,
+			UINT64_MAX
+		) != VK_SUCCESS ) {
+			if( data->report_function ) {
+				data->report_function( ReportSeverity::NON_CRITICAL_ERROR, "Error synchronizing frame!" );
+			}
+			return false;
+		}
+		if( vkResetFences(
+			device,
+			1, &data->gpu_to_cpu_frame_fences[ data->previous_image ]
+		) != VK_SUCCESS ) {
+			if( data->report_function ) {
+				data->report_function( ReportSeverity::NON_CRITICAL_ERROR, "Error synchronizing frame!" );
+			}
+			return false;
+		}
+		// And we also don't need to synchronize later.
+		data->previous_frame_need_synchronization	= false;
+
+		return true;
+	}
 
 
 

@@ -49,6 +49,11 @@ struct RendererDataImpl {
 };
 
 
+
 } // _internal
+
+
+
+
 
 } // vk2d

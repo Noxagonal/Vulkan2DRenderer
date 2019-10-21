@@ -79,4 +79,13 @@ struct WindowDataImpl {
 
 } // _internal
 
+
+
+bool								SynchronizeFrame(
+	_internal::WindowDataImpl	*	data,
+	VkDevice						device
+);
+
+
+
 } // vk2d
