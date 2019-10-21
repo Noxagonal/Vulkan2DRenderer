@@ -81,10 +81,66 @@ struct WindowDataImpl {
 
 
 
-bool								SynchronizeFrame(
-	_internal::WindowDataImpl	*	data,
-	VkDevice						device
-);
+bool									RecreateResourcesAfterResizing(
+	_internal::WindowDataImpl		*	data,
+	VkPhysicalDevice					physical_device,
+	VkDevice							device,
+	ResolvedQueue						primary_render_queue );
+
+bool									CreateGLFWWindow(
+	_internal::WindowDataImpl		*	data );
+
+bool									CreateSurface(
+	_internal::WindowDataImpl		*	data,
+	VkInstance							instance,
+	VkPhysicalDevice					physical_device,
+	ResolvedQueue					&	primary_render_queue );
+
+bool									CreateRenderPass(
+	_internal::WindowDataImpl		*	data,
+	VkDevice							device );
+
+bool									CreateGraphicsPipelines(
+	_internal::WindowDataImpl		*	data,
+	VkDevice							device,
+	VkPipelineCache						pipeline_cache,
+	VkPipelineLayout					pipeline_layout,
+	VkShaderModule						vertex_shader_module,
+	VkShaderModule						fragment_shader_module );
+
+bool									CreateCommandPool(
+	_internal::WindowDataImpl		*	data,
+	VkDevice							device,
+	ResolvedQueue					&	primary_render_queue );
+
+bool									AllocateCommandBuffers(
+	_internal::WindowDataImpl		*	data,
+	VkDevice							device );
+
+// If old_swapchain is provided, this function instead re-creates
+// the swapchain recycling old resources whenever possible.
+bool									CreateSwapchain(
+	_internal::WindowDataImpl		*	data,
+	VkPhysicalDevice					physical_device,
+	VkDevice							device,
+	ResolvedQueue						primary_render_queue,
+	VkSwapchainKHR						old_swapchain				= VK_NULL_HANDLE );
+
+bool									CreateFramebuffers(
+	_internal::WindowDataImpl		*	data,
+	VkDevice							device );
+
+bool									CreateWindowSynchronizationPrimitives(
+	_internal::WindowDataImpl		*	data,
+	VkDevice							device );
+
+bool									CreateFrameSynchronizationPrimitives(
+	_internal::WindowDataImpl		*	data,
+	VkDevice							device );
+
+bool									SynchronizeFrame(
+	_internal::WindowDataImpl		*	data,
+	VkDevice							device );
 
 
 
