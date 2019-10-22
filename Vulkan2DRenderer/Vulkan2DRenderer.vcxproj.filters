@@ -72,6 +72,9 @@
     <ClInclude Include="..\Source\Header\WindowImpl.h">
       <Filter>Source\Headers</Filter>
     </ClInclude>
+    <ClInclude Include="..\Source\Header\VulkanMemoryManagement.h">
+      <Filter>Source\Headers</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\Source\VK2D\Platform.cpp">
@@ -87,6 +90,9 @@
       <Filter>Source\VK2D</Filter>
     </ClCompile>
     <ClCompile Include="..\Source\VK2D\MeshBuffer.cpp">
+      <Filter>Source\VK2D</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\VK2D\VulkanMemoryManagement.cpp">
       <Filter>Source\VK2D</Filter>
     </ClCompile>
   </ItemGroup>

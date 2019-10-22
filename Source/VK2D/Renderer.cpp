@@ -75,9 +75,7 @@ VK2D_API										Renderer::Renderer(
 
 	};
 	std::vector<const char*> device_extensions {
-		VK_KHR_SWAPCHAIN_EXTENSION_NAME,
-		VK_KHR_MAINTENANCE1_EXTENSION_NAME,
-		VK_KHR_MAINTENANCE2_EXTENSION_NAME
+		VK_KHR_SWAPCHAIN_EXTENSION_NAME
 	};
 	
 	{
@@ -102,6 +100,18 @@ VK2D_API										Renderer::Renderer(
 	if( !CreateDescriptorSetLayouts( data.get(), data->device ) ) return;
 	if( !CreatePipelineLayout( data.get(), data->device ) ) return;
 
+	data->device_memory_pool	= MakeDeviceMemoryPool(
+		data->physical_device,
+		data->device
+	);
+
+	if( !data->device_memory_pool ) {
+		if( data->report_function ) {
+			data->report_function( ReportSeverity::NON_CRITICAL_ERROR, "Cannot create Vulkan Device memory pool!" );
+		}
+		return;
+	}
+
 	is_good			= true;
 }
 
@@ -116,6 +126,8 @@ VK2D_API Renderer::~Renderer()
 	vkDeviceWaitIdle( data->device );
 
 	data->windows.clear();
+
+	data->device_memory_pool	= nullptr;
 
 	vkDestroyPipelineLayout(
 		data->device,
@@ -221,7 +233,7 @@ VK2D_API void VK2D_APIENTRY Renderer::CloseWindowOutput( Window * window )
 
 
 
-VK2D_API std::unique_ptr<Renderer>VK2D_APIENTRY CreateRenderer( RendererCreateInfo & renderer_create_info )
+VK2D_API std::unique_ptr<Renderer>VK2D_APIENTRY CreateRenderer( const RendererCreateInfo & renderer_create_info )
 {
 	auto renderer = std::unique_ptr<Renderer>( new Renderer( renderer_create_info ) );
 

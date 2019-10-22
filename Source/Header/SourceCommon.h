@@ -4,6 +4,7 @@
 
 #include "../../Include/vk2d/Common.h"
 
+#include <stdint.h>
 #include <vulkan/vulkan.h>
 
 struct ResolvedQueue {

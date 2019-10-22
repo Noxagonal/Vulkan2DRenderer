@@ -2,6 +2,7 @@
 
 #include "SourceCommon.h"
 #include "../../Include/VK2D/Renderer.h"
+#include "../Header/VulkanMemoryManagement.h"
 
 #include <list>
 #include <vector>
@@ -44,6 +45,8 @@ struct RendererDataImpl {
 	ResolvedQueue									secondary_render_queue		= {};
 	ResolvedQueue									primary_compute_queue		= {};
 	ResolvedQueue									primary_transfer			= {};
+
+	std::unique_ptr<DeviceMemoryPool>				device_memory_pool			= {};
 
 	std::list<std::unique_ptr<Window>>				windows						= {};
 };
