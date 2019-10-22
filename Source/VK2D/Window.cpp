@@ -354,10 +354,10 @@ VK2D_API bool VK2D_APIENTRY Window::BeginRender()
 		// Begin render pass
 		{
 			VkClearValue	clear_value {};
-			clear_value.color.float32[ 0 ]		= 1.0f;
-			clear_value.color.float32[ 1 ]		= 1.0f;
-			clear_value.color.float32[ 2 ]		= 1.0f;
-			clear_value.color.float32[ 3 ]		= 1.0f;
+			clear_value.color.float32[ 0 ]		= 0.0f;
+			clear_value.color.float32[ 1 ]		= 0.0f;
+			clear_value.color.float32[ 2 ]		= 0.0f;
+			clear_value.color.float32[ 3 ]		= 0.0f;
 
 			VkRenderPassBeginInfo render_pass_begin_info {};
 			render_pass_begin_info.sType			= VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
@@ -473,9 +473,6 @@ VK2D_API bool VK2D_APIENTRY Window::EndRender()
 			}
 		}
 	}
-
-	// TODO: debugging only, remove later
-	vkDeviceWaitIdle( data->renderer->data->device );
 
 	// Synchronize the previous frame here, this waits for the previous
 	// frame to finish fully rendering before continuing execution.
@@ -796,7 +793,7 @@ bool									CreateRenderPass(
 	color_attachment_descriptions[ 0 ].flags			= 0;
 	color_attachment_descriptions[ 0 ].format			= data->surface_format.format;
 	color_attachment_descriptions[ 0 ].samples			= VkSampleCountFlagBits( data->create_info_copy.samples );
-	color_attachment_descriptions[ 0 ].loadOp			= VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+	color_attachment_descriptions[ 0 ].loadOp			= VK_ATTACHMENT_LOAD_OP_CLEAR;
 	color_attachment_descriptions[ 0 ].storeOp			= VK_ATTACHMENT_STORE_OP_STORE;
 	color_attachment_descriptions[ 0 ].stencilLoadOp	= VK_ATTACHMENT_LOAD_OP_DONT_CARE;
 	color_attachment_descriptions[ 0 ].stencilStoreOp	= VK_ATTACHMENT_STORE_OP_DONT_CARE;

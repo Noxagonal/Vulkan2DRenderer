@@ -75,7 +75,9 @@ VK2D_API										Renderer::Renderer(
 
 	};
 	std::vector<const char*> device_extensions {
-		VK_KHR_SWAPCHAIN_EXTENSION_NAME
+		VK_KHR_SWAPCHAIN_EXTENSION_NAME,
+		VK_KHR_MAINTENANCE1_EXTENSION_NAME,
+		VK_KHR_MAINTENANCE2_EXTENSION_NAME
 	};
 	
 	{
