@@ -21,7 +21,7 @@ public:
 	MeshBuffer(
 		VkDevice							device,
 		const VkPhysicalDeviceLimits	&	physicald_device_limits,
-		_internal::WindowDataImpl		*	window_data,
+		_internal::WindowImpl			*	window_data,
 		DeviceMemoryPool				*	device_memory_pool );
 
 	~MeshBuffer();
@@ -62,7 +62,7 @@ private:
 
 	VkDevice								device							= {};
 	VkPhysicalDeviceLimits					physicald_device_limits			= {};
-	_internal::WindowDataImpl			*	window_data						= {};
+	_internal::WindowImpl				*	window_data						= {};
 	DeviceMemoryPool					*	device_memory_pool				= {};
 };
 

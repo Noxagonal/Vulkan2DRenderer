@@ -12,7 +12,7 @@
 namespace vk2d {
 
 namespace _internal {
-struct RendererDataImpl;
+class RendererImpl;
 } // _internal
 
 
@@ -59,9 +59,7 @@ public:
 		Window												*	window );
 
 private:
-	std::unique_ptr<vk2d::_internal::RendererDataImpl>			data;
-
-	static uint64_t												renderer_count;					// used to keep track of Renderer instances
+	std::unique_ptr<vk2d::_internal::RendererImpl>				impl;
 
 	bool														is_good					= {};
 };

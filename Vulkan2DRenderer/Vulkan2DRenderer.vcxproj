@@ -119,8 +119,10 @@ glslangValidator -V -o "$(SolutionDir)Source\Shaders\shader.frag.spv.h" "$(Solut
     <ClCompile Include="..\Source\VK2D\Platform.cpp" />
     <ClCompile Include="..\Source\VK2D\QueueResolver.cpp" />
     <ClCompile Include="..\Source\VK2D\Renderer.cpp" />
+    <ClCompile Include="..\Source\VK2D\RendererImpl.cpp" />
     <ClCompile Include="..\Source\VK2D\VulkanMemoryManagement.cpp" />
     <ClCompile Include="..\Source\VK2D\Window.cpp" />
+    <ClCompile Include="..\Source\VK2D\WindowImpl.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\Source\Shaders\shader.frag" />

@@ -95,6 +95,12 @@
     <ClCompile Include="..\Source\VK2D\VulkanMemoryManagement.cpp">
       <Filter>Source\VK2D</Filter>
     </ClCompile>
+    <ClCompile Include="..\Source\VK2D\WindowImpl.cpp">
+      <Filter>Source\VK2D</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\VK2D\RendererImpl.cpp">
+      <Filter>Source\VK2D</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="cpp.hint" />

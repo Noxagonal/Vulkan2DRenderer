@@ -15,7 +15,7 @@ namespace vk2d {
 MeshBuffer::MeshBuffer(
 	VkDevice							device,
 	const VkPhysicalDeviceLimits	&	physicald_device_limits,
-	_internal::WindowDataImpl		*	window_data,
+	_internal::WindowImpl			*	window_data,
 	DeviceMemoryPool				*	device_memory_pool )
 {
 	this->device						= device;
@@ -244,7 +244,7 @@ bool MeshBuffer::ResizeDeviceBuffer(
 
 	// Resizing device buffers means that we need to synchronize
 	// frame as this buffer might still be in use.
-	SynchronizeFrame( window_data, device );
+	window_data->SynchronizeFrame();
 
 	// Destroy old buffer and free it's memory
 	vkDestroyBuffer(
