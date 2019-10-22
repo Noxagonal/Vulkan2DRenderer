@@ -3,6 +3,8 @@
 
 #include "../../Include/VK2D/Window.h"
 #include "../Header/WindowImpl.h"
+
+#include "../../Include/VK2D/Renderer.h"
 #include "../Header/RendererImpl.h"
 
 #include "../Header/MeshBuffer.h"
@@ -79,6 +81,8 @@ VK2D_API					Window::Window(
 	if( !CreateFrameSynchronizationPrimitives( data.get(), device ) ) return;
 
 	data->mesh_buffer		= std::make_unique<MeshBuffer>(
+		device,
+		data->renderer->data->physical_device_properties.limits,
 		data.get(),
 		data->renderer->data->device_memory_pool.get() );
 
@@ -105,6 +109,8 @@ VK2D_API Window::~Window()
 	vkDeviceWaitIdle( device );
 
 	if( data ) {
+
+		data->mesh_buffer		= nullptr;
 
 		for( auto f : data->gpu_to_cpu_frame_fences ) {
 			vkDestroyFence(

@@ -3,6 +3,7 @@
 
 #include "../../Include/VK2D/Renderer.h"
 #include "../Header/RendererImpl.h"
+
 #include "../Header/WindowImpl.h"
 #include "../../Include/VK2D/RenderPrimitives.h"
 
@@ -41,7 +42,7 @@ namespace vk2d {
 uint64_t Renderer::renderer_count				= 0;
 
 VK2D_API										Renderer::Renderer(
-	RendererCreateInfo						&	renderer_create_info )
+	const RendererCreateInfo				&	renderer_create_info )
 {
 	if( renderer_count == 0 ) {
 		glfwInit();

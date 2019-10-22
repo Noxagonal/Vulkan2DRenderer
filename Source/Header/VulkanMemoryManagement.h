@@ -101,7 +101,7 @@ struct DeviceMemoryPoolDataImpl;
 
 class DeviceMemoryPool {
 	friend struct _internal::DeviceMemoryPoolDataImpl;
-	friend std::unique_ptr<DeviceMemoryPool>				MakeDeviceMemoryPool(
+	friend VK2D_API std::unique_ptr<DeviceMemoryPool> VK2D_APIENTRY MakeDeviceMemoryPool(
 		VkPhysicalDevice									physicalDevice,
 		VkDevice											device,
 		VkDeviceSize										linearAllocationChunkSize,

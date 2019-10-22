@@ -42,7 +42,7 @@ struct RendererCreateInfo {
 
 
 class Renderer {
-	friend std::unique_ptr<vk2d::Renderer> CreateRenderer( const RendererCreateInfo & renderer_create_info );
+	friend VK2D_API std::unique_ptr<vk2d::Renderer> VK2D_APIENTRY CreateRenderer( const RendererCreateInfo & renderer_create_info );
 	friend class Window;
 
 private:

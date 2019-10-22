@@ -13,11 +13,15 @@ namespace vk2d {
 
 
 MeshBuffer::MeshBuffer(
+	VkDevice							device,
+	const VkPhysicalDeviceLimits	&	physicald_device_limits,
 	_internal::WindowDataImpl		*	window_data,
 	DeviceMemoryPool				*	device_memory_pool )
 {
-	this->window_data			= window_data;
-	this->device_memory_pool	= device_memory_pool;
+	this->device						= device;
+	this->physicald_device_limits		= physicald_device_limits;
+	this->window_data					= window_data;
+	this->device_memory_pool			= device_memory_pool;
 }
 
 
@@ -30,7 +34,18 @@ MeshBuffer::MeshBuffer(
 
 MeshBuffer::~MeshBuffer()
 {
-
+	vkDestroyBuffer(
+		device,
+		staging_buffer,
+		nullptr
+	);
+	vkDestroyBuffer(
+		device,
+		device_buffer,
+		nullptr
+	);
+	device_memory_pool->FreeMemory( staging_buffer_memory );
+	device_memory_pool->FreeMemory( device_buffer_memory );
 }
 
 
@@ -81,16 +96,14 @@ void MeshBuffer::PushBackIndices(
 
 
 bool									MeshBuffer::CmdUploadToGPU(
-	VkDevice							device,
-	VkCommandBuffer						command_buffer,
-	const VkPhysicalDeviceLimits	&	limits
+	VkCommandBuffer						command_buffer
 )
 {
 	// Calculate buffer offsets and size
 	VkDeviceSize			vertex_buffer_byte_size				= VkDeviceSize( vertices.size() * sizeof( *vertices.data() ) );
 	VkDeviceSize			index_buffer_byte_size				= VkDeviceSize( indices.size() * sizeof( *indices.data() ) );
-	VkDeviceSize			vertex_buffer_aligned_byte_size		= CalculateAlignmentForBuffer( vertex_buffer_byte_size , limits );
-	VkDeviceSize			index_buffer_aligned_byte_size		= CalculateAlignmentForBuffer( index_buffer_byte_size, limits );
+	VkDeviceSize			vertex_buffer_aligned_byte_size		= CalculateAlignmentForBuffer( vertex_buffer_byte_size , physicald_device_limits );
+	VkDeviceSize			index_buffer_aligned_byte_size		= CalculateAlignmentForBuffer( index_buffer_byte_size, physicald_device_limits );
 	VkDeviceSize			vertex_buffer_aligned_byte_offset	= 0;
 	VkDeviceSize			index_buffer_aligned_byte_offset	= vertex_buffer_aligned_byte_size;
 	VkDeviceSize			total_aligned_buffer_byte_size		= vertex_buffer_aligned_byte_size + index_buffer_aligned_byte_size;
@@ -98,8 +111,7 @@ bool									MeshBuffer::CmdUploadToGPU(
 	// Check the size of the current staging buffer, resize if needed
 	if( current_staging_buffer_size < total_aligned_buffer_byte_size ) {
 		if( !ResizeStagingBuffer(
-			total_aligned_buffer_byte_size,
-			device
+			total_aligned_buffer_byte_size
 		) ) return false;
 	}
 
@@ -114,7 +126,7 @@ bool									MeshBuffer::CmdUploadToGPU(
 		void * vertex_mapped_memory	= (uint8_t*)original_mapped_memory + vertex_buffer_aligned_byte_offset;
 		void * index_mapped_memory	= (uint8_t*)original_mapped_memory + index_buffer_aligned_byte_offset;
 		{
-			// Copy over the vertex data
+			// Copy over the vertex data to staging buffer
 			std::memcpy( vertex_mapped_memory, vertices.data(), vertex_buffer_byte_size );
 
 			// Clear inbetween bits, just in case
@@ -124,7 +136,7 @@ bool									MeshBuffer::CmdUploadToGPU(
 			}
 		}
 		{
-			// Copy over the index data
+			// Copy over the index data to staging buffer
 			std::memcpy( index_mapped_memory, indices.data(), index_buffer_byte_size );
 
 			// Clear tail of the buffer, just in case
@@ -139,8 +151,7 @@ bool									MeshBuffer::CmdUploadToGPU(
 	// Check the size of the current device buffer, resize if needed
 	if( current_device_buffer_size < total_aligned_buffer_byte_size ) {
 		if( !ResizeDeviceBuffer(
-			total_aligned_buffer_byte_size,
-			device
+			total_aligned_buffer_byte_size
 		) ) return false;
 	}
 
@@ -169,8 +180,8 @@ bool									MeshBuffer::CmdUploadToGPU(
 
 
 bool MeshBuffer::ResizeStagingBuffer(
-	VkDeviceSize		new_size,
-	VkDevice			device )
+	VkDeviceSize		new_size
+)
 {
 	if( new_size == current_staging_buffer_size ) return true;
 
@@ -226,8 +237,7 @@ bool MeshBuffer::ResizeStagingBuffer(
 
 
 bool MeshBuffer::ResizeDeviceBuffer(
-	VkDeviceSize		new_size,
-	VkDevice			device
+	VkDeviceSize		new_size
 )
 {
 	if( new_size == current_device_buffer_size ) return true;

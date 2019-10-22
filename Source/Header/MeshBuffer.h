@@ -19,6 +19,8 @@ namespace vk2d {
 class MeshBuffer {
 public:
 	MeshBuffer(
+		VkDevice							device,
+		const VkPhysicalDeviceLimits	&	physicald_device_limits,
 		_internal::WindowDataImpl		*	window_data,
 		DeviceMemoryPool				*	device_memory_pool );
 
@@ -37,18 +39,14 @@ public:
 		const std::vector<uint32_t>		&	new_indices );
 
 	bool									CmdUploadToGPU(
-		VkDevice							device,
-		VkCommandBuffer						command_buffer,
-		const VkPhysicalDeviceLimits	&	limits );
+		VkCommandBuffer						command_buffer );
 
 private:
 	bool									ResizeStagingBuffer(
-		VkDeviceSize						new_size,
-		VkDevice							device );
+		VkDeviceSize						new_size );
 
 	bool									ResizeDeviceBuffer(
-		VkDeviceSize						new_size,
-		VkDevice							device );
+		VkDeviceSize						new_size );
 
 	std::vector<Vertex>						vertices						= {};
 	std::vector<uint32_t>					indices							= {};
@@ -62,6 +60,8 @@ private:
 	VkDeviceSize							current_staging_buffer_size		= {};
 	VkDeviceSize							current_device_buffer_size		= {};
 
+	VkDevice								device							= {};
+	VkPhysicalDeviceLimits					physicald_device_limits			= {};
 	_internal::WindowDataImpl			*	window_data						= {};
 	DeviceMemoryPool					*	device_memory_pool				= {};
 };
