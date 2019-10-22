@@ -5,6 +5,8 @@
 #include "../Header/WindowImpl.h"
 #include "../Header/RendererImpl.h"
 
+#include "../Header/MeshBuffer.h"
+
 #include "../../Include/VK2D/Renderer.h"
 
 #define GLFW_INCLUDE_NONE
@@ -76,9 +78,16 @@ VK2D_API					Window::Window(
 	if( !CreateWindowSynchronizationPrimitives( data.get(), device ) ) return;
 	if( !CreateFrameSynchronizationPrimitives( data.get(), device ) ) return;
 
-	// (Re-)Create frame vertex and index lists
-	data->frame_vertices.resize( data->swapchain_image_count );
-	data->frame_indices.resize( data->swapchain_image_count );
+	data->mesh_buffer		= std::make_unique<MeshBuffer>(
+		data.get(),
+		data->renderer->data->device_memory_pool.get() );
+
+	if( !data->mesh_buffer ) {
+		if( data->report_function ) {
+			data->report_function( ReportSeverity::NON_CRITICAL_ERROR, "Cannot create mesh buffers!" );
+		}
+		return;
+	}
 
 	is_good							= true;
 }
@@ -615,10 +624,6 @@ bool RecreateResourcesAfterResizing(
 
 		if( !CreateFrameSynchronizationPrimitives( data, device ) ) return false;
 	}
-
-	// (Re-)Create frame vertex and index lists
-	data->frame_vertices.resize( data->swapchain_image_count );
-	data->frame_indices.resize( data->swapchain_image_count );
 
 	data->recreate_swapchain		= false;
 

@@ -144,7 +144,75 @@ bool									MeshBuffer::CmdUploadToGPU(
 		) ) return false;
 	}
 
+	VkBufferCopy copy_region {};
+	copy_region.srcOffset	= 0;
+	copy_region.dstOffset	= 0;
+	copy_region.size		= std::min( current_staging_buffer_size, current_device_buffer_size );
 
+	vkCmdCopyBuffer(
+		command_buffer,
+		staging_buffer,
+		device_buffer,
+		1,
+		&copy_region
+	);
+
+	return true;
+}
+
+
+
+
+
+
+
+
+
+bool MeshBuffer::ResizeStagingBuffer(
+	VkDeviceSize		new_size,
+	VkDevice			device )
+{
+	if( new_size == current_staging_buffer_size ) return true;
+
+	// Destroy old buffer and free it's memory
+	vkDestroyBuffer(
+		device,
+		staging_buffer,
+		nullptr
+	);
+	device_memory_pool->FreeMemory(
+		staging_buffer_memory
+	);
+
+	current_staging_buffer_size					= 0;
+
+
+	VkBufferCreateInfo buffer_create_info {};
+	buffer_create_info.sType					= VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+	buffer_create_info.pNext					= nullptr;
+	buffer_create_info.flags					= 0;
+	buffer_create_info.size						= new_size;
+	buffer_create_info.usage					= VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
+	buffer_create_info.sharingMode				= VK_SHARING_MODE_EXCLUSIVE;
+	buffer_create_info.queueFamilyIndexCount	= 0;
+	buffer_create_info.pQueueFamilyIndices		= nullptr;
+
+	if( vkCreateBuffer(
+		device,
+		&buffer_create_info,
+		nullptr,
+		&staging_buffer
+	) != VK_SUCCESS ) {
+		return false;
+	}
+	staging_buffer_memory = device_memory_pool->AllocateAndBindBufferMemory(
+		staging_buffer,
+		&buffer_create_info,
+		VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT
+	);
+	if( staging_buffer_memory != VK_SUCCESS ) return false;
+
+	current_staging_buffer_size		= staging_buffer_memory.size;
 
 	return true;
 }
@@ -158,8 +226,8 @@ bool									MeshBuffer::CmdUploadToGPU(
 
 
 bool MeshBuffer::ResizeDeviceBuffer(
-	VkDeviceSize						new_size,
-	VkDevice							device
+	VkDeviceSize		new_size,
+	VkDevice			device
 )
 {
 	if( new_size == current_device_buffer_size ) return true;

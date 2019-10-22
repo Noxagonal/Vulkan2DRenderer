@@ -12,6 +12,7 @@
 namespace vk2d {
 
 class Renderer;
+class MeshBuffer;
 
 
 
@@ -71,8 +72,7 @@ struct WindowDataImpl {
 	NextRenderCallFunction					next_render_call_function				= NextRenderCallFunction::BEGIN;
 	bool									recreate_swapchain						= {};
 
-	std::vector<std::vector<Vertex>>		frame_vertices							= {};
-	std::vector<std::vector<uint32_t>>		frame_indices							= {};
+	std::unique_ptr<MeshBuffer>				mesh_buffer								= {};
 };
 
 
