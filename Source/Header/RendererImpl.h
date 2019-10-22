@@ -53,6 +53,46 @@ struct RendererDataImpl {
 } // _internal
 
 
+bool												CreateInstance(
+	_internal::RendererDataImpl					*	data,
+	std::vector<const char*>					&	instance_layers,
+	std::vector<const char*>					&	instance_extensions );
+
+bool												PickPhysicalDevice(
+	_internal::RendererDataImpl					*	data );
+
+bool												CreateDeviceAndQueues(
+	_internal::RendererDataImpl					*	data,
+	VkPhysicalDevice								physical_device,
+	std::vector<const char*>					&	device_extensions );
+
+bool												CreateSampler(
+	_internal::RendererDataImpl					*	data,
+	VkDevice										device );
+
+bool												CreatePipelineCache(
+	_internal::RendererDataImpl					*	data,
+	VkDevice										device );
+
+bool												CreateShaderModules(
+	_internal::RendererDataImpl					*	data,
+	VkDevice										device );
+
+bool												CreateDescriptorSetLayouts(
+	_internal::RendererDataImpl					*	data,
+	VkDevice										device );
+
+bool												CreatePipelineLayout(
+	_internal::RendererDataImpl					*	data,
+	VkDevice										device );
+
+std::vector<VkPhysicalDevice>						EnumeratePhysicalDevices(
+	VkInstance										instance );
+
+VkPhysicalDevice									PickBestPhysicalDevice(
+	VkInstance										instance,
+	std::vector<VkPhysicalDevice>				&	physicalDevices );
+
 
 
 

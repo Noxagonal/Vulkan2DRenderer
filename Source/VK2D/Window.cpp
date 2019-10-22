@@ -62,17 +62,17 @@ VK2D_API					Window::Window(
 		data->renderer->data->fragment_shader_module
 	) ) return;
 
-	if( !CreateCommandPool( data.get(), device, data->renderer->data->primary_render_queue ) ) return;
-	if( !AllocateCommandBuffers( data.get(), device ) ) return;
-
 	if( !CreateSwapchain(
 		data.get(),
 		data->renderer->data->physical_device,
 		device,
 		data->renderer->data->primary_render_queue
 	) ) return;
-
 	if( !CreateFramebuffers( data.get(), device ) ) return;
+
+	if( !CreateCommandPool( data.get(), device, data->renderer->data->primary_render_queue ) ) return;
+	if( !AllocateCommandBuffers( data.get(), device ) ) return;
+
 	if( !CreateWindowSynchronizationPrimitives( data.get(), device ) ) return;
 	if( !CreateFrameSynchronizationPrimitives( data.get(), device ) ) return;
 
@@ -119,6 +119,12 @@ VK2D_API Window::~Window()
 			nullptr
 		);
 
+		vkDestroyCommandPool(
+			device,
+			data->command_pool,
+			nullptr
+		);
+
 		for( auto f : data->framebuffers ) {
 			vkDestroyFramebuffer(
 				device,
@@ -138,12 +144,6 @@ VK2D_API Window::~Window()
 		vkDestroySwapchainKHR(
 			device,
 			data->swapchain,
-			nullptr
-		);
-
-		vkDestroyCommandPool(
-			device,
-			data->command_pool,
 			nullptr
 		);
 
@@ -264,7 +264,7 @@ VK2D_API bool VK2D_APIENTRY Window::BeginRender()
 
 	// TODO: check if we need to recreate the swapchain
 	if( data->recreate_swapchain ) {
-		if( !CreateSwapchain(
+		if( !RecreateResourcesAfterResizing(
 			data.get(),
 			data->renderer->data->physical_device,
 			data->renderer->data->device,
@@ -354,10 +354,10 @@ VK2D_API bool VK2D_APIENTRY Window::BeginRender()
 		// Begin render pass
 		{
 			VkClearValue	clear_value {};
-			clear_value.color.float32[ 0 ]		= 25.7f;
-			clear_value.color.float32[ 1 ]		= 0.0f;
-			clear_value.color.float32[ 2 ]		= 0.0f;
-			clear_value.color.float32[ 3 ]		= 0.0f;
+			clear_value.color.float32[ 0 ]		= 1.0f;
+			clear_value.color.float32[ 1 ]		= 1.0f;
+			clear_value.color.float32[ 2 ]		= 1.0f;
+			clear_value.color.float32[ 3 ]		= 1.0f;
 
 			VkRenderPassBeginInfo render_pass_begin_info {};
 			render_pass_begin_info.sType			= VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
@@ -374,10 +374,18 @@ VK2D_API bool VK2D_APIENTRY Window::BeginRender()
 				VK_SUBPASS_CONTENTS_INLINE
 			);
 		}
+
+		vkCmdBindPipeline(
+			command_buffer,
+			VK_PIPELINE_BIND_POINT_GRAPHICS,
+			data->pipelines[ uint32_t( _internal::PipelineType::FILLED_POLYGON_LIST ) ]
+		);
 	}
 
 	return true;
 }
+
+
 
 
 
@@ -466,6 +474,9 @@ VK2D_API bool VK2D_APIENTRY Window::EndRender()
 		}
 	}
 
+	// TODO: debugging only, remove later
+	vkDeviceWaitIdle( data->renderer->data->device );
+
 	// Synchronize the previous frame here, this waits for the previous
 	// frame to finish fully rendering before continuing execution.
 	if( !SynchronizeFrame( data.get(), data->renderer->data->device ) ) return false;
@@ -485,6 +496,7 @@ VK2D_API bool VK2D_APIENTRY Window::EndRender()
 
 
 
+/*
 
 VK2D_API void VK2D_APIENTRY Window::Draw_TriangleList(
 	bool								filled,
@@ -525,6 +537,8 @@ VK2D_API void VK2D_APIENTRY Window::Draw_TriangleList(
 	}
 }
 
+*/
+
 
 
 
@@ -550,7 +564,7 @@ bool RecreateResourcesAfterResizing(
 	// Check if any other resources need to be reallocated
 
 	// Reallocate framebuffers
-	if( data->framebuffers.size() != data->swapchain_image_count ) {
+	{
 		if( data->framebuffers.size() ) {
 			for( auto fb : data->framebuffers ) {
 				vkDestroyFramebuffer(
@@ -815,16 +829,16 @@ bool									CreateRenderPass(
 	subpass_dependencies[ 0 ].dstSubpass		= 0;
 	subpass_dependencies[ 0 ].srcStageMask		= VK_PIPELINE_STAGE_HOST_BIT;
 	subpass_dependencies[ 0 ].dstStageMask		= VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT;
-	subpass_dependencies[ 0 ].srcAccessMask		= VK_ACCESS_MEMORY_WRITE_BIT | VK_ACCESS_MEMORY_READ_BIT;
-	subpass_dependencies[ 0 ].dstAccessMask		= VK_ACCESS_MEMORY_WRITE_BIT | VK_ACCESS_MEMORY_READ_BIT;
+	subpass_dependencies[ 0 ].srcAccessMask		= 0;
+	subpass_dependencies[ 0 ].dstAccessMask		= VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT | VK_ACCESS_COLOR_ATTACHMENT_READ_BIT;
 	subpass_dependencies[ 0 ].dependencyFlags	= 0;
 
 	subpass_dependencies[ 1 ].srcSubpass		= 0;
 	subpass_dependencies[ 1 ].dstSubpass		= VK_SUBPASS_EXTERNAL;
 	subpass_dependencies[ 1 ].srcStageMask		= VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT;
 	subpass_dependencies[ 1 ].dstStageMask		= VK_PIPELINE_STAGE_HOST_BIT;
-	subpass_dependencies[ 1 ].srcAccessMask		= VK_ACCESS_MEMORY_WRITE_BIT | VK_ACCESS_MEMORY_READ_BIT;
-	subpass_dependencies[ 1 ].dstAccessMask		= VK_ACCESS_MEMORY_WRITE_BIT | VK_ACCESS_MEMORY_READ_BIT;
+	subpass_dependencies[ 1 ].srcAccessMask		= VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT | VK_ACCESS_COLOR_ATTACHMENT_READ_BIT;
+	subpass_dependencies[ 1 ].dstAccessMask		= 0;
 	subpass_dependencies[ 1 ].dependencyFlags	= 0;
 
 	VkRenderPassCreateInfo render_pass_create_info {};
@@ -1394,7 +1408,7 @@ bool									CreateSwapchain(
 			swapchain_create_info.preTransform				= VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR;
 			swapchain_create_info.compositeAlpha			= VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;		// Check this if rendering transparent windows
 			swapchain_create_info.presentMode				= data->present_mode;
-			swapchain_create_info.clipped					= VK_FALSE;
+			swapchain_create_info.clipped					= VK_TRUE;
 			swapchain_create_info.oldSwapchain				= old_swapchain;
 
 			auto result = vkCreateSwapchainKHR(
@@ -1660,3 +1674,13 @@ bool SynchronizeFrame(
 
 	return true;
 }
+
+
+
+
+
+
+
+
+
+} // vk2d

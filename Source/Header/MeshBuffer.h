@@ -8,7 +8,7 @@ public:
 							~MeshBuffer();
 
 private:
-	void					ResizeDeviceBuffer(
+	void					ResizeHostBuffer(
 		VkDeviceSize		new_vertex_size,
 		VkDeviceSize		new_index_size );
 

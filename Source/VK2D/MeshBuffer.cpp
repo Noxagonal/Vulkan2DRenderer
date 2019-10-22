@@ -12,11 +12,12 @@ MeshBuffer::~MeshBuffer()
 
 }
 
+/*
+
 void MeshBuffer::ResizeDeviceBuffer(
 	VkDeviceSize		new_vertex_size,
 	VkDeviceSize		new_index_size )
 {
-
 
 	// TODO: resizing device buffers means that
 	// we need to halt all gpu rendering until
@@ -40,4 +41,7 @@ void MeshBuffer::ResizeDeviceBuffer(
 		nullptr,
 		device_buffer
 	);
+
 }
+
+*/
