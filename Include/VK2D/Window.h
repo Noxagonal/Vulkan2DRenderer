@@ -13,7 +13,8 @@
 namespace vk2d {
 
 namespace _internal {
-struct WindowDataImpl;
+class RendererImpl;
+class WindowImpl;
 } // internal
 
 
@@ -55,11 +56,12 @@ struct WindowCreateInfo {
 
 
 class Window {
-	friend class Renderer;
+	friend class _internal::RendererImpl;
 
 private:
+	// Only accessible through Renderer::CreateWindowOutput();
 	VK2D_API													Window(
-		Renderer											*	renderer_parent,
+		_internal::RendererImpl								*	renderer_parent,
 		WindowCreateInfo									&	window_create_info );
 
 public:
@@ -104,7 +106,7 @@ public:
 		float													end_angle_radians );
 
 private:
-	std::unique_ptr<vk2d::_internal::WindowDataImpl>			data				= {};
+	std::unique_ptr<_internal::WindowImpl>						impl				= {};
 
 	bool														is_good				= {};
 };

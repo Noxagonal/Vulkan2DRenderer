@@ -1,23 +1,29 @@
 #pragma once
 
 #include "SourceCommon.h"
-#include "../../Include/VK2D/Window.h"
+
 #include "../../Include/VK2D/Renderer.h"
+#include "../../Include/VK2D/Window.h"
+
+#include "MeshBuffer.h"
 
 #define GLFW_INCLUDE_NONE
 #include <GLFW/glfw3.h>
 
 #include <vector>
+#include <memory>
 
 namespace vk2d {
 
-class Renderer;
+class Window;
+class MeshBuffer;
 
 
 
 namespace _internal {
 
-
+class RendererImpl;
+class WindowImpl;
 
 enum class NextRenderCallFunction : uint32_t {
 	BEGIN		= 0,
@@ -33,11 +39,90 @@ enum class PipelineType : uint32_t {
 	PIPELINE_TYPE_COUNT,
 };
 
-struct WindowDataImpl {
-	PFN_VK2D_ReportFunction					report_function							= {};
+class WindowImpl {
+	friend class Window;
+	friend bool								AquireImage(
+		WindowImpl						*	data,
+		VkPhysicalDevice					physical_device,
+		VkDevice							device,
+		ResolvedQueue					&	primary_render_queue,
+		uint32_t							nested_counter );
 
-	Renderer							*	renderer								= {};
+public:
+	WindowImpl(
+		RendererImpl					*	renderer,
+		const WindowCreateInfo			&	window_create_info
+	);
+	~WindowImpl();
+
+	bool									BeginRender();
+	bool									EndRender();
+
+	void									Draw_TriangleList(
+		bool								filled,
+		std::vector<Vertex>				&	vertices,
+		std::vector<VertexIndex_3>		&	indices );
+
+	void									Draw_LineList(
+		std::vector<Vertex>				&	vertices,
+		std::vector<VertexIndex_2>		&	indices );
+
+	void									Draw_PointList(
+		std::vector<Vertex>					vertices );
+
+	void									Draw_Line(
+		Vertex								point_1,
+		Vertex								point_2 );
+
+	void									Draw_Box(
+		bool								filled,
+		Coords								top_left,
+		Coords								bottom_right );
+
+	void									Draw_Circle(
+		bool								filled,
+		float								edge_count,
+		Coords								location,
+		float								radius );
+
+	void									Draw_Pie(
+		bool								filled,
+		float								edge_count,
+		Coords								location,
+		float								radius,
+		float								begin_angle_radians,
+		float								end_angle_radians );
+
+	bool									SynchronizeFrame();
+
+private:
+	bool									RecreateResourcesAfterResizing();
+	bool									CreateGLFWWindow();
+	bool									CreateSurface();
+	bool									CreateRenderPass();
+	bool									CreateGraphicsPipelines();
+	bool									CreateCommandPool();
+	bool									AllocateCommandBuffers();
+
+	// If old swapchain is still active, this function instead re-creates
+	// the swapchain recycling old resources whenever possible.
+	bool									CreateSwapchain();
+	bool									CreateFramebuffers();
+	bool									CreateWindowSynchronizationPrimitives();
+	bool									CreateFrameSynchronizationPrimitives();
+
+
+
+	_internal::RendererImpl				*	renderer_parent							= {};
 	WindowCreateInfo						create_info_copy						= {};
+
+	VkInstance								instance								= {};
+	VkPhysicalDevice						physical_device							= {};
+	VkDevice								device									= {};
+
+	ResolvedQueue							primary_render_queue					= {};
+
+	PFN_VK2D_ReportFunction					report_function							= {};
 
 	GLFWwindow							*	glfw_window								= {};
 
@@ -48,7 +133,9 @@ struct WindowDataImpl {
 	VkRenderPass							render_pass								= {};
 
 	VkCommandPool							command_pool							= {};
-	std::vector<VkCommandBuffer>			command_buffers							= {};
+	std::vector<VkCommandBuffer>			render_command_buffers					= {};	// For more overlapped execution multiple command buffers are needed.
+	VkCommandBuffer							transfer_command_buffer					= {};	// For data transfer each frame, this is small command buffer and can be re-recorded just before submitting the work.
+	VkSemaphore								mesh_transfer_semaphore					= {};
 
 	VkExtent2D								min_extent								= {};
 	VkExtent2D								max_extent								= {};
@@ -71,77 +158,13 @@ struct WindowDataImpl {
 	NextRenderCallFunction					next_render_call_function				= NextRenderCallFunction::BEGIN;
 	bool									recreate_swapchain						= {};
 
-	std::vector<std::vector<Vertex>>		frame_vertices							= {};
-	std::vector<std::vector<uint32_t>>		frame_indices							= {};
+	std::unique_ptr<MeshBuffer>				mesh_buffer								= {};
+
+	bool									is_good									= {};
 };
 
 
 
 } // _internal
-
-
-
-bool									RecreateResourcesAfterResizing(
-	_internal::WindowDataImpl		*	data,
-	VkPhysicalDevice					physical_device,
-	VkDevice							device,
-	ResolvedQueue						primary_render_queue );
-
-bool									CreateGLFWWindow(
-	_internal::WindowDataImpl		*	data );
-
-bool									CreateSurface(
-	_internal::WindowDataImpl		*	data,
-	VkInstance							instance,
-	VkPhysicalDevice					physical_device,
-	ResolvedQueue					&	primary_render_queue );
-
-bool									CreateRenderPass(
-	_internal::WindowDataImpl		*	data,
-	VkDevice							device );
-
-bool									CreateGraphicsPipelines(
-	_internal::WindowDataImpl		*	data,
-	VkDevice							device,
-	VkPipelineCache						pipeline_cache,
-	VkPipelineLayout					pipeline_layout,
-	VkShaderModule						vertex_shader_module,
-	VkShaderModule						fragment_shader_module );
-
-bool									CreateCommandPool(
-	_internal::WindowDataImpl		*	data,
-	VkDevice							device,
-	ResolvedQueue					&	primary_render_queue );
-
-bool									AllocateCommandBuffers(
-	_internal::WindowDataImpl		*	data,
-	VkDevice							device );
-
-// If old_swapchain is provided, this function instead re-creates
-// the swapchain recycling old resources whenever possible.
-bool									CreateSwapchain(
-	_internal::WindowDataImpl		*	data,
-	VkPhysicalDevice					physical_device,
-	VkDevice							device,
-	ResolvedQueue						primary_render_queue,
-	VkSwapchainKHR						old_swapchain				= VK_NULL_HANDLE );
-
-bool									CreateFramebuffers(
-	_internal::WindowDataImpl		*	data,
-	VkDevice							device );
-
-bool									CreateWindowSynchronizationPrimitives(
-	_internal::WindowDataImpl		*	data,
-	VkDevice							device );
-
-bool									CreateFrameSynchronizationPrimitives(
-	_internal::WindowDataImpl		*	data,
-	VkDevice							device );
-
-bool									SynchronizeFrame(
-	_internal::WindowDataImpl		*	data,
-	VkDevice							device );
-
-
 
 } // vk2d

@@ -3,6 +3,8 @@
 #include "SourceCommon.h"
 #include "../../Include/VK2D/Renderer.h"
 
+#include "../Header/VulkanMemoryManagement.h"
+
 #include <list>
 #include <vector>
 #include <array>
@@ -13,86 +15,108 @@
 namespace vk2d {
 
 class Window;
+class Renderer;
 
 namespace _internal {
 
 
 
-struct RendererDataImpl {
-	RendererCreateInfo								create_info_copy			= {};
+class RendererImpl {
+	friend class Renderer;
 
-	PFN_VK2D_ReportFunction							report_function				= {};
+public:
+	RendererImpl(
+		const RendererCreateInfo				&	renderer_create_info );
 
-	VkDebugUtilsMessengerEXT						debug_utils_messenger		= {};
+	~RendererImpl();
 
-	VkInstance										instance					= {};
-	VkPhysicalDevice								physical_device				= {};
-	VkDevice										device						= {};
+	Window										*	CreateWindowOutput(
+		WindowCreateInfo						&	window_create_info );
+	void											CloseWindowOutput(
+		Window									*	window );
 
-	VkPhysicalDeviceProperties						physical_device_properties	= {};
+	PFN_VK2D_ReportFunction							GetReportFunction();
 
-	VkShaderModule									vertex_shader_module		= {};
-	VkShaderModule									fragment_shader_module		= {};
-	VkPipelineCache									pipeline_cache				= {};
-	VkPipelineLayout								pipeline_layout				= {};
+	VkInstance										GetVulkanInstance();
+	VkPhysicalDevice								GetVulkanPhysicalDevice();
+	VkDevice										GetVulkanDevice();
 
-	VkSampler										sampler						= {};
+	ResolvedQueue									GetPrimaryRenderQueue();
+	ResolvedQueue									GetSecondaryRenderQueue();
+	ResolvedQueue									GetPrimaryComputeQueue();
+	ResolvedQueue									GetPrimaryTransferQueue();
 
-	VkDescriptorSetLayout							descriptor_set_layout		= {};
+	const VkPhysicalDeviceProperties			&	GetPhysicalDeviceProperties();
+	const VkPhysicalDeviceMemoryProperties		&	GetPhysicalDeviceMemoryProperties();
+	const VkPhysicalDeviceFeatures				&	GetPhysicalDeviceFeatures();
 
-	ResolvedQueue									primary_render_queue		= {};
-	ResolvedQueue									secondary_render_queue		= {};
-	ResolvedQueue									primary_compute_queue		= {};
-	ResolvedQueue									primary_transfer			= {};
+	VkShaderModule									GetVertexShaderModule();
+	VkShaderModule									GetFragmentShaderModule();
 
-	std::list<std::unique_ptr<Window>>				windows						= {};
+	VkPipelineCache									GetPipelineCache();
+	VkPipelineLayout								GetPipelineLayout();
+	VkDescriptorSetLayout							GetDescriptorSetLayout();
+
+	DeviceMemoryPool							*	GetDeviceMemoryPool();
+
+private:
+	bool											CreateInstance();
+	bool											PickPhysicalDevice();
+	bool											CreateDeviceAndQueues();
+	bool											CreateSampler();
+	bool											CreatePipelineCache();
+	bool											CreateShaderModules();
+	bool											CreateDescriptorSetLayouts();
+	bool											CreatePipelineLayout();
+	std::vector<VkPhysicalDevice>					EnumeratePhysicalDevices();
+	VkPhysicalDevice								PickBestPhysicalDevice();
+
+
+
+	static uint64_t									renderer_count;		// used to keep track of Renderer instances
+
+	RendererCreateInfo								create_info_copy					= {};
+
+	std::vector<const char*>						instance_layers						= {};
+	std::vector<const char*>						instance_extensions					= {};
+	std::vector<const char*>						device_extensions					= {};
+
+	PFN_VK2D_ReportFunction							report_function						= {};
+
+	VkDebugUtilsMessengerEXT						debug_utils_messenger				= {};
+
+	VkInstance										instance							= {};
+	VkPhysicalDevice								physical_device						= {};
+	VkDevice										device								= {};
+
+	VkPhysicalDeviceProperties						physical_device_properties			= {};
+	VkPhysicalDeviceMemoryProperties				physical_device_memory_properties	= {};
+	VkPhysicalDeviceFeatures						physical_device_features			= {};
+
+	VkShaderModule									vertex_shader_module				= {};
+	VkShaderModule									fragment_shader_module				= {};
+	VkPipelineCache									pipeline_cache						= {};
+	VkPipelineLayout								pipeline_layout						= {};
+
+	VkSampler										sampler								= {};
+
+	VkDescriptorSetLayout							descriptor_set_layout				= {};
+
+	ResolvedQueue									primary_render_queue				= {};
+	ResolvedQueue									secondary_render_queue				= {};
+	ResolvedQueue									primary_compute_queue				= {};
+	ResolvedQueue									primary_transfer_queue				= {};
+
+	std::unique_ptr<DeviceMemoryPool>				device_memory_pool					= {};
+
+	std::list<std::unique_ptr<Window>>				windows								= {};
+
+	bool											is_good								= {};
 };
 
 
 
 } // _internal
-
-
-bool												CreateInstance(
-	_internal::RendererDataImpl					*	data,
-	std::vector<const char*>					&	instance_layers,
-	std::vector<const char*>					&	instance_extensions );
-
-bool												PickPhysicalDevice(
-	_internal::RendererDataImpl					*	data );
-
-bool												CreateDeviceAndQueues(
-	_internal::RendererDataImpl					*	data,
-	VkPhysicalDevice								physical_device,
-	std::vector<const char*>					&	device_extensions );
-
-bool												CreateSampler(
-	_internal::RendererDataImpl					*	data,
-	VkDevice										device );
-
-bool												CreatePipelineCache(
-	_internal::RendererDataImpl					*	data,
-	VkDevice										device );
-
-bool												CreateShaderModules(
-	_internal::RendererDataImpl					*	data,
-	VkDevice										device );
-
-bool												CreateDescriptorSetLayouts(
-	_internal::RendererDataImpl					*	data,
-	VkDevice										device );
-
-bool												CreatePipelineLayout(
-	_internal::RendererDataImpl					*	data,
-	VkDevice										device );
-
-std::vector<VkPhysicalDevice>						EnumeratePhysicalDevices(
-	VkInstance										instance );
-
-VkPhysicalDevice									PickBestPhysicalDevice(
-	VkInstance										instance,
-	std::vector<VkPhysicalDevice>				&	physicalDevices );
-
 
 
 

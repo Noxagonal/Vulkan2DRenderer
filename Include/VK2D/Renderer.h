@@ -12,7 +12,7 @@
 namespace vk2d {
 
 namespace _internal {
-struct RendererDataImpl;
+class RendererImpl;
 } // _internal
 
 
@@ -42,13 +42,13 @@ struct RendererCreateInfo {
 
 
 class Renderer {
-	friend VK2D_API std::unique_ptr<vk2d::Renderer> VK2D_APIENTRY CreateRenderer( RendererCreateInfo & renderer_create_info );
+	friend VK2D_API std::unique_ptr<vk2d::Renderer> VK2D_APIENTRY CreateRenderer( const RendererCreateInfo & renderer_create_info );
 	friend class Window;
 
 private:
 	// Do not use directly, instead use vk2d::CreateRender() to get a renderer.
 	VK2D_API													Renderer(
-		RendererCreateInfo									&	renderer_create_info );
+		const RendererCreateInfo							&	renderer_create_info );
 
 public:
 	VK2D_API													~Renderer();
@@ -59,16 +59,14 @@ public:
 		Window												*	window );
 
 private:
-	std::unique_ptr<vk2d::_internal::RendererDataImpl>			data;
-
-	static uint64_t												renderer_count;					// used to keep track of Renderer instances
+	std::unique_ptr<vk2d::_internal::RendererImpl>				impl;
 
 	bool														is_good					= {};
 };
 
 
 VK2D_API std::unique_ptr<Renderer>			VK2D_APIENTRY		CreateRenderer(
-	RendererCreateInfo										&	renderer_create_info );
+	const RendererCreateInfo								&	renderer_create_info );
 
 
 }
