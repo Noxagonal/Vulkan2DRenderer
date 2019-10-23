@@ -57,14 +57,14 @@ MeshBuffer::~MeshBuffer()
 
 
 void MeshBuffer::PushBackVertex(
-	Vertex								new_vertex
+	Vertex									new_vertex
 )
 {
 	vertices.push_back( new_vertex );
 }
 
 void MeshBuffer::PushBackVertices(
-	const std::vector<Vertex>		&	new_vertices
+	const std::vector<Vertex>			&	new_vertices
 )
 {
 	vertices.reserve( vertices.size() + new_vertices.size() );
@@ -72,20 +72,42 @@ void MeshBuffer::PushBackVertices(
 }
 
 void MeshBuffer::PushBackIndex(
-	uint32_t							new_index
+	uint32_t								new_index
 )
 {
 	indices.push_back( new_index );
 }
 
 void MeshBuffer::PushBackIndices(
-	const std::vector<uint32_t>		&	new_indices
+	const std::vector<uint32_t>			&	new_indices
 )
 {
 	indices.reserve( indices.size() + new_indices.size() );
 	indices.insert( indices.end(), new_indices.begin(), new_indices.end() );
 }
 
+void MeshBuffer::PushBackIndices(
+	const std::vector<VertexIndex_2>	&	new_indices
+)
+{
+	indices.reserve( indices.size() + new_indices.size() * 2 );
+	for( auto & i : new_indices ) {
+		indices.push_back( i.indices[ 0 ] );
+		indices.push_back( i.indices[ 1 ] );
+	}
+}
+
+void MeshBuffer::PushBackIndices(
+	const std::vector<VertexIndex_3>	&	new_indices
+)
+{
+	indices.reserve( indices.size() + new_indices.size() * 3 );
+	for( auto & i : new_indices ) {
+		indices.push_back( i.indices[ 0 ] );
+		indices.push_back( i.indices[ 1 ] );
+		indices.push_back( i.indices[ 2 ] );
+	}
+}
 
 
 
@@ -107,6 +129,8 @@ bool									MeshBuffer::CmdUploadToGPU(
 	VkDeviceSize			vertex_buffer_aligned_byte_offset	= 0;
 	VkDeviceSize			index_buffer_aligned_byte_offset	= vertex_buffer_aligned_byte_size;
 	VkDeviceSize			total_aligned_buffer_byte_size		= vertex_buffer_aligned_byte_size + index_buffer_aligned_byte_size;
+
+	if( total_aligned_buffer_byte_size == 0 ) return true;
 
 	// Check the size of the current staging buffer, resize if needed
 	if( current_staging_buffer_size < total_aligned_buffer_byte_size ) {
@@ -148,6 +172,9 @@ bool									MeshBuffer::CmdUploadToGPU(
 		device_memory_pool->UnmapMemory( staging_buffer_memory );
 	}
 
+	vertices.clear();
+	indices.clear();
+
 	// Check the size of the current device buffer, resize if needed
 	if( current_device_buffer_size < total_aligned_buffer_byte_size ) {
 		if( !ResizeDeviceBuffer(
@@ -169,6 +196,24 @@ bool									MeshBuffer::CmdUploadToGPU(
 	);
 
 	return true;
+}
+
+
+
+
+
+
+
+
+
+size_t MeshBuffer::GetCurrentVertexCount()
+{
+	return vertices.size();
+}
+
+size_t MeshBuffer::GetCurrentIndexCount()
+{
+	return indices.size();
 }
 
 

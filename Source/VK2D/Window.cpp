@@ -71,48 +71,21 @@ VK2D_API bool VK2D_APIENTRY Window::EndRender()
 
 
 
-/*
-
 VK2D_API void VK2D_APIENTRY Window::Draw_TriangleList(
 	bool								filled,
-	std::vector<Vertex>				&	vertices,
-	std::vector<VertexIndex_3>		&	indices )
+	std::vector<Vertex>			&		vertices,
+	std::vector<VertexIndex_3>	&		indices )
 {
-	// TODO: we need a mesh buffer that is able to keep track of changing vertices
-	// and indices as well as record command to copy data from host to device.
-	todo here;
-
-	auto command_buffer			= data->command_buffers[ data->next_image ];
-	auto & frame_mesh_buffer	= data->frame_mesh_buffer[ data->next_image ];
-
-	if( filled ) {
-		vkCmdBindPipeline(
-			command_buffer,
-			VK_PIPELINE_BIND_POINT_GRAPHICS,
-			data->pipelines[ uint32_t( _internal::PipelineType::FILLED_POLYGON_LIST ) ]
+	if( impl ) {
+		impl->Draw_TriangleList(
+			filled,
+			vertices,
+			indices
 		);
-	}
-
-	vkCmdDrawIndexed(
-		data->command_buffers[ data->next_image ],
-		uint32_t( indices.size() ),
-		1,
-		uint32_t( indices.size() + frame_indices.size() ),
-		frame_vertices.size(),
-		0
-	);
-
-	frame_vertices.insert( frame_vertices.end(), vertices.begin(), vertices.end() );
-
-	frame_indices.reserve( frame_vertices.size() + indices.size() * 3 );
-	for( auto & i : indices ) {
-		frame_indices.push_back( i.indices[ 0 ] );
-		frame_indices.push_back( i.indices[ 1 ] );
-		frame_indices.push_back( i.indices[ 2 ] );
 	}
 }
 
-*/
+
 
 
 

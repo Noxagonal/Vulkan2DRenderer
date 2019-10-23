@@ -133,7 +133,9 @@ private:
 	VkRenderPass							render_pass								= {};
 
 	VkCommandPool							command_pool							= {};
-	std::vector<VkCommandBuffer>			command_buffers							= {};
+	std::vector<VkCommandBuffer>			render_command_buffers					= {};	// For more overlapped execution multiple command buffers are needed.
+	VkCommandBuffer							transfer_command_buffer					= {};	// For data transfer each frame, this is small command buffer and can be re-recorded just before submitting the work.
+	VkSemaphore								mesh_transfer_semaphore					= {};
 
 	VkExtent2D								min_extent								= {};
 	VkExtent2D								max_extent								= {};

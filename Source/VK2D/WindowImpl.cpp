@@ -88,6 +88,12 @@ WindowImpl::~WindowImpl()
 		);
 	}
 
+	vkDestroySemaphore(
+		device,
+		mesh_transfer_semaphore,
+		nullptr
+	);
+
 	vkDestroyFence(
 		device,
 		aquire_image_fence,
@@ -270,7 +276,7 @@ bool WindowImpl::BeginRender()
 
 	// Begin command buffer
 	{
-		VkCommandBuffer		command_buffer			= command_buffers[ next_image ];
+		VkCommandBuffer		command_buffer			= render_command_buffers[ next_image ];
 
 		VkCommandBufferBeginInfo command_buffer_begin_info {};
 		command_buffer_begin_info.sType				= VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
@@ -340,12 +346,29 @@ bool WindowImpl::BeginRender()
 				VK_SUBPASS_CONTENTS_INLINE
 			);
 		}
-
+		/*
 		vkCmdBindPipeline(
 			command_buffer,
 			VK_PIPELINE_BIND_POINT_GRAPHICS,
 			pipelines[ uint32_t( _internal::PipelineType::FILLED_POLYGON_LIST ) ]
 		);
+
+		// TODO: PROBLEM HERE;
+		// Problem I didn't consider before is that the vertex buffer needs to be bound first,
+		// Sounds obvious in retrospect. -_-
+		// Possible solutions:
+		// First one is to just postpone command buffer recording till EndRender()
+		// and to just keep track internally of what gets recorded and where.
+		// Second option is a bit easier and might perform better in the end is to
+		// create multiple fixed lenght mesh buffers dynamically as needed and bind them
+		// just before recording the draw command, then record a command to copy the
+		// vertex buffer data to memory as usual.
+
+		vkCmdBindIndexBuffer(
+			command_buffer,
+
+			);
+		*/
 	}
 
 	return true;
@@ -371,37 +394,101 @@ bool WindowImpl::EndRender()
 		next_render_call_function = _internal::NextRenderCallFunction::BEGIN;
 	}
 
-	VkCommandBuffer		command_buffer	= command_buffers[ next_image ];
+	VkCommandBuffer		render_command_buffer	= render_command_buffers[ next_image ];
 
 	// End render pass
 	{
-		vkCmdEndRenderPass( command_buffer );
+		vkCmdEndRenderPass( render_command_buffer );
 	}
 
 	// End command buffer
-	if( vkEndCommandBuffer( command_buffer ) != VK_SUCCESS ) {
+	if( vkEndCommandBuffer( render_command_buffer ) != VK_SUCCESS ) {
 		if( report_function ) {
 			report_function( ReportSeverity::NON_CRITICAL_ERROR, "Cannot compile command buffer at EndRender()!" );
 		}
 		return false;
 	}
 
+	// Synchronize the previous frame here, this waits for the previous
+	// frame to finish fully rendering before continuing execution.
+	if( !SynchronizeFrame() ) return false;
+
+	// Record command buffer to upload mesh data to GPU
+	{
+		// Begin command buffer
+		{
+			VkCommandBufferBeginInfo transfer_command_buffer_begin_info {};
+			transfer_command_buffer_begin_info.sType			= VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+			transfer_command_buffer_begin_info.pNext			= nullptr;
+			transfer_command_buffer_begin_info.flags			= VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+			transfer_command_buffer_begin_info.pInheritanceInfo	= nullptr;
+
+			// SynchronizeFrame() above will guarantee that the transfer command buffer is not
+			// still being processed so we can begin re-recording the transfer command buffer here.
+			if( vkBeginCommandBuffer(
+				transfer_command_buffer,
+				&transfer_command_buffer_begin_info
+			) != VK_SUCCESS ) {
+				if( report_function ) {
+					report_function( ReportSeverity::NON_CRITICAL_ERROR, "Cannot begin mesh GPU transfer command buffer!" );
+				}
+				return false;
+			}
+		}
+
+		// Record commands
+		{
+			if( !mesh_buffer->CmdUploadToGPU(
+				transfer_command_buffer
+			) ) {
+				if( report_function ) {
+					report_function( ReportSeverity::NON_CRITICAL_ERROR, "Cannot record commands to transfer mesh to GPU!" );
+				}
+				return false;
+			}
+		}
+
+		// End command buffer
+		{
+			if( vkEndCommandBuffer(
+				transfer_command_buffer
+			) != VK_SUCCESS ) {
+				if( report_function ) {
+					report_function( ReportSeverity::NON_CRITICAL_ERROR, "Cannot compile commands to transfer mesh to GPU!" );
+				}
+				return false;
+			}
+		}
+	}
+
 	// Submit swapchain image
 	{
-		VkSubmitInfo submit_info {};
-		submit_info.sType					= VK_STRUCTURE_TYPE_SUBMIT_INFO;
-		submit_info.pNext					= nullptr;
-		submit_info.waitSemaphoreCount		= 0;
-		submit_info.pWaitSemaphores			= nullptr;
-		submit_info.pWaitDstStageMask		= nullptr;
-		submit_info.commandBufferCount		= 1;
-		submit_info.pCommandBuffers			= &command_buffer;
-		submit_info.signalSemaphoreCount	= 1;
-		submit_info.pSignalSemaphores		= &submit_to_present_semaphores[ next_image ];
+		std::array<VkSubmitInfo, 2> submit_infos {};
+
+		submit_infos[ 0 ].sType						= VK_STRUCTURE_TYPE_SUBMIT_INFO;
+		submit_infos[ 0 ].pNext						= nullptr;
+		submit_infos[ 0 ].waitSemaphoreCount		= 0;
+		submit_infos[ 0 ].pWaitSemaphores			= nullptr;
+		submit_infos[ 0 ].pWaitDstStageMask			= nullptr;
+		submit_infos[ 0 ].commandBufferCount		= 1;
+		submit_infos[ 0 ].pCommandBuffers			= &transfer_command_buffer;
+		submit_infos[ 0 ].signalSemaphoreCount		= 1;
+		submit_infos[ 0 ].pSignalSemaphores			= &mesh_transfer_semaphore;
+
+		VkPipelineStageFlags wait_dst_stage_mask	= VK_PIPELINE_STAGE_VERTEX_INPUT_BIT | VK_PIPELINE_STAGE_VERTEX_SHADER_BIT;
+		submit_infos[ 1 ].sType						= VK_STRUCTURE_TYPE_SUBMIT_INFO;
+		submit_infos[ 1 ].pNext						= nullptr;
+		submit_infos[ 1 ].waitSemaphoreCount		= 1;
+		submit_infos[ 1 ].pWaitSemaphores			= &mesh_transfer_semaphore;
+		submit_infos[ 1 ].pWaitDstStageMask			= &wait_dst_stage_mask;
+		submit_infos[ 1 ].commandBufferCount		= 1;
+		submit_infos[ 1 ].pCommandBuffers			= &render_command_buffer;
+		submit_infos[ 1 ].signalSemaphoreCount		= 1;
+		submit_infos[ 1 ].pSignalSemaphores			= &submit_to_present_semaphores[ next_image ];
 
 		if( vkQueueSubmit(
 			primary_render_queue.queue,
-			1, &submit_info,
+			uint32_t( submit_infos.size() ), submit_infos.data() ,
 			gpu_to_cpu_frame_fences[ next_image ]
 		) != VK_SUCCESS ) {
 			if( report_function ) {
@@ -440,10 +527,6 @@ bool WindowImpl::EndRender()
 		}
 	}
 
-	// Synchronize the previous frame here, this waits for the previous
-	// frame to finish fully rendering before continuing execution.
-	if( !SynchronizeFrame() ) return false;
-
 	previous_image						= next_image;
 	previous_frame_need_synchronization	= true;
 
@@ -459,46 +542,64 @@ bool WindowImpl::EndRender()
 
 
 
-/*
-VK2D_API void VK2D_APIENTRY Window::Draw_TriangleList(
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// 
+// WindowImpl::Draw_TriangleList()
+// 
+// - Records commands to bind a pipeline, draw triangle list to the swapchain image
+// - Pushes vertices and indices to mesh buffer that will get uploaded to the GPU prior
+//   to submitting the command buffer that these drawing commands were recorded to.
+// 
+// - Returns:		void
+// - Parameters:
+//   filled			=: true -> polygons will be filled, false -> polygons will be rendered as wireframe
+//   vertices		=: A vector of <Vertex> defining the end points of the polygons
+//   indices		=: A vector of <VertexIndex_3> defining the surface of the polygon, each VertexIndex_3 defines a single polygon,
+//						VertexIndex_3 contains an array of 3 uint32_t, these correspond to the index number in the vertices vector,
+//						of between which the polygon will be drawn.
+// 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+void WindowImpl::Draw_TriangleList(
 	bool								filled,
 	std::vector<Vertex>				&	vertices,
 	std::vector<VertexIndex_3>		&	indices )
 {
-	// TODO: we need a mesh buffer that is able to keep track of changing vertices
-	// and indices as well as record command to copy data from host to device.
-	todo here;
+	auto command_buffer			= render_command_buffers[ next_image ];
 
-	auto command_buffer			= command_buffers[ next_image ];
-	auto & frame_mesh_buffer	= frame_mesh_buffer[ next_image ];
+	auto vertex_offset	= mesh_buffer->GetCurrentVertexCount();
+	auto index_offset	= mesh_buffer->GetCurrentIndexCount();
+	auto vertex_count	= vertices.size();
+	auto index_count	= indices.size() * 3;
 
+	mesh_buffer->PushBackVertices( vertices );
+	mesh_buffer->PushBackIndices( indices );
+
+	// TODO: add a pipeline changer function that will keep track of
+	// the previous pipeline and only changes it if needed.
 	if( filled ) {
 		vkCmdBindPipeline(
 			command_buffer,
 			VK_PIPELINE_BIND_POINT_GRAPHICS,
 			pipelines[ uint32_t( _internal::PipelineType::FILLED_POLYGON_LIST ) ]
 		);
+	} else {
+		vkCmdBindPipeline(
+			command_buffer,
+			VK_PIPELINE_BIND_POINT_GRAPHICS,
+			pipelines[ uint32_t( _internal::PipelineType::WIREFRAME_POLYGON_LIST ) ]
+		);
 	}
 
 	vkCmdDrawIndexed(
-		command_buffers[ next_image ],
-		uint32_t( indices.size() ),
+		command_buffer,
+		index_count,
 		1,
-		uint32_t( indices.size() + frame_indices.size() ),
-		frame_vertices.size(),
+		index_offset,
+		vertex_offset,
 		0
 	);
-
-	frame_vertices.insert( frame_vertices.end(), vertices.begin(), vertices.end() );
-
-	frame_indices.reserve( frame_vertices.size() + indices.size() * 3 );
-	for( auto & i : indices ) {
-		frame_indices.push_back( i.indices[ 0 ] );
-		frame_indices.push_back( i.indices[ 1 ] );
-		frame_indices.push_back( i.indices[ 2 ] );
-	}
 }
-*/
+
 
 
 
@@ -566,13 +667,13 @@ bool WindowImpl::RecreateResourcesAfterResizing( )
 	}
 
 	// Reallocate command buffers
-	if( command_buffers.size() != swapchain_image_count ) {
-		if( command_buffers.size() ) {
+	if( render_command_buffers.size() != swapchain_image_count ) {
+		if( render_command_buffers.size() ) {
 			vkFreeCommandBuffers(
 				device,
 				command_pool,
-				uint32_t( command_buffers.size() ),
-				command_buffers.data()
+				uint32_t( render_command_buffers.size() ),
+				render_command_buffers.data()
 			);
 		}
 		if( !AllocateCommandBuffers() ) return false;
@@ -1218,25 +1319,31 @@ bool WindowImpl::CreateCommandPool()
 
 bool WindowImpl::AllocateCommandBuffers()
 {
-	command_buffers.resize( swapchain_image_count );
+	render_command_buffers.resize( swapchain_image_count );
+	std::vector<VkCommandBuffer> temp( swapchain_image_count + 1 );
 
 	VkCommandBufferAllocateInfo command_buffer_allocate_info {};
 	command_buffer_allocate_info.sType				= VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
 	command_buffer_allocate_info.pNext				= nullptr;
 	command_buffer_allocate_info.commandPool		= command_pool;
 	command_buffer_allocate_info.level				= VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-	command_buffer_allocate_info.commandBufferCount	= swapchain_image_count;
+	command_buffer_allocate_info.commandBufferCount	= uint32_t( temp.size() );
 
 	if( vkAllocateCommandBuffers(
 		device,
 		&command_buffer_allocate_info,
-		command_buffers.data()
+		temp.data()
 	) != VK_SUCCESS ) {
 		if( report_function ) {
 			report_function( ReportSeverity::NON_CRITICAL_ERROR, "Cannot allocate command buffers!" );
 		}
 		return false;
 	}
+
+	for( size_t i = 0; i < swapchain_image_count; ++i ) {
+		render_command_buffers[ i ]		= temp[ i ];
+	}
+	transfer_command_buffer				= temp[ swapchain_image_count ];
 
 	return true;
 }
@@ -1523,7 +1630,24 @@ bool WindowImpl::CreateWindowSynchronizationPrimitives()
 		&aquire_image_fence
 	) != VK_SUCCESS ) {
 		if( report_function ) {
-			report_function( ReportSeverity::NON_CRITICAL_ERROR, "Cannot create vulkan fence!" );
+			report_function( ReportSeverity::NON_CRITICAL_ERROR, "Cannot create image aquisition fence!" );
+		}
+		return false;
+	}
+
+	VkSemaphoreCreateInfo mesh_transfer_semaphore_create_info {};
+	mesh_transfer_semaphore_create_info.sType	= VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
+	mesh_transfer_semaphore_create_info.pNext	= nullptr;
+	mesh_transfer_semaphore_create_info.flags	= 0;
+
+	if( vkCreateSemaphore(
+		device,
+		&mesh_transfer_semaphore_create_info,
+		nullptr,
+		&mesh_transfer_semaphore
+	) != VK_SUCCESS ) {
+		if( report_function ) {
+			report_function( ReportSeverity::NON_CRITICAL_ERROR, "Cannot create mesh transfer semaphore!" );
 		}
 		return false;
 	}
