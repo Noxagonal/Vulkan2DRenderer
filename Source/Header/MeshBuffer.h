@@ -9,6 +9,7 @@
 
 #include <vector>
 #include <stdint.h>
+#include <memory>
 
 
 
@@ -74,36 +75,50 @@ public:
 	size_t											GetTotalIndexCount();
 
 private:
-	// Keeps track of allocation blocks, we'll need a method of dynamically
-	// allocating more memory as the rendering gets more complicated.
-	// This struct is POD and completely managed by the MeshBuffer object.
-	// OPTIMIZE MEMORY: Might be a good idea to create VertexBufferBlock
-	//   and IndexBufferBlock and individually manage both instead of
-	//   storing both vertices and indices within a single buffer object
-	//   with pre-set size limit on both halfs of the buffer.
-	struct BufferBlock {
-		std::vector<Vertex>							vertices						= {};
-		std::vector<uint32_t>						indices							= {};
+	class BufferBlock {
+		friend class MeshBuffer;
 
-		VkBuffer									staging_buffer					= {};
-		VkBuffer									device_buffer					= {};
+	public:
+		BufferBlock(
+			MeshBuffer							*	mesh_buffer_parent,
+			VkDeviceSize							buffer_vertex_size,
+			VkDeviceSize							buffer_index_size );
+		~BufferBlock();
+		bool										CopyVectorsToStagingBuffers();
 
-		PoolMemory									staging_buffer_memory			= {};
-		PoolMemory									device_buffer_memory			= {};
+		MeshBuffer								*	parent								= {};
 
-		VkDeviceSize								buffer_index_size_left			= {};
-		VkDeviceSize								buffer_vertex_size_left			= {};
+		std::vector<Vertex>							vertices							= {};
+		std::vector<uint32_t>						indices								= {};
+
+		VkDeviceSize								total_aligned_vertex_byte_size		= {};
+		VkDeviceSize								total_aligned_index_byte_size		= {};
+
+		VkDeviceSize								used_aligned_vertex_byte_size		= {};
+		VkDeviceSize								used_aligned_index_byte_size		= {};
+
+		VkDeviceSize								aligned_vertex_buffer_byte_offset	= {};
+		VkDeviceSize								aligned_index_buffer_byte_offset	= {};
+
+		VkBuffer									staging_buffer						= {};
+		VkBuffer									device_buffer						= {};
+
+		PoolMemory									staging_buffer_memory				= {};
+		PoolMemory									device_buffer_memory				= {};
+
+		bool										is_good								= {};
 	};
 	struct ReserveSpaceResult {
-		BufferBlock								*	buffer_block					= {};	// nullptr if failed
-		MeshOffsets									offsets							= {};
+		BufferBlock								*	buffer_block						= {};	// nullptr if failed
+		MeshOffsets									offsets								= {};
 	};
 
-	// Returns only reference, buffer block is stored inside this object
-	BufferBlock									*	AllocateBufferBlock();
+	// Creates a new buffer block and stores it internally,
+	// returns a pointer to it if successful or nullptr on failure.
+	BufferBlock									*	AllocateBufferBlockAndStore();
 
-	// Takes only reference, buffer block is stored inside this object
-	void											FreeBufferBlock(
+	// Removes a buffer block with matching pointer from internal storage.
+	void											FreeBufferBlockFromStorage(
 		BufferBlock								*	buffer_block );
 
 	ReserveSpaceResult								ReserveSpaceForMesh(
