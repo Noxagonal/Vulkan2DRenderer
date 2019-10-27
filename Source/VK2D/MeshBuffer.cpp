@@ -8,6 +8,8 @@
 
 #include "../Header/VulkanMemoryManagement.h"
 
+#include <algorithm>
+
 
 
 namespace vk2d {
@@ -24,15 +26,103 @@ MeshBuffer::MeshBuffer(
 	this->physicald_device_limits		= physicald_device_limits;
 	this->window_data					= window_data;
 	this->device_memory_pool			= device_memory_pool;
+
+	first_draw					= true;
 }
 
 MeshBuffer::~MeshBuffer()
 {
 }
 
-MeshBuffer::BufferBlock * MeshBuffer::AllocateBufferBlockAndStore()
+MeshBuffer::PushResult MeshBuffer::CmdPushMesh(
+	VkCommandBuffer						command_buffer,
+	const std::vector<Vertex>		&	new_vertices,
+	const std::vector<uint32_t>		&	new_indices )
 {
-	auto block = std::make_unique<MeshBuffer::BufferBlock>( this, sizeof( vk2d::Vertex ) * 5000, sizeof( uint32_t ) * 5000 );
+	auto reserve_result = ReserveSpaceForMesh(
+		new_vertices.size() * sizeof( Vertex ),
+		new_indices.size() * sizeof( uint32_t )
+	);
+
+	if( !reserve_result.buffer_block ) return {};
+
+	if( reserve_result.buffer_block_need_binding ) {
+		VkDeviceSize buffer_offset = reserve_result.buffer_block->aligned_vertex_buffer_byte_offset;
+		vkCmdBindVertexBuffers(
+			command_buffer,
+			0,
+			1, &reserve_result.buffer_block->device_buffer,
+			&buffer_offset
+		);
+		vkCmdBindIndexBuffer(
+			command_buffer,
+			reserve_result.buffer_block->device_buffer,
+			reserve_result.buffer_block->aligned_index_buffer_byte_offset,
+			VK_INDEX_TYPE_UINT32
+		);
+	}
+
+	{
+		auto & bv = reserve_result.buffer_block->vertices;
+		auto & bi = reserve_result.buffer_block->indices;
+
+		bv.insert( bv.end(), new_vertices.begin(), new_vertices.end() );
+		bi.insert( bi.end(), new_indices.begin(), new_indices.end() );
+	}
+
+	first_draw	= false;
+
+	MeshBuffer::PushResult ret {};
+	ret.offsets = reserve_result.offsets;
+	ret.success = true;
+	return ret;
+}
+
+bool MeshBuffer::CmdUploadMeshDataToGPU(
+	VkCommandBuffer			command_buffer
+)
+{
+	for( auto & b : buffer_blocks ) {
+		auto bp = b.get();
+
+		std::array<VkBufferCopy, 2> regions {};
+		regions[ 0 ].srcOffset = bp->aligned_vertex_buffer_byte_offset;
+		regions[ 0 ].dstOffset = bp->aligned_vertex_buffer_byte_offset;
+		regions[ 0 ].size = bp->used_aligned_vertex_byte_size;
+
+		regions[ 1 ].srcOffset = bp->aligned_index_buffer_byte_offset;
+		regions[ 1 ].dstOffset = bp->aligned_index_buffer_byte_offset;
+		regions[ 1 ].size = bp->used_aligned_index_byte_size;
+
+		vkCmdCopyBuffer(
+			command_buffer,
+			bp->staging_buffer,
+			bp->device_buffer,
+			uint32_t( regions.size() ),
+			regions.data()
+			);
+
+		bp->CopyVectorsToStagingBuffers();
+	}
+
+	current_buffer_block	= buffer_blocks.begin();
+	first_draw				= true;
+
+	return true;
+}
+
+MeshBuffer::BufferBlock * MeshBuffer::AllocateBufferBlockAndStore(
+	VkDeviceSize								vertex_portion_byte_size,
+	VkDeviceSize								index_portion_byte_size
+)
+{
+	// TODO: make sure buffers are reserved with more memory if mesh exceeds the size of the buffer,
+	// TODO: This may introduce gaps in the buffer blocks as the last mesh should be last on the list,
+	// consider a trimming function to remove the possible empty buffer blocks in the middle.
+	auto block = std::make_unique<MeshBuffer::BufferBlock>(
+		this,
+		vertex_portion_byte_size,
+		index_portion_byte_size );
 	if( block && block->is_good ) {
 		auto ret = block.get();
 		buffer_blocks.push_back( std::move( block ) );
@@ -60,35 +150,52 @@ MeshBuffer::ReserveSpaceResult MeshBuffer::ReserveSpaceForMesh(
 	VkDeviceSize			vertex_byte_size,
 	VkDeviceSize			index_byte_size )
 {
-	// Find from existing space
-	// TODO: TESTING ONLY: instead of parsing through all buffer blocks from the beginning we should
-	// keep track of where the last mesh was recorded to and only check from there worwards.
-	for( auto & b : buffer_blocks ) {
-		auto bp = b.get();
-		VkDeviceSize buffer_vertex_size_left	= bp->total_aligned_vertex_byte_size - bp->used_aligned_vertex_byte_size;
-		VkDeviceSize buffer_index_size_left		= bp->total_aligned_index_byte_size - bp->used_aligned_index_byte_size;
-		if( buffer_vertex_size_left <= vertex_byte_size &&
-			buffer_index_size_left <= index_byte_size ) {
-			MeshBuffer::ReserveSpaceResult		ret;
-			ret.buffer_block					= bp;
-			ret.offsets.vertex_byte_offset		= bp->used_aligned_vertex_byte_size;
-			ret.offsets.index_byte_offset		= bp->used_aligned_index_byte_size;
-			bp->used_aligned_vertex_byte_size	+= vertex_byte_size;
-			bp->used_aligned_index_byte_size	+= index_byte_size;
-			return ret;
+	bool buffer_blocks_list_empty_initially = buffer_blocks.empty();
+	if( !buffer_blocks_list_empty_initially ) {
+		// Find from existing space, start from last location, advance to the next buffer block if needed
+		while( current_buffer_block != buffer_blocks.end() ) {
+			auto bp = current_buffer_block->get();
+			VkDeviceSize buffer_vertex_size_left	= bp->total_aligned_vertex_byte_size - bp->used_aligned_vertex_byte_size;
+			VkDeviceSize buffer_index_size_left		= bp->total_aligned_index_byte_size - bp->used_aligned_index_byte_size;
+			if( vertex_byte_size <= buffer_vertex_size_left &&
+				index_byte_size <= buffer_index_size_left ) {
+				MeshBuffer::ReserveSpaceResult		ret {};
+				ret.buffer_block					= bp;
+				ret.buffer_block_need_binding		= first_draw;
+				ret.offsets.vertex_byte_offset		= bp->used_aligned_vertex_byte_size;
+				ret.offsets.index_byte_offset		= bp->used_aligned_index_byte_size;
+				bp->used_aligned_vertex_byte_size	+= vertex_byte_size;
+				bp->used_aligned_index_byte_size	+= index_byte_size;
+				return ret;
+			} else {
+				if( bp->used_aligned_vertex_byte_size == 0 ) {
+					current_buffer_block = buffer_blocks.erase( current_buffer_block );
+				} else {
+					++current_buffer_block;
+				}
+			}
 		}
 	}
 
 	// Not enough space, allocate more
 	{
-		auto bp		= AllocateBufferBlockAndStore();
+		auto bp		= AllocateBufferBlockAndStore(
+			std::max( vertex_byte_size, VkDeviceSize( VK2D_BUILD_OPTION_MESH_BUFFER_BLOCK_VERTEX_SIZE ) ),
+			std::max( index_byte_size, VkDeviceSize( VK2D_BUILD_OPTION_MESH_BUFFER_BLOCK_INDEX_SIZE ) )
+		);
 		if( bp ) {
-			MeshBuffer::ReserveSpaceResult		ret;
+			MeshBuffer::ReserveSpaceResult		ret {};
 			ret.buffer_block					= bp;
+			ret.buffer_block_need_binding		= true;
 			ret.offsets.vertex_byte_offset		= bp->used_aligned_vertex_byte_size;
 			ret.offsets.index_byte_offset		= bp->used_aligned_index_byte_size;
 			bp->used_aligned_vertex_byte_size	+= vertex_byte_size;
 			bp->used_aligned_index_byte_size	+= index_byte_size;
+			if( buffer_blocks_list_empty_initially ) {
+				current_buffer_block = buffer_blocks.begin();
+			} else {
+				current_buffer_block = buffer_blocks.end() - 1;
+			}
 			return ret;
 		}
 	}
@@ -114,13 +221,13 @@ MeshBuffer::BufferBlock::BufferBlock(
 
 	total_aligned_vertex_byte_size				= CalculateAlignmentForBuffer( buffer_vertex_byte_size, parent->physicald_device_limits );
 	total_aligned_index_byte_size				= CalculateAlignmentForBuffer( buffer_index_byte_size, parent->physicald_device_limits );
-	auto total_aligned_buffer_byte_size			= total_aligned_vertex_byte_size + total_aligned_index_byte_size;
+	total_aligned_buffer_byte_size				= total_aligned_vertex_byte_size + total_aligned_index_byte_size;
 
 	vertices.reserve( total_aligned_vertex_byte_size / sizeof( Vertex ) );
 	indices.reserve( total_aligned_index_byte_size / sizeof( uint32_t ) );
 
 	aligned_vertex_buffer_byte_offset			= 0;
-	aligned_index_buffer_byte_offset			= total_aligned_buffer_byte_size;
+	aligned_index_buffer_byte_offset			= total_aligned_vertex_byte_size;
 
 	VkBufferCreateInfo buffer_create_info {};
 	buffer_create_info.sType					= VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
@@ -152,7 +259,7 @@ MeshBuffer::BufferBlock::BufferBlock(
 		parent->device,
 		&buffer_create_info,
 		nullptr,
-		&staging_buffer
+		&device_buffer
 	) != VK_SUCCESS ) return;
 
 	device_buffer_memory = parent->device_memory_pool->AllocateAndBindBufferMemory(
@@ -184,26 +291,34 @@ bool MeshBuffer::BufferBlock::CopyVectorsToStagingBuffers()
 	void * index_mapped_memory	= (uint8_t*)original_mapped_memory + aligned_index_buffer_byte_offset;
 	{
 		// Copy over the vertex data to staging buffer
-		std::memcpy( vertex_mapped_memory, vertices.data(), used_aligned_vertex_byte_size );
+		std::memcpy( vertex_mapped_memory, vertices.data(), vertices.size() * sizeof( Vertex ) );
 
 		// Clear inbetween bits, just in case
-		VkDeviceSize vertex_index_buffer_gap	=  total_aligned_vertex_byte_size - VkDeviceSize( vertices.size() );
-		if( vertex_index_buffer_gap ) {
-			std::memset( (uint8_t*)vertex_mapped_memory + VkDeviceSize( vertices.size() ), 0, vertex_index_buffer_gap );
-		}
+//		VkDeviceSize vertex_index_buffer_gap	=  total_aligned_vertex_byte_size - VkDeviceSize( vertices.size() );
+//		if( vertex_index_buffer_gap ) {
+//			std::memset( (uint8_t*)vertex_mapped_memory + VkDeviceSize( vertices.size() ), 0, vertex_index_buffer_gap );
+//		}
 	}
 	{
 		// Copy over the index data to staging buffer
-		std::memcpy( index_mapped_memory, indices.data(), used_aligned_index_byte_size );
+		std::memcpy( index_mapped_memory, indices.data(), indices.size() * sizeof( uint32_t ) );
 
 		// Clear tail of the buffer, just in case
-		VkDeviceSize buffer_tail_size	= total_aligned_index_byte_size - VkDeviceSize( indices.size() );
-		if( buffer_tail_size ) {
-			std::memset( (uint8_t*)index_mapped_memory + VkDeviceSize( indices.size() ), 0, buffer_tail_size );
-		}
+//		VkDeviceSize buffer_tail_size	= total_aligned_index_byte_size - VkDeviceSize( indices.size() );
+//		if( buffer_tail_size ) {
+//			std::memset( (uint8_t*)index_mapped_memory + VkDeviceSize( indices.size() ), 0, buffer_tail_size );
+//		}
 	}
 
 	parent->device_memory_pool->UnmapMemory( staging_buffer_memory );
+
+	vertices.clear();
+	indices.clear();
+
+	used_aligned_vertex_byte_size	= 0;
+	used_aligned_index_byte_size	= 0;
+
+	return true;
 }
 
 

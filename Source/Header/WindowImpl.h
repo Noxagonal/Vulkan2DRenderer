@@ -37,6 +37,8 @@ enum class PipelineType : uint32_t {
 	POINT_LIST,
 
 	PIPELINE_TYPE_COUNT,
+
+	NONE						= UINT32_MAX,
 };
 
 class WindowImpl {
@@ -111,6 +113,10 @@ private:
 	bool									CreateWindowSynchronizationPrimitives();
 	bool									CreateFrameSynchronizationPrimitives();
 
+	void									CmdBindPipeline(
+		VkCommandBuffer						command_buffer,
+		_internal::PipelineType				pipeline_type );
+
 
 
 	_internal::RendererImpl				*	renderer_parent							= {};
@@ -134,7 +140,7 @@ private:
 
 	VkCommandPool							command_pool							= {};
 	std::vector<VkCommandBuffer>			render_command_buffers					= {};	// For more overlapped execution multiple command buffers are needed.
-	VkCommandBuffer							transfer_command_buffer					= {};	// For data transfer each frame, this is small command buffer and can be re-recorded just before submitting the work.
+	VkCommandBuffer							mesh_transfer_command_buffer			= {};	// For data transfer each frame, this is small command buffer and can be re-recorded just before submitting the work.
 	VkSemaphore								mesh_transfer_semaphore					= {};
 
 	VkExtent2D								min_extent								= {};
@@ -157,6 +163,8 @@ private:
 
 	NextRenderCallFunction					next_render_call_function				= NextRenderCallFunction::BEGIN;
 	bool									recreate_swapchain						= {};
+
+	_internal::PipelineType					previous_pipeline_type					= _internal::PipelineType::NONE;
 
 	std::unique_ptr<MeshBuffer>				mesh_buffer								= {};
 

@@ -23,6 +23,11 @@ public:
 		VkDeviceSize								vertex_byte_offset;
 		VkDeviceSize								index_byte_offset;
 	};
+	struct PushResult {
+		MeshOffsets									offsets;
+		bool										success;
+		inline explicit operator bool() { return	success; }
+	};
 
 	MeshBuffer(
 		VkDevice									device,
@@ -37,30 +42,10 @@ public:
 	// and adds vertex and index data to host visible buffer.
 	// Returns mesh offsets of whatever buffer object this mesh was
 	// put into, needed when recording a Vulkan draw command.
-	MeshOffsets										CmdPushMesh(
+	PushResult										CmdPushMesh(
 		VkCommandBuffer								command_buffer,
 		const std::vector<Vertex>				&	new_vertices,
 		const std::vector<uint32_t>				&	new_indices );
-
-	// Pushes mesh into render list, dynamically allocates new buffers
-	// if needed, binds the new buffers to command buffer if needed
-	// and adds vertex and index data to host visible buffer.
-	// Returns mesh offsets of whatever buffer object this mesh was
-	// put into, needed when recording a Vulkan draw command.
-	MeshOffsets										CmdPushMesh(
-		VkCommandBuffer								command_buffer,
-		const std::vector<Vertex>				&	new_vertices,
-		const std::vector<VertexIndex_2>		&	new_indices );
-
-	// Pushes mesh into render list, dynamically allocates new buffers
-	// if needed, binds the new buffers to command buffer if needed
-	// and adds vertex and index data to host visible buffer.
-	// Returns mesh offsets of whatever buffer object this mesh was
-	// put into, needed when recording a Vulkan draw command.
-	MeshOffsets										CmdPushMesh(
-		VkCommandBuffer								command_buffer,
-		const std::vector<Vertex>				&	new_vertices,
-		const std::vector<VertexIndex_3>		&	new_indices );
 
 	bool											CmdUploadMeshDataToGPU(
 		VkCommandBuffer								command_buffer );
@@ -81,8 +66,8 @@ private:
 	public:
 		BufferBlock(
 			MeshBuffer							*	mesh_buffer_parent,
-			VkDeviceSize							buffer_vertex_size,
-			VkDeviceSize							buffer_index_size );
+			VkDeviceSize							buffer_vertex_byte_size,
+			VkDeviceSize							buffer_index_bute_size );
 		~BufferBlock();
 		bool										CopyVectorsToStagingBuffers();
 
@@ -91,6 +76,7 @@ private:
 		std::vector<Vertex>							vertices							= {};
 		std::vector<uint32_t>						indices								= {};
 
+		VkDeviceSize								total_aligned_buffer_byte_size		= {};
 		VkDeviceSize								total_aligned_vertex_byte_size		= {};
 		VkDeviceSize								total_aligned_index_byte_size		= {};
 
@@ -109,13 +95,16 @@ private:
 		bool										is_good								= {};
 	};
 	struct ReserveSpaceResult {
-		BufferBlock								*	buffer_block						= {};	// nullptr if failed
+		BufferBlock								*	buffer_block						= {};	// nullptr if failed.
+		bool										buffer_block_need_binding			= {};	// Tells if the buffer block changed since last time.
 		MeshOffsets									offsets								= {};
 	};
 
 	// Creates a new buffer block and stores it internally,
 	// returns a pointer to it if successful or nullptr on failure.
-	BufferBlock									*	AllocateBufferBlockAndStore();
+	BufferBlock									*	AllocateBufferBlockAndStore(
+		VkDeviceSize								vertex_portion_byte_size,
+		VkDeviceSize								index_portion_byte_size );
 
 	// Removes a buffer block with matching pointer from internal storage.
 	void											FreeBufferBlockFromStorage(
@@ -127,12 +116,16 @@ private:
 
 
 
-	std::vector<std::unique_ptr<BufferBlock>>		buffer_blocks					= {};
+	typedef std::vector<std::unique_ptr<BufferBlock>> BufferBlockArray;
+	BufferBlockArray								buffer_blocks					= {};
+	BufferBlockArray::iterator						current_buffer_block			= {};
 
 	VkDevice										device							= {};
 	VkPhysicalDeviceLimits							physicald_device_limits			= {};
 	_internal::WindowImpl						*	window_data						= {};
 	DeviceMemoryPool							*	device_memory_pool				= {};
+
+	bool											first_draw				= {};
 };
 
 
