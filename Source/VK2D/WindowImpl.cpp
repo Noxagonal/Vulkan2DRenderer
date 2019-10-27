@@ -346,29 +346,6 @@ bool WindowImpl::BeginRender()
 				VK_SUBPASS_CONTENTS_INLINE
 			);
 		}
-		/*
-		vkCmdBindPipeline(
-			command_buffer,
-			VK_PIPELINE_BIND_POINT_GRAPHICS,
-			pipelines[ uint32_t( _internal::PipelineType::FILLED_POLYGON_LIST ) ]
-		);
-
-		// TODO: PROBLEM HERE;
-		// Problem I didn't consider before is that the vertex buffer needs to be bound first,
-		// Sounds obvious in retrospect. -_-
-		// Possible solutions:
-		// First one is to just postpone command buffer recording till EndRender()
-		// and to just keep track internally of what gets recorded and where.
-		// Second option is a bit easier and might perform better in the end is to
-		// create multiple fixed lenght mesh buffers dynamically as needed and bind them
-		// just before recording the draw command, then record a command to copy the
-		// vertex buffer data to memory as usual.
-
-		vkCmdBindIndexBuffer(
-			command_buffer,
-
-			);
-		*/
 	}
 
 	return true;
@@ -426,7 +403,7 @@ bool WindowImpl::EndRender()
 			// SynchronizeFrame() above will guarantee that the transfer command buffer is not
 			// still being processed so we can begin re-recording the transfer command buffer here.
 			if( vkBeginCommandBuffer(
-				transfer_command_buffer,
+				mesh_transfer_command_buffer,
 				&transfer_command_buffer_begin_info
 			) != VK_SUCCESS ) {
 				if( report_function ) {
@@ -438,8 +415,8 @@ bool WindowImpl::EndRender()
 
 		// Record commands
 		{
-			if( !mesh_buffer->CmdUploadToGPU(
-				transfer_command_buffer
+			if( !mesh_buffer->CmdUploadMeshDataToGPU(
+				mesh_transfer_command_buffer
 			) ) {
 				if( report_function ) {
 					report_function( ReportSeverity::NON_CRITICAL_ERROR, "Cannot record commands to transfer mesh to GPU!" );
@@ -451,7 +428,7 @@ bool WindowImpl::EndRender()
 		// End command buffer
 		{
 			if( vkEndCommandBuffer(
-				transfer_command_buffer
+				mesh_transfer_command_buffer
 			) != VK_SUCCESS ) {
 				if( report_function ) {
 					report_function( ReportSeverity::NON_CRITICAL_ERROR, "Cannot compile commands to transfer mesh to GPU!" );
@@ -471,11 +448,11 @@ bool WindowImpl::EndRender()
 		submit_infos[ 0 ].pWaitSemaphores			= nullptr;
 		submit_infos[ 0 ].pWaitDstStageMask			= nullptr;
 		submit_infos[ 0 ].commandBufferCount		= 1;
-		submit_infos[ 0 ].pCommandBuffers			= &transfer_command_buffer;
+		submit_infos[ 0 ].pCommandBuffers			= &mesh_transfer_command_buffer;
 		submit_infos[ 0 ].signalSemaphoreCount		= 1;
 		submit_infos[ 0 ].pSignalSemaphores			= &mesh_transfer_semaphore;
 
-		VkPipelineStageFlags wait_dst_stage_mask	= VK_PIPELINE_STAGE_VERTEX_INPUT_BIT | VK_PIPELINE_STAGE_VERTEX_SHADER_BIT;
+		VkPipelineStageFlags wait_dst_stage_mask	= VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT | VK_PIPELINE_STAGE_VERTEX_INPUT_BIT | VK_PIPELINE_STAGE_VERTEX_SHADER_BIT;
 		submit_infos[ 1 ].sType						= VK_STRUCTURE_TYPE_SUBMIT_INFO;
 		submit_infos[ 1 ].pNext						= nullptr;
 		submit_infos[ 1 ].waitSemaphoreCount		= 1;
@@ -527,8 +504,11 @@ bool WindowImpl::EndRender()
 		}
 	}
 
+	vkDeviceWaitIdle( device );
+
 	previous_image						= next_image;
 	previous_frame_need_synchronization	= true;
+	previous_pipeline_type				= _internal::PipelineType::NONE;
 
 	glfwPollEvents();
 
@@ -564,38 +544,34 @@ void WindowImpl::Draw_TriangleList(
 	std::vector<Vertex>				&	vertices,
 	std::vector<VertexIndex_3>		&	indices )
 {
-	auto command_buffer			= render_command_buffers[ next_image ];
+	auto command_buffer					= render_command_buffers[ next_image ];
 
-	auto vertex_offset	= mesh_buffer->GetCurrentVertexCount();
-	auto index_offset	= mesh_buffer->GetCurrentIndexCount();
 	auto vertex_count	= vertices.size();
 	auto index_count	= indices.size() * 3;
-
-	mesh_buffer->PushBackVertices( vertices );
-	mesh_buffer->PushBackIndices( indices );
-
-	// TODO: add a pipeline changer function that will keep track of
-	// the previous pipeline and only changes it if needed.
-	if( filled ) {
-		vkCmdBindPipeline(
-			command_buffer,
-			VK_PIPELINE_BIND_POINT_GRAPHICS,
-			pipelines[ uint32_t( _internal::PipelineType::FILLED_POLYGON_LIST ) ]
-		);
-	} else {
-		vkCmdBindPipeline(
-			command_buffer,
-			VK_PIPELINE_BIND_POINT_GRAPHICS,
-			pipelines[ uint32_t( _internal::PipelineType::WIREFRAME_POLYGON_LIST ) ]
-		);
+	std::vector<uint32_t> raw_indices;
+	raw_indices.reserve( index_count );
+	for( size_t i = 0; i < indices.size(); ++i ) {
+		raw_indices.push_back( indices[ i ].indices[ 0 ] );
+		raw_indices.push_back( indices[ i ].indices[ 1 ] );
+		raw_indices.push_back( indices[ i ].indices[ 2 ] );
 	}
+
+	CmdBindPipeline(
+		command_buffer,
+		_internal::PipelineType::FILLED_POLYGON_LIST
+	);
+
+	auto result = mesh_buffer->CmdPushMesh(
+		command_buffer,
+		vertices,
+		raw_indices );
 
 	vkCmdDrawIndexed(
 		command_buffer,
 		index_count,
 		1,
-		index_offset,
-		vertex_offset,
+		result.offsets.index_byte_offset,
+		result.offsets.vertex_byte_offset,
 		0
 	);
 }
@@ -884,6 +860,10 @@ bool WindowImpl::CreateRenderPass()
 	color_attachment_references[ 0 ].attachment		= 0;	// points to color_attachment_descriptions[ 0 ]
 	color_attachment_references[ 0 ].layout			= VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 
+	VkAttachmentReference						depth_stencil_attachment {};
+	depth_stencil_attachment.attachment			= VK_ATTACHMENT_UNUSED;
+	depth_stencil_attachment.layout				= VK_IMAGE_LAYOUT_UNDEFINED;
+
 	std::array<uint32_t, 0>						preserve_attachments {};
 
 	std::array<VkSubpassDescription, 1>			subpasses {};
@@ -894,7 +874,7 @@ bool WindowImpl::CreateRenderPass()
 	subpasses[ 0 ].colorAttachmentCount			= uint32_t( color_attachment_references.size() );
 	subpasses[ 0 ].pColorAttachments			= color_attachment_references.data();
 	subpasses[ 0 ].pResolveAttachments			= create_info_copy.samples == Multisamples::SAMPLE_COUNT_1 ? nullptr : color_attachment_references.data();
-	subpasses[ 0 ].pDepthStencilAttachment		= nullptr;
+	subpasses[ 0 ].pDepthStencilAttachment		= &depth_stencil_attachment;
 	subpasses[ 0 ].preserveAttachmentCount		= uint32_t( preserve_attachments.size() );
 	subpasses[ 0 ].pPreserveAttachments			= preserve_attachments.data();
 
@@ -962,7 +942,7 @@ bool WindowImpl::CreateGraphicsPipelines()
 	shader_stages[ 0 ].stage					= VK_SHADER_STAGE_VERTEX_BIT;
 	shader_stages[ 0 ].module					= renderer_parent->GetVertexShaderModule();
 	shader_stages[ 0 ].pName					= "main";
-	shader_stages[ 0 ].pSpecializationInfo	= nullptr;
+	shader_stages[ 0 ].pSpecializationInfo		= nullptr;
 
 	shader_stages[ 1 ].sType					= VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
 	shader_stages[ 1 ].pNext					= nullptr;
@@ -1053,7 +1033,7 @@ bool WindowImpl::CreateGraphicsPipelines()
 	multisample_state_create_info.flags						= 0;
 	multisample_state_create_info.rasterizationSamples		= VkSampleCountFlagBits( create_info_copy.samples );
 	multisample_state_create_info.sampleShadingEnable		= VK_FALSE;
-	multisample_state_create_info.minSampleShading			= 0.0f;
+	multisample_state_create_info.minSampleShading			= 1.0f;
 	multisample_state_create_info.pSampleMask				= nullptr;
 	multisample_state_create_info.alphaToCoverageEnable		= VK_FALSE;
 	multisample_state_create_info.alphaToOneEnable			= VK_FALSE;
@@ -1079,7 +1059,8 @@ bool WindowImpl::CreateGraphicsPipelines()
 	depth_stencil_state_create_info.maxDepthBounds			= 1.0f;
 
 	std::array<VkPipelineColorBlendAttachmentState, 1> color_blend_attachment_states {};
-	color_blend_attachment_states[ 0 ].blendEnable			= VK_TRUE;
+	// TODO: DEBUG: enable once we get visual
+	color_blend_attachment_states[ 0 ].blendEnable			= VK_FALSE;
 	color_blend_attachment_states[ 0 ].srcColorBlendFactor	= VK_BLEND_FACTOR_SRC_ALPHA;
 	color_blend_attachment_states[ 0 ].dstColorBlendFactor	= VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
 	color_blend_attachment_states[ 0 ].colorBlendOp			= VK_BLEND_OP_ADD;
@@ -1343,7 +1324,7 @@ bool WindowImpl::AllocateCommandBuffers()
 	for( size_t i = 0; i < swapchain_image_count; ++i ) {
 		render_command_buffers[ i ]		= temp[ i ];
 	}
-	transfer_command_buffer				= temp[ swapchain_image_count ];
+	mesh_transfer_command_buffer		= temp[ swapchain_image_count ];
 
 	return true;
 }
@@ -1708,6 +1689,21 @@ bool WindowImpl::CreateFrameSynchronizationPrimitives()
 	}
 
 	return true;
+}
+
+void WindowImpl::CmdBindPipeline(
+	VkCommandBuffer						command_buffer,
+	_internal::PipelineType				pipeline_type
+)
+{
+	if( previous_pipeline_type != pipeline_type ) {
+		vkCmdBindPipeline(
+			command_buffer,
+			VK_PIPELINE_BIND_POINT_GRAPHICS,
+			pipelines[ uint32_t( pipeline_type ) ]
+		);
+		previous_pipeline_type = pipeline_type;
+	}
 }
 
 

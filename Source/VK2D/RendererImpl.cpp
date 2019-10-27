@@ -560,9 +560,9 @@ bool RendererImpl::CreateDeviceAndQueues()
 		return false;
 	}
 	primary_render_queue		= resolved_queues[ 0 ];
-	secondary_render_queue	= resolved_queues[ 1 ];
+	secondary_render_queue		= resolved_queues[ 1 ];
 	primary_compute_queue		= resolved_queues[ 2 ];
-	primary_transfer_queue			= resolved_queues[ 3 ];
+	primary_transfer_queue		= resolved_queues[ 3 ];
 
 	return true;
 }
@@ -715,12 +715,13 @@ bool RendererImpl::CreateDescriptorSetLayouts()
 	// Set 0 layout
 	{
 		std::array<VkDescriptorSetLayoutBinding, 2> descriptor_set_layout_bindings {};
+
 		descriptor_set_layout_bindings[ 0 ].binding				= 0;
 		descriptor_set_layout_bindings[ 0 ].descriptorType		= VK_DESCRIPTOR_TYPE_SAMPLER;
 		descriptor_set_layout_bindings[ 0 ].descriptorCount		= 1;
 		descriptor_set_layout_bindings[ 0 ].stageFlags			= VK_SHADER_STAGE_FRAGMENT_BIT;
 		// If using more than one sampler this will need to be set to nullptr and update manually
-		descriptor_set_layout_bindings[ 0 ].pImmutableSamplers	= &sampler;
+		descriptor_set_layout_bindings[ 0 ].pImmutableSamplers	= nullptr; // TODO: once using samplers, include this &sampler;
 
 		descriptor_set_layout_bindings[ 1 ].binding				= 1;
 		descriptor_set_layout_bindings[ 1 ].descriptorType		= VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
@@ -732,10 +733,12 @@ bool RendererImpl::CreateDescriptorSetLayouts()
 		descriptor_set_layout_create_info.sType			= VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
 		descriptor_set_layout_create_info.pNext			= nullptr;
 		descriptor_set_layout_create_info.flags			= 0;
-		descriptor_set_layout_create_info.bindingCount	= uint32_t( descriptor_set_layout_bindings.size() );
-		descriptor_set_layout_create_info.pBindings		= descriptor_set_layout_bindings.data();
+		// TODO: DEBUG:
+//		descriptor_set_layout_create_info.bindingCount	= uint32_t( descriptor_set_layout_bindings.size() );
+//		descriptor_set_layout_create_info.pBindings		= descriptor_set_layout_bindings.data();
+		descriptor_set_layout_create_info.bindingCount	= 0;
+		descriptor_set_layout_create_info.pBindings		= nullptr;
 
-		// TODO: check result
 		if( vkCreateDescriptorSetLayout(
 			device,
 			&descriptor_set_layout_create_info,

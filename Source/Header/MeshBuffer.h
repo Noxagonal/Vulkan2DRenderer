@@ -9,6 +9,7 @@
 
 #include <vector>
 #include <stdint.h>
+#include <memory>
 
 
 
@@ -18,6 +19,16 @@ namespace vk2d {
 
 class MeshBuffer {
 public:
+	struct MeshOffsets {
+		VkDeviceSize								vertex_byte_offset;
+		VkDeviceSize								index_byte_offset;
+	};
+	struct PushResult {
+		MeshOffsets									offsets;
+		bool										success;
+		inline explicit operator bool() { return	success; }
+	};
+
 	MeshBuffer(
 		VkDevice									device,
 		const VkPhysicalDeviceLimits			&	physicald_device_limits,
@@ -26,57 +37,95 @@ public:
 
 	~MeshBuffer();
 
-	void											PushBackVertex(
-		Vertex										new_vertex );
-
-	void											PushBackVertices(
-		const std::vector<Vertex>				&	new_vertices );
-
-	void											PushBackIndex(
-		uint32_t									new_index );
-
-	void											PushBackIndices(
+	// Pushes mesh into render list, dynamically allocates new buffers
+	// if needed, binds the new buffers to command buffer if needed
+	// and adds vertex and index data to host visible buffer.
+	// Returns mesh offsets of whatever buffer object this mesh was
+	// put into, needed when recording a Vulkan draw command.
+	PushResult										CmdPushMesh(
+		VkCommandBuffer								command_buffer,
+		const std::vector<Vertex>				&	new_vertices,
 		const std::vector<uint32_t>				&	new_indices );
 
-	void											PushBackIndices(
-		const std::vector<VertexIndex_2>		&	new_indices );
-
-	void											PushBackIndices(
-		const std::vector<VertexIndex_3>		&	new_indices );
-
-	bool											CmdUploadToGPU(
+	bool											CmdUploadMeshDataToGPU(
 		VkCommandBuffer								command_buffer );
 
-	// This gets the current amount of vertices already pushed in
-	size_t											GetCurrentVertexCount();
+	// Gets the total amount of individual meshes that have been pushed so far.
+	size_t											GetPushedMeshCount();
 
-	// This gets the current amount of indices already pushed in
-	size_t											GetCurrentIndexCount();
+	// This gets the total amount of vertices already pushed in
+	size_t											GetTotalVertexCount();
+
+	// This gets the total amount of indices already pushed in
+	size_t											GetTotalIndexCount();
 
 private:
-	bool											ResizeStagingBuffer(
-		VkDeviceSize								new_size );
+	class BufferBlock {
+		friend class MeshBuffer;
 
-	bool											ResizeDeviceBuffer(
-		VkDeviceSize								new_size );
+	public:
+		BufferBlock(
+			MeshBuffer							*	mesh_buffer_parent,
+			VkDeviceSize							buffer_vertex_byte_size,
+			VkDeviceSize							buffer_index_bute_size );
+		~BufferBlock();
+		bool										CopyVectorsToStagingBuffers();
 
-	// TODO: Look into replacing these with std::deque, just need a new method of copying to staging buffer
-	std::vector<Vertex>								vertices						= {};
-	std::vector<uint32_t>							indices							= {};
+		MeshBuffer								*	parent								= {};
 
-	VkBuffer										staging_buffer					= {};
-	VkBuffer										device_buffer					= {};
+		std::vector<Vertex>							vertices							= {};
+		std::vector<uint32_t>						indices								= {};
 
-	PoolMemory										staging_buffer_memory			= {};
-	PoolMemory										device_buffer_memory			= {};
+		VkDeviceSize								total_aligned_buffer_byte_size		= {};
+		VkDeviceSize								total_aligned_vertex_byte_size		= {};
+		VkDeviceSize								total_aligned_index_byte_size		= {};
 
-	VkDeviceSize									current_staging_buffer_size		= {};
-	VkDeviceSize									current_device_buffer_size		= {};
+		VkDeviceSize								used_aligned_vertex_byte_size		= {};
+		VkDeviceSize								used_aligned_index_byte_size		= {};
+
+		VkDeviceSize								aligned_vertex_buffer_byte_offset	= {};
+		VkDeviceSize								aligned_index_buffer_byte_offset	= {};
+
+		VkBuffer									staging_buffer						= {};
+		VkBuffer									device_buffer						= {};
+
+		PoolMemory									staging_buffer_memory				= {};
+		PoolMemory									device_buffer_memory				= {};
+
+		bool										is_good								= {};
+	};
+	struct ReserveSpaceResult {
+		BufferBlock								*	buffer_block						= {};	// nullptr if failed.
+		bool										buffer_block_need_binding			= {};	// Tells if the buffer block changed since last time.
+		MeshOffsets									offsets								= {};
+	};
+
+	// Creates a new buffer block and stores it internally,
+	// returns a pointer to it if successful or nullptr on failure.
+	BufferBlock									*	AllocateBufferBlockAndStore(
+		VkDeviceSize								vertex_portion_byte_size,
+		VkDeviceSize								index_portion_byte_size );
+
+	// Removes a buffer block with matching pointer from internal storage.
+	void											FreeBufferBlockFromStorage(
+		BufferBlock								*	buffer_block );
+
+	ReserveSpaceResult								ReserveSpaceForMesh(
+		VkDeviceSize								vertex_count,
+		VkDeviceSize								index_count );
+
+
+
+	typedef std::vector<std::unique_ptr<BufferBlock>> BufferBlockArray;
+	BufferBlockArray								buffer_blocks					= {};
+	BufferBlockArray::iterator						current_buffer_block			= {};
 
 	VkDevice										device							= {};
 	VkPhysicalDeviceLimits							physicald_device_limits			= {};
 	_internal::WindowImpl						*	window_data						= {};
 	DeviceMemoryPool							*	device_memory_pool				= {};
+
+	bool											first_draw				= {};
 };
 
 

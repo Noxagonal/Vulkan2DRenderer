@@ -16,6 +16,6 @@ void main()
 {
 	fragment_UV		= vertex_UVs;
 	fragment_Color	= vertex_Color;
-	gl_Position		= vec4( vertex_Coords, 0.0f, 1.0f );
+	gl_Position		= vec4( vertex_Coords, 1.0f, 1.0f );
 	gl_PointSize	= 1.0f;		// todo: add means to get this info from the renderer to the shader
 }
