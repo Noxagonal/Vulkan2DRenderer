@@ -40,8 +40,8 @@ MeshBuffer::PushResult MeshBuffer::CmdPushMesh(
 	const std::vector<uint32_t>		&	new_indices )
 {
 	auto reserve_result = ReserveSpaceForMesh(
-		new_vertices.size() * sizeof( Vertex ),
-		new_indices.size() * sizeof( uint32_t )
+		uint32_t( new_vertices.size() ),
+		uint32_t( new_indices.size() )
 	);
 
 	if( !reserve_result.buffer_block ) return {};
@@ -147,9 +147,12 @@ void MeshBuffer::FreeBufferBlockFromStorage(
 }
 
 MeshBuffer::ReserveSpaceResult MeshBuffer::ReserveSpaceForMesh(
-	VkDeviceSize			vertex_byte_size,
-	VkDeviceSize			index_byte_size )
+	uint32_t				vertex_count,
+	uint32_t				index_count )
 {
+	VkDeviceSize vertex_byte_size			= VkDeviceSize( vertex_count ) * sizeof( Vertex );
+	VkDeviceSize index_byte_size			= VkDeviceSize( index_count ) * sizeof( uint32_t );
+
 	bool buffer_blocks_list_empty_initially = buffer_blocks.empty();
 	if( !buffer_blocks_list_empty_initially ) {
 		// Find from existing space, start from last location, advance to the next buffer block if needed
@@ -162,13 +165,18 @@ MeshBuffer::ReserveSpaceResult MeshBuffer::ReserveSpaceForMesh(
 				MeshBuffer::ReserveSpaceResult		ret {};
 				ret.buffer_block					= bp;
 				ret.buffer_block_need_binding		= first_draw;
+				ret.offsets.first_index				= bp->block_index_count;
+				ret.offsets.vertex_offset			= bp->block_vertex_count;
 				ret.offsets.vertex_byte_offset		= bp->used_aligned_vertex_byte_size;
 				ret.offsets.index_byte_offset		= bp->used_aligned_index_byte_size;
 				bp->used_aligned_vertex_byte_size	+= vertex_byte_size;
 				bp->used_aligned_index_byte_size	+= index_byte_size;
+				bp->block_vertex_count				+= vertex_count;
+				bp->block_index_count				+= index_count;
 				return ret;
 			} else {
 				if( bp->used_aligned_vertex_byte_size == 0 ) {
+					this->window_data->SynchronizeFrame();
 					current_buffer_block = buffer_blocks.erase( current_buffer_block );
 				} else {
 					++current_buffer_block;
@@ -187,10 +195,14 @@ MeshBuffer::ReserveSpaceResult MeshBuffer::ReserveSpaceForMesh(
 			MeshBuffer::ReserveSpaceResult		ret {};
 			ret.buffer_block					= bp;
 			ret.buffer_block_need_binding		= true;
+			ret.offsets.first_index				= bp->block_index_count;
+			ret.offsets.vertex_offset			= bp->block_vertex_count;
 			ret.offsets.vertex_byte_offset		= bp->used_aligned_vertex_byte_size;
 			ret.offsets.index_byte_offset		= bp->used_aligned_index_byte_size;
 			bp->used_aligned_vertex_byte_size	+= vertex_byte_size;
 			bp->used_aligned_index_byte_size	+= index_byte_size;
+			bp->block_vertex_count				+= vertex_count;
+			bp->block_index_count				+= index_count;
 			if( buffer_blocks_list_empty_initially ) {
 				current_buffer_block = buffer_blocks.begin();
 			} else {
@@ -314,6 +326,9 @@ bool MeshBuffer::BufferBlock::CopyVectorsToStagingBuffers()
 
 	vertices.clear();
 	indices.clear();
+
+	block_vertex_count				= 0;
+	block_index_count				= 0;
 
 	used_aligned_vertex_byte_size	= 0;
 	used_aligned_index_byte_size	= 0;

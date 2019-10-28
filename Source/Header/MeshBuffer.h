@@ -20,6 +20,8 @@ namespace vk2d {
 class MeshBuffer {
 public:
 	struct MeshOffsets {
+		uint32_t									first_index;
+		uint32_t									vertex_offset;
 		VkDeviceSize								vertex_byte_offset;
 		VkDeviceSize								index_byte_offset;
 	};
@@ -76,6 +78,9 @@ private:
 		std::vector<Vertex>							vertices							= {};
 		std::vector<uint32_t>						indices								= {};
 
+		uint32_t									block_vertex_count					= {};
+		uint32_t									block_index_count					= {};
+
 		VkDeviceSize								total_aligned_buffer_byte_size		= {};
 		VkDeviceSize								total_aligned_vertex_byte_size		= {};
 		VkDeviceSize								total_aligned_index_byte_size		= {};
@@ -111,8 +116,8 @@ private:
 		BufferBlock								*	buffer_block );
 
 	ReserveSpaceResult								ReserveSpaceForMesh(
-		VkDeviceSize								vertex_count,
-		VkDeviceSize								index_count );
+		uint32_t									vertex_count,
+		uint32_t									index_count );
 
 
 

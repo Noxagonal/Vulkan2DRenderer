@@ -23,5 +23,5 @@
 // TODO: This ratio should be changed at least.
 // TODO: Ratio could be automated in future allocations.
 // TODO: If automated, replace these with total buffer size.
-#define VK2D_BUILD_OPTION_MESH_BUFFER_BLOCK_VERTEX_SIZE					( 64 * 2 ) // * 1024 * 1024 )
-#define VK2D_BUILD_OPTION_MESH_BUFFER_BLOCK_INDEX_SIZE					( 16 * 2 ) // * 1024 * 1024 )
+#define VK2D_BUILD_OPTION_MESH_BUFFER_BLOCK_VERTEX_SIZE					( 56	* 1024 * 1024 )
+#define VK2D_BUILD_OPTION_MESH_BUFFER_BLOCK_INDEX_SIZE					( 8		* 1024 * 1024 )

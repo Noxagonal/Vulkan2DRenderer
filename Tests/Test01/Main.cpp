@@ -20,12 +20,12 @@ int main()
 		{ 1.0f, 0.0f, 0.0f, 1.0f }	// color (rgba)
 		} );
 	vertices.push_back( {
-		{ -0.5f, 0.5f },			// vertex_coords (xy, 0,0 -> screen centre )
+		{ -0.5f, 0.0f },			// vertex_coords (xy, 0,0 -> screen centre )
 		{},							// uv_coords (uv)
 		{ 0.0f, 1.0f, 0.0f, 1.0f }	// color (rgba)
 		} );
 	vertices.push_back( {
-		{ 0.5f, 0.5f },				// vertex_coords (xy, 0,0 -> screen centre )
+		{ 0.5f, 0.0f },				// vertex_coords (xy, 0,0 -> screen centre )
 		{},							// uv_coords (uv)
 		{ 0.0f, 0.0f, 1.0f, 1.0f }	// color (rgba)
 		} );
@@ -47,13 +47,11 @@ int main()
 		--frame_count_remining;
 		if( !window->BeginRender() ) return -1;
 
-		for( size_t i = 0; i < 10; ++i ) {
-			window->Draw_TriangleList(
-				true,
-				vertices,
-				indices
-			);
-		}
+		window->Draw_TriangleList(
+			true,
+			vertices,
+			indices
+		);
 
 		if( !window->EndRender() ) return -1;
 	}

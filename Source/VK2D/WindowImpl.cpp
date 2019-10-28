@@ -310,7 +310,7 @@ bool WindowImpl::BeginRender()
 
 			VkRect2D scissor {
 				{ 0, 0 },
-				extent.width
+				extent
 			};
 			vkCmdSetScissor(
 				command_buffer,
@@ -475,6 +475,8 @@ bool WindowImpl::EndRender()
 		}
 	}
 
+	vkDeviceWaitIdle( device );
+
 	// Present swapchain image
 	{
 		VkResult present_result				= VK_SUCCESS;
@@ -546,8 +548,8 @@ void WindowImpl::Draw_TriangleList(
 {
 	auto command_buffer					= render_command_buffers[ next_image ];
 
-	auto vertex_count	= vertices.size();
-	auto index_count	= indices.size() * 3;
+	auto vertex_count	= uint32_t( vertices.size() );
+	auto index_count	= uint32_t( indices.size() * 3 );
 	std::vector<uint32_t> raw_indices;
 	raw_indices.reserve( index_count );
 	for( size_t i = 0; i < indices.size(); ++i ) {
@@ -570,8 +572,8 @@ void WindowImpl::Draw_TriangleList(
 		command_buffer,
 		index_count,
 		1,
-		result.offsets.index_byte_offset,
-		result.offsets.vertex_byte_offset,
+		result.offsets.first_index,
+		int32_t( result.offsets.vertex_offset ),
 		0
 	);
 }
@@ -993,14 +995,14 @@ bool WindowImpl::CreateGraphicsPipelines()
 	VkViewport viewport {};
 	viewport.x			= 0;
 	viewport.y			= 0;
-	viewport.width		= 512;
-	viewport.height		= 512;
+	viewport.width		= 800;
+	viewport.height		= 600;
 	viewport.minDepth	= 0.0f;
 	viewport.maxDepth	= 1.0f;
 
 	VkRect2D scissor {
 		{ 0, 0 },
-		{ 512, 512 }
+		{ 800, 600 }
 	};
 
 	VkPipelineViewportStateCreateInfo viewport_state_create_info {};
