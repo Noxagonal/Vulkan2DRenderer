@@ -25,4 +25,4 @@ This project is work in progress and not ready to be used in any project as of y
 
 | Library | Licence |
 | --- | --- |
-| GLFW 3.3 | [zlib/libpng](ExternalLibraries\glfw-3.3\LICENSE.md) |
+| GLFW 3.3 | [zlib/libpng](ExternalLibraries\glfw-3.3\LISENSE.md) |
