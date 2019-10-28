@@ -16,6 +16,5 @@ layout(location=0) out vec4 finalFragmentColor;
 void main()
 {
 	//finalFragmentColor		= texture( sampler2D( image, imageSampler ), fragment_UV );
-	//finalFragmentColor			= fragment_Color;
-	finalFragmentColor			= vec4( 1, 1, 1, 1 );
+	finalFragmentColor			= fragment_Color;
 }
