@@ -1,24 +1,32 @@
 
 # Vulkan 2D Renderer
 
-Vulkan 2D Renderer is designed to be easy to use 2D rendering backend, you only need a few lines of code to create a window and display simple shapes.
+:exclamation: This project is work in progress and not ready to be used in any project as of yet. :exclamation:
 
-This project is work in progress and not ready to be used in any project as of yet.
+Vulkan 2D Renderer is designed to be easy to use 2D rendering backend, you only need a few lines of code to create a window and display simple shapes.
 
 ### Capabilities
 
-- Draws simple polygons.
+- Draws basic 2D shapes.
+- Color controlled by vertex color.
+- Alpha blending.
 - Not much else right now.
 
 
 ### Limitations
 
-- work in progress. Crashes will happen frequently.
+- Does not draw 3D, this is meant to be a simple library to use.
+- work in progress. We'll know more about limitations later.
+- Crashes will happen frequently.
 
 
 ### Todo
 
-- [ ] Under construction.
+- [ ] Testing for bugs.
+- [ ] Make PieBox shape.
+- [ ] Resource loader.
+- [ ] Textures.
+- [ ] lots more...
 
 
 ### Included libraries
@@ -26,3 +34,8 @@ This project is work in progress and not ready to be used in any project as of y
 | Library | License |
 | --- | --- |
 | GLFW 3.3 | [zlib/libpng](ExternalLibraries/glfw-3.3/LICENSE.md) |
+
+
+### License
+
+This software is released under [MIT license](LICENSE.md)

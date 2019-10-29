@@ -12,7 +12,7 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Test01", "Tests\Test01\Test
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{C9AEFCF0-DD28-47C8-95DA-BE3AB0D828D4}"
 	ProjectSection(SolutionItems) = preProject
-		LICENCE.md = LICENCE.md
+		LICENSE.md = LICENSE.md
 		README.md = README.md
 	EndProjectSection
 EndProject
