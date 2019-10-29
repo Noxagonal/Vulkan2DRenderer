@@ -25,7 +25,8 @@ namespace vk2d {
 
 VK2D_API					Window::Window(
 	_internal::RendererImpl		*	renderer_parent,
-	WindowCreateInfo			&	window_create_info )
+	WindowCreateInfo			&	window_create_info
+)
 {
 	impl	= std::make_unique<vk2d::_internal::WindowImpl>(
 		renderer_parent,
@@ -74,13 +75,133 @@ VK2D_API bool VK2D_APIENTRY Window::EndRender()
 VK2D_API void VK2D_APIENTRY Window::Draw_TriangleList(
 	bool								filled,
 	std::vector<Vertex>			&		vertices,
-	std::vector<VertexIndex_3>	&		indices )
+	std::vector<VertexIndex_3>	&		indices
+)
 {
 	if( impl ) {
 		impl->Draw_TriangleList(
 			filled,
 			vertices,
 			indices
+		);
+	}
+}
+
+VK2D_API void VK2D_APIENTRY Window::Draw_LineList(
+	std::vector<Vertex>			&	vertices,
+	std::vector<VertexIndex_2>	&	indices
+)
+{
+	if( impl ) {
+		impl->Draw_LineList(
+			vertices,
+			indices
+		);
+	}
+}
+
+VK2D_API void VK2D_APIENTRY Window::Draw_PointList(
+	std::vector<Vertex>			&	vertices
+)
+{
+	if( impl ) {
+		impl->Draw_PointList(
+			vertices
+		);
+	}
+}
+
+VK2D_API void VK2D_APIENTRY Window::Draw_Line(
+	Coords							point_1,
+	Coords							point_2,
+	Color							color
+)
+{
+	if( impl ) {
+		impl->Draw_Line(
+			point_1,
+			point_2,
+			color
+		);
+	}
+}
+
+VK2D_API void VK2D_APIENTRY Window::Draw_Box(
+	bool							filled,
+	Coords							top_left,
+	Coords							bottom_right,
+	Color							color
+)
+{
+	if( impl ) {
+		impl->Draw_Box(
+			filled,
+			top_left,
+			bottom_right,
+			color
+		);
+	}
+}
+
+VK2D_API void VK2D_APIENTRY Window::Draw_Circle(
+	bool							filled,
+	Coords							top_left,
+	Coords							bottom_right,
+	float							edge_count,
+	Color							color
+)
+{
+	if( impl ) {
+		impl->Draw_Circle(
+			filled,
+			top_left,
+			bottom_right,
+			edge_count,
+			color
+		);
+	}
+}
+
+VK2D_API void VK2D_APIENTRY Window::Draw_Pie(
+	bool							filled,
+	Coords							top_left,
+	Coords							bottom_right,
+	float							begin_angle_radians,
+	float							end_angle_radians,
+	float							edge_count,
+	Color							color )
+{
+	if( impl ) {
+		impl->Draw_Pie(
+			filled,
+			top_left,
+			bottom_right,
+			begin_angle_radians,
+			end_angle_radians,
+			edge_count,
+			color
+		);
+	}
+}
+
+VK2D_API void VK2D_APIENTRY Window::Draw_PieBox(
+	bool							filled,
+	Coords							top_left,
+	Coords							bottom_right,
+	float							radius,
+	float							begin_angle_radians,
+	float							end_angle_radians,
+	Color							color )
+{
+	if( impl ) {
+		impl->Draw_PieBox(
+			filled,
+			top_left,
+			bottom_right,
+			radius,
+			begin_angle_radians,
+			end_angle_radians,
+			color
 		);
 	}
 }
