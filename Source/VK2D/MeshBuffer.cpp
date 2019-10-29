@@ -251,7 +251,7 @@ MeshBuffer::BufferBlock::BufferBlock(
 	buffer_create_info.pQueueFamilyIndices		= nullptr;
 
 	// Staging buffer.
-	buffer_create_info.usage					= VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
+	buffer_create_info.usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
 	if( vkCreateBuffer(
 		parent->device,
 		&buffer_create_info,
@@ -266,7 +266,7 @@ MeshBuffer::BufferBlock::BufferBlock(
 	);
 
 	// Device buffer.
-	buffer_create_info.usage					= VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT;
+	buffer_create_info.usage = VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT;
 	if( vkCreateBuffer(
 		parent->device,
 		&buffer_create_info,

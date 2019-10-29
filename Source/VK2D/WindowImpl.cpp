@@ -8,7 +8,15 @@
 #include <memory>
 
 
+
 namespace vk2d {
+
+
+
+constexpr double PI				= 3.14159265358979323846;
+constexpr double RAD			= PI * 2.0;
+
+
 
 namespace _internal {
 
@@ -558,9 +566,51 @@ void WindowImpl::Draw_TriangleList(
 		raw_indices.push_back( indices[ i ].indices[ 2 ] );
 	}
 
+	if( filled ) {
+		CmdBindPipeline(
+			command_buffer,
+			_internal::PipelineType::FILLED_POLYGON_LIST
+		);
+	} else {
+		CmdBindPipeline(
+			command_buffer,
+			_internal::PipelineType::WIREFRAME_POLYGON_LIST
+		);
+	}
+
+	auto result = mesh_buffer->CmdPushMesh(
+		command_buffer,
+		vertices,
+		raw_indices );
+
+	vkCmdDrawIndexed(
+		command_buffer,
+		index_count,
+		1,
+		result.offsets.first_index,
+		int32_t( result.offsets.vertex_offset ),
+		0
+	);
+}
+
+void WindowImpl::Draw_LineList(
+	std::vector<Vertex>				&	vertices,
+	std::vector<VertexIndex_2>		&	indices )
+{
+	auto command_buffer					= render_command_buffers[ next_image ];
+
+	auto vertex_count	= uint32_t( vertices.size() );
+	auto index_count	= uint32_t( indices.size() * 2 );
+	std::vector<uint32_t> raw_indices;
+	raw_indices.reserve( index_count );
+	for( size_t i = 0; i < indices.size(); ++i ) {
+		raw_indices.push_back( indices[ i ].indices[ 0 ] );
+		raw_indices.push_back( indices[ i ].indices[ 1 ] );
+	}
+
 	CmdBindPipeline(
 		command_buffer,
-		_internal::PipelineType::FILLED_POLYGON_LIST
+		_internal::PipelineType::LINE_LIST
 	);
 
 	auto result = mesh_buffer->CmdPushMesh(
@@ -577,6 +627,290 @@ void WindowImpl::Draw_TriangleList(
 		0
 	);
 }
+
+void WindowImpl::Draw_PointList(
+	std::vector<Vertex>				&	vertices
+)
+{
+	auto command_buffer					= render_command_buffers[ next_image ];
+
+	auto vertex_count	= uint32_t( vertices.size() );
+
+	CmdBindPipeline(
+		command_buffer,
+		_internal::PipelineType::POINT_LIST
+	);
+
+	auto result = mesh_buffer->CmdPushMesh(
+		command_buffer,
+		vertices,
+		{} );
+
+	vkCmdDraw(
+		command_buffer,
+		vertex_count,
+		1,
+		result.offsets.vertex_offset,
+		0
+	);
+}
+
+void WindowImpl::Draw_Line(
+	Coords								point_1,
+	Coords								point_2,
+	Color								color )
+{
+	std::vector<Vertex>				vertices( 2 );
+	std::vector<VertexIndex_2>		indices( 1 );
+
+	vertices[ 0 ].vertex_coords		= point_1;
+	vertices[ 0 ].uv_coords			= {};
+	vertices[ 0 ].color				= color;
+
+	vertices[ 1 ].vertex_coords		= point_2;
+	vertices[ 1 ].uv_coords			= {};
+	vertices[ 1 ].color				= color;
+
+	indices[ 0 ].indices			= { 0, 1 };
+
+	Draw_LineList(
+		vertices,
+		indices
+	);
+}
+
+void WindowImpl::Draw_Box(
+	bool								filled,
+	Coords								top_left,
+	Coords								bottom_right,
+	Color								color )
+{
+	std::vector<Vertex>				vertices( 4 );
+
+	// 0. Top left
+	vertices[ 0 ].vertex_coords		= { top_left.x,			top_left.y };
+	vertices[ 0 ].uv_coords			= vertices[ 0 ].vertex_coords;
+	vertices[ 0 ].color				= color;
+
+	// 1. Top right
+	vertices[ 1 ].vertex_coords		= { bottom_right.x,		top_left.y };
+	vertices[ 1 ].uv_coords			= vertices[ 1 ].vertex_coords;
+	vertices[ 1 ].color				= color;
+
+	// 2. Bottom left
+	vertices[ 2 ].vertex_coords		= { top_left.x,			bottom_right.y };
+	vertices[ 2 ].uv_coords			= vertices[ 2 ].vertex_coords;
+	vertices[ 2 ].color				= color;
+
+	// 3. Bottom right
+	vertices[ 3 ].vertex_coords		= { bottom_right.x,		bottom_right.y };
+	vertices[ 3 ].uv_coords			= vertices[ 3 ].vertex_coords;
+	vertices[ 3 ].color				= color;
+
+	if( filled ) {
+		// Draw filled polygons
+		std::vector<VertexIndex_3>	indices( 2 );
+		indices[ 0 ].indices		= { 0, 2, 1 };
+		indices[ 1 ].indices		= { 1, 2, 3 };
+		Draw_TriangleList(
+			true,
+			vertices,
+			indices
+		);
+	} else {
+		// Draw lines
+		std::vector<VertexIndex_2>	indices( 4 );
+		indices[ 0 ].indices		= { 0, 2 };
+		indices[ 1 ].indices		= { 2, 3 };
+		indices[ 2 ].indices		= { 3, 1 };
+		indices[ 3 ].indices		= { 1, 0 };
+		Draw_LineList(
+			vertices,
+			indices
+		);
+	}
+}
+
+void WindowImpl::Draw_Circle(
+	bool								filled,
+	Coords								top_left,
+	Coords								bottom_right,
+	float								edge_count,
+	Color								color
+)
+{
+	if( edge_count < 3.0f ) edge_count = 3.0f;
+
+	Coords center_point					= {
+		( top_left.x + bottom_right.x ) / 2.0f,
+		( top_left.y + bottom_right.y ) / 2.0f
+	};
+
+	float center_to_edge_x		= bottom_right.x - center_point.x;
+	float center_to_edge_y		= bottom_right.y - center_point.y;
+
+	float rotation_step			= 0.0f;
+	float rotation_step_size	= float( RAD / edge_count );
+
+	uint32_t edge_count_integer	= uint32_t( edge_count );
+	if( edge_count - uint32_t( edge_count ) ) {
+		++edge_count_integer;
+	}
+
+	std::vector<Vertex> vertices( edge_count_integer );
+	for( uint32_t i = 0; i < edge_count_integer; ++i ) {
+		vertices[ i ].vertex_coords		= {
+			std::cos( rotation_step ) * center_to_edge_x + center_point.x,
+			std::sin( rotation_step ) * center_to_edge_y + center_point.y
+		};
+		vertices[ i ].uv_coords			= {
+			std::cos( rotation_step ),
+			std::sin( rotation_step )
+		};
+		vertices[ i ].color				= color;
+		rotation_step					+= rotation_step_size;
+	}
+
+	if( filled ) {
+		// Draw filled polygons
+		std::vector<VertexIndex_3> indices( size_t( edge_count_integer ) + 1 );
+		{
+			uint32_t i = 0;
+			for( i = 2; i < edge_count_integer; ++i ) {
+				assert( i < edge_count_integer );
+				indices[ i ] = { 0, i - 1, i };
+			}
+		}
+		Draw_TriangleList(
+			true,
+			vertices,
+			indices
+		);
+	} else {
+		// Draw lines
+		std::vector<VertexIndex_2> indices( size_t( edge_count_integer ) + 1 );
+		{
+			uint32_t i = 0;
+			for( i = 1; i < edge_count_integer; ++i ) {
+				assert( i < edge_count_integer );
+				indices[ i ] = { i - 1, i };
+			}
+			indices[ edge_count_integer ] = { edge_count_integer - 1, 0 };
+		}
+		Draw_LineList(
+			vertices,
+			indices
+		);
+	}
+}
+
+void WindowImpl::Draw_Pie(
+	bool								filled,
+	Coords								top_left,
+	Coords								bottom_right,
+	float								begin_angle_radians,
+	float								coverage,
+	float								edge_count,
+	Color								color
+)
+{
+	if( edge_count < 3.0f )			edge_count		= 3.0f;
+	if( coverage > 1.0f )			coverage		= 1.0f;
+	if( coverage <= 0.0f )			return;			// Nothing to draw
+
+	Coords center_point					= {
+		( top_left.x + bottom_right.x ) / 2.0f,
+		( top_left.y + bottom_right.y ) / 2.0f
+	};
+
+	float center_to_edge_x		= bottom_right.x - center_point.x;
+	float center_to_edge_y		= bottom_right.y - center_point.y;
+
+	float rotation_step			= 0.0f;
+	float rotation_step_size	= float( RAD / edge_count );
+
+	uint32_t edge_count_integer	= uint32_t( edge_count );
+	if( edge_count - uint32_t( edge_count ) ) {
+		++edge_count_integer;
+	}
+
+	auto end_angle_radians		= float( RAD ) * coverage;
+	end_angle_radians			+= begin_angle_radians;
+	auto area_angle				= end_angle_radians - begin_angle_radians;
+
+	std::vector<Vertex> vertices; vertices.reserve( size_t( edge_count_integer ) + 2 );
+	vertices.push_back( {
+		center_point,
+		{ 0.5f, 0.5f },
+		color }
+	);
+	while( true ) {
+		if( rotation_step >= area_angle ) break;
+		vertices.push_back( { {
+				std::cos( rotation_step + begin_angle_radians ) * center_to_edge_x + center_point.x,
+				std::sin( rotation_step + begin_angle_radians ) * center_to_edge_y + center_point.y
+			}, {
+				std::cos( rotation_step ),
+				std::sin( rotation_step )
+			},
+			color }
+		);
+		rotation_step					+= rotation_step_size;
+	}
+	vertices.push_back( { {
+			std::cos( end_angle_radians ) * center_to_edge_x + center_point.x,
+			std::sin( end_angle_radians ) * center_to_edge_y + center_point.y
+		}, {
+			std::cos( end_angle_radians ),
+			std::sin( end_angle_radians )
+		},
+		color }
+	);
+
+
+	if( filled ) {
+		// Draw filled polygons
+		std::vector<VertexIndex_3> indices( vertices.size() + 1 );
+		{
+			uint32_t i = 0;
+			for( i = 2; i < indices.size() - 1; ++i ) {
+				//assert( i < edge_count_integer );
+				indices[ i ] = { 0, i - 1, i };
+			}
+		}
+		Draw_TriangleList(
+			true,
+			vertices,
+			indices
+		);
+	} else {
+		// Draw lines
+		std::vector<VertexIndex_2> indices; indices.reserve( vertices.size() + 2 );
+		{
+			if( coverage < 1.0f )		indices.push_back( { 0, 1 } );
+			uint32_t i = 0;
+			for( i = 2; i < uint32_t( vertices.size() ); ++i ) {
+				indices.push_back( { i - 1, i } );
+			}
+			if( coverage < 1.0f )		indices.push_back( { uint32_t( vertices.size() - 1 ), 0 } );
+		}
+		Draw_LineList(
+			vertices,
+			indices
+		);
+	}
+}
+
+void WindowImpl::Draw_PieBox(
+	bool								filled,
+	Coords								top_left,
+	Coords								bottom_right,
+	float								radius,
+	float								begin_angle_radians,
+	float								end_angle_radians,
+	Color								color
+)
+{}
 
 
 
@@ -1061,8 +1395,7 @@ bool WindowImpl::CreateGraphicsPipelines()
 	depth_stencil_state_create_info.maxDepthBounds			= 1.0f;
 
 	std::array<VkPipelineColorBlendAttachmentState, 1> color_blend_attachment_states {};
-	// TODO: DEBUG: enable once we get visual
-	color_blend_attachment_states[ 0 ].blendEnable			= VK_FALSE;
+	color_blend_attachment_states[ 0 ].blendEnable			= VK_TRUE;
 	color_blend_attachment_states[ 0 ].srcColorBlendFactor	= VK_BLEND_FACTOR_SRC_ALPHA;
 	color_blend_attachment_states[ 0 ].dstColorBlendFactor	= VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
 	color_blend_attachment_states[ 0 ].colorBlendOp			= VK_BLEND_OP_ADD;

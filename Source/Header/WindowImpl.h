@@ -70,30 +70,43 @@ public:
 		std::vector<VertexIndex_2>		&	indices );
 
 	void									Draw_PointList(
-		std::vector<Vertex>					vertices );
+		std::vector<Vertex>				&	vertices );
 
 	void									Draw_Line(
-		Vertex								point_1,
-		Vertex								point_2 );
+		Coords								point_1,
+		Coords								point_2,
+		Color								color				= { 1.0f, 1.0f, 1.0f, 1.0f } );
 
 	void									Draw_Box(
 		bool								filled,
 		Coords								top_left,
-		Coords								bottom_right );
+		Coords								bottom_right,
+		Color								color				= { 1.0f, 1.0f, 1.0f, 1.0f } );
 
 	void									Draw_Circle(
 		bool								filled,
-		float								edge_count,
-		Coords								location,
-		float								radius );
+		Coords								top_left,
+		Coords								bottom_right,
+		float								edge_count			= 32.0f,
+		Color								color				= { 1.0f, 1.0f, 1.0f, 1.0f } );
 
 	void									Draw_Pie(
 		bool								filled,
-		float								edge_count,
-		Coords								location,
+		Coords								top_left,
+		Coords								bottom_right,
+		float								begin_angle_radians,
+		float								end_angle_radians,
+		float								edge_count			= 32.0f,
+		Color								color				= { 1.0f, 1.0f, 1.0f, 1.0f } );
+
+	void									Draw_PieBox(
+		bool								filled,
+		Coords								top_left,
+		Coords								bottom_right,
 		float								radius,
 		float								begin_angle_radians,
-		float								end_angle_radians );
+		float								end_angle_radians,
+		Color								color				= { 1.0f, 1.0f, 1.0f, 1.0f } );
 
 	bool									SynchronizeFrame();
 

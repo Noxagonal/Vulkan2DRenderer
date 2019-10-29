@@ -1,6 +1,9 @@
 
 #include <Vulkan2DRenderer.h>
 
+constexpr double PI				= 3.14159265358979323846;
+constexpr double RAD			= PI * 2.0;
+
 int main()
 {
 	vk2d::RendererCreateInfo renderer_create_info {};
@@ -12,45 +15,28 @@ int main()
 	window_create_info.height	= 600;
 	auto window = renderer->CreateWindowOutput( window_create_info );
 
-	std::vector<vk2d::Vertex> vertices;
-	std::vector<vk2d::VertexIndex_3> indices;
-	vertices.push_back( {
-		{ 0.0f, -0.5f },			// vertex_coords (xy, 0,0 -> screen centre )
-		{},							// uv_coords (uv)
-		{ 1.0f, 0.0f, 0.0f, 1.0f }	// color (rgba)
-		} );
-	vertices.push_back( {
-		{ -0.5f, 0.0f },			// vertex_coords (xy, 0,0 -> screen centre )
-		{},							// uv_coords (uv)
-		{ 0.0f, 1.0f, 0.0f, 1.0f }	// color (rgba)
-		} );
-	vertices.push_back( {
-		{ 0.5f, 0.0f },				// vertex_coords (xy, 0,0 -> screen centre )
-		{},							// uv_coords (uv)
-		{ 0.0f, 0.0f, 1.0f, 1.0f }	// color (rgba)
-		} );
-	vertices.push_back( {
-		{ 0.0f, 0.5f },				// vertex_coords (xy, 0,0 -> screen centre )
-		{},							// uv_coords (uv)
-		{ 1.0f, 1.0f, 1.0f, 1.0f }	// color (rgba)
-		} );
-	indices.push_back( {
-		{ 0, 1, 2 }					// Form a triangle between these vertices
-		} );
-	indices.push_back( {
-		{ 2, 1, 3 }					// Form a triangle between these vertices
-		} );
-
-
-	size_t frame_count_remining = 2000;
-	while( frame_count_remining ) {
-		--frame_count_remining;
+	size_t frame_counter = 0;
+	while( true ) {
+		++frame_counter;
 		if( !window->BeginRender() ) return -1;
 
-		window->Draw_TriangleList(
+//		window->Draw_Line( { -0.5f, -0.3f }, { +0.3, +0.5 } );
+//		window->Draw_Box( true, { 0.1, 0.1 }, { 0., 0.3 } );
+		window->Draw_Pie(
 			true,
-			vertices,
-			indices
+			{ -0.8, -0.5f },
+			{ -0.1f, +0.5f },
+			std::sin( frame_counter / 120.0f ),
+			( ( std::sin( frame_counter / 200.0f ) + 0.9f ) / 1.8f ),
+			( std::sin( frame_counter / 100.0f ) + 2.0f ) * 10.0f
+		);
+
+		window->Draw_Pie(
+			true,
+			{ +0.1f, -0.5f },
+			{ +0.8f, +0.5f },
+			0.0f,
+			0.75f
 		);
 
 		if( !window->EndRender() ) return -1;
