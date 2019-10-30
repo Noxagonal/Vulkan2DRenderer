@@ -20,23 +20,12 @@ int main()
 		++frame_counter;
 		if( !window->BeginRender() ) return -1;
 
-//		window->Draw_Line( { -0.5f, -0.3f }, { +0.3, +0.5 } );
-//		window->Draw_Box( true, { 0.1, 0.1 }, { 0., 0.3 } );
-		window->Draw_Pie(
-			true,
-			{ -0.8, -0.5f },
-			{ -0.1f, +0.5f },
-			std::sin( frame_counter / 120.0f ),
-			( ( std::sin( frame_counter / 200.0f ) + 0.9f ) / 1.8f ),
-			( std::sin( frame_counter / 100.0f ) + 2.0f ) * 10.0f
-		);
-
-		window->Draw_Pie(
-			true,
-			{ +0.1f, -0.5f },
-			{ +0.8f, +0.5f },
-			0.0f,
-			0.75f
+		window->Draw_PieBox(
+			false,
+			{ -0.5f, -0.5f },
+			{ +0.5f, +0.5f },
+			frame_counter / 100.0f,
+			std::sin( frame_counter / 123.0f ) / 2.0f + 0.5f
 		);
 
 		if( !window->EndRender() ) return -1;

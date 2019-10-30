@@ -188,9 +188,8 @@ VK2D_API void VK2D_APIENTRY Window::Draw_PieBox(
 	bool							filled,
 	Coords							top_left,
 	Coords							bottom_right,
-	float							radius,
 	float							begin_angle_radians,
-	float							end_angle_radians,
+	float							coverage,
 	Color							color )
 {
 	if( impl ) {
@@ -198,9 +197,8 @@ VK2D_API void VK2D_APIENTRY Window::Draw_PieBox(
 			filled,
 			top_left,
 			bottom_right,
-			radius,
 			begin_angle_radians,
-			end_angle_radians,
+			coverage,
 			color
 		);
 	}

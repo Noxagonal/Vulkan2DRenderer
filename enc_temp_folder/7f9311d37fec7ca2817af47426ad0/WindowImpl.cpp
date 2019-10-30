@@ -1036,13 +1036,6 @@ void WindowImpl::Draw_PieBox(
 		auto next_corner_from_ray_1_intersection	= FindNextVertexFromPoint( ray_exit_1 );
 		auto next_corner_from_ray_2_intersection	= FindNextVertexFromPoint( ray_exit_2 );
 
-		TODO;
-		// TODO: This code is getting complicated, need a lot of rules.
-		// see if we could make a more general approach to this,
-		// somethint that follows the edges of the box, looks what point
-		// lies next on the path, we'll need a crawler or sorts and need
-		// to cross check all the points in one big list.
-
 		area_vertex_coordinates_in_order.push_back( ray_exit_1 );
 		auto next_corner = next_corner_from_ray_1_intersection;
 		while( true ) {
