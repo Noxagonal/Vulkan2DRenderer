@@ -6,6 +6,8 @@
 #include "../Header/RendererImpl.h"
 
 #include <memory>
+#include <algorithm>
+#include <set>
 
 
 
@@ -905,12 +907,258 @@ void WindowImpl::Draw_PieBox(
 	bool								filled,
 	Coords								top_left,
 	Coords								bottom_right,
-	float								radius,
 	float								begin_angle_radians,
-	float								end_angle_radians,
+	float								coverage,
 	Color								color
 )
-{}
+{
+	if( coverage >= 1.0f ) {
+		Draw_Box( filled, top_left, bottom_right, color );
+		return;		// Done
+	}
+	if( coverage <= 0.0f ) {
+		return;		// Nothing to draw
+	}
+
+	Coords center_point					= {
+		( top_left.x + bottom_right.x ) / 2.0f,
+		( top_left.y + bottom_right.y ) / 2.0f
+	};
+
+	float center_to_edge_x		= bottom_right.x - center_point.x;
+	float center_to_edge_y		= bottom_right.y - center_point.y;
+
+	float width					= std::abs( bottom_right.x - top_left.x );
+	float height				= std::abs( bottom_right.y - top_left.y );
+
+	auto end_angle_radians		= float( RAD ) * coverage;
+	end_angle_radians			+= begin_angle_radians;
+	auto area_angle				= end_angle_radians - begin_angle_radians;
+
+	enum AllPointsIndex : uint32_t {
+		BOX_CORNER_0,
+		BOX_CORNER_1,
+		BOX_CORNER_2,
+		BOX_CORNER_3,
+		PIE_BEGIN,
+		PIE_END,
+	};
+	std::array<Coords, 6>	unordered_outer_points { {
+		{ top_left.x,		top_left.y		},
+		{ bottom_right.x,	top_left.y		},
+		{ bottom_right.x,	bottom_right.y	},
+		{ top_left.x,		bottom_right.y	}
+	} };
+
+	// Get pie begin and end coordinates
+	{
+		// Specialized version of Ray to AABB intersecion test that
+		// always intersects and returns the exit coordinates only.
+		auto RayExitIntersection	=[](
+			Coords box_coords_1,
+			Coords box_coords_2,
+			Coords box_center,		// ray origin, and box center are both at the same coordinates
+			Coords ray_end
+			) -> Coords
+		{
+			Coords		ray_begin			= box_center;
+			float		clipped_exit		= 1.0;
+
+			// Clipping on x and y axis
+			float dim_low_x		= ( box_coords_1.x - ray_begin.x ) / ( ray_end.x - ray_begin.x );
+			float dim_low_y		= ( box_coords_1.y - ray_begin.y ) / ( ray_end.y - ray_begin.y );
+			float dim_high_x	= ( box_coords_2.x - ray_begin.x ) / ( ray_end.x - ray_begin.x );
+			float dim_high_y	= ( box_coords_2.y - ray_begin.y ) / ( ray_end.y - ray_begin.y );
+
+			dim_high_x			= std::max( dim_low_x, dim_high_x );
+			dim_high_y			= std::max( dim_low_y, dim_high_y );
+			clipped_exit		= std::min( dim_high_y, dim_high_x );
+
+			Coords collider_localized				= ray_end - ray_begin;
+			Coords localized_intersection_point		= collider_localized * clipped_exit;
+			Coords globalized_intersection_point	= localized_intersection_point + box_center;
+			return globalized_intersection_point;
+		};
+
+		float ray_lenght		= center_to_edge_x + center_to_edge_y;
+		Coords ray_angle_1_end	= { std::cos( begin_angle_radians ) * ray_lenght, std::sin( begin_angle_radians ) * ray_lenght };
+		Coords ray_angle_2_end	= { std::cos( end_angle_radians ) * ray_lenght, std::sin( end_angle_radians ) * ray_lenght };
+		ray_angle_1_end			+= center_point;
+		ray_angle_2_end			+= center_point;
+
+		unordered_outer_points[ PIE_BEGIN ]	= RayExitIntersection(
+			top_left,
+			bottom_right,
+			center_point,
+			ray_angle_1_end
+		);
+		unordered_outer_points[ PIE_END ]		= RayExitIntersection(
+			top_left,
+			bottom_right,
+			center_point,
+			ray_angle_2_end
+		);
+	}
+
+	auto IsOnSameXAxis	= [](
+		Coords			point_1,
+		Coords			point_2
+		) -> bool
+	{
+		if( point_1.y < point_2.y + 0.0001f &&
+			point_1.y > point_2.y - 0.0001f ) {
+			return true;
+		}
+		return false;
+	};
+
+	auto IsOnSameYAxis	= [](
+		Coords			point_1,
+		Coords			point_2
+		) -> bool
+	{
+		if( point_1.x < point_2.x + 0.0001f &&
+			point_1.x > point_2.x - 0.0001f ) {
+			return true;
+		}
+		return false;
+	};
+
+	// Generate an ordered point list
+	std::vector<Coords> outer_point_list;
+	{
+		// We'll linearize / unwrap the box so that a single number represents x/y coordinates
+		//
+		// 0---1
+		// |   |	->	0---1---2---3---0
+		// 3---2
+
+		struct LinearPoint {
+			uint32_t	original_linear_point_index;
+			float		linear_coords;
+			Coords		actual_coords;
+		};
+		float distance_counter = 0.0f;
+		std::array<LinearPoint, 6>	linear_points { {
+			{ BOX_CORNER_0, 0.0f,							unordered_outer_points[ BOX_CORNER_0 ] },
+			{ BOX_CORNER_1, distance_counter += width,		unordered_outer_points[ BOX_CORNER_1 ] },
+			{ BOX_CORNER_2, distance_counter += height,		unordered_outer_points[ BOX_CORNER_2 ] },
+			{ BOX_CORNER_3, distance_counter += width,		unordered_outer_points[ BOX_CORNER_3 ] }
+		} };
+
+		auto ResolveLinearPoint	= [
+			width,
+			height,
+			IsOnSameXAxis,
+			IsOnSameYAxis,
+			&unordered_outer_points,
+			&linear_points
+		](
+			uint32_t		index
+			)
+		{
+			// Find which side of the box the point is located at
+			Coords actual_coords	= unordered_outer_points[ index ];
+
+			if( IsOnSameXAxis( actual_coords, unordered_outer_points[ 0 ] ) ) {
+				// Top
+				float linear		= ( actual_coords.x - linear_points[ 0 ].actual_coords.x ) + linear_points[ 0 ].linear_coords;
+				linear_points[ index ]	= { index, linear, actual_coords };
+			} else if( IsOnSameYAxis( actual_coords, unordered_outer_points[ 1 ] ) ) {
+				// Right
+				float linear		= ( actual_coords.y - linear_points[ 1 ].actual_coords.y ) + linear_points[ 1 ].linear_coords;
+				linear_points[ index ]	= { index, linear, actual_coords };
+			} else if( IsOnSameXAxis( actual_coords, unordered_outer_points[ 3 ] ) ) {
+				// Bottom
+				float linear		= ( linear_points[ 2 ].actual_coords.x - actual_coords.x ) + linear_points[ 2 ].linear_coords;
+				linear_points[ index ]	= { index, linear, actual_coords };
+			} else if( IsOnSameYAxis( actual_coords, unordered_outer_points[ 0 ] ) ) {
+				// Left
+				float linear		= ( linear_points[ 3 ].actual_coords.y - actual_coords.y ) + linear_points[ 3 ].linear_coords;
+				linear_points[ index ]	= { index, linear, actual_coords };
+			} else {
+				assert( 0 );
+			}
+		};
+
+		ResolveLinearPoint( PIE_BEGIN );
+		ResolveLinearPoint( PIE_END );
+
+		std::sort(
+			linear_points.begin(),
+			linear_points.end(),
+			[]( LinearPoint & p1, LinearPoint & p2 )
+			{
+				return p1.linear_coords < p2.linear_coords;
+			} );
+
+		// We have a list of points in a winding order.
+		// Now we need to figure out which points are
+		// within and collect a list from those.
+
+		// Find current index for pie begin and end in linear_points array
+		uint32_t	linear_resolved_pie_begin_point		= UINT32_MAX;
+		uint32_t	linear_resolved_pie_end_point		= UINT32_MAX;
+		for( size_t i = 0; i < linear_points.size(); ++i ) {
+			if( linear_points[ i ].original_linear_point_index == PIE_BEGIN )	linear_resolved_pie_begin_point	= i;
+			if( linear_points[ i ].original_linear_point_index == PIE_END )		linear_resolved_pie_end_point	= i;
+		}
+		assert( linear_resolved_pie_begin_point != UINT32_MAX );
+		assert( linear_resolved_pie_end_point != UINT32_MAX );
+
+		// Sort() organized everything for us, now we just need to
+		// collect all in-between coordinates from the indices
+		outer_point_list.reserve( 6 );
+		uint32_t current_linear_point_index		= linear_resolved_pie_begin_point;
+		while( current_linear_point_index != linear_resolved_pie_end_point ) {
+			outer_point_list.push_back( linear_points[ current_linear_point_index ].actual_coords );
+			if( ( ++current_linear_point_index ) == 6 ) current_linear_point_index = 0;
+		}
+		outer_point_list.push_back( linear_points[ linear_resolved_pie_end_point ].actual_coords );
+	}
+
+	// Create vertices
+	std::vector<Vertex> vertices;
+	{
+		vertices.reserve( 7 );
+
+		vertices.push_back( {
+			center_point,
+			{ 0.5f, 0.5f },
+			color
+			} );
+		for( auto opl : outer_point_list ) {
+			vertices.push_back( {
+				opl,
+				( opl - unordered_outer_points[ 0 ] ) / Coords( width, height ),
+				color
+				} );
+		}
+	}
+
+	if( filled ) {
+		std::vector<VertexIndex_3> indices;		indices.reserve( vertices.size() );
+		for( uint32_t i = 2; i < uint32_t( vertices.size() ); ++i ) {
+			indices.push_back( { 0, i - 1, i } );
+		}
+
+		Draw_TriangleList(
+			true,
+			vertices,
+			indices
+		);
+	} else {
+		std::vector<VertexIndex_2> indices;		indices.reserve( vertices.size() );
+		for( uint32_t i = 1; i < uint32_t( vertices.size() ); ++i ) {
+			indices.push_back( { i - 1, i } );
+		}
+		indices.push_back( { uint32_t( vertices.size() - 1 ), 0 } );
+		Draw_LineList(
+			vertices,
+			indices
+		);
+	}
+}
 
 
 

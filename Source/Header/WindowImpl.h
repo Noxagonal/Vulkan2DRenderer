@@ -95,7 +95,7 @@ public:
 		Coords								top_left,
 		Coords								bottom_right,
 		float								begin_angle_radians,
-		float								end_angle_radians,
+		float								coverage,
 		float								edge_count			= 32.0f,
 		Color								color				= { 1.0f, 1.0f, 1.0f, 1.0f } );
 
@@ -103,9 +103,8 @@ public:
 		bool								filled,
 		Coords								top_left,
 		Coords								bottom_right,
-		float								radius,
 		float								begin_angle_radians,
-		float								end_angle_radians,
+		float								coverage,
 		Color								color				= { 1.0f, 1.0f, 1.0f, 1.0f } );
 
 	bool									SynchronizeFrame();
