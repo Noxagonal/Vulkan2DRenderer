@@ -22,8 +22,16 @@ int main()
 
 		window->Draw_PieBox(
 			false,
-			{ -0.5f, -0.5f },
-			{ +0.5f, +0.5f },
+			{ -0.95f, -0.5f },
+			{ -0.05f, +0.5f },
+			frame_counter / 100.0f,
+			std::sin( frame_counter / 123.0f ) / 2.0f + 0.5f
+		);
+
+		window->Draw_Pie(
+			false,
+			{ +0.05f, -0.5f },
+			{ +0.95f, +0.5f },
 			frame_counter / 100.0f,
 			std::sin( frame_counter / 123.0f ) / 2.0f + 0.5f
 		);
