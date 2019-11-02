@@ -10,23 +10,35 @@ namespace vk2d {
 
 
 
-TextureResource::TextureResource(
-	_internal::RendererImpl			*	renderer_parent
+VK2D_API TextureResource::TextureResource(
+	_internal::ResourceManagerImpl		*	resource_manager_parent
 )
 {
-	impl		= std::make_unique<_internal::TextureResourceImpl>( renderer_parent );
+	impl		= std::make_unique<_internal::TextureResourceImpl>( this, resource_manager_parent );
 	if( !impl )				return;
 	if( !impl->IsGood() )	return;
 
 	is_good		= true;
 }
 
-TextureResource::~TextureResource()
+VK2D_API TextureResource::~TextureResource()
 {}
 
-bool TextureResource::IsGood()
+VK2D_API bool VK2D_APIENTRY TextureResource::IsGood()
 {
 	return is_good;
+}
+
+VK2D_API bool VK2D_APIENTRY TextureResource::MTLoad()
+{
+	if( impl && impl->IsGood() ) return impl->MTLoad();
+	return false;
+}
+
+VK2D_API bool VK2D_APIENTRY TextureResource::MTUnload()
+{
+	if( impl && impl->IsGood() ) return impl->MTUnload();
+	return false;
 }
 
 

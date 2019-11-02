@@ -20,6 +20,8 @@ class ResourceManager;
 
 namespace _internal {
 
+class ThreadPool;
+
 
 
 class RendererImpl {
@@ -36,31 +38,36 @@ public:
 	void											CloseWindowOutput(
 		Window									*	window );
 
-	PFN_VK2D_ReportFunction							GetReportFunction();
+	PFN_VK2D_ReportFunction							GetReportFunction() const;
 
-	ResourceManager								*	GetResourceManager();
+	ThreadPool									*	GetThreadPool() const;
+	const std::vector<uint32_t>					&	GetLoaderThreads() const;
+	const std::vector<uint32_t>					&	GetGeneralThreads() const;
+	ResourceManager								*	GetResourceManager() const;
 
-	VkInstance										GetVulkanInstance();
-	VkPhysicalDevice								GetVulkanPhysicalDevice();
-	VkDevice										GetVulkanDevice();
+	VkInstance										GetVulkanInstance() const;
+	VkPhysicalDevice								GetVulkanPhysicalDevice() const;
+	VkDevice										GetVulkanDevice() const;
 
-	ResolvedQueue									GetPrimaryRenderQueue();
-	ResolvedQueue									GetSecondaryRenderQueue();
-	ResolvedQueue									GetPrimaryComputeQueue();
-	ResolvedQueue									GetPrimaryTransferQueue();
+	ResolvedQueue									GetPrimaryRenderQueue() const;
+	ResolvedQueue									GetSecondaryRenderQueue() const;
+	ResolvedQueue									GetPrimaryComputeQueue() const;
+	ResolvedQueue									GetPrimaryTransferQueue() const;
 
-	const VkPhysicalDeviceProperties			&	GetPhysicalDeviceProperties();
-	const VkPhysicalDeviceMemoryProperties		&	GetPhysicalDeviceMemoryProperties();
-	const VkPhysicalDeviceFeatures				&	GetPhysicalDeviceFeatures();
+	const VkPhysicalDeviceProperties			&	GetPhysicalDeviceProperties() const;
+	const VkPhysicalDeviceMemoryProperties		&	GetPhysicalDeviceMemoryProperties() const;
+	const VkPhysicalDeviceFeatures				&	GetPhysicalDeviceFeatures() const;
 
-	VkShaderModule									GetVertexShaderModule();
-	VkShaderModule									GetFragmentShaderModule();
+	VkShaderModule									GetVertexShaderModule() const;
+	VkShaderModule									GetFragmentShaderModule() const;
 
-	VkPipelineCache									GetPipelineCache();
-	VkPipelineLayout								GetPipelineLayout();
-	VkDescriptorSetLayout							GetDescriptorSetLayout();
+	VkPipelineCache									GetPipelineCache() const;
+	VkPipelineLayout								GetPipelineLayout() const;
+	VkDescriptorSetLayout							GetDescriptorSetLayout() const;
 
-	DeviceMemoryPool							*	GetDeviceMemoryPool();
+	DeviceMemoryPool							*	GetDeviceMemoryPool() const;
+
+	bool											IsGood() const;
 
 private:
 	bool											CreateInstance();
@@ -86,7 +93,10 @@ private:
 
 	PFN_VK2D_ReportFunction							report_function						= {};
 
-//	std::unique_ptr<ResourceManager>				resource_manager					= {};
+	std::unique_ptr<ResourceManager>				resource_manager					= {};
+	std::unique_ptr<ThreadPool>						thread_pool							= {};
+	std::vector<uint32_t>							loader_threads						= {};
+	std::vector<uint32_t>							general_threads						= {};
 
 	VkDebugUtilsMessengerEXT						debug_utils_messenger				= {};
 

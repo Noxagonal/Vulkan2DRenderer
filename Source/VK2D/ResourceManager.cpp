@@ -12,7 +12,7 @@ namespace vk2d {
 
 
 
-ResourceManager::ResourceManager(
+VK2D_API ResourceManager::ResourceManager(
 	_internal::RendererImpl			*	parent_renderer
 )
 {
@@ -23,9 +23,17 @@ ResourceManager::ResourceManager(
 	is_good					= true;
 }
 
-ResourceManager::~ResourceManager()
+VK2D_API ResourceManager::~ResourceManager()
 {
 	
+}
+
+VK2D_API TextureResource * VK2D_APIENTRY ResourceManager::LoadTextureResource(
+	std::filesystem::path		file_path
+)
+{
+	if( impl && impl->IsGood() ) return impl->LoadTextureResource( file_path );
+	return nullptr;
 }
 
 

@@ -14,10 +14,17 @@ namespace _internal {
 
 
 
-TextureResourceImpl::TextureResourceImpl( _internal::RendererImpl * renderer_parent )
+TextureResourceImpl::TextureResourceImpl(
+	TextureResource					*	texture_resource_parent,
+	_internal::ResourceManagerImpl	*	resource_manager
+)
 {
-	parent		= renderer_parent;
-	assert( renderer_parent );
+	this->parent				= texture_resource_parent;
+	this->resource_manager		= resource_manager;
+	assert( this->parent );
+	assert( this->resource_manager );
+
+	is_good						= true;
 }
 
 TextureResourceImpl::~TextureResourceImpl()

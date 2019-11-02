@@ -1,4 +1,6 @@
 
+#include "../Header/SourceCommon.h"
+
 #include "../Header/ThreadPool.h"
 
 #include <atomic>
@@ -7,6 +9,9 @@
 #include <algorithm>
 
 namespace vk2d {
+
+namespace _internal {
+
 
 
 
@@ -31,7 +36,7 @@ public:
 				// Check if this thread is allowed to run this code
 				if( !task->IsThreadLocked() ||
 					std::any_of( task->GetThreadLocks().begin(), task->GetThreadLocks().end(),
-						[ thread_private_resource, &task ]( uint64_t tl )
+						[ thread_private_resource, &task ]( uint32_t tl )
 						{
 							return thread_private_resource->GetThreadIndex() == tl;
 						} ) ) {
@@ -56,9 +61,9 @@ public:
 							return task;
 						}
 				} else {
-					// This thread is not allowed to run this code
-					++it;
-				}
+							// This thread is not allowed to run this code
+							++it;
+						}
 			} else {
 				// Task already running, move on to check the next one
 				++it;
@@ -208,5 +213,6 @@ uint64_t ThreadPool::AddTask( std::unique_ptr<Task> new_task )
 }
 
 
+} // _internal
 
 } // vk2d

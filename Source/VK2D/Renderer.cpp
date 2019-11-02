@@ -3,12 +3,10 @@
 
 #include "../../Include/VK2D/Renderer.h"
 #include "../Header/RendererImpl.h"
-
 #include "../Header/WindowImpl.h"
-
 #include "../../Include/VK2D/Window.h"
-
 #include "../Header/QueueResolver.h"
+#include "../../Include/VK2D/ResourceManager.h"
 
 
 
@@ -36,7 +34,7 @@ VK2D_API										Renderer::Renderer(
 		}
 		return;
 	}
-	if( !impl->is_good ) return;
+	if( !impl->IsGood() ) return;
 
 	is_good			= true;
 }
@@ -45,9 +43,7 @@ VK2D_API										Renderer::Renderer(
 
 VK2D_API Renderer::~Renderer()
 {
-	if( impl ) {
-		impl = nullptr;
-	}
+	impl = nullptr;
 }
 
 
@@ -55,9 +51,7 @@ VK2D_API Renderer::~Renderer()
 VK2D_API Window * VK2D_APIENTRY Renderer::CreateWindowOutput(
 	WindowCreateInfo		&	window_create_info )
 {
-	if( impl ) {
-		return impl->CreateWindowOutput( window_create_info );
-	}
+	if( impl && impl->IsGood() ) return impl->CreateWindowOutput( window_create_info );
 	return {};
 }
 
@@ -65,9 +59,15 @@ VK2D_API Window * VK2D_APIENTRY Renderer::CreateWindowOutput(
 
 VK2D_API void VK2D_APIENTRY Renderer::CloseWindowOutput( Window * window )
 {
-	if( impl ) {
+	if( impl && impl->IsGood() ) {
 		impl->CloseWindowOutput( window );
 	}
+}
+
+VK2D_API ResourceManager * VK2D_APIENTRY Renderer::GetResourceManager()
+{
+	if( impl && impl->IsGood() ) return impl->GetResourceManager();
+	return {};
 }
 
 

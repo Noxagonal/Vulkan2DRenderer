@@ -2,36 +2,38 @@
 
 #include "SourceCommon.h"
 #include "../../Include/VK2D/TextureResource.h"
-#include "ResourceImpl.h"
 
 
 namespace vk2d {
 
 namespace _internal {
 
+class ResourceManagerImpl;
 
 
-class TextureResourceImpl :
-	public _internal::ResourceImpl
+
+class TextureResourceImpl
 {
-
 	friend class TextureResource;
+	friend class _internal::ResourceManagerImpl;
 
 public:
 	TextureResourceImpl(
-		_internal::RendererImpl						*	renderer_parent );
+		TextureResource							*	texture_resource_parent,
+		_internal::ResourceManagerImpl			*	resource_manager );
 
 	~TextureResourceImpl();
 
-	bool								MTLoad();
-	bool								MTUnload();
+	bool											MTLoad();
+	bool											MTUnload();
 
-	bool								IsGood();
+	bool											IsGood();
 
 private:
-	_internal::RendererImpl			*	parent						= {};
+	TextureResource								*	parent						= {};
+	_internal::ResourceManagerImpl				*	resource_manager			= {};
 
-	bool								is_good						= {};
+	bool											is_good						= {};
 };
 
 
