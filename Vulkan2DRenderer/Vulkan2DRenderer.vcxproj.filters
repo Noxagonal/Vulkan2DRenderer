@@ -75,6 +75,27 @@
     <ClInclude Include="..\Source\Header\VulkanMemoryManagement.h">
       <Filter>Source\Headers</Filter>
     </ClInclude>
+    <ClInclude Include="..\Include\VK2D\Resource.h">
+      <Filter>Include\VK2D</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Include\VK2D\ResourceManager.h">
+      <Filter>Include\VK2D</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Source\Header\TextureResourceImpl.h">
+      <Filter>Source\Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Include\VK2D\TextureResource.h">
+      <Filter>Include\VK2D</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Source\Header\ResourceManagerImpl.h">
+      <Filter>Source\Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Source\Header\ThreadPool.h">
+      <Filter>Source\Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Source\Header\ResourceImpl.h">
+      <Filter>Source\Headers</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\Source\VK2D\Platform.cpp">
@@ -99,6 +120,27 @@
       <Filter>Source\VK2D</Filter>
     </ClCompile>
     <ClCompile Include="..\Source\VK2D\RendererImpl.cpp">
+      <Filter>Source\VK2D</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\VK2D\Resource.cpp">
+      <Filter>Source\VK2D</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\VK2D\ResourceManager.cpp">
+      <Filter>Source\VK2D</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\VK2D\ResourceManagerImpl.cpp">
+      <Filter>Source\VK2D</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\VK2D\TextureResource.cpp">
+      <Filter>Source\VK2D</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\VK2D\TextureResourceImpl.cpp">
+      <Filter>Source\VK2D</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\VK2D\ResourceImpl.cpp">
+      <Filter>Source\VK2D</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\VK2D\ThreadPool.cpp">
       <Filter>Source\VK2D</Filter>
     </ClCompile>
   </ItemGroup>

@@ -1,6 +1,7 @@
 
 #include "../Header/SourceCommon.h"
 #include "../Header/RendererImpl.h"
+#include "../Header/ResourceManagerImpl.h"
 
 #include "../../Include/VK2D/Window.h"
 
@@ -79,13 +80,24 @@ RendererImpl::RendererImpl( const RendererCreateInfo & renderer_create_info )
 		physical_device,
 		device
 	);
-
 	if( !device_memory_pool ) {
 		if( report_function ) {
 			report_function( ReportSeverity::NON_CRITICAL_ERROR, "Cannot create Vulkan Device memory pool!" );
 		}
 		return;
 	}
+
+	/*
+	resource_manager		= std::make_unique<ResourceManager>(
+		this
+	);
+	if( !resource_manager ) {
+		if( report_function ) {
+			report_function( ReportSeverity::NON_CRITICAL_ERROR, "Cannot create resource manager!" );
+		}
+		return;
+	}
+	*/
 
 	is_good		= true;
 }
@@ -208,6 +220,12 @@ void RendererImpl::CloseWindowOutput(
 PFN_VK2D_ReportFunction RendererImpl::GetReportFunction()
 {
 	return report_function;
+}
+
+ResourceManager * RendererImpl::GetResourceManager()
+{
+//	return resource_manager.get();
+	return nullptr;
 }
 
 VkInstance RendererImpl::GetVulkanInstance()

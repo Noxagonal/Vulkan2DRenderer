@@ -16,6 +16,7 @@ namespace vk2d {
 
 class Window;
 class Renderer;
+class ResourceManager;
 
 namespace _internal {
 
@@ -36,6 +37,8 @@ public:
 		Window									*	window );
 
 	PFN_VK2D_ReportFunction							GetReportFunction();
+
+	ResourceManager								*	GetResourceManager();
 
 	VkInstance										GetVulkanInstance();
 	VkPhysicalDevice								GetVulkanPhysicalDevice();
@@ -82,6 +85,8 @@ private:
 	std::vector<const char*>						device_extensions					= {};
 
 	PFN_VK2D_ReportFunction							report_function						= {};
+
+//	std::unique_ptr<ResourceManager>				resource_manager					= {};
 
 	VkDebugUtilsMessengerEXT						debug_utils_messenger				= {};
 
