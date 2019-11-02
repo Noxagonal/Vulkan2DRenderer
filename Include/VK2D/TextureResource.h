@@ -32,7 +32,7 @@ public:
 
 protected:
 	VK2D_API virtual bool		VK2D_APIENTRY	MTLoad();
-	VK2D_API virtual bool		VK2D_APIENTRY	MTUnload();
+	VK2D_API virtual void		VK2D_APIENTRY	MTUnload();
 
 private:
 	std::unique_ptr<_internal::TextureResourceImpl>		impl					= {};

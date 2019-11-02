@@ -25,7 +25,7 @@ public:
 	~TextureResourceImpl();
 
 	bool											MTLoad();
-	bool											MTUnload();
+	void											MTUnload();
 
 	bool											IsGood();
 

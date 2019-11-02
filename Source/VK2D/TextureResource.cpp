@@ -35,10 +35,9 @@ VK2D_API bool VK2D_APIENTRY TextureResource::MTLoad()
 	return false;
 }
 
-VK2D_API bool VK2D_APIENTRY TextureResource::MTUnload()
+VK2D_API void VK2D_APIENTRY TextureResource::MTUnload()
 {
-	if( impl && impl->IsGood() ) return impl->MTUnload();
-	return false;
+	if( impl && impl->IsGood() ) impl->MTUnload();
 }
 
 

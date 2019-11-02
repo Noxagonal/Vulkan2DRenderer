@@ -4,6 +4,7 @@
 #include "../Header/TextureResourceImpl.h"
 
 #include <assert.h>
+#include <thread>
 
 
 namespace vk2d {
@@ -34,14 +35,21 @@ TextureResourceImpl::~TextureResourceImpl()
 
 bool TextureResourceImpl::MTLoad()
 {
-	// TODO
+	// 1. Load and process image from file.
+	// 2. Create staging buffer, we'll also need memory pool for this.
+	// 3. Create image and image view Vulkan objects.
+	// 4. Allocate a command buffer from thread resources
+	// 5. Record commands to upload image into the GPU.
+	// 6. Record commands to make mipmaps of the image in the GPU.
+	// 7. Make image available in a shader.
+	// 8. Allocate descriptor set that points to the image.
+	// 9. Submit command buffer to the GPU, get a fence handle to indicate when the image is ready to be used.
 	return false;
 }
 
-bool TextureResourceImpl::MTUnload()
+void TextureResourceImpl::MTUnload()
 {
 	// TODO
-	return false;
 }
 
 bool TextureResourceImpl::IsGood()

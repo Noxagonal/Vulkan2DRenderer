@@ -47,7 +47,26 @@ public:
 
 	void operator()( _internal::ThreadPrivateResource * thread_resource )
 	{
-		resource->MTLoad();
+		if( !resource->MTLoad() ) resource->failed_to_load = true;
+	}
+
+	ResourceManagerImpl		*	resource_manager		= {};
+	Resource				*	resource				= {};
+};
+
+class UnloadTask : public _internal::Task {
+public:
+	UnloadTask(
+		ResourceManagerImpl		*	resource_manager,
+		Resource				*	resource
+	) :
+		resource_manager( resource_manager ),
+		resource( resource )
+	{};
+
+	void operator()( _internal::ThreadPrivateResource * thread_resource )
+	{
+		resource->MTUnload();
 	}
 
 	ResourceManagerImpl		*	resource_manager		= {};
@@ -68,7 +87,7 @@ TextureResource * ResourceManagerImpl::LoadTextureResource(
 		}
 	}
 
-	// Not found in resources, load it
+	// Not found in resources, create it
 	auto resource		= std::unique_ptr<TextureResource>( new TextureResource( this ) );
 	auto resource_ptr	= resource.get();
 	if( !resource || !resource->IsGood() ) return nullptr; // Could not create resource.
