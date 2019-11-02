@@ -6,7 +6,7 @@ constexpr double RAD			= PI * 2.0;
 
 
 
-// Debugging...
+// Debugging only...
 #include <../Source/Header/ThreadPool.h>
 #include <../Source/VK2D/ThreadPool.cpp>
 
@@ -18,10 +18,17 @@ constexpr double RAD			= PI * 2.0;
 int main()
 {
 	{
+		// This is only testing the code, full thread pool system will
+		// likely not be visible to the library user.
+
 		// Create thread pool with multiple different types of threads.
 		// This is a rather complicated system which allows some tasks
 		// to be locked to certain threads, useful when handling vulkan
-		// device resources, this also allows 
+		// device resources. Tasks can have dependencies to previously
+		// submitted tasks, useful when breaking down operations into
+		// smaller steps allowing code execution to proceed overall
+		// instead of something getting stuck processing something huge.
+
 		std::unique_ptr<vk2d::ThreadPool> thread_pool {};
 
 		// Create a type of thread.
@@ -59,8 +66,8 @@ int main()
 
 		{
 			// Create a new task type, need to be derived from vk2d::Task.
-			// Alternatively you can also lock the task to a certain thread, if
-			// you need to ensure that task 
+			// You can also lock the task to a certain thread, if you need
+			// to ensure that task uses resourses from only a specific thread.
 			class MyTask : public vk2d::Task {
 			public:
 				MyTask( std::chrono::milliseconds delay ) :
@@ -81,6 +88,7 @@ int main()
 				std::chrono::milliseconds	delay;
 			};
 
+			// Second task to print out that all previous threads have finished execution.
 			class MyTask2 : public vk2d::Task {
 			public:
 				void operator()( vk2d::ThreadPrivateResource * thread_resource )
@@ -101,7 +109,7 @@ int main()
 			thread_pool->ScheduleTask( std::make_unique<MyTask2>(), thread_pool->GetThreadID( 1 ), dependencies );
 		}
 
-		// At this point thread pool gets destroyed, so it'll automatically synchronize
+		// At this point thread pool gets destroyed, so it'll automatically synchronize all threads.
 	}
 
 
