@@ -14,6 +14,8 @@ constexpr double RAD			= PI * 2.0;
 #include <iostream>
 
 
+std::mutex iostream_mutex;
+
 
 int main()
 {
@@ -59,10 +61,14 @@ int main()
 		std::vector<std::unique_ptr<vk2d::ThreadPrivateResource>> thread_resources;
 		thread_resources.push_back( std::make_unique<thread_resource_test>() );
 		thread_resources.push_back( std::make_unique<thread_resource_test>() );
+		thread_resources.push_back( std::make_unique<thread_resource_test>() );
+		thread_resources.push_back( std::make_unique<thread_resource_test>() );
 
 		thread_pool = std::make_unique<vk2d::ThreadPool>( std::move( thread_resources ) );
 		std::cout << "Thread 0: " << thread_pool->GetThreadID( 0 ) << "\n";
-		std::cout << "Thread 1: " << thread_pool->GetThreadID( 1 ) << std::endl;
+		std::cout << "Thread 1: " << thread_pool->GetThreadID( 1 ) << "\n";
+		std::cout << "Thread 2: " << thread_pool->GetThreadID( 2 ) << "\n";
+		std::cout << "Thread 3: " << thread_pool->GetThreadID( 3 ) << "\n" << std::endl;
 
 		{
 			// Create a new task type, need to be derived from vk2d::Task.
@@ -70,8 +76,9 @@ int main()
 			// to ensure that task uses resourses from only a specific thread.
 			class MyTask : public vk2d::Task {
 			public:
-				MyTask( std::chrono::milliseconds delay ) :
-					delay( delay )
+				MyTask( std::chrono::milliseconds delay = std::chrono::milliseconds( 0 ), std::string message = "" ) :
+					delay( delay ),
+					message( message )
 				{};
 				void operator()( vk2d::ThreadPrivateResource * thread_resource )
 				{
@@ -81,32 +88,57 @@ int main()
 					if( tr ) {
 						// Simulate some workload
 						std::this_thread::sleep_for( delay );
-						std::cout << tr->str << " From thread: " << std::this_thread::get_id() << std::endl;
+
+						std::lock_guard<std::mutex> lock_guard( iostream_mutex );
+						std::cout << tr->str << " From thread: " << tr->GetThreadIndex() << ". " << message << std::endl;
 					}
 				}
 
 				std::chrono::milliseconds	delay;
+				std::string					message;
 			};
 
 			// Second task to print out that all previous threads have finished execution.
 			class MyTask2 : public vk2d::Task {
 			public:
+				MyTask2( std::string message ) : message( message )
+				{};
 				void operator()( vk2d::ThreadPrivateResource * thread_resource )
 				{
 					// We'll set this thread to wait for all other threads.
-					std::cout << "All tasks completed: from thread: " << std::this_thread::get_id() << std::endl;
+					std::cout << "All tasks completed: from thread: " << thread_resource->GetThreadIndex() << ". " << message << std::endl;
 				}
+
+				std::string message;
 			};
 
-			// TODO: Already have a way of forcing a specific thread to a task, I might also consider a vector of
-			// possible threads, some tasks can run on any thread, some tasks can run only one thread, some tasks
-			// might be able to run only specific types of threads but not directly bound by per-thread resources.
 			std::vector<uint64_t> dependencies;
-			dependencies.push_back( thread_pool->ScheduleTask( std::make_unique<MyTask>( std::chrono::milliseconds(  500 ) ), thread_pool->GetThreadID( 0 ) ) );
-			dependencies.push_back( thread_pool->ScheduleTask( std::make_unique<MyTask>( std::chrono::milliseconds( 1000 ) ), thread_pool->GetThreadID( 0 ) ) );
-			dependencies.push_back( thread_pool->ScheduleTask( std::make_unique<MyTask>( std::chrono::milliseconds( 1500 ) ), thread_pool->GetThreadID( 0 ) ) );
-			dependencies.push_back( thread_pool->ScheduleTask( std::make_unique<MyTask>( std::chrono::milliseconds( 2000 ) ), thread_pool->GetThreadID( 0 ) ) );
-			thread_pool->ScheduleTask( std::make_unique<MyTask2>(), thread_pool->GetThreadID( 1 ), dependencies );
+			dependencies.push_back( thread_pool->ScheduleTask( std::make_unique<MyTask>( std::chrono::milliseconds(  100 ), "Should run on thread 0 only." ), { 0 } ) );
+			dependencies.push_back( thread_pool->ScheduleTask( std::make_unique<MyTask>( std::chrono::milliseconds(  200 ), "Should run on thread 0 only." ), { 0 } ) );
+			dependencies.push_back( thread_pool->ScheduleTask( std::make_unique<MyTask>( std::chrono::milliseconds(  300 ), "Should run on thread 0 only." ), { 0 } ) );
+			dependencies.push_back( thread_pool->ScheduleTask( std::make_unique<MyTask>( std::chrono::milliseconds(  400 ), "Should run on thread 0 only." ), { 0 } ) );
+			dependencies.push_back( thread_pool->ScheduleTask( std::make_unique<MyTask>( std::chrono::milliseconds(  100 ), "Should run on thread 1 only." ), { 1 } ) );
+			dependencies.push_back( thread_pool->ScheduleTask( std::make_unique<MyTask>( std::chrono::milliseconds(  200 ), "Should run on thread 1 only." ), { 1 } ) );
+			dependencies.push_back( thread_pool->ScheduleTask( std::make_unique<MyTask>( std::chrono::milliseconds(  300 ), "Should run on thread 1 only." ), { 1 } ) );
+			dependencies.push_back( thread_pool->ScheduleTask( std::make_unique<MyTask>( std::chrono::milliseconds(  400 ), "Should run on thread 1 only." ), { 1 } ) );
+			dependencies.push_back( thread_pool->ScheduleTask( std::make_unique<MyTask>( std::chrono::milliseconds(    0 ), "Should run on any thread." ) ) );
+			dependencies.push_back( thread_pool->ScheduleTask( std::make_unique<MyTask>( std::chrono::milliseconds(    0 ), "Should run on any thread." ) ) );
+			dependencies.push_back( thread_pool->ScheduleTask( std::make_unique<MyTask>( std::chrono::milliseconds(    0 ), "Should run on any thread." ) ) );
+			dependencies.push_back( thread_pool->ScheduleTask( std::make_unique<MyTask>( std::chrono::milliseconds(    0 ), "Should run on any thread." ) ) );
+			dependencies.push_back( thread_pool->ScheduleTask( std::make_unique<MyTask>( std::chrono::milliseconds(    0 ), "Should run only on threads 0 and 1." ), { 0, 1 } ) );
+			dependencies.push_back( thread_pool->ScheduleTask( std::make_unique<MyTask>( std::chrono::milliseconds(    0 ), "Should run only on threads 0 and 1." ), { 0, 1 } ) );
+			dependencies.push_back( thread_pool->ScheduleTask( std::make_unique<MyTask>( std::chrono::milliseconds(    0 ), "Should run only on threads 0 and 1." ), { 0, 1 } ) );
+			dependencies.push_back( thread_pool->ScheduleTask( std::make_unique<MyTask>( std::chrono::milliseconds(    0 ), "Should run only on threads 0 and 1." ), { 0, 1 } ) );
+			std::vector<uint64_t> chained_dependencies;
+			chained_dependencies.push_back( thread_pool->ScheduleTask( std::make_unique<MyTask>( std::chrono::milliseconds(  500 ), "Chained, should run after unchained: Should run on thread 2 or 3." ), { 2, 3 }, dependencies ) );
+			chained_dependencies.push_back( thread_pool->ScheduleTask( std::make_unique<MyTask>( std::chrono::milliseconds( 1000 ), "Chained, should run after unchained: Should run on thread 2 or 3." ), { 2, 3 }, dependencies ) );
+			chained_dependencies.push_back( thread_pool->ScheduleTask( std::make_unique<MyTask>( std::chrono::milliseconds( 1500 ), "Chained, should run after unchained: Should run on thread 2 or 3." ), { 2, 3 }, dependencies ) );
+			chained_dependencies.push_back( thread_pool->ScheduleTask( std::make_unique<MyTask>( std::chrono::milliseconds( 2000 ), "Chained, should run after unchained: Should run on thread 2 or 3." ), { 2, 3 }, dependencies ) );
+			chained_dependencies.push_back( thread_pool->ScheduleTask( std::make_unique<MyTask>( std::chrono::milliseconds(    0 ), "Chained, should run after unchained: Should run on thread 2 or 3." ), { 2, 3 }, dependencies ) );
+			chained_dependencies.push_back( thread_pool->ScheduleTask( std::make_unique<MyTask>( std::chrono::milliseconds(    0 ), "Chained, should run after unchained: Should run on thread 2 or 3." ), { 2, 3 }, dependencies ) );
+			chained_dependencies.push_back( thread_pool->ScheduleTask( std::make_unique<MyTask>( std::chrono::milliseconds(    0 ), "Chained, should run after unchained: Should run on thread 2 or 3." ), { 2, 3 }, dependencies ) );
+			chained_dependencies.push_back( thread_pool->ScheduleTask( std::make_unique<MyTask>( std::chrono::milliseconds(    0 ), "Chained, should run after unchained: Should run on thread 2 or 3." ), { 2, 3 }, dependencies ) );
+			thread_pool->ScheduleTask( std::make_unique<MyTask2>( "Chained, should run last: Should run on thread 1." ), { 1 }, chained_dependencies );
 		}
 
 		// At this point thread pool gets destroyed, so it'll automatically synchronize all threads.
