@@ -86,7 +86,7 @@ private:
 
 	PFN_VK2D_ReportFunction							report_function						= {};
 
-	std::unique_ptr<ResourceManager>				resource_manager					= {};
+//	std::unique_ptr<ResourceManager>				resource_manager					= {};
 
 	VkDebugUtilsMessengerEXT						debug_utils_messenger				= {};
 

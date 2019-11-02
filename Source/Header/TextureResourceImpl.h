@@ -23,8 +23,8 @@ public:
 
 	~TextureResourceImpl();
 
-	bool								Load();
-	bool								Unload();
+	bool								MTLoad();
+	bool								MTUnload();
 
 	bool								IsGood();
 

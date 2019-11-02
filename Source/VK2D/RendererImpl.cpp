@@ -87,6 +87,7 @@ RendererImpl::RendererImpl( const RendererCreateInfo & renderer_create_info )
 		return;
 	}
 
+	/*
 	resource_manager		= std::make_unique<ResourceManager>(
 		this
 	);
@@ -96,6 +97,7 @@ RendererImpl::RendererImpl( const RendererCreateInfo & renderer_create_info )
 		}
 		return;
 	}
+	*/
 
 	is_good		= true;
 }
@@ -222,7 +224,8 @@ PFN_VK2D_ReportFunction RendererImpl::GetReportFunction()
 
 ResourceManager * RendererImpl::GetResourceManager()
 {
-	return resource_manager.get();
+//	return resource_manager.get();
+	return nullptr;
 }
 
 VkInstance RendererImpl::GetVulkanInstance()

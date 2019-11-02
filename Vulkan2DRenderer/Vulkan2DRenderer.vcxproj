@@ -115,6 +115,7 @@ glslangValidator -V -o "$(SolutionDir)Source\Shaders\shader.frag.spv.h" "$(Solut
     <ClInclude Include="..\Source\Header\ResourceManagerImpl.h" />
     <ClInclude Include="..\Source\Header\SourceCommon.h" />
     <ClInclude Include="..\Source\Header\TextureResourceImpl.h" />
+    <ClInclude Include="..\Source\Header\ThreadPool.h" />
     <ClInclude Include="..\Source\Header\VulkanMemoryManagement.h" />
     <ClInclude Include="..\Source\Header\WindowImpl.h" />
     <ClInclude Include="..\Source\Shaders\shader.frag.spv.h" />
@@ -132,6 +133,7 @@ glslangValidator -V -o "$(SolutionDir)Source\Shaders\shader.frag.spv.h" "$(Solut
     <ClCompile Include="..\Source\VK2D\ResourceManagerImpl.cpp" />
     <ClCompile Include="..\Source\VK2D\TextureResource.cpp" />
     <ClCompile Include="..\Source\VK2D\TextureResourceImpl.cpp" />
+    <ClCompile Include="..\Source\VK2D\ThreadPool.cpp" />
     <ClCompile Include="..\Source\VK2D\VulkanMemoryManagement.cpp" />
     <ClCompile Include="..\Source\VK2D\Window.cpp" />
     <ClCompile Include="..\Source\VK2D\WindowImpl.cpp" />
@@ -140,9 +142,6 @@ glslangValidator -V -o "$(SolutionDir)Source\Shaders\shader.frag.spv.h" "$(Solut
     <None Include="..\Source\Shaders\shader.frag" />
     <None Include="..\Source\Shaders\shader.vert" />
     <None Include="cpp.hint" />
-  </ItemGroup>
-  <ItemGroup>
-    <ResourceCompile Include="Vulkan2DRenderer.rc" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

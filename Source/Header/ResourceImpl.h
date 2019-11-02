@@ -1,5 +1,7 @@
 #pragma once
 
+#include "SourceCommon.h"
+
 namespace vk2d {
 
 namespace _internal {
@@ -8,8 +10,8 @@ namespace _internal {
 
 class ResourceImpl {
 public:
-	virtual bool Load()		= 0;
-	virtual bool Unload()	= 0;
+	virtual bool MTLoad()		= 0;
+	virtual bool MTUnload()		= 0;
 };
 
 

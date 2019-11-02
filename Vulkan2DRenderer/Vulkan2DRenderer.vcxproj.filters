@@ -90,8 +90,11 @@
     <ClInclude Include="..\Source\Header\ResourceManagerImpl.h">
       <Filter>Source\Headers</Filter>
     </ClInclude>
+    <ClInclude Include="..\Source\Header\ThreadPool.h">
+      <Filter>Source\Headers</Filter>
+    </ClInclude>
     <ClInclude Include="..\Source\Header\ResourceImpl.h">
-      <Filter>Include\VK2D</Filter>
+      <Filter>Source\Headers</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -137,6 +140,9 @@
     <ClCompile Include="..\Source\VK2D\ResourceImpl.cpp">
       <Filter>Source\VK2D</Filter>
     </ClCompile>
+    <ClCompile Include="..\Source\VK2D\ThreadPool.cpp">
+      <Filter>Source\VK2D</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="cpp.hint" />
@@ -146,10 +152,5 @@
     <None Include="..\Source\Shaders\shader.frag">
       <Filter>Source\Shaders</Filter>
     </None>
-  </ItemGroup>
-  <ItemGroup>
-    <ResourceCompile Include="Vulkan2DRenderer.rc">
-      <Filter>Resource Files</Filter>
-    </ResourceCompile>
   </ItemGroup>
 </Project>

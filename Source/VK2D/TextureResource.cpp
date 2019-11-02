@@ -24,6 +24,11 @@ TextureResource::TextureResource(
 TextureResource::~TextureResource()
 {}
 
+bool TextureResource::IsGood()
+{
+	return is_good;
+}
+
 
 
 }

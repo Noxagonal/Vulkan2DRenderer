@@ -8,7 +8,7 @@ namespace vk2d {
 
 class Resource {
 public:
-	virtual bool			IsLoaded();
+	virtual bool			IsLoaded()		= 0;
 };
 
 

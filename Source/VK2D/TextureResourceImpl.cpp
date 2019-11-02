@@ -25,13 +25,13 @@ TextureResourceImpl::~TextureResourceImpl()
 	// TODO
 }
 
-bool TextureResourceImpl::Load()
+bool TextureResourceImpl::MTLoad()
 {
 	// TODO
 	return false;
 }
 
-bool TextureResourceImpl::Unload()
+bool TextureResourceImpl::MTUnload()
 {
 	// TODO
 	return false;
