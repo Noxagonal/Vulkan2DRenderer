@@ -93,9 +93,6 @@
     <ClInclude Include="..\Source\Header\ThreadPool.h">
       <Filter>Source\Headers</Filter>
     </ClInclude>
-    <ClInclude Include="..\Source\Header\ResourceImpl.h">
-      <Filter>Source\Headers</Filter>
-    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\Source\VK2D\Platform.cpp">
@@ -135,9 +132,6 @@
       <Filter>Source\VK2D</Filter>
     </ClCompile>
     <ClCompile Include="..\Source\VK2D\TextureResourceImpl.cpp">
-      <Filter>Source\VK2D</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Source\VK2D\ResourceImpl.cpp">
       <Filter>Source\VK2D</Filter>
     </ClCompile>
     <ClCompile Include="..\Source\VK2D\ThreadPool.cpp">

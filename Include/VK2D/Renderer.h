@@ -3,7 +3,6 @@
 #include "Common.h"
 
 #include "Window.h"
-
 #include "Version.hpp"
 
 #include <string>
@@ -17,6 +16,7 @@ class RendererImpl;
 
 
 class Window;
+class ResourceManager;
 
 
 enum class ReportSeverity : uint32_t {
@@ -57,6 +57,8 @@ public:
 		WindowCreateInfo									&	window_create_info );
 	VK2D_API void							VK2D_APIENTRY		CloseWindowOutput(
 		Window												*	window );
+
+	VK2D_API ResourceManager			*	VK2D_APIENTRY		GetResourceManager();
 
 private:
 	std::unique_ptr<vk2d::_internal::RendererImpl>				impl;

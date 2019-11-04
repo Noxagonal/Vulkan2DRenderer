@@ -44,12 +44,12 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <OutDir>$(SolutionDir)Lib\$(Configuration)\</OutDir>
-    <IncludePath>$(VK_SDK_PATH)\Include;$(SolutionDir)ExternalLibraries\glfw-3.3\include;$(IncludePath)</IncludePath>
+    <IncludePath>$(VK_SDK_PATH)\Include;$(SolutionDir)ExternalLibraries\glfw-3.3\include;$(SolutionDir)ExternalLibraries\stb;$(IncludePath)</IncludePath>
     <LibraryPath>$(VK_SDK_PATH)\Lib;$(SolutionDir)ExternalLibraries\glfw-3.3-VisualStudio2019\src\Release;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <OutDir>$(SolutionDir)Lib\$(Configuration)\</OutDir>
-    <IncludePath>$(VK_SDK_PATH)\Include;$(SolutionDir)ExternalLibraries\glfw-3.3\include;$(IncludePath)</IncludePath>
+    <IncludePath>$(VK_SDK_PATH)\Include;$(SolutionDir)ExternalLibraries\glfw-3.3\include;$(SolutionDir)ExternalLibraries\stb;$(IncludePath)</IncludePath>
     <LibraryPath>$(VK_SDK_PATH)\Lib;$(SolutionDir)ExternalLibraries\glfw-3.3-VisualStudio2019\src\Release;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -58,6 +58,8 @@
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -80,6 +82,8 @@ glslangValidator -V -o "$(SolutionDir)Source\Shaders\shader.frag.spv.h" "$(Solut
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -111,7 +115,6 @@ glslangValidator -V -o "$(SolutionDir)Source\Shaders\shader.frag.spv.h" "$(Solut
     <ClInclude Include="..\Source\Header\MeshBuffer.h" />
     <ClInclude Include="..\Source\Header\QueueResolver.h" />
     <ClInclude Include="..\Source\Header\RendererImpl.h" />
-    <ClInclude Include="..\Source\Header\ResourceImpl.h" />
     <ClInclude Include="..\Source\Header\ResourceManagerImpl.h" />
     <ClInclude Include="..\Source\Header\SourceCommon.h" />
     <ClInclude Include="..\Source\Header\TextureResourceImpl.h" />
@@ -128,7 +131,6 @@ glslangValidator -V -o "$(SolutionDir)Source\Shaders\shader.frag.spv.h" "$(Solut
     <ClCompile Include="..\Source\VK2D\Renderer.cpp" />
     <ClCompile Include="..\Source\VK2D\RendererImpl.cpp" />
     <ClCompile Include="..\Source\VK2D\Resource.cpp" />
-    <ClCompile Include="..\Source\VK2D\ResourceImpl.cpp" />
     <ClCompile Include="..\Source\VK2D\ResourceManager.cpp" />
     <ClCompile Include="..\Source\VK2D\ResourceManagerImpl.cpp" />
     <ClCompile Include="..\Source\VK2D\TextureResource.cpp" />

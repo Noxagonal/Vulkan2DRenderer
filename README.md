@@ -36,9 +36,10 @@ Vulkan 2D Renderer is a C++17 library designed to be easy to use 2D rendering ba
 
 ### Included libraries
 
-| Library | License |
-| --- | --- |
-| GLFW 3.3 | [zlib/libpng](ExternalLibraries/glfw-3.3/LICENSE.md) |
+| Library | License | Github page |
+| --- | --- | --- |
+| GLFW 3.3 | [zlib/libpng](ExternalLibraries/glfw-3.3/LICENSE.md) | https://github.com/glfw/glfw |
+| STB | [MIT](ExternalLibraries/stb/LICENSE.md) | https://github.com/nothings/stb |
 
 ------
 

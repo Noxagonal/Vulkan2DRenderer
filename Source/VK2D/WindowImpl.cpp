@@ -1100,8 +1100,8 @@ void WindowImpl::Draw_PieBox(
 		uint32_t	linear_resolved_pie_begin_point		= UINT32_MAX;
 		uint32_t	linear_resolved_pie_end_point		= UINT32_MAX;
 		for( size_t i = 0; i < linear_points.size(); ++i ) {
-			if( linear_points[ i ].original_linear_point_index == PIE_BEGIN )	linear_resolved_pie_begin_point	= i;
-			if( linear_points[ i ].original_linear_point_index == PIE_END )		linear_resolved_pie_end_point	= i;
+			if( linear_points[ i ].original_linear_point_index == PIE_BEGIN )	linear_resolved_pie_begin_point	= uint32_t( i );
+			if( linear_points[ i ].original_linear_point_index == PIE_END )		linear_resolved_pie_end_point	= uint32_t( i );
 		}
 		assert( linear_resolved_pie_begin_point != UINT32_MAX );
 		assert( linear_resolved_pie_end_point != UINT32_MAX );

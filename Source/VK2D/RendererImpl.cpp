@@ -1,11 +1,11 @@
 
 #include "../Header/SourceCommon.h"
 #include "../Header/RendererImpl.h"
+#include "../../Include/VK2D/ResourceManager.h"
 #include "../Header/ResourceManagerImpl.h"
-
 #include "../../Include/VK2D/Window.h"
-
 #include "../Header/QueueResolver.h"
+#include "../Header/ThreadPool.h"
 
 #include "../Shaders/shader.vert.spv.h"
 #include "../Shaders/shader.frag.spv.h"
@@ -25,6 +25,44 @@ namespace vk2d {
 namespace _internal {
 
 
+
+class ThreadLoaderResource : public ThreadPrivateResource {
+public:
+	ThreadLoaderResource(
+		RendererImpl * parent
+	) : parent( parent )
+	{
+		device		= parent->GetVulkanDevice();
+	}
+	~ThreadLoaderResource()
+	{}
+
+protected:
+	void			ThreadBegin()
+	{
+		// Initialize Vulkan stuff here
+
+	}
+	void			ThreadEnd()
+	{
+		// De-initialize Vulkan stuff here
+	}
+
+private:
+
+	RendererImpl		*	parent			= {};
+	VkDevice				device			= {};
+};
+
+
+
+class ThreadGeneralResource : public ThreadPrivateResource {
+protected:
+	void			ThreadBegin()
+	{};
+	void			ThreadEnd()
+	{};
+};
 
 
 
@@ -76,28 +114,63 @@ RendererImpl::RendererImpl( const RendererCreateInfo & renderer_create_info )
 	if( !CreateDescriptorSetLayouts() ) return;
 	if( !CreatePipelineLayout() ) return;
 
-	device_memory_pool		= MakeDeviceMemoryPool(
-		physical_device,
-		device
-	);
-	if( !device_memory_pool ) {
-		if( report_function ) {
-			report_function( ReportSeverity::NON_CRITICAL_ERROR, "Cannot create Vulkan Device memory pool!" );
+	// Create device memory pool
+	{
+		device_memory_pool		= MakeDeviceMemoryPool(
+			physical_device,
+			device
+		);
+		if( !device_memory_pool ) {
+			if( report_function ) {
+				report_function( ReportSeverity::NON_CRITICAL_ERROR, "Cannot create Vulkan Device memory pool!" );
+			}
+			return;
 		}
-		return;
 	}
 
-	/*
-	resource_manager		= std::make_unique<ResourceManager>(
-		this
-	);
-	if( !resource_manager ) {
-		if( report_function ) {
-			report_function( ReportSeverity::NON_CRITICAL_ERROR, "Cannot create resource manager!" );
+	// Create thread pool and it's threads
+	{
+		uint32_t thread_count			= std::thread::hardware_concurrency();
+		if( thread_count == 0 ) thread_count = 8;
+		--thread_count;
+
+		uint32_t loader_thread_count	= thread_count / 5;
+		uint32_t general_thread_count	= thread_count - loader_thread_count;
+		if( loader_thread_count == 0 )	loader_thread_count = 1;
+		if( general_thread_count == 0 )	general_thread_count = 1;
+
+		std::vector<std::unique_ptr<ThreadPrivateResource>> thread_resources;
+		for( uint32_t i = 0; i < loader_thread_count; ++i ) {
+			thread_resources.push_back( std::make_unique<ThreadLoaderResource>( this ) );
 		}
-		return;
+		for( uint32_t i = 0; i < general_thread_count; ++i ) {
+			thread_resources.push_back( std::make_unique<ThreadGeneralResource>() );
+		}
+
+		loader_threads.resize( loader_thread_count );
+		general_threads.resize( general_thread_count );
+		for( uint32_t i = 0; i < loader_thread_count; ++i ) {
+			loader_threads[ i ]		= i;
+		}
+		for( uint32_t i = 0; i < general_thread_count; ++i ) {
+			general_threads[ i ]	= loader_thread_count + i;
+		}
+
+		thread_pool				= std::make_unique<ThreadPool>( std::move( thread_resources ) );
 	}
-	*/
+
+	// Create resource manager
+	{
+		resource_manager		= std::make_unique<ResourceManager>(
+			this
+			);
+		if( !resource_manager ) {
+			if( report_function ) {
+				report_function( ReportSeverity::NON_CRITICAL_ERROR, "Cannot create resource manager!" );
+			}
+			return;
+		}
+	}
 
 	is_good		= true;
 }
@@ -107,8 +180,9 @@ RendererImpl::~RendererImpl()
 	vkDeviceWaitIdle( device );
 
 	windows.clear();
-
-	device_memory_pool	= nullptr;
+	resource_manager		= nullptr;
+	thread_pool				= nullptr;
+	device_memory_pool		= nullptr;
 
 	vkDestroyPipelineLayout(
 		device,
@@ -217,95 +291,114 @@ void RendererImpl::CloseWindowOutput(
 
 
 
-PFN_VK2D_ReportFunction RendererImpl::GetReportFunction()
+PFN_VK2D_ReportFunction RendererImpl::GetReportFunction() const
 {
 	return report_function;
 }
 
-ResourceManager * RendererImpl::GetResourceManager()
+ThreadPool * RendererImpl::GetThreadPool() const
 {
-//	return resource_manager.get();
-	return nullptr;
+	return thread_pool.get();
 }
 
-VkInstance RendererImpl::GetVulkanInstance()
+const std::vector<uint32_t> & RendererImpl::GetLoaderThreads() const
+{
+	return loader_threads;
+}
+
+const std::vector<uint32_t> & RendererImpl::GetGeneralThreads() const
+{
+	return general_threads;
+}
+
+ResourceManager * RendererImpl::GetResourceManager() const
+{
+	return resource_manager.get();
+}
+
+VkInstance RendererImpl::GetVulkanInstance() const
 {
 	return instance;
 }
 
-VkPhysicalDevice RendererImpl::GetVulkanPhysicalDevice()
+VkPhysicalDevice RendererImpl::GetVulkanPhysicalDevice() const
 {
 	return physical_device;
 }
 
-VkDevice RendererImpl::GetVulkanDevice()
+VkDevice RendererImpl::GetVulkanDevice() const
 {
 	return device;
 }
 
-ResolvedQueue RendererImpl::GetPrimaryRenderQueue()
+ResolvedQueue RendererImpl::GetPrimaryRenderQueue() const
 {
 	return primary_render_queue;
 }
 
-ResolvedQueue RendererImpl::GetSecondaryRenderQueue()
+ResolvedQueue RendererImpl::GetSecondaryRenderQueue() const
 {
 	return secondary_render_queue;
 }
 
-ResolvedQueue RendererImpl::GetPrimaryComputeQueue()
+ResolvedQueue RendererImpl::GetPrimaryComputeQueue() const
 {
 	return primary_compute_queue;
 }
 
-ResolvedQueue RendererImpl::GetPrimaryTransferQueue()
+ResolvedQueue RendererImpl::GetPrimaryTransferQueue() const
 {
 	return primary_transfer_queue;
 }
 
-const VkPhysicalDeviceProperties & RendererImpl::GetPhysicalDeviceProperties()
+const VkPhysicalDeviceProperties & RendererImpl::GetPhysicalDeviceProperties() const
 {
 	return physical_device_properties;
 }
 
-const VkPhysicalDeviceMemoryProperties & RendererImpl::GetPhysicalDeviceMemoryProperties()
+const VkPhysicalDeviceMemoryProperties & RendererImpl::GetPhysicalDeviceMemoryProperties() const
 {
 	return physical_device_memory_properties;
 }
 
-const VkPhysicalDeviceFeatures & RendererImpl::GetPhysicalDeviceFeatures()
+const VkPhysicalDeviceFeatures & RendererImpl::GetPhysicalDeviceFeatures() const
 {
 	return physical_device_features;
 }
 
-VkShaderModule RendererImpl::GetVertexShaderModule()
+VkShaderModule RendererImpl::GetVertexShaderModule() const
 {
 	return vertex_shader_module;
 }
 
-VkShaderModule RendererImpl::GetFragmentShaderModule()
+VkShaderModule RendererImpl::GetFragmentShaderModule() const
 {
 	return fragment_shader_module;
 }
 
-VkPipelineCache RendererImpl::GetPipelineCache()
+VkPipelineCache RendererImpl::GetPipelineCache() const
 {
 	return pipeline_cache;
 }
 
-VkPipelineLayout RendererImpl::GetPipelineLayout()
+VkPipelineLayout RendererImpl::GetPipelineLayout() const
 {
 	return pipeline_layout;
 }
 
-VkDescriptorSetLayout RendererImpl::GetDescriptorSetLayout()
+VkDescriptorSetLayout RendererImpl::GetDescriptorSetLayout() const
 {
 	return descriptor_set_layout;
 }
 
-DeviceMemoryPool * RendererImpl::GetDeviceMemoryPool()
+DeviceMemoryPool * RendererImpl::GetDeviceMemoryPool() const
 {
 	return device_memory_pool.get();
+}
+
+bool RendererImpl::IsGood() const
+{
+	return is_good;
 }
 
 

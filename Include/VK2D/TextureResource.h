@@ -10,26 +10,34 @@ namespace vk2d {
 namespace _internal {
 class RendererImpl;
 class TextureResourceImpl;
+class LoadTask;
+class UnloadTask;
 }
 
 
 class TextureResource :
 	public Resource
 {
-	friend class _internal::RendererImpl;
+	friend class _internal::ResourceManagerImpl;
+	friend class _internal::LoadTask;
+	friend class _internal::UnloadTask;
 
-	TextureResource(
-		_internal::RendererImpl						*	renderer_parent );
+	VK2D_API									TextureResource(
+		_internal::ResourceManagerImpl		*	resource_manager_parent );
 
 public:
-	~TextureResource();
+	VK2D_API									~TextureResource();
 
-	bool						IsGood();
+	VK2D_API bool				VK2D_APIENTRY	IsGood();
+
+protected:
+	VK2D_API virtual bool		VK2D_APIENTRY	MTLoad();
+	VK2D_API virtual void		VK2D_APIENTRY	MTUnload();
 
 private:
-	std::unique_ptr<_internal::TextureResourceImpl>		impl	= {};
+	std::unique_ptr<_internal::TextureResourceImpl>		impl					= {};
 
-	bool						is_good							= {};
+	bool										is_good							= {};
 };
 
 

@@ -1,5 +1,7 @@
 
-#include "..\Header\ThreadPool.h"
+#include "../Header/SourceCommon.h"
+
+#include "../Header/ThreadPool.h"
 
 #include <atomic>
 #include <deque>
@@ -8,6 +10,9 @@
 
 namespace vk2d {
 
+namespace _internal {
+
+
 
 
 // Make sure all accesses are either atomic or inside a critical sector.
@@ -15,7 +20,9 @@ namespace vk2d {
 class ThreadSharedResource {
 public:
 
-	Task * FindWork()
+	Task * FindWork(
+		ThreadPrivateResource * thread_private_resource
+	)
 	{
 		std::lock_guard<std::mutex> lock_guard( task_list_mutex );
 
@@ -28,7 +35,11 @@ public:
 
 				// Check if this thread is allowed to run this code
 				if( !task->IsThreadLocked() ||
-					task->GetThreadLockID() == std::this_thread::get_id() ) {
+					std::any_of( task->GetThreadLocks().begin(), task->GetThreadLocks().end(),
+						[ thread_private_resource, &task ]( uint32_t tl )
+						{
+							return thread_private_resource->GetThreadIndex() == tl;
+						} ) ) {
 
 					// Look for dependencies, if task is depending on another
 					// task that isn't yet finished we should not execute it.
@@ -50,9 +61,9 @@ public:
 							return task;
 						}
 				} else {
-					// This thread is not allowed to run this code
-					++it;
-				}
+							// This thread is not allowed to run this code
+							++it;
+						}
 			} else {
 				// Task already running, move on to check the next one
 				++it;
@@ -110,7 +121,7 @@ void ThreadPoolWorkerThread(
 
 	while( !thread_shared_resource->threads_should_exit ) {
 		bool found_work		= false;
-		if( auto task		= thread_shared_resource->FindWork() ) {
+		if( auto task		= thread_shared_resource->FindWork( thread_private_resource ) ) {
 			// There's more work to be done, let the other threads know about it too.
 			thread_shared_resource->thread_wakeup.notify_one();
 			( *task )( thread_private_resource );
@@ -141,6 +152,7 @@ ThreadPool::ThreadPool(
 	thread_shared_resource		= std::make_unique<ThreadSharedResource>();
 	thread_private_resources	= std::move( thread_resources );
 	for( size_t i = 0; i < thread_private_resources.size(); ++i ) {
+		thread_private_resources[ i ]->thread_index		= i;
 		threads.push_back( std::thread( ThreadPoolWorkerThread, thread_shared_resource.get(), thread_private_resources[ i ].get(), &thread_signals[ i ] ) );
 	};
 
@@ -201,5 +213,6 @@ uint64_t ThreadPool::AddTask( std::unique_ptr<Task> new_task )
 }
 
 
+} // _internal
 
 } // vk2d

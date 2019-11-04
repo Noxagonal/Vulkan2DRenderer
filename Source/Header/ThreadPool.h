@@ -1,6 +1,6 @@
 #pragma once
 
-// #include "SourceCommon.h"
+#include "SourceCommon.h"
 
 #include <vector>
 #include <thread>
@@ -8,6 +8,8 @@
 #include <atomic>
 
 namespace vk2d {
+
+namespace _internal {
 
 
 
@@ -18,7 +20,6 @@ struct ThreadSignal;
 
 
 
-// Must be copy constructible
 class Task {
 	friend class ThreadPool;
 	friend class ThreadSharedResource;
@@ -26,20 +27,20 @@ class Task {
 public:
 	Task()
 	{};
-	Task( Task & other )							= default;
+	Task( const Task & other )						= delete;
 	Task( Task && other )							= default;
 
 	virtual											~Task()
 	{};
 
-	inline std::thread::id							GetThreadLockID()
+	inline const std::vector<uint32_t>			&	GetThreadLocks() const
 	{
-		return thread_lock;
+		return locked_to_threads;
 	}
 
-	inline bool										IsThreadLocked()
+	inline bool										IsThreadLocked() const
 	{
-		return thread_lock != std::thread::id();
+		return !!locked_to_threads.size();
 	}
 
 	inline uint64_t									GetTaskIndex() const
@@ -58,10 +59,10 @@ public:
 	}
 
 	virtual void									operator()(
-		ThreadPrivateResource							*	thread_resource )			= 0;
+		ThreadPrivateResource					*	thread_resource )			= 0;
 
 private:
-	std::thread::id									thread_lock					= std::thread::id();
+	std::vector<uint32_t>							locked_to_threads			= {};
 	uint64_t										task_index					= {};
 	std::vector<uint64_t>							dependencies				= {};
 	std::atomic_bool								is_running					= {};
@@ -69,10 +70,10 @@ private:
 
 
 
-// Must be copy constructible
 // This tells a specific thread what to do immediately after the
 // thread has been created and what to do before joining the thread.
 class ThreadPrivateResource {
+	friend class ThreadPool;
 	friend void ThreadPoolWorkerThread(
 		ThreadSharedResource		*	thread_shared_resource,
 		ThreadPrivateResource		*	thread_private_resource,
@@ -82,25 +83,36 @@ class ThreadPrivateResource {
 public:
 	ThreadPrivateResource()
 	{};
+	ThreadPrivateResource( const ThreadPrivateResource & other )	= delete;
+	ThreadPrivateResource( ThreadPrivateResource && other )			= default;
 
 	virtual					~ThreadPrivateResource()
 	{};
 
+	// This is not thread id, just the index
+	inline uint32_t			GetThreadIndex()
+	{
+		return thread_index;
+	}
+
 protected:
 	virtual	void			ThreadBegin()			= 0;
 	virtual void			ThreadEnd()				= 0;
+
+private:
+	uint32_t				thread_index			= {};
 };
 
 
 
-//
+// Used to pass signals between specific threads and the main thread
 struct ThreadSignal {
 	ThreadSignal()									= default;
 	ThreadSignal( const ThreadSignal & other )
 	{
 		thread_ready_to_join	= other.thread_ready_to_join.load();
 	}
-	ThreadSignal( ThreadSignal && other)			= default;
+	ThreadSignal( ThreadSignal && other )			= default;
 	~ThreadSignal()									= default;
 	std::atomic_bool		thread_ready_to_join;
 };
@@ -124,12 +136,12 @@ public:
 	template<typename T>
 	uint64_t											ScheduleTask(
 		std::unique_ptr<T>							&&	unique_task,
-		std::thread::id									thread_locked				= std::thread::id(),
+		const std::vector<uint32_t>					&	locked_to_threads			= {},
 		const std::vector<uint64_t>					&	dependencies				= {} )
 	{
 		static_assert( std::is_base_of<Task, T>::value, "Task must be derived from 'Task' Class!" );
-		unique_task->thread_lock	= thread_locked;
-		unique_task->dependencies	= dependencies;
+		unique_task->locked_to_threads	= locked_to_threads;
+		unique_task->dependencies		= dependencies;
 		return AddTask( std::move( unique_task ) );
 	}
 
@@ -154,5 +166,7 @@ private:
 };
 
 
+
+} // _internal
 
 } // vk2d
