@@ -10,10 +10,11 @@
 
 namespace vk2d {
 
-class ThreadPool;
+class Resource;
 
 namespace _internal {
 
+class ThreadPool;
 class ResourceImpl;
 
 
@@ -33,7 +34,16 @@ public:
 		uint32_t									size_y,
 		const std::vector<uint8_t>				&	texture_data );
 
-	bool											IsGood();
+	void											DestroyResource(
+		Resource								*	resource );
+
+	_internal::RendererImpl						*	GetRenderer() const;
+	_internal::ThreadPool						*	GetThreadPool() const;
+	const std::vector<uint32_t>					&	GetLoaderThreads() const;
+	const std::vector<uint32_t>					&	GetGeneralThreads() const;
+	VkDevice										GetVulkanDevice() const;
+
+	bool											IsGood() const;
 
 private:
 	uint32_t										SelectLoaderThread();
@@ -41,6 +51,7 @@ private:
 	_internal::RendererImpl						*	parent								= {};
 	ThreadPool									*	thread_pool							= {};
 	std::vector<uint32_t>							loader_threads						= {};
+	std::vector<uint32_t>							general_threads						= {};
 
 	// TODO: This only cycles through loader threads for every new load operation,
 	// a more advanced load balancer could be more appropriate, for now it's no big deal.

@@ -14,6 +14,8 @@
 
 namespace vk2d {
 
+namespace _internal {
+
 
 
 MeshBuffer::MeshBuffer(
@@ -31,8 +33,7 @@ MeshBuffer::MeshBuffer(
 }
 
 MeshBuffer::~MeshBuffer()
-{
-}
+{}
 
 MeshBuffer::PushResult MeshBuffer::CmdPushMesh(
 	VkCommandBuffer						command_buffer,
@@ -100,7 +101,7 @@ bool MeshBuffer::CmdUploadMeshDataToGPU(
 			bp->device_buffer,
 			uint32_t( regions.size() ),
 			regions.data()
-			);
+		);
 
 		bp->CopyVectorsToStagingBuffers();
 	}
@@ -294,9 +295,7 @@ MeshBuffer::BufferBlock::~BufferBlock()
 
 bool MeshBuffer::BufferBlock::CopyVectorsToStagingBuffers()
 {
-	void * original_mapped_memory = parent->device_memory_pool->MapMemory(
-		staging_buffer_memory
-	);
+	void * original_mapped_memory = staging_buffer_memory.Map<void*>();
 	if( !original_mapped_memory ) return false;
 
 	void * vertex_mapped_memory	= (uint8_t*)original_mapped_memory + aligned_vertex_buffer_byte_offset;
@@ -322,7 +321,7 @@ bool MeshBuffer::BufferBlock::CopyVectorsToStagingBuffers()
 //		}
 	}
 
-	parent->device_memory_pool->UnmapMemory( staging_buffer_memory );
+	staging_buffer_memory.Unmap();
 
 	vertices.clear();
 	indices.clear();
@@ -337,5 +336,7 @@ bool MeshBuffer::BufferBlock::CopyVectorsToStagingBuffers()
 }
 
 
+
+} // _internal
 
 } // vk2d

@@ -34,12 +34,12 @@ ResourceManagerImpl::~ResourceManagerImpl()
 }
 
 
-
+// Load task works on the resource list through pointers
 class LoadTask : public _internal::Task {
 public:
 	LoadTask(
-		ResourceManagerImpl		*	resource_manager,
-		Resource				*	resource
+		ResourceManagerImpl			*	resource_manager,
+		Resource					*	resource
 	) :
 		resource_manager( resource_manager ),
 		resource( resource )
@@ -47,21 +47,26 @@ public:
 
 	void operator()( _internal::ThreadPrivateResource * thread_resource )
 	{
-		if( !resource->MTLoad() ) resource->failed_to_load = true;
+		if( resource->MTLoad() ) {
+			resource->is_loaded			= true;
+		} else {
+			resource->failed_to_load	= true;
+		}
 	}
 
-	ResourceManagerImpl		*	resource_manager		= {};
-	Resource				*	resource				= {};
+	ResourceManagerImpl				*	resource_manager		= {};
+	Resource						*	resource				= {};
 };
 
+// Unload task takes ownership of the task
 class UnloadTask : public _internal::Task {
 public:
 	UnloadTask(
-		ResourceManagerImpl		*	resource_manager,
-		Resource				*	resource
+		ResourceManagerImpl			*	resource_manager,
+		std::unique_ptr<Resource>		resource
 	) :
 		resource_manager( resource_manager ),
-		resource( resource )
+		resource( std::move( resource ) )
 	{};
 
 	void operator()( _internal::ThreadPrivateResource * thread_resource )
@@ -69,8 +74,8 @@ public:
 		resource->MTUnload();
 	}
 
-	ResourceManagerImpl		*	resource_manager		= {};
-	Resource				*	resource				= {};
+	ResourceManagerImpl				*	resource_manager		= {};
+	std::unique_ptr<Resource>			resource				= {};
 };
 
 
@@ -109,7 +114,56 @@ TextureResource * ResourceManagerImpl::CreateTextureResource(
 	return nullptr;
 }
 
-bool ResourceManagerImpl::IsGood()
+void ResourceManagerImpl::DestroyResource(
+	Resource	*	resource
+)
+{
+	if( !resource ) return;
+
+	// We'll have to wait until the resource is definitely loaded, or encountered an error.
+	resource->WaitUntilLoaded();
+
+	std::lock_guard<std::mutex> lock_guard( resources_mutex );
+	// find resource if it exists
+	auto it = resources.begin();
+	while( it != resources.end() ) {
+		if( it->get() == resource ) {
+			// Found resource in the resources list
+			thread_pool->ScheduleTask( std::make_unique<UnloadTask>( this, std::move( *it ) ), { resource->loader_thread } );
+			it = resources.erase( it );
+			return;
+		} else {
+			++it;
+		}
+	}
+}
+
+_internal::RendererImpl * ResourceManagerImpl::GetRenderer() const
+{
+	return parent;
+}
+
+_internal::ThreadPool * ResourceManagerImpl::GetThreadPool() const
+{
+	return thread_pool;
+}
+
+const std::vector<uint32_t> & ResourceManagerImpl::GetLoaderThreads() const
+{
+	return loader_threads;
+}
+
+const std::vector<uint32_t> & ResourceManagerImpl::GetGeneralThreads() const
+{
+	return general_threads;
+}
+
+VkDevice ResourceManagerImpl::GetVulkanDevice() const
+{
+	return device;
+}
+
+bool ResourceManagerImpl::IsGood() const
 {
 	return is_good;
 }

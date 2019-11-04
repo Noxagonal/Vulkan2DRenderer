@@ -9,6 +9,7 @@ namespace vk2d {
 
 class ThreadPool;
 class TextureResource;
+class Resource;
 
 namespace _internal {
 class RendererImpl;
@@ -19,18 +20,22 @@ class ResourceManager {
 	friend class _internal::RendererImpl;
 
 public:
-	VK2D_API											ResourceManager(
-		_internal::RendererImpl						*	parent_renderer
+	VK2D_API																ResourceManager(
+		_internal::RendererImpl											*	parent_renderer
 	);
-	VK2D_API											~ResourceManager();
 
-	VK2D_API TextureResource		*	VK2D_APIENTRY	LoadTextureResource(
-		std::filesystem::path							file_path );
+	VK2D_API																~ResourceManager();
+
+	VK2D_API TextureResource				*	VK2D_APIENTRY				LoadTextureResource(
+		std::filesystem::path												file_path );
+
+	VK2D_API void								VK2D_APIENTRY				DestroyResource(
+		Resource														*	resource );
 
 private:
-	std::unique_ptr<_internal::ResourceManagerImpl>		impl		= {};
+	std::unique_ptr<_internal::ResourceManagerImpl>							impl		= {};
 
-	bool												is_good		= {};
+	bool																	is_good		= {};
 };
 
 

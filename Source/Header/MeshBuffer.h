@@ -15,6 +15,8 @@
 
 namespace vk2d {
 
+namespace _internal {
+
 
 
 class MeshBuffer {
@@ -28,7 +30,10 @@ public:
 	struct PushResult {
 		MeshOffsets									offsets;
 		bool										success;
-		inline explicit operator bool() { return	success; }
+		inline explicit operator bool()
+		{
+			return	success;
+		}
 	};
 
 	MeshBuffer(
@@ -134,5 +139,7 @@ private:
 };
 
 
+
+} // _internal
 
 } // vk2d

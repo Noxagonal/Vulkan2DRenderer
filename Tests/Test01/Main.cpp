@@ -18,7 +18,9 @@ int main()
 	if( !renderer ) return -1;
 
 	auto resource_manager	= renderer->GetResourceManager();
-	auto texture			= resource_manager->LoadTextureResource( "../TestData/GrafGear.png" );
+	auto texture			= resource_manager->LoadTextureResource( "../../TestData/GrafGear_128.png" );
+//	texture->WaitUntilLoaded();
+	resource_manager->DestroyResource( texture );
 
 	vk2d::WindowCreateInfo window_create_info {};
 	window_create_info.width	= 800;
@@ -31,7 +33,7 @@ int main()
 		if( !window->BeginRender() ) return -1;
 
 		window->Draw_PieBox(
-			false,
+			true,
 			{ -0.95f, -0.5f },
 			{ -0.05f, +0.5f },
 			frame_counter / 100.0f,

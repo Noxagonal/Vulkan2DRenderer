@@ -2,6 +2,7 @@
 
 #include "SourceCommon.h"
 #include "../../Include/VK2D/TextureResource.h"
+#include "../Header/VulkanMemoryManagement.h"
 
 
 namespace vk2d {
@@ -32,6 +33,9 @@ public:
 private:
 	TextureResource								*	parent						= {};
 	_internal::ResourceManagerImpl				*	resource_manager			= {};
+
+	CompleteBufferResource							staging_buffer				= {};
+	CompleteImageResource							image						= {};
 
 	bool											is_good						= {};
 };

@@ -36,6 +36,13 @@ VK2D_API TextureResource * VK2D_APIENTRY ResourceManager::LoadTextureResource(
 	return nullptr;
 }
 
+VK2D_API void VK2D_APIENTRY ResourceManager::DestroyResource(
+	Resource		*	resource
+)
+{
+	if( impl && impl->IsGood() ) impl->DestroyResource( resource );
+}
+
 
 
 }
