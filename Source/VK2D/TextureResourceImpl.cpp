@@ -3,6 +3,7 @@
 
 #include "../Header/TextureResourceImpl.h"
 #include "../Header/ResourceManagerImpl.h"
+#include "../Header/ThreadPrivateResources.h"
 
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
@@ -35,10 +36,11 @@ TextureResourceImpl::TextureResourceImpl(
 
 TextureResourceImpl::~TextureResourceImpl()
 {
-	// TODO
 }
 
-bool TextureResourceImpl::MTLoad()
+bool TextureResourceImpl::MTLoad(
+	_internal::ThreadPrivateResource	*	thread_resource
+)
 {
 	// 1. Load and process image from file.
 	// 2. Create staging buffer, we'll also need memory pool for this.
@@ -47,10 +49,14 @@ bool TextureResourceImpl::MTLoad()
 	// 5. Record commands to upload image into the GPU.
 	// 6. Record commands to make mipmaps of the image in the GPU.
 	// 7. Make image available in a shader.
-	// 8. Allocate descriptor set that points to the image.
-	// 9. Submit command buffer to the GPU, get a fence handle to indicate when the image is ready to be used.
+	// 8. Submit command buffer to the GPU, get a fence handle to indicate when the image is ready to be used.
+	// 9. Allocate descriptor set that points to the image.
 
-	auto memory_pool = resource_manager->GetRenderer()->GetDeviceMemoryPool();
+	auto loader_thread_resource		= dynamic_cast<ThreadLoaderResource*>( thread_resource );
+	auto memory_pool				= resource_manager->GetRenderer()->GetDeviceMemoryPool();
+
+	assert( loader_thread_resource );
+	if( !loader_thread_resource ) return false;
 
 	// Get data into a staging buffer, and create staging buffer
 	struct {
@@ -58,6 +64,12 @@ bool TextureResourceImpl::MTLoad()
 		uint32_t	y;
 		uint32_t	channels;
 	} image_info;
+
+	auto primary_render_queue_family_index		= resource_manager->GetRenderer()->GetPrimaryRenderQueue().queueFamilyIndex;
+	auto secondary_render_queue_family_index	= resource_manager->GetRenderer()->GetSecondaryRenderQueue().queueFamilyIndex;
+	auto primary_transfer_queue_family_index	= resource_manager->GetRenderer()->GetPrimaryTransferQueue().queueFamilyIndex;
+
+	bool is_primary_render_needed				= secondary_render_queue_family_index != primary_render_queue_family_index;
 
 	{
 		// 1. Load and process image from file.
@@ -134,7 +146,7 @@ bool TextureResourceImpl::MTLoad()
 		image_create_info.arrayLayers				= 1;
 		image_create_info.samples					= VK_SAMPLE_COUNT_1_BIT;
 		image_create_info.tiling					= VK_IMAGE_TILING_OPTIMAL;
-		image_create_info.usage						= VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT;
+		image_create_info.usage						= VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT;
 		image_create_info.sharingMode				= VK_SHARING_MODE_EXCLUSIVE;
 		image_create_info.queueFamilyIndexCount		= 0;
 		image_create_info.pQueueFamilyIndices		= nullptr;
@@ -167,18 +179,572 @@ bool TextureResourceImpl::MTLoad()
 	}
 
 	// 4. Allocate a command buffer from thread resources
+	{
+		// Allocate render command buffer if needed.
+		if( is_primary_render_needed ) {
+			VkCommandBufferAllocateInfo command_buffer_allocate_info {};
+			command_buffer_allocate_info.sType					= VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+			command_buffer_allocate_info.pNext					= nullptr;
+			command_buffer_allocate_info.commandPool			= loader_thread_resource->GetPrimaryRenderCommandPool();
+			command_buffer_allocate_info.level					= VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+			command_buffer_allocate_info.commandBufferCount		= 1;
+			if( vkAllocateCommandBuffers(
+				loader_thread_resource->GetVulkanDevice(),
+				&command_buffer_allocate_info,
+				&primary_render_command_buffer
+			) != VK_SUCCESS ) {
+				return false;
+			}
+
+			VkCommandBufferBeginInfo command_buffer_begin_info {};
+			command_buffer_begin_info.sType				= VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+			command_buffer_begin_info.pNext				= nullptr;
+			command_buffer_begin_info.flags				= VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+			command_buffer_begin_info.pInheritanceInfo	= nullptr;
+			if( vkBeginCommandBuffer(
+				primary_render_command_buffer,
+				&command_buffer_begin_info
+			) != VK_SUCCESS ) {
+				return false;
+			}
+		} else {
+			primary_render_command_buffer	= VK_NULL_HANDLE;
+		}
+
+		// Allocate blit command buffer.
+		{
+			VkCommandBufferAllocateInfo command_buffer_allocate_info {};
+			command_buffer_allocate_info.sType					= VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+			command_buffer_allocate_info.pNext					= nullptr;
+			command_buffer_allocate_info.commandPool			= loader_thread_resource->GetSecondaryRenderCommandPool();
+			command_buffer_allocate_info.level					= VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+			command_buffer_allocate_info.commandBufferCount		= 1;
+			if( vkAllocateCommandBuffers(
+				loader_thread_resource->GetVulkanDevice(),
+				&command_buffer_allocate_info,
+				&secondary_render_command_buffer
+			) != VK_SUCCESS ) {
+				return false;
+			}
+
+			VkCommandBufferBeginInfo command_buffer_begin_info {};
+			command_buffer_begin_info.sType				= VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+			command_buffer_begin_info.pNext				= nullptr;
+			command_buffer_begin_info.flags				= VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+			command_buffer_begin_info.pInheritanceInfo	= nullptr;
+			if( vkBeginCommandBuffer(
+				secondary_render_command_buffer,
+				&command_buffer_begin_info
+			) != VK_SUCCESS ) {
+				return false;
+			}
+		}
+
+		// Allocate transfer command buffer.
+		{
+			VkCommandBufferAllocateInfo command_buffer_allocate_info {};
+			command_buffer_allocate_info.sType					= VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+			command_buffer_allocate_info.pNext					= nullptr;
+			command_buffer_allocate_info.commandPool			= loader_thread_resource->GetPrimaryTransferCommandPool();
+			command_buffer_allocate_info.level					= VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+			command_buffer_allocate_info.commandBufferCount		= 1;
+			if( vkAllocateCommandBuffers(
+				loader_thread_resource->GetVulkanDevice(),
+				&command_buffer_allocate_info,
+				&primary_transfer_command_buffer
+			) != VK_SUCCESS ) {
+				return false;
+			}
+
+			VkCommandBufferBeginInfo command_buffer_begin_info {};
+			command_buffer_begin_info.sType				= VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+			command_buffer_begin_info.pNext				= nullptr;
+			command_buffer_begin_info.flags				= VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+			command_buffer_begin_info.pInheritanceInfo	= nullptr;
+			if( vkBeginCommandBuffer(
+				primary_transfer_command_buffer,
+				&command_buffer_begin_info
+			) != VK_SUCCESS ) {
+				return false;
+			}
+		}
+	}
+
 	// 5. Record commands to upload image into the GPU.
-	// 6. Record commands to make mipmaps of the image in the GPU.
-	// 7. Make image available in a shader.
-	// 8. Allocate descriptor set that points to the image.
-	// 9. Submit command buffer to the GPU, get a fence handle to indicate when the image is ready to be used.
+	// This gets very memory barrier heavy because of all the image layout transitions and
+	// individually blitting mip levels from previously blitted mip level.
+	{
+		// 5.1 Record transfer commands.
+		{
+			// Transition image from undefined image layout to transfer dst optimal
+			{
+				VkImageMemoryBarrier image_memory_barrier {};
+				image_memory_barrier.sType								= VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+				image_memory_barrier.pNext								= nullptr;
+				image_memory_barrier.srcAccessMask						= 0;
+				image_memory_barrier.dstAccessMask						= VK_ACCESS_MEMORY_WRITE_BIT;
+				image_memory_barrier.oldLayout							= VK_IMAGE_LAYOUT_UNDEFINED;
+				image_memory_barrier.newLayout							= VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+				image_memory_barrier.srcQueueFamilyIndex				= VK_QUEUE_FAMILY_IGNORED;
+				image_memory_barrier.dstQueueFamilyIndex				= VK_QUEUE_FAMILY_IGNORED;
+				image_memory_barrier.image								= image.image;
+				image_memory_barrier.subresourceRange.aspectMask		= VK_IMAGE_ASPECT_COLOR_BIT;
+				image_memory_barrier.subresourceRange.baseMipLevel		= 0;
+				image_memory_barrier.subresourceRange.levelCount		= uint32_t( mipmap_levels.size() );
+				image_memory_barrier.subresourceRange.baseArrayLayer	= 0;
+				image_memory_barrier.subresourceRange.layerCount		= 1;
+				vkCmdPipelineBarrier(
+					primary_transfer_command_buffer,
+					VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
+					VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
+					0,
+					0, nullptr,
+					0, nullptr,
+					1, &image_memory_barrier
+				);
+			}
+
+			// Copy to mip level 0
+			VkBufferImageCopy copy_region {};
+			copy_region.bufferOffset					= 0;
+			copy_region.bufferRowLength					= 0;
+			copy_region.bufferImageHeight				= 0;
+			copy_region.imageSubresource.aspectMask		= VK_IMAGE_ASPECT_COLOR_BIT;
+			copy_region.imageSubresource.mipLevel		= 0;
+			copy_region.imageSubresource.baseArrayLayer	= 0;
+			copy_region.imageSubresource.layerCount		= 1;
+			copy_region.imageOffset						= { 0, 0, 0 };
+			copy_region.imageExtent						= { image_info.x, image_info.y, 1 };
+			vkCmdCopyBufferToImage(
+				primary_transfer_command_buffer,
+				staging_buffer.buffer,
+				image.image,
+				VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+				1,
+				&copy_region
+			);
+		}
+
+		// We might need to change image queue family ownership
+		if( primary_transfer_queue_family_index != secondary_render_queue_family_index ) {
+			// Ownership is transferred by writing the same pipeline barrier twice to
+			// two different command buffers from two different families and setting
+			// srcQueueFamilyIndex dstQueueFamilyIndex members to appropriate families.
+			{
+				VkImageMemoryBarrier image_memory_barrier {};
+				image_memory_barrier.sType								= VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+				image_memory_barrier.pNext								= nullptr;
+				image_memory_barrier.srcAccessMask						= VK_ACCESS_MEMORY_WRITE_BIT;
+				image_memory_barrier.dstAccessMask						= VK_ACCESS_MEMORY_WRITE_BIT;
+				image_memory_barrier.oldLayout							= VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+				image_memory_barrier.newLayout							= VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+				image_memory_barrier.srcQueueFamilyIndex				= primary_transfer_queue_family_index;
+				image_memory_barrier.dstQueueFamilyIndex				= secondary_render_queue_family_index;
+				image_memory_barrier.image								= image.image;
+				image_memory_barrier.subresourceRange.aspectMask		= VK_IMAGE_ASPECT_COLOR_BIT;
+				image_memory_barrier.subresourceRange.baseMipLevel		= 0;
+				image_memory_barrier.subresourceRange.levelCount		= uint32_t( mipmap_levels.size() );
+				image_memory_barrier.subresourceRange.baseArrayLayer	= 0;
+				image_memory_barrier.subresourceRange.layerCount		= 1;
+				vkCmdPipelineBarrier(
+					primary_transfer_command_buffer,
+					VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
+					VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
+					0,
+					0, nullptr,
+					0, nullptr,
+					1, &image_memory_barrier
+				);
+			}
+			{
+				VkImageMemoryBarrier image_memory_barrier {};
+				image_memory_barrier.sType								= VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+				image_memory_barrier.pNext								= nullptr;
+				image_memory_barrier.srcAccessMask						= VK_ACCESS_MEMORY_WRITE_BIT;
+				image_memory_barrier.dstAccessMask						= VK_ACCESS_MEMORY_WRITE_BIT;
+				image_memory_barrier.oldLayout							= VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+				image_memory_barrier.newLayout							= VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+				image_memory_barrier.srcQueueFamilyIndex				= primary_transfer_queue_family_index;
+				image_memory_barrier.dstQueueFamilyIndex				= secondary_render_queue_family_index;
+				image_memory_barrier.image								= image.image;
+				image_memory_barrier.subresourceRange.aspectMask		= VK_IMAGE_ASPECT_COLOR_BIT;
+				image_memory_barrier.subresourceRange.baseMipLevel		= 0;
+				image_memory_barrier.subresourceRange.levelCount		= uint32_t( mipmap_levels.size() );
+				image_memory_barrier.subresourceRange.baseArrayLayer	= 0;
+				image_memory_barrier.subresourceRange.layerCount		= 1;
+				vkCmdPipelineBarrier(
+					secondary_render_command_buffer,
+					VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
+					VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
+					0,
+					0, nullptr,
+					0, nullptr,
+					1, &image_memory_barrier
+				);
+			}
+		}
+
+		// 6. Record commands to make mipmaps of the image in the GPU.
+		{
+			for( uint32_t current_mip_level = 1; current_mip_level < uint32_t( mipmap_levels.size() ); ++current_mip_level ) {
+				auto src_mip_level							= current_mip_level - 1;
+				auto dst_mip_level							= current_mip_level;
+				auto src_mipmap_extent						= mipmap_levels[ src_mip_level ];
+				auto dst_mipmap_extent						= mipmap_levels[ dst_mip_level ];
+
+				// Transition current image layout for current mipmap level from transfer dst optimal to transfer src optimal
+				{
+					VkImageMemoryBarrier image_memory_barrier {};
+					image_memory_barrier.sType								= VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+					image_memory_barrier.pNext								= nullptr;
+					image_memory_barrier.srcAccessMask						= VK_ACCESS_MEMORY_WRITE_BIT;
+					image_memory_barrier.dstAccessMask						= VK_ACCESS_MEMORY_READ_BIT;
+					image_memory_barrier.oldLayout							= VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+					image_memory_barrier.newLayout							= VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
+					image_memory_barrier.srcQueueFamilyIndex				= VK_QUEUE_FAMILY_IGNORED;
+					image_memory_barrier.dstQueueFamilyIndex				= VK_QUEUE_FAMILY_IGNORED;
+					image_memory_barrier.image								= image.image;
+					image_memory_barrier.subresourceRange.aspectMask		= VK_IMAGE_ASPECT_COLOR_BIT;
+					image_memory_barrier.subresourceRange.baseMipLevel		= src_mip_level;
+					image_memory_barrier.subresourceRange.levelCount		= 1;
+					image_memory_barrier.subresourceRange.baseArrayLayer	= 0;
+					image_memory_barrier.subresourceRange.layerCount		= 1;
+					vkCmdPipelineBarrier(
+						secondary_render_command_buffer,
+						VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
+						VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
+						0,
+						0, nullptr,
+						0, nullptr,
+						1, &image_memory_barrier
+					);
+				}
+
+				// Blit here
+				{
+					VkImageBlit blit_region {};
+					blit_region.srcSubresource.aspectMask		= VK_IMAGE_ASPECT_COLOR_BIT;
+					blit_region.srcSubresource.mipLevel			= src_mip_level;
+					blit_region.srcSubresource.baseArrayLayer	= 0;
+					blit_region.srcSubresource.layerCount		= 1;
+					blit_region.srcOffsets[ 0 ]					= { 0, 0, 0 };
+					blit_region.srcOffsets[ 1 ]					= { int32_t( src_mipmap_extent.width ), int32_t(  src_mipmap_extent.height ), 1 };
+					blit_region.dstSubresource.aspectMask		= VK_IMAGE_ASPECT_COLOR_BIT;
+					blit_region.dstSubresource.mipLevel			= dst_mip_level;
+					blit_region.dstSubresource.baseArrayLayer	= 0;
+					blit_region.dstSubresource.layerCount		= 1;
+					blit_region.dstOffsets[ 0 ]					= { 0, 0, 0 };
+					blit_region.dstOffsets[ 1 ]					= { int32_t( dst_mipmap_extent.width ), int32_t( dst_mipmap_extent.height ), 1 };
+
+					vkCmdBlitImage(
+						secondary_render_command_buffer,
+						image.image,
+						VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+						image.image,
+						VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+						1, &blit_region,
+						VK_FILTER_LINEAR
+					);
+				}
+
+				// 7. Make image available in a shader.
+				// Transition current image layout for current mipmap level from transfer src optimal to shader read only optimal
+				{
+					VkImageMemoryBarrier image_memory_barrier {};
+					image_memory_barrier.sType								= VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+					image_memory_barrier.pNext								= nullptr;
+					image_memory_barrier.srcAccessMask						= VK_ACCESS_MEMORY_READ_BIT;
+					image_memory_barrier.dstAccessMask						= VK_ACCESS_MEMORY_READ_BIT;
+					image_memory_barrier.oldLayout							= VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
+					image_memory_barrier.newLayout							= VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+					image_memory_barrier.srcQueueFamilyIndex				= VK_QUEUE_FAMILY_IGNORED;
+					image_memory_barrier.dstQueueFamilyIndex				= VK_QUEUE_FAMILY_IGNORED;
+					image_memory_barrier.image								= image.image;
+					image_memory_barrier.subresourceRange.aspectMask		= VK_IMAGE_ASPECT_COLOR_BIT;
+					image_memory_barrier.subresourceRange.baseMipLevel		= src_mip_level;
+					image_memory_barrier.subresourceRange.levelCount		= 1;
+					image_memory_barrier.subresourceRange.baseArrayLayer	= 0;
+					image_memory_barrier.subresourceRange.layerCount		= 1;
+					vkCmdPipelineBarrier(
+						secondary_render_command_buffer,
+						VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
+						VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
+						0,
+						0, nullptr,
+						0, nullptr,
+						1, &image_memory_barrier
+					);
+				}
+			}
+
+			// Lastly we'll transition current image layout for last mipmap level from transfer src optimal to shader read only optimal
+			{
+			VkImageMemoryBarrier image_memory_barrier {};
+			image_memory_barrier.sType								= VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+			image_memory_barrier.pNext								= nullptr;
+			image_memory_barrier.srcAccessMask						= VK_ACCESS_MEMORY_READ_BIT;
+			image_memory_barrier.dstAccessMask						= VK_ACCESS_MEMORY_READ_BIT;
+			image_memory_barrier.oldLayout							= VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+			image_memory_barrier.newLayout							= VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+			image_memory_barrier.srcQueueFamilyIndex				= VK_QUEUE_FAMILY_IGNORED;
+			image_memory_barrier.dstQueueFamilyIndex				= VK_QUEUE_FAMILY_IGNORED;
+			image_memory_barrier.image								= image.image;
+			image_memory_barrier.subresourceRange.aspectMask		= VK_IMAGE_ASPECT_COLOR_BIT;
+			image_memory_barrier.subresourceRange.baseMipLevel		= uint32_t( mipmap_levels.size() - 1 );
+			image_memory_barrier.subresourceRange.levelCount		= 1;
+			image_memory_barrier.subresourceRange.baseArrayLayer	= 0;
+			image_memory_barrier.subresourceRange.layerCount		= 1;
+			vkCmdPipelineBarrier(
+				secondary_render_command_buffer,
+				VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
+				VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
+				0,
+				0, nullptr,
+				0, nullptr,
+				1, &image_memory_barrier
+			);
+			}
+		}
+
+		// We might need to change image queue family ownership
+		if( secondary_render_queue_family_index != primary_render_queue_family_index ) {
+			// Ownership is transferred by writing the same pipeline barrier twice to
+			// two different command buffers from two different families and setting
+			// srcQueueFamilyIndex dstQueueFamilyIndex members to appropriate families.
+			{
+				VkImageMemoryBarrier image_memory_barrier {};
+				image_memory_barrier.sType								= VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+				image_memory_barrier.pNext								= nullptr;
+				image_memory_barrier.srcAccessMask						= VK_ACCESS_MEMORY_READ_BIT;
+				image_memory_barrier.dstAccessMask						= VK_ACCESS_MEMORY_READ_BIT;
+				image_memory_barrier.oldLayout							= VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+				image_memory_barrier.newLayout							= VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+				image_memory_barrier.srcQueueFamilyIndex				= primary_transfer_queue_family_index;
+				image_memory_barrier.dstQueueFamilyIndex				= secondary_render_queue_family_index;
+				image_memory_barrier.image								= image.image;
+				image_memory_barrier.subresourceRange.aspectMask		= VK_IMAGE_ASPECT_COLOR_BIT;
+				image_memory_barrier.subresourceRange.baseMipLevel		= 0;
+				image_memory_barrier.subresourceRange.levelCount		= uint32_t( mipmap_levels.size() );
+				image_memory_barrier.subresourceRange.baseArrayLayer	= 0;
+				image_memory_barrier.subresourceRange.layerCount		= 1;
+				vkCmdPipelineBarrier(
+					secondary_render_command_buffer,
+					VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
+					VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
+					0,
+					0, nullptr,
+					0, nullptr,
+					1, &image_memory_barrier
+				);
+			}
+			{
+				VkImageMemoryBarrier image_memory_barrier {};
+				image_memory_barrier.sType								= VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+				image_memory_barrier.pNext								= nullptr;
+				image_memory_barrier.srcAccessMask						= VK_ACCESS_MEMORY_READ_BIT;
+				image_memory_barrier.dstAccessMask						= VK_ACCESS_MEMORY_READ_BIT;
+				image_memory_barrier.oldLayout							= VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+				image_memory_barrier.newLayout							= VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+				image_memory_barrier.srcQueueFamilyIndex				= primary_transfer_queue_family_index;
+				image_memory_barrier.dstQueueFamilyIndex				= secondary_render_queue_family_index;
+				image_memory_barrier.image								= image.image;
+				image_memory_barrier.subresourceRange.aspectMask		= VK_IMAGE_ASPECT_COLOR_BIT;
+				image_memory_barrier.subresourceRange.baseMipLevel		= 0;
+				image_memory_barrier.subresourceRange.levelCount		= uint32_t( mipmap_levels.size() );
+				image_memory_barrier.subresourceRange.baseArrayLayer	= 0;
+				image_memory_barrier.subresourceRange.layerCount		= 1;
+				vkCmdPipelineBarrier(
+					primary_render_command_buffer,
+					VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
+					VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
+					0,
+					0, nullptr,
+					0, nullptr,
+					1, &image_memory_barrier
+				);
+			}
+		}
+	}
+
+	// Create synchronization primitives
+	{
+		VkSemaphoreCreateInfo semaphore_create_info {};
+		semaphore_create_info.sType		= VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
+		semaphore_create_info.pNext		= nullptr;
+		semaphore_create_info.flags		= 0;
+
+		VkFenceCreateInfo fence_create_info {};
+		fence_create_info.sType			= VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
+		fence_create_info.pNext			= nullptr;
+		fence_create_info.flags			= 0;
+
+		if( vkCreateSemaphore(
+			loader_thread_resource->GetVulkanDevice(),
+			&semaphore_create_info,
+			nullptr,
+			&transfer_semaphore
+		) != VK_SUCCESS ) {
+			return false;
+		}
+
+		if( is_primary_render_needed ) {
+			if( vkCreateSemaphore(
+				loader_thread_resource->GetVulkanDevice(),
+				&semaphore_create_info,
+				nullptr,
+				&blit_semaphore
+			) != VK_SUCCESS ) {
+				return false;
+			}
+		}
+
+		if( vkCreateFence(
+			loader_thread_resource->GetVulkanDevice(),
+			&fence_create_info,
+			nullptr,
+			&texture_complete_fence
+		) != VK_SUCCESS ) {
+			return false;
+		}
+	}
+
+	// 8. Submit command buffer to the GPU, get a fence handle to indicate when the image is ready to be used.
+	{
+		if( vkEndCommandBuffer( primary_transfer_command_buffer ) != VK_SUCCESS ) {
+			return false;
+		}
+		if( vkEndCommandBuffer( secondary_render_command_buffer ) != VK_SUCCESS ) {
+			return false;
+		}
+		if( is_primary_render_needed ) {
+			if( vkEndCommandBuffer( primary_render_command_buffer ) != VK_SUCCESS ) {
+				return false;
+			}
+		}
+
+		// Submit transfer command buffer
+		{
+			VkSubmitInfo submit_info {};
+			submit_info.sType					= VK_STRUCTURE_TYPE_SUBMIT_INFO;
+			submit_info.pNext					= nullptr;
+			submit_info.waitSemaphoreCount		= 0;
+			submit_info.pWaitSemaphores			= nullptr;
+			submit_info.pWaitDstStageMask		= nullptr;
+			submit_info.commandBufferCount		= 1;
+			submit_info.pCommandBuffers			= &primary_transfer_command_buffer;
+			submit_info.signalSemaphoreCount	= 1;
+			submit_info.pSignalSemaphores		= &transfer_semaphore;
+			if( vkQueueSubmit(
+				resource_manager->GetRenderer()->GetPrimaryTransferQueue().queue,
+				1, &submit_info,
+				VK_NULL_HANDLE
+			) != VK_SUCCESS ) {
+				return false;
+			}
+		}
+
+		// Submit blit command buffer
+		{
+			VkPipelineStageFlags wait_semaphore_dst	= VK_PIPELINE_STAGE_ALL_COMMANDS_BIT;
+			VkSubmitInfo submit_info {};
+			submit_info.sType					= VK_STRUCTURE_TYPE_SUBMIT_INFO;
+			submit_info.pNext					= nullptr;
+			submit_info.waitSemaphoreCount		= 1;
+			submit_info.pWaitSemaphores			= &transfer_semaphore;
+			submit_info.pWaitDstStageMask		= &wait_semaphore_dst;
+			submit_info.commandBufferCount		= 1;
+			submit_info.pCommandBuffers			= &secondary_render_command_buffer;
+			submit_info.signalSemaphoreCount	= is_primary_render_needed ? 1 : 0;
+			submit_info.pSignalSemaphores		= is_primary_render_needed ? &blit_semaphore : nullptr;
+			if( vkQueueSubmit(
+				resource_manager->GetRenderer()->GetSecondaryRenderQueue().queue,
+				1, &submit_info,
+				is_primary_render_needed ? VK_NULL_HANDLE : texture_complete_fence
+			) != VK_SUCCESS ) {
+				return false;
+			}
+		}
+
+		// Submit primary render command buffer
+		if( is_primary_render_needed ) {
+			VkPipelineStageFlags wait_semaphore_dst	= VK_PIPELINE_STAGE_ALL_COMMANDS_BIT;
+			VkSubmitInfo submit_info {};
+			submit_info.sType					= VK_STRUCTURE_TYPE_SUBMIT_INFO;
+			submit_info.pNext					= nullptr;
+			submit_info.waitSemaphoreCount		= 1;
+			submit_info.pWaitSemaphores			= &blit_semaphore;
+			submit_info.pWaitDstStageMask		= &wait_semaphore_dst;
+			submit_info.commandBufferCount		= 1;
+			submit_info.pCommandBuffers			= &primary_render_command_buffer;
+			submit_info.signalSemaphoreCount	= 0;
+			submit_info.pSignalSemaphores		= nullptr;
+			if( vkQueueSubmit(
+				resource_manager->GetRenderer()->GetPrimaryRenderQueue().queue,
+				1, &submit_info,
+				texture_complete_fence
+			) != VK_SUCCESS ) {
+				return false;
+			}
+		}
+	}
+
+	// 9. Allocate descriptor set that points to the image.
+	// TODO: descriptor pool allocations
 
 	return true;
 }
 
-void TextureResourceImpl::MTUnload()
+void TextureResourceImpl::MTUnload(
+	_internal::ThreadPrivateResource	*	thread_resource
+)
 {
-	auto memory_pool = resource_manager->GetRenderer()->GetDeviceMemoryPool();
+	auto loader_thread_resource		= dynamic_cast<ThreadLoaderResource*>( thread_resource );
+	auto memory_pool				= resource_manager->GetRenderer()->GetDeviceMemoryPool();
+
+	// Check if loaded successfully, no need to check for failure as this thread was
+	// responsible for loading it, it's either loaded or failed to load but it'll
+	// definitely be either or. MTUnload() does not ever get called before MTLoad().
+	if( parent->IsLoaded() ) {
+		vkWaitForFences(
+			loader_thread_resource->GetVulkanDevice(),
+			1, &texture_complete_fence,
+			VK_TRUE,
+			UINT64_MAX
+		);
+	}
+
+	vkDestroyFence(
+		loader_thread_resource->GetVulkanDevice(),
+		texture_complete_fence,
+		nullptr
+	);
+
+	vkDestroySemaphore(
+		loader_thread_resource->GetVulkanDevice(),
+		transfer_semaphore,
+		nullptr
+	);
+	vkDestroySemaphore(
+		loader_thread_resource->GetVulkanDevice(),
+		blit_semaphore,
+		nullptr
+	);
+
+	vkFreeCommandBuffers(
+		loader_thread_resource->GetVulkanDevice(),
+		loader_thread_resource->GetPrimaryRenderCommandPool(),
+		1, &primary_render_command_buffer
+	);
+	vkFreeCommandBuffers(
+		loader_thread_resource->GetVulkanDevice(),
+		loader_thread_resource->GetSecondaryRenderCommandPool(),
+		1, &secondary_render_command_buffer
+	);
+	vkFreeCommandBuffers(
+		loader_thread_resource->GetVulkanDevice(),
+		loader_thread_resource->GetPrimaryTransferCommandPool(),
+		1, &primary_transfer_command_buffer
+	);
 
 	memory_pool->FreeCompleteResource( image );
 	memory_pool->FreeCompleteResource( staging_buffer );

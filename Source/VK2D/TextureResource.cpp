@@ -29,15 +29,19 @@ VK2D_API bool VK2D_APIENTRY TextureResource::IsGood()
 	return is_good;
 }
 
-VK2D_API bool VK2D_APIENTRY TextureResource::MTLoad()
+VK2D_API bool VK2D_APIENTRY TextureResource::MTLoad(
+	_internal::ThreadPrivateResource	*	thread_resource
+)
 {
-	if( impl && impl->IsGood() ) return impl->MTLoad();
+	if( impl && impl->IsGood() ) return impl->MTLoad( thread_resource );
 	return false;
 }
 
-VK2D_API void VK2D_APIENTRY TextureResource::MTUnload()
+VK2D_API void VK2D_APIENTRY TextureResource::MTUnload(
+	_internal::ThreadPrivateResource	*	thread_resource
+)
 {
-	if( impl && impl->IsGood() ) impl->MTUnload();
+	if( impl && impl->IsGood() ) impl->MTUnload( thread_resource );
 }
 
 

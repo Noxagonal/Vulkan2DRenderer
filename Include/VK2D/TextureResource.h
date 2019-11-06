@@ -31,8 +31,11 @@ public:
 	VK2D_API bool				VK2D_APIENTRY	IsGood();
 
 protected:
-	VK2D_API virtual bool		VK2D_APIENTRY	MTLoad();
-	VK2D_API virtual void		VK2D_APIENTRY	MTUnload();
+	VK2D_API virtual bool		VK2D_APIENTRY	MTLoad(
+		_internal::ThreadPrivateResource	*	thread_resource );
+
+	VK2D_API virtual void		VK2D_APIENTRY	MTUnload(
+		_internal::ThreadPrivateResource	*	thread_resource );
 
 private:
 	std::unique_ptr<_internal::TextureResourceImpl>		impl					= {};

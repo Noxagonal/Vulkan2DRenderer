@@ -6,6 +6,7 @@
 #include "../../Include/VK2D/Window.h"
 #include "../Header/QueueResolver.h"
 #include "../Header/ThreadPool.h"
+#include "../Header/ThreadPrivateResources.h"
 
 #include "../Shaders/shader.vert.spv.h"
 #include "../Shaders/shader.frag.spv.h"
@@ -23,46 +24,6 @@ namespace vk2d {
 
 
 namespace _internal {
-
-
-
-class ThreadLoaderResource : public ThreadPrivateResource {
-public:
-	ThreadLoaderResource(
-		RendererImpl * parent
-	) : parent( parent )
-	{
-		device		= parent->GetVulkanDevice();
-	}
-	~ThreadLoaderResource()
-	{}
-
-protected:
-	void			ThreadBegin()
-	{
-		// Initialize Vulkan stuff here
-
-	}
-	void			ThreadEnd()
-	{
-		// De-initialize Vulkan stuff here
-	}
-
-private:
-
-	RendererImpl		*	parent			= {};
-	VkDevice				device			= {};
-};
-
-
-
-class ThreadGeneralResource : public ThreadPrivateResource {
-protected:
-	void			ThreadBegin()
-	{};
-	void			ThreadEnd()
-	{};
-};
 
 
 

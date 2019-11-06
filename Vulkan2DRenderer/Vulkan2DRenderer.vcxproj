@@ -119,6 +119,7 @@ glslangValidator -V -o "$(SolutionDir)Source\Shaders\shader.frag.spv.h" "$(Solut
     <ClInclude Include="..\Source\Header\SourceCommon.h" />
     <ClInclude Include="..\Source\Header\TextureResourceImpl.h" />
     <ClInclude Include="..\Source\Header\ThreadPool.h" />
+    <ClInclude Include="..\Source\Header\ThreadPrivateResources.h" />
     <ClInclude Include="..\Source\Header\VulkanMemoryManagement.h" />
     <ClInclude Include="..\Source\Header\WindowImpl.h" />
     <ClInclude Include="..\Source\Shaders\shader.frag.spv.h" />
@@ -136,6 +137,7 @@ glslangValidator -V -o "$(SolutionDir)Source\Shaders\shader.frag.spv.h" "$(Solut
     <ClCompile Include="..\Source\VK2D\TextureResource.cpp" />
     <ClCompile Include="..\Source\VK2D\TextureResourceImpl.cpp" />
     <ClCompile Include="..\Source\VK2D\ThreadPool.cpp" />
+    <ClCompile Include="..\Source\VK2D\ThreadPrivateResources.cpp" />
     <ClCompile Include="..\Source\VK2D\VulkanMemoryManagement.cpp" />
     <ClCompile Include="..\Source\VK2D\Window.cpp" />
     <ClCompile Include="..\Source\VK2D\WindowImpl.cpp" />

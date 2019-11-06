@@ -25,19 +25,30 @@ public:
 
 	~TextureResourceImpl();
 
-	bool											MTLoad();
-	void											MTUnload();
+	bool											MTLoad(
+		_internal::ThreadPrivateResource		*	thread_resource );
+
+	void											MTUnload(
+		_internal::ThreadPrivateResource		*	thread_resource );
 
 	bool											IsGood();
 
 private:
-	TextureResource								*	parent						= {};
-	_internal::ResourceManagerImpl				*	resource_manager			= {};
+	TextureResource								*	parent								= {};
+	_internal::ResourceManagerImpl				*	resource_manager					= {};
 
-	CompleteBufferResource							staging_buffer				= {};
-	CompleteImageResource							image						= {};
+	CompleteBufferResource							staging_buffer						= {};
+	CompleteImageResource							image								= {};
 
-	bool											is_good						= {};
+	VkCommandBuffer									primary_render_command_buffer		= {};
+	VkCommandBuffer									secondary_render_command_buffer		= {};
+	VkCommandBuffer									primary_transfer_command_buffer		= {};
+
+	VkSemaphore										transfer_semaphore					= {};
+	VkSemaphore										blit_semaphore						= {};
+	VkFence											texture_complete_fence				= {};
+
+	bool											is_good								= {};
 };
 
 

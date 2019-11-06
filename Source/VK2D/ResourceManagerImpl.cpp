@@ -47,7 +47,7 @@ public:
 
 	void operator()( _internal::ThreadPrivateResource * thread_resource )
 	{
-		if( resource->MTLoad() ) {
+		if( resource->MTLoad( thread_resource ) ) {
 			resource->is_loaded			= true;
 		} else {
 			resource->failed_to_load	= true;
@@ -71,7 +71,7 @@ public:
 
 	void operator()( _internal::ThreadPrivateResource * thread_resource )
 	{
-		resource->MTUnload();
+		resource->MTUnload( thread_resource );
 	}
 
 	ResourceManagerImpl				*	resource_manager		= {};
