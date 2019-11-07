@@ -4,6 +4,7 @@
 #include "../../Include/VK2D/TextureResource.h"
 #include "../Header/VulkanMemoryManagement.h"
 #include "../Header/DescriptorSet.h"
+#include "../Header/ThreadPrivateResources.h"
 
 
 namespace vk2d {
@@ -32,11 +33,14 @@ public:
 	void											MTUnload(
 		_internal::ThreadPrivateResource		*	thread_resource );
 
+	bool											IsLoaded();
+
 	bool											IsGood();
 
 private:
 	TextureResource								*	parent								= {};
 	_internal::ResourceManagerImpl				*	resource_manager					= {};
+	ThreadLoaderResource						*	loader_thread_resource				= {};
 
 	CompleteBufferResource							staging_buffer						= {};
 	CompleteImageResource							image								= {};
@@ -51,6 +55,7 @@ private:
 	VkSemaphore										blit_semaphore						= {};
 	VkFence											texture_complete_fence				= {};
 
+	bool											is_loaded							= {};
 	bool											is_good								= {};
 };
 

@@ -20,6 +20,9 @@ ResourceManagerImpl::ResourceManagerImpl( _internal::RendererImpl * parent_rende
 	parent			= parent_renderer;
 	assert( parent );
 
+	device			= parent->GetVulkanDevice();
+	assert( device );
+
 	thread_pool		= parent->GetThreadPool();
 	assert( thread_pool );
 
@@ -47,11 +50,10 @@ public:
 
 	void operator()( _internal::ThreadPrivateResource * thread_resource )
 	{
-		if( resource->MTLoad( thread_resource ) ) {
-			resource->is_loaded			= true;
-		} else {
+		if( !resource->MTLoad( thread_resource ) ) {
 			resource->failed_to_load	= true;
 		}
+		resource->load_function_ran		= true;
 	}
 
 	ResourceManagerImpl				*	resource_manager		= {};

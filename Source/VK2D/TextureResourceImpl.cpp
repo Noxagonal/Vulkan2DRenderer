@@ -53,8 +53,8 @@ bool TextureResourceImpl::MTLoad(
 	// 8. Submit command buffer to the GPU, get a fence handle to indicate when the image is ready to be used.
 	// 9. Allocate descriptor set that points to the image.
 
-	auto loader_thread_resource		= dynamic_cast<ThreadLoaderResource*>( thread_resource );
-	auto memory_pool				= resource_manager->GetRenderer()->GetDeviceMemoryPool();
+	loader_thread_resource	= dynamic_cast<ThreadLoaderResource*>( thread_resource );
+	auto memory_pool		= resource_manager->GetRenderer()->GetDeviceMemoryPool();
 
 	assert( loader_thread_resource );
 	if( !loader_thread_resource ) return false;
@@ -706,20 +706,17 @@ void TextureResourceImpl::MTUnload(
 	_internal::ThreadPrivateResource	*	thread_resource
 )
 {
-	auto loader_thread_resource		= dynamic_cast<ThreadLoaderResource*>( thread_resource );
-	auto memory_pool				= resource_manager->GetRenderer()->GetDeviceMemoryPool();
+	loader_thread_resource	= dynamic_cast<ThreadLoaderResource*>( thread_resource );
+
+	assert( loader_thread_resource );
+	if( !loader_thread_resource ) return;
+
+	auto memory_pool		= resource_manager->GetRenderer()->GetDeviceMemoryPool();
 
 	// Check if loaded successfully, no need to check for failure as this thread was
 	// responsible for loading it, it's either loaded or failed to load but it'll
 	// definitely be either or. MTUnload() does not ever get called before MTLoad().
-	if( parent->IsLoaded() ) {
-		vkWaitForFences(
-			loader_thread_resource->GetVulkanDevice(),
-			1, &texture_complete_fence,
-			VK_TRUE,
-			UINT64_MAX
-		);
-	}
+	parent->WaitUntilLoaded();
 
 	loader_thread_resource->GetDescriptorAutoPool()->FreeDescriptorSet(
 		descriptor_set
@@ -760,6 +757,85 @@ void TextureResourceImpl::MTUnload(
 
 	memory_pool->FreeCompleteResource( image );
 	memory_pool->FreeCompleteResource( staging_buffer );
+}
+
+bool TextureResourceImpl::IsLoaded()
+{
+	if( is_loaded )						return true;
+	if( !is_good )						return false;
+	if( !parent->load_function_ran )	return false;
+	if( parent->FailedToLoad() )		return false;
+
+	// TODO: problem here, we can't use this function to directly check and modify stuff here,
+	// we'll run into race conditions. Instead we should make a thread locked task to check it
+	// for us. So make a task which checks for completion, submit it, return false until the
+	// task we submitted earlier returns true.
+
+	ERROR HERE;
+
+	assert( texture_complete_fence );
+	auto result = vkGetFenceStatus(
+		resource_manager->GetVulkanDevice(),
+		texture_complete_fence
+	);
+	if( result == VK_SUCCESS ) {
+		// Loaded, free some resources used to load
+
+		vkDestroyFence(
+			resource_manager->GetVulkanDevice(),
+			texture_complete_fence,
+			nullptr
+		);
+
+		vkDestroySemaphore(
+			resource_manager->GetVulkanDevice(),
+			transfer_semaphore,
+			nullptr
+		);
+		vkDestroySemaphore(
+			resource_manager->GetVulkanDevice(),
+			blit_semaphore,
+			nullptr
+		);
+
+		vkFreeCommandBuffers(
+			resource_manager->GetVulkanDevice(),
+			loader_thread_resource->GetPrimaryRenderCommandPool(),
+			1, &primary_render_command_buffer
+		);
+		vkFreeCommandBuffers(
+			resource_manager->GetVulkanDevice(),
+			loader_thread_resource->GetSecondaryRenderCommandPool(),
+			1, &secondary_render_command_buffer
+		);
+		vkFreeCommandBuffers(
+			resource_manager->GetVulkanDevice(),
+			loader_thread_resource->GetPrimaryTransferCommandPool(),
+			1, &primary_transfer_command_buffer
+		);
+
+		resource_manager->GetRenderer()->GetDeviceMemoryPool()->FreeCompleteResource( staging_buffer );
+
+		texture_complete_fence				= VK_NULL_HANDLE;
+		transfer_semaphore					= VK_NULL_HANDLE;
+		blit_semaphore						= VK_NULL_HANDLE;
+		primary_render_command_buffer		= VK_NULL_HANDLE;
+		secondary_render_command_buffer		= VK_NULL_HANDLE;
+		primary_transfer_command_buffer		= VK_NULL_HANDLE;
+		staging_buffer						= {};
+
+		is_loaded							= true;
+		return true;
+
+	} else if( result == VK_NOT_READY ) {
+		return false;
+
+	} else {
+		parent->failed_to_load	= true;
+		return false;
+	};
+
+	return false;
 }
 
 bool TextureResourceImpl::IsGood()

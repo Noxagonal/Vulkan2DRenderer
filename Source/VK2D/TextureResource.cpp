@@ -24,6 +24,12 @@ VK2D_API TextureResource::TextureResource(
 VK2D_API TextureResource::~TextureResource()
 {}
 
+VK2D_API bool VK2D_APIENTRY TextureResource::IsLoaded()
+{
+	if( impl && impl->IsGood() ) return impl->IsLoaded();
+	return false;
+}
+
 VK2D_API bool VK2D_APIENTRY TextureResource::IsGood()
 {
 	return is_good;

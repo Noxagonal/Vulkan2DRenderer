@@ -26,8 +26,7 @@ public:
 
 	// Checks if the resource is ready to be used.
 	// Returns true if resource is loaded, false otherwise.
-	// TODO: MAKE THIS PURE VIRTUAL, this should invoke some more complicated checks.
-	VK2D_API bool								VK2D_APIENTRY	IsLoaded() const;
+	VK2D_API virtual bool						VK2D_APIENTRY	IsLoaded()			= 0;
 
 	// Checks if the resource loading failed.
 	// Returns true if failed to load, false otherwise.
@@ -35,7 +34,9 @@ public:
 
 	// Blocks until the resource is ready to be used or an error happened.
 	// Returns true if loading was successful, false otherwise.
-	VK2D_API bool								VK2D_APIENTRY	WaitUntilLoaded() const;
+	// TODO: Make this pure virtual, resource itself will perform this task better.
+	TODO HERE;
+	VK2D_API bool								VK2D_APIENTRY	WaitUntilLoaded();
 
 	// Checks if the resource was loaded from a file.
 	// Returns true if the resource origin is in a file, for example an image, false otherwise.
@@ -55,7 +56,7 @@ protected:
 	VK2D_API virtual void						VK2D_APIENTRY	MTUnload(
 		_internal::ThreadPrivateResource	*	thread_resource )					= 0;
 
-	std::atomic_bool							is_loaded							= {};
+	std::atomic_bool							load_function_ran					= {};
 	std::atomic_bool							failed_to_load						= {};
 
 private:
