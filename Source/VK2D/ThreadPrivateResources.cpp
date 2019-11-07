@@ -3,6 +3,7 @@
 
 #include "../Header/ThreadPrivateResources.h"
 #include "../Header/RendererImpl.h"
+#include "../Header/DescriptorSet.h"
 
 vk2d::_internal::ThreadLoaderResource::ThreadLoaderResource( RendererImpl * parent )
 {
@@ -18,6 +19,11 @@ vk2d::_internal::RendererImpl * vk2d::_internal::ThreadLoaderResource::GetRender
 VkDevice vk2d::_internal::ThreadLoaderResource::GetVulkanDevice() const
 {
 	return device;
+}
+
+vk2d::_internal::DescriptorAutoPool * vk2d::_internal::ThreadLoaderResource::GetDescriptorAutoPool() const
+{
+	return descriptor_auto_pool.get();
 }
 
 VkCommandPool vk2d::_internal::ThreadLoaderResource::GetPrimaryRenderCommandPool() const
@@ -86,7 +92,14 @@ bool vk2d::_internal::ThreadLoaderResource::ThreadBegin()
 	}
 
 	// Descriptor pool
-	// TODO: descriptor pool
+	{
+		descriptor_auto_pool	= CreateDescriptorAutoPool(
+			device
+		);
+		if( !descriptor_auto_pool ) {
+			return false;
+		}
+	}
 
 	return true;
 }
@@ -94,21 +107,21 @@ bool vk2d::_internal::ThreadLoaderResource::ThreadBegin()
 void vk2d::_internal::ThreadLoaderResource::ThreadEnd()
 {
 	// De-initialize Vulkan stuff here
-	{
-		vkDestroyCommandPool(
-			device,
-			primary_render_command_pool,
-			nullptr
-		);
-		vkDestroyCommandPool(
-			device,
-			secondary_render_command_pool,
-			nullptr
-		);
-		vkDestroyCommandPool(
-			device,
-			primary_transfer_command_pool,
-			nullptr
-		);
-	}
+	descriptor_auto_pool	= nullptr;
+
+	vkDestroyCommandPool(
+		device,
+		primary_render_command_pool,
+		nullptr
+	);
+	vkDestroyCommandPool(
+		device,
+		secondary_render_command_pool,
+		nullptr
+	);
+	vkDestroyCommandPool(
+		device,
+		primary_transfer_command_pool,
+		nullptr
+	);
 }

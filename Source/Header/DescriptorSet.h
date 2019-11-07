@@ -122,7 +122,7 @@ public:
 		const DescriptorSetLayout								&	rForDescriptorSetLaout);
 
 	 void															FreeDescriptorSet(
-		PoolDescriptorSet										&	rDescriptorSet );
+		PoolDescriptorSet										&	pDescriptorSet );
 
 private:
 	VkDevice														refDevice				= {};

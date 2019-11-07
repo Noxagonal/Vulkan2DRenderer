@@ -7,6 +7,7 @@
 #include "../Header/QueueResolver.h"
 #include "../Header/ThreadPool.h"
 #include "../Header/ThreadPrivateResources.h"
+#include "../Header/DescriptorSet.h"
 
 #include "../Shaders/shader.vert.spv.h"
 #include "../Shaders/shader.frag.spv.h"
@@ -151,11 +152,7 @@ RendererImpl::~RendererImpl()
 		nullptr
 	);
 
-	vkDestroyDescriptorSetLayout(
-		device,
-		descriptor_set_layout,
-		nullptr
-	);
+	descriptor_set_layout	= nullptr;
 
 	vkDestroyShaderModule(
 		device,
@@ -347,9 +344,9 @@ VkPipelineLayout RendererImpl::GetPipelineLayout() const
 	return pipeline_layout;
 }
 
-VkDescriptorSetLayout RendererImpl::GetDescriptorSetLayout() const
+const DescriptorSetLayout & RendererImpl::GetDescriptorSetLayout() const
 {
-	return descriptor_set_layout;
+	return *descriptor_set_layout;
 }
 
 DeviceMemoryPool * RendererImpl::GetDeviceMemoryPool() const
@@ -806,17 +803,16 @@ bool RendererImpl::CreateDescriptorSetLayouts()
 		descriptor_set_layout_create_info.pNext			= nullptr;
 		descriptor_set_layout_create_info.flags			= 0;
 		// TODO: DEBUG:
-//		descriptor_set_layout_create_info.bindingCount	= uint32_t( descriptor_set_layout_bindings.size() );
-//		descriptor_set_layout_create_info.pBindings		= descriptor_set_layout_bindings.data();
-		descriptor_set_layout_create_info.bindingCount	= 0;
-		descriptor_set_layout_create_info.pBindings		= nullptr;
+		descriptor_set_layout_create_info.bindingCount	= uint32_t( descriptor_set_layout_bindings.size() );
+		descriptor_set_layout_create_info.pBindings		= descriptor_set_layout_bindings.data();
+//		descriptor_set_layout_create_info.bindingCount	= 0;
+//		descriptor_set_layout_create_info.pBindings		= nullptr;
 
-		if( vkCreateDescriptorSetLayout(
+		descriptor_set_layout		= _internal::CreateDescriptorSetLayout(
 			device,
-			&descriptor_set_layout_create_info,
-			nullptr,
-			&descriptor_set_layout
-		) != VK_SUCCESS ) {
+			&descriptor_set_layout_create_info
+		);
+		if( !descriptor_set_layout ) {
 			if( report_function ) {
 				report_function( ReportSeverity::NON_CRITICAL_ERROR, "Cannot create descriptor set layout!" );
 			}
@@ -840,7 +836,7 @@ bool RendererImpl::CreatePipelineLayout()
 	// This must match shader layout.
 
 	std::vector<VkDescriptorSetLayout> set_layouts {
-		descriptor_set_layout
+		descriptor_set_layout->GetVulkanDescriptorSetLayout()
 	};
 
 	std::array<VkPushConstantRange, 0> push_constant_ranges {};

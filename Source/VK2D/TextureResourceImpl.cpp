@@ -4,6 +4,7 @@
 #include "../Header/TextureResourceImpl.h"
 #include "../Header/ResourceManagerImpl.h"
 #include "../Header/ThreadPrivateResources.h"
+#include "../Header/DescriptorSet.h"
 
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
@@ -689,7 +690,14 @@ bool TextureResourceImpl::MTLoad(
 	}
 
 	// 9. Allocate descriptor set that points to the image.
-	// TODO: descriptor pool allocations
+	{
+		descriptor_set = loader_thread_resource->GetDescriptorAutoPool()->AllocateDescriptorSet(
+			resource_manager->GetRenderer()->GetDescriptorSetLayout()
+		);
+		if( descriptor_set != VK_SUCCESS ) {
+			return false;
+		}
+	}
 
 	return true;
 }
@@ -712,6 +720,10 @@ void TextureResourceImpl::MTUnload(
 			UINT64_MAX
 		);
 	}
+
+	loader_thread_resource->GetDescriptorAutoPool()->FreeDescriptorSet(
+		descriptor_set
+	);
 
 	vkDestroyFence(
 		loader_thread_resource->GetVulkanDevice(),

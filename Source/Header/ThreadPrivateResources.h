@@ -9,6 +9,7 @@ namespace vk2d {
 namespace _internal {
 
 class RendererImpl;
+class DescriptorAutoPool;
 
 
 
@@ -21,23 +22,25 @@ public:
 	~ThreadLoaderResource()
 	{}
 
-	RendererImpl				*	GetRenderer() const;
-	VkDevice						GetVulkanDevice() const;
-	VkCommandPool					GetPrimaryRenderCommandPool() const;
-	VkCommandPool					GetSecondaryRenderCommandPool() const;
-	VkCommandPool					GetPrimaryTransferCommandPool() const;
+	RendererImpl							*	GetRenderer() const;
+	VkDevice									GetVulkanDevice() const;
+	DescriptorAutoPool						*	GetDescriptorAutoPool() const;
+	VkCommandPool								GetPrimaryRenderCommandPool() const;
+	VkCommandPool								GetSecondaryRenderCommandPool() const;
+	VkCommandPool								GetPrimaryTransferCommandPool() const;
 
 protected:
-	bool							ThreadBegin();
-	void							ThreadEnd();
+	bool										ThreadBegin();
+	void										ThreadEnd();
 
 private:
-	RendererImpl				*	parent							= {};
-	VkDevice						device							= {};
+	RendererImpl							*	parent								= {};
+	VkDevice									device								= {};
+	std::unique_ptr<DescriptorAutoPool>			descriptor_auto_pool				= {};
 
-	VkCommandPool					primary_render_command_pool		= {};
-	VkCommandPool					secondary_render_command_pool	= {};
-	VkCommandPool					primary_transfer_command_pool	= {};
+	VkCommandPool								primary_render_command_pool			= {};
+	VkCommandPool								secondary_render_command_pool		= {};
+	VkCommandPool								primary_transfer_command_pool		= {};
 };
 
 

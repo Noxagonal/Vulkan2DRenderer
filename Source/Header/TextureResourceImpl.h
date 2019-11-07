@@ -3,6 +3,7 @@
 #include "SourceCommon.h"
 #include "../../Include/VK2D/TextureResource.h"
 #include "../Header/VulkanMemoryManagement.h"
+#include "../Header/DescriptorSet.h"
 
 
 namespace vk2d {
@@ -39,6 +40,8 @@ private:
 
 	CompleteBufferResource							staging_buffer						= {};
 	CompleteImageResource							image								= {};
+
+	PoolDescriptorSet								descriptor_set						= {};
 
 	VkCommandBuffer									primary_render_command_buffer		= {};
 	VkCommandBuffer									secondary_render_command_buffer		= {};

@@ -21,6 +21,7 @@ class ResourceManager;
 namespace _internal {
 
 class ThreadPool;
+class DescriptorSetLayout;
 
 
 
@@ -63,7 +64,7 @@ public:
 
 	VkPipelineCache									GetPipelineCache() const;
 	VkPipelineLayout								GetPipelineLayout() const;
-	VkDescriptorSetLayout							GetDescriptorSetLayout() const;
+	const DescriptorSetLayout					&	GetDescriptorSetLayout() const;
 
 	DeviceMemoryPool							*	GetDeviceMemoryPool() const;
 
@@ -115,7 +116,7 @@ private:
 
 	VkSampler										sampler								= {};
 
-	VkDescriptorSetLayout							descriptor_set_layout				= {};
+	std::unique_ptr<DescriptorSetLayout>			descriptor_set_layout				= {};
 
 	ResolvedQueue									primary_render_queue				= {};
 	ResolvedQueue									secondary_render_queue				= {};
