@@ -120,7 +120,7 @@ void ResourceManagerImpl::DestroyResource(
 	Resource	*	resource
 )
 {
-	if( !resource ) return;
+ 	if( !resource ) return;
 
 	// We'll have to wait until the resource is definitely loaded, or encountered an error.
 	resource->WaitUntilLoaded();
@@ -131,7 +131,7 @@ void ResourceManagerImpl::DestroyResource(
 	while( it != resources.end() ) {
 		if( it->get() == resource ) {
 			// Found resource in the resources list
-			thread_pool->ScheduleTask( std::make_unique<UnloadTask>( this, std::move( *it ) ), { resource->loader_thread } );
+			thread_pool->ScheduleTask( std::make_unique<UnloadTask>( this, std::move( *it ) ), { resource->GetLoaderThread() } );
 			it = resources.erase( it );
 			return;
 		} else {

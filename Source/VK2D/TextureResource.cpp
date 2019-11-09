@@ -30,6 +30,12 @@ VK2D_API bool VK2D_APIENTRY TextureResource::IsLoaded()
 	return false;
 }
 
+VK2D_API bool VK2D_APIENTRY TextureResource::WaitUntilLoaded()
+{
+	if( impl && impl->IsGood() ) return impl->WaitUntilLoaded();
+	return false;
+}
+
 VK2D_API bool VK2D_APIENTRY TextureResource::IsGood()
 {
 	return is_good;

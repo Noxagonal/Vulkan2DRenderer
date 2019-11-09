@@ -12,13 +12,14 @@ namespace vk2d {
 namespace _internal {
 
 class ResourceManagerImpl;
-
+class DestroyTextureLoadResources;
 
 
 class TextureResourceImpl
 {
-	friend class TextureResource;
-	friend class _internal::ResourceManagerImpl;
+	friend class vk2d::TextureResource;
+	friend class vk2d::_internal::ResourceManagerImpl;
+	friend class vk2d::_internal::DestroyTextureLoadResources;
 
 public:
 	TextureResourceImpl(
@@ -34,29 +35,33 @@ public:
 		_internal::ThreadPrivateResource		*	thread_resource );
 
 	bool											IsLoaded();
+	bool											WaitUntilLoaded();
 
 	bool											IsGood();
 
 private:
-	TextureResource								*	parent								= {};
-	_internal::ResourceManagerImpl				*	resource_manager					= {};
-	ThreadLoaderResource						*	loader_thread_resource				= {};
+	void											ScheduleTextureLoadResourceDestruction();
 
-	CompleteBufferResource							staging_buffer						= {};
-	CompleteImageResource							image								= {};
+	TextureResource								*	texture										= {};
+	_internal::ResourceManagerImpl				*	resource_manager							= {};
+	ThreadLoaderResource						*	loader_thread_resource						= {};
 
-	PoolDescriptorSet								descriptor_set						= {};
+	CompleteBufferResource							staging_buffer								= {};
+	CompleteImageResource							image										= {};
 
-	VkCommandBuffer									primary_render_command_buffer		= {};
-	VkCommandBuffer									secondary_render_command_buffer		= {};
-	VkCommandBuffer									primary_transfer_command_buffer		= {};
+	PoolDescriptorSet								descriptor_set								= {};
 
-	VkSemaphore										transfer_semaphore					= {};
-	VkSemaphore										blit_semaphore						= {};
-	VkFence											texture_complete_fence				= {};
+	VkCommandBuffer									primary_render_command_buffer				= {};
+	VkCommandBuffer									secondary_render_command_buffer				= {};
+	VkCommandBuffer									primary_transfer_command_buffer				= {};
 
-	bool											is_loaded							= {};
-	bool											is_good								= {};
+	VkSemaphore										transfer_semaphore							= {};
+	VkSemaphore										blit_semaphore								= {};
+	VkFence											texture_complete_fence						= {};
+
+	std::mutex										is_loaded_mutex								= {};
+	bool											is_loaded									= {};
+	bool											is_good										= {};
 };
 
 

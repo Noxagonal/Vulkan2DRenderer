@@ -27,9 +27,9 @@ TextureResourceImpl::TextureResourceImpl(
 	_internal::ResourceManagerImpl	*	resource_manager
 )
 {
-	this->parent				= texture_resource_parent;
+	this->texture				= texture_resource_parent;
 	this->resource_manager		= resource_manager;
-	assert( this->parent );
+	assert( this->texture );
 	assert( this->resource_manager );
 
 	is_good						= true;
@@ -75,17 +75,17 @@ bool TextureResourceImpl::MTLoad(
 	{
 		// 1. Load and process image from file.
 
-		if( parent->IsFromFile() ) {
+		if( texture->IsFromFile() ) {
 			// Create texture from a file
 
-			auto mypath = std::filesystem::current_path() / parent->GetFilePath();
+			auto mypath = std::filesystem::current_path() / texture->GetFilePath();
 
 			int image_size_x			= 0;
 			int image_size_y			= 0;
 			int image_channel_count		= 0;
 
 			auto image_data = stbi_load(
-				parent->GetFilePath().string().c_str(),
+				texture->GetFilePath().string().c_str(),
 				&image_size_x,
 				&image_size_y,
 				&image_channel_count,
@@ -716,7 +716,7 @@ void TextureResourceImpl::MTUnload(
 	// Check if loaded successfully, no need to check for failure as this thread was
 	// responsible for loading it, it's either loaded or failed to load but it'll
 	// definitely be either or. MTUnload() does not ever get called before MTLoad().
-	parent->WaitUntilLoaded();
+	texture->WaitUntilLoaded();
 
 	loader_thread_resource->GetDescriptorAutoPool()->FreeDescriptorSet(
 		descriptor_set
@@ -761,18 +761,18 @@ void TextureResourceImpl::MTUnload(
 
 bool TextureResourceImpl::IsLoaded()
 {
+	std::unique_lock<std::mutex>		is_loaded_lock( is_loaded_mutex, std::defer_lock );
+	if( !is_loaded_lock.try_lock() ) {
+		return false;
+	}
+
 	if( is_loaded )						return true;
 	if( !is_good )						return false;
-	if( !parent->load_function_ran )	return false;
-	if( parent->FailedToLoad() )		return false;
+	if( !texture->load_function_ran )	return false;
+	if( texture->FailedToLoad() )		return false;
 
-	// TODO: problem here, we can't use this function to directly check and modify stuff here,
-	// we'll run into race conditions. Instead we should make a thread locked task to check it
-	// for us. So make a task which checks for completion, submit it, return false until the
-	// task we submitted earlier returns true.
-
-	ERROR HERE;
-
+	// We can check the status of the fence in any thread,
+	// it will not be removed until the resource is removed.
 	assert( texture_complete_fence );
 	auto result = vkGetFenceStatus(
 		resource_manager->GetVulkanDevice(),
@@ -780,58 +780,50 @@ bool TextureResourceImpl::IsLoaded()
 	);
 	if( result == VK_SUCCESS ) {
 		// Loaded, free some resources used to load
-
-		vkDestroyFence(
-			resource_manager->GetVulkanDevice(),
-			texture_complete_fence,
-			nullptr
-		);
-
-		vkDestroySemaphore(
-			resource_manager->GetVulkanDevice(),
-			transfer_semaphore,
-			nullptr
-		);
-		vkDestroySemaphore(
-			resource_manager->GetVulkanDevice(),
-			blit_semaphore,
-			nullptr
-		);
-
-		vkFreeCommandBuffers(
-			resource_manager->GetVulkanDevice(),
-			loader_thread_resource->GetPrimaryRenderCommandPool(),
-			1, &primary_render_command_buffer
-		);
-		vkFreeCommandBuffers(
-			resource_manager->GetVulkanDevice(),
-			loader_thread_resource->GetSecondaryRenderCommandPool(),
-			1, &secondary_render_command_buffer
-		);
-		vkFreeCommandBuffers(
-			resource_manager->GetVulkanDevice(),
-			loader_thread_resource->GetPrimaryTransferCommandPool(),
-			1, &primary_transfer_command_buffer
-		);
-
-		resource_manager->GetRenderer()->GetDeviceMemoryPool()->FreeCompleteResource( staging_buffer );
-
-		texture_complete_fence				= VK_NULL_HANDLE;
-		transfer_semaphore					= VK_NULL_HANDLE;
-		blit_semaphore						= VK_NULL_HANDLE;
-		primary_render_command_buffer		= VK_NULL_HANDLE;
-		secondary_render_command_buffer		= VK_NULL_HANDLE;
-		primary_transfer_command_buffer		= VK_NULL_HANDLE;
-		staging_buffer						= {};
-
 		is_loaded							= true;
+		ScheduleTextureLoadResourceDestruction();
 		return true;
 
 	} else if( result == VK_NOT_READY ) {
 		return false;
 
 	} else {
-		parent->failed_to_load	= true;
+		texture->failed_to_load	= true;
+		return false;
+	};
+
+	return false;
+}
+
+bool TextureResourceImpl::WaitUntilLoaded()
+{
+	std::lock_guard<std::mutex> is_loaded_lock( is_loaded_mutex );
+
+	if( is_loaded )						return true;
+	if( !is_good )						return false;
+	while( !texture->load_function_ran ) {
+		// Semi busy loop for now.
+		std::this_thread::sleep_for( std::chrono::microseconds( 10 ) );
+	}
+	if( texture->FailedToLoad() )		return false;
+
+	// We can check the status of the fence in any thread,
+	// it will not be removed until the resource is removed.
+	assert( texture_complete_fence );
+	auto result = vkWaitForFences(
+		resource_manager->GetVulkanDevice(),
+		1, &texture_complete_fence,
+		VK_TRUE,
+		UINT64_MAX
+	);
+	if( result == VK_SUCCESS ) {
+		// Loaded, free some resources used to load
+		is_loaded							= true;
+		ScheduleTextureLoadResourceDestruction();
+		return true;
+
+	} else {
+		texture->failed_to_load	= true;
 		return false;
 	};
 
@@ -841,6 +833,80 @@ bool TextureResourceImpl::IsLoaded()
 bool TextureResourceImpl::IsGood()
 {
 	return is_good;
+}
+
+
+
+// Handles the texture destruction
+class DestroyTextureLoadResources :
+	public vk2d::_internal::Task {
+public:
+	DestroyTextureLoadResources(
+		vk2d::_internal::TextureResourceImpl * texture
+	) :
+		texture( texture )
+	{};
+
+	void operator()(
+		vk2d::_internal::ThreadPrivateResource * thread_resource )
+	{
+
+		vkDestroyFence(
+			texture->resource_manager->GetVulkanDevice(),
+			texture->texture_complete_fence,
+			nullptr
+		);
+
+		vkDestroySemaphore(
+			texture->resource_manager->GetVulkanDevice(),
+			texture->transfer_semaphore,
+			nullptr
+		);
+		vkDestroySemaphore(
+			texture->resource_manager->GetVulkanDevice(),
+			texture->blit_semaphore,
+			nullptr
+		);
+
+		vkFreeCommandBuffers(
+			texture->resource_manager->GetVulkanDevice(),
+			texture->loader_thread_resource->GetPrimaryRenderCommandPool(),
+			1, &texture->primary_render_command_buffer
+		);
+		vkFreeCommandBuffers(
+			texture->resource_manager->GetVulkanDevice(),
+			texture->loader_thread_resource->GetSecondaryRenderCommandPool(),
+			1, &texture->secondary_render_command_buffer
+		);
+		vkFreeCommandBuffers(
+			texture->resource_manager->GetVulkanDevice(),
+			texture->loader_thread_resource->GetPrimaryTransferCommandPool(),
+			1, &texture->primary_transfer_command_buffer
+		);
+
+		texture->resource_manager->GetRenderer()->GetDeviceMemoryPool()->FreeCompleteResource(
+			texture->staging_buffer
+		);
+
+		texture->texture_complete_fence				= VK_NULL_HANDLE;
+		texture->transfer_semaphore					= VK_NULL_HANDLE;
+		texture->blit_semaphore						= VK_NULL_HANDLE;
+		texture->primary_render_command_buffer		= VK_NULL_HANDLE;
+		texture->secondary_render_command_buffer	= VK_NULL_HANDLE;
+		texture->primary_transfer_command_buffer	= VK_NULL_HANDLE;
+		texture->staging_buffer						= {};
+	}
+
+private:
+	vk2d::_internal::TextureResourceImpl		*	texture;
+};
+
+void vk2d::_internal::TextureResourceImpl::ScheduleTextureLoadResourceDestruction()
+{
+	resource_manager->GetThreadPool()->ScheduleTask(
+		std::make_unique<DestroyTextureLoadResources>( this ),
+		{ texture->GetLoaderThread() }
+	);
 }
 
 } // _internal

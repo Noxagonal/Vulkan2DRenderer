@@ -30,6 +30,7 @@ public:
 	VK2D_API									~TextureResource();
 
 	VK2D_API bool				VK2D_APIENTRY	IsLoaded();
+	VK2D_API bool				VK2D_APIENTRY	WaitUntilLoaded();
 
 	VK2D_API bool				VK2D_APIENTRY	IsGood();
 

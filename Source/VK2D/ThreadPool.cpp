@@ -14,7 +14,6 @@ namespace _internal {
 
 
 
-
 // Make sure all accesses are either atomic or inside a critical sector.
 // This is the main method of inter-thread communication.
 class ThreadSharedResource {
