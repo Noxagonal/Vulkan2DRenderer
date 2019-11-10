@@ -43,6 +43,11 @@ VK2D_API void VK2D_APIENTRY ResourceManager::DestroyResource(
 	if( impl && impl->IsGood() ) impl->DestroyResource( resource );
 }
 
+VK2D_API bool VK2D_APIENTRY ResourceManager::IsGood()
+{
+	return is_good;
+}
+
 
 
 }

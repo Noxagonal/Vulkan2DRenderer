@@ -37,7 +37,9 @@ public:
 	bool											IsLoaded();
 	bool											WaitUntilLoaded();
 
-	bool											IsGood();
+	VkDescriptorSet									GetDescriptorSet() const;
+
+	bool											IsGood() const;
 
 private:
 	void											ScheduleTextureLoadResourceDestruction();

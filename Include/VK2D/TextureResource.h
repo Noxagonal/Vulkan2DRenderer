@@ -9,19 +9,21 @@ namespace vk2d {
 
 namespace _internal {
 class RendererImpl;
+class WindowImpl;
 class TextureResourceImpl;
 class LoadTask;
 class UnloadTask;
-}
+} // _internal
 
 
 class TextureResource :
 	public Resource
 {
-	friend class _internal::TextureResourceImpl;
-	friend class _internal::ResourceManagerImpl;
-	friend class _internal::LoadTask;
-	friend class _internal::UnloadTask;
+	friend class vk2d::_internal::TextureResourceImpl;
+	friend class vk2d::_internal::ResourceManagerImpl;
+	friend class vk2d::_internal::LoadTask;
+	friend class vk2d::_internal::UnloadTask;
+	friend class vk2d::_internal::WindowImpl;
 
 	VK2D_API									TextureResource(
 		_internal::ResourceManagerImpl		*	resource_manager_parent );

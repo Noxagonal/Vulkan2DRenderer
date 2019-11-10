@@ -689,14 +689,35 @@ bool TextureResourceImpl::MTLoad(
 		}
 	}
 
-	// 9. Allocate descriptor set that points to the image.
+	// 9. Allocate and update descriptor set that points to the image.
 	{
 		descriptor_set = loader_thread_resource->GetDescriptorAutoPool()->AllocateDescriptorSet(
-			resource_manager->GetRenderer()->GetDescriptorSetLayout()
+			resource_manager->GetRenderer()->GetTextureDescriptorSetLayout()
 		);
 		if( descriptor_set != VK_SUCCESS ) {
 			return false;
 		}
+
+		VkDescriptorImageInfo descriptor_image_info {};
+		descriptor_image_info.sampler		= VK_NULL_HANDLE;
+		descriptor_image_info.imageView		= image.view;
+		descriptor_image_info.imageLayout	= VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+		VkWriteDescriptorSet descriptor_write {};
+		descriptor_write.sType				= VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+		descriptor_write.pNext				= nullptr;
+		descriptor_write.dstSet				= descriptor_set.descriptorSet;
+		descriptor_write.dstBinding			= 0;
+		descriptor_write.dstArrayElement	= 0;
+		descriptor_write.descriptorCount	= 1;
+		descriptor_write.descriptorType		= VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
+		descriptor_write.pImageInfo			= &descriptor_image_info;
+		descriptor_write.pBufferInfo		= nullptr;
+		descriptor_write.pTexelBufferView	= nullptr;
+		vkUpdateDescriptorSets(
+			resource_manager->GetVulkanDevice(),
+			1, &descriptor_write,
+			0, nullptr
+		);
 	}
 
 	return true;
@@ -830,7 +851,12 @@ bool TextureResourceImpl::WaitUntilLoaded()
 	return false;
 }
 
-bool TextureResourceImpl::IsGood()
+VkDescriptorSet TextureResourceImpl::GetDescriptorSet() const
+{
+	return descriptor_set.descriptorSet;
+}
+
+bool TextureResourceImpl::IsGood() const
 {
 	return is_good;
 }

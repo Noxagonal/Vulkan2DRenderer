@@ -7,20 +7,22 @@
 
 namespace vk2d {
 
+namespace _internal {
+
 class DeviceQueueResolver {
 public:
-	VK2D_API															DeviceQueueResolver()		= delete;
-	VK2D_API															DeviceQueueResolver(
+	VK2D_API																						DeviceQueueResolver()		= delete;
+	VK2D_API																						DeviceQueueResolver(
 		VkInstance														instance,
 		VkPhysicalDevice												physicalDevice,
 		std::vector<std::pair<VkQueueFlags, float>>						queueTypes );
 
-	VK2D_API															~DeviceQueueResolver();
+	VK2D_API																						~DeviceQueueResolver();
 
 	const VK2D_API std::vector<VkDeviceQueueCreateInfo>				&	VK2D_APIENTRY				GetDeviceQueueCreateInfos();
-	VK2D_API std::vector<ResolvedQueue>									VK2D_APIENTRY				GetQueues( VkDevice device );
+	VK2D_API std::vector<vk2d::_internal::ResolvedQueue>				VK2D_APIENTRY				GetQueues( VkDevice device );
 
-	bool																IsGood();
+	bool																							IsGood();
 
 private:
 	struct QueueGetInfo {
@@ -37,5 +39,7 @@ private:
 
 	bool									is_good						= {};
 };
+
+} // _internal
 
 } // vk2d

@@ -73,40 +73,46 @@ VK2D_API bool VK2D_APIENTRY Window::EndRender()
 
 
 VK2D_API void VK2D_APIENTRY Window::Draw_TriangleList(
-	bool								filled,
-	std::vector<Vertex>			&		vertices,
-	std::vector<VertexIndex_3>	&		indices
+	bool										filled,
+	const std::vector<Vertex>				&	vertices,
+	const std::vector<VertexIndex_3>		&	indices,
+	TextureResource							*	texture
 )
 {
 	if( impl ) {
 		impl->Draw_TriangleList(
 			filled,
 			vertices,
-			indices
+			indices,
+			texture
 		);
 	}
 }
 
 VK2D_API void VK2D_APIENTRY Window::Draw_LineList(
-	std::vector<Vertex>			&	vertices,
-	std::vector<VertexIndex_2>	&	indices
+	const std::vector<Vertex>				&	vertices,
+	const std::vector<VertexIndex_2>		&	indices,
+	TextureResource							*	texture
 )
 {
 	if( impl ) {
 		impl->Draw_LineList(
 			vertices,
-			indices
+			indices,
+			texture
 		);
 	}
 }
 
 VK2D_API void VK2D_APIENTRY Window::Draw_PointList(
-	std::vector<Vertex>			&	vertices
+	const std::vector<Vertex>				&	vertices,
+	TextureResource							*	texture
 )
 {
 	if( impl ) {
 		impl->Draw_PointList(
-			vertices
+			vertices,
+			texture
 		);
 	}
 }
@@ -169,7 +175,8 @@ VK2D_API void VK2D_APIENTRY Window::Draw_Pie(
 	float							begin_angle_radians,
 	float							end_angle_radians,
 	float							edge_count,
-	Color							color )
+	Color							color
+)
 {
 	if( impl ) {
 		impl->Draw_Pie(
@@ -190,7 +197,8 @@ VK2D_API void VK2D_APIENTRY Window::Draw_PieBox(
 	Coords							bottom_right,
 	float							begin_angle_radians,
 	float							coverage,
-	Color							color )
+	Color							color
+)
 {
 	if( impl ) {
 		impl->Draw_PieBox(
@@ -200,6 +208,25 @@ VK2D_API void VK2D_APIENTRY Window::Draw_PieBox(
 			begin_angle_radians,
 			coverage,
 			color
+		);
+	}
+}
+
+VK2D_API void VK2D_APIENTRY Window::Draw_Texture(
+	Coords						top_left,
+	Coords						bottom_right,
+	vk2d::TextureResource	*	texture,
+	Color						color,
+	bool						filled
+)
+{
+	if( impl ) {
+		impl->Draw_Texture(
+			top_left,
+			bottom_right,
+			texture,
+			color,
+			filled
 		);
 	}
 }
