@@ -1,12 +1,12 @@
 #pragma once
 
-#include "VK2D/Common.h"
+#include "Core/Common.h"
+#include "Core/Version.hpp"
 
-#include "VK2D/Version.hpp"
-#include "VK2D/Renderer.h"
-#include "VK2D/Window.h"
-#include "VK2D/ResourceManager.h"
-#include "VK2D/TextureResource.h"
+#include "Interface/Renderer.h"
+#include "Interface/Window.h"
+#include "Interface/ResourceManager.h"
+#include "Interface/TextureResource.h"
 
 namespace vk2d {
 

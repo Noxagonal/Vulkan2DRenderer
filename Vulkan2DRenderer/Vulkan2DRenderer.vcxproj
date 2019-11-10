@@ -101,53 +101,53 @@ glslangValidator -V -o "$(SolutionDir)Source\Shaders\shader.frag.spv.h" "$(Solut
     </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="..\Include\VK2D\BuildOptions.h" />
-    <ClInclude Include="..\Include\VK2D\Common.h" />
-    <ClInclude Include="..\Include\VK2D\Platform.h" />
-    <ClInclude Include="..\Include\VK2D\Renderer.h" />
-    <ClInclude Include="..\Include\VK2D\RenderPrimitives.h" />
-    <ClInclude Include="..\Include\VK2D\Resource.h" />
-    <ClInclude Include="..\Include\VK2D\ResourceManager.h" />
-    <ClInclude Include="..\Include\VK2D\TextureResource.h" />
-    <ClInclude Include="..\Include\VK2D\Version.hpp" />
-    <ClInclude Include="..\Include\VK2D\Window.h" />
+    <None Include="..\Source\Shaders\shader.frag" />
+    <None Include="..\Source\Shaders\shader.vert" />
+    <None Include="cpp.hint" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\Include\Core\BuildOptions.h" />
+    <ClInclude Include="..\Include\Core\Common.h" />
+    <ClInclude Include="..\Include\Core\Platform.h" />
+    <ClInclude Include="..\Include\Core\Version.hpp" />
+    <ClInclude Include="..\Include\Interface\Renderer.h" />
+    <ClInclude Include="..\Include\Interface\RenderPrimitives.h" />
+    <ClInclude Include="..\Include\Interface\Resource.h" />
+    <ClInclude Include="..\Include\Interface\ResourceManager.h" />
+    <ClInclude Include="..\Include\Interface\TextureResource.h" />
+    <ClInclude Include="..\Include\Interface\Window.h" />
     <ClInclude Include="..\Include\Vulkan2DRenderer.h" />
-    <ClInclude Include="..\Source\Header\DescriptorSet.h" />
-    <ClInclude Include="..\Source\Header\MeshBuffer.h" />
-    <ClInclude Include="..\Source\Header\QueueResolver.h" />
-    <ClInclude Include="..\Source\Header\RendererImpl.h" />
-    <ClInclude Include="..\Source\Header\ResourceManagerImpl.h" />
-    <ClInclude Include="..\Source\Header\SourceCommon.h" />
-    <ClInclude Include="..\Source\Header\TextureResourceImpl.h" />
-    <ClInclude Include="..\Source\Header\ThreadPool.h" />
-    <ClInclude Include="..\Source\Header\ThreadPrivateResources.h" />
-    <ClInclude Include="..\Source\Header\VulkanMemoryManagement.h" />
-    <ClInclude Include="..\Source\Header\WindowImpl.h" />
+    <ClInclude Include="..\Source\Header\Core\DescriptorSet.h" />
+    <ClInclude Include="..\Source\Header\Core\MeshBuffer.h" />
+    <ClInclude Include="..\Source\Header\Core\QueueResolver.h" />
+    <ClInclude Include="..\Source\Header\Core\SourceCommon.h" />
+    <ClInclude Include="..\Source\Header\Core\ThreadPool.h" />
+    <ClInclude Include="..\Source\Header\Core\ThreadPrivateResources.h" />
+    <ClInclude Include="..\Source\Header\Core\VulkanMemoryManagement.h" />
+    <ClInclude Include="..\Source\Header\Impl\RendererImpl.h" />
+    <ClInclude Include="..\Source\Header\Impl\ResourceManagerImpl.h" />
+    <ClInclude Include="..\Source\Header\Impl\TextureResourceImpl.h" />
+    <ClInclude Include="..\Source\Header\Impl\WindowImpl.h" />
     <ClInclude Include="..\Source\Shaders\shader.frag.spv.h" />
     <ClInclude Include="..\Source\Shaders\shader.vert.spv.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\Source\VK2D\DescriptorSet.cpp" />
-    <ClCompile Include="..\Source\VK2D\MeshBuffer.cpp" />
-    <ClCompile Include="..\Source\VK2D\Platform.cpp" />
-    <ClCompile Include="..\Source\VK2D\QueueResolver.cpp" />
-    <ClCompile Include="..\Source\VK2D\Renderer.cpp" />
-    <ClCompile Include="..\Source\VK2D\RendererImpl.cpp" />
-    <ClCompile Include="..\Source\VK2D\Resource.cpp" />
-    <ClCompile Include="..\Source\VK2D\ResourceManager.cpp" />
-    <ClCompile Include="..\Source\VK2D\ResourceManagerImpl.cpp" />
-    <ClCompile Include="..\Source\VK2D\TextureResource.cpp" />
-    <ClCompile Include="..\Source\VK2D\TextureResourceImpl.cpp" />
-    <ClCompile Include="..\Source\VK2D\ThreadPool.cpp" />
-    <ClCompile Include="..\Source\VK2D\ThreadPrivateResources.cpp" />
-    <ClCompile Include="..\Source\VK2D\VulkanMemoryManagement.cpp" />
-    <ClCompile Include="..\Source\VK2D\Window.cpp" />
-    <ClCompile Include="..\Source\VK2D\WindowImpl.cpp" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="..\Source\Shaders\shader.frag" />
-    <None Include="..\Source\Shaders\shader.vert" />
-    <None Include="cpp.hint" />
+    <ClCompile Include="..\Source\Core\DescriptorSet.cpp" />
+    <ClCompile Include="..\Source\Core\MeshBuffer.cpp" />
+    <ClCompile Include="..\Source\Core\Platform.cpp" />
+    <ClCompile Include="..\Source\Core\QueueResolver.cpp" />
+    <ClCompile Include="..\Source\Core\ThreadPool.cpp" />
+    <ClCompile Include="..\Source\Core\ThreadPrivateResources.cpp" />
+    <ClCompile Include="..\Source\Core\VulkanMemoryManagement.cpp" />
+    <ClCompile Include="..\Source\Impl\RendererImpl.cpp" />
+    <ClCompile Include="..\Source\Impl\ResourceManagerImpl.cpp" />
+    <ClCompile Include="..\Source\Impl\TextureResourceImpl.cpp" />
+    <ClCompile Include="..\Source\Impl\WindowImpl.cpp" />
+    <ClCompile Include="..\Source\Interface\Renderer.cpp" />
+    <ClCompile Include="..\Source\Interface\Resource.cpp" />
+    <ClCompile Include="..\Source\Interface\ResourceManager.cpp" />
+    <ClCompile Include="..\Source\Interface\TextureResource.cpp" />
+    <ClCompile Include="..\Source\Interface\Window.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
