@@ -10,6 +10,7 @@ Vulkan 2D Renderer is a C++17 library designed to be easy to use 2D rendering ba
 ### Capabilities
 
 - Draws basic 2D shapes.
+- Textured rendering.
 - Color controlled by vertex color.
 - Alpha blending.
 - Not much else right now.
@@ -21,16 +22,6 @@ Vulkan 2D Renderer is a C++17 library designed to be easy to use 2D rendering ba
 - Does not draw 3D, this is meant to be a simple library to use.
 - work in progress. We'll know more about limitations later.
 - Crashes will happen frequently.
-
-------
-
-### Todo
-
-- [ ] Testing for bugs.
-- [X] Make PieBox shape.
-- [ ] Resource loader.
-- [ ] Textures.
-- [ ] lots more...
 
 ------
 
