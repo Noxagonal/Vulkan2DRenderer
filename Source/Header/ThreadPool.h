@@ -6,6 +6,7 @@
 #include <thread>
 #include <mutex>
 #include <atomic>
+#include <assert.h>
 
 namespace vk2d {
 
@@ -96,7 +97,14 @@ public:
 	}
 
 protected:
-	virtual	void			ThreadBegin()			= 0;
+	// Ran at thread start before anything else.
+	// Return true if succesful, false to terminate entire thread pool.
+	// ThreadEnd() is ran afterwards regardless so you can rely that for cleanup.
+	virtual	bool			ThreadBegin()			= 0;
+
+	// Ran at thread pool termination, this is ran after all tasks have completed.
+	// It's also run even if ThreadBegin() returns false,
+	// so you can rely on this function for cleanup.
 	virtual void			ThreadEnd()				= 0;
 
 private:
@@ -110,11 +118,16 @@ struct ThreadSignal {
 	ThreadSignal()									= default;
 	ThreadSignal( const ThreadSignal & other )
 	{
-		thread_ready_to_join	= other.thread_ready_to_join.load();
+		init_success	= other.init_success.load();
+		init_error		= other.init_error.load();
+		ready_to_join	= other.ready_to_join.load();
 	}
 	ThreadSignal( ThreadSignal && other )			= default;
 	~ThreadSignal()									= default;
-	std::atomic_bool		thread_ready_to_join;
+
+	std::atomic_bool		init_success			= {};
+	std::atomic_bool		init_error				= {};
+	std::atomic_bool		ready_to_join			= {};
 };
 
 
@@ -140,6 +153,11 @@ public:
 		const std::vector<uint64_t>					&	dependencies				= {} )
 	{
 		static_assert( std::is_base_of<Task, T>::value, "Task must be derived from 'Task' Class!" );
+
+		if( shutting_down ) {
+			assert( 0 && "Shouldn't be adding tasks when we're shutting down the thread pool." );
+			return UINT64_MAX;
+		}
 		unique_task->locked_to_threads	= locked_to_threads;
 		unique_task->dependencies		= dependencies;
 		return AddTask( std::move( unique_task ) );
@@ -161,6 +179,7 @@ private:
 	std::vector<ThreadSignal>							thread_signals				= {};
 	std::vector<std::thread>							threads						= {};
 
+	std::atomic_bool									shutting_down				= {};
 
 	bool												is_good						= {};
 };

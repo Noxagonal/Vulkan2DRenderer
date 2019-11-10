@@ -2,8 +2,9 @@
 #include "../Header/SourceCommon.h"
 
 #include "../Header/WindowImpl.h"
-
 #include "../Header/RendererImpl.h"
+#include "../../Include/VK2D/TextureResource.h"
+#include "../Header/TextureResourceImpl.h"
 
 #include <memory>
 #include <algorithm>
@@ -331,6 +332,16 @@ bool WindowImpl::BeginRender()
 				command_buffer,
 				1.0f
 			);
+			
+			// TODO: consider sampler changes mid-render.
+			auto sampler_descriptor_set = renderer_parent->GetSamplerDescriptorSet( SamplerType::DEFAULT );
+			vkCmdBindDescriptorSets(
+				command_buffer,
+				VK_PIPELINE_BIND_POINT_GRAPHICS,
+				renderer_parent->GetPipelineLayout(),
+				0, 1, &sampler_descriptor_set,
+				0, nullptr
+			);
 		}
 
 		// Begin render pass
@@ -521,6 +532,7 @@ bool WindowImpl::EndRender()
 	previous_image						= next_image;
 	previous_frame_need_synchronization	= true;
 	previous_pipeline_type				= _internal::PipelineType::NONE;
+	previous_texture_descriptor_set		= VK_NULL_HANDLE;
 
 	glfwPollEvents();
 
@@ -552,9 +564,11 @@ bool WindowImpl::EndRender()
 // 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void WindowImpl::Draw_TriangleList(
-	bool								filled,
-	std::vector<Vertex>				&	vertices,
-	std::vector<VertexIndex_3>		&	indices )
+	bool										filled,
+	const std::vector<Vertex>				&	vertices,
+	const std::vector<VertexIndex_3>		&	indices,
+	TextureResource							*	texture
+)
 {
 	auto command_buffer					= render_command_buffers[ next_image ];
 
@@ -569,16 +583,21 @@ void WindowImpl::Draw_TriangleList(
 	}
 
 	if( filled ) {
-		CmdBindPipeline(
+		CmdBindPipelineIfDifferent(
 			command_buffer,
 			_internal::PipelineType::FILLED_POLYGON_LIST
 		);
 	} else {
-		CmdBindPipeline(
+		CmdBindPipelineIfDifferent(
 			command_buffer,
 			_internal::PipelineType::WIREFRAME_POLYGON_LIST
 		);
 	}
+
+	CmdBindTextureIfDifferent(
+		command_buffer,
+		texture
+	);
 
 	auto result = mesh_buffer->CmdPushMesh(
 		command_buffer,
@@ -596,8 +615,10 @@ void WindowImpl::Draw_TriangleList(
 }
 
 void WindowImpl::Draw_LineList(
-	std::vector<Vertex>				&	vertices,
-	std::vector<VertexIndex_2>		&	indices )
+	const std::vector<Vertex>				&	vertices,
+	const std::vector<VertexIndex_2>		&	indices,
+	TextureResource							*	texture
+)
 {
 	auto command_buffer					= render_command_buffers[ next_image ];
 
@@ -610,7 +631,7 @@ void WindowImpl::Draw_LineList(
 		raw_indices.push_back( indices[ i ].indices[ 1 ] );
 	}
 
-	CmdBindPipeline(
+	CmdBindPipelineIfDifferent(
 		command_buffer,
 		_internal::PipelineType::LINE_LIST
 	);
@@ -631,14 +652,15 @@ void WindowImpl::Draw_LineList(
 }
 
 void WindowImpl::Draw_PointList(
-	std::vector<Vertex>				&	vertices
+	const std::vector<Vertex>				&	vertices,
+	TextureResource							*	texture
 )
 {
 	auto command_buffer					= render_command_buffers[ next_image ];
 
 	auto vertex_count	= uint32_t( vertices.size() );
 
-	CmdBindPipeline(
+	CmdBindPipelineIfDifferent(
 		command_buffer,
 		_internal::PipelineType::POINT_LIST
 	);
@@ -691,22 +713,22 @@ void WindowImpl::Draw_Box(
 
 	// 0. Top left
 	vertices[ 0 ].vertex_coords		= { top_left.x,			top_left.y };
-	vertices[ 0 ].uv_coords			= vertices[ 0 ].vertex_coords;
+	vertices[ 0 ].uv_coords			= { 0.0f, 0.0f };
 	vertices[ 0 ].color				= color;
 
 	// 1. Top right
 	vertices[ 1 ].vertex_coords		= { bottom_right.x,		top_left.y };
-	vertices[ 1 ].uv_coords			= vertices[ 1 ].vertex_coords;
+	vertices[ 1 ].uv_coords			= { 1.0f, 0.0f };
 	vertices[ 1 ].color				= color;
 
 	// 2. Bottom left
 	vertices[ 2 ].vertex_coords		= { top_left.x,			bottom_right.y };
-	vertices[ 2 ].uv_coords			= vertices[ 2 ].vertex_coords;
+	vertices[ 2 ].uv_coords			= { 0.0f, 1.0f };
 	vertices[ 2 ].color				= color;
 
 	// 3. Bottom right
 	vertices[ 3 ].vertex_coords		= { bottom_right.x,		bottom_right.y };
-	vertices[ 3 ].uv_coords			= vertices[ 3 ].vertex_coords;
+	vertices[ 3 ].uv_coords			= { 1.0f, 1.0f };
 	vertices[ 3 ].color				= color;
 
 	if( filled ) {
@@ -1156,6 +1178,62 @@ void WindowImpl::Draw_PieBox(
 		Draw_LineList(
 			vertices,
 			indices
+		);
+	}
+}
+
+void WindowImpl::Draw_Texture(
+	Coords							top_left,
+	Coords							bottom_right,
+	vk2d::TextureResource		*	texture,
+	Color							color,
+	bool							filled
+)
+{
+	std::vector<Vertex>				vertices( 4 );
+
+	// 0. Top left
+	vertices[ 0 ].vertex_coords		= { top_left.x,			top_left.y };
+	vertices[ 0 ].uv_coords			= { 0.0f, 0.0f };
+	vertices[ 0 ].color				= color;
+
+	// 1. Top right
+	vertices[ 1 ].vertex_coords		= { bottom_right.x,		top_left.y };
+	vertices[ 1 ].uv_coords			= { 1.0f, 0.0f };
+	vertices[ 1 ].color				= color;
+
+	// 2. Bottom left
+	vertices[ 2 ].vertex_coords		= { top_left.x,			bottom_right.y };
+	vertices[ 2 ].uv_coords			= { 0.0f, 1.0f };
+	vertices[ 2 ].color				= color;
+
+	// 3. Bottom right
+	vertices[ 3 ].vertex_coords		= { bottom_right.x,		bottom_right.y };
+	vertices[ 3 ].uv_coords			= { 1.0f, 1.0f };
+	vertices[ 3 ].color				= color;
+
+	if( filled ) {
+		// Draw filled polygons
+		std::vector<VertexIndex_3>	indices( 2 );
+		indices[ 0 ].indices		= { 0, 2, 1 };
+		indices[ 1 ].indices		= { 1, 2, 3 };
+		Draw_TriangleList(
+			true,
+			vertices,
+			indices,
+			texture
+		);
+	} else {
+		// Draw lines
+		std::vector<VertexIndex_2>	indices( 4 );
+		indices[ 0 ].indices		= { 0, 2 };
+		indices[ 1 ].indices		= { 2, 3 };
+		indices[ 2 ].indices		= { 3, 1 };
+		indices[ 3 ].indices		= { 1, 0 };
+		Draw_LineList(
+			vertices,
+			indices,
+			texture
 		);
 	}
 }
@@ -2274,7 +2352,7 @@ bool WindowImpl::CreateFrameSynchronizationPrimitives()
 	return true;
 }
 
-void WindowImpl::CmdBindPipeline(
+void WindowImpl::CmdBindPipelineIfDifferent(
 	VkCommandBuffer						command_buffer,
 	_internal::PipelineType				pipeline_type
 )
@@ -2286,6 +2364,34 @@ void WindowImpl::CmdBindPipeline(
 			pipelines[ uint32_t( pipeline_type ) ]
 		);
 		previous_pipeline_type = pipeline_type;
+	}
+}
+
+void WindowImpl::CmdBindTextureIfDifferent(
+	VkCommandBuffer						command_buffer,
+	vk2d::TextureResource			*	texture
+)
+{
+	auto texture_descriptor_set	= renderer_parent->GetDefaultTextureDescriptorSet();
+	if( texture ) {
+		if( texture->WaitUntilLoaded() ) {
+			texture_descriptor_set	= texture->impl->GetDescriptorSet();
+		}
+	}
+
+	assert( texture_descriptor_set );
+
+	if( previous_texture_descriptor_set != texture_descriptor_set ) {
+
+		vkCmdBindDescriptorSets(
+			command_buffer,
+			VK_PIPELINE_BIND_POINT_GRAPHICS,
+			renderer_parent->GetPipelineLayout(),
+			1, 1, &texture_descriptor_set,
+			0, nullptr
+		);
+
+		previous_texture_descriptor_set	= texture_descriptor_set;
 	}
 }
 

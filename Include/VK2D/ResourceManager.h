@@ -32,6 +32,8 @@ public:
 	VK2D_API void								VK2D_APIENTRY				DestroyResource(
 		Resource														*	resource );
 
+	VK2D_API bool								VK2D_APIENTRY				IsGood();
+
 private:
 	std::unique_ptr<_internal::ResourceManagerImpl>							impl		= {};
 

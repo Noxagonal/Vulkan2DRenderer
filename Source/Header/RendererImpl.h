@@ -21,6 +21,13 @@ class ResourceManager;
 namespace _internal {
 
 class ThreadPool;
+class DescriptorSetLayout;
+
+
+
+enum class SamplerType : uint32_t {
+	DEFAULT,
+};
 
 
 
@@ -63,7 +70,14 @@ public:
 
 	VkPipelineCache									GetPipelineCache() const;
 	VkPipelineLayout								GetPipelineLayout() const;
-	VkDescriptorSetLayout							GetDescriptorSetLayout() const;
+	const DescriptorSetLayout					&	GetSamplerDescriptorSetLayout() const;
+	const DescriptorSetLayout					&	GetTextureDescriptorSetLayout() const;
+
+	VkDescriptorSet									GetDefaultTextureDescriptorSet() const;
+	VkDescriptorSet									GetSamplerDescriptorSet(
+		SamplerType									sampler_type ) const;
+	VkSampler										GetSampler(
+		SamplerType									sampler_type ) const;
 
 	DeviceMemoryPool							*	GetDeviceMemoryPool() const;
 
@@ -73,11 +87,28 @@ private:
 	bool											CreateInstance();
 	bool											PickPhysicalDevice();
 	bool											CreateDeviceAndQueues();
-	bool											CreateSampler();
+	bool											CreateSamplers();
 	bool											CreatePipelineCache();
 	bool											CreateShaderModules();
 	bool											CreateDescriptorSetLayouts();
 	bool											CreatePipelineLayout();
+	bool											CreateDeviceMemoryPool();
+	bool											CreateThreadPool();
+	bool											CreateResourceManager();
+	bool											CreateDefaultTexture();
+
+	void											DestroyInstance();
+	void											DestroyDevice();
+	void											DestroySamplers();
+	void											DestroyPipelineCache();
+	void											DestroyShaderModules();
+	void											DestroyDescriptorSetLayouts();
+	void											DestroyPipelineLayout();
+	void											DestroyDeviceMemoryPool();
+	void											DestroyThreadPool();
+	void											DestroyResourceManager();
+	void											DestroyDefaultTexture();
+
 	std::vector<VkPhysicalDevice>					EnumeratePhysicalDevices();
 	VkPhysicalDevice								PickBestPhysicalDevice();
 
@@ -113,9 +144,15 @@ private:
 	VkPipelineCache									pipeline_cache						= {};
 	VkPipelineLayout								pipeline_layout						= {};
 
-	VkSampler										sampler								= {};
+	VkDescriptorPool								sampler_descriptor_pool				= {};
+	struct Sampler {
+		VkSampler									sampler								= {};
+		VkDescriptorSet								descriptor_set				= {};
+	};
+	std::array<Sampler, 1>							samplers							= {};
 
-	VkDescriptorSetLayout							descriptor_set_layout				= {};
+	std::unique_ptr<DescriptorSetLayout>			sampler_descriptor_set_layout		= {};
+	std::unique_ptr<DescriptorSetLayout>			texture_descriptor_set_layout		= {};
 
 	ResolvedQueue									primary_render_queue				= {};
 	ResolvedQueue									secondary_render_queue				= {};
@@ -123,6 +160,10 @@ private:
 	ResolvedQueue									primary_transfer_queue				= {};
 
 	std::unique_ptr<DeviceMemoryPool>				device_memory_pool					= {};
+
+	vk2d::_internal::CompleteImageResource			default_texture						= {};
+	VkDescriptorPool								default_texture_descriptor_pool		= {};
+	VkDescriptorSet									default_texture_descriptor_set		= {};
 
 	std::list<std::unique_ptr<Window>>				windows								= {};
 

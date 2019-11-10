@@ -14,7 +14,6 @@ namespace _internal {
 
 
 
-
 // Make sure all accesses are either atomic or inside a critical sector.
 // This is the main method of inter-thread communication.
 class ThreadSharedResource {
@@ -117,7 +116,15 @@ void ThreadPoolWorkerThread(
 	ThreadSignal				*	thread_signals
 )
 {
-	thread_private_resource->ThreadBegin();
+	auto success = thread_private_resource->ThreadBegin();
+	if( !success ) {
+		thread_signals->init_error		= true;
+		thread_private_resource->ThreadEnd();
+		thread_signals->ready_to_join	= true;
+		return;
+	} else {
+		thread_signals->init_success	= true;
+	}
 
 	while( !thread_shared_resource->threads_should_exit ) {
 		bool found_work		= false;
@@ -138,7 +145,7 @@ void ThreadPoolWorkerThread(
 	}
 
 	thread_private_resource->ThreadEnd();
-	thread_signals->thread_ready_to_join		= true;
+	thread_signals->ready_to_join		= true;
 }
 
 
@@ -152,9 +159,16 @@ ThreadPool::ThreadPool(
 	thread_shared_resource		= std::make_unique<ThreadSharedResource>();
 	thread_private_resources	= std::move( thread_resources );
 	for( size_t i = 0; i < thread_private_resources.size(); ++i ) {
-		thread_private_resources[ i ]->thread_index		= i;
+		thread_private_resources[ i ]->thread_index		= uint32_t( i );
 		threads.push_back( std::thread( ThreadPoolWorkerThread, thread_shared_resource.get(), thread_private_resources[ i ].get(), &thread_signals[ i ] ) );
 	};
+	for( size_t i = 0; i < threads.size(); ++i ) {
+		auto & signal = thread_signals[ i ];
+		while( !( signal.init_success || signal.init_error ) ) {
+			std::this_thread::sleep_for( std::chrono::microseconds( 10 ) );
+		};
+		if( signal.init_error ) return;
+	}
 
 	is_good						= true;
 }
@@ -163,6 +177,8 @@ ThreadPool::ThreadPool(
 
 ThreadPool::~ThreadPool()
 {
+	shutting_down	= true;
+
 	// Wait for all the work to be done.
 	while( !thread_shared_resource->IsTaskListEmpty() ) {
 		thread_shared_resource->thread_wakeup.notify_all();
@@ -175,7 +191,7 @@ ThreadPool::~ThreadPool()
 	// Wait for all threads to be ready for joining.
 	while( !std::all_of( thread_signals.begin(), thread_signals.end(), []( ThreadSignal & signal )
 		{
-			return signal.thread_ready_to_join.load();
+			return signal.ready_to_join.load();
 		} ) ) {
 
 		// Keep signaling all threads until they're ready to join.

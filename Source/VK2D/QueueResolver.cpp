@@ -11,6 +11,8 @@
 
 namespace vk2d {
 
+namespace _internal {
+
 VK2D_API DeviceQueueResolver::DeviceQueueResolver(
 	VkInstance												instance,
 	VkPhysicalDevice										physicalDevice,
@@ -150,8 +152,7 @@ VK2D_API DeviceQueueResolver::DeviceQueueResolver(
 }
 
 VK2D_API DeviceQueueResolver::~DeviceQueueResolver()
-{
-}
+{}
 
 const VK2D_API std::vector<VkDeviceQueueCreateInfo> & VK2D_APIENTRY DeviceQueueResolver::GetDeviceQueueCreateInfos()
 {
@@ -194,5 +195,7 @@ bool DeviceQueueResolver::IsGood()
 {
 	return is_good;
 }
+
+} // _internal
 
 } // vk2d

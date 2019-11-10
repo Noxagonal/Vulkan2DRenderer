@@ -49,6 +49,8 @@ private:
 	uint32_t										SelectLoaderThread();
 
 	_internal::RendererImpl						*	parent								= {};
+	VkDevice										device								= {};
+
 	ThreadPool									*	thread_pool							= {};
 	std::vector<uint32_t>							loader_threads						= {};
 	std::vector<uint32_t>							general_threads						= {};
@@ -56,8 +58,6 @@ private:
 	// TODO: This only cycles through loader threads for every new load operation,
 	// a more advanced load balancer could be more appropriate, for now it's no big deal.
 	uint32_t										current_loader_thread_index			= {};
-
-	VkDevice										device								= {};
 
 	std::mutex										resources_mutex						= {};
 	std::list<std::unique_ptr<Resource>>			resources							= {};

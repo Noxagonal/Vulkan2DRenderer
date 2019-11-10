@@ -20,6 +20,7 @@ class WindowImpl;
 
 
 class Renderer;
+class TextureResource;
 
 
 
@@ -60,67 +61,77 @@ class Window {
 
 private:
 	// Only accessible through Renderer::CreateWindowOutput();
-	VK2D_API													Window(
-		_internal::RendererImpl								*	renderer_parent,
-		WindowCreateInfo									&	window_create_info );
+	VK2D_API																		Window(
+		_internal::RendererImpl						*	renderer_parent,
+		WindowCreateInfo							&	window_create_info );
 
 public:
-	VK2D_API													~Window();
+	VK2D_API																		~Window();
 
-	VK2D_API bool				VK2D_APIENTRY					BeginRender();
-	VK2D_API bool				VK2D_APIENTRY					EndRender();
+	VK2D_API bool										VK2D_APIENTRY				BeginRender();
+	VK2D_API bool										VK2D_APIENTRY				EndRender();
 
-	VK2D_API void				VK2D_APIENTRY					Draw_TriangleList(
-		bool													filled,
-		std::vector<Vertex>									&	vertices,
-		std::vector<VertexIndex_3>							&	indices );
+	VK2D_API void										VK2D_APIENTRY				Draw_TriangleList(
+		bool											filled,
+		const std::vector<Vertex>					&	vertices,
+		const std::vector<VertexIndex_3>			&	indices,
+		TextureResource								*	texture						= nullptr );
 
-	VK2D_API void				VK2D_APIENTRY					Draw_LineList(
-		std::vector<Vertex>									&	vertices,
-		std::vector<VertexIndex_2>							&	indices );
+	VK2D_API void										VK2D_APIENTRY				Draw_LineList(
+		const std::vector<Vertex>					&	vertices,
+		const std::vector<VertexIndex_2>			&	indices,
+		TextureResource								*	texture						= nullptr );
 
-	VK2D_API void				VK2D_APIENTRY					Draw_PointList(
-		std::vector<Vertex>									&	vertices );
+	VK2D_API void										VK2D_APIENTRY				Draw_PointList(
+		const std::vector<Vertex>					&	vertices,
+		TextureResource								*	texture						= nullptr );
 
-	VK2D_API void				VK2D_APIENTRY					Draw_Line(
-		Coords													point_1,
-		Coords													point_2,
-		Color													color				= { 1.0f, 1.0f, 1.0f, 1.0f } );
+	VK2D_API void										VK2D_APIENTRY				Draw_Line(
+		Coords											point_1,
+		Coords											point_2,
+		Color											color						= { 1.0f, 1.0f, 1.0f, 1.0f } );
 
-	VK2D_API void				VK2D_APIENTRY					Draw_Box(
-		bool													filled,
-		Coords													top_left,
-		Coords													bottom_right,
-		Color													color				= { 1.0f, 1.0f, 1.0f, 1.0f } );
+	VK2D_API void										VK2D_APIENTRY				Draw_Box(
+		bool											filled,
+		Coords											top_left,
+		Coords											bottom_right,
+		Color											color						= { 1.0f, 1.0f, 1.0f, 1.0f } );
 
-	VK2D_API void				VK2D_APIENTRY					Draw_Circle(
-		bool													filled,
-		Coords													top_left,
-		Coords													bottom_right,
-		float													edge_count			= 32.0f,
-		Color													color				= { 1.0f, 1.0f, 1.0f, 1.0f } );
+	VK2D_API void										VK2D_APIENTRY				Draw_Circle(
+		bool											filled,
+		Coords											top_left,
+		Coords											bottom_right,
+		float											edge_count					= 32.0f,
+		Color											color						= { 1.0f, 1.0f, 1.0f, 1.0f } );
 
-	VK2D_API void				VK2D_APIENTRY					Draw_Pie(
-		bool													filled,
-		Coords													top_left,
-		Coords													bottom_right,
-		float													begin_angle_radians,
-		float													coverage,
-		float													edge_count			= 32.0f,
-		Color													color				= { 1.0f, 1.0f, 1.0f, 1.0f } );
+	VK2D_API void										VK2D_APIENTRY				Draw_Pie(
+		bool											filled,
+		Coords											top_left,
+		Coords											bottom_right,
+		float											begin_angle_radians,
+		float											coverage,
+		float											edge_count					= 32.0f,
+		Color											color						= { 1.0f, 1.0f, 1.0f, 1.0f } );
 
-	VK2D_API void				VK2D_APIENTRY					Draw_PieBox(
-		bool													filled,
-		Coords													top_left,
-		Coords													bottom_right,
-		float													begin_angle_radians,
-		float													coverage,
-		Color													color				= { 1.0f, 1.0f, 1.0f, 1.0f } );
+	VK2D_API void										VK2D_APIENTRY				Draw_PieBox(
+		bool											filled,
+		Coords											top_left,
+		Coords											bottom_right,
+		float											begin_angle_radians,
+		float											coverage,
+		Color											color						= { 1.0f, 1.0f, 1.0f, 1.0f } );
+
+	VK2D_API void										VK2D_APIENTRY				Draw_Texture(
+		Coords											top_left,
+		Coords											bottom_right,
+		vk2d::TextureResource						*	texture,
+		Color											color						= { 1.0f, 1.0f, 1.0f, 1.0f },
+		bool											filled						= true );
 
 private:
-	std::unique_ptr<_internal::WindowImpl>						impl				= {};
+	std::unique_ptr<_internal::WindowImpl>				impl				= {};
 
-	bool														is_good				= {};
+	bool												is_good				= {};
 };
 
 
