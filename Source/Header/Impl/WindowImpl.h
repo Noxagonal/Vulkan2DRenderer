@@ -76,27 +76,27 @@ public:
 		vk2d::TextureResource					*	texture						= nullptr );
 
 	void											Draw_Line(
-		Coords										point_1,
-		Coords										point_2,
+		Vector2d										point_1,
+		Vector2d										point_2,
 		Color										color						= { 1.0f, 1.0f, 1.0f, 1.0f } );
 
 	void											Draw_Box(
 		bool										filled,
-		Coords										top_left,
-		Coords										bottom_right,
+		Vector2d										top_left,
+		Vector2d										bottom_right,
 		Color										color						= { 1.0f, 1.0f, 1.0f, 1.0f } );
 
 	void											Draw_Circle(
 		bool										filled,
-		Coords										top_left,
-		Coords										bottom_right,
+		Vector2d										top_left,
+		Vector2d										bottom_right,
 		float										edge_count					= 32.0f,
 		Color										color						= { 1.0f, 1.0f, 1.0f, 1.0f } );
 
 	void											Draw_Pie(
 		bool										filled,
-		Coords										top_left,
-		Coords										bottom_right,
+		Vector2d										top_left,
+		Vector2d										bottom_right,
 		float										begin_angle_radians,
 		float										coverage,
 		float										edge_count					= 32.0f,
@@ -104,15 +104,15 @@ public:
 
 	void											Draw_PieBox(
 		bool										filled,
-		Coords										top_left,
-		Coords										bottom_right,
+		Vector2d										top_left,
+		Vector2d										bottom_right,
 		float										begin_angle_radians,
 		float										coverage,
 		Color										color						= { 1.0f, 1.0f, 1.0f, 1.0f } );
 
 	void											Draw_Texture(
-		Coords										top_left,
-		Coords										bottom_right,
+		Vector2d										top_left,
+		Vector2d										bottom_right,
 		vk2d::TextureResource					*	texture,
 		Color										color						= { 1.0f, 1.0f, 1.0f, 1.0f },
 		bool										filled						= true );

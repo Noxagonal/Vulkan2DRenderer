@@ -25,6 +25,8 @@ int main()
 	auto window = renderer->CreateWindowOutput( window_create_info );
 	if( !window ) return -1;
 
+	vk2d::GeneratePointMeshFromList( { { -0.5f, -0.5f }, { -0.4f, -0.4f }, { -0.3f, -0.3f } } );
+
 	size_t frame_counter = 0;
 	while( true ) {
 		++frame_counter;
@@ -46,11 +48,11 @@ int main()
 			std::sin( frame_counter / 123.0f ) / 2.0f + 0.5f
 		);
 
-		vk2d::Coords position { -0.9f, -0.9f };
+		vk2d::Vector2d position { -0.9f, -0.9f };
 
 		window->Draw_Texture(
 			position,
-			position + vk2d::Coords( ( std::cos( frame_counter / 123.0f ) / 10.0f + 0.3f ), ( std::sin( frame_counter / 123.0f ) / 10.0f + 0.3f ) ),
+			position + vk2d::Vector2d( ( std::cos( frame_counter / 123.0f ) / 10.0f + 0.3f ), ( std::sin( frame_counter / 123.0f ) / 10.0f + 0.3f ) ),
 			texture,
 			{ 1.0f, 1.0f, 1.0f, 1.0f }
 		);

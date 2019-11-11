@@ -680,9 +680,9 @@ void WindowImpl::Draw_PointList(
 }
 
 void WindowImpl::Draw_Line(
-	Coords								point_1,
-	Coords								point_2,
-	Color								color )
+	Vector2d						point_1,
+	Vector2d						point_2,
+	Color							color )
 {
 	std::vector<Vertex>				vertices( 2 );
 	std::vector<VertexIndex_2>		indices( 1 );
@@ -704,10 +704,10 @@ void WindowImpl::Draw_Line(
 }
 
 void WindowImpl::Draw_Box(
-	bool								filled,
-	Coords								top_left,
-	Coords								bottom_right,
-	Color								color )
+	bool							filled,
+	Vector2d						top_left,
+	Vector2d						bottom_right,
+	Color							color )
 {
 	std::vector<Vertex>				vertices( 4 );
 
@@ -756,16 +756,16 @@ void WindowImpl::Draw_Box(
 }
 
 void WindowImpl::Draw_Circle(
-	bool								filled,
-	Coords								top_left,
-	Coords								bottom_right,
-	float								edge_count,
-	Color								color
+	bool							filled,
+	Vector2d						top_left,
+	Vector2d						bottom_right,
+	float							edge_count,
+	Color							color
 )
 {
 	if( edge_count < 3.0f ) edge_count = 3.0f;
 
-	Coords center_point					= {
+	Vector2d center_point					= {
 		( top_left.x + bottom_right.x ) / 2.0f,
 		( top_left.y + bottom_right.y ) / 2.0f
 	};
@@ -829,20 +829,20 @@ void WindowImpl::Draw_Circle(
 }
 
 void WindowImpl::Draw_Pie(
-	bool								filled,
-	Coords								top_left,
-	Coords								bottom_right,
-	float								begin_angle_radians,
-	float								coverage,
-	float								edge_count,
-	Color								color
+	bool							filled,
+	Vector2d						top_left,
+	Vector2d						bottom_right,
+	float							begin_angle_radians,
+	float							coverage,
+	float							edge_count,
+	Color							color
 )
 {
 	if( edge_count < 3.0f )			edge_count		= 3.0f;
 	if( coverage > 1.0f )			coverage		= 1.0f;
 	if( coverage <= 0.0f )			return;			// Nothing to draw
 
-	Coords center_point					= {
+	Vector2d center_point					= {
 		( top_left.x + bottom_right.x ) / 2.0f,
 		( top_left.y + bottom_right.y ) / 2.0f
 	};
@@ -926,12 +926,12 @@ void WindowImpl::Draw_Pie(
 }
 
 void WindowImpl::Draw_PieBox(
-	bool								filled,
-	Coords								top_left,
-	Coords								bottom_right,
-	float								begin_angle_radians,
-	float								coverage,
-	Color								color
+	bool							filled,
+	Vector2d						top_left,
+	Vector2d						bottom_right,
+	float							begin_angle_radians,
+	float							coverage,
+	Color							color
 )
 {
 	if( coverage >= 1.0f ) {
@@ -942,7 +942,7 @@ void WindowImpl::Draw_PieBox(
 		return;		// Nothing to draw
 	}
 
-	Coords center_point					= {
+	Vector2d center_point					= {
 		( top_left.x + bottom_right.x ) / 2.0f,
 		( top_left.y + bottom_right.y ) / 2.0f
 	};
@@ -965,7 +965,7 @@ void WindowImpl::Draw_PieBox(
 		PIE_BEGIN,
 		PIE_END,
 	};
-	std::array<Coords, 6>	unordered_outer_points { {
+	std::array<Vector2d, 6>	unordered_outer_points { {
 		{ top_left.x,		top_left.y		},
 		{ bottom_right.x,	top_left.y		},
 		{ bottom_right.x,	bottom_right.y	},
@@ -977,13 +977,13 @@ void WindowImpl::Draw_PieBox(
 		// Specialized version of Ray to AABB intersecion test that
 		// always intersects and returns the exit coordinates only.
 		auto RayExitIntersection	=[](
-			Coords box_coords_1,
-			Coords box_coords_2,
-			Coords box_center,		// ray origin, and box center are both at the same coordinates
-			Coords ray_end
-			) -> Coords
+			Vector2d box_coords_1,
+			Vector2d box_coords_2,
+			Vector2d box_center,		// ray origin, and box center are both at the same coordinates
+			Vector2d ray_end
+			) -> Vector2d
 		{
-			Coords		ray_begin			= box_center;
+			Vector2d		ray_begin			= box_center;
 			float		clipped_exit		= 1.0;
 
 			// Clipping on x and y axis
@@ -996,15 +996,15 @@ void WindowImpl::Draw_PieBox(
 			dim_high_y			= std::max( dim_low_y, dim_high_y );
 			clipped_exit		= std::min( dim_high_y, dim_high_x );
 
-			Coords collider_localized				= ray_end - ray_begin;
-			Coords localized_intersection_point		= collider_localized * clipped_exit;
-			Coords globalized_intersection_point	= localized_intersection_point + box_center;
+			Vector2d collider_localized				= ray_end - ray_begin;
+			Vector2d localized_intersection_point		= collider_localized * clipped_exit;
+			Vector2d globalized_intersection_point	= localized_intersection_point + box_center;
 			return globalized_intersection_point;
 		};
 
 		float ray_lenght		= center_to_edge_x + center_to_edge_y;
-		Coords ray_angle_1_end	= { std::cos( begin_angle_radians ) * ray_lenght, std::sin( begin_angle_radians ) * ray_lenght };
-		Coords ray_angle_2_end	= { std::cos( end_angle_radians ) * ray_lenght, std::sin( end_angle_radians ) * ray_lenght };
+		Vector2d ray_angle_1_end	= { std::cos( begin_angle_radians ) * ray_lenght, std::sin( begin_angle_radians ) * ray_lenght };
+		Vector2d ray_angle_2_end	= { std::cos( end_angle_radians ) * ray_lenght, std::sin( end_angle_radians ) * ray_lenght };
 		ray_angle_1_end			+= center_point;
 		ray_angle_2_end			+= center_point;
 
@@ -1023,8 +1023,8 @@ void WindowImpl::Draw_PieBox(
 	}
 
 	auto IsOnSameXAxis	= [](
-		Coords			point_1,
-		Coords			point_2
+		Vector2d			point_1,
+		Vector2d			point_2
 		) -> bool
 	{
 		if( point_1.y < point_2.y + 0.0001f &&
@@ -1035,8 +1035,8 @@ void WindowImpl::Draw_PieBox(
 	};
 
 	auto IsOnSameYAxis	= [](
-		Coords			point_1,
-		Coords			point_2
+		Vector2d			point_1,
+		Vector2d			point_2
 		) -> bool
 	{
 		if( point_1.x < point_2.x + 0.0001f &&
@@ -1047,7 +1047,7 @@ void WindowImpl::Draw_PieBox(
 	};
 
 	// Generate an ordered point list
-	std::vector<Coords> outer_point_list;
+	std::vector<Vector2d> outer_point_list;
 	{
 		// We'll linearize / unwrap the box so that a single number represents x/y coordinates
 		//
@@ -1058,7 +1058,7 @@ void WindowImpl::Draw_PieBox(
 		struct LinearPoint {
 			uint32_t	original_linear_point_index;
 			float		linear_coords;
-			Coords		actual_coords;
+			Vector2d		actual_coords;
 		};
 		float distance_counter = 0.0f;
 		std::array<LinearPoint, 6>	linear_points { {
@@ -1080,7 +1080,7 @@ void WindowImpl::Draw_PieBox(
 			)
 		{
 			// Find which side of the box the point is located at
-			Coords actual_coords	= unordered_outer_points[ index ];
+			Vector2d actual_coords	= unordered_outer_points[ index ];
 
 			if( IsOnSameXAxis( actual_coords, unordered_outer_points[ 0 ] ) ) {
 				// Top
@@ -1152,7 +1152,7 @@ void WindowImpl::Draw_PieBox(
 		for( auto opl : outer_point_list ) {
 			vertices.push_back( {
 				opl,
-				( opl - unordered_outer_points[ 0 ] ) / Coords( width, height ),
+				( opl - unordered_outer_points[ 0 ] ) / Vector2d( width, height ),
 				color
 				} );
 		}
@@ -1183,8 +1183,8 @@ void WindowImpl::Draw_PieBox(
 }
 
 void WindowImpl::Draw_Texture(
-	Coords							top_left,
-	Coords							bottom_right,
+	Vector2d						top_left,
+	Vector2d						bottom_right,
 	vk2d::TextureResource		*	texture,
 	Color							color,
 	bool							filled

@@ -110,6 +110,7 @@ glslangValidator -V -o "$(SolutionDir)Source\Shaders\shader.frag.spv.h" "$(Solut
     <ClInclude Include="..\Include\Core\Common.h" />
     <ClInclude Include="..\Include\Core\Platform.h" />
     <ClInclude Include="..\Include\Core\Version.hpp" />
+    <ClInclude Include="..\Include\Interface\Mesh.h" />
     <ClInclude Include="..\Include\Interface\Renderer.h" />
     <ClInclude Include="..\Include\Interface\RenderPrimitives.h" />
     <ClInclude Include="..\Include\Interface\Resource.h" />
@@ -143,6 +144,7 @@ glslangValidator -V -o "$(SolutionDir)Source\Shaders\shader.frag.spv.h" "$(Solut
     <ClCompile Include="..\Source\Impl\ResourceManagerImpl.cpp" />
     <ClCompile Include="..\Source\Impl\TextureResourceImpl.cpp" />
     <ClCompile Include="..\Source\Impl\WindowImpl.cpp" />
+    <ClCompile Include="..\Source\Interface\Mesh.cpp" />
     <ClCompile Include="..\Source\Interface\Renderer.cpp" />
     <ClCompile Include="..\Source\Interface\Resource.cpp" />
     <ClCompile Include="..\Source\Interface\ResourceManager.cpp" />
