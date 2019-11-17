@@ -4,21 +4,27 @@
 #include "../Header/Core/ThreadPrivateResources.h"
 #include "../Header/Impl/RendererImpl.h"
 #include "../Header/Core/DescriptorSet.h"
+#include "../Header/Core/VulkanMemoryManagement.h"
 
 vk2d::_internal::ThreadLoaderResource::ThreadLoaderResource( RendererImpl * parent )
 {
-	this->parent	= parent;
+	this->renderer	= parent;
 	device			= parent->GetVulkanDevice();
 }
 
 vk2d::_internal::RendererImpl * vk2d::_internal::ThreadLoaderResource::GetRenderer() const
 {
-	return parent;
+	return renderer;
 }
 
 VkDevice vk2d::_internal::ThreadLoaderResource::GetVulkanDevice() const
 {
 	return device;
+}
+
+vk2d::_internal::DeviceMemoryPool * vk2d::_internal::ThreadLoaderResource::GetDeviceMemoryPool() const
+{
+	return device_memory_pool.get();
 }
 
 vk2d::_internal::DescriptorAutoPool * vk2d::_internal::ThreadLoaderResource::GetDescriptorAutoPool() const
@@ -47,9 +53,9 @@ bool vk2d::_internal::ThreadLoaderResource::ThreadBegin()
 
 	// Command buffers
 	{
-		auto primary_render_queue_family_index			= parent->GetPrimaryRenderQueue().queueFamilyIndex;
-		auto secondary_render_queue_family_index		= parent->GetSecondaryRenderQueue().queueFamilyIndex;
-		auto primary_transfer_queue_family_index		= parent->GetPrimaryTransferQueue().queueFamilyIndex;
+		auto primary_render_queue_family_index			= renderer->GetPrimaryRenderQueue().queueFamilyIndex;
+		auto secondary_render_queue_family_index		= renderer->GetSecondaryRenderQueue().queueFamilyIndex;
+		auto primary_transfer_queue_family_index		= renderer->GetPrimaryTransferQueue().queueFamilyIndex;
 
 		VkCommandPoolCreateInfo command_pool_create_info {};
 		command_pool_create_info.sType		= VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
@@ -93,12 +99,21 @@ bool vk2d::_internal::ThreadLoaderResource::ThreadBegin()
 
 	// Descriptor pool
 	{
-		descriptor_auto_pool	= CreateDescriptorAutoPool(
+		descriptor_auto_pool	= vk2d::_internal::CreateDescriptorAutoPool(
 			device
 		);
 		if( !descriptor_auto_pool ) {
 			return false;
 		}
+	}
+
+	// Device memory pool
+	device_memory_pool			= vk2d::_internal::MakeDeviceMemoryPool(
+		renderer->GetVulkanPhysicalDevice(),
+		device
+	);
+	if( !device_memory_pool ) {
+		return false;
 	}
 
 	return true;
@@ -107,6 +122,7 @@ bool vk2d::_internal::ThreadLoaderResource::ThreadBegin()
 void vk2d::_internal::ThreadLoaderResource::ThreadEnd()
 {
 	// De-initialize Vulkan stuff here
+	device_memory_pool		= nullptr;
 	descriptor_auto_pool	= nullptr;
 
 	vkDestroyCommandPool(

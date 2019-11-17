@@ -54,7 +54,7 @@ bool TextureResourceImpl::MTLoad(
 	// 9. Allocate descriptor set that points to the image.
 
 	loader_thread_resource	= dynamic_cast<ThreadLoaderResource*>( thread_resource );
-	auto memory_pool		= resource_manager->GetRenderer()->GetDeviceMemoryPool();
+	auto memory_pool		= loader_thread_resource->GetDeviceMemoryPool();
 
 	assert( loader_thread_resource );
 	if( !loader_thread_resource ) return false;
@@ -732,7 +732,7 @@ void TextureResourceImpl::MTUnload(
 	assert( loader_thread_resource );
 	if( !loader_thread_resource ) return;
 
-	auto memory_pool		= resource_manager->GetRenderer()->GetDeviceMemoryPool();
+	auto memory_pool		= loader_thread_resource->GetDeviceMemoryPool();
 
 	// Check if loaded successfully, no need to check for failure as this thread was
 	// responsible for loading it, it's either loaded or failed to load but it'll
