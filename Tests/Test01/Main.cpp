@@ -18,7 +18,6 @@ int main()
 	if( !renderer ) return -1;
 
 	auto texture			= renderer->GetResourceManager()->LoadTextureResource( "../../TestData/GrafGear_128.png" );
-	texture->WaitUntilLoaded();
 
 	vk2d::WindowCreateInfo window_create_info {};
 	window_create_info.width	= 800;

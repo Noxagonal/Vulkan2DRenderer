@@ -113,6 +113,7 @@ TextureResource * ResourceManagerImpl::CreateTextureResource(
 	uint32_t							size_y,
 	const std::vector<uint8_t>		&	texture_data )
 {
+	assert( 0 );
 	return nullptr;
 }
 

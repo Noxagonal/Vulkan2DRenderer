@@ -117,9 +117,6 @@ MeshBuffer::BufferBlock * MeshBuffer::AllocateBufferBlockAndStore(
 	VkDeviceSize								index_portion_byte_size
 )
 {
-	// TODO: make sure buffers are reserved with more memory if mesh exceeds the size of the buffer,
-	// TODO: This may introduce gaps in the buffer blocks as the last mesh should be last on the list,
-	// consider a trimming function to remove the possible empty buffer blocks in the middle.
 	auto block = std::make_unique<MeshBuffer::BufferBlock>(
 		this,
 		vertex_portion_byte_size,
@@ -149,7 +146,8 @@ void MeshBuffer::FreeBufferBlockFromStorage(
 
 MeshBuffer::ReserveSpaceResult MeshBuffer::ReserveSpaceForMesh(
 	uint32_t				vertex_count,
-	uint32_t				index_count )
+	uint32_t				index_count
+)
 {
 	VkDeviceSize vertex_byte_size			= VkDeviceSize( vertex_count ) * sizeof( Vertex );
 	VkDeviceSize index_byte_size			= VkDeviceSize( index_count ) * sizeof( uint32_t );
