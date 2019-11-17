@@ -7,6 +7,11 @@
 
 
 
+constexpr double PI				= 3.14159265358979323846;
+constexpr double RAD			= PI * 2.0;
+
+
+
 vk2d::AABB2d CalculateAABBFromPointList(
 	const std::vector<vk2d::Vector2d>		&	points
 )
@@ -21,6 +26,28 @@ vk2d::AABB2d CalculateAABBFromPointList(
 	return ret;
 }
 
+void ClearVerticesToDefaultValues(
+	std::vector<vk2d::Vertex>				&	vertices
+)
+{
+	for( auto & v : vertices ) {
+		v.vertex_coords			= {};
+		v.uv_coords				= {};
+		v.color					= { 1.0f, 1.0f, 1.0f, 1.0f };
+		v.point_size			= 1.0f;
+	}
+}
+
+vk2d::Vertex CreateDefaultValueVertex()
+{
+	vk2d::Vertex v;
+	v.vertex_coords		= {};
+	v.uv_coords			= {};
+	v.color				= { 1.0f, 1.0f, 1.0f, 1.0f };
+	v.point_size		= 1.0f;
+	return v;
+}
+
 
 
 VK2D_API vk2d::Mesh VK2D_APIENTRY vk2d::GeneratePointMeshFromList(
@@ -33,10 +60,10 @@ VK2D_API vk2d::Mesh VK2D_APIENTRY vk2d::GeneratePointMeshFromList(
 
 	Mesh mesh;
 	mesh.vertices.resize( points.size() );
+	ClearVerticesToDefaultValues( mesh.vertices );
 	for( size_t i = 0; i < points.size(); ++i ) {
 		mesh.vertices[ i ].vertex_coords	= points[ i ];
 		mesh.vertices[ i ].uv_coords		= ( points[ i ] - aabb_origin ) / aabb_size;
-		mesh.vertices[ i ].color			= { 1.0f, 1.0f, 1.0f, 1.0f };
 	}
 
 	mesh.mesh_type			= vk2d::MeshType::POINT;
@@ -81,90 +108,64 @@ VK2D_API vk2d::Mesh VK2D_APIENTRY vk2d::GenerateTriangleMeshFromList(
 	return mesh;
 }
 
-
-/*
-void WindowImpl::Draw_Line(
-	Vector2d						point_1,
-	Vector2d						point_2,
-	Color							color )
+VK2D_API vk2d::Mesh VK2D_APIENTRY vk2d::GenerateBoxMesh(
+	vk2d::Vector2d				top_left,
+	vk2d::Vector2d				bottom_right,
+	bool						filled
+)
 {
-	std::vector<Vertex>				vertices( 2 );
-	std::vector<VertexIndex_2>		indices( 1 );
-
-	vertices[ 0 ].vertex_coords		= point_1;
-	vertices[ 0 ].uv_coords			= {};
-	vertices[ 0 ].color				= color;
-
-	vertices[ 1 ].vertex_coords		= point_2;
-	vertices[ 1 ].uv_coords			= {};
-	vertices[ 1 ].color				= color;
-
-	indices[ 0 ].indices			= { 0, 1 };
-
-	Draw_LineList(
-		vertices,
-		indices
-	);
-}
-
-void WindowImpl::Draw_Box(
-	bool							filled,
-	Vector2d						top_left,
-	Vector2d						bottom_right,
-	Color							color )
-{
-	std::vector<Vertex>				vertices( 4 );
+	vk2d::Mesh ret;
+	ret.vertices.resize( 4 );
+	ClearVerticesToDefaultValues( ret.vertices );
 
 	// 0. Top left
-	vertices[ 0 ].vertex_coords		= { top_left.x,			top_left.y };
-	vertices[ 0 ].uv_coords			= { 0.0f, 0.0f };
-	vertices[ 0 ].color				= color;
+	ret.vertices[ 0 ].vertex_coords		= { top_left.x,			top_left.y };
+	ret.vertices[ 0 ].uv_coords			= { 0.0f, 0.0f };
 
 	// 1. Top right
-	vertices[ 1 ].vertex_coords		= { bottom_right.x,		top_left.y };
-	vertices[ 1 ].uv_coords			= { 1.0f, 0.0f };
-	vertices[ 1 ].color				= color;
+	ret.vertices[ 1 ].vertex_coords		= { bottom_right.x,		top_left.y };
+	ret.vertices[ 1 ].uv_coords			= { 1.0f, 0.0f };
 
 	// 2. Bottom left
-	vertices[ 2 ].vertex_coords		= { top_left.x,			bottom_right.y };
-	vertices[ 2 ].uv_coords			= { 0.0f, 1.0f };
-	vertices[ 2 ].color				= color;
+	ret.vertices[ 2 ].vertex_coords		= { top_left.x,			bottom_right.y };
+	ret.vertices[ 2 ].uv_coords			= { 0.0f, 1.0f };
 
 	// 3. Bottom right
-	vertices[ 3 ].vertex_coords		= { bottom_right.x,		bottom_right.y };
-	vertices[ 3 ].uv_coords			= { 1.0f, 1.0f };
-	vertices[ 3 ].color				= color;
+	ret.vertices[ 3 ].vertex_coords		= { bottom_right.x,		bottom_right.y };
+	ret.vertices[ 3 ].uv_coords			= { 1.0f, 1.0f };
 
 	if( filled ) {
 		// Draw filled polygons
-		std::vector<VertexIndex_3>	indices( 2 );
-		indices[ 0 ].indices		= { 0, 2, 1 };
-		indices[ 1 ].indices		= { 1, 2, 3 };
-		Draw_TriangleList(
-			true,
-			vertices,
-			indices
-		);
+		ret.indices.resize( 2 * 3 );
+		ret.indices[ 0 ]	= 0;
+		ret.indices[ 1 ]	= 2;
+		ret.indices[ 2 ]	= 1;
+		ret.indices[ 3 ]	= 1;
+		ret.indices[ 4 ]	= 2;
+		ret.indices[ 5 ]	= 3;
+		ret.mesh_type		= vk2d::MeshType::TRIANGLE_FILLED;
 	} else {
 		// Draw lines
-		std::vector<VertexIndex_2>	indices( 4 );
-		indices[ 0 ].indices		= { 0, 2 };
-		indices[ 1 ].indices		= { 2, 3 };
-		indices[ 2 ].indices		= { 3, 1 };
-		indices[ 3 ].indices		= { 1, 0 };
-		Draw_LineList(
-			vertices,
-			indices
-		);
+		ret.indices.resize( 4 * 2 );
+		ret.indices[ 0 ]	= 0;
+		ret.indices[ 1 ]	= 2;
+		ret.indices[ 2 ]	= 2;
+		ret.indices[ 3 ]	= 3;
+		ret.indices[ 4 ]	= 3;
+		ret.indices[ 5 ]	= 1;
+		ret.indices[ 6 ]	= 1;
+		ret.indices[ 7 ]	= 0;
+		ret.mesh_type		= vk2d::MeshType::LINE;
 	}
+
+	return ret;
 }
 
-void WindowImpl::Draw_Circle(
-	bool							filled,
-	Vector2d						top_left,
-	Vector2d						bottom_right,
-	float							edge_count,
-	Color							color
+VK2D_API vk2d::Mesh VK2D_APIENTRY vk2d::GenerateCircleMesh(
+	vk2d::Vector2d			top_left,
+	vk2d::Vector2d			bottom_right,
+	bool					filled,
+	float					edge_count
 )
 {
 	if( edge_count < 3.0f ) edge_count = 3.0f;
@@ -180,71 +181,70 @@ void WindowImpl::Draw_Circle(
 	float rotation_step			= 0.0f;
 	float rotation_step_size	= float( RAD / edge_count );
 
-	uint32_t edge_count_integer	= uint32_t( edge_count );
-	if( edge_count - uint32_t( edge_count ) ) {
-		++edge_count_integer;
-	}
+	uint32_t edge_count_integer	= uint32_t( std::ceil( edge_count ) );
 
-	std::vector<Vertex> vertices( edge_count_integer );
+	vk2d::Mesh ret;
+
+	ret.vertices.resize( edge_count_integer );
+	ClearVerticesToDefaultValues( ret.vertices );
+
 	for( uint32_t i = 0; i < edge_count_integer; ++i ) {
-		vertices[ i ].vertex_coords		= {
+		ret.vertices[ i ].vertex_coords		= {
 			std::cos( rotation_step ) * center_to_edge_x + center_point.x,
 			std::sin( rotation_step ) * center_to_edge_y + center_point.y
 		};
-		vertices[ i ].uv_coords			= {
-			std::cos( rotation_step ),
-			std::sin( rotation_step )
+		ret.vertices[ i ].uv_coords			= {
+			std::cos( rotation_step ) * 0.5f + 0.5f,
+			std::sin( rotation_step ) * 0.5f + 0.5f
 		};
-		vertices[ i ].color				= color;
 		rotation_step					+= rotation_step_size;
 	}
 
 	if( filled ) {
 		// Draw filled polygons
-		std::vector<VertexIndex_3> indices( size_t( edge_count_integer ) + 1 );
+		ret.indices.resize( size_t( edge_count_integer - 2 ) * 3 );
 		{
-			uint32_t i = 0;
-			for( i = 2; i < edge_count_integer; ++i ) {
+			for( uint32_t i = 2, a = 0; i < edge_count_integer; ++i, a += 3 ) {
 				assert( i < edge_count_integer );
-				indices[ i ] = { 0, i - 1, i };
+
+				ret.indices[ size_t( a ) + 0 ]	= 0;
+				ret.indices[ size_t( a ) + 1 ]	= i - 1;
+				ret.indices[ size_t( a ) + 2 ]	= i;
 			}
 		}
-		Draw_TriangleList(
-			true,
-			vertices,
-			indices
-		);
+		ret.mesh_type		= vk2d::MeshType::TRIANGLE_FILLED;
 	} else {
 		// Draw lines
-		std::vector<VertexIndex_2> indices( size_t( edge_count_integer ) + 1 );
+		ret.indices.resize( size_t( edge_count_integer ) * 2 );
 		{
-			uint32_t i = 0;
-			for( i = 1; i < edge_count_integer; ++i ) {
+			for( uint32_t i = 1, a = 0; i < edge_count_integer; ++i, a += 2 ) {
 				assert( i < edge_count_integer );
-				indices[ i ] = { i - 1, i };
+
+				ret.indices[ size_t( a ) + 0 ]	= i - 1;
+				ret.indices[ size_t( a ) + 1 ]	= i;
 			}
-			indices[ edge_count_integer ] = { edge_count_integer - 1, 0 };
+			ret.indices[ size_t( edge_count_integer ) * 2LL - 2 ]	= edge_count_integer - 1;
+			ret.indices[ size_t( edge_count_integer ) * 2LL - 1 ]	= 0;
 		}
-		Draw_LineList(
-			vertices,
-			indices
-		);
+		ret.mesh_type		= vk2d::MeshType::LINE;
 	}
+	return ret;
 }
 
-void WindowImpl::Draw_Pie(
-	bool							filled,
-	Vector2d						top_left,
-	Vector2d						bottom_right,
-	float							begin_angle_radians,
-	float							coverage,
-	float							edge_count,
-	Color							color
+VK2D_API vk2d::Mesh VK2D_APIENTRY vk2d::GeneratePieMesh(
+	vk2d::Vector2d		top_left,
+	vk2d::Vector2d		bottom_right,
+	float				begin_angle_radians,
+	float				coverage,
+	bool				filled,
+	float				edge_count
 )
 {
+	vk2d::Mesh ret;
+
 	if( edge_count < 3.0f )			edge_count		= 3.0f;
 	if( coverage > 1.0f )			coverage		= 1.0f;
-	if( coverage <= 0.0f )			return;			// Nothing to draw
+	if( coverage <= 0.0f )			return ret;		// Nothing to draw
 
 	Vector2d center_point					= {
 		( top_left.x + bottom_right.x ) / 2.0f,
@@ -254,96 +254,141 @@ void WindowImpl::Draw_Pie(
 	float center_to_edge_x		= bottom_right.x - center_point.x;
 	float center_to_edge_y		= bottom_right.y - center_point.y;
 
-	float rotation_step			= 0.0f;
 	float rotation_step_size	= float( RAD / edge_count );
 
-	uint32_t edge_count_integer	= uint32_t( edge_count );
-	if( edge_count - uint32_t( edge_count ) ) {
-		++edge_count_integer;
-	}
+	uint32_t edge_count_integer	= uint32_t( std::ceil( edge_count ) );
 
+	{
+		auto angle_clamp		= float( std::floor( begin_angle_radians / RAD ) );
+		begin_angle_radians		= begin_angle_radians - float( angle_clamp * RAD );
+		assert( begin_angle_radians <= RAD );
+	}
 	auto end_angle_radians		= float( RAD ) * coverage;
 	end_angle_radians			+= begin_angle_radians;
 	auto area_angle				= end_angle_radians - begin_angle_radians;
 
-	std::vector<Vertex> vertices; vertices.reserve( size_t( edge_count_integer ) + 2 );
-	vertices.push_back( {
-		center_point,
-		{ 0.5f, 0.5f },
-		color }
-	);
-	while( true ) {
-		if( rotation_step >= area_angle ) break;
-		vertices.push_back( { {
-				std::cos( rotation_step + begin_angle_radians ) * center_to_edge_x + center_point.x,
-				std::sin( rotation_step + begin_angle_radians ) * center_to_edge_y + center_point.y
-			}, {
-				std::cos( rotation_step ),
-				std::sin( rotation_step )
-			},
-			color }
-		);
-		rotation_step					+= rotation_step_size;
+	ret.vertices.reserve( size_t( edge_count_integer ) + 2 );
+	// Center vertex.
+	{
+		auto v = CreateDefaultValueVertex();
+		v.vertex_coords		= center_point;
+		v.uv_coords			= { 0.5f, 0.5f };
+		ret.vertices.push_back( v );
 	}
-	vertices.push_back( { {
+
+	auto intermediate_point_begin	= uint32_t( begin_angle_radians / rotation_step_size );
+	auto intermediate_point_end		= uint32_t( end_angle_radians / rotation_step_size );
+	auto intermediate_point_count	= intermediate_point_end - intermediate_point_begin;
+
+	// Start vertex.
+	{
+		auto v = CreateDefaultValueVertex();
+		v.vertex_coords		= {
+			std::cos( begin_angle_radians ) * center_to_edge_x + center_point.x,
+			std::sin( begin_angle_radians ) * center_to_edge_y + center_point.y
+		};
+		v.uv_coords			= {
+			std::cos( begin_angle_radians ) * 0.5f + 0.5f,
+			std::sin( begin_angle_radians ) * 0.5f + 0.5f
+		};
+		ret.vertices.push_back( v );
+	}
+
+	// Intermediate vertices.
+	{
+		// First half, from begin angle to 0 angle
+		for( uint32_t i = intermediate_point_begin + 1; i < intermediate_point_end + 1; ++i ) {
+			if( double( rotation_step_size ) * i > RAD ) break;
+
+			auto v = CreateDefaultValueVertex();
+			v.vertex_coords		= {
+				std::cos( rotation_step_size * i ) * center_to_edge_x + center_point.x,
+				std::sin( rotation_step_size * i ) * center_to_edge_y + center_point.y
+			};
+			v.uv_coords			= {
+				std::cos( rotation_step_size * i ) * 0.5f + 0.5f,
+				std::sin( rotation_step_size * i ) * 0.5f + 0.5f
+			};
+			ret.vertices.push_back( v );
+		}
+
+		// Second half, from 0 angle to end angle
+		float rotation_step		= 0.0f;
+		while( rotation_step	< end_angle_radians - RAD ) {
+
+			auto v = CreateDefaultValueVertex();
+			v.vertex_coords		= {
+				std::cos( rotation_step ) * center_to_edge_x + center_point.x,
+				std::sin( rotation_step ) * center_to_edge_y + center_point.y
+			};
+			v.uv_coords			= {
+				std::cos( rotation_step ) * 0.5f + 0.5f,
+				std::sin( rotation_step ) * 0.5f + 0.5f
+			};
+			ret.vertices.push_back( v );
+
+			rotation_step		+= rotation_step_size;
+		}
+	}
+
+	// End vertex.
+	{
+		auto v = CreateDefaultValueVertex();
+		v.vertex_coords		= {
 			std::cos( end_angle_radians ) * center_to_edge_x + center_point.x,
 			std::sin( end_angle_radians ) * center_to_edge_y + center_point.y
-		}, {
-			std::cos( end_angle_radians ),
-			std::sin( end_angle_radians )
-		},
-		color }
-	);
+		};
+		v.uv_coords			= {
+			std::cos( end_angle_radians ) * 0.5f + 0.5f,
+			std::sin( end_angle_radians ) * 0.5f + 0.5f
+		};
+		ret.vertices.push_back( v );
+	}
+
 
 
 	if( filled ) {
 		// Draw filled polygons
-		std::vector<VertexIndex_3> indices( vertices.size() + 1 );
+		ret.indices.resize( ( ret.vertices.size() - 2 ) * 3 );
 		{
-			uint32_t i = 0;
-			for( i = 2; i < indices.size() - 1; ++i ) {
-				//assert( i < edge_count_integer );
-				indices[ i ] = { 0, i - 1, i };
+			for( size_t i = 2, a = 0; i < ret.vertices.size(); ++i, a += 3 ) 				{
+				ret.indices[ a + 0 ]	= 0;
+				ret.indices[ a + 1 ]	= uint32_t( i ) - 1;
+				ret.indices[ a + 2 ]	= uint32_t( i );
 			}
 		}
-		Draw_TriangleList(
-			true,
-			vertices,
-			indices
-		);
+		ret.mesh_type		= vk2d::MeshType::TRIANGLE_FILLED;
 	} else {
 		// Draw lines
-		std::vector<VertexIndex_2> indices; indices.reserve( vertices.size() + 2 );
-		{
-			if( coverage < 1.0f )		indices.push_back( { 0, 1 } );
-			uint32_t i = 0;
-			for( i = 2; i < uint32_t( vertices.size() ); ++i ) {
-				indices.push_back( { i - 1, i } );
-			}
-			if( coverage < 1.0f )		indices.push_back( { uint32_t( vertices.size() - 1 ), 0 } );
+		ret.indices.resize( ret.vertices.size() * 2 );
+		for( size_t i = 1, a = 0; i < ret.vertices.size(); ++i, a += 2 ) {
+			ret.indices[ a + 0 ]	= uint32_t( i ) - 1;
+			ret.indices[ a + 1 ]	= uint32_t( i );
 		}
-		Draw_LineList(
-			vertices,
-			indices
-		);
+		ret.indices[ ret.indices.size() - 2 ]	= uint32_t( ret.vertices.size() - 1 );
+		ret.indices[ ret.indices.size() - 1 ]	= 0;
+
+		ret.mesh_type		= vk2d::MeshType::LINE;
 	}
+
+	return ret;
 }
 
-void WindowImpl::Draw_PieBox(
-	bool							filled,
-	Vector2d						top_left,
-	Vector2d						bottom_right,
-	float							begin_angle_radians,
-	float							coverage,
-	Color							color
+VK2D_API vk2d::Mesh VK2D_APIENTRY vk2d::GeneratePieBoxMesh(
+	vk2d::Vector2d		top_left,
+	vk2d::Vector2d		bottom_right,
+	float				begin_angle_radians,
+	float				coverage,
+	bool				filled
 )
 {
+	vk2d::Mesh ret;
+
 	if( coverage >= 1.0f ) {
-		Draw_Box( filled, top_left, bottom_right, color );
-		return;		// Done
+		return vk2d::GenerateBoxMesh( top_left, bottom_right, filled );
 	}
 	if( coverage <= 0.0f ) {
-		return;		// Nothing to draw
+		return ret;		// Nothing to draw
 	}
 
 	Vector2d center_point					= {
@@ -387,7 +432,7 @@ void WindowImpl::Draw_PieBox(
 			Vector2d ray_end
 			) -> Vector2d
 		{
-			Vector2d		ray_begin			= box_center;
+			Vector2d	ray_begin			= box_center;
 			float		clipped_exit		= 1.0;
 
 			// Clipping on x and y axis
@@ -401,16 +446,16 @@ void WindowImpl::Draw_PieBox(
 			clipped_exit		= std::min( dim_high_y, dim_high_x );
 
 			Vector2d collider_localized				= ray_end - ray_begin;
-			Vector2d localized_intersection_point		= collider_localized * clipped_exit;
+			Vector2d localized_intersection_point	= collider_localized * clipped_exit;
 			Vector2d globalized_intersection_point	= localized_intersection_point + box_center;
 			return globalized_intersection_point;
 		};
 
-		float ray_lenght		= center_to_edge_x + center_to_edge_y;
+		float ray_lenght			= center_to_edge_x + center_to_edge_y;
 		Vector2d ray_angle_1_end	= { std::cos( begin_angle_radians ) * ray_lenght, std::sin( begin_angle_radians ) * ray_lenght };
 		Vector2d ray_angle_2_end	= { std::cos( end_angle_radians ) * ray_lenght, std::sin( end_angle_radians ) * ray_lenght };
-		ray_angle_1_end			+= center_point;
-		ray_angle_2_end			+= center_point;
+		ray_angle_1_end				+= center_point;
+		ray_angle_2_end				+= center_point;
 
 		unordered_outer_points[ PIE_BEGIN ]	= RayExitIntersection(
 			top_left,
@@ -460,8 +505,8 @@ void WindowImpl::Draw_PieBox(
 		// 3---2
 
 		struct LinearPoint {
-			uint32_t	original_linear_point_index;
-			float		linear_coords;
+			uint32_t		original_linear_point_index;
+			float			linear_coords;
 			Vector2d		actual_coords;
 		};
 		float distance_counter = 0.0f;
@@ -544,46 +589,129 @@ void WindowImpl::Draw_PieBox(
 	}
 
 	// Create vertices
-	std::vector<Vertex> vertices;
 	{
-		vertices.reserve( 7 );
+		ret.vertices.reserve( 7 );
 
-		vertices.push_back( {
-			center_point,
-			{ 0.5f, 0.5f },
-			color
-			} );
+		auto v = CreateDefaultValueVertex();
+		v.vertex_coords		= center_point;
+		v.uv_coords			= { 0.5f, 0.5f };
+		ret.vertices.push_back( v );
+
 		for( auto opl : outer_point_list ) {
-			vertices.push_back( {
-				opl,
-				( opl - unordered_outer_points[ 0 ] ) / Vector2d( width, height ),
-				color
-				} );
+			v.vertex_coords		= opl;
+			v.uv_coords			= ( opl - unordered_outer_points[ 0 ] ) / Vector2d( width, height );
+			ret.vertices.push_back( v );
 		}
 	}
 
 	if( filled ) {
-		std::vector<VertexIndex_3> indices;		indices.reserve( vertices.size() );
-		for( uint32_t i = 2; i < uint32_t( vertices.size() ); ++i ) {
-			indices.push_back( { 0, i - 1, i } );
+		ret.indices.reserve( ret.vertices.size() * 3 );
+		for( size_t i = 2; i < ret.vertices.size(); ++i ) {
+			ret.indices.push_back( 0 );
+			ret.indices.push_back( uint32_t( i ) - 1 );
+			ret.indices.push_back( uint32_t( i ) );
 		}
 
-		Draw_TriangleList(
-			true,
-			vertices,
-			indices
-		);
+		ret.mesh_type		= vk2d::MeshType::TRIANGLE_FILLED;
+
 	} else {
-		std::vector<VertexIndex_2> indices;		indices.reserve( vertices.size() );
-		for( uint32_t i = 1; i < uint32_t( vertices.size() ); ++i ) {
-			indices.push_back( { i - 1, i } );
+		ret.indices.reserve( ret.vertices.size() * 2 + 2 );
+		for( size_t i = 1; i < ret.vertices.size(); ++i ) {
+			ret.indices.push_back( uint32_t( i ) - 1 );
+			ret.indices.push_back( uint32_t( i ) );
 		}
-		indices.push_back( { uint32_t( vertices.size() - 1 ), 0 } );
-		Draw_LineList(
-			vertices,
-			indices
-		);
+		ret.indices.push_back( uint32_t( ret.vertices.size() - 1 ) );
+		ret.indices.push_back( 0 );
+
+		ret.mesh_type		= vk2d::MeshType::LINE;
 	}
+
+	return ret;
 }
 
-*/
+VK2D_API vk2d::Mesh VK2D_APIENTRY vk2d::GenerateLatticeMesh(
+	vk2d::Vector2d			top_left,
+	vk2d::Vector2d			bottom_right,
+	vk2d::Vector2d			subdivisions,
+	bool					filled )
+{
+	vk2d::Mesh ret;
+
+	uint32_t vertex_count_x			= uint32_t( std::ceil( subdivisions.x ) ) + 2;
+	uint32_t vertex_count_y			= uint32_t( std::ceil( subdivisions.y ) ) + 2;
+	uint32_t total_vertex_count		= vertex_count_x * vertex_count_y;
+
+	vk2d::Vector2d mesh_size		= bottom_right - top_left;
+	vk2d::Vector2d vertex_spacing	= mesh_size / ( subdivisions + vk2d::Vector2d( 1.0f, 1.0f ) );
+
+	ret.vertices.resize( total_vertex_count );
+	ClearVerticesToDefaultValues( ret.vertices );
+
+	for( size_t y = 0; y < vertex_count_y - 1; ++y ) {
+		for( size_t x = 0; x < vertex_count_x - 1; ++x ) {
+			auto & v		= ret.vertices[ y * vertex_count_x + x ];
+			v.vertex_coords	= { vertex_spacing.x * x + top_left.x, vertex_spacing.y * y + top_left.y };
+			v.uv_coords		= { vertex_spacing.x * x, vertex_spacing.y * y };
+		}
+		auto & v			= ret.vertices[ y * vertex_count_x + vertex_count_x - 1 ];
+		v.vertex_coords		= { bottom_right.x, vertex_spacing.y * y + top_left.y };
+		v.uv_coords			= { 1.0f, vertex_spacing.y * y };
+	}
+	for( size_t x = 0; x < vertex_count_x - 1; ++x ) {
+		auto & v		= ret.vertices[ ( vertex_count_y - 1 ) * vertex_count_x + x ];
+		v.vertex_coords	= { vertex_spacing.x * x + top_left.x, bottom_right.y };
+		v.uv_coords		= { vertex_spacing.x * x, 1.0f };
+	}
+	auto & v			= ret.vertices[ ( vertex_count_y - 1 ) * vertex_count_x + vertex_count_x - 1 ];
+	v.vertex_coords		= { bottom_right.x, bottom_right.y };
+	v.uv_coords			= { 1.0f, 1.0f };
+
+	if( filled ) {
+		// Draw solid mesh with polygons.
+
+		auto reserved_size = ( vertex_count_x - 1 ) * ( vertex_count_y - 1 ) * 2 * 3;
+		ret.indices.reserve( reserved_size );
+		for( size_t y = 1; y < vertex_count_y; ++y ) {
+			for( size_t x = 1; x < vertex_count_x; ++x ) {
+				auto tl		= uint32_t( ( y - 1 ) * vertex_count_x + x - 1	);	// top left vertex.
+				auto tr		= uint32_t( ( y - 1 ) * vertex_count_x + x );		// top right vertex.
+				auto bl		= uint32_t( ( y - 0 ) * vertex_count_x + x - 1 );	// bottom left vertex.
+				auto br		= uint32_t( ( y - 0 ) * vertex_count_x + x );		// bottom right vertex.
+				ret.indices.push_back( tl );	// First triangle.
+				ret.indices.push_back( bl );
+				ret.indices.push_back( tr );
+				ret.indices.push_back( tr );	// Second triangle.
+				ret.indices.push_back( bl );
+				ret.indices.push_back( br );
+			}
+		}
+
+		ret.mesh_type		= vk2d::MeshType::TRIANGLE_FILLED;
+
+	} else {
+		// Draw lattice lines.
+
+		auto reserved_size = ( vertex_count_x - 1 ) * ( vertex_count_y - 1 ) * 4 * 2;
+		ret.indices.reserve( reserved_size );
+		for( size_t y = 1; y < vertex_count_y; ++y ) {
+			for( size_t x = 1; x < vertex_count_x; ++x ) {
+				auto tl		= uint32_t( ( y - 1 ) * vertex_count_x + x - 1 );	// top left vertex.
+				auto tr		= uint32_t( ( y - 1 ) * vertex_count_x + x );		// top right vertex.
+				auto bl		= uint32_t( ( y - 0 ) * vertex_count_x + x - 1 );	// bottom left vertex.
+				auto br		= uint32_t( ( y - 0 ) * vertex_count_x + x );		// bottom right vertex.
+				ret.indices.push_back( tl );	// First line.
+				ret.indices.push_back( bl );
+				ret.indices.push_back( bl );	// Second line.
+				ret.indices.push_back( br );
+				ret.indices.push_back( br );	// Third line.
+				ret.indices.push_back( tr );
+				ret.indices.push_back( tr );	// Fourth line.
+				ret.indices.push_back( tl );
+			}
+		}
+
+		ret.mesh_type	= vk2d::MeshType::LINE;
+	}
+
+	return ret;
+}

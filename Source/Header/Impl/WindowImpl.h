@@ -17,6 +17,7 @@ namespace vk2d {
 
 class Window;
 class TextureResource;
+class Mesh;
 
 namespace _internal {
 
@@ -66,37 +67,50 @@ public:
 		const std::vector<VertexIndex_3>		&	indices,
 		vk2d::TextureResource					*	texture						= nullptr );
 
+	void											Draw_TriangleList(
+		bool										filled,
+		const std::vector<Vertex>				&	vertices,
+		const std::vector<uint32_t>				&	raw_indices,
+		vk2d::TextureResource					*	texture						= nullptr );
+
 	void											Draw_LineList(
 		const std::vector<Vertex>				&	vertices,
 		const std::vector<VertexIndex_2>		&	indices,
-		vk2d::TextureResource					*	texture						= nullptr );
+		vk2d::TextureResource					*	texture						= nullptr,
+		float										line_width					= 1.0f );
+
+	void											Draw_LineList(
+		const std::vector<Vertex>				&	vertices,
+		const std::vector<uint32_t>				&	raw_indices,
+		vk2d::TextureResource					*	texture						= nullptr,
+		float										line_width					= 1.0f );
 
 	void											Draw_PointList(
 		const std::vector<Vertex>				&	vertices,
 		vk2d::TextureResource					*	texture						= nullptr );
 
 	void											Draw_Line(
-		Vector2d										point_1,
-		Vector2d										point_2,
+		Vector2d									point_1,
+		Vector2d									point_2,
 		Color										color						= { 1.0f, 1.0f, 1.0f, 1.0f } );
 
 	void											Draw_Box(
 		bool										filled,
-		Vector2d										top_left,
-		Vector2d										bottom_right,
+		Vector2d									top_left,
+		Vector2d									bottom_right,
 		Color										color						= { 1.0f, 1.0f, 1.0f, 1.0f } );
 
 	void											Draw_Circle(
 		bool										filled,
-		Vector2d										top_left,
-		Vector2d										bottom_right,
+		Vector2d									top_left,
+		Vector2d									bottom_right,
 		float										edge_count					= 32.0f,
 		Color										color						= { 1.0f, 1.0f, 1.0f, 1.0f } );
 
 	void											Draw_Pie(
 		bool										filled,
-		Vector2d										top_left,
-		Vector2d										bottom_right,
+		Vector2d									top_left,
+		Vector2d									bottom_right,
 		float										begin_angle_radians,
 		float										coverage,
 		float										edge_count					= 32.0f,
@@ -104,18 +118,21 @@ public:
 
 	void											Draw_PieBox(
 		bool										filled,
-		Vector2d										top_left,
-		Vector2d										bottom_right,
+		Vector2d									top_left,
+		Vector2d									bottom_right,
 		float										begin_angle_radians,
 		float										coverage,
 		Color										color						= { 1.0f, 1.0f, 1.0f, 1.0f } );
 
 	void											Draw_Texture(
-		Vector2d										top_left,
-		Vector2d										bottom_right,
+		Vector2d									top_left,
+		Vector2d									bottom_right,
 		vk2d::TextureResource					*	texture,
 		Color										color						= { 1.0f, 1.0f, 1.0f, 1.0f },
 		bool										filled						= true );
+
+	void											Draw_Mesh(
+		const vk2d::Mesh						&	mesh );
 
 	bool											SynchronizeFrame();
 
@@ -142,6 +159,10 @@ private:
 	void											CmdBindTextureIfDifferent(
 		VkCommandBuffer								command_buffer,
 		vk2d::TextureResource					*	texture );
+
+	void											CmdSetLineWidthIfDifferent(
+		VkCommandBuffer								command_buffer,
+		float										line_width );
 
 
 	vk2d::_internal::RendererImpl				*	renderer_parent							= {};
@@ -191,6 +212,7 @@ private:
 
 	vk2d::_internal::PipelineType					previous_pipeline_type					= vk2d::_internal::PipelineType::NONE;
 	VkDescriptorSet									previous_texture_descriptor_set			= {};
+	float											previous_line_width						= {};
 
 	std::unique_ptr<vk2d::_internal::MeshBuffer>	mesh_buffer								= {};
 

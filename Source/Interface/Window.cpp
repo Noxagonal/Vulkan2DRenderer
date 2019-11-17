@@ -227,6 +227,17 @@ VK2D_API void VK2D_APIENTRY Window::Draw_Texture(
 	}
 }
 
+VK2D_API void VK2D_APIENTRY Window::Draw_Mesh(
+	const vk2d::Mesh	&	mesh
+)
+{
+	if( impl ) {
+		impl->Draw_Mesh(
+			mesh
+		);
+	}
+}
+
 
 
 

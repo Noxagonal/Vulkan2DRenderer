@@ -8,12 +8,18 @@
 
 namespace vk2d {
 
+class TextureResource;
+
+
+
 enum class MeshType : uint32_t {
 	TRIANGLE_FILLED,
 	TRIANGLE_WIREFRAME,
 	LINE,
 	POINT,
 };
+
+
 
 class Mesh {
 public:
@@ -29,18 +35,36 @@ public:
 	VK2D_API void								VK2D_APIENTRY					Scew(
 		vk2d::Vector2d							scew_amount );
 
+	VK2D_API void								VK2D_APIENTRY					TranslateUV(
+		const vk2d::Vector2d					movement );
+
+	VK2D_API void								VK2D_APIENTRY					RotateUV(
+		float									rotate );
+
+	VK2D_API void								VK2D_APIENTRY					ScaleUV(
+		vk2d::Vector2d							scaling );
+
+	VK2D_API void								VK2D_APIENTRY					ScewUV(
+		vk2d::Vector2d							scew_amount );
+
 	VK2D_API void								VK2D_APIENTRY					SetVertexColor(
 		vk2d::Color								new_color );
 
 	VK2D_API void								VK2D_APIENTRY					SetVertexColorGradient(
 		vk2d::Color								color_1,
-		vk2d::Color								color_2 );
+		vk2d::Color								color_2,
+		vk2d::Vector2d							coord_1,
+		vk2d::Vector2d							coord_2 );
 
-	vk2d::MeshType								mesh_type						= vk2d::MeshType::TRIANGLE_FILLED;
-	float										non_solid_render_size			= 1.0f;
+	VK2D_API void								VK2D_APIENTRY					UVToBoundingBox();
 
 	std::vector<vk2d::Vertex>					vertices						= {};
 	std::vector<uint32_t>						indices							= {};
+
+	bool										created_by_generator			= {};		// This should probably be hidden
+	vk2d::MeshType								mesh_type						= vk2d::MeshType::TRIANGLE_FILLED;	// This should probably be hidden
+	float										line_width						= 1.0f;		// Only considered when rendering lines
+	vk2d::TextureResource					*	texture							= nullptr;	// Texture resource to be used when rendering, can be used in all modes
 };
 
 

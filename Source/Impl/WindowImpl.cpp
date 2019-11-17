@@ -5,6 +5,7 @@
 #include "../Header/Impl/RendererImpl.h"
 #include "../../Include/Interface/TextureResource.h"
 #include "../Header/Impl/TextureResourceImpl.h"
+#include "../../Include/Interface/Mesh.h"
 
 #include <memory>
 #include <algorithm>
@@ -332,6 +333,7 @@ bool WindowImpl::BeginRender()
 				command_buffer,
 				1.0f
 			);
+			previous_line_width		= 1.0f;
 			
 			// TODO: consider sampler changes mid-render.
 			auto sampler_descriptor_set = renderer_parent->GetSamplerDescriptorSet( SamplerType::DEFAULT );
@@ -570,17 +572,34 @@ void WindowImpl::Draw_TriangleList(
 	TextureResource							*	texture
 )
 {
+	auto index_count	= uint32_t( indices.size() * 3 );
+	std::vector<uint32_t> raw_indices;
+	raw_indices.resize( index_count );
+	for( size_t i = 0, a = 0; i < indices.size(); ++i, a += 3 ) {
+		raw_indices[ a + 0 ] = indices[ i ].indices[ 0 ];
+		raw_indices[ a + 1 ] = indices[ i ].indices[ 1 ];
+		raw_indices[ a + 2 ] = indices[ i ].indices[ 2 ];
+	}
+
+	Draw_TriangleList(
+		filled,
+		vertices,
+		raw_indices,
+		texture
+	);
+}
+
+void WindowImpl::Draw_TriangleList(
+	bool										filled,
+	const std::vector<Vertex>				&	vertices,
+	const std::vector<uint32_t>				&	raw_indices,
+	TextureResource							*	texture
+)
+{
 	auto command_buffer					= render_command_buffers[ next_image ];
 
 	auto vertex_count	= uint32_t( vertices.size() );
-	auto index_count	= uint32_t( indices.size() * 3 );
-	std::vector<uint32_t> raw_indices;
-	raw_indices.reserve( index_count );
-	for( size_t i = 0; i < indices.size(); ++i ) {
-		raw_indices.push_back( indices[ i ].indices[ 0 ] );
-		raw_indices.push_back( indices[ i ].indices[ 1 ] );
-		raw_indices.push_back( indices[ i ].indices[ 2 ] );
-	}
+	auto index_count	= uint32_t( raw_indices.size() );
 
 	if( filled ) {
 		CmdBindPipelineIfDifferent(
@@ -604,36 +623,61 @@ void WindowImpl::Draw_TriangleList(
 		vertices,
 		raw_indices );
 
-	vkCmdDrawIndexed(
-		command_buffer,
-		index_count,
-		1,
-		result.offsets.first_index,
-		int32_t( result.offsets.vertex_offset ),
-		0
-	);
+	if( result.success ) {
+		vkCmdDrawIndexed(
+			command_buffer,
+			index_count,
+			1,
+			result.offsets.first_index,
+			int32_t( result.offsets.vertex_offset ),
+			0
+		);
+	}
 }
 
 void WindowImpl::Draw_LineList(
 	const std::vector<Vertex>				&	vertices,
 	const std::vector<VertexIndex_2>		&	indices,
-	TextureResource							*	texture
+	TextureResource							*	texture,
+	float										line_width
+)
+{
+	auto index_count	= uint32_t( indices.size() * 2 );
+	std::vector<uint32_t> raw_indices;
+	raw_indices.resize( index_count );
+	for( size_t i = 0, a = 0; i < indices.size(); ++i, a += 2 ) {
+		raw_indices[ a + 0 ] = indices[ i ].indices[ 0 ];
+		raw_indices[ a + 1 ] = indices[ i ].indices[ 1 ];
+	}
+
+	Draw_LineList(
+		vertices,
+		raw_indices,
+		texture,
+		line_width
+	);
+}
+
+void WindowImpl::Draw_LineList(
+	const std::vector<Vertex>				&	vertices,
+	const std::vector<uint32_t>				&	raw_indices,
+	TextureResource							*	texture,
+	float										line_width
 )
 {
 	auto command_buffer					= render_command_buffers[ next_image ];
 
 	auto vertex_count	= uint32_t( vertices.size() );
-	auto index_count	= uint32_t( indices.size() * 2 );
-	std::vector<uint32_t> raw_indices;
-	raw_indices.reserve( index_count );
-	for( size_t i = 0; i < indices.size(); ++i ) {
-		raw_indices.push_back( indices[ i ].indices[ 0 ] );
-		raw_indices.push_back( indices[ i ].indices[ 1 ] );
-	}
+	auto index_count	= uint32_t( raw_indices.size() );
 
 	CmdBindPipelineIfDifferent(
 		command_buffer,
 		_internal::PipelineType::LINE_LIST
+	);
+
+	CmdBindTextureIfDifferent(
+		command_buffer,
+		texture
 	);
 
 	auto result = mesh_buffer->CmdPushMesh(
@@ -641,14 +685,21 @@ void WindowImpl::Draw_LineList(
 		vertices,
 		raw_indices );
 
-	vkCmdDrawIndexed(
+	CmdSetLineWidthIfDifferent(
 		command_buffer,
-		index_count,
-		1,
-		result.offsets.first_index,
-		int32_t( result.offsets.vertex_offset ),
-		0
+		line_width
 	);
+
+	if( result.success ) {
+		vkCmdDrawIndexed(
+			command_buffer,
+			index_count,
+			1,
+			result.offsets.first_index,
+			int32_t( result.offsets.vertex_offset ),
+			0
+		);
+	}
 }
 
 void WindowImpl::Draw_PointList(
@@ -665,18 +716,25 @@ void WindowImpl::Draw_PointList(
 		_internal::PipelineType::POINT_LIST
 	);
 
+	CmdBindTextureIfDifferent(
+		command_buffer,
+		texture
+	);
+
 	auto result = mesh_buffer->CmdPushMesh(
 		command_buffer,
 		vertices,
 		{} );
 
-	vkCmdDraw(
-		command_buffer,
-		vertex_count,
-		1,
-		result.offsets.vertex_offset,
-		0
-	);
+	if( result.success ) {
+		vkCmdDraw(
+			command_buffer,
+			vertex_count,
+			1,
+			result.offsets.vertex_offset,
+			0
+		);
+	}
 }
 
 void WindowImpl::Draw_Line(
@@ -863,33 +921,47 @@ void WindowImpl::Draw_Pie(
 	auto area_angle				= end_angle_radians - begin_angle_radians;
 
 	std::vector<Vertex> vertices; vertices.reserve( size_t( edge_count_integer ) + 2 );
-	vertices.push_back( {
-		center_point,
-		{ 0.5f, 0.5f },
-		color }
-	);
+	{
+		vk2d::Vertex v;
+		v.vertex_coords		= center_point;
+		v.uv_coords			= { 0.5f, 0.5f };
+		v.color				= color;
+		v.point_size		= 1.0f;
+
+		vertices.push_back( v );
+	}
 	while( true ) {
 		if( rotation_step >= area_angle ) break;
-		vertices.push_back( { {
-				std::cos( rotation_step + begin_angle_radians ) * center_to_edge_x + center_point.x,
-				std::sin( rotation_step + begin_angle_radians ) * center_to_edge_y + center_point.y
-			}, {
-				std::cos( rotation_step ),
-				std::sin( rotation_step )
-			},
-			color }
-		);
+		vk2d::Vertex v;
+		v.vertex_coords		= {
+			std::cos( rotation_step + begin_angle_radians ) * center_to_edge_x + center_point.x,
+			std::sin( rotation_step + begin_angle_radians ) * center_to_edge_y + center_point.y
+		};
+		v.uv_coords			= {
+			std::cos( rotation_step ),
+			std::sin( rotation_step )
+		};
+		v.color				= color;
+		v.point_size		= 1.0f;
+
+		vertices.push_back( v );
 		rotation_step					+= rotation_step_size;
 	}
-	vertices.push_back( { {
+	{
+		vk2d::Vertex v;
+		v.vertex_coords		= {
 			std::cos( end_angle_radians ) * center_to_edge_x + center_point.x,
 			std::sin( end_angle_radians ) * center_to_edge_y + center_point.y
-		}, {
-			std::cos( end_angle_radians ),
-			std::sin( end_angle_radians )
-		},
-		color }
-	);
+		};
+		v.uv_coords			= {
+			std::cos( rotation_step ),
+			std::sin( rotation_step )
+		};
+		v.color				= color;
+		v.point_size		= 1.0f;
+
+		vertices.push_back( v );
+	}
 
 
 	if( filled ) {
@@ -1143,18 +1215,23 @@ void WindowImpl::Draw_PieBox(
 	std::vector<Vertex> vertices;
 	{
 		vertices.reserve( 7 );
+		{
+			vk2d::Vertex v;
+			v.vertex_coords		= center_point;
+			v.uv_coords			= { 0.5f, 0.5f };
+			v.color				= color;
+			v.point_size		= 1.0f;
 
-		vertices.push_back( {
-			center_point,
-			{ 0.5f, 0.5f },
-			color
-			} );
+			vertices.push_back( v );
+		}
 		for( auto opl : outer_point_list ) {
-			vertices.push_back( {
-				opl,
-				( opl - unordered_outer_points[ 0 ] ) / Vector2d( width, height ),
-				color
-				} );
+			vk2d::Vertex v;
+			v.vertex_coords		= opl;
+			v.uv_coords			= ( opl - unordered_outer_points[ 0 ] ) / Vector2d( width, height );
+			v.color				= color;
+			v.point_size		= 1.0f;
+
+			vertices.push_back( v );
 		}
 	}
 
@@ -1235,6 +1312,47 @@ void WindowImpl::Draw_Texture(
 			indices,
 			texture
 		);
+	}
+}
+
+void WindowImpl::Draw_Mesh(
+	const vk2d::Mesh		&	mesh )
+{
+	if( mesh.vertices.size() == 0 ) return;
+
+	switch( mesh.mesh_type ) {
+	case vk2d::MeshType::TRIANGLE_FILLED:
+		Draw_TriangleList(
+			true,
+			mesh.vertices,
+			mesh.indices,
+			mesh.texture
+		);
+		break;
+	case vk2d::MeshType::TRIANGLE_WIREFRAME:
+		Draw_TriangleList(
+			false,
+			mesh.vertices,
+			mesh.indices,
+			mesh.texture
+		);
+		break;
+	case vk2d::MeshType::LINE:
+		Draw_LineList(
+			mesh.vertices,
+			mesh.indices,
+			mesh.texture,
+			mesh.line_width
+		);
+		break;
+	case vk2d::MeshType::POINT:
+		Draw_PointList(
+			mesh.vertices,
+			mesh.texture
+		);
+		break;
+	default:
+		break;
 	}
 }
 
@@ -1620,7 +1738,7 @@ bool WindowImpl::CreateGraphicsPipelines()
 	vertex_input_binding_descriptions[ 0 ].stride		= sizeof( Vertex );
 	vertex_input_binding_descriptions[ 0 ].inputRate	= VK_VERTEX_INPUT_RATE_VERTEX;
 
-	std::array<VkVertexInputAttributeDescription, 3> vertex_input_attribute_descriptions {};
+	std::array<VkVertexInputAttributeDescription, 4> vertex_input_attribute_descriptions {};
 	vertex_input_attribute_descriptions[ 0 ].location	= 0;
 	vertex_input_attribute_descriptions[ 0 ].binding	= 0;
 	vertex_input_attribute_descriptions[ 0 ].format		= VK_FORMAT_R32G32_SFLOAT;
@@ -1635,6 +1753,11 @@ bool WindowImpl::CreateGraphicsPipelines()
 	vertex_input_attribute_descriptions[ 2 ].binding	= 0;
 	vertex_input_attribute_descriptions[ 2 ].format		= VK_FORMAT_R32G32B32A32_SFLOAT;
 	vertex_input_attribute_descriptions[ 2 ].offset		= offsetof( Vertex, color );
+
+	vertex_input_attribute_descriptions[ 3 ].location	= 3;
+	vertex_input_attribute_descriptions[ 3 ].binding	= 0;
+	vertex_input_attribute_descriptions[ 3 ].format		= VK_FORMAT_R32_SFLOAT;
+	vertex_input_attribute_descriptions[ 3 ].offset		= offsetof( Vertex, point_size );
 
 	VkPipelineVertexInputStateCreateInfo vertex_input_state_create_info {};
 	vertex_input_state_create_info.sType							= VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
@@ -2394,6 +2517,23 @@ void WindowImpl::CmdBindTextureIfDifferent(
 		previous_texture_descriptor_set	= texture_descriptor_set;
 	}
 }
+
+void WindowImpl::CmdSetLineWidthIfDifferent(
+	VkCommandBuffer						command_buffer,
+	float								line_width
+)
+{
+	if( previous_line_width != line_width ) {
+
+		vkCmdSetLineWidth(
+			command_buffer,
+			line_width
+		);
+
+		previous_line_width	= line_width;
+	}
+}
+
 
 
 

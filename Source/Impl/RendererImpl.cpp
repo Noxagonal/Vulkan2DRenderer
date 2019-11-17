@@ -486,16 +486,16 @@ bool RendererImpl::PickPhysicalDevice()
 			physical_device,
 			&physical_device_properties
 		);
-vkGetPhysicalDeviceMemoryProperties(
-	physical_device,
-	&physical_device_memory_properties
-);
-vkGetPhysicalDeviceFeatures(
-	physical_device,
-	&physical_device_features
-);
+		vkGetPhysicalDeviceMemoryProperties(
+			physical_device,
+			&physical_device_memory_properties
+		);
+		vkGetPhysicalDeviceFeatures(
+			physical_device,
+			&physical_device_features
+		);
 
-return true;
+		return true;
 	}
 	return false;
 }
@@ -526,8 +526,9 @@ bool RendererImpl::CreateDeviceAndQueues()
 	auto queue_create_infos = queue_resolver.GetDeviceQueueCreateInfos();
 
 	VkPhysicalDeviceFeatures features {};
-	features.samplerAnisotropy							= VK_TRUE;
-	features.fillModeNonSolid							= VK_TRUE;
+	features.samplerAnisotropy					= VK_TRUE;
+	features.fillModeNonSolid					= VK_TRUE;
+	features.wideLines							= VK_TRUE;
 
 	VkDeviceCreateInfo device_create_info {};
 	device_create_info.sType					= VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;

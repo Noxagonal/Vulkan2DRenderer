@@ -141,9 +141,12 @@ struct Color {
 };
 
 struct Vertex {
-	Vector2d					vertex_coords;
-	Vector2d					uv_coords;
-	Color						color;
+	Vector2d					vertex_coords;			// 2 x 32 bits
+	Vector2d					uv_coords;				// 2 x 32 bits
+	Color						color;					// 4 x 32 bits
+	float						point_size;				// 1 x 32 bits
+private:
+	float						padding[ 3 ];			// Reserved, padding Vertex struct to 128 bit boundaries
 };
 
 struct VertexIndex_2 {

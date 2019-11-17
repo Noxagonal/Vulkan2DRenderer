@@ -21,6 +21,7 @@ class WindowImpl;
 
 class Renderer;
 class TextureResource;
+class Mesh;
 
 
 
@@ -87,27 +88,27 @@ public:
 		TextureResource								*	texture						= nullptr );
 
 	VK2D_API void										VK2D_APIENTRY				Draw_Line(
-		Vector2d											point_1,
-		Vector2d											point_2,
+		Vector2d										point_1,
+		Vector2d										point_2,
 		Color											color						= { 1.0f, 1.0f, 1.0f, 1.0f } );
 
 	VK2D_API void										VK2D_APIENTRY				Draw_Box(
 		bool											filled,
-		Vector2d											top_left,
-		Vector2d											bottom_right,
+		Vector2d										top_left,
+		Vector2d										bottom_right,
 		Color											color						= { 1.0f, 1.0f, 1.0f, 1.0f } );
 
 	VK2D_API void										VK2D_APIENTRY				Draw_Circle(
 		bool											filled,
-		Vector2d											top_left,
-		Vector2d											bottom_right,
+		Vector2d										top_left,
+		Vector2d										bottom_right,
 		float											edge_count					= 32.0f,
 		Color											color						= { 1.0f, 1.0f, 1.0f, 1.0f } );
 
 	VK2D_API void										VK2D_APIENTRY				Draw_Pie(
 		bool											filled,
-		Vector2d											top_left,
-		Vector2d											bottom_right,
+		Vector2d										top_left,
+		Vector2d										bottom_right,
 		float											begin_angle_radians,
 		float											coverage,
 		float											edge_count					= 32.0f,
@@ -115,18 +116,22 @@ public:
 
 	VK2D_API void										VK2D_APIENTRY				Draw_PieBox(
 		bool											filled,
-		Vector2d											top_left,
-		Vector2d											bottom_right,
+		Vector2d										top_left,
+		Vector2d										bottom_right,
 		float											begin_angle_radians,
 		float											coverage,
 		Color											color						= { 1.0f, 1.0f, 1.0f, 1.0f } );
 
 	VK2D_API void										VK2D_APIENTRY				Draw_Texture(
-		Vector2d											top_left,
-		Vector2d											bottom_right,
+		Vector2d										top_left,
+		Vector2d										bottom_right,
 		vk2d::TextureResource						*	texture,
 		Color											color						= { 1.0f, 1.0f, 1.0f, 1.0f },
 		bool											filled						= true );
+
+	VK2D_API void										VK2D_APIENTRY				Draw_Mesh(
+		const vk2d::Mesh							&	mesh );
+
 
 private:
 	std::unique_ptr<_internal::WindowImpl>				impl				= {};
