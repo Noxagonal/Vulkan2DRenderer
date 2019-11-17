@@ -18,6 +18,7 @@ int main()
 	if( !renderer ) return -1;
 
 	auto texture			= renderer->GetResourceManager()->LoadTextureResource( "../../TestData/GrafGear_128.png" );
+	texture->WaitUntilLoaded();
 
 	vk2d::WindowCreateInfo window_create_info {};
 	window_create_info.width	= 800;
@@ -29,7 +30,7 @@ int main()
 	while( true ) {
 		++frame_counter;
 		if( !window->BeginRender() ) return -1;
-
+		/*
 		window->Draw_PieBox(
 			true,
 			{ -0.95f, -0.5f },
@@ -39,21 +40,48 @@ int main()
 		);
 
 		window->Draw_Pie(
-			false,
+			true,
 			{ +0.05f, -0.5f },
 			{ +0.95f, +0.5f },
 			frame_counter / 100.0f,
-			std::sin( frame_counter / 123.0f ) / 2.0f + 0.5f
+			16.0f
 		);
 
-		vk2d::Coords position { -0.9f, -0.9f };
+		vk2d::Vector2d position { -0.9f, -0.9f };
 
 		window->Draw_Texture(
 			position,
-			position + vk2d::Coords( ( std::cos( frame_counter / 123.0f ) / 10.0f + 0.3f ), ( std::sin( frame_counter / 123.0f ) / 10.0f + 0.3f ) ),
+			position + vk2d::Vector2d( ( std::cos( frame_counter / 123.0f ) / 10.0f + 0.3f ), ( std::sin( frame_counter / 123.0f ) / 10.0f + 0.3f ) ),
 			texture,
 			{ 1.0f, 1.0f, 1.0f, 1.0f }
 		);
+		*/
+
+		auto pie_box_mesh = vk2d::GeneratePieBoxMesh(
+			{ -1.0f, -0.5f },
+			{ +0.0f, +0.5f },
+			frame_counter / 100.0f,
+			std::sin( frame_counter / 123.0f ) / 2.0f + 0.5f,
+			true );
+//		pie_box_mesh.line_width		= 16.0f;
+//		pie_box_mesh.mesh_type		= vk2d::MeshType::TRIANGLE_FILLED;
+		pie_box_mesh.texture		= texture;
+		window->Draw_Mesh( pie_box_mesh );
+
+		auto lattice_mesh = vk2d::GenerateLatticeMesh(
+			{ -0.0f, -0.5f },
+			{ +1.0f, +0.5f },
+			{ ( std::cos( frame_counter / 123.0f ) * 0.5f + 0.5f ) * 32.0f + 2.0f, ( std::sin( frame_counter / 123.0f ) * 0.5f + 0.5f ) * 32.0f + 2.0f },
+			false
+		);
+		for( auto & v : lattice_mesh.vertices ) {
+			v.point_size	= 8.0f;
+		}
+		lattice_mesh.line_width	= 8.0f;
+//		lattice_mesh.mesh_type	= vk2d::MeshType::TRIANGLE_WIREFRAME;
+		lattice_mesh.texture	= texture;
+
+		window->Draw_Mesh( lattice_mesh );
 
 		if( !window->EndRender() ) return -1;
 	}

@@ -117,6 +117,9 @@
     <ClInclude Include="..\Source\Header\Core\VulkanMemoryManagement.h">
       <Filter>Source\Header\Core</Filter>
     </ClInclude>
+    <ClInclude Include="..\Include\Interface\Mesh.h">
+      <Filter>Include\Interface</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\Source\Impl\RendererImpl.cpp">
@@ -166,6 +169,9 @@
     </ClCompile>
     <ClCompile Include="..\Source\Core\VulkanMemoryManagement.cpp">
       <Filter>Source\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\Interface\Mesh.cpp">
+      <Filter>Source\Interface</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

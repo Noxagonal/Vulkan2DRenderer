@@ -95,6 +95,8 @@ bool MeshBuffer::CmdUploadMeshDataToGPU(
 		regions[ 1 ].dstOffset = bp->aligned_index_buffer_byte_offset;
 		regions[ 1 ].size = bp->used_aligned_index_byte_size;
 
+		bp->CopyVectorsToStagingBuffers();
+
 		vkCmdCopyBuffer(
 			command_buffer,
 			bp->staging_buffer,
@@ -102,8 +104,6 @@ bool MeshBuffer::CmdUploadMeshDataToGPU(
 			uint32_t( regions.size() ),
 			regions.data()
 		);
-
-		bp->CopyVectorsToStagingBuffers();
 	}
 
 	current_buffer_block	= buffer_blocks.begin();

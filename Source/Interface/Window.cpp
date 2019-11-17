@@ -114,8 +114,8 @@ VK2D_API void VK2D_APIENTRY Window::Draw_PointList(
 }
 
 VK2D_API void VK2D_APIENTRY Window::Draw_Line(
-	Coords							point_1,
-	Coords							point_2,
+	Vector2d							point_1,
+	Vector2d							point_2,
 	Color							color
 )
 {
@@ -130,8 +130,8 @@ VK2D_API void VK2D_APIENTRY Window::Draw_Line(
 
 VK2D_API void VK2D_APIENTRY Window::Draw_Box(
 	bool							filled,
-	Coords							top_left,
-	Coords							bottom_right,
+	Vector2d							top_left,
+	Vector2d							bottom_right,
 	Color							color
 )
 {
@@ -147,8 +147,8 @@ VK2D_API void VK2D_APIENTRY Window::Draw_Box(
 
 VK2D_API void VK2D_APIENTRY Window::Draw_Circle(
 	bool							filled,
-	Coords							top_left,
-	Coords							bottom_right,
+	Vector2d							top_left,
+	Vector2d							bottom_right,
 	float							edge_count,
 	Color							color
 )
@@ -166,8 +166,8 @@ VK2D_API void VK2D_APIENTRY Window::Draw_Circle(
 
 VK2D_API void VK2D_APIENTRY Window::Draw_Pie(
 	bool							filled,
-	Coords							top_left,
-	Coords							bottom_right,
+	Vector2d							top_left,
+	Vector2d							bottom_right,
 	float							begin_angle_radians,
 	float							end_angle_radians,
 	float							edge_count,
@@ -189,8 +189,8 @@ VK2D_API void VK2D_APIENTRY Window::Draw_Pie(
 
 VK2D_API void VK2D_APIENTRY Window::Draw_PieBox(
 	bool							filled,
-	Coords							top_left,
-	Coords							bottom_right,
+	Vector2d							top_left,
+	Vector2d							bottom_right,
 	float							begin_angle_radians,
 	float							coverage,
 	Color							color
@@ -209,8 +209,8 @@ VK2D_API void VK2D_APIENTRY Window::Draw_PieBox(
 }
 
 VK2D_API void VK2D_APIENTRY Window::Draw_Texture(
-	Coords						top_left,
-	Coords						bottom_right,
+	Vector2d						top_left,
+	Vector2d						bottom_right,
 	vk2d::TextureResource	*	texture,
 	Color						color,
 	bool						filled
@@ -223,6 +223,17 @@ VK2D_API void VK2D_APIENTRY Window::Draw_Texture(
 			texture,
 			color,
 			filled
+		);
+	}
+}
+
+VK2D_API void VK2D_APIENTRY Window::Draw_Mesh(
+	const vk2d::Mesh	&	mesh
+)
+{
+	if( impl ) {
+		impl->Draw_Mesh(
+			mesh
 		);
 	}
 }

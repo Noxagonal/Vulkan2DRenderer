@@ -3,6 +3,7 @@
 #include "Core/Common.h"
 #include "Core/Version.hpp"
 
+#include "Interface/Mesh.h"
 #include "Interface/Renderer.h"
 #include "Interface/Window.h"
 #include "Interface/ResourceManager.h"
