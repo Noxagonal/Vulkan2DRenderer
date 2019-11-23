@@ -27,22 +27,32 @@ public:
 		const vk2d::Vector2d					movement );
 
 	VK2D_API void								VK2D_APIENTRY					Rotate(
-		float									rotate );
+		float									rotation_amount_radians,
+		vk2d::Vector2d							origin							= {} );
 
 	VK2D_API void								VK2D_APIENTRY					Scale(
-		vk2d::Vector2d							scaling );
+		vk2d::Vector2d							scaling_amount,
+		vk2d::Vector2d							origin							= {} );
 
 	VK2D_API void								VK2D_APIENTRY					Scew(
-		vk2d::Vector2d							scew_amount );
+		vk2d::Vector2d							scew_amount,
+		vk2d::Vector2d							origin							= {} );
+
+	VK2D_API void								VK2D_APIENTRY					Wave(
+		float									rotation_amount_radians,
+		float									intensity,
+		vk2d::Vector2d							origin							= {} );
 
 	VK2D_API void								VK2D_APIENTRY					TranslateUV(
 		const vk2d::Vector2d					movement );
 
 	VK2D_API void								VK2D_APIENTRY					RotateUV(
-		float									rotate );
+		float									rotation_amount_radians,
+		vk2d::Vector2d							origin							= {} );
 
 	VK2D_API void								VK2D_APIENTRY					ScaleUV(
-		vk2d::Vector2d							scaling );
+		vk2d::Vector2d							scaling_amount,
+		vk2d::Vector2d							origin							= {} );
 
 	VK2D_API void								VK2D_APIENTRY					ScewUV(
 		vk2d::Vector2d							scew_amount );
@@ -56,7 +66,10 @@ public:
 		vk2d::Vector2d							coord_1,
 		vk2d::Vector2d							coord_2 );
 
-	VK2D_API void								VK2D_APIENTRY					UVToBoundingBox();
+	VK2D_API void								VK2D_APIENTRY					ConfineUVToBoundingBox();
+
+	VK2D_API void								VK2D_APIENTRY					SetTexture(
+		vk2d::TextureResource				*	texture_resource_pointer );
 
 	std::vector<vk2d::Vertex>					vertices						= {};
 	std::vector<uint32_t>						indices							= {};

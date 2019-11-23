@@ -91,6 +91,89 @@ struct Vector2d {
 	}
 };
 
+struct Matrix2 {
+	vk2d::Vector2d	row_1 {};
+	vk2d::Vector2d	row_2 {};
+
+	Matrix2()									= default;
+	Matrix2( const vk2d::Matrix2 & other )		= default;
+	Matrix2( vk2d::Matrix2 && other )			= default;
+	Matrix2( float identity )
+	{
+		row_1	= { identity, 0.0f };
+		row_2	= { 0.0f, identity };
+	}
+	Matrix2( const std::initializer_list<float> & elements )
+	{
+		assert( elements.size() <= 4 );
+		auto e = elements.begin();
+		if( e ) row_1.x = *e++;
+		if( e ) row_1.y = *e++;
+		if( e ) row_2.x = *e++;
+		if( e ) row_2.y = *e++;
+	}
+	Matrix2(
+		float r1_c1, float r1_c2,
+		float r2_c1, float r2_c2
+	)
+	{
+		row_1	= { r1_c1, r1_c2 };
+		row_2	= { r2_c1, r2_c2 };
+	}
+
+	vk2d::Matrix2 & operator=( const vk2d::Matrix2 & other )	= default;
+	vk2d::Matrix2 & operator=( vk2d::Matrix2 && other )			= default;
+
+	vk2d::Matrix2 operator*( float multiplier )
+	{
+		vk2d::Matrix2 ret = {};
+		ret.row_1		= row_1 * multiplier;
+		ret.row_2		= row_2 * multiplier;
+		return ret;
+	}
+
+	vk2d::Matrix2 operator*( const vk2d::Matrix2 & other )
+	{
+		vk2d::Matrix2 ret = *this;
+		ret.row_1.x		= row_1.x * other.row_1.x + row_1.y * other.row_2.x;
+		ret.row_1.y		= row_1.x * other.row_1.y + row_1.y * other.row_2.y;
+		ret.row_2.x		= row_2.x * other.row_1.x + row_2.y * other.row_2.x;
+		ret.row_2.y		= row_2.x * other.row_1.y + row_2.y * other.row_2.y;
+		return ret;
+	}
+
+	vk2d::Vector2d operator*( const vk2d::Vector2d & other )
+	{
+		vk2d::Vector2d ret = {};
+		ret.x			= row_1.x * other.x + row_1.y * other.y;
+		ret.y			= row_2.x * other.x + row_2.y * other.y;
+		return ret;
+	}
+
+	vk2d::Matrix2 & operator*=( float multiplier )
+	{
+		*this	= *this * multiplier;
+		return *this;
+	}
+	vk2d::Matrix2 & operator*=( const vk2d::Matrix2 & other )
+	{
+		*this	= *this * other;
+		return *this;
+	}
+};
+
+inline vk2d::Matrix2 CreateRotationMatrix(
+	float rotation
+)
+{
+	auto x = std::cos( rotation );
+	auto y = std::sin( rotation );
+	return vk2d::Matrix2(
+		+x, -y,
+		+y, +x
+	);
+}
+
 struct AABB2d {
 	vk2d::Vector2d				top_left			= {};
 	vk2d::Vector2d				bottom_right		= {};

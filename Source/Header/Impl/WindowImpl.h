@@ -61,77 +61,76 @@ public:
 	bool											BeginRender();
 	bool											EndRender();
 
-	void											Draw_TriangleList(
-		bool										filled,
+	void											DrawTriangleList(
 		const std::vector<Vertex>				&	vertices,
 		const std::vector<VertexIndex_3>		&	indices,
+		bool										filled						= true,
 		vk2d::TextureResource					*	texture						= nullptr );
 
-	void											Draw_TriangleList(
-		bool										filled,
+	void											DrawTriangleList(
 		const std::vector<Vertex>				&	vertices,
 		const std::vector<uint32_t>				&	raw_indices,
+		bool										filled						= true,
 		vk2d::TextureResource					*	texture						= nullptr );
 
-	void											Draw_LineList(
+	void											DrawLineList(
 		const std::vector<Vertex>				&	vertices,
 		const std::vector<VertexIndex_2>		&	indices,
 		vk2d::TextureResource					*	texture						= nullptr,
 		float										line_width					= 1.0f );
 
-	void											Draw_LineList(
+	void											DrawLineList(
 		const std::vector<Vertex>				&	vertices,
 		const std::vector<uint32_t>				&	raw_indices,
 		vk2d::TextureResource					*	texture						= nullptr,
 		float										line_width					= 1.0f );
 
-	void											Draw_PointList(
+	void											DrawPointList(
 		const std::vector<Vertex>				&	vertices,
 		vk2d::TextureResource					*	texture						= nullptr );
 
-	void											Draw_Line(
+	void											DrawLine(
 		Vector2d									point_1,
 		Vector2d									point_2,
 		Color										color						= { 1.0f, 1.0f, 1.0f, 1.0f } );
 
-	void											Draw_Box(
-		bool										filled,
+	void											DrawBox(
 		Vector2d									top_left,
 		Vector2d									bottom_right,
+		bool										filled						= true,
 		Color										color						= { 1.0f, 1.0f, 1.0f, 1.0f } );
 
-	void											Draw_Circle(
-		bool										filled,
+	void											DrawCircle(
 		Vector2d									top_left,
 		Vector2d									bottom_right,
-		float										edge_count					= 32.0f,
+		bool										filled						= true,
+		float										edge_count					= 64.0f,
 		Color										color						= { 1.0f, 1.0f, 1.0f, 1.0f } );
 
-	void											Draw_Pie(
-		bool										filled,
-		Vector2d									top_left,
-		Vector2d									bottom_right,
-		float										begin_angle_radians,
-		float										coverage,
-		float										edge_count					= 32.0f,
-		Color										color						= { 1.0f, 1.0f, 1.0f, 1.0f } );
-
-	void											Draw_PieBox(
-		bool										filled,
+	void											DrawPie(
 		Vector2d									top_left,
 		Vector2d									bottom_right,
 		float										begin_angle_radians,
 		float										coverage,
+		bool										filled						= true,
+		float										edge_count					= 64.0f,
 		Color										color						= { 1.0f, 1.0f, 1.0f, 1.0f } );
 
-	void											Draw_Texture(
+	void											DrawPieBox(
+		Vector2d									top_left,
+		Vector2d									bottom_right,
+		float										begin_angle_radians,
+		float										coverage,
+		bool										filled						= true,
+		Color										color						= { 1.0f, 1.0f, 1.0f, 1.0f } );
+
+	void											DrawTexture(
 		Vector2d									top_left,
 		Vector2d									bottom_right,
 		vk2d::TextureResource					*	texture,
-		Color										color						= { 1.0f, 1.0f, 1.0f, 1.0f },
-		bool										filled						= true );
+		Color										color						= { 1.0f, 1.0f, 1.0f, 1.0f } );
 
-	void											Draw_Mesh(
+	void											DrawMesh(
 		const vk2d::Mesh						&	mesh );
 
 	bool											SynchronizeFrame();

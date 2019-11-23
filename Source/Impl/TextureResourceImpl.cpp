@@ -97,7 +97,7 @@ bool TextureResourceImpl::MTLoad(
 
 			staging_buffer = memory_pool->CreateCompleteHostBufferResourceWithData(
 				image_data,
-				VkDeviceSize( image_size_x * image_size_x * image_channel_count ),
+				VkDeviceSize( image_size_x ) * VkDeviceSize( image_size_x ) * VkDeviceSize( image_channel_count ),
 				VK_BUFFER_USAGE_TRANSFER_SRC_BIT
 			);
 

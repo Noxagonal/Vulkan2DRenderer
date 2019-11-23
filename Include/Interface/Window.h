@@ -72,64 +72,63 @@ public:
 	VK2D_API bool										VK2D_APIENTRY				BeginRender();
 	VK2D_API bool										VK2D_APIENTRY				EndRender();
 
-	VK2D_API void										VK2D_APIENTRY				Draw_TriangleList(
-		bool											filled,
+	VK2D_API void										VK2D_APIENTRY				DrawTriangleList(
 		const std::vector<Vertex>					&	vertices,
 		const std::vector<VertexIndex_3>			&	indices,
+		bool											filled						= true,
 		TextureResource								*	texture						= nullptr );
 
-	VK2D_API void										VK2D_APIENTRY				Draw_LineList(
+	VK2D_API void										VK2D_APIENTRY				DrawLineList(
 		const std::vector<Vertex>					&	vertices,
 		const std::vector<VertexIndex_2>			&	indices,
 		TextureResource								*	texture						= nullptr );
 
-	VK2D_API void										VK2D_APIENTRY				Draw_PointList(
+	VK2D_API void										VK2D_APIENTRY				DrawPointList(
 		const std::vector<Vertex>					&	vertices,
 		TextureResource								*	texture						= nullptr );
 
-	VK2D_API void										VK2D_APIENTRY				Draw_Line(
+	VK2D_API void										VK2D_APIENTRY				DrawLine(
 		Vector2d										point_1,
 		Vector2d										point_2,
 		Color											color						= { 1.0f, 1.0f, 1.0f, 1.0f } );
 
-	VK2D_API void										VK2D_APIENTRY				Draw_Box(
-		bool											filled,
+	VK2D_API void										VK2D_APIENTRY				DrawBox(
 		Vector2d										top_left,
 		Vector2d										bottom_right,
+		bool											filled						= true,
 		Color											color						= { 1.0f, 1.0f, 1.0f, 1.0f } );
 
-	VK2D_API void										VK2D_APIENTRY				Draw_Circle(
-		bool											filled,
+	VK2D_API void										VK2D_APIENTRY				DrawCircle(
 		Vector2d										top_left,
 		Vector2d										bottom_right,
-		float											edge_count					= 32.0f,
+		bool											filled						= true,
+		float											edge_count					= 64.0f,
 		Color											color						= { 1.0f, 1.0f, 1.0f, 1.0f } );
 
-	VK2D_API void										VK2D_APIENTRY				Draw_Pie(
-		bool											filled,
-		Vector2d										top_left,
-		Vector2d										bottom_right,
-		float											begin_angle_radians,
-		float											coverage,
-		float											edge_count					= 32.0f,
-		Color											color						= { 1.0f, 1.0f, 1.0f, 1.0f } );
-
-	VK2D_API void										VK2D_APIENTRY				Draw_PieBox(
-		bool											filled,
+	VK2D_API void										VK2D_APIENTRY				DrawPie(
 		Vector2d										top_left,
 		Vector2d										bottom_right,
 		float											begin_angle_radians,
 		float											coverage,
+		bool											filled						= true,
+		float											edge_count					= 64.0f,
 		Color											color						= { 1.0f, 1.0f, 1.0f, 1.0f } );
 
-	VK2D_API void										VK2D_APIENTRY				Draw_Texture(
+	VK2D_API void										VK2D_APIENTRY				DrawPieBox(
+		Vector2d										top_left,
+		Vector2d										bottom_right,
+		float											begin_angle_radians,
+		float											coverage,
+		bool											filled						= true,
+		Color											color						= { 1.0f, 1.0f, 1.0f, 1.0f } );
+
+	VK2D_API void										VK2D_APIENTRY				DrawTexture(
 		Vector2d										top_left,
 		Vector2d										bottom_right,
 		vk2d::TextureResource						*	texture,
-		Color											color						= { 1.0f, 1.0f, 1.0f, 1.0f },
-		bool											filled						= true );
+		Color											color						= { 1.0f, 1.0f, 1.0f, 1.0f } );
 
-	VK2D_API void										VK2D_APIENTRY				Draw_Mesh(
+	VK2D_API void										VK2D_APIENTRY				DrawMesh(
 		const vk2d::Mesh							&	mesh );
 
 

@@ -12,6 +12,44 @@ constexpr double RAD			= PI * 2.0;
 
 
 
+VK2D_API void VK2D_APIENTRY vk2d::Mesh::Translate(
+	const vk2d::Vector2d		movement )
+{
+	for( auto & v : vertices ) {
+		v.vertex_coords		+= movement;
+	}
+}
+
+VK2D_API void VK2D_APIENTRY vk2d::Mesh::Rotate(
+	float						rotation_amount_radians,
+	vk2d::Vector2d				origin )
+{
+	auto rotation_matrix	= vk2d::CreateRotationMatrix( rotation_amount_radians );
+
+	for( auto & v : vertices ) {
+		v.vertex_coords		-= origin;
+		v.vertex_coords		= rotation_matrix * v.vertex_coords;
+		v.vertex_coords		+= origin;
+	}
+}
+
+VK2D_API void VK2D_APIENTRY vk2d::Mesh::SetVertexColor(
+	vk2d::Color					new_color )
+{
+	for( auto & v : vertices ) {
+		v.color		= new_color;
+	}
+}
+
+VK2D_API void VK2D_APIENTRY vk2d::Mesh::SetTexture(
+	vk2d::TextureResource	*	texture_resource_pointer
+)
+{
+	texture = texture_resource_pointer;
+}
+
+
+
 vk2d::AABB2d CalculateAABBFromPointList(
 	const std::vector<vk2d::Vector2d>		&	points
 )
