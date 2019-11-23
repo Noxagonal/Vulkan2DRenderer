@@ -56,33 +56,73 @@ int main()
 		);
 		*/
 
-		auto pie_box_mesh = vk2d::GeneratePieBoxMesh(
-			{ -1.0f, -0.5f },
-			{ +0.0f, +0.5f },
-			frame_counter / 100.0f,
-			std::sin( frame_counter / 123.0f ) / 2.0f + 0.5f,
+		auto pie_box_mesh = vk2d::GenerateLatticeMesh(
+			{ -1.0f, -1.0f },
+			{ +1.0f, +1.0f },
+			{ 64, 64 },
 			true );
 //		pie_box_mesh.line_width		= 16.0f;
 //		pie_box_mesh.mesh_type		= vk2d::MeshType::TRIANGLE_WIREFRAME;
-		pie_box_mesh.texture		= texture;
-		pie_box_mesh.Translate( { std::cos( frame_counter / 100.0f ) / 10.0f, std::sin( frame_counter / 100.0f ) / 10.0f } );
+		pie_box_mesh.SetTexture( texture );
+
+		pie_box_mesh.WaveUV(
+			frame_counter / 50.0f,
+			32.0f,
+			frame_counter / 600.0f,
+			{ 0.05f, 0.05f },
+			{  }
+		);
+
+		auto gbegin	= vk2d::Vector2d( std::cos( frame_counter / 232.0f ), std::sin( frame_counter / 178.0f ) );
+		auto gend	= vk2d::Vector2d( std::cos( frame_counter / 124.0f ), std::sin( frame_counter / 196.0f ) );
+
+		pie_box_mesh.SetVertexColorGradient(
+			{ 1, 0, 1, 1 },
+			{ 0, 1, 0, 1 },
+			gbegin,
+			gend
+		);
+
 		window->DrawMesh( pie_box_mesh );
 
+		window->DrawCircle(
+			{ gbegin.x - 0.05f, gbegin.y - 0.05f },
+			{ gbegin.x + 0.05f, gbegin.y + 0.05f },
+			true,
+			64,
+			{ 0, 1, 1, 1 }
+		);
+		window->DrawCircle(
+			{ gend.x - 0.05f, gend.y - 0.05f },
+			{ gend.x + 0.05f, gend.y + 0.05f },
+			true,
+			64,
+			{ 1, 1, 0, 1 }
+		);
+
+		/*
 		auto lattice_mesh = vk2d::GenerateLatticeMesh(
 			{ -0.0f, -0.5f },
 			{ +1.0f, +0.5f },
-			{ ( std::cos( frame_counter / 123.0f ) * 0.5f + 0.5f ) * 6.0f + 64.0f, ( std::sin( frame_counter / 123.0f ) * 0.5f + 0.5f ) * 6.0f + 64.0f },
-			false
+			{ 32.0f, 32.0f },
+			true
 		);
 		for( auto & v : lattice_mesh.vertices ) {
 			v.point_size	= 8.0f;
 		}
 		lattice_mesh.line_width	= 1.0f;
-		lattice_mesh.mesh_type	= vk2d::MeshType::POINT;
+//		lattice_mesh.mesh_type	= vk2d::MeshType::POINT;
 		lattice_mesh.texture	= texture;
-		lattice_mesh.Rotate( frame_counter / 234.0f, { +0.5f, +0.0f } );
+//		lattice_mesh.Rotate( frame_counter / 234.0f, { +0.5f, +0.0f } );
+		lattice_mesh.Wave(
+			frame_counter / 50.0f,
+			16.0f,
+			frame_counter / 600.0f,
+			{ 0.04f, 0.04f },
+			{ +0.5f, +0.0f } );
 
 		window->DrawMesh( lattice_mesh );
+		*/
 
 		if( !window->EndRender() ) return -1;
 	}

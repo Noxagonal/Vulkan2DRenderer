@@ -217,10 +217,32 @@ struct AABB2d {
 };
 
 struct Color {
-	float r;
-	float g;
-	float b;
-	float a;
+	float r			= 1.0f;
+	float g			= 1.0f;
+	float b			= 1.0f;
+	float a			= 1.0f;
+
+	Color()								= default;
+	Color( const vk2d::Color & other )	= default;
+	Color( vk2d::Color && other )		= default;
+	Color( const std::initializer_list<float> & elements )
+	{
+		assert( elements.size() <= 4 );
+		auto e = elements.begin();
+		if( e ) r = *e++;
+		if( e ) g = *e++;
+		if( e ) b = *e++;
+		if( e ) a = *e++;
+	}
+	Color( float r, float g, float b, float a ) :
+		r( r ),
+		g( g ),
+		b( b ),
+		a( a )
+	{};
+
+	vk2d::Color & operator=( const vk2d::Color & other )	= default;
+	vk2d::Color & operator=( vk2d::Color && other )			= default;
 };
 
 struct Vertex {
