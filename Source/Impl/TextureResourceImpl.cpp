@@ -77,9 +77,6 @@ bool TextureResourceImpl::MTLoad(
 
 		if( texture->IsFromFile() ) {
 			// Create texture from a file
-
-			auto mypath = std::filesystem::current_path() / texture->GetFilePath();
-
 			int image_size_x			= 0;
 			int image_size_y			= 0;
 			int image_channel_count		= 0;
@@ -97,7 +94,7 @@ bool TextureResourceImpl::MTLoad(
 
 			staging_buffer = memory_pool->CreateCompleteHostBufferResourceWithData(
 				image_data,
-				VkDeviceSize( image_size_x ) * VkDeviceSize( image_size_x ) * VkDeviceSize( image_channel_count ),
+				VkDeviceSize( image_size_x ) * VkDeviceSize( image_size_y ) * VkDeviceSize( image_channel_count ),
 				VK_BUFFER_USAGE_TRANSFER_SRC_BIT
 			);
 
@@ -107,14 +104,27 @@ bool TextureResourceImpl::MTLoad(
 				return false;
 			}
 
+			// Set image extent so we'll know it later
+			extent				= { uint32_t( image_size_x ), uint32_t( image_size_y ) };
+
 			image_info.x		= uint32_t( image_size_x );
 			image_info.y		= uint32_t( image_size_y );
 			image_info.channels	= uint32_t( image_channel_count );
 
 		} else {
 			// Create texture from data
-			// TODO
-			assert( 0 );
+
+			// Image extent already set by resource manager, we can just use it.
+			image_info.x		= extent.width;
+			image_info.y		= extent.height;
+			image_info.channels	= 4;
+
+			staging_buffer = memory_pool->CreateCompleteHostBufferResourceWithData(
+				texture_data.data(),
+				VkDeviceSize( image_info.x ) * VkDeviceSize( image_info.y ) * VkDeviceSize( image_info.channels ),
+				VK_BUFFER_USAGE_TRANSFER_SRC_BIT
+			);
+
 		}
 	}
 

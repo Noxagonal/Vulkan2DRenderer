@@ -4,6 +4,7 @@
 #include "../Header/Impl/ResourceManagerImpl.h"
 #include "../Header/Core/ThreadPool.h"
 #include "../../Include/Interface/TextureResource.h"
+#include "../Header/Impl/TextureResourceImpl.h"
 
 
 
@@ -111,10 +112,20 @@ TextureResource * ResourceManagerImpl::LoadTextureResource(
 TextureResource * ResourceManagerImpl::CreateTextureResource(
 	uint32_t							size_x,
 	uint32_t							size_y,
-	const std::vector<uint8_t>		&	texture_data )
+	const std::vector<vk2d::Texel>	&	texture_data )
 {
-	assert( 0 );
-	return nullptr;
+	auto resource		= std::unique_ptr<TextureResource>( new TextureResource( this ) );
+	auto resource_ptr	= resource.get();
+	if( !resource || !resource->IsGood() ) return nullptr; // Could not create resource.
+
+	resource->impl->extent			= { size_x, size_y };
+	resource->impl->texture_data	= texture_data;
+	resource->is_from_file	= false;
+	resource->loader_thread	= SelectLoaderThread();
+	resources.push_back( std::move( resource ) );
+
+	thread_pool->ScheduleTask( std::make_unique<LoadTask>( this, resource_ptr ), { resource_ptr->loader_thread } );
+	return resource_ptr;
 }
 
 void ResourceManagerImpl::DestroyResource(

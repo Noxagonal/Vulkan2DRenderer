@@ -32,7 +32,7 @@ public:
 	TextureResource								*	CreateTextureResource(
 		uint32_t									size_x,
 		uint32_t									size_y,
-		const std::vector<uint8_t>				&	texture_data );
+		const std::vector<vk2d::Texel>			&	texture_data );
 
 	void											DestroyResource(
 		Resource								*	resource );

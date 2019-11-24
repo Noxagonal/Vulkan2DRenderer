@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../Core/Common.h"
+#include "../Interface/TextureResource.h"
 
 #include <memory>
 #include <filesystem>
@@ -8,7 +9,6 @@
 namespace vk2d {
 
 class ThreadPool;
-class TextureResource;
 class Resource;
 
 namespace _internal {
@@ -25,6 +25,11 @@ public:
 	);
 
 	VK2D_API																~ResourceManager();
+
+	VK2D_API TextureResource				*	VK2D_APIENTRY				CreateTextureResource(
+		uint32_t								extent_x,
+		uint32_t								extent_y,
+		const std::vector<vk2d::Texel>		&	texels );
 
 	VK2D_API TextureResource				*	VK2D_APIENTRY				LoadTextureResource(
 		std::filesystem::path												file_path );

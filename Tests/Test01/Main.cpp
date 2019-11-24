@@ -19,6 +19,14 @@ int main()
 
 	auto texture			= renderer->GetResourceManager()->LoadTextureResource( "../../TestData/GrafGear_128.png" );
 
+	std::vector<vk2d::Texel> texels {
+		{ 0, 0, 0, 255 },
+		{ 255, 0, 0, 255 },
+		{ 0, 255, 0, 255 },
+		{ 0, 0, 255, 255 }
+	};
+	auto texture2			= renderer->GetResourceManager()->CreateTextureResource( 2, 2, texels );
+
 	vk2d::WindowCreateInfo window_create_info {};
 	window_create_info.width				= 800;
 	window_create_info.height				= 600;
@@ -64,7 +72,7 @@ int main()
 			true );
 //		pie_box_mesh.line_width		= 16.0f;
 //		pie_box_mesh.mesh_type		= vk2d::MeshType::TRIANGLE_WIREFRAME;
-//		pie_box_mesh.SetTexture( texture );
+		pie_box_mesh.SetTexture( texture2 );
 
 		/*
 		pie_box_mesh.WaveUV(
@@ -78,14 +86,14 @@ int main()
 
 		auto gbegin	= vk2d::Vector2d( std::cos( frame_counter / 232.0f ) * 300, std::sin( frame_counter / 178.0f ) * 300 );
 		auto gend	= vk2d::Vector2d( std::cos( frame_counter / 124.0f ) * 300, std::sin( frame_counter / 196.0f ) * 300 );
-
+		/*
 		pie_box_mesh.SetVertexColorGradient(
 			{ 1, 0, 1, 1 },
 			{ 0, 1, 0, 1 },
 			gbegin,
 			gend
 		);
-
+		*/
 		window->DrawMesh( pie_box_mesh );
 
 		window->DrawCircle(
