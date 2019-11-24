@@ -866,7 +866,10 @@ bool RendererImpl::CreatePipelineLayout()
 		texture_descriptor_set_layout->GetVulkanDescriptorSetLayout()
 	};
 
-	std::array<VkPushConstantRange, 0> push_constant_ranges {};
+	std::array<VkPushConstantRange, 1> push_constant_ranges {};
+	push_constant_ranges[ 0 ].stageFlags	= VK_SHADER_STAGE_VERTEX_BIT;
+	push_constant_ranges[ 0 ].offset		= 0;
+	push_constant_ranges[ 0 ].size			= uint32_t( sizeof( vk2d::_internal::WindowCoordinateScaling ) );
 
 	VkPipelineLayoutCreateInfo pipeline_layout_create_info {};
 	pipeline_layout_create_info.sType					= VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;

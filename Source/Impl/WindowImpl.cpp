@@ -2,6 +2,7 @@
 #include "../Header/Core/SourceCommon.h"
 
 #include "../Header/Impl/WindowImpl.h"
+#include "../../Include/Interface/Window.h"
 #include "../Header/Impl/RendererImpl.h"
 #include "../../Include/Interface/TextureResource.h"
 #include "../Header/Impl/TextureResourceImpl.h"
@@ -334,8 +335,54 @@ bool WindowImpl::BeginRender()
 				1.0f
 			);
 			previous_line_width		= 1.0f;
-			
-			// TODO: consider sampler changes mid-render.
+
+			// Push constants: window coordinate system scaling
+			{
+				vk2d::_internal::WindowCoordinateScaling window_coordinate_scaling {};
+
+				switch( create_info_copy.coordinate_space ) {
+				case vk2d::WindowCoordinateSpace::TEXEL_SPACE:
+					window_coordinate_scaling.multiplier	= { 1.0f / ( extent.width / 2.0f ), 1.0f / ( extent.height / 2.0f ) };
+					window_coordinate_scaling.offset		= { -1.0f, -1.0f };
+					break;
+				case vk2d::WindowCoordinateSpace::TEXEL_SPACE_CENTERED:
+					window_coordinate_scaling.multiplier	= { 1.0f / ( extent.width / 2.0f ), 1.0f / ( extent.height / 2.0f ) };
+					window_coordinate_scaling.offset		= { 0.0f, 0.0f };
+					break;
+				case vk2d::WindowCoordinateSpace::NORMALIZED_SPACE:
+				{
+					float contained_minimum_dimension		= float( std::min( extent.width, extent.height ) );
+					window_coordinate_scaling.multiplier	= { contained_minimum_dimension / ( extent.width / 2.0f ), contained_minimum_dimension / ( extent.height / 2.0f ) };
+					window_coordinate_scaling.offset		= { -1.0f, -1.0f };
+				}
+					break;
+				case vk2d::WindowCoordinateSpace::NORMALIZED_SPACE_CENTERED:
+				{
+					float contained_minimum_dimension		= float( std::min( extent.width, extent.height ) );
+					window_coordinate_scaling.multiplier	= { contained_minimum_dimension / extent.width, contained_minimum_dimension / extent.height };
+					window_coordinate_scaling.offset		= { 0.0f, 0.0f };
+				}
+					break;
+				case vk2d::WindowCoordinateSpace::NORMALIZED_VULKAN:
+					window_coordinate_scaling.multiplier	= { 1.0f, 1.0f };
+					window_coordinate_scaling.offset		= { 0.0f, 0.0f };
+					break;
+				default:
+					window_coordinate_scaling.multiplier	= { 1.0f, 1.0f };
+					window_coordinate_scaling.offset		= { 0.0f, 0.0f };
+					break;
+				}
+
+				vkCmdPushConstants(
+					command_buffer,
+					renderer_parent->GetPipelineLayout(),
+					VK_SHADER_STAGE_VERTEX_BIT,
+					0,
+					uint32_t( sizeof( vk2d::_internal::WindowCoordinateScaling ) ),
+					&window_coordinate_scaling
+				);
+			}
+
 			auto sampler_descriptor_set = renderer_parent->GetSamplerDescriptorSet( SamplerType::DEFAULT );
 			vkCmdBindDescriptorSets(
 				command_buffer,
