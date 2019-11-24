@@ -7,6 +7,9 @@
 #include <vector>
 
 namespace vk2d {
+namespace _internal {
+class WindowImpl;
+}
 
 class TextureResource;
 
@@ -22,30 +25,52 @@ enum class MeshType : uint32_t {
 
 
 class Mesh {
+	friend class vk2d::_internal::WindowImpl;
+
 public:
 	VK2D_API void								VK2D_APIENTRY					Translate(
 		const vk2d::Vector2d					movement );
 
 	VK2D_API void								VK2D_APIENTRY					Rotate(
-		float									rotate );
+		float									rotation_amount_radians,
+		vk2d::Vector2d							origin							= {} );
 
 	VK2D_API void								VK2D_APIENTRY					Scale(
-		vk2d::Vector2d							scaling );
+		vk2d::Vector2d							scaling_amount,
+		vk2d::Vector2d							origin							= {} );
 
 	VK2D_API void								VK2D_APIENTRY					Scew(
-		vk2d::Vector2d							scew_amount );
+		vk2d::Vector2d							scew_amount,
+		vk2d::Vector2d							origin							= {} );
+
+	VK2D_API void								VK2D_APIENTRY					Wave(
+		float									rotation_amount_radians,
+		float									frequency,
+		float									direction_radians,
+		vk2d::Vector2d							intensity,
+		vk2d::Vector2d							origin							= {} );
 
 	VK2D_API void								VK2D_APIENTRY					TranslateUV(
 		const vk2d::Vector2d					movement );
 
 	VK2D_API void								VK2D_APIENTRY					RotateUV(
-		float									rotate );
+		float									rotation_amount_radians,
+		vk2d::Vector2d							origin							= {} );
 
 	VK2D_API void								VK2D_APIENTRY					ScaleUV(
-		vk2d::Vector2d							scaling );
+		vk2d::Vector2d							scaling_amount,
+		vk2d::Vector2d							origin							= {} );
 
 	VK2D_API void								VK2D_APIENTRY					ScewUV(
-		vk2d::Vector2d							scew_amount );
+		vk2d::Vector2d							scew_amount,
+		vk2d::Vector2d							origin							= {} );
+
+	VK2D_API void								VK2D_APIENTRY					WaveUV(
+		float									rotation_amount_radians,
+		float									frequency,
+		float									direction_radians,
+		vk2d::Vector2d							intensity,
+		vk2d::Vector2d							origin							= {} );
 
 	VK2D_API void								VK2D_APIENTRY					SetVertexColor(
 		vk2d::Color								new_color );
@@ -56,13 +81,25 @@ public:
 		vk2d::Vector2d							coord_1,
 		vk2d::Vector2d							coord_2 );
 
-	VK2D_API void								VK2D_APIENTRY					UVToBoundingBox();
+	VK2D_API void								VK2D_APIENTRY					ConfineUVToBoundingBox();
+
+	VK2D_API void								VK2D_APIENTRY					SetTexture(
+		vk2d::TextureResource				*	texture_resource_pointer );
+
+	VK2D_API void								VK2D_APIENTRY					SetPointSize(
+		float									point_size );
+
+	VK2D_API void								VK2D_APIENTRY					SetLineSize(
+		float									line_width );
+
+	VK2D_API void								VK2D_APIENTRY					SetMeshType(
+		vk2d::MeshType							type );
 
 	std::vector<vk2d::Vertex>					vertices						= {};
 	std::vector<uint32_t>						indices							= {};
 
-	bool										created_by_generator			= {};		// This should probably be hidden
-	vk2d::MeshType								mesh_type						= vk2d::MeshType::TRIANGLE_FILLED;	// This should probably be hidden
+private:
+	vk2d::MeshType								mesh_type						= vk2d::MeshType::TRIANGLE_FILLED;
 	float										line_width						= 1.0f;		// Only considered when rendering lines
 	vk2d::TextureResource					*	texture							= nullptr;	// Texture resource to be used when rendering, can be used in all modes
 };

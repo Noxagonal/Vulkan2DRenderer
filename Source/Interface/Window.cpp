@@ -34,8 +34,10 @@ VK2D_API					Window::Window(
 		}
 		return;
 	}
-	if( !impl->is_good ) return;
-
+	if( !impl->is_good ) {
+		impl = nullptr;
+		return;
+	}
 	is_good							= true;
 }
 
@@ -68,31 +70,31 @@ VK2D_API bool VK2D_APIENTRY Window::EndRender()
 
 
 
-VK2D_API void VK2D_APIENTRY Window::Draw_TriangleList(
-	bool										filled,
+VK2D_API void VK2D_APIENTRY Window::DrawTriangleList(
 	const std::vector<Vertex>				&	vertices,
 	const std::vector<VertexIndex_3>		&	indices,
+	bool										filled,
 	TextureResource							*	texture
 )
 {
 	if( impl ) {
-		impl->Draw_TriangleList(
-			filled,
+		impl->DrawTriangleList(
 			vertices,
 			indices,
+			filled,
 			texture
 		);
 	}
 }
 
-VK2D_API void VK2D_APIENTRY Window::Draw_LineList(
+VK2D_API void VK2D_APIENTRY Window::DrawLineList(
 	const std::vector<Vertex>				&	vertices,
 	const std::vector<VertexIndex_2>		&	indices,
 	TextureResource							*	texture
 )
 {
 	if( impl ) {
-		impl->Draw_LineList(
+		impl->DrawLineList(
 			vertices,
 			indices,
 			texture
@@ -100,27 +102,27 @@ VK2D_API void VK2D_APIENTRY Window::Draw_LineList(
 	}
 }
 
-VK2D_API void VK2D_APIENTRY Window::Draw_PointList(
+VK2D_API void VK2D_APIENTRY Window::DrawPointList(
 	const std::vector<Vertex>				&	vertices,
 	TextureResource							*	texture
 )
 {
 	if( impl ) {
-		impl->Draw_PointList(
+		impl->DrawPointList(
 			vertices,
 			texture
 		);
 	}
 }
 
-VK2D_API void VK2D_APIENTRY Window::Draw_Line(
-	Vector2d							point_1,
-	Vector2d							point_2,
+VK2D_API void VK2D_APIENTRY Window::DrawLine(
+	Vector2d						point_1,
+	Vector2d						point_2,
 	Color							color
 )
 {
 	if( impl ) {
-		impl->Draw_Line(
+		impl->DrawLine(
 			point_1,
 			point_2,
 			color
@@ -128,111 +130,109 @@ VK2D_API void VK2D_APIENTRY Window::Draw_Line(
 	}
 }
 
-VK2D_API void VK2D_APIENTRY Window::Draw_Box(
+VK2D_API void VK2D_APIENTRY Window::DrawBox(
+	Vector2d						top_left,
+	Vector2d						bottom_right,
 	bool							filled,
-	Vector2d							top_left,
-	Vector2d							bottom_right,
 	Color							color
 )
 {
 	if( impl ) {
-		impl->Draw_Box(
-			filled,
+		impl->DrawBox(
 			top_left,
 			bottom_right,
+			filled,
 			color
 		);
 	}
 }
 
-VK2D_API void VK2D_APIENTRY Window::Draw_Circle(
+VK2D_API void VK2D_APIENTRY Window::DrawCircle(
+	Vector2d						top_left,
+	Vector2d						bottom_right,
 	bool							filled,
-	Vector2d							top_left,
-	Vector2d							bottom_right,
 	float							edge_count,
 	Color							color
 )
 {
 	if( impl ) {
-		impl->Draw_Circle(
-			filled,
+		impl->DrawCircle(
 			top_left,
 			bottom_right,
+			filled,
 			edge_count,
 			color
 		);
 	}
 }
 
-VK2D_API void VK2D_APIENTRY Window::Draw_Pie(
-	bool							filled,
-	Vector2d							top_left,
-	Vector2d							bottom_right,
+VK2D_API void VK2D_APIENTRY Window::DrawPie(
+	Vector2d						top_left,
+	Vector2d						bottom_right,
 	float							begin_angle_radians,
 	float							end_angle_radians,
+	bool							filled,
 	float							edge_count,
 	Color							color
 )
 {
 	if( impl ) {
-		impl->Draw_Pie(
-			filled,
+		impl->DrawPie(
 			top_left,
 			bottom_right,
 			begin_angle_radians,
 			end_angle_radians,
+			filled,
 			edge_count,
 			color
 		);
 	}
 }
 
-VK2D_API void VK2D_APIENTRY Window::Draw_PieBox(
-	bool							filled,
-	Vector2d							top_left,
-	Vector2d							bottom_right,
+VK2D_API void VK2D_APIENTRY Window::DrawPieBox(
+	Vector2d						top_left,
+	Vector2d						bottom_right,
 	float							begin_angle_radians,
 	float							coverage,
+	bool							filled,
 	Color							color
 )
 {
 	if( impl ) {
-		impl->Draw_PieBox(
-			filled,
+		impl->DrawPieBox(
 			top_left,
 			bottom_right,
 			begin_angle_radians,
 			coverage,
+			filled,
 			color
 		);
 	}
 }
 
-VK2D_API void VK2D_APIENTRY Window::Draw_Texture(
-	Vector2d						top_left,
-	Vector2d						bottom_right,
+VK2D_API void VK2D_APIENTRY Window::DrawTexture(
+	Vector2d					top_left,
+	Vector2d					bottom_right,
 	vk2d::TextureResource	*	texture,
-	Color						color,
-	bool						filled
+	Color						color
 )
 {
 	if( impl ) {
-		impl->Draw_Texture(
+		impl->DrawTexture(
 			top_left,
 			bottom_right,
 			texture,
-			color,
-			filled
+			color
 		);
 	}
 }
 
-VK2D_API void VK2D_APIENTRY Window::Draw_Mesh(
+VK2D_API void VK2D_APIENTRY Window::DrawMesh(
 	const vk2d::Mesh	&	mesh
 )
 {
 	if( impl ) {
-		impl->Draw_Mesh(
+		impl->DrawMesh(
 			mesh
 		);
 	}

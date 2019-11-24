@@ -26,6 +26,20 @@ vk2d::AABB2d CalculateAABBFromPointList(
 	return ret;
 }
 
+vk2d::AABB2d CalculateAABBFromVertexList(
+	const std::vector<vk2d::Vertex>			&	vertices
+)
+{
+	vk2d::AABB2d ret { vertices[ 0 ].vertex_coords, vertices[ 0 ].vertex_coords };
+	for( auto p : vertices ) {
+		ret.top_left.x		= std::min( ret.top_left.x, p.vertex_coords.x );
+		ret.top_left.y		= std::min( ret.top_left.y, p.vertex_coords.y );
+		ret.bottom_right.x	= std::max( ret.bottom_right.x, p.vertex_coords.x );
+		ret.bottom_right.y	= std::max( ret.bottom_right.y, p.vertex_coords.y );
+	}
+	return ret;
+}
+
 void ClearVerticesToDefaultValues(
 	std::vector<vk2d::Vertex>				&	vertices
 )
@@ -50,6 +64,251 @@ vk2d::Vertex CreateDefaultValueVertex()
 
 
 
+VK2D_API void VK2D_APIENTRY vk2d::Mesh::Translate(
+	const vk2d::Vector2d		movement )
+{
+	for( auto & i : vertices ) {
+		i.vertex_coords		+= movement;
+	}
+}
+
+VK2D_API void VK2D_APIENTRY vk2d::Mesh::Rotate(
+	float						rotation_amount_radians,
+	vk2d::Vector2d				origin )
+{
+	auto rotation_matrix	= vk2d::CreateRotationMatrix( rotation_amount_radians );
+
+	for( auto & i : vertices ) {
+		i.vertex_coords		-= origin;
+		i.vertex_coords		= rotation_matrix * i.vertex_coords;
+		i.vertex_coords		+= origin;
+	}
+}
+
+VK2D_API void VK2D_APIENTRY vk2d::Mesh::Scale(
+	vk2d::Vector2d				scaling_amount,
+	vk2d::Vector2d				origin
+)
+{
+	for( auto & i : vertices ) {
+		i.vertex_coords		-= origin;
+		i.vertex_coords		*= scaling_amount;
+		i.vertex_coords		+= origin;
+	}
+}
+
+VK2D_API void VK2D_APIENTRY vk2d::Mesh::Scew(
+	vk2d::Vector2d				scew_amount,
+	vk2d::Vector2d				origin
+)
+{
+	for( auto & i : vertices ) {
+		auto c = i.vertex_coords - origin;
+		i.vertex_coords.x	= c.y * scew_amount.x + c.x;
+		i.vertex_coords.y	= c.x * scew_amount.y + c.y;
+		i.vertex_coords		+= origin;
+	}
+}
+
+VK2D_API void VK2D_APIENTRY vk2d::Mesh::Wave(
+	float						rotation_amount_radians,
+	float						frequency,
+	float						direction_radians,
+	vk2d::Vector2d				intensity,
+	vk2d::Vector2d				origin
+)
+{
+	vk2d::Vector2d	dir {
+		std::cos( direction_radians ),
+		std::sin( direction_radians )
+	};
+
+	for( auto & i : vertices ) {
+		auto c		= i.vertex_coords - origin;
+		auto d		= ( c.x * dir.x + c.y * dir.y ) * frequency;
+		i.vertex_coords		= {
+			std::cos( rotation_amount_radians + d ) * intensity.x + c.x,
+			std::sin( rotation_amount_radians + d ) * intensity.y + c.y };
+		i.vertex_coords		+= origin;
+	}
+}
+
+VK2D_API void VK2D_APIENTRY vk2d::Mesh::TranslateUV(
+	const vk2d::Vector2d		movement
+)
+{
+	for( auto & i : vertices ) {
+		i.uv_coords		+= movement;
+	}
+}
+
+VK2D_API void VK2D_APIENTRY vk2d::Mesh::RotateUV(
+	float						rotation_amount_radians,
+	vk2d::Vector2d				origin
+)
+{
+	auto rotation_matrix	= vk2d::CreateRotationMatrix( rotation_amount_radians );
+
+	for( auto & i : vertices ) {
+		i.uv_coords		-= origin;
+		i.uv_coords		= rotation_matrix * i.uv_coords;
+		i.uv_coords		+= origin;
+	}
+}
+
+VK2D_API void VK2D_APIENTRY vk2d::Mesh::ScaleUV(
+	vk2d::Vector2d				scaling_amount,
+	vk2d::Vector2d				origin
+)
+{
+	for( auto & i : vertices ) {
+		i.uv_coords		-= origin;
+		i.uv_coords		*= scaling_amount;
+		i.uv_coords		+= origin;
+	}
+}
+
+VK2D_API void VK2D_APIENTRY vk2d::Mesh::ScewUV(
+	vk2d::Vector2d				scew_amount,
+	vk2d::Vector2d				origin
+)
+{
+	for( auto & i : vertices ) {
+		auto c = i.uv_coords - origin;
+		i.uv_coords.x	= c.y * scew_amount.x + c.x;
+		i.uv_coords.y	= c.x * scew_amount.y + c.y;
+		i.uv_coords		+= origin;
+	}
+}
+
+VK2D_API void VK2D_APIENTRY vk2d::Mesh::WaveUV(
+	float						rotation_amount_radians,
+	float						frequency,
+	float						direction_radians,
+	vk2d::Vector2d				intensity,
+	vk2d::Vector2d				origin
+)
+{
+	vk2d::Vector2d	dir {
+		std::cos( direction_radians ),
+		std::sin( direction_radians )
+	};
+
+	for( auto & i : vertices ) {
+		auto c		= i.uv_coords - origin;
+		auto d		= ( c.x * dir.x + c.y * dir.y ) * frequency;
+		i.uv_coords		= {
+			std::cos( rotation_amount_radians + d ) * intensity.x + c.x,
+			std::sin( rotation_amount_radians + d ) * intensity.y + c.y };
+		i.uv_coords		+= origin;
+	}
+}
+
+VK2D_API void VK2D_APIENTRY vk2d::Mesh::SetVertexColor(
+	vk2d::Color					new_color )
+{
+	for( auto & v : vertices ) {
+		v.color		= new_color;
+	}
+}
+
+VK2D_API void VK2D_APIENTRY vk2d::Mesh::SetVertexColorGradient(
+	vk2d::Color					color_1,
+	vk2d::Color					color_2,
+	vk2d::Vector2d				coord_1,
+	vk2d::Vector2d				coord_2
+)
+{
+	vk2d::Vector2d				coord_vector	= coord_2 - coord_1;
+	vk2d::Vector2d				coord_dir		= {};
+	float						coord_lenght	= std::sqrt( coord_vector.x * coord_vector.x + coord_vector.y * coord_vector.y );
+	if( coord_lenght > 0.0f ) {
+		coord_dir					= coord_vector / coord_lenght;
+	} else {
+		coord_lenght				= 0.0001f;
+		coord_dir					= { 1.0f, 0.0f };
+	}
+
+	auto forward_rotation_matrix = vk2d::Matrix2(
+		+coord_dir.x, -coord_dir.y,
+		+coord_dir.y, +coord_dir.x
+	);
+	auto backward_rotation_matrix = vk2d::Matrix2(
+		+coord_dir.x, +coord_dir.y,
+		-coord_dir.y, +coord_dir.x
+	);
+	auto coord_linearilized = backward_rotation_matrix * ( coord_dir * coord_lenght );
+
+	for( auto & v : vertices ) {
+		auto c = v.vertex_coords - coord_1;
+
+		c = backward_rotation_matrix * c;
+		auto cx = c.x / coord_linearilized.x;
+
+		if( cx < 0.0f )			v.color = color_1;
+		else if( cx > 1.0f )	v.color = color_2;
+		else {
+			auto g = vk2d::Color(
+				color_1.r * ( 1.0f - cx ) + color_2.r * cx,
+				color_1.g * ( 1.0f - cx ) + color_2.g * cx,
+				color_1.b * ( 1.0f - cx ) + color_2.b * cx,
+				color_1.a * ( 1.0f - cx ) + color_2.a * cx
+			);
+			v.color		= g;
+			//v.color = { 0, 1, 0, 1 };
+		}
+		c = forward_rotation_matrix * c;
+
+		v.vertex_coords = c + coord_1;
+	}
+}
+
+VK2D_API void VK2D_APIENTRY vk2d::Mesh::ConfineUVToBoundingBox()
+{
+	auto aabb = CalculateAABBFromVertexList( vertices );
+	auto size = aabb.bottom_right - aabb.top_left;
+	for( auto & v : vertices ) {
+		auto vp = v.vertex_coords - aabb.top_left;
+		v.uv_coords		= vp / size;
+	}
+}
+
+VK2D_API void VK2D_APIENTRY vk2d::Mesh::SetTexture(
+	vk2d::TextureResource	*	texture_resource_pointer
+)
+{
+	texture = texture_resource_pointer;
+}
+
+VK2D_API void VK2D_APIENTRY vk2d::Mesh::SetPointSize(
+	float						point_size
+)
+{
+	for( auto & v : vertices ) {
+		v.point_size = point_size;
+	}
+}
+
+VK2D_API void VK2D_APIENTRY vk2d::Mesh::SetLineSize(
+	float line_width
+)
+{
+	this->line_width = line_width;
+}
+
+VK2D_API void VK2D_APIENTRY vk2d::Mesh::SetMeshType(
+	vk2d::MeshType				type
+)
+{
+	mesh_type = type;
+}
+
+
+
+
+
+
+
 VK2D_API vk2d::Mesh VK2D_APIENTRY vk2d::GeneratePointMeshFromList(
 	const std::vector<vk2d::Vector2d>		&	points
 )
@@ -66,7 +325,7 @@ VK2D_API vk2d::Mesh VK2D_APIENTRY vk2d::GeneratePointMeshFromList(
 		mesh.vertices[ i ].uv_coords		= ( points[ i ] - aabb_origin ) / aabb_size;
 	}
 
-	mesh.mesh_type			= vk2d::MeshType::POINT;
+	mesh.SetMeshType( vk2d::MeshType::POINT );
 	return mesh;
 }
 
@@ -82,7 +341,7 @@ VK2D_API vk2d::Mesh VK2D_APIENTRY vk2d::GenerateLineMeshFromList(
 		mesh.indices[ d + 1 ] = indices[ i ].indices[ 1 ];
 	}
 
-	mesh.mesh_type			= vk2d::MeshType::LINE;
+	mesh.SetMeshType( vk2d::MeshType::LINE );
 	return mesh;
 }
 
@@ -101,9 +360,9 @@ VK2D_API vk2d::Mesh VK2D_APIENTRY vk2d::GenerateTriangleMeshFromList(
 	}
 
 	if( filled ) {
-		mesh.mesh_type		= vk2d::MeshType::TRIANGLE_FILLED;
+		mesh.SetMeshType( vk2d::MeshType::TRIANGLE_FILLED );
 	} else {
-		mesh.mesh_type		= vk2d::MeshType::TRIANGLE_WIREFRAME;
+		mesh.SetMeshType( vk2d::MeshType::TRIANGLE_WIREFRAME );
 	}
 	return mesh;
 }
@@ -143,7 +402,7 @@ VK2D_API vk2d::Mesh VK2D_APIENTRY vk2d::GenerateBoxMesh(
 		ret.indices[ 3 ]	= 1;
 		ret.indices[ 4 ]	= 2;
 		ret.indices[ 5 ]	= 3;
-		ret.mesh_type		= vk2d::MeshType::TRIANGLE_FILLED;
+		ret.SetMeshType( vk2d::MeshType::TRIANGLE_FILLED );
 	} else {
 		// Draw lines
 		ret.indices.resize( 4 * 2 );
@@ -155,7 +414,7 @@ VK2D_API vk2d::Mesh VK2D_APIENTRY vk2d::GenerateBoxMesh(
 		ret.indices[ 5 ]	= 1;
 		ret.indices[ 6 ]	= 1;
 		ret.indices[ 7 ]	= 0;
-		ret.mesh_type		= vk2d::MeshType::LINE;
+		ret.SetMeshType( vk2d::MeshType::LINE );
 	}
 
 	return ret;
@@ -212,7 +471,7 @@ VK2D_API vk2d::Mesh VK2D_APIENTRY vk2d::GenerateCircleMesh(
 				ret.indices[ size_t( a ) + 2 ]	= i;
 			}
 		}
-		ret.mesh_type		= vk2d::MeshType::TRIANGLE_FILLED;
+		ret.SetMeshType( vk2d::MeshType::TRIANGLE_FILLED );
 	} else {
 		// Draw lines
 		ret.indices.resize( size_t( edge_count_integer ) * 2 );
@@ -226,7 +485,7 @@ VK2D_API vk2d::Mesh VK2D_APIENTRY vk2d::GenerateCircleMesh(
 			ret.indices[ size_t( edge_count_integer ) * 2LL - 2 ]	= edge_count_integer - 1;
 			ret.indices[ size_t( edge_count_integer ) * 2LL - 1 ]	= 0;
 		}
-		ret.mesh_type		= vk2d::MeshType::LINE;
+		ret.SetMeshType( vk2d::MeshType::LINE );
 	}
 	return ret;
 }
@@ -357,7 +616,7 @@ VK2D_API vk2d::Mesh VK2D_APIENTRY vk2d::GeneratePieMesh(
 				ret.indices[ a + 2 ]	= uint32_t( i );
 			}
 		}
-		ret.mesh_type		= vk2d::MeshType::TRIANGLE_FILLED;
+		ret.SetMeshType( vk2d::MeshType::TRIANGLE_FILLED );
 	} else {
 		// Draw lines
 		ret.indices.resize( ret.vertices.size() * 2 );
@@ -368,7 +627,7 @@ VK2D_API vk2d::Mesh VK2D_APIENTRY vk2d::GeneratePieMesh(
 		ret.indices[ ret.indices.size() - 2 ]	= uint32_t( ret.vertices.size() - 1 );
 		ret.indices[ ret.indices.size() - 1 ]	= 0;
 
-		ret.mesh_type		= vk2d::MeshType::LINE;
+		ret.SetMeshType( vk2d::MeshType::LINE );
 	}
 
 	return ret;
@@ -505,9 +764,9 @@ VK2D_API vk2d::Mesh VK2D_APIENTRY vk2d::GeneratePieBoxMesh(
 		// 3---2
 
 		struct LinearPoint {
-			uint32_t		original_linear_point_index;
-			float			linear_coords;
-			Vector2d		actual_coords;
+			uint32_t		original_linear_point_index		= {};
+			float			linear_coords					= {};
+			Vector2d		actual_coords					= {};
 		};
 		float distance_counter = 0.0f;
 		std::array<LinearPoint, 6>	linear_points { {
@@ -612,7 +871,7 @@ VK2D_API vk2d::Mesh VK2D_APIENTRY vk2d::GeneratePieBoxMesh(
 			ret.indices.push_back( uint32_t( i ) );
 		}
 
-		ret.mesh_type		= vk2d::MeshType::TRIANGLE_FILLED;
+		ret.SetMeshType( vk2d::MeshType::TRIANGLE_FILLED );
 
 	} else {
 		ret.indices.reserve( ret.vertices.size() * 2 + 2 );
@@ -623,7 +882,7 @@ VK2D_API vk2d::Mesh VK2D_APIENTRY vk2d::GeneratePieBoxMesh(
 		ret.indices.push_back( uint32_t( ret.vertices.size() - 1 ) );
 		ret.indices.push_back( 0 );
 
-		ret.mesh_type		= vk2d::MeshType::LINE;
+		ret.SetMeshType( vk2d::MeshType::LINE );
 	}
 
 	return ret;
@@ -643,6 +902,7 @@ VK2D_API vk2d::Mesh VK2D_APIENTRY vk2d::GenerateLatticeMesh(
 
 	vk2d::Vector2d mesh_size		= bottom_right - top_left;
 	vk2d::Vector2d vertex_spacing	= mesh_size / ( subdivisions + vk2d::Vector2d( 1.0f, 1.0f ) );
+	vk2d::Vector2d uv_spacing		= vk2d::Vector2d( 1.0f, 1.0f ) / ( subdivisions + vk2d::Vector2d( 1.0f, 1.0f ) );
 
 	ret.vertices.resize( total_vertex_count );
 	ClearVerticesToDefaultValues( ret.vertices );
@@ -651,18 +911,18 @@ VK2D_API vk2d::Mesh VK2D_APIENTRY vk2d::GenerateLatticeMesh(
 		for( size_t x = 0; x < vertex_count_x - 1; ++x ) {
 			auto & v		= ret.vertices[ y * vertex_count_x + x ];
 			v.vertex_coords	= { vertex_spacing.x * x + top_left.x, vertex_spacing.y * y + top_left.y };
-			v.uv_coords		= { vertex_spacing.x * x, vertex_spacing.y * y };
+			v.uv_coords		= { uv_spacing.x * x, uv_spacing.y * y };
 		}
 		auto & v			= ret.vertices[ y * vertex_count_x + vertex_count_x - 1 ];
 		v.vertex_coords		= { bottom_right.x, vertex_spacing.y * y + top_left.y };
-		v.uv_coords			= { 1.0f, vertex_spacing.y * y };
+		v.uv_coords			= { 1.0f, uv_spacing.y * y };
 	}
 	for( size_t x = 0; x < vertex_count_x - 1; ++x ) {
-		auto & v		= ret.vertices[ ( vertex_count_y - 1 ) * vertex_count_x + x ];
+		auto & v		= ret.vertices[ size_t( vertex_count_y - 1 ) * vertex_count_x + x ];
 		v.vertex_coords	= { vertex_spacing.x * x + top_left.x, bottom_right.y };
-		v.uv_coords		= { vertex_spacing.x * x, 1.0f };
+		v.uv_coords		= { uv_spacing.x * x, 1.0f };
 	}
-	auto & v			= ret.vertices[ ( vertex_count_y - 1 ) * vertex_count_x + vertex_count_x - 1 ];
+	auto & v			= ret.vertices[ size_t( vertex_count_y - 1 ) * vertex_count_x + vertex_count_x - 1 ];
 	v.vertex_coords		= { bottom_right.x, bottom_right.y };
 	v.uv_coords			= { 1.0f, 1.0f };
 
@@ -686,7 +946,7 @@ VK2D_API vk2d::Mesh VK2D_APIENTRY vk2d::GenerateLatticeMesh(
 			}
 		}
 
-		ret.mesh_type		= vk2d::MeshType::TRIANGLE_FILLED;
+		ret.SetMeshType( vk2d::MeshType::TRIANGLE_FILLED );
 
 	} else {
 		// Draw lattice lines.
@@ -710,7 +970,7 @@ VK2D_API vk2d::Mesh VK2D_APIENTRY vk2d::GenerateLatticeMesh(
 			}
 		}
 
-		ret.mesh_type	= vk2d::MeshType::LINE;
+		ret.SetMeshType( vk2d::MeshType::LINE );
 	}
 
 	return ret;

@@ -34,9 +34,11 @@ VK2D_API										Renderer::Renderer(
 		}
 		return;
 	}
-	if( !impl->IsGood() ) return;
-
-	is_good			= true;
+	if( !impl->IsGood() ) {
+		impl	= nullptr;
+		return;
+	}
+	is_good		= true;
 }
 
 
@@ -51,7 +53,7 @@ VK2D_API Renderer::~Renderer()
 VK2D_API Window * VK2D_APIENTRY Renderer::CreateWindowOutput(
 	WindowCreateInfo		&	window_create_info )
 {
-	if( impl && impl->IsGood() ) return impl->CreateWindowOutput( window_create_info );
+	if( impl ) return impl->CreateWindowOutput( window_create_info );
 	return {};
 }
 
@@ -59,14 +61,14 @@ VK2D_API Window * VK2D_APIENTRY Renderer::CreateWindowOutput(
 
 VK2D_API void VK2D_APIENTRY Renderer::CloseWindowOutput( Window * window )
 {
-	if( impl && impl->IsGood() ) {
+	if( impl ) {
 		impl->CloseWindowOutput( window );
 	}
 }
 
 VK2D_API ResourceManager * VK2D_APIENTRY Renderer::GetResourceManager()
 {
-	if( impl && impl->IsGood() ) return impl->GetResourceManager();
+	if( impl ) return impl->GetResourceManager();
 	return {};
 }
 
