@@ -35,24 +35,33 @@ enum class Multisamples : uint32_t {
 	SAMPLE_COUNT_64		= 64
 };
 
+enum class WindowCoordinateSpace : uint32_t {
+	TEXEL_SPACE,					// Default, ( 0, 0 ) at top left corner of the screen, bottom right is window extent.
+	TEXEL_SPACE_CENTERED,			// Same as TEXEL_SPACE but ( 0, 0 ) coordinates are at screen center.
+	NORMALIZED_SPACE,				// Window always contains 1x1 coordinate space, larger side is extended to keep window contents from stretching.
+	NORMALIZED_SPACE_CENTERED,		// Same as NORMALIZED SPACE but window always contains 2x2 coordinate space, ( 0, 0 ) is window center
+	NORMALIZED_VULKAN,				// ( -1, -1 ) top left, ( 1, 1 ) bottom right.
+};
+
 struct WindowCreateInfo {
-	bool			resizeable				= true;			// Can we use the cursor to resize the window
-	bool			visible					= true;			// Is the window visible when created
-	bool			decorated				= true;			// Does the window have default OS borders and buttons
-	bool			focused					= true;			// Is the window focused and brought forth when created
-	bool			maximized				= false;		// Is the window maximized to fill the screen when created
-	bool			transparent_framebuffer	= false;		// Is the alpha value of the render interpreted as a transparent window background
-	uint32_t		width					= 0;			// Window framebuffer initial width
-	uint32_t		height					= 0;			// Window framebuffer initial height
-	uint32_t		min_width				= 32;			// Minimum width of the window, will be adjusted to suit the hardware
-	uint32_t		min_height				= 32;			// Minimum height of the window, will be adjusted to suit the hardware
-	uint32_t		max_width				= UINT32_MAX;	// Maximum width of the window, will be adjusted to suit the hardware
-	uint32_t		max_height				= UINT32_MAX;	// Maximum height of the window, will be adjusted to suit the hardware
-	uint32_t		fullscreen_monitor		= 0;			// Fullscreen monitor index, 0 means windowed, 1 is primary, any value larger than amount of monitors goes to primary monitor
-	uint32_t		fullscreen_refresh_rate	= UINT32_MAX;	// Refresh rate in fullscreen mode, UINT32_MAX uses maximum refresh rate available
-	bool			vsync					= true;			// Vertical synchronization, works in both windowed and fullscreen modes, usually best left on for 2d graphics
-	Multisamples	samples					= Multisamples::SAMPLE_COUNT_1;	// Multisampling, must be a value in Multisamples enum
-	std::string		title					= "";			// Window title
+	bool							resizeable					= true;			// Can we use the cursor to resize the window.
+	bool							visible						= true;			// Is the window visible when created.
+	bool							decorated					= true;			// Does the window have default OS borders and buttons.
+	bool							focused						= true;			// Is the window focused and brought forth when created.
+	bool							maximized					= false;		// Is the window maximized to fill the screen when created.
+	bool							transparent_framebuffer		= false;		// Is the alpha value of the render interpreted as a transparent window background.
+	vk2d::WindowCoordinateSpace	coordinate_space			= WindowCoordinateSpace::TEXEL_SPACE; // Window coordinate system to be used, see WindowCoordinateSpace.
+	uint32_t						width						= 0;			// Window framebuffer initial width.
+	uint32_t						height						= 0;			// Window framebuffer initial height.
+	uint32_t						min_width					= 32;			// Minimum width of the window, will be adjusted to suit the hardware.
+	uint32_t						min_height					= 32;			// Minimum height of the window, will be adjusted to suit the hardware.
+	uint32_t						max_width					= UINT32_MAX;	// Maximum width of the window, will be adjusted to suit the hardware.
+	uint32_t						max_height					= UINT32_MAX;	// Maximum height of the window, will be adjusted to suit the hardware.
+	uint32_t						fullscreen_monitor			= 0;			// Fullscreen monitor index, 0 means windowed, 1 is primary, any value larger than amount of monitors goes to primary monitor.
+	uint32_t						fullscreen_refresh_rate		= UINT32_MAX;	// Refresh rate in fullscreen mode, UINT32_MAX uses maximum refresh rate available.
+	bool							vsync						= true;			// Vertical synchronization, works in both windowed and fullscreen modes, usually best left on for 2d graphics.
+	Multisamples					samples						= Multisamples::SAMPLE_COUNT_1;	// Multisampling, must be a value in Multisamples enum.
+	std::string						title						= "";			// Window title.
 };
 
 

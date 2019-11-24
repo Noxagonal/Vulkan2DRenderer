@@ -20,8 +20,9 @@ int main()
 	auto texture			= renderer->GetResourceManager()->LoadTextureResource( "../../TestData/GrafGear_128.png" );
 
 	vk2d::WindowCreateInfo window_create_info {};
-	window_create_info.width	= 800;
-	window_create_info.height	= 600;
+	window_create_info.width				= 800;
+	window_create_info.height				= 600;
+	window_create_info.coordinate_space		= vk2d::WindowCoordinateSpace::TEXEL_SPACE_CENTERED;
 	auto window = renderer->CreateWindowOutput( window_create_info );
 	if( !window ) return -1;
 
@@ -57,14 +58,15 @@ int main()
 		*/
 
 		auto pie_box_mesh = vk2d::GenerateLatticeMesh(
-			{ -1.0f, -1.0f },
-			{ +1.0f, +1.0f },
+			{ -300.0f, -300.0f },
+			{ +300.0f, +300.0f },
 			{ 64, 64 },
 			true );
 //		pie_box_mesh.line_width		= 16.0f;
 //		pie_box_mesh.mesh_type		= vk2d::MeshType::TRIANGLE_WIREFRAME;
-		pie_box_mesh.SetTexture( texture );
+//		pie_box_mesh.SetTexture( texture );
 
+		/*
 		pie_box_mesh.WaveUV(
 			frame_counter / 50.0f,
 			32.0f,
@@ -72,9 +74,10 @@ int main()
 			{ 0.05f, 0.05f },
 			{  }
 		);
+		*/
 
-		auto gbegin	= vk2d::Vector2d( std::cos( frame_counter / 232.0f ), std::sin( frame_counter / 178.0f ) );
-		auto gend	= vk2d::Vector2d( std::cos( frame_counter / 124.0f ), std::sin( frame_counter / 196.0f ) );
+		auto gbegin	= vk2d::Vector2d( std::cos( frame_counter / 232.0f ) * 300, std::sin( frame_counter / 178.0f ) * 300 );
+		auto gend	= vk2d::Vector2d( std::cos( frame_counter / 124.0f ) * 300, std::sin( frame_counter / 196.0f ) * 300 );
 
 		pie_box_mesh.SetVertexColorGradient(
 			{ 1, 0, 1, 1 },
@@ -86,15 +89,15 @@ int main()
 		window->DrawMesh( pie_box_mesh );
 
 		window->DrawCircle(
-			{ gbegin.x - 0.05f, gbegin.y - 0.05f },
-			{ gbegin.x + 0.05f, gbegin.y + 0.05f },
+			{ gbegin.x - 10, gbegin.y - 10 },
+			{ gbegin.x + 10, gbegin.y + 10 },
 			true,
 			64,
 			{ 0, 1, 1, 1 }
 		);
 		window->DrawCircle(
-			{ gend.x - 0.05f, gend.y - 0.05f },
-			{ gend.x + 0.05f, gend.y + 0.05f },
+			{ gend.x - 10, gend.y - 10 },
+			{ gend.x + 10, gend.y + 10 },
 			true,
 			64,
 			{ 1, 1, 0, 1 }
