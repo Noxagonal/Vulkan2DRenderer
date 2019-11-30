@@ -510,7 +510,7 @@ bool WindowImpl::EndRender()
 
 	// Submit swapchain image
 	{
-		std::array<VkSubmitInfo, 2> submit_infos {};
+		std::vector<VkSubmitInfo> submit_infos( 2 );
 
 		submit_infos[ 0 ].sType						= VK_STRUCTURE_TYPE_SUBMIT_INFO;
 		submit_infos[ 0 ].pNext						= nullptr;
@@ -533,9 +533,8 @@ bool WindowImpl::EndRender()
 		submit_infos[ 1 ].signalSemaphoreCount		= 1;
 		submit_infos[ 1 ].pSignalSemaphores			= &submit_to_present_semaphores[ next_image ];
 
-		if( vkQueueSubmit(
-			primary_render_queue.queue,
-			uint32_t( submit_infos.size() ), submit_infos.data() ,
+		if( primary_render_queue.Submit(
+			submit_infos,
 			gpu_to_cpu_frame_fences[ next_image ]
 		) != VK_SUCCESS ) {
 			if( report_function ) {
@@ -559,9 +558,8 @@ bool WindowImpl::EndRender()
 		present_info.pSwapchains			= &swapchain;
 		present_info.pImageIndices			= &next_image;
 		present_info.pResults				= &present_result;
-		auto result = vkQueuePresentKHR(
-			primary_render_queue.queue,
-			&present_info
+		auto result = primary_render_queue.Present(
+			present_info
 		);
 		if( result != VK_SUCCESS || present_result != VK_SUCCESS ) {
 			if( result == VK_ERROR_OUT_OF_DATE_KHR || present_result == VK_ERROR_OUT_OF_DATE_KHR ||
@@ -1133,7 +1131,7 @@ bool WindowImpl::CreateSurface()
 		VkBool32 surface_supported = VK_FALSE;
 		vkGetPhysicalDeviceSurfaceSupportKHR(
 			physical_device,
-			primary_render_queue.queueFamilyIndex,
+			primary_render_queue.GetQueueFamilyIndex(),
 			surface,
 			&surface_supported
 		);
@@ -1641,7 +1639,7 @@ bool WindowImpl::CreateCommandPool()
 	command_pool_create_info.sType				= VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
 	command_pool_create_info.pNext				= nullptr;
 	command_pool_create_info.flags				= VK_COMMAND_POOL_CREATE_TRANSIENT_BIT | VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
-	command_pool_create_info.queueFamilyIndex	= primary_render_queue.queueFamilyIndex;
+	command_pool_create_info.queueFamilyIndex	= primary_render_queue.GetQueueFamilyIndex();
 
 	if( vkCreateCommandPool(
 		device,

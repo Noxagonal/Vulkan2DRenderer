@@ -66,9 +66,9 @@ bool TextureResourceImpl::MTLoad(
 		uint32_t	channels;
 	} image_info;
 
-	auto primary_render_queue_family_index		= resource_manager->GetRenderer()->GetPrimaryRenderQueue().queueFamilyIndex;
-	auto secondary_render_queue_family_index	= resource_manager->GetRenderer()->GetSecondaryRenderQueue().queueFamilyIndex;
-	auto primary_transfer_queue_family_index	= resource_manager->GetRenderer()->GetPrimaryTransferQueue().queueFamilyIndex;
+	auto primary_render_queue_family_index		= resource_manager->GetRenderer()->GetPrimaryRenderQueue().GetQueueFamilyIndex();
+	auto secondary_render_queue_family_index	= resource_manager->GetRenderer()->GetSecondaryRenderQueue().GetQueueFamilyIndex();
+	auto primary_transfer_queue_family_index	= resource_manager->GetRenderer()->GetPrimaryTransferQueue().GetQueueFamilyIndex();
 
 	bool is_primary_render_needed				= secondary_render_queue_family_index != primary_render_queue_family_index;
 
@@ -645,9 +645,9 @@ bool TextureResourceImpl::MTLoad(
 			submit_info.pCommandBuffers			= &primary_transfer_command_buffer;
 			submit_info.signalSemaphoreCount	= 1;
 			submit_info.pSignalSemaphores		= &transfer_semaphore;
-			if( vkQueueSubmit(
-				resource_manager->GetRenderer()->GetPrimaryTransferQueue().queue,
-				1, &submit_info,
+			
+			if( resource_manager->GetRenderer()->GetPrimaryTransferQueue().Submit(
+				submit_info,
 				VK_NULL_HANDLE
 			) != VK_SUCCESS ) {
 				return false;
@@ -667,9 +667,8 @@ bool TextureResourceImpl::MTLoad(
 			submit_info.pCommandBuffers			= &secondary_render_command_buffer;
 			submit_info.signalSemaphoreCount	= is_primary_render_needed ? 1 : 0;
 			submit_info.pSignalSemaphores		= is_primary_render_needed ? &blit_semaphore : nullptr;
-			if( vkQueueSubmit(
-				resource_manager->GetRenderer()->GetSecondaryRenderQueue().queue,
-				1, &submit_info,
+			if( resource_manager->GetRenderer()->GetSecondaryRenderQueue().Submit(
+				submit_info,
 				is_primary_render_needed ? VK_NULL_HANDLE : texture_complete_fence
 			) != VK_SUCCESS ) {
 				return false;
@@ -689,9 +688,8 @@ bool TextureResourceImpl::MTLoad(
 			submit_info.pCommandBuffers			= &primary_render_command_buffer;
 			submit_info.signalSemaphoreCount	= 0;
 			submit_info.pSignalSemaphores		= nullptr;
-			if( vkQueueSubmit(
-				resource_manager->GetRenderer()->GetPrimaryRenderQueue().queue,
-				1, &submit_info,
+			if( resource_manager->GetRenderer()->GetPrimaryRenderQueue().Submit(
+				submit_info,
 				texture_complete_fence
 			) != VK_SUCCESS ) {
 				return false;

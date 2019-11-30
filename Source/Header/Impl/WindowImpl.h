@@ -6,6 +6,7 @@
 #include "../../../Include/Interface/Window.h"
 
 #include "../../Header/Core/MeshBuffer.h"
+#include "../Core/QueueResolver.h"
 
 #define GLFW_INCLUDE_NONE
 #include <GLFW/glfw3.h>

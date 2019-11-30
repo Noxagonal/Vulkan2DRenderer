@@ -4,6 +4,7 @@
 #include "../../../Include/Interface/Renderer.h"
 
 #include "../../Header/Core/VulkanMemoryManagement.h"
+#include "../Core/QueueResolver.h"
 
 #include <list>
 #include <vector>

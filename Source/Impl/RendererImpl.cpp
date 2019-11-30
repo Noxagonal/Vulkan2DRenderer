@@ -1052,7 +1052,7 @@ bool RendererImpl::CreateDefaultTexture()
 				pool_create_info.sType				= VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
 				pool_create_info.pNext				= nullptr;
 				pool_create_info.flags				= VK_COMMAND_POOL_CREATE_TRANSIENT_BIT;
-				pool_create_info.queueFamilyIndex	= primary_render_queue.queueFamilyIndex;
+				pool_create_info.queueFamilyIndex	= primary_render_queue.GetQueueFamilyIndex();
 				if( vkCreateCommandPool(
 					device,
 					&pool_create_info,
@@ -1214,9 +1214,8 @@ bool RendererImpl::CreateDefaultTexture()
 				submit_info.pCommandBuffers			= &cbuffer;
 				submit_info.signalSemaphoreCount	= 0;
 				submit_info.pSignalSemaphores		= nullptr;
-				if( vkQueueSubmit(
-					primary_render_queue.queue,
-					1, &submit_info,
+				if( primary_render_queue.Submit(
+					submit_info,
 					fence
 				) != VK_SUCCESS ) {
 					if( report_function ) {

@@ -19,13 +19,22 @@ int main()
 
 	auto texture			= renderer->GetResourceManager()->LoadTextureResource( "../../TestData/GrafGear_128.png" );
 
-	std::vector<vk2d::Texel> texels {
-		{ 0, 0, 0, 255 },
-		{ 255, 0, 0, 255 },
-		{ 0, 255, 0, 255 },
-		{ 0, 0, 255, 255 }
-	};
-	auto texture2			= renderer->GetResourceManager()->CreateTextureResource( 2, 2, texels );
+	std::vector<vk2d::Texel> texels( 64 * 64 );
+	for( auto & t : texels ) {
+		t.r = rand() % 255;
+		t.g = rand() % 255;
+		t.b = rand() % 255;
+		t.a = rand() % 255;
+	}
+
+	auto texture2			= renderer->GetResourceManager()->CreateTextureResource( 64, 64, texels );
+	auto texture3			= renderer->GetResourceManager()->CreateTextureResource( 64, 64, texels );
+	auto texture4			= renderer->GetResourceManager()->CreateTextureResource( 64, 64, texels );
+	auto texture5			= renderer->GetResourceManager()->CreateTextureResource( 64, 64, texels );
+	auto texture6			= renderer->GetResourceManager()->CreateTextureResource( 64, 64, texels );
+	auto texture7			= renderer->GetResourceManager()->CreateTextureResource( 64, 64, texels );
+	auto texture8			= renderer->GetResourceManager()->CreateTextureResource( 64, 64, texels );
+	auto texture9			= renderer->GetResourceManager()->CreateTextureResource( 64, 64, texels );
 
 	vk2d::WindowCreateInfo window_create_info {};
 	window_create_info.width				= 800;
