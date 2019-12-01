@@ -120,6 +120,9 @@
     <ClInclude Include="..\Include\Interface\Mesh.h">
       <Filter>Include\Interface</Filter>
     </ClInclude>
+    <ClInclude Include="..\Include\Interface\Handle.hpp">
+      <Filter>Include\Interface</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\Source\Impl\RendererImpl.cpp">

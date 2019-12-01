@@ -116,7 +116,7 @@ RendererImpl::~RendererImpl()
 
 
 
-Window * RendererImpl::CreateWindowOutput(
+Window * RendererImpl::CreateOutputWindow(
 	WindowCreateInfo	&	window_create_info
 )
 {
@@ -137,7 +137,7 @@ Window * RendererImpl::CreateWindowOutput(
 
 
 
-void RendererImpl::CloseWindowOutput(
+void RendererImpl::CloseOutputWindow(
 	Window				*	window
 )
 {

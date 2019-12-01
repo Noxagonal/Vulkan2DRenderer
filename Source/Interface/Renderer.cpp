@@ -50,19 +50,19 @@ VK2D_API Renderer::~Renderer()
 
 
 
-VK2D_API Window * VK2D_APIENTRY Renderer::CreateWindowOutput(
+VK2D_API Window * VK2D_APIENTRY Renderer::CreateOutputWindow(
 	WindowCreateInfo		&	window_create_info )
 {
-	if( impl ) return impl->CreateWindowOutput( window_create_info );
+	if( impl ) return impl->CreateOutputWindow( window_create_info );
 	return {};
 }
 
 
 
-VK2D_API void VK2D_APIENTRY Renderer::CloseWindowOutput( Window * window )
+VK2D_API void VK2D_APIENTRY Renderer::CloseOutputWindow( Window * window )
 {
 	if( impl ) {
-		impl->CloseWindowOutput( window );
+		impl->CloseOutputWindow( window );
 	}
 }
 

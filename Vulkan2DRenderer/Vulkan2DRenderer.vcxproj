@@ -110,6 +110,7 @@ glslangValidator -V -o "$(SolutionDir)Source\Shaders\shader.frag.spv.h" "$(Solut
     <ClInclude Include="..\Include\Core\Common.h" />
     <ClInclude Include="..\Include\Core\Platform.h" />
     <ClInclude Include="..\Include\Core\Version.hpp" />
+    <ClInclude Include="..\Include\Interface\Handle.hpp" />
     <ClInclude Include="..\Include\Interface\Mesh.h" />
     <ClInclude Include="..\Include\Interface\Renderer.h" />
     <ClInclude Include="..\Include\Interface\RenderPrimitives.h" />

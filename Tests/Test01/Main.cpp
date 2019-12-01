@@ -40,7 +40,7 @@ int main()
 	window_create_info.width				= 800;
 	window_create_info.height				= 600;
 	window_create_info.coordinate_space		= vk2d::WindowCoordinateSpace::TEXEL_SPACE_CENTERED;
-	auto window = renderer->CreateWindowOutput( window_create_info );
+	auto window = renderer->CreateOutputWindow( window_create_info );
 	if( !window ) return -1;
 
 	size_t frame_counter = 0;

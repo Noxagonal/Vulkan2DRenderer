@@ -48,9 +48,9 @@ public:
 
 	~RendererImpl();
 
-	Window										*	CreateWindowOutput(
+	Window										*	CreateOutputWindow(
 		WindowCreateInfo						&	window_create_info );
-	void											CloseWindowOutput(
+	void											CloseOutputWindow(
 		Window									*	window );
 
 	PFN_VK2D_ReportFunction							GetReportFunction() const;

@@ -70,13 +70,15 @@ class Window {
 	friend class _internal::RendererImpl;
 
 private:
-	// Only accessible through Renderer::CreateWindowOutput();
+	// Only accessible through Renderer::CreateOutputWindow();
 	VK2D_API																		Window(
 		_internal::RendererImpl						*	renderer_parent,
 		WindowCreateInfo							&	window_create_info );
 
 public:
 	VK2D_API																		~Window();
+
+	VK2D_API void										VK2D_APIENTRY				UpdateEvents();
 
 	VK2D_API bool										VK2D_APIENTRY				BeginRender();
 	VK2D_API bool										VK2D_APIENTRY				EndRender();

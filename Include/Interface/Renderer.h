@@ -53,9 +53,9 @@ private:
 public:
 	VK2D_API													~Renderer();
 
-	VK2D_API Window						*	VK2D_APIENTRY		CreateWindowOutput(
+	VK2D_API Window						*	VK2D_APIENTRY		CreateOutputWindow(
 		WindowCreateInfo									&	window_create_info );
-	VK2D_API void							VK2D_APIENTRY		CloseWindowOutput(
+	VK2D_API void							VK2D_APIENTRY		CloseOutputWindow(
 		Window												*	window );
 
 	VK2D_API ResourceManager			*	VK2D_APIENTRY		GetResourceManager();
