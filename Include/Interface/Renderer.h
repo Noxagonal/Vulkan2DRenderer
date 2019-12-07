@@ -7,6 +7,7 @@
 
 #include <string>
 #include <memory>
+#include <inttypes.h>
 
 namespace vk2d {
 
@@ -33,11 +34,12 @@ typedef void ( *PFN_VK2D_ReportFunction )( ReportSeverity severity, std::string 
 
 
 struct RendererCreateInfo {
-	std::string					application_name;
-	Version						application_version;
-	std::string					engine_name;
-	Version						engine_version;
-	PFN_VK2D_ReportFunction		report_function;
+	std::string					application_name				= {};
+	Version						application_version				= {};
+	std::string					engine_name						= {};
+	Version						engine_version					= {};
+	PFN_VK2D_ReportFunction		report_function					= {};
+	uint32_t					resource_loader_thread_count	= UINT32_MAX;
 };
 
 

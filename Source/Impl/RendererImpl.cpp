@@ -912,14 +912,18 @@ bool RendererImpl::CreateDeviceMemoryPool()
 
 bool RendererImpl::CreateThreadPool()
 {
-	uint32_t thread_count			= std::thread::hardware_concurrency();
-	if( thread_count == 0 ) thread_count = 8;
+	uint32_t thread_count					= uint32_t( std::thread::hardware_concurrency() );
+	if( thread_count == 0 ) thread_count	= 8;
 	--thread_count;
 
-	uint32_t loader_thread_count	= thread_count / 5;
-	uint32_t general_thread_count	= thread_count - loader_thread_count;
-	if( loader_thread_count == 0 )	loader_thread_count = 1;
-	if( general_thread_count == 0 )	general_thread_count = 1;
+	uint32_t loader_thread_count = create_info_copy.resource_loader_thread_count;
+	if( loader_thread_count == UINT32_MAX )		loader_thread_count		= thread_count / 2;
+	if( loader_thread_count > thread_count )	loader_thread_count		= thread_count;
+	if( loader_thread_count == 0 )				loader_thread_count		= 1;
+
+	uint32_t general_thread_count = thread_count - loader_thread_count;
+	if( general_thread_count > thread_count )	general_thread_count	= thread_count;
+	if( general_thread_count == 0 )				general_thread_count	= 1;
 
 	std::vector<std::unique_ptr<ThreadPrivateResource>> thread_resources;
 	for( uint32_t i = 0; i < loader_thread_count; ++i ) {
