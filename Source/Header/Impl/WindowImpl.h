@@ -17,6 +17,7 @@
 namespace vk2d {
 
 class Window;
+class Cursor;
 class TextureResource;
 class Mesh;
 
@@ -24,6 +25,7 @@ namespace _internal {
 
 class RendererImpl;
 class WindowImpl;
+class CursorImpl;
 class MeshBuffer;
 class TextureResourceImpl;
 
@@ -217,6 +219,67 @@ private:
 	std::unique_ptr<vk2d::_internal::MeshBuffer>	mesh_buffer								= {};
 
 	bool											is_good									= {};
+};
+
+
+
+class CursorImpl {
+	friend class vk2d::_internal::WindowImpl;
+
+public:
+												CursorImpl(
+		const std::filesystem::path			&	image_path,
+		int32_t									hot_spot_x,
+		int32_t									hot_spot_y );
+
+	// Cursor constructor, raw data version.
+	// Image data needs to be in format RGBA, 8 bits per channel, 32 bits per pixel,
+	// in order left to right - top to bottom.
+	// [in] image_size: size of the image in pixels, x dimension.
+	// [in] image_size: size of the image in pixels, y dimension.
+	// [in] image_data: raw image data.
+	// [in] hot_spot_x: where the active location of the cursor is, x location.
+	// [in] hot_spot_y: where the active location of the cursor is, y location.
+												CursorImpl(
+		uint32_t								image_size_x,
+		uint32_t								image_size_y,
+		const std::vector<vk2d::Color>		&	image_data,
+		int32_t									hot_spot_x,
+		int32_t									hot_spot_y );
+
+	// Copy constructor from another cursor.
+												CursorImpl(
+		const vk2d::_internal::CursorImpl	&	other );
+
+	// Move constructor from another cursor.
+												CursorImpl(
+		vk2d::_internal::CursorImpl			&&	other )							= default;
+
+	// Destructor for cursor.
+												~CursorImpl();
+
+	// Copy operator from another cursor.
+	vk2d::_internal::CursorImpl				&	operator=(
+		vk2d::_internal::CursorImpl			&	other );
+
+	// Move operator from another cursor.
+	vk2d::_internal::CursorImpl				&	operator=(
+		vk2d::_internal::CursorImpl			&&	other )							= default;
+
+	bool										IsGood();
+
+	const std::vector<vk2d::Color>			&	GetPixelData();
+	GLFWcursor								*	GetGLFWcursor();
+	std::array<uint32_t, 2>						GetExtent();
+	std::array<int32_t, 2>						GetHotSpot();
+
+private:
+	std::vector<vk2d::Color>					pixel_data						= {};
+	GLFWcursor								*	cursor							= nullptr;
+	VkExtent2D									extent							= {};
+	VkOffset2D									hotSpot							= {};
+
+	bool										is_good							= {};
 };
 
 

@@ -242,4 +242,118 @@ VK2D_API void VK2D_APIENTRY Window::DrawMesh(
 
 
 
+
+
+Cursor::Cursor(
+	const std::filesystem::path		&	image_path,
+	int32_t								hot_spot_x,
+	int32_t								hot_spot_y
+)
+{
+	impl		= std::make_unique<vk2d::_internal::CursorImpl>(
+		image_path,
+		hot_spot_x,
+		hot_spot_y
+	);
+	if( impl && impl->IsGood() ) {
+		is_good			= true;
+	} else {
+		is_good			= false;
+		impl			= nullptr;
+	}
+}
+
+Cursor::Cursor(
+	uint32_t							image_size_x,
+	uint32_t							image_size_y,
+	const std::vector<vk2d::Color>	&	image_data,
+	int32_t								hot_spot_x,
+	int32_t								hot_spot_y
+)
+{
+	impl		= std::make_unique<vk2d::_internal::CursorImpl>(
+		image_size_x,
+		image_size_y,
+		image_data,
+		hot_spot_x,
+		hot_spot_y
+	);
+	if( impl && impl->IsGood() ) {
+		is_good			= true;
+	} else {
+		is_good			= false;
+		impl			= nullptr;
+	}
+}
+
+Cursor::Cursor(
+	vk2d::Cursor	&	other
+)
+{
+	impl		= std::make_unique<vk2d::_internal::CursorImpl>(
+		other.impl->GetExtent()[ 0 ],
+		other.impl->GetExtent()[ 1 ],
+		other.impl->GetPixelData(),
+		other.impl->GetHotSpot()[ 0 ],
+		other.impl->GetHotSpot()[ 1 ]
+	);
+	if( impl && impl->IsGood() ) {
+		is_good			= true;
+	} else {
+		is_good			= false;
+		impl			= nullptr;
+	}
+}
+
+Cursor::~Cursor()
+{}
+
+VK2D_API vk2d::Cursor &VK2D_APIENTRY Cursor::operator=(
+	vk2d::Cursor	&	other )
+{
+	impl		= std::make_unique<vk2d::_internal::CursorImpl>(
+		other.impl->GetExtent()[ 0 ],
+		other.impl->GetExtent()[ 1 ],
+		other.impl->GetPixelData(),
+		other.impl->GetHotSpot()[ 0 ],
+		other.impl->GetHotSpot()[ 1 ]
+		);
+	if( impl && impl->IsGood() ) {
+		is_good			= true;
+	} else {
+		is_good			= false;
+		impl			= nullptr;
+	}
+}
+
+VK2D_API std::array<uint32_t, 2> VK2D_APIENTRY Cursor::GetExtent()
+{
+	if( is_good ) {
+		return impl->GetExtent();
+	}
+	return {};
+}
+
+VK2D_API std::array<int32_t, 2> VK2D_APIENTRY Cursor::GetHotSpot()
+{
+	if( is_good ) {
+		return impl->GetHotSpot();
+	}
+	return {};
+}
+
+VK2D_API const std::vector<vk2d::Color> & VK2D_APIENTRY Cursor::GetPixelData()
+{
+	if( is_good ) {
+		return impl->GetPixelData();
+	}
+	return {};
+}
+
+
+
+
+
+
+
 } // vk2d

@@ -11,6 +11,7 @@
 #include <memory>
 #include <algorithm>
 #include <set>
+#include <stb_image.h>
 
 
 
@@ -2119,6 +2120,113 @@ void WindowImpl::CmdSetLineWidthIfDifferent(
 
 
 
+
+
+
+CursorImpl::CursorImpl(
+	const std::filesystem::path		&	image_path,
+	int32_t								hot_spot_x,
+	int32_t								hot_spot_y
+)
+{
+	int x = 0, y = 0, channels = 0;
+	auto stbiData = stbi_load( image_path.string().c_str(), &x, &y, &channels, 4 );
+	if( stbiData ) {
+		std::vector<vk2d::Color> data( x * y );
+		std::memcpy( data.data(), stbiData, data.size() * sizeof( vk2d::Color ) );
+		free( stbiData );
+		*this = vk2d::_internal::CursorImpl( uint32_t( x ), uint32_t( y ), data, hot_spot_x, hot_spot_y );
+	}
+}
+
+CursorImpl::CursorImpl(
+	uint32_t							image_size_x,
+	uint32_t							image_size_y,
+	const std::vector<vk2d::Color>	&	image_data,
+	int32_t								hot_spot_x,
+	int32_t								hot_spot_y
+)
+{
+	if( size_t( image_size_x ) * size_t( image_size_y ) > image_data.size() ) {
+		return;
+	}
+
+	pixel_data.resize( size_t( image_size_x ) * size_t( image_size_y ) * sizeof( vk2d::Color ) );
+	std::memcpy( pixel_data.data(), image_data.data(), pixel_data.size() * sizeof( vk2d::Color ) );
+
+	GLFWimage glfwImage {};
+	glfwImage.width		= image_size_x;
+	glfwImage.height	= image_size_y;
+	glfwImage.pixels	= (uint8_t*)pixel_data.data();
+	cursor				= glfwCreateCursor( &glfwImage, int( hot_spot_x ), int( hot_spot_y ) );
+	if( cursor ) {
+		hotSpot	= { hot_spot_x, hot_spot_y };
+		extent	= { image_size_x, image_size_y };
+	} else {
+		return;
+	}
+
+	is_good = true;
+}
+
+CursorImpl::CursorImpl(
+	const vk2d::_internal::CursorImpl	&	other )
+{
+	this->~CursorImpl();
+	*this	= vk2d::_internal::CursorImpl(
+		other.extent.width,
+		other.extent.height,
+		other.pixel_data,
+		other.hotSpot.x,
+		other.hotSpot.y
+	);
+}
+
+CursorImpl::~CursorImpl()
+{
+	glfwDestroyCursor( cursor );
+	cursor			= nullptr;
+	hotSpot			= {};
+	is_good			= false;
+}
+
+vk2d::_internal::CursorImpl & CursorImpl::operator=(
+	vk2d::_internal::CursorImpl			&	other )
+{
+	this->~CursorImpl();
+	*this	= vk2d::_internal::CursorImpl(
+		other.extent.width,
+		other.extent.height,
+		other.pixel_data,
+		other.hotSpot.x,
+		other.hotSpot.y
+	);
+}
+
+bool CursorImpl::IsGood()
+{
+	return is_good;
+}
+
+const std::vector<vk2d::Color>& CursorImpl::GetPixelData()
+{
+	return pixel_data;
+}
+
+GLFWcursor * CursorImpl::GetGLFWcursor()
+{
+	return cursor;
+}
+
+std::array<uint32_t, 2> CursorImpl::GetExtent()
+{
+	return { extent.width, extent.height };
+}
+
+std::array<int32_t, 2> CursorImpl::GetHotSpot()
+{
+	return { hotSpot.x, hotSpot.y };
+}
 
 
 
