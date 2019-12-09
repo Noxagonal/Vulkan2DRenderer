@@ -54,15 +54,105 @@ class WindowImpl {
 		vk2d::_internal::ResolvedQueue			&	primary_render_queue,
 		uint32_t									nested_counter );
 
+	friend void glfwWindowPosCallback( GLFWwindow * glfwWindow, int x, int y );
+	friend void glfwWindowSizeCallback( GLFWwindow * glfwWindow, int x, int y );
+	friend void glfwWindowCloseCallback( GLFWwindow * glfwWindow );
+	friend void glfwWindowRefreshCallback( GLFWwindow * glfwWindow );
+	friend void glfwWindowFocusCallback( GLFWwindow * glfwWindow, int focus );
+	friend void glfwWindowIconifyCallback( GLFWwindow * glfwWindow, int iconify );
+	friend void glfwFramebufferSizeCallback( GLFWwindow * glfwWindow, int x, int y );
+	friend void glfwMouseButtonCallback( GLFWwindow * glfwWindow, int button, int action, int mods );
+	friend void glfwCursorPosCallback( GLFWwindow * glfwWindow, double x, double y );
+	friend void glfwCursorEnterCallback( GLFWwindow * glfwWindow, int enter );
+	friend void glfwScrollCallback( GLFWwindow * glfwWindow, double x, double y );
+	friend void glfwKeyCallback( GLFWwindow * glfwWindow, int key, int scancode, int action, int mods );
+	friend void glfwCharModsCallback( GLFWwindow * glfwWindow, unsigned int codepoint, int mods );
+	friend void glfwFileDropCallback( GLFWwindow * glfwWindow, int fileCount, const char ** filePaths );
+
 public:
 	WindowImpl(
-		RendererImpl							*	renderer,
-		const WindowCreateInfo					&	window_create_info
+		vk2d::Window							*	window,
+		vk2d::_internal::RendererImpl			*	renderer,
+		const vk2d::WindowCreateInfo			&	window_create_info
 	);
 	~WindowImpl();
 
+	void											CloseWindow();
+	bool											ShouldClose();
+
 	bool											BeginRender();
 	bool											EndRender();
+
+	void											UpdateEvents();
+
+	void											TakeScreenshot(
+		std::filesystem::path						save_path );
+
+	void											Focus();
+
+	void											SetOpacity(
+		float										opacity );
+
+	float											GetOpacity();
+
+	void											Hide(
+		bool										hidden );
+
+	bool											IsHidden();
+
+	void											DisableEvents(
+		bool										disable_events );
+
+	bool											IsEventsDisabled();
+
+	void											SetFullscreen(
+		vk2d::Monitor							*	monitor,
+		uint32_t									frequency );
+
+	bool											IsFullscreen();
+
+	std::array<double, 2>							GetCursorPosition();
+
+	void											SetCursorPosition(
+		double										x,
+		double										y );
+
+	void											SetCursor(
+		vk2d::Cursor							*	cursor );
+
+	std::string										GetClipboardString();
+
+	void											SetClipboardString(
+		const std::string						&	str );
+
+	void											SetTitle(
+		const std::string						&	title );
+
+	std::string										GetTitle();
+
+	void											SetIcon(
+		const std::vector<std::filesystem::path>&	image_paths );
+
+	void											SetPosition(
+		int32_t										x,
+		int32_t										y );
+
+	std::array<int32_t, 2>							GetPosition();
+
+	void											Iconify(
+		bool										minimized );
+
+	bool											IsIconified();
+
+	void											SetMaximized(
+		bool										maximized );
+
+	bool											GetMaximized();
+
+	void											SetCursorState(
+		vk2d::CursorState							new_state );
+
+	vk2d::CursorState								GetCursorState();
 
 	void											DrawTriangleList(
 		const std::vector<Vertex>				&	vertices,
@@ -166,9 +256,19 @@ private:
 		VkCommandBuffer								command_buffer,
 		float										line_width );
 
-
+	vk2d::Window								*	window_parent							= {};
 	vk2d::_internal::RendererImpl				*	renderer_parent							= {};
 	vk2d::WindowCreateInfo							create_info_copy						= {};
+
+	vk2d::WindowEventHandler					*	event_handler							= {};
+	VkOffset2D										position								= {};
+	bool											is_minimized							= {};
+
+	struct IconData {
+		std::vector<uint8_t>						image_data								= {};
+		GLFWimage									glfw_image								= {};
+	};
+	std::vector<IconData>							icon_data								= {};
 
 	VkInstance										instance								= {};
 	VkPhysicalDevice								physical_device							= {};
@@ -179,6 +279,7 @@ private:
 	vk2d::PFN_VK2D_ReportFunction					report_function							= {};
 
 	GLFWwindow									*	glfw_window								= {};
+	std::string										window_title							= {};
 
 	VkSurfaceKHR									surface									= {};
 	VkSwapchainKHR									swapchain								= {};
@@ -210,7 +311,8 @@ private:
 	std::vector<VkPipeline>							pipelines								= {};
 
 	vk2d::_internal::NextRenderCallFunction			next_render_call_function				= vk2d::_internal::NextRenderCallFunction::BEGIN;
-	bool											recreate_swapchain						= {};
+	bool											should_reconstruct						= {};
+	bool											should_close							= {};
 
 	vk2d::_internal::PipelineType					previous_pipeline_type					= vk2d::_internal::PipelineType::NONE;
 	VkDescriptorSet									previous_texture_descriptor_set			= {};
@@ -220,6 +322,10 @@ private:
 
 	bool											is_good									= {};
 };
+
+
+
+
 
 
 
@@ -281,6 +387,72 @@ private:
 
 	bool										is_good							= {};
 };
+
+
+
+
+
+
+
+// Monitor object holds information about the physical monitor
+class MonitorImpl {
+	friend class vk2d::Window;
+	friend class vk2d::_internal::WindowImpl;
+	friend class vk2d::Monitor;
+
+public:
+	MonitorImpl(
+		GLFWmonitor									*	monitor,
+		VkOffset2D										position,
+		VkExtent2D										physical_size,
+		std::string										name,
+		vk2d::MonitorVideoMode							current_video_mode,
+		const std::vector<vk2d::MonitorVideoMode>	&	video_modes );
+
+														MonitorImpl()						= delete;
+
+														MonitorImpl(
+		const vk2d::_internal::MonitorImpl			&	other )								= default;
+
+														MonitorImpl(
+		vk2d::_internal::MonitorImpl				&&	other )								= default;
+
+														~MonitorImpl()						= default;
+
+	const vk2d::MonitorVideoMode					&	GetCurrentVideoMode() const;
+
+	const std::vector<vk2d::MonitorVideoMode>		&	GetVideoModes() const;
+
+	void												SetGamma(
+		float											gamma );
+
+	vk2d::GammaRamp										GetGammaRamp();
+
+	void												SetGammaRamp(
+		const vk2d::GammaRamp						&	ramp );
+
+	vk2d::_internal::MonitorImpl					&	operator=(
+		const vk2d::_internal::MonitorImpl			&	other )								= default;
+
+	vk2d::_internal::MonitorImpl					&	operator=(
+		vk2d::_internal::MonitorImpl				&&	other )								= default;
+
+	bool												IsGood();
+
+private:
+	GLFWmonitor										*	monitor								= nullptr;
+	VkOffset2D											position							= {};
+	VkExtent2D											physical_size						= {};
+	std::string											name								= "";
+	MonitorVideoMode									current_video_mode					= {};
+	std::vector<MonitorVideoMode>						video_modes;
+
+	bool												is_good								= {};
+};
+
+
+
+
 
 
 

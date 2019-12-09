@@ -6,16 +6,23 @@
 #include "../../Header/Core/VulkanMemoryManagement.h"
 #include "../Core/QueueResolver.h"
 
+#include "../Impl/WindowImpl.h"
+
 #include <list>
 #include <vector>
 #include <array>
 #include <memory>
+
+#define GLFW_INCLUDE_NONE
+#include <GLFW/glfw3.h>
+
 
 
 
 namespace vk2d {
 
 class Window;
+class Monitor;
 class Renderer;
 class ResourceManager;
 
@@ -23,6 +30,7 @@ namespace _internal {
 
 class ThreadPool;
 class DescriptorSetLayout;
+class MonitorImpl;
 
 
 
@@ -47,6 +55,30 @@ public:
 		const RendererCreateInfo				&	renderer_create_info );
 
 	~RendererImpl();
+
+	std::vector<vk2d::Monitor*>						GetMonitors();
+
+	vk2d::Monitor								*	GetPrimaryMonitor();
+
+	void											SetMonitorUpdateCallback(
+		vk2d::MonitorUpdateCallbackFun				monitor_update_callback_funtion );
+
+	vk2d::GamepadEventCallbackFun					GetGamepadEventCallback();
+
+	void											SetGamepadEventCallback(
+		vk2d::GamepadEventCallbackFun				gamepad_event_callback_function );
+
+	bool											IsGamepadPresent(
+		vk2d::Gamepad								gamepad );
+
+	std::string										GetGamepadName(
+		vk2d::Gamepad								gamepad );
+
+	vk2d::GamepadState								QueryGamepadState(
+		vk2d::Gamepad								gamepad );
+
+	// TODO: gamepad mapping
+	void											SetGamepadMapping();
 
 	Window										*	CreateOutputWindow(
 		WindowCreateInfo						&	window_create_info );
@@ -91,7 +123,7 @@ public:
 
 	bool											IsGood() const;
 
-private:
+
 	bool											CreateInstance();
 	bool											PickPhysicalDevice();
 	bool											CreateDeviceAndQueues();
@@ -120,11 +152,12 @@ private:
 	std::vector<VkPhysicalDevice>					EnumeratePhysicalDevices();
 	VkPhysicalDevice								PickBestPhysicalDevice();
 
+	vk2d::MonitorUpdateCallbackFun					monitor_update_callback				= nullptr;
 
-
+private:
 	static uint64_t									renderer_count;		// used to keep track of Renderer instances
 
-	RendererCreateInfo								create_info_copy					= {};
+	vk2d::RendererCreateInfo						create_info_copy					= {};
 
 	std::vector<const char*>						instance_layers						= {};
 	std::vector<const char*>						instance_extensions					= {};
@@ -132,8 +165,8 @@ private:
 
 	PFN_VK2D_ReportFunction							report_function						= {};
 
-	std::unique_ptr<ResourceManager>				resource_manager					= {};
-	std::unique_ptr<ThreadPool>						thread_pool							= {};
+	std::unique_ptr<vk2d::ResourceManager>			resource_manager					= {};
+	std::unique_ptr<vk2d::_internal::ThreadPool>	thread_pool							= {};
 	std::vector<uint32_t>							loader_threads						= {};
 	std::vector<uint32_t>							general_threads						= {};
 
@@ -155,7 +188,7 @@ private:
 	VkDescriptorPool								sampler_descriptor_pool				= {};
 	struct Sampler {
 		VkSampler									sampler								= {};
-		VkDescriptorSet								descriptor_set				= {};
+		VkDescriptorSet								descriptor_set						= {};
 	};
 	std::array<Sampler, 1>							samplers							= {};
 
@@ -174,6 +207,8 @@ private:
 	VkDescriptorSet									default_texture_descriptor_set		= {};
 
 	std::list<std::unique_ptr<Window>>				windows								= {};
+
+	vk2d::GamepadEventCallbackFun					joystick_event_callback				= {};
 
 	bool											is_good								= {};
 };

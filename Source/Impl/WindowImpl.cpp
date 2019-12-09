@@ -31,14 +31,183 @@ namespace _internal {
 
 
 
+
+// Function declarations
+void glfwJoystickEventCallback( int joystick, int event );
+void glfwWindowPosCallback( GLFWwindow * glfwWindow, int x, int y );
+void glfwWindowSizeCallback( GLFWwindow * glfwWindow, int x, int y );
+void glfwWindowCloseCallback( GLFWwindow * glfwWindow );
+void glfwWindowRefreshCallback( GLFWwindow * glfwWindow );
+void glfwWindowFocusCallback( GLFWwindow * glfwWindow, int focus );
+void glfwWindowIconifyCallback( GLFWwindow * glfwWindow, int iconify );
+void glfwFramebufferSizeCallback( GLFWwindow * glfwWindow, int x, int y );
+void glfwMouseButtonCallback( GLFWwindow * glfwWindow, int button, int action, int mods );
+void glfwCursorPosCallback( GLFWwindow * glfwWindow, double x, double y );
+void glfwCursorEnterCallback( GLFWwindow * glfwWindow, int enter );
+void glfwScrollCallback( GLFWwindow * glfwWindow, double x, double y );
+void glfwKeyCallback( GLFWwindow * glfwWindow, int key, int scancode, int action, int mods );
+void glfwCharModsCallback( GLFWwindow * glfwWindow, unsigned int codepoint, int mods );
+void glfwFileDropCallback( GLFWwindow * glfwWindow, int fileCount, const char ** filePaths );
+
+
+
+
+
+///////////////////////////////////////////////////////////
+// Internal callback functions
+///////////////////////////////////////////////////////////
+
+void glfwWindowPosCallback( GLFWwindow * glfwWindow, int x, int y )
+{
+	auto impl = reinterpret_cast<vk2d::_internal::WindowImpl*>( glfwGetWindowUserPointer( glfwWindow ) );
+	impl->position = { int32_t( x ), int32_t( y ) };
+	if( impl->event_handler ) {
+		impl->event_handler->EventWindowPosition( impl->window_parent, int32_t( x ), int32_t( y ) );
+	}
+}
+
+void glfwWindowSizeCallback( GLFWwindow * glfwWindow, int x, int y )
+{
+	auto impl = reinterpret_cast<vk2d::_internal::WindowImpl*>( glfwGetWindowUserPointer( glfwWindow ) );
+
+	impl->extent					= { uint32_t( x ), uint32_t( y ) };
+	impl->should_reconstruct		= true;
+	if( impl->event_handler ) {
+		impl->event_handler->EventWindowSize( impl->window_parent, uint32_t( x ), uint32_t( y ) );
+	}
+}
+
+void glfwWindowCloseCallback( GLFWwindow * glfwWindow )
+{
+	auto impl = reinterpret_cast<vk2d::_internal::WindowImpl*>( glfwGetWindowUserPointer( glfwWindow ) );
+
+	impl->should_close			= true;
+//	glfwHideWindow( impl->glfw_window );
+	if( impl->event_handler ) {
+		impl->event_handler->EventWindowClose( impl->window_parent );
+	}
+}
+
+void glfwWindowRefreshCallback( GLFWwindow * glfwWindow )
+{
+	auto impl = reinterpret_cast<vk2d::_internal::WindowImpl*>( glfwGetWindowUserPointer( glfwWindow ) );
+
+	impl->should_reconstruct		= true;
+	if( impl->event_handler ) {
+		impl->event_handler->EventWindowRefresh( impl->window_parent );
+	}
+}
+
+void glfwWindowFocusCallback( GLFWwindow * glfwWindow, int focus )
+{
+	auto impl = reinterpret_cast<vk2d::_internal::WindowImpl*>( glfwGetWindowUserPointer( glfwWindow ) );
+
+	if( impl->event_handler ) {
+		impl->event_handler->EventWindowFocus( impl->window_parent, bool( focus ) );
+	}
+}
+
+void glfwWindowIconifyCallback( GLFWwindow * glfwWindow, int iconify )
+{
+	auto impl = reinterpret_cast<vk2d::_internal::WindowImpl*>( glfwGetWindowUserPointer( glfwWindow ) );
+
+	if( iconify ) {
+		impl->is_minimized			= true;
+	} else {
+		impl->is_minimized			= false;
+		impl->should_reconstruct	= true;
+	}
+	if( impl->event_handler ) {
+		impl->event_handler->EventWindowIconify( impl->window_parent, bool( iconify ) );
+	}
+}
+
+void glfwFramebufferSizeCallback( GLFWwindow * glfwWindow, int x, int y )
+{
+	auto impl = reinterpret_cast<vk2d::_internal::WindowImpl*>( glfwGetWindowUserPointer( glfwWindow ) );
+
+	impl->extent					= { uint32_t( x ), uint32_t( y ) };
+	impl->should_reconstruct		= true;
+	if( impl->event_handler ) {
+		impl->event_handler->EventWindowSize( impl->window_parent, uint32_t( x ), uint32_t( y ) );
+	}
+}
+
+
+
+void glfwMouseButtonCallback( GLFWwindow * glfwWindow, int button, int action, int mods )
+{
+	auto impl = reinterpret_cast<vk2d::_internal::WindowImpl*>( glfwGetWindowUserPointer( glfwWindow ) );
+	if( impl->event_handler ) {
+		impl->event_handler->EventMouseButton( impl->window_parent, MouseButton( button ), ButtonAction( action ), ModifierKeyFlags( mods ) );
+	}
+}
+
+void glfwCursorPosCallback( GLFWwindow * glfwWindow, double x, double y )
+{
+	auto impl = reinterpret_cast<vk2d::_internal::WindowImpl*>( glfwGetWindowUserPointer( glfwWindow ) );
+	if( impl->event_handler ) {
+		impl->event_handler->EventCursorPosition( impl->window_parent, x, y );
+	}
+}
+
+void glfwCursorEnterCallback( GLFWwindow * glfwWindow, int enter )
+{
+	auto impl = reinterpret_cast<vk2d::_internal::WindowImpl*>( glfwGetWindowUserPointer( glfwWindow ) );
+	if( impl->event_handler ) {
+		impl->event_handler->EventCursorEnter( impl->window_parent, bool( enter ) );
+	}
+}
+
+void glfwScrollCallback( GLFWwindow * glfwWindow, double x, double y )
+{
+	auto impl = reinterpret_cast<vk2d::_internal::WindowImpl*>( glfwGetWindowUserPointer( glfwWindow ) );
+	if( impl->event_handler ) {
+		impl->event_handler->EventScroll( impl->window_parent, x, y );
+	}
+}
+
+void glfwKeyCallback( GLFWwindow * glfwWindow, int key, int scancode, int action, int mods )
+{
+	auto impl = reinterpret_cast<vk2d::_internal::WindowImpl*>( glfwGetWindowUserPointer( glfwWindow ) );
+	if( impl->event_handler ) {
+		impl->event_handler->EventKeyboard( impl->window_parent, KeyboardButton( key ), scancode, ButtonAction( action ), ModifierKeyFlags( mods ) );
+	}
+}
+
+void glfwCharModsCallback( GLFWwindow * glfwWindow, unsigned int codepoint, int mods )
+{
+	auto impl = reinterpret_cast<vk2d::_internal::WindowImpl*>( glfwGetWindowUserPointer( glfwWindow ) );
+	if( impl->event_handler ) {
+		impl->event_handler->EventCharacter( impl->window_parent, codepoint, ModifierKeyFlags( mods ) );
+	}
+}
+
+void glfwFileDropCallback( GLFWwindow * glfwWindow, int fileCount, const char ** filePaths )
+{
+	auto impl = reinterpret_cast<vk2d::_internal::WindowImpl*>( glfwGetWindowUserPointer( glfwWindow ) );
+	if( impl->event_handler ) {
+		std::vector<std::filesystem::path> files( fileCount );
+		for( int i = 0; i < fileCount; ++i ) {
+			files[ i ]		= filePaths[ i ];
+		}
+		impl->event_handler->EventFileDrop( impl->window_parent, files );
+	}
+}
+
+
 WindowImpl::WindowImpl(
-	RendererImpl					*	renderer,
-	const WindowCreateInfo			&	window_create_info
+	vk2d::Window					*	window,
+	vk2d::_internal::RendererImpl	*	renderer,
+	const vk2d::WindowCreateInfo	&	window_create_info
 )
 {
 	create_info_copy				= window_create_info;
+	window_parent					= window;
 	renderer_parent					= renderer;
 	report_function					= renderer_parent->GetReportFunction();
+	window_title					= create_info_copy.title;
+	event_handler					= create_info_copy.event_handler;
 
 	instance						= renderer_parent->GetVulkanInstance();
 	physical_device					= renderer_parent->GetVulkanPhysicalDevice();
@@ -67,6 +236,34 @@ WindowImpl::WindowImpl(
 			report_function( ReportSeverity::NON_CRITICAL_ERROR, "Cannot create mesh buffers!" );
 		}
 		return;
+	}
+
+	{
+		int32_t x = 0, y = 0;
+		glfwGetWindowPos( glfw_window, &x, &y );
+		position	= { x, y };
+
+		glfwGetWindowSize( glfw_window, &x, &y );
+		extent		= { uint32_t( x ), uint32_t( y ) };
+	}
+	{
+		glfwSetWindowUserPointer( glfw_window, this );
+
+		glfwSetWindowPosCallback( glfw_window, vk2d::_internal::glfwWindowPosCallback );
+		glfwSetWindowSizeCallback( glfw_window, vk2d::_internal::glfwWindowSizeCallback );
+		glfwSetWindowCloseCallback( glfw_window, vk2d::_internal::glfwWindowCloseCallback );
+		glfwSetWindowRefreshCallback( glfw_window, vk2d::_internal::glfwWindowRefreshCallback );
+		glfwSetWindowFocusCallback( glfw_window, vk2d::_internal::glfwWindowFocusCallback );
+		glfwSetWindowIconifyCallback( glfw_window, vk2d::_internal::glfwWindowIconifyCallback );
+		glfwSetFramebufferSizeCallback( glfw_window, vk2d::_internal::glfwFramebufferSizeCallback );
+
+		glfwSetMouseButtonCallback( glfw_window, vk2d::_internal::glfwMouseButtonCallback );
+		glfwSetCursorPosCallback( glfw_window, vk2d::_internal::glfwCursorPosCallback );
+		glfwSetCursorEnterCallback( glfw_window, vk2d::_internal::glfwCursorEnterCallback );
+		glfwSetScrollCallback( glfw_window, vk2d::_internal::glfwScrollCallback );
+		glfwSetKeyCallback( glfw_window, vk2d::_internal::glfwKeyCallback );
+		glfwSetCharModsCallback( glfw_window, vk2d::_internal::glfwCharModsCallback );
+		glfwSetDropCallback( glfw_window, vk2d::_internal::glfwFileDropCallback );
 	}
 
 	is_good		= true;
@@ -173,6 +370,18 @@ WindowImpl::~WindowImpl()
 
 
 
+void WindowImpl::CloseWindow()
+{
+	should_close = true;
+}
+
+bool WindowImpl::ShouldClose()
+{
+	return should_close;
+}
+
+
+
 bool									AquireImage(
 	WindowImpl						*	data,
 	VkPhysicalDevice					physical_device,
@@ -191,7 +400,7 @@ bool									AquireImage(
 	if( result != VK_SUCCESS ) {
 		if( result == VK_SUBOPTIMAL_KHR ) {
 			// Image aquired but is not optimal, continue but recreate swapchain next time we begin the render again.
-			data->recreate_swapchain		= true;
+			data->should_reconstruct		= true;
 		} else if( result == VK_ERROR_OUT_OF_DATE_KHR ) {
 			// Image was not aquired so we cannot present anything until we recreate the swapchain.
 			if( nested_counter ) {
@@ -254,7 +463,7 @@ bool WindowImpl::BeginRender()
 	}
 
 	// TODO: check if we need to recreate the swapchain
-	if( recreate_swapchain ) {
+	if( should_reconstruct ) {
 		if( !RecreateResourcesAfterResizing() ) {
 			if( report_function ) {
 				report_function( ReportSeverity::NON_CRITICAL_ERROR, "Cannot recreate swapchain!" );
@@ -565,7 +774,7 @@ bool WindowImpl::EndRender()
 		if( result != VK_SUCCESS || present_result != VK_SUCCESS ) {
 			if( result == VK_ERROR_OUT_OF_DATE_KHR || present_result == VK_ERROR_OUT_OF_DATE_KHR ||
 				result == VK_SUBOPTIMAL_KHR || present_result == VK_SUBOPTIMAL_KHR ) {
-				recreate_swapchain	= true;
+				should_reconstruct	= true;
 			} else {
 				if( report_function ) {
 					report_function( ReportSeverity::WARNING, "Cannot present image!" );
@@ -585,6 +794,238 @@ bool WindowImpl::EndRender()
 	glfwPollEvents();
 
 	return true;
+}
+
+void WindowImpl::UpdateEvents()
+{
+	glfwPollEvents();
+}
+
+void WindowImpl::TakeScreenshot(
+	std::filesystem::path		save_path
+)
+{
+	assert( 0 && "NOT IMPLEMENTED YET!" );
+}
+
+void WindowImpl::Focus()
+{
+	glfwFocusWindow( glfw_window );
+}
+
+void WindowImpl::SetOpacity( float opacity )
+{
+	glfwSetWindowOpacity( glfw_window, opacity );
+}
+
+float WindowImpl::GetOpacity()
+{
+	return glfwGetWindowOpacity( glfw_window );
+}
+
+void WindowImpl::Hide( bool hidden )
+{
+	if( hidden ) {
+		glfwHideWindow( glfw_window );
+	} else {
+		glfwShowWindow( glfw_window );
+	}
+}
+
+bool WindowImpl::IsHidden()
+{
+	return !glfwGetWindowAttrib( glfw_window, GLFW_VISIBLE );
+}
+
+void WindowImpl::DisableEvents(
+	bool		disable_events
+)
+{
+	if( disable_events ) {
+		event_handler	= nullptr;
+	} else {
+		event_handler	= create_info_copy.event_handler;
+	}
+}
+
+bool WindowImpl::IsEventsDisabled()
+{
+	return !!event_handler;
+}
+
+void WindowImpl::SetFullscreen(
+	vk2d::Monitor		*	monitor,
+	uint32_t				frequency )
+{
+	if( monitor ) {
+		glfwSetWindowMonitor( glfw_window, monitor->impl->monitor, 0, 0, extent.width, extent.height, frequency );
+		if( !glfwGetWindowMonitor( glfw_window ) ) {
+			glfwSetWindowMonitor( glfw_window, nullptr, position.x, position.y, extent.width, extent.height, INT32_MAX );
+		}
+	} else {
+		glfwSetWindowMonitor( glfw_window, nullptr, position.x, position.y, extent.width, extent.height, INT32_MAX );
+	}
+}
+
+bool WindowImpl::IsFullscreen()
+{
+	return !!glfwGetWindowMonitor( glfw_window );
+}
+
+std::array<double, 2> WindowImpl::GetCursorPosition()
+{
+	double x = 0, y = 0;
+	glfwGetCursorPos( glfw_window, &x, &y );
+	return { x, y };
+}
+
+void WindowImpl::SetCursorPosition( double x, double y )
+{
+	glfwSetCursorPos( glfw_window, x, y );
+}
+
+void WindowImpl::SetCursor( vk2d::Cursor * cursor )
+{
+	if( cursor ) {
+		glfwSetCursor( glfw_window, cursor->impl->cursor );
+	} else {
+		glfwSetCursor( glfw_window, nullptr );
+	}
+}
+
+std::string WindowImpl::GetClipboardString()
+{
+	return glfwGetClipboardString( glfw_window );
+}
+
+void WindowImpl::SetClipboardString( const std::string & str )
+{
+	glfwSetClipboardString( glfw_window, str.c_str() );
+}
+
+void WindowImpl::SetTitle(
+	const std::string		&	title
+)
+{
+	window_title	= title;
+	glfwSetWindowTitle( glfw_window, window_title.c_str() );
+}
+
+std::string WindowImpl::GetTitle()
+{
+	return window_title;
+}
+
+void WindowImpl::SetIcon(
+	const std::vector<std::filesystem::path>	&	image_paths
+)
+{
+	icon_data.resize( image_paths.size() );
+	for( size_t i = 0; i < image_paths.size(); ++i ) {
+		auto & ic = icon_data[ i ];
+
+		int x = 0, y = 0, channels = 0;
+		auto stbi_image = stbi_load( image_paths[ i ].string().c_str(), &x, &y, &channels, 4 );
+
+		if( stbi_image && channels == 4 ) {
+			ic.image_data.resize( x * y * 4 );
+			std::memcpy( ic.image_data.data(), stbi_image, x * y * 4 );
+			ic.glfw_image.width		= x;
+			ic.glfw_image.height	= y;
+			stbi_image_free( stbi_image );
+		} else {
+			ic.image_data.resize( 4 );
+			std::memset( ic.image_data.data(), 255, 4 );
+			ic.glfw_image.width		= 1;
+			ic.glfw_image.height	= 1;
+		}
+
+		ic.glfw_image.pixels	= ic.image_data.data();
+	}
+
+	std::vector<GLFWimage> images( icon_data.size() );
+	for( size_t i = 0; i < icon_data.size(); ++i ) {
+		images[ i ]		= icon_data[ i ].glfw_image;
+	}
+	glfwSetWindowIcon( glfw_window, int( icon_data.size() ), images.data() );
+}
+
+void WindowImpl::SetPosition(
+	int32_t			x,
+	int32_t			y
+)
+{
+	glfwSetWindowPos( glfw_window, x, y );
+}
+
+std::array<int32_t, 2> WindowImpl::GetPosition()
+{
+	return std::array<int32_t, 2>();
+}
+
+void WindowImpl::Iconify(
+	bool			iconified
+)
+{
+	if( iconified ) {
+		glfwIconifyWindow( glfw_window );
+	} else {
+		glfwRestoreWindow( glfw_window );
+	}
+}
+
+bool WindowImpl::IsIconified()
+{
+	return glfwGetWindowAttrib( glfw_window, GLFW_ICONIFIED );
+}
+
+void WindowImpl::SetMaximized(
+	bool			maximized
+)
+{
+	if( maximized ) {
+		glfwMaximizeWindow( glfw_window );
+	} else {
+		glfwRestoreWindow( glfw_window );
+	}
+}
+
+bool WindowImpl::GetMaximized()
+{
+	return glfwGetWindowAttrib( glfw_window, GLFW_MAXIMIZED );
+}
+
+void WindowImpl::SetCursorState( vk2d::CursorState new_state )
+{
+	switch( new_state ) {
+	case vk2d::CursorState::NORMAL:
+		glfwSetInputMode( glfw_window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+		break;
+	case vk2d::CursorState::HIDDEN:
+		glfwSetInputMode( glfw_window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN );
+		break;
+	case vk2d::CursorState::LOCKED:
+		glfwSetInputMode( glfw_window, GLFW_CURSOR, GLFW_CURSOR_DISABLED );
+		break;
+	default:
+		glfwSetInputMode( glfw_window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+		break;
+	}
+}
+
+vk2d::CursorState WindowImpl::GetCursorState()
+{
+	auto state = glfwGetInputMode( glfw_window, GLFW_CURSOR );
+	switch( state ) {
+	case GLFW_CURSOR_NORMAL:
+		return vk2d::CursorState::NORMAL;
+	case GLFW_CURSOR_HIDDEN:
+		return vk2d::CursorState::HIDDEN;
+	case GLFW_CURSOR_DISABLED:
+		return vk2d::CursorState::LOCKED;
+	default:
+		return vk2d::CursorState::NORMAL;
+	}
 }
 
 
@@ -1047,7 +1488,7 @@ bool WindowImpl::RecreateResourcesAfterResizing( )
 		if( !CreateFrameSynchronizationPrimitives() ) return false;
 	}
 
-	recreate_swapchain		= false;
+	should_reconstruct		= false;
 
 	return true;
 }
@@ -1074,26 +1515,18 @@ bool WindowImpl::CreateGLFWWindow()
 	glfwWindowHint( GLFW_FOCUS_ON_SHOW, GLFW_TRUE );
 	glfwWindowHint( GLFW_SCALE_TO_MONITOR, GLFW_FALSE );
 
-	std::vector<GLFWmonitor*> monitors;
-	{
-		int monitor_count = 0;
-		auto monitors_ptr = glfwGetMonitors( &monitor_count );
-		for( int i = 0; i < monitor_count; ++i ) {
-			monitors.push_back( monitors_ptr[ i ] );
+	GLFWmonitor * monitor = nullptr;
+	if( create_info_copy.fullscreen_monitor ) {
+		if( create_info_copy.fullscreen_monitor->impl ) {
+			monitor = create_info_copy.fullscreen_monitor->impl->monitor;
 		}
-	}
-
-	GLFWmonitor * fullscreen_monitor = nullptr;
-	if( create_info_copy.fullscreen_monitor > 0 &&
-		create_info_copy.fullscreen_monitor <= uint32_t( monitors.size() ) ) {
-		fullscreen_monitor		= monitors[ create_info_copy.fullscreen_monitor ];
 	}
 
 	glfw_window = glfwCreateWindow(
 		int( create_info_copy.width ),
 		int( create_info_copy.height ),
-		create_info_copy.title.c_str(),
-		fullscreen_monitor,
+		window_title.c_str(),
+		monitor,
 		nullptr );
 	if( !glfw_window ) {
 		if( report_function ) {
@@ -1911,7 +2344,7 @@ bool WindowImpl::CreateSwapchain()
 		);
 	}
 
-	recreate_swapchain		= false;
+	should_reconstruct		= false;
 
 	return true;
 }
@@ -2201,6 +2634,8 @@ vk2d::_internal::CursorImpl & CursorImpl::operator=(
 		other.hotSpot.x,
 		other.hotSpot.y
 	);
+
+	return *this;
 }
 
 bool CursorImpl::IsGood()
@@ -2230,6 +2665,81 @@ std::array<int32_t, 2> CursorImpl::GetHotSpot()
 
 
 
+
+
+
+MonitorImpl::MonitorImpl(
+	GLFWmonitor									*	monitor,
+	VkOffset2D										position,
+	VkExtent2D										physical_size,
+	std::string										name,
+	vk2d::MonitorVideoMode							current_video_mode,
+	const std::vector<vk2d::MonitorVideoMode>	&	video_modes )
+{
+	this->monitor				= monitor;
+	this->position				= position;
+	this->physical_size			= physical_size;
+	this->name					= name;
+	this->current_video_mode	= current_video_mode;
+	this->video_modes			= video_modes;
+
+	is_good						= true;
+}
+
+const vk2d::MonitorVideoMode & MonitorImpl::GetCurrentVideoMode() const
+{
+	return current_video_mode;
+}
+
+const std::vector<vk2d::MonitorVideoMode> & MonitorImpl::GetVideoModes() const
+{
+	return video_modes;
+}
+
+void MonitorImpl::SetGamma(
+	float		gamma
+)
+{
+	glfwSetGamma(
+		monitor,
+		gamma
+	);
+}
+
+vk2d::GammaRamp MonitorImpl::GetGammaRamp()
+{
+	auto glfwRamp		= glfwGetGammaRamp( monitor );
+	vk2d::GammaRamp		ret {};
+	ret.count			= glfwRamp->size;
+	ret.red.reserve( ret.count );
+	ret.green.reserve( ret.count );
+	ret.blue.reserve( ret.count );
+	for( uint32_t i = 0; i < ret.count; ++i ) {
+		ret.red.push_back( glfwRamp->red[ i ] );
+		ret.green.push_back( glfwRamp->green[ i ] );
+		ret.blue.push_back( glfwRamp->blue[ i ] );
+	}
+	return ret;
+}
+
+void MonitorImpl::SetGammaRamp(
+	const vk2d::GammaRamp		&	ramp
+)
+{
+	auto modifiable_ramp = ramp;
+
+	GLFWgammaramp glfwRamp {};
+	glfwRamp.size		= modifiable_ramp.count;
+	glfwRamp.red		= modifiable_ramp.red.data();
+	glfwRamp.green		= modifiable_ramp.green.data();
+	glfwRamp.blue		= modifiable_ramp.blue.data();
+	glfwSetGammaRamp( monitor, &glfwRamp );
+}
+
+bool MonitorImpl::IsGood()
+{
+	return is_good;
+}
 
 
 

@@ -11,6 +11,31 @@ constexpr double RAD			= PI * 2.0;
 
 
 
+class EventHandler : public vk2d::WindowEventHandler {
+public:
+
+	void							VK2D_APIENTRY		EventWindowClose(
+		vk2d::Window			*	window
+	)
+	{
+		window->CloseWindow();
+	};
+
+	void							VK2D_APIENTRY		EventKeyboard(
+		vk2d::Window			*	window,
+		vk2d::KeyboardButton		button,
+		int							scancode,
+		vk2d::ButtonAction			action,
+		vk2d::ModifierKeyFlags		modifierKeys )
+	{
+		if( button == vk2d::KeyboardButton::KEY_ESCAPE && action == vk2d::ButtonAction::PRESS ) {
+			window->CloseWindow();
+		}
+	};
+};
+
+
+
 int main()
 {
 	vk2d::RendererCreateInfo renderer_create_info {};
@@ -36,15 +61,17 @@ int main()
 	auto texture8			= renderer->GetResourceManager()->CreateTextureResource( 64, 64, texels );
 	auto texture9			= renderer->GetResourceManager()->CreateTextureResource( 64, 64, texels );
 
-	vk2d::WindowCreateInfo window_create_info {};
+	EventHandler							event_handler;
+	vk2d::WindowCreateInfo					window_create_info {};
 	window_create_info.width				= 800;
 	window_create_info.height				= 600;
 	window_create_info.coordinate_space		= vk2d::WindowCoordinateSpace::TEXEL_SPACE_CENTERED;
+	window_create_info.event_handler		= &event_handler;
 	auto window = renderer->CreateOutputWindow( window_create_info );
 	if( !window ) return -1;
 
 	size_t frame_counter = 0;
-	while( true ) {
+	while( !window->ShouldClose() ) {
 		++frame_counter;
 		if( !window->BeginRender() ) return -1;
 		/*

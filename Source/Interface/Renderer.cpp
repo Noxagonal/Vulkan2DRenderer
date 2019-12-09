@@ -48,7 +48,63 @@ VK2D_API Renderer::~Renderer()
 	impl = nullptr;
 }
 
+VK2D_API std::vector<vk2d::Monitor*> VK2D_APIENTRY Renderer::GetMonitors()
+{
+	if( impl ) {
+		return impl->GetMonitors();
+	}
+	return {};
+}
 
+VK2D_API vk2d::Monitor *VK2D_APIENTRY Renderer::GetPrimaryMonitor()
+{
+	if( impl ) {
+		return impl->GetPrimaryMonitor();
+	}
+	return {};
+}
+
+
+
+VK2D_API void VK2D_APIENTRY Renderer::SetMonitorUpdateCallback( MonitorUpdateCallbackFun monitor_update_callback_funtion )
+{
+	if( impl ) {
+		impl->SetMonitorUpdateCallback(
+			monitor_update_callback_funtion
+		);
+	}
+}
+
+VK2D_API void VK2D_APIENTRY Renderer::SetGamepadEventCallback( vk2d::GamepadEventCallbackFun gamepad_event_callback_function )
+{
+	if( impl ) {
+		impl->SetGamepadEventCallback( gamepad_event_callback_function );
+	}
+}
+
+VK2D_API bool VK2D_APIENTRY Renderer::IsGamepadPresent( vk2d::Gamepad gamepad )
+{
+	if( impl ) {
+		return impl->IsGamepadPresent( gamepad );
+	}
+	return {};
+}
+
+VK2D_API std::string VK2D_APIENTRY Renderer::GetGamepadName( vk2d::Gamepad gamepad )
+{
+	if( impl ) {
+		return impl->GetGamepadName( gamepad );
+	}
+	return {};
+}
+
+VK2D_API vk2d::GamepadState VK2D_APIENTRY Renderer::QueryGamepadState( vk2d::Gamepad gamepad )
+{
+	if( impl ) {
+		return impl->QueryGamepadState( gamepad );
+	}
+	return {};
+}
 
 VK2D_API Window * VK2D_APIENTRY Renderer::CreateOutputWindow(
 	WindowCreateInfo		&	window_create_info )

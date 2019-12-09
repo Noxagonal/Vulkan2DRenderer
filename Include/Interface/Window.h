@@ -17,6 +17,9 @@ namespace _internal {
 class RendererImpl;
 class WindowImpl;
 class CursorImpl;
+class MonitorImpl;
+
+void UpdateMonitorLists();
 } // _internal
 
 
@@ -24,7 +27,9 @@ class CursorImpl;
 class Renderer;
 class TextureResource;
 class Mesh;
+class Window;
 class Cursor;
+class Monitor;
 
 
 
@@ -81,6 +86,12 @@ inline ModifierKeyFlags operator&( ModifierKeyFlags f1, ModifierKeyFlags f2 )
 {
 	return ModifierKeyFlags( int32_t( f1 ) & int32_t( f2 ) );
 }
+
+enum class CursorState : int32_t {
+	NORMAL,		// Normal cursor, allowed to leave the window area and is visible at all times.
+	HIDDEN,		// Hidden cursor on window area, cursor is allowed to leave the window area and becomes visible when it does.
+	LOCKED		// Cursor is locked to the window, it's not visible and it's now allowed to leave the window area.
+};
 
 enum class KeyboardButton : int32_t {
 	KEY_UNKNOWN			= -1,
@@ -210,254 +221,110 @@ enum class KeyboardButton : int32_t {
 	KEY_LAST			= KEY_MENU,
 };
 
-enum class Joystick : int32_t {
-	JOYSTICK_1			= 0,
-	JOYSTICK_2			= 1,
-	JOYSTICK_3			= 2,
-	JOYSTICK_4			= 3,
-	JOYSTICK_5			= 4,
-	JOYSTICK_6			= 5,
-	JOYSTICK_7			= 6,
-	JOYSTICK_8			= 7,
-	JOYSTICK_9			= 8,
-	JOYSTICK_10			= 9,
-	JOYSTICK_11			= 10,
-	JOYSTICK_12			= 11,
-	JOYSTICK_13			= 12,
-	JOYSTICK_14			= 13,
-	JOYSTICK_15			= 14,
-	JOYSTICK_16			= 15,
-	JOYSTICK_LAST		= JOYSTICK_16,
-};
-
-enum class JoystickEvent : int32_t {
-	CONNECTED			= 0x00040001,
-	DISCONNECTED		= 0x00040002,
-};
-
-enum JoystickButton : int32_t {
-	JOYSTICK_BUTTON_1			= 0,
-	JOYSTICK_BUTTON_2			= 1,
-	JOYSTICK_BUTTON_3			= 2,
-	JOYSTICK_BUTTON_4			= 3,
-	JOYSTICK_BUTTON_5			= 4,
-	JOYSTICK_BUTTON_6			= 5,
-	JOYSTICK_BUTTON_7			= 6,
-	JOYSTICK_BUTTON_8			= 7,
-	JOYSTICK_BUTTON_9			= 8,
-	JOYSTICK_BUTTON_10			= 9,
-	JOYSTICK_BUTTON_11			= 10,
-	JOYSTICK_BUTTON_12			= 11,
-	JOYSTICK_BUTTON_13			= 12,
-	JOYSTICK_BUTTON_14			= 13,
-	JOYSTICK_BUTTON_15			= 14,
-	JOYSTICK_BUTTON_16			= 15,
-	JOYSTICK_BUTTON_17			= 16,
-	JOYSTICK_BUTTON_18			= 17,
-	JOYSTICK_BUTTON_19			= 18,
-	JOYSTICK_BUTTON_20			= 19,
-	JOYSTICK_BUTTON_21			= 20,
-	JOYSTICK_BUTTON_22			= 21,
-	JOYSTICK_BUTTON_23			= 22,
-	JOYSTICK_BUTTON_24			= 23,
-	JOYSTICK_BUTTON_25			= 24,
-	JOYSTICK_BUTTON_26			= 25,
-	JOYSTICK_BUTTON_27			= 26,
-	JOYSTICK_BUTTON_28			= 27,
-	JOYSTICK_BUTTON_29			= 28,
-	JOYSTICK_BUTTON_30			= 29,
-	JOYSTICK_BUTTON_31			= 30,
-	JOYSTICK_BUTTON_32			= 31,
-
-	JOYSTICK_BUTTON_XBOX360_A				= JOYSTICK_BUTTON_1,
-	JOYSTICK_BUTTON_XBOX360_B				= JOYSTICK_BUTTON_2,
-	JOYSTICK_BUTTON_XBOX360_X				= JOYSTICK_BUTTON_3,
-	JOYSTICK_BUTTON_XBOX360_Y				= JOYSTICK_BUTTON_4,
-	JOYSTICK_BUTTON_XBOX360_LEFT_BUMPER		= JOYSTICK_BUTTON_5,
-	JOYSTICK_BUTTON_XBOX360_RIGHT_BUMPER	= JOYSTICK_BUTTON_6,
-	JOYSTICK_BUTTON_XBOX360_BACK			= JOYSTICK_BUTTON_7,
-	JOYSTICK_BUTTON_XBOX360_START			= JOYSTICK_BUTTON_8,
-	JOYSTICK_BUTTON_XBOX360_LEFT_ANALOG		= JOYSTICK_BUTTON_9,
-	JOYSTICK_BUTTON_XBOX360_RIGHT_ANALOG	= JOYSTICK_BUTTON_10,
-	JOYSTICK_BUTTON_XBOX360_DPAD_UP			= JOYSTICK_BUTTON_11,
-	JOYSTICK_BUTTON_XBOX360_DPAD_RIGHT		= JOYSTICK_BUTTON_12,
-	JOYSTICK_BUTTON_XBOX360_DPAD_DOWN		= JOYSTICK_BUTTON_13,
-	JOYSTICK_BUTTON_XBOX360_DPAD_LEFT		= JOYSTICK_BUTTON_14,
-};
-
-enum JoystickAxes : int32_t {
-	JOYSTICK_AXEL_1				= 0,
-	JOYSTICK_AXEL_2				= 1,
-	JOYSTICK_AXEL_3				= 2,
-	JOYSTICK_AXEL_4				= 3,
-	JOYSTICK_AXEL_5				= 4,
-	JOYSTICK_AXEL_6				= 5,
-	JOYSTICK_AXEL_7				= 6,
-	JOYSTICK_AXEL_8				= 7,
-	JOYSTICK_AXEL_9				= 8,
-	JOYSTICK_AXEL_10			= 9,
-	JOYSTICK_AXEL_11			= 10,
-	JOYSTICK_AXEL_12			= 11,
-	JOYSTICK_AXEL_13			= 12,
-	JOYSTICK_AXEL_14			= 13,
-	JOYSTICK_AXEL_15			= 14,
-	JOYSTICK_AXEL_16			= 15,
-	JOYSTICK_AXEL_17			= 16,
-	JOYSTICK_AXEL_18			= 17,
-	JOYSTICK_AXEL_19			= 18,
-	JOYSTICK_AXEL_20			= 19,
-	JOYSTICK_AXEL_21			= 20,
-	JOYSTICK_AXEL_22			= 21,
-	JOYSTICK_AXEL_23			= 22,
-	JOYSTICK_AXEL_24			= 23,
-	JOYSTICK_AXEL_25			= 24,
-	JOYSTICK_AXEL_26			= 25,
-	JOYSTICK_AXEL_27			= 26,
-	JOYSTICK_AXEL_28			= 27,
-	JOYSTICK_AXEL_29			= 28,
-	JOYSTICK_AXEL_30			= 29,
-	JOYSTICK_AXEL_31			= 30,
-	JOYSTICK_AXEL_32			= 31,
-
-	JOYSTICK_AXEL_XBOX360_LEFT_ANALOG_X		= JOYSTICK_AXEL_1,
-	JOYSTICK_AXEL_XBOX360_LEFT_ANALOG_Y		= JOYSTICK_AXEL_2,
-	JOYSTICK_AXEL_XBOX360_RIGHT_ANALOG_X	= JOYSTICK_AXEL_3,
-	JOYSTICK_AXEL_XBOX360_RIGHT_ANALOG_Y	= JOYSTICK_AXEL_4,
-	JOYSTICK_AXEL_XBOX360_LEFT_TRIGGER		= JOYSTICK_AXEL_5,
-	JOYSTICK_AXEL_XBOX360_RIGHT_TRIGGER		= JOYSTICK_AXEL_6,
-};
-
 // Window event handler
 // Responsible in signalling back events from the window object
 class WindowEventHandler {
 public:
 	// Window position changed.
-	virtual VK2D_API void				VK2D_APIENTRY		EventWindowPosition(
-		vk2d::Window				*	window,
-		int32_t							position_x,
-		int32_t							position_y )
+	virtual void								VK2D_APIENTRY		EventWindowPosition(
+		vk2d::Window						*	window,
+		int32_t									position_x,
+		int32_t									position_y )
 	{};
 
 	// Window size changed.
-	virtual VK2D_API void				VK2D_APIENTRY		EventWindowSize(
-		vk2d::Window				*	window,
-		uint32_t						size_x,
-		uint32_t						size_y )
+	virtual void								VK2D_APIENTRY		EventWindowSize(
+		vk2d::Window						*	window,
+		uint32_t								size_x,
+		uint32_t								size_y )
 	{};
 
 	// Window was closed, either via the "X" or someone called Window::Close().
-	virtual VK2D_API void				VK2D_APIENTRY		EventWindowClose(
-		vk2d::Window				*	window )
+	virtual void								VK2D_APIENTRY		EventWindowClose(
+		vk2d::Window						*	window )
 	{};
 
 	// Window refreshed itself, not as useful nowadays.
-	virtual VK2D_API void				VK2D_APIENTRY		EventWindowRefresh(
-		vk2d::Window				*	window )
+	virtual void								VK2D_APIENTRY		EventWindowRefresh(
+		vk2d::Window						*	window )
 	{};
 
 	// Window gained or lost focus.
-	virtual VK2D_API void				VK2D_APIENTRY		EventWindowFocus(
-		vk2d::Window				*	window,
-		bool							focused )
+	virtual void								VK2D_APIENTRY		EventWindowFocus(
+		vk2d::Window						*	window,
+		bool									focused )
 	{};
 
 	// Window was iconified or recovered from iconified state.
-	virtual VK2D_API void				VK2D_APIENTRY		EventWindowIconify(
-		vk2d::Window				*	window,
-		bool							iconified )
+	virtual void								VK2D_APIENTRY		EventWindowIconify(
+		vk2d::Window						*	window,
+		bool									iconified )
 	{};
 
 	// Window was maximized or recovered from maximized state.
-	virtual VK2D_API void				VK2D_APIENTRY		EventWindowMaximize(
-		vk2d::Window				*	window,
-		bool							maximized )
-	{};
-
-	// Framebuffer size changed, you should listen to this event if you want to change your rendering output size to match the window's.
-	virtual VK2D_API void				VK2D_APIENTRY		EventFramebufferSize(
-		vk2d::Window				*	window,
-		uint32_t						size_x,
-		uint32_t						size_y )
+	virtual void								VK2D_APIENTRY		EventWindowMaximize(
+		vk2d::Window						*	window,
+		bool									maximized )
 	{};
 
 
 	// Mouse button pressed or released.
-	virtual VK2D_API void				VK2D_APIENTRY		EventMouseButton(
-		vk2d::Window				*	window,
-		vk2d::MouseButton				button,
-		vk2d::ButtonAction				action,
-		vk2d::ModifierKeyFlags			modifierKeys )
+	virtual void								VK2D_APIENTRY		EventMouseButton(
+		vk2d::Window						*	window,
+		vk2d::MouseButton						button,
+		vk2d::ButtonAction						action,
+		vk2d::ModifierKeyFlags					modifierKeys )
 	{};
 
 	// Cursor position on window changed.
-	virtual VK2D_API void				VK2D_APIENTRY		EventCursorPosition(
-		vk2d::Window				*	window,
-		double							x,
-		double							y )
+	virtual void								VK2D_APIENTRY		EventCursorPosition(
+		vk2d::Window						*	window,
+		double									x,
+		double									y )
 	{};
 
 	// Cursor entered or left window client area.
-	virtual VK2D_API void				VK2D_APIENTRY		EventCursorEnter(
-		vk2d::Window				*	window,
-		bool							entered )
+	virtual void								VK2D_APIENTRY		EventCursorEnter(
+		vk2d::Window						*	window,
+		bool									entered )
 	{};
 
 	// Scrolling happened, y for vertical scrolling, x for horisontal.
-	virtual VK2D_API void				VK2D_APIENTRY		EventScroll(
-		vk2d::Window				*	window,
-		double							x,
-		double							y )
+	virtual void								VK2D_APIENTRY		EventScroll(
+		vk2d::Window						*	window,
+		double									x,
+		double									y )
 	{};
 
 	// Keyboard button was pressed, released or kept down ( repeating ).
-	virtual VK2D_API void				VK2D_APIENTRY		EventKeyboard(
-		vk2d::Window				*	window,
-		vk2d::KeyboardButton			button,
-		int								scancode,
-		vk2d::ButtonAction				action,
-		vk2d::ModifierKeyFlags			modifierKeys )
+	virtual void								VK2D_APIENTRY		EventKeyboard(
+		vk2d::Window						*	window,
+		vk2d::KeyboardButton					button,
+		int										scancode,
+		vk2d::ButtonAction						action,
+		vk2d::ModifierKeyFlags					modifierKeys )
 	{};
 
 	// Character input, use this if you want to know the character that was received from combination of keyboard presses, character is in UTF-32 format.
-	virtual VK2D_API void				VK2D_APIENTRY		EventCharacter(
-		vk2d::Window				*	window,
-		uint32_t						character,
-		vk2d::ModifierKeyFlags			modifierKeys )
+	virtual void								VK2D_APIENTRY		EventCharacter(
+		vk2d::Window						*	window,
+		uint32_t								character,
+		vk2d::ModifierKeyFlags					modifierKeys )
 	{};
 
 
 	// File or files were dropped on window.
-	virtual VK2D_API void				VK2D_APIENTRY		EventFileDrop(
-		vk2d::Window				*	window,
-		std::vector<std::string>		files )
-	{};
-
-
-	// Joystick events, connected or disconnected, called for everyone that's listening
-	virtual VK2D_API void				VK2D_APIENTRY		EventJoystic(
-		vk2d::Joystick					joystick,
-		vk2d::JoystickEvent				event,
-		const std::string			&	joystickName )
-	{};
-
-	// Joystick query of buttons, called every time you update the window and reports the button states rather than events, called for everyone that's listening.
-	virtual VK2D_API void				VK2D_APIENTRY		QueryJoysticButtons(
-		vk2d::Joystick					joystick,
-		const std::vector<bool>		&	buttons )
-	{};
-
-	// Joystick query of axes, called every time you update the window and reports the axel states rather than events, called for everyone that's listening.
-	virtual VK2D_API void				VK2D_APIENTRY		QueryJoysticAxes(
-		vk2d::Joystick					joystick,
-		const std::vector<float>	&	axes )
+	virtual void								VK2D_APIENTRY		EventFileDrop(
+		vk2d::Window						*	window,
+		std::vector<std::filesystem::path>		files )
 	{};
 
 	// Screenshot events, called when screenshot save was successfully saved on disk or if there was an error, if error, error message is also given.
-	virtual VK2D_API void				VK2D_APIENTRY		EventScreenshot(
-		vk2d::Window				*	window,
-		const std::string			&	path,
-		bool							success,
-		const std::string			&	errorMessage )
+	virtual void								VK2D_APIENTRY		EventScreenshot(
+		vk2d::Window						*	window,
+		const std::string					&	path,
+		bool									success,
+		const std::string					&	errorMessage )
 	{};
 };
 
@@ -475,7 +342,7 @@ struct WindowCreateInfo {
 	uint32_t							min_height					= 32;			// Minimum height of the window, will be adjusted to suit the hardware.
 	uint32_t							max_width					= UINT32_MAX;	// Maximum width of the window, will be adjusted to suit the hardware.
 	uint32_t							max_height					= UINT32_MAX;	// Maximum height of the window, will be adjusted to suit the hardware.
-	uint32_t							fullscreen_monitor			= 0;			// Fullscreen monitor index, 0 means windowed, 1 is primary, any value larger than amount of monitors goes to primary monitor.
+	vk2d::Monitor					*	fullscreen_monitor			= {};			// Fullscreen monitor index, nullptr is windowed, use Renderer::GetPrimaryMonitor() to use primary monitor for fullscreen.
 	uint32_t							fullscreen_refresh_rate		= UINT32_MAX;	// Refresh rate in fullscreen mode, UINT32_MAX uses maximum refresh rate available.
 	bool								vsync						= true;			// Vertical synchronization, works in both windowed and fullscreen modes, usually best left on for 2d graphics.
 	Multisamples						samples						= Multisamples::SAMPLE_COUNT_1;	// Multisampling, must be a value in Multisamples enum.
@@ -498,6 +365,16 @@ private:
 public:
 	VK2D_API																		~Window();
 
+	// Signal that the window should now close. This function does not actually close the window
+	// but rather just sets a flag that it should close, the main program will have to manually
+	// remove the window from Renderer, this function will however hide the window.
+	VK2D_API void										VK2D_APIENTRY				CloseWindow();
+
+	// Checks if the window wants to close.
+	// Returns:
+	// true if the window requested to be removed and closed, false if the window is good to stay open.
+	VK2D_API bool										VK2D_APIENTRY				ShouldClose();
+
 	// Update window events. Need to be called once a frame.
 	VK2D_API void										VK2D_APIENTRY				UpdateEvents();
 
@@ -507,14 +384,58 @@ public:
 	VK2D_API void										VK2D_APIENTRY				TakeScreenshot(
 		std::filesystem::path							save_path );
 
-	VK2D_API bool										VK2D_APIENTRY				IsFullscreen();
-	VK2D_API bool										VK2D_APIENTRY				SetFullscreen(
-		uint32_t										monitor,
+	// Sets focus to this window, should be called before
+	// entering fullscreen from windowed mode.
+	VK2D_API void										VK2D_APIENTRY				Focus();
+
+	// Sets fullscreen opacity.
+	// Parameters:
+	// [in] opacity: a value between 0 and 1 where 1 is completely opaque and 0 is completely transparent.
+	VK2D_API void										VK2D_APIENTRY				SetOpacity(
+		float											opacity );
+
+	// Gets the fullscreen opacity.
+	// Returns: Opacity of this window in range of 0 to 1 where 1 is completely opaque and 0 is completely transparent.
+	VK2D_API float										VK2D_APIENTRY				GetOpacity();
+
+	// Hides or unhides the window.
+	// Parameters:
+	// [in] hidden: false will unhide the window, true will hide the window, user input is uneffected.
+	VK2D_API void										VK2D_APIENTRY				Hide(
+		bool											hidden );
+
+	// Gets the hidden status of the window.
+	// Returns:
+	// true if hidden, false if visible.
+	VK2D_API bool										VK2D_APIENTRY				IsHidden();
+
+	// Sets the events to be disabled or enabled.
+	// Parameters:
+	// [in] disable_events: true will disable all events, false will enable all events, including closing the window.
+	VK2D_API void										VK2D_APIENTRY				DisableEvents(
+		bool											disable_events );
+
+	// Gets the status of are events disabled or not. If window has no event receiver this will always return true.
+	// Returns:
+	// true if events are disabled, false if they're enabled.
+	VK2D_API bool										VK2D_APIENTRY				IsEventsDisabled();
+
+	// Sets window to fullscreen to a specific window.
+	// Parameters:
+	// [in] monitor: pointer to monitor object. ( See Renderer::GetMonitors() and Renderer::GetPrimaryMonitor() )
+	// [in] frequency: new refresh rate.
+	VK2D_API void										VK2D_APIENTRY				SetFullscreen(
+		vk2d::Monitor								*	monitor,
 		uint32_t										frequency );
+
+	// Checks if the window is fullscreen or not.
+	// Returns:
+	// true if fullscreen, false if windowed.
+	VK2D_API bool										VK2D_APIENTRY				IsFullscreen();
 
 	// Get cursor position.
 	// Returns:
-	// Array of 2 doubles returning the X and Y coordinates of the mouse cursor position.
+	// Array of 2 doubles returning the X and Y coordinates of the mouse cursor position, respectively.
 	VK2D_API std::array<double, 2>						VK2D_APIENTRY				GetCursorPosition();
 
 	// Set cursor position.
@@ -527,6 +448,7 @@ public:
 
 	// Set cursor.
 	// Sets the cursor image for the window, hardware cursor.
+	// Parameters:
 	// [in] cursor: pointer to a Cursor object that we want to use from now on
 	VK2D_API void										VK2D_APIENTRY				SetCursor(
 		vk2d::Cursor								*	cursor );
@@ -550,6 +472,11 @@ public:
 	VK2D_API void										VK2D_APIENTRY				SetTitle(
 		const std::string							&	title );
 
+	// Get window title.
+	// Returns:
+	// Current title of the window.
+	VK2D_API std::string								VK2D_APIENTRY				GetTitle();
+
 	// Set window icon, from image paths.
 	// A set of images are provided so that the window can automatically choose the right size for the task.
 	// Parameters:
@@ -557,64 +484,118 @@ public:
 	VK2D_API void										VK2D_APIENTRY				SetIcon(
 		const std::vector<std::filesystem::path>	&	image_paths );
 
+	// Set window position on screen.
+	// Parameters:
+	// [in] x: new window position x coordinate.
+	// [in] y: new window position y coordinate.
+	VK2D_API void										VK2D_APIENTRY				SetPosition(
+		int32_t											x,
+		int32_t											y );
+
+	// Get window position on screen.
+	// Returns:
+	// An array of 2 int32_t's where first element is X location and second element is Y location.
+	VK2D_API std::array<int32_t, 2>						VK2D_APIENTRY				GetPosition();
+
+	// Sets the window to be minimized or normal.
+	// Parameters:
+	// [in] minimized: true will minimize the window to the taskbar, false if you want to clear it.
+	VK2D_API void										VK2D_APIENTRY				Iconify(
+		bool											minimized );
+
+	// Gets the minimized status of the window.
+	// Returns:
+	// true if the window is minimized, false if normal.
+	VK2D_API bool										VK2D_APIENTRY				IsIconified();
+
+	// Sets the window to be maximized or normal.
+	// Parameters:
+	// [in] maximized: true will maximize the window to fill the screen, false if you want to clear it.
+	VK2D_API void										VK2D_APIENTRY				SetMaximized(
+		bool											maximized );
+
+	// Gets the maximized status of the window.
+	// Returns:
+	// true if the window is maximized, false if normal.
+	VK2D_API bool										VK2D_APIENTRY				GetMaximized();
+
+	// Sets the cursor to be normal, hidden or locked.
+	// Parameters:
+	// [in] new_state: see vk2d::CursorState for more information.
+	VK2D_API void										VK2D_APIENTRY				SetCursorState(
+		vk2d::CursorState								new_state );
+
+	// Returns the state of the cursor. If hidden, the cursor will become
+	// visible outside the window boundaries. If locked the cursor is not
+	// allowed to leave the window boundaries.
+	// Returns:
+	// current state of the cursor. See vk2d::CursorState for more information.
+	VK2D_API vk2d::CursorState							VK2D_APIENTRY				GetCursorState();
+
+	// Begins the render operations. You must call this before using any drawing commands.
+	// For best performance you should calculate game logic first, when you're ready to draw
+	// call this function just before your first draw command.
 	VK2D_API bool										VK2D_APIENTRY				BeginRender();
+
+	// Ends the rendering operations. You must call this after you're done drawing.
+	// This will display the results on screen.
 	VK2D_API bool										VK2D_APIENTRY				EndRender();
 
 	VK2D_API void										VK2D_APIENTRY				DrawTriangleList(
-		const std::vector<Vertex>					&	vertices,
-		const std::vector<VertexIndex_3>			&	indices,
+		const std::vector<vk2d::Vertex>				&	vertices,
+		const std::vector<vk2d::VertexIndex_3>		&	indices,
 		bool											filled						= true,
-		TextureResource								*	texture						= nullptr );
+		vk2d::TextureResource						*	texture						= nullptr );
 
 	VK2D_API void										VK2D_APIENTRY				DrawLineList(
-		const std::vector<Vertex>					&	vertices,
-		const std::vector<VertexIndex_2>			&	indices,
-		TextureResource								*	texture						= nullptr );
+		const std::vector<vk2d::Vertex>				&	vertices,
+		const std::vector<vk2d::VertexIndex_2>		&	indices,
+		vk2d::TextureResource						*	texture						= nullptr );
 
 	VK2D_API void										VK2D_APIENTRY				DrawPointList(
-		const std::vector<Vertex>					&	vertices,
-		TextureResource								*	texture						= nullptr );
+		const std::vector<vk2d::Vertex>				&	vertices,
+		vk2d::TextureResource						*	texture						= nullptr );
 
 	VK2D_API void										VK2D_APIENTRY				DrawLine(
-		Vector2d										point_1,
-		Vector2d										point_2,
-		Color											color						= { 1.0f, 1.0f, 1.0f, 1.0f } );
+		vk2d::Vector2d									point_1,
+		vk2d::Vector2d									point_2,
+		vk2d::Color										color						= { 1.0f, 1.0f, 1.0f, 1.0f } );
 
 	VK2D_API void										VK2D_APIENTRY				DrawBox(
-		Vector2d										top_left,
-		Vector2d										bottom_right,
+		vk2d::Vector2d									top_left,
+		vk2d::Vector2d									bottom_right,
 		bool											filled						= true,
-		Color											color						= { 1.0f, 1.0f, 1.0f, 1.0f } );
+		vk2d::Color										color						= { 1.0f, 1.0f, 1.0f, 1.0f } );
 
 	VK2D_API void										VK2D_APIENTRY				DrawCircle(
-		Vector2d										top_left,
-		Vector2d										bottom_right,
+		vk2d::Vector2d									top_left,
+		vk2d::Vector2d									bottom_right,
 		bool											filled						= true,
 		float											edge_count					= 64.0f,
-		Color											color						= { 1.0f, 1.0f, 1.0f, 1.0f } );
+		vk2d::Color										color						= { 1.0f, 1.0f, 1.0f, 1.0f } );
 
 	VK2D_API void										VK2D_APIENTRY				DrawPie(
-		Vector2d										top_left,
-		Vector2d										bottom_right,
+		vk2d::Vector2d									top_left,
+		vk2d::Vector2d									bottom_right,
 		float											begin_angle_radians,
 		float											coverage,
 		bool											filled						= true,
 		float											edge_count					= 64.0f,
-		Color											color						= { 1.0f, 1.0f, 1.0f, 1.0f } );
+		vk2d::Color										color						= { 1.0f, 1.0f, 1.0f, 1.0f } );
 
 	VK2D_API void										VK2D_APIENTRY				DrawPieBox(
-		Vector2d										top_left,
-		Vector2d										bottom_right,
+		vk2d::Vector2d									top_left,
+		vk2d::Vector2d									bottom_right,
 		float											begin_angle_radians,
 		float											coverage,
 		bool											filled						= true,
-		Color											color						= { 1.0f, 1.0f, 1.0f, 1.0f } );
+		vk2d::Color										color						= { 1.0f, 1.0f, 1.0f, 1.0f } );
 
 	VK2D_API void										VK2D_APIENTRY				DrawTexture(
-		Vector2d										top_left,
-		Vector2d										bottom_right,
+		vk2d::Vector2d									top_left,
+		vk2d::Vector2d									bottom_right,
 		vk2d::TextureResource						*	texture,
-		Color											color						= { 1.0f, 1.0f, 1.0f, 1.0f } );
+		vk2d::Color										color						= { 1.0f, 1.0f, 1.0f, 1.0f } );
 
 	VK2D_API void										VK2D_APIENTRY				DrawMesh(
 		const vk2d::Mesh							&	mesh );
@@ -631,6 +612,7 @@ private:
 // Cursor objects hold a cursor image and the cursor image hot spot.
 class Cursor {
 	friend class vk2d::Window;
+	friend class vk2d::_internal::WindowImpl;
 
 public:
 	// Cursor constructor, image path version.
@@ -678,13 +660,114 @@ public:
 
 	VK2D_API std::array<uint32_t, 2>			VK2D_APIENTRY						GetExtent();
 	VK2D_API std::array<int32_t, 2>				VK2D_APIENTRY						GetHotSpot();
-	VK2D_API const std::vector<vk2d::Color>	&	VK2D_APIENTRY						GetPixelData();
+	VK2D_API std::vector<vk2d::Color>			VK2D_APIENTRY						GetPixelData();
 
 private:
 	std::unique_ptr<vk2d::_internal::CursorImpl>	impl							= nullptr;
 
 	bool										is_good								= {};
 };
+
+
+
+
+
+
+
+// Monitor video mode tells you one of the supported modes the monitor can natively work in.
+struct MonitorVideoMode {
+	uint32_t			size_x;
+	uint32_t			size_y;
+	uint32_t			redBits;
+	uint32_t			greenBits;
+	uint32_t			blueBits;
+	uint32_t			refreshRate;
+};
+
+// Gamma ramp for manual gamma adjustment per color
+struct GammaRamp {
+	std::vector<uint16_t>		red;
+	std::vector<uint16_t>		green;
+	std::vector<uint16_t>		blue;
+	uint32_t					count;
+};
+
+
+
+// Monitor object holds information about the physical monitor
+class Monitor {
+	friend class vk2d::Window;
+	friend class vk2d::_internal::WindowImpl;
+	friend void vk2d::_internal::UpdateMonitorLists();
+
+	// Monitor constructor from data directly, used internally.
+	VK2D_API																				Monitor(
+		std::unique_ptr<vk2d::_internal::MonitorImpl>	&&	preconstructed_impl );
+
+public:
+	// Monitor constructor for an empty monitor.
+	VK2D_API																				Monitor()			= default;
+
+	// Monitor copy constructor.
+	VK2D_API																				Monitor(
+		const vk2d::Monitor								&	other );
+
+	// Monitor move constructor.
+	VK2D_API																				Monitor(
+		vk2d::Monitor									&&	other )							= default;
+
+	// Monitor destructor.
+	VK2D_API																				~Monitor()			= default;
+
+	// Get current video mode, resolution, bits per color and refresh rate.
+	// Returns:
+	// A const reference to MonitorVideoMode object.
+	VK2D_API vk2d::MonitorVideoMode							VK2D_APIENTRY					GetCurrentVideoMode() const;
+
+	// Get all video modes, resolutions, bits per color and refresh rates.
+	// Returns:
+	// A vector of MonitorVideoMode objects.
+	VK2D_API std::vector<vk2d::MonitorVideoMode>			VK2D_APIENTRY					GetVideoModes() const;
+
+	// Set monitor gamma.
+	// Parameters:
+	// [in] gamma: gamma value between 0 and 1.
+	VK2D_API void											VK2D_APIENTRY					SetGamma(
+		float												gamma );
+
+	// Get monitor gamma ramp.
+	// Gamma ramps work similarly to gamma but per color and per color value.
+	// Returns:
+	// GammaRamp object which will tell you gamma per color.
+	VK2D_API vk2d::GammaRamp								VK2D_APIENTRY					GetGammaRamp();
+
+	// Set monitor gamma ramp.
+	// Gamma ramps work similarly to gamma but per color and per color value.
+	// It is recommended that the amount of gamma ramp values is set to 255
+	// as that is supported by all monitors on all platforms.
+	// Parameters:
+	// [in] ramp: GammaRamp object into which we should change the gamma to.
+	VK2D_API void											VK2D_APIENTRY					SetGammaRamp(
+		const vk2d::GammaRamp							&	ramp );
+
+	// Copy operator.
+	VK2D_API vk2d::Monitor								&	VK2D_APIENTRY					operator=(
+		const vk2d::Monitor								&	other );
+
+	// Move operator.
+	VK2D_API vk2d::Monitor								&	VK2D_APIENTRY					operator=(
+		vk2d::Monitor									&&	other )							= default;
+
+	VK2D_API bool											VK2D_APIENTRY					IsGood();
+
+private:
+	std::unique_ptr<vk2d::_internal::MonitorImpl>			impl							= nullptr;
+
+	bool													is_good							= {};
+};
+
+
+
 
 
 
