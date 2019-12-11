@@ -170,6 +170,10 @@ public:
 	// ANY THREAD!
 	bool												IsGood() const;
 
+	// ANY THREAD!
+	// Meant for shutdown. Can add up to a millisecond of wasted time, so not for runtime use.
+	void												WaitIdle();
+
 private:
 	uint64_t											AddTask(
 		std::unique_ptr<Task>							new_task );

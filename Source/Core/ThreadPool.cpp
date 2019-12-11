@@ -180,10 +180,7 @@ ThreadPool::~ThreadPool()
 	shutting_down	= true;
 
 	// Wait for all the work to be done.
-	while( !thread_shared_resource->IsTaskListEmpty() ) {
-		thread_shared_resource->thread_wakeup.notify_all();
-		std::this_thread::sleep_for( std::chrono::milliseconds( 1 ) );
-	}
+	WaitIdle();
 
 	// Signal all threads to exit.
 	thread_shared_resource->threads_should_exit	= true;
@@ -213,6 +210,15 @@ std::thread::id ThreadPool::GetThreadID( uint32_t thread_index ) const
 bool ThreadPool::IsGood() const
 {
 	return is_good;
+}
+
+void ThreadPool::WaitIdle()
+{
+	while( !thread_shared_resource->IsTaskListEmpty() ) {
+		thread_shared_resource->thread_wakeup.notify_all();
+		std::this_thread::sleep_for( std::chrono::milliseconds( 1 ) );
+	}
+	assert( thread_shared_resource->IsTaskListEmpty() );
 }
 
 std::atomic_uint64_t task_index_counter		= 0;

@@ -16,28 +16,6 @@ namespace _internal {
 
 
 
-ResourceManagerImpl::ResourceManagerImpl( _internal::RendererImpl * parent_renderer )
-{
-	parent			= parent_renderer;
-	assert( parent );
-
-	device			= parent->GetVulkanDevice();
-	assert( device );
-
-	thread_pool		= parent->GetThreadPool();
-	assert( thread_pool );
-
-	loader_threads	= parent->GetLoaderThreads();
-
-	is_good		= true;
-}
-
-ResourceManagerImpl::~ResourceManagerImpl()
-{
-
-}
-
-
 // Load task works on the resource list through pointers
 class LoadTask : public _internal::Task {
 public:
@@ -80,6 +58,40 @@ public:
 	ResourceManagerImpl				*	resource_manager		= {};
 	std::unique_ptr<Resource>			resource				= {};
 };
+
+
+
+
+
+ResourceManagerImpl::ResourceManagerImpl( _internal::RendererImpl * parent_renderer )
+{
+	parent			= parent_renderer;
+	assert( parent );
+
+	device			= parent->GetVulkanDevice();
+	assert( device );
+
+	thread_pool		= parent->GetThreadPool();
+	assert( thread_pool );
+
+	loader_threads	= parent->GetLoaderThreads();
+
+	is_good		= true;
+}
+
+ResourceManagerImpl::~ResourceManagerImpl()
+{
+	std::lock_guard<std::mutex> lock_guard( resources_mutex );
+
+	auto it = resources.begin();
+	while( it != resources.end() ) {
+		( *it )->WaitUntilLoaded();
+		thread_pool->ScheduleTask( std::make_unique<UnloadTask>( this, std::move( *it ) ), { ( *it )->GetLoaderThread() } );
+		it = resources.erase( it );
+	}
+
+	thread_pool->WaitIdle();
+}
 
 
 
@@ -138,6 +150,7 @@ void ResourceManagerImpl::DestroyResource(
 	resource->WaitUntilLoaded();
 
 	std::lock_guard<std::mutex> lock_guard( resources_mutex );
+
 	// find resource if it exists
 	auto it = resources.begin();
 	while( it != resources.end() ) {
