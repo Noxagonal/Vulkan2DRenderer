@@ -96,9 +96,15 @@ ResourceManagerImpl::~ResourceManagerImpl()
 
 
 TextureResource * ResourceManagerImpl::LoadTextureResource(
-	std::filesystem::path				file_path )
+	const std::filesystem::path		&	file_path )
 {
 	std::lock_guard<std::mutex> lock_guard( resources_mutex );
+
+	/*
+	// RETURNING EXISTING RESOURCES IS NOT SUPPORTED ANYMORE.
+	// User will keep track of resources, resource manager only makes
+	// sure everything gets destroyed at the end of the application.
+
 	// find resource if it exists
 	for( auto & res : resources ) {
 		auto texres = dynamic_cast<TextureResource*>( res.get() );
@@ -106,8 +112,8 @@ TextureResource * ResourceManagerImpl::LoadTextureResource(
 			return texres;
 		}
 	}
+	*/
 
-	// Not found in resources, create it
 	auto resource		= std::unique_ptr<TextureResource>( new TextureResource( this ) );
 	auto resource_ptr	= resource.get();
 	if( !resource || !resource->IsGood() ) return nullptr; // Could not create resource.
