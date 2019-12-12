@@ -8,6 +8,7 @@
 #include "../Header/Core/ThreadPool.h"
 #include "../Header/Core/ThreadPrivateResources.h"
 #include "../Header/Core/DescriptorSet.h"
+#include "../Header/Impl/WindowImpl.h"
 
 #include "../Shaders/shader.vert.spv.h"
 #include "../Shaders/shader.frag.spv.h"
@@ -18,6 +19,8 @@
 
 #include <sstream>
 #include <iostream>
+#include <vector>
+#include <list>
 
 
 namespace vk2d {
@@ -32,14 +35,134 @@ namespace _internal {
 
 
 
+vk2d::Monitor									primary_monitor				= {};
+std::vector<vk2d::Monitor>						all_monitors				= {};
+std::list<vk2d::_internal::RendererImpl*>		renderer_listeners	= {};
+
+void UpdateMonitorLists()
+{
+	auto BuildMonitorData = [](
+		GLFWmonitor		*	monitor
+		) -> std::unique_ptr<vk2d::_internal::MonitorImpl>
+	{
+		VkOffset2D position {};
+		{
+			int posX = 0, posY = 0;
+			glfwGetMonitorPos( monitor, &posX, &posY );
+			position		= { int32_t( posX ), int32_t( posY ) };
+		}
+
+		VkExtent2D physical_size {};
+		{
+			int widthMM = 0, heightMM = 0;
+			glfwGetMonitorPhysicalSize( monitor, &widthMM, &heightMM );
+			physical_size	= { uint32_t( widthMM ), uint32_t( heightMM ) };
+		}
+
+		std::string					name					= glfwGetMonitorName( monitor );
+		vk2d::MonitorVideoMode		current_video_mode		= {};
+		{
+			auto glfw_current_video_mode	= glfwGetVideoMode( monitor );
+			current_video_mode.size_x		= uint32_t( glfw_current_video_mode->width );
+			current_video_mode.size_y		= uint32_t( glfw_current_video_mode->height );
+			current_video_mode.redBits		= uint32_t( glfw_current_video_mode->redBits );
+			current_video_mode.greenBits	= uint32_t( glfw_current_video_mode->greenBits );
+			current_video_mode.blueBits		= uint32_t( glfw_current_video_mode->blueBits );
+			current_video_mode.refreshRate	= uint32_t( glfw_current_video_mode->refreshRate );
+		}
+
+		std::vector<vk2d::MonitorVideoMode> video_modes		= {};
+		{
+			int vidModeCount = 0;
+			auto glfw_video_modes = glfwGetVideoModes( monitor, &vidModeCount );
+			video_modes.resize( vidModeCount );
+			for( int i = 0; i < vidModeCount; ++i ) {
+				video_modes[ i ].size_x			= uint32_t( glfw_video_modes[ i ].width );
+				video_modes[ i ].size_y			= uint32_t( glfw_video_modes[ i ].height );
+				video_modes[ i ].redBits		= glfw_video_modes[ i ].redBits;
+				video_modes[ i ].greenBits		= glfw_video_modes[ i ].greenBits;
+				video_modes[ i ].blueBits		= glfw_video_modes[ i ].blueBits;
+				video_modes[ i ].refreshRate	= glfw_video_modes[ i ].refreshRate;
+			};
+		}
+
+
+		return std::make_unique<vk2d::_internal::MonitorImpl>(
+			monitor,
+			position,
+			physical_size,
+			name,
+			current_video_mode,
+			video_modes
+			);
+	};
+
+	// All monitors
+	vk2d::_internal::all_monitors.clear();
+	int monitorCount = 0;
+	auto monitors = glfwGetMonitors( &monitorCount );
+	vk2d::_internal::all_monitors.reserve( monitorCount );
+	for( int i = 0; i < monitorCount; ++i ) {
+
+		GLFWmonitor * monitor		= monitors[ i ];
+		vk2d::_internal::all_monitors.push_back( std::move( vk2d::Monitor( BuildMonitorData( monitor ) ) ) );
+	}
+
+	// primary monitor
+	vk2d::_internal::primary_monitor = std::move( Monitor( BuildMonitorData( glfwGetPrimaryMonitor() ) ) );
+
+	// callback
+	for( auto l : renderer_listeners ) {
+		if( l->monitor_update_callback ) {
+			l->monitor_update_callback();
+		}
+	}
+}
+
+void glfwMonitorCallback(
+	GLFWmonitor		*	monitor,
+	int					event
+)
+{
+	UpdateMonitorLists();
+}
+
+
+
+void glfwJoystickEventCallback( int joystick, int event )
+{
+	if( event == GLFW_CONNECTED ) {
+		std::string joystic_name = glfwGetJoystickName( joystick );
+
+		for( auto l : renderer_listeners ) {
+			if( l->GetGamepadEventCallback() ) {
+				l->GetGamepadEventCallback()( vk2d::Gamepad( joystick ), vk2d::GamepadEvent::CONNECTED, joystic_name );
+			}
+		}
+	} else {
+		for( auto l : renderer_listeners ) {
+			if( l->GetGamepadEventCallback() ) {
+				l->GetGamepadEventCallback()( vk2d::Gamepad( joystick ), vk2d::GamepadEvent::DISCONNECTED, std::string( "" ) );
+			}
+		}
+	}
+}
+
+
+
 uint64_t RendererImpl::renderer_count				= 0;
 
 RendererImpl::RendererImpl( const RendererCreateInfo & renderer_create_info )
 {
+	vk2d::_internal::renderer_listeners.push_back( this );
+
 	// Initialize glfw if this is the first renderer.
 	if( renderer_count == 0 ) {
 		glfwInit();
 		glfwWindowHint( GLFW_CLIENT_API, GLFW_NO_API );
+		glfwSetMonitorCallback( glfwMonitorCallback );
+		glfwSetJoystickCallback( glfwJoystickEventCallback );
+		UpdateMonitorLists();
 	}
 	++renderer_count;
 
@@ -54,7 +177,7 @@ RendererImpl::RendererImpl( const RendererCreateInfo & renderer_create_info )
 	create_info_copy	= renderer_create_info;
 	report_function		= create_info_copy.report_function;
 
-	// Introduce layers and extensions here
+//	Introduce layers and extensions here
 //	instance_layers;
 //	instance_extensions;
 	device_extensions.push_back( VK_KHR_SWAPCHAIN_EXTENSION_NAME );
@@ -106,6 +229,83 @@ RendererImpl::~RendererImpl()
 	if( renderer_count == 0 ) {
 		glfwTerminate();
 	}
+
+	vk2d::_internal::renderer_listeners.remove( this );
+}
+
+std::vector<vk2d::Monitor*> RendererImpl::GetMonitors()
+{
+	std::vector<vk2d::Monitor*> ret;
+	ret.reserve( vk2d::_internal::all_monitors.size() );
+
+	for( auto & m : vk2d::_internal::all_monitors ) {
+		ret.push_back( &m );
+	}
+
+	return ret;
+}
+
+vk2d::Monitor * RendererImpl::GetPrimaryMonitor()
+{
+	return &vk2d::_internal::primary_monitor;
+}
+
+void RendererImpl::SetMonitorUpdateCallback( vk2d::MonitorUpdateCallbackFun monitor_update_callback_funtion )
+{
+	monitor_update_callback		= monitor_update_callback_funtion;
+}
+
+vk2d::GamepadEventCallbackFun RendererImpl::GetGamepadEventCallback()
+{
+	return vk2d::GamepadEventCallbackFun();
+}
+
+void RendererImpl::SetGamepadEventCallback(
+	vk2d::GamepadEventCallbackFun		joystick_event_callback_function
+)
+{
+	joystick_event_callback		= joystick_event_callback_function;
+}
+
+bool RendererImpl::IsGamepadPresent( vk2d::Gamepad joystick )
+{
+	if( glfwJoystickIsGamepad( int( joystick ) ) == GLFW_TRUE ) {
+		return true;
+	} else {
+		return false;
+	}
+}
+
+std::string RendererImpl::GetGamepadName( vk2d::Gamepad gamepad )
+{
+	return glfwGetGamepadName( int( gamepad ) );
+}
+
+vk2d::GamepadState RendererImpl::QueryGamepadState(
+	vk2d::Gamepad			gamepad )
+{
+	vk2d::GamepadState	gamepad_state {};
+	GLFWgamepadstate	glfw_gamepad_state {};
+
+	int32_t button_array_size	= int32_t( sizeof( glfw_gamepad_state.buttons ) / sizeof( *glfw_gamepad_state.buttons ) );
+	button_array_size			= std::min( button_array_size, int32_t( gamepad_state.buttons.size() ) );
+
+	int32_t axes_array_size		= int32_t( sizeof( glfw_gamepad_state.axes ) / sizeof( *glfw_gamepad_state.axes ) );
+	axes_array_size				= std::min( axes_array_size, int32_t( gamepad_state.axes.size() ) );
+
+	if( glfwGetGamepadState( int( gamepad ), &glfw_gamepad_state ) != GLFW_FALSE ) {
+
+		for( int i = 0; i < button_array_size; ++i ) {
+			gamepad_state.buttons[ i ]		= bool( glfw_gamepad_state.buttons[ i ] );
+		}
+		for( int i = 0; i < axes_array_size; ++i ) {
+			gamepad_state.axes[ i ]			= float( glfw_gamepad_state.axes[ i ] );
+		}
+
+		return gamepad_state;
+	} else {
+		return {};
+	}
 }
 
 
@@ -116,7 +316,7 @@ RendererImpl::~RendererImpl()
 
 
 
-Window * RendererImpl::CreateWindowOutput(
+Window * RendererImpl::CreateOutputWindow(
 	WindowCreateInfo	&	window_create_info
 )
 {
@@ -137,7 +337,7 @@ Window * RendererImpl::CreateWindowOutput(
 
 
 
-void RendererImpl::CloseWindowOutput(
+void RendererImpl::CloseOutputWindow(
 	Window				*	window
 )
 {
@@ -912,14 +1112,18 @@ bool RendererImpl::CreateDeviceMemoryPool()
 
 bool RendererImpl::CreateThreadPool()
 {
-	uint32_t thread_count			= std::thread::hardware_concurrency();
-	if( thread_count == 0 ) thread_count = 8;
+	uint32_t thread_count					= uint32_t( std::thread::hardware_concurrency() );
+	if( thread_count == 0 ) thread_count	= 8;
 	--thread_count;
 
-	uint32_t loader_thread_count	= thread_count / 5;
-	uint32_t general_thread_count	= thread_count - loader_thread_count;
-	if( loader_thread_count == 0 )	loader_thread_count = 1;
-	if( general_thread_count == 0 )	general_thread_count = 1;
+	uint32_t loader_thread_count = create_info_copy.resource_loader_thread_count;
+	if( loader_thread_count == UINT32_MAX )		loader_thread_count		= thread_count / 2;
+	if( loader_thread_count > thread_count )	loader_thread_count		= thread_count;
+	if( loader_thread_count == 0 )				loader_thread_count		= 1;
+
+	uint32_t general_thread_count = thread_count - loader_thread_count;
+	if( general_thread_count > thread_count )	general_thread_count	= thread_count;
+	if( general_thread_count == 0 )				general_thread_count	= 1;
 
 	std::vector<std::unique_ptr<ThreadPrivateResource>> thread_resources;
 	for( uint32_t i = 0; i < loader_thread_count; ++i ) {
@@ -1052,7 +1256,7 @@ bool RendererImpl::CreateDefaultTexture()
 				pool_create_info.sType				= VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
 				pool_create_info.pNext				= nullptr;
 				pool_create_info.flags				= VK_COMMAND_POOL_CREATE_TRANSIENT_BIT;
-				pool_create_info.queueFamilyIndex	= primary_render_queue.queueFamilyIndex;
+				pool_create_info.queueFamilyIndex	= primary_render_queue.GetQueueFamilyIndex();
 				if( vkCreateCommandPool(
 					device,
 					&pool_create_info,
@@ -1214,9 +1418,8 @@ bool RendererImpl::CreateDefaultTexture()
 				submit_info.pCommandBuffers			= &cbuffer;
 				submit_info.signalSemaphoreCount	= 0;
 				submit_info.pSignalSemaphores		= nullptr;
-				if( vkQueueSubmit(
-					primary_render_queue.queue,
-					1, &submit_info,
+				if( primary_render_queue.Submit(
+					submit_info,
 					fence
 				) != VK_SUCCESS ) {
 					if( report_function ) {

@@ -27,12 +27,12 @@ public:
 	~ResourceManagerImpl();
 
 	TextureResource								*	LoadTextureResource(
-		std::filesystem::path						file_path );
+		const std::filesystem::path				&	file_path );
 
 	TextureResource								*	CreateTextureResource(
 		uint32_t									size_x,
 		uint32_t									size_y,
-		const std::vector<uint8_t>				&	texture_data );
+		const std::vector<vk2d::Texel>			&	texture_data );
 
 	void											DestroyResource(
 		Resource								*	resource );
@@ -46,6 +46,11 @@ public:
 	bool											IsGood() const;
 
 private:
+	// Some resources will need to use the same thread where they were
+	// originally created, for example if a resource uses a memory pool
+	// from a thread, memory should be freed to the same thread memory
+	// pool, idea of per thread resource scheme is to reduce mutex usage.
+	// This is just to select a loader thread prior to resource loading.
 	uint32_t										SelectLoaderThread();
 
 	_internal::RendererImpl						*	parent								= {};

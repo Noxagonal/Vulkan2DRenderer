@@ -25,6 +25,7 @@ VK2D_API					Window::Window(
 )
 {
 	impl	= std::make_unique<vk2d::_internal::WindowImpl>(
+		this,
 		renderer_parent,
 		window_create_info
 		);
@@ -47,6 +48,242 @@ VK2D_API Window::~Window()
 {
 	impl	= nullptr;
 }
+
+VK2D_API void VK2D_APIENTRY Window::CloseWindow()
+{
+	if( impl ) {
+		impl->CloseWindow();
+	}
+}
+
+VK2D_API bool VK2D_APIENTRY Window::ShouldClose()
+{
+	if( impl ) {
+		return impl->ShouldClose();
+	}
+	return true;
+}
+
+VK2D_API void VK2D_APIENTRY Window::UpdateEvents()
+{
+	if( impl ) {
+		impl->UpdateEvents();
+	}
+}
+
+VK2D_API void VK2D_APIENTRY Window::TakeScreenshot( std::filesystem::path save_path )
+{
+	if( impl ) {
+		impl->TakeScreenshot( save_path );
+	}
+}
+
+VK2D_API void VK2D_APIENTRY Window::Focus()
+{
+	if( impl ) {
+		impl->Focus();
+	}
+}
+
+VK2D_API void VK2D_APIENTRY Window::SetOpacity(
+	float			opacity
+)
+{
+	if( impl ) {
+		impl->SetOpacity( opacity );
+	}
+}
+
+VK2D_API float VK2D_APIENTRY Window::GetOpacity()
+{
+	if( impl ) {
+		return impl->GetOpacity();
+	}
+	return {};
+}
+
+VK2D_API void VK2D_APIENTRY Window::Hide(
+	bool			hidden
+)
+{
+	if( impl ) {
+		impl->Hide( hidden );
+	}
+}
+
+VK2D_API bool VK2D_APIENTRY Window::IsHidden()
+{
+	if( impl ) {
+		return impl->IsHidden();
+	}
+	return {};
+}
+
+VK2D_API void VK2D_APIENTRY Window::DisableEvents(
+	bool				disable_events
+)
+{
+	if( impl ) {
+		impl->DisableEvents( disable_events );
+	}
+}
+
+VK2D_API bool VK2D_APIENTRY Window::IsEventsDisabled()
+{
+	if( impl ) {
+		return impl->IsEventsDisabled();
+	}
+	return true;
+}
+
+VK2D_API void VK2D_APIENTRY Window::SetFullscreen(
+	vk2d::Monitor		*	monitor,
+	uint32_t				frequency )
+{
+	if( impl ) {
+		impl->SetFullscreen( monitor, frequency );
+	}
+}
+
+VK2D_API bool VK2D_APIENTRY Window::IsFullscreen()
+{
+	if( impl ) {
+		return impl->IsFullscreen();
+	}
+	return {};
+}
+
+VK2D_API std::array<double, 2>VK2D_APIENTRY Window::GetCursorPosition()
+{
+	if( impl ) {
+		return impl->GetCursorPosition();
+	}
+	return {};
+}
+
+VK2D_API void VK2D_APIENTRY Window::SetCursorPosition(
+	double			x,
+	double			y
+)
+{
+	if( impl ) {
+		impl->SetCursorPosition( x, y );
+	}
+}
+
+VK2D_API void VK2D_APIENTRY Window::SetCursor(
+	vk2d::Cursor		*	cursor
+)
+{
+	if( impl ) {
+		impl->SetCursor( cursor );
+	}
+}
+
+VK2D_API std::string VK2D_APIENTRY Window::GetClipboardString()
+{
+	if( impl ) {
+		return impl->GetClipboardString();
+	}
+	return {};
+}
+
+VK2D_API void VK2D_APIENTRY Window::SetClipboardString( const std::string & str )
+{
+	if( impl ) {
+		impl->SetClipboardString( str );
+	}
+}
+
+VK2D_API void VK2D_APIENTRY Window::SetTitle( const std::string & title )
+{
+	if( impl ) {
+		impl->SetTitle( title );
+	}
+}
+
+VK2D_API std::string VK2D_APIENTRY Window::GetTitle()
+{
+	if( impl ) {
+		return impl->GetTitle();
+	}
+	return {};
+}
+
+VK2D_API void VK2D_APIENTRY Window::SetIcon(
+	const std::vector<std::filesystem::path>		&	image_paths )
+{
+	if( impl ) {
+		impl->SetIcon( image_paths );
+	}
+}
+
+VK2D_API void VK2D_APIENTRY Window::SetPosition(
+	int32_t				x,
+	int32_t				y
+)
+{
+	if( impl ) {
+		impl->SetPosition( x, y );
+	}
+}
+
+VK2D_API std::array<int32_t, 2>VK2D_APIENTRY Window::GetPosition()
+{
+	if( impl ) {
+		return impl->GetPosition();
+	}
+	return {};
+}
+
+VK2D_API void VK2D_APIENTRY Window::Iconify( bool iconified )
+{
+	if( impl ) {
+		impl->Iconify( iconified );
+	}
+}
+
+VK2D_API bool VK2D_APIENTRY Window::IsIconified()
+{
+	if( impl ) {
+		return impl->IsIconified();
+	}
+	return {};
+}
+
+VK2D_API void VK2D_APIENTRY Window::SetMaximized( bool maximized )
+{
+	if( impl ) {
+		impl->SetMaximized( maximized );
+	}
+}
+
+VK2D_API bool VK2D_APIENTRY Window::GetMaximized()
+{
+	if( impl ) {
+		return impl->GetMaximized();
+	}
+	return {};
+}
+
+VK2D_API void VK2D_APIENTRY Window::SetCursorState( vk2d::CursorState new_state )
+{
+	if( impl ) {
+		impl->SetCursorState( new_state );
+	}
+}
+
+VK2D_API vk2d::CursorState VK2D_APIENTRY Window::GetCursorState()
+{
+	if( impl ) {
+		return impl->GetCursorState();
+	}
+	return {};
+}
+
+
+
+
 
 
 
@@ -241,5 +478,223 @@ VK2D_API void VK2D_APIENTRY Window::DrawMesh(
 
 
 
+
+
+
+Cursor::Cursor(
+	const std::filesystem::path		&	image_path,
+	int32_t								hot_spot_x,
+	int32_t								hot_spot_y
+)
+{
+	impl		= std::make_unique<vk2d::_internal::CursorImpl>(
+		image_path,
+		hot_spot_x,
+		hot_spot_y
+	);
+	if( impl && impl->IsGood() ) {
+		is_good			= true;
+	} else {
+		is_good			= false;
+		impl			= nullptr;
+	}
+}
+
+Cursor::Cursor(
+	uint32_t							image_size_x,
+	uint32_t							image_size_y,
+	const std::vector<vk2d::Color>	&	image_data,
+	int32_t								hot_spot_x,
+	int32_t								hot_spot_y
+)
+{
+	impl		= std::make_unique<vk2d::_internal::CursorImpl>(
+		image_size_x,
+		image_size_y,
+		image_data,
+		hot_spot_x,
+		hot_spot_y
+	);
+	if( impl && impl->IsGood() ) {
+		is_good			= true;
+	} else {
+		is_good			= false;
+		impl			= nullptr;
+	}
+}
+
+Cursor::Cursor(
+	vk2d::Cursor	&	other
+)
+{
+	impl		= std::make_unique<vk2d::_internal::CursorImpl>(
+		other.impl->GetExtent()[ 0 ],
+		other.impl->GetExtent()[ 1 ],
+		other.impl->GetPixelData(),
+		other.impl->GetHotSpot()[ 0 ],
+		other.impl->GetHotSpot()[ 1 ]
+	);
+	if( impl && impl->IsGood() ) {
+		is_good			= true;
+	} else {
+		is_good			= false;
+		impl			= nullptr;
+	}
+}
+
+Cursor::~Cursor()
+{}
+
+VK2D_API vk2d::Cursor & VK2D_APIENTRY Cursor::operator=(
+	vk2d::Cursor	&	other )
+{
+	impl		= std::make_unique<vk2d::_internal::CursorImpl>(
+		other.impl->GetExtent()[ 0 ],
+		other.impl->GetExtent()[ 1 ],
+		other.impl->GetPixelData(),
+		other.impl->GetHotSpot()[ 0 ],
+		other.impl->GetHotSpot()[ 1 ]
+		);
+	if( impl && impl->IsGood() ) {
+		is_good			= true;
+	} else {
+		is_good			= false;
+		impl			= nullptr;
+	}
+
+	return *this;
+}
+
+VK2D_API std::array<uint32_t, 2> VK2D_APIENTRY Cursor::GetExtent()
+{
+	if( impl ) {
+		return impl->GetExtent();
+	}
+	return {};
+}
+
+VK2D_API std::array<int32_t, 2> VK2D_APIENTRY Cursor::GetHotSpot()
+{
+	if( impl ) {
+		return impl->GetHotSpot();
+	}
+	return {};
+}
+
+VK2D_API std::vector<vk2d::Color> VK2D_APIENTRY Cursor::GetPixelData()
+{
+	if( impl ) {
+		return impl->GetPixelData();
+	}
+	return {};
+}
+
+
+
+
+
+
+
+Monitor::Monitor(
+	std::unique_ptr<vk2d::_internal::MonitorImpl>	&&	preconstructed_impl
+)
+{
+	impl	= std::move( preconstructed_impl );
+	if( impl && impl->IsGood() ) {
+		is_good		= true;
+	} else {
+		is_good		= false;
+		impl		= nullptr;
+	}
+}
+
+vk2d::Monitor::Monitor(
+	const vk2d::Monitor			&	other
+)
+{
+	impl = std::make_unique<vk2d::_internal::MonitorImpl>(
+		other.impl->monitor,
+		other.impl->position,
+		other.impl->physical_size,
+		other.impl->name,
+		other.impl->current_video_mode,
+		other.impl->video_modes
+	);
+	if( impl && impl->IsGood() ) {
+		is_good		= true;
+	} else {
+		impl		= nullptr;
+		is_good		= false;
+	}
+}
+
+VK2D_API vk2d::MonitorVideoMode VK2D_APIENTRY Monitor::GetCurrentVideoMode() const
+{
+	if( impl ) {
+		return impl->GetCurrentVideoMode();
+	}
+	return {};
+}
+
+VK2D_API std::vector<vk2d::MonitorVideoMode>VK2D_APIENTRY Monitor::GetVideoModes() const
+{
+	if( impl ) {
+		return impl->GetVideoModes();
+	}
+	return {};
+}
+
+VK2D_API void VK2D_APIENTRY Monitor::SetGamma(
+	float		gamma
+)
+{
+	if( impl ) {
+		impl->SetGamma( gamma );
+	}
+}
+
+VK2D_API vk2d::GammaRamp VK2D_APIENTRY Monitor::GetGammaRamp()
+{
+	if( impl ) {
+		return impl->GetGammaRamp();
+	}
+	return {};
+}
+
+VK2D_API void VK2D_APIENTRY Monitor::SetGammaRamp(
+	const vk2d::GammaRamp		&	ramp
+)
+{
+	if( impl ) {
+		impl->SetGammaRamp( ramp );
+	}
+}
+
+VK2D_API vk2d::Monitor & VK2D_APIENTRY Monitor::operator=(
+	const vk2d::Monitor		&	other
+)
+{
+	impl = std::make_unique<vk2d::_internal::MonitorImpl>(
+		other.impl->monitor,
+		other.impl->position,
+		other.impl->physical_size,
+		other.impl->name,
+		other.impl->current_video_mode,
+		other.impl->video_modes
+		);
+	if( impl && impl->IsGood() ) {
+		is_good		= true;
+	} else {
+		impl		= nullptr;
+		is_good		= false;
+	}
+
+	return *this;
+}
+
+VK2D_API bool VK2D_APIENTRY vk2d::Monitor::IsGood()
+{
+	return is_good;
+}
 
 } // vk2d

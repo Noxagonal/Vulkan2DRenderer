@@ -53,9 +53,9 @@ bool vk2d::_internal::ThreadLoaderResource::ThreadBegin()
 
 	// Command buffers
 	{
-		auto primary_render_queue_family_index			= renderer->GetPrimaryRenderQueue().queueFamilyIndex;
-		auto secondary_render_queue_family_index		= renderer->GetSecondaryRenderQueue().queueFamilyIndex;
-		auto primary_transfer_queue_family_index		= renderer->GetPrimaryTransferQueue().queueFamilyIndex;
+		auto primary_render_queue_family_index			= renderer->GetPrimaryRenderQueue().GetQueueFamilyIndex();
+		auto secondary_render_queue_family_index		= renderer->GetSecondaryRenderQueue().GetQueueFamilyIndex();
+		auto primary_transfer_queue_family_index		= renderer->GetPrimaryTransferQueue().GetQueueFamilyIndex();
 
 		VkCommandPoolCreateInfo command_pool_create_info {};
 		command_pool_create_info.sType		= VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;

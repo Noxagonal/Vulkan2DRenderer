@@ -300,7 +300,72 @@ VK2D_API void VK2D_APIENTRY vk2d::Mesh::SetMeshType(
 	vk2d::MeshType				type
 )
 {
-	mesh_type = type;
+	if( !generated ) {
+		mesh_type	= type;
+		return;
+	}
+
+	switch( mesh_type ) {
+	case vk2d::MeshType::TRIANGLE_FILLED:
+		switch( type ) {
+		case vk2d::MeshType::TRIANGLE_FILLED:
+			mesh_type	= type;
+			break;
+		case vk2d::MeshType::TRIANGLE_WIREFRAME:
+			mesh_type	= type;
+			break;
+		case vk2d::MeshType::LINE:
+//			mesh_type	= type;
+			break;
+		case vk2d::MeshType::POINT:
+			mesh_type	= type;
+			break;
+		default:
+			break;
+		}
+		break;
+	case vk2d::MeshType::TRIANGLE_WIREFRAME:
+		switch( type ) {
+		case vk2d::MeshType::TRIANGLE_FILLED:
+			mesh_type	= type;
+			break;
+		case vk2d::MeshType::TRIANGLE_WIREFRAME:
+			mesh_type	= type;
+			break;
+		case vk2d::MeshType::LINE:
+//			mesh_type	= type;
+			break;
+		case vk2d::MeshType::POINT:
+			mesh_type	= type;
+			break;
+		default:
+			break;
+		}
+		break;
+	case vk2d::MeshType::LINE:
+		switch( type ) {
+		case vk2d::MeshType::TRIANGLE_FILLED:
+//			mesh_type	= type;
+			break;
+		case vk2d::MeshType::TRIANGLE_WIREFRAME:
+//			mesh_type	= type;
+			break;
+		case vk2d::MeshType::LINE:
+			mesh_type	= type;
+			break;
+		case vk2d::MeshType::POINT:
+			mesh_type	= type;
+			break;
+		default:
+			break;
+		}
+		break;
+	case vk2d::MeshType::POINT:
+		// Point cannot be anything else.
+		break;
+	default:
+		break;
+	}
 }
 
 
@@ -325,7 +390,9 @@ VK2D_API vk2d::Mesh VK2D_APIENTRY vk2d::GeneratePointMeshFromList(
 		mesh.vertices[ i ].uv_coords		= ( points[ i ] - aabb_origin ) / aabb_size;
 	}
 
-	mesh.SetMeshType( vk2d::MeshType::POINT );
+	mesh.generated				= true;
+	mesh.generated_mesh_type	= vk2d::MeshType::POINT;
+	mesh.SetMeshType( mesh.generated_mesh_type );
 	return mesh;
 }
 
@@ -341,7 +408,9 @@ VK2D_API vk2d::Mesh VK2D_APIENTRY vk2d::GenerateLineMeshFromList(
 		mesh.indices[ d + 1 ] = indices[ i ].indices[ 1 ];
 	}
 
-	mesh.SetMeshType( vk2d::MeshType::LINE );
+	mesh.generated				= true;
+	mesh.generated_mesh_type	= vk2d::MeshType::POINT;
+	mesh.SetMeshType( mesh.generated_mesh_type );
 	return mesh;
 }
 
@@ -360,10 +429,12 @@ VK2D_API vk2d::Mesh VK2D_APIENTRY vk2d::GenerateTriangleMeshFromList(
 	}
 
 	if( filled ) {
-		mesh.SetMeshType( vk2d::MeshType::TRIANGLE_FILLED );
+		mesh.generated_mesh_type	= vk2d::MeshType::TRIANGLE_FILLED;
 	} else {
-		mesh.SetMeshType( vk2d::MeshType::TRIANGLE_WIREFRAME );
+		mesh.generated_mesh_type	= vk2d::MeshType::TRIANGLE_WIREFRAME;
 	}
+	mesh.generated				= true;
+	mesh.SetMeshType( mesh.generated_mesh_type );
 	return mesh;
 }
 
@@ -402,7 +473,9 @@ VK2D_API vk2d::Mesh VK2D_APIENTRY vk2d::GenerateBoxMesh(
 		ret.indices[ 3 ]	= 1;
 		ret.indices[ 4 ]	= 2;
 		ret.indices[ 5 ]	= 3;
-		ret.SetMeshType( vk2d::MeshType::TRIANGLE_FILLED );
+		ret.generated				= true;
+		ret.generated_mesh_type		= vk2d::MeshType::TRIANGLE_FILLED;
+		ret.SetMeshType( ret.generated_mesh_type );
 	} else {
 		// Draw lines
 		ret.indices.resize( 4 * 2 );
@@ -414,7 +487,9 @@ VK2D_API vk2d::Mesh VK2D_APIENTRY vk2d::GenerateBoxMesh(
 		ret.indices[ 5 ]	= 1;
 		ret.indices[ 6 ]	= 1;
 		ret.indices[ 7 ]	= 0;
-		ret.SetMeshType( vk2d::MeshType::LINE );
+		ret.generated				= true;
+		ret.generated_mesh_type		= vk2d::MeshType::LINE;
+		ret.SetMeshType( ret.generated_mesh_type );
 	}
 
 	return ret;
@@ -471,7 +546,9 @@ VK2D_API vk2d::Mesh VK2D_APIENTRY vk2d::GenerateCircleMesh(
 				ret.indices[ size_t( a ) + 2 ]	= i;
 			}
 		}
-		ret.SetMeshType( vk2d::MeshType::TRIANGLE_FILLED );
+		ret.generated				= true;
+		ret.generated_mesh_type		= vk2d::MeshType::TRIANGLE_FILLED;
+		ret.SetMeshType( ret.generated_mesh_type );
 	} else {
 		// Draw lines
 		ret.indices.resize( size_t( edge_count_integer ) * 2 );
@@ -485,7 +562,9 @@ VK2D_API vk2d::Mesh VK2D_APIENTRY vk2d::GenerateCircleMesh(
 			ret.indices[ size_t( edge_count_integer ) * 2LL - 2 ]	= edge_count_integer - 1;
 			ret.indices[ size_t( edge_count_integer ) * 2LL - 1 ]	= 0;
 		}
-		ret.SetMeshType( vk2d::MeshType::LINE );
+		ret.generated				= true;
+		ret.generated_mesh_type		= vk2d::MeshType::LINE;
+		ret.SetMeshType( ret.generated_mesh_type );
 	}
 	return ret;
 }
@@ -616,7 +695,9 @@ VK2D_API vk2d::Mesh VK2D_APIENTRY vk2d::GeneratePieMesh(
 				ret.indices[ a + 2 ]	= uint32_t( i );
 			}
 		}
-		ret.SetMeshType( vk2d::MeshType::TRIANGLE_FILLED );
+		ret.generated				= true;
+		ret.generated_mesh_type		= vk2d::MeshType::TRIANGLE_FILLED;
+		ret.SetMeshType( ret.generated_mesh_type );
 	} else {
 		// Draw lines
 		ret.indices.resize( ret.vertices.size() * 2 );
@@ -627,7 +708,9 @@ VK2D_API vk2d::Mesh VK2D_APIENTRY vk2d::GeneratePieMesh(
 		ret.indices[ ret.indices.size() - 2 ]	= uint32_t( ret.vertices.size() - 1 );
 		ret.indices[ ret.indices.size() - 1 ]	= 0;
 
-		ret.SetMeshType( vk2d::MeshType::LINE );
+		ret.generated				= true;
+		ret.generated_mesh_type		= vk2d::MeshType::LINE;
+		ret.SetMeshType( ret.generated_mesh_type );
 	}
 
 	return ret;
@@ -871,7 +954,9 @@ VK2D_API vk2d::Mesh VK2D_APIENTRY vk2d::GeneratePieBoxMesh(
 			ret.indices.push_back( uint32_t( i ) );
 		}
 
-		ret.SetMeshType( vk2d::MeshType::TRIANGLE_FILLED );
+		ret.generated				= true;
+		ret.generated_mesh_type		= vk2d::MeshType::TRIANGLE_FILLED;
+		ret.SetMeshType( ret.generated_mesh_type );
 
 	} else {
 		ret.indices.reserve( ret.vertices.size() * 2 + 2 );
@@ -882,7 +967,9 @@ VK2D_API vk2d::Mesh VK2D_APIENTRY vk2d::GeneratePieBoxMesh(
 		ret.indices.push_back( uint32_t( ret.vertices.size() - 1 ) );
 		ret.indices.push_back( 0 );
 
-		ret.SetMeshType( vk2d::MeshType::LINE );
+		ret.generated				= true;
+		ret.generated_mesh_type		= vk2d::MeshType::LINE;
+		ret.SetMeshType( ret.generated_mesh_type );
 	}
 
 	return ret;
@@ -946,7 +1033,9 @@ VK2D_API vk2d::Mesh VK2D_APIENTRY vk2d::GenerateLatticeMesh(
 			}
 		}
 
-		ret.SetMeshType( vk2d::MeshType::TRIANGLE_FILLED );
+		ret.generated				= true;
+		ret.generated_mesh_type		= vk2d::MeshType::TRIANGLE_FILLED;
+		ret.SetMeshType( ret.generated_mesh_type );
 
 	} else {
 		// Draw lattice lines.
@@ -970,7 +1059,9 @@ VK2D_API vk2d::Mesh VK2D_APIENTRY vk2d::GenerateLatticeMesh(
 			}
 		}
 
-		ret.SetMeshType( vk2d::MeshType::LINE );
+		ret.generated				= true;
+		ret.generated_mesh_type		= vk2d::MeshType::LINE;
+		ret.SetMeshType( ret.generated_mesh_type );
 	}
 
 	return ret;

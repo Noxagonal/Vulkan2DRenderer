@@ -51,6 +51,9 @@ private:
 	CompleteBufferResource							staging_buffer								= {};
 	CompleteImageResource							image										= {};
 
+	VkExtent2D										extent										= {};
+	std::vector<vk2d::Texel>						texture_data								= {};
+
 	PoolDescriptorSet								descriptor_set								= {};
 
 	VkCommandBuffer									primary_render_command_buffer				= {};

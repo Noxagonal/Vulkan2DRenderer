@@ -4,6 +4,7 @@
 #include "../Header/Impl/ResourceManagerImpl.h"
 #include "../Header/Core/ThreadPool.h"
 #include "../../Include/Interface/TextureResource.h"
+#include "../Header/Impl/TextureResourceImpl.h"
 
 
 
@@ -13,28 +14,6 @@ namespace _internal {
 
 
 
-
-
-ResourceManagerImpl::ResourceManagerImpl( _internal::RendererImpl * parent_renderer )
-{
-	parent			= parent_renderer;
-	assert( parent );
-
-	device			= parent->GetVulkanDevice();
-	assert( device );
-
-	thread_pool		= parent->GetThreadPool();
-	assert( thread_pool );
-
-	loader_threads	= parent->GetLoaderThreads();
-
-	is_good		= true;
-}
-
-ResourceManagerImpl::~ResourceManagerImpl()
-{
-
-}
 
 
 // Load task works on the resource list through pointers
@@ -82,10 +61,50 @@ public:
 
 
 
-TextureResource * ResourceManagerImpl::LoadTextureResource(
-	std::filesystem::path				file_path )
+
+
+ResourceManagerImpl::ResourceManagerImpl( _internal::RendererImpl * parent_renderer )
+{
+	parent			= parent_renderer;
+	assert( parent );
+
+	device			= parent->GetVulkanDevice();
+	assert( device );
+
+	thread_pool		= parent->GetThreadPool();
+	assert( thread_pool );
+
+	loader_threads	= parent->GetLoaderThreads();
+
+	is_good		= true;
+}
+
+ResourceManagerImpl::~ResourceManagerImpl()
 {
 	std::lock_guard<std::mutex> lock_guard( resources_mutex );
+
+	auto it = resources.begin();
+	while( it != resources.end() ) {
+		( *it )->WaitUntilLoaded();
+		thread_pool->ScheduleTask( std::make_unique<UnloadTask>( this, std::move( *it ) ), { ( *it )->GetLoaderThread() } );
+		it = resources.erase( it );
+	}
+
+	thread_pool->WaitIdle();
+}
+
+
+
+TextureResource * ResourceManagerImpl::LoadTextureResource(
+	const std::filesystem::path		&	file_path )
+{
+	std::lock_guard<std::mutex> lock_guard( resources_mutex );
+
+	/*
+	// RETURNING EXISTING RESOURCES IS NOT SUPPORTED ANYMORE.
+	// User will keep track of resources, resource manager only makes
+	// sure everything gets destroyed at the end of the application.
+
 	// find resource if it exists
 	for( auto & res : resources ) {
 		auto texres = dynamic_cast<TextureResource*>( res.get() );
@@ -93,8 +112,8 @@ TextureResource * ResourceManagerImpl::LoadTextureResource(
 			return texres;
 		}
 	}
+	*/
 
-	// Not found in resources, create it
 	auto resource		= std::unique_ptr<TextureResource>( new TextureResource( this ) );
 	auto resource_ptr	= resource.get();
 	if( !resource || !resource->IsGood() ) return nullptr; // Could not create resource.
@@ -111,10 +130,20 @@ TextureResource * ResourceManagerImpl::LoadTextureResource(
 TextureResource * ResourceManagerImpl::CreateTextureResource(
 	uint32_t							size_x,
 	uint32_t							size_y,
-	const std::vector<uint8_t>		&	texture_data )
+	const std::vector<vk2d::Texel>	&	texture_data )
 {
-	assert( 0 );
-	return nullptr;
+	auto resource		= std::unique_ptr<TextureResource>( new TextureResource( this ) );
+	auto resource_ptr	= resource.get();
+	if( !resource || !resource->IsGood() ) return nullptr; // Could not create resource.
+
+	resource->impl->extent			= { size_x, size_y };
+	resource->impl->texture_data	= texture_data;
+	resource->is_from_file	= false;
+	resource->loader_thread	= SelectLoaderThread();
+	resources.push_back( std::move( resource ) );
+
+	thread_pool->ScheduleTask( std::make_unique<LoadTask>( this, resource_ptr ), { resource_ptr->loader_thread } );
+	return resource_ptr;
 }
 
 void ResourceManagerImpl::DestroyResource(
@@ -127,6 +156,7 @@ void ResourceManagerImpl::DestroyResource(
 	resource->WaitUntilLoaded();
 
 	std::lock_guard<std::mutex> lock_guard( resources_mutex );
+
 	// find resource if it exists
 	auto it = resources.begin();
 	while( it != resources.end() ) {

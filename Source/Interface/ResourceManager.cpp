@@ -30,6 +30,20 @@ VK2D_API ResourceManager::~ResourceManager()
 	
 }
 
+VK2D_API TextureResource *VK2D_APIENTRY ResourceManager::CreateTextureResource(
+	uint32_t							extent_x,
+	uint32_t							extent_y,
+	const std::vector<vk2d::Texel>	&	texels
+)
+{
+	if( impl ) return impl->CreateTextureResource(
+		extent_x,
+		extent_y,
+		texels
+	);
+	return nullptr;
+}
+
 VK2D_API TextureResource * VK2D_APIENTRY ResourceManager::LoadTextureResource(
 	std::filesystem::path		file_path
 )

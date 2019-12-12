@@ -13,6 +13,69 @@ namespace vk2d {
 
 namespace _internal {
 
+
+
+VkResult ResolvedQueue::Submit( const VkSubmitInfo & submit_info, VkFence fence )
+{
+	std::lock_guard<std::mutex> lock_guard( *queueMutex );
+
+	return vkQueueSubmit(
+		queue,
+		1,
+		&submit_info,
+		fence
+	);
+}
+
+VkResult ResolvedQueue::Submit( const std::vector<VkSubmitInfo> submit_infos, VkFence fence )
+{
+	std::lock_guard<std::mutex> lock_guard( *queueMutex );
+
+	return vkQueueSubmit(
+		queue,
+		uint32_t( submit_infos.size() ),
+		submit_infos.data(),
+		fence
+	);
+}
+
+VkResult ResolvedQueue::Present( const VkPresentInfoKHR & present_info )
+{
+	std::lock_guard<std::mutex> lock_guard( *queueMutex );
+
+	return vkQueuePresentKHR(
+		queue,
+		&present_info
+	);
+}
+
+VkQueue ResolvedQueue::GetQueue()
+{
+	return queue;
+}
+
+uint32_t ResolvedQueue::GetQueueFamilyIndex()
+{
+	return queueFamilyIndex;
+}
+
+VkBool32 ResolvedQueue::IsPresentationSupported()
+{
+	return supportsPresentation;
+}
+
+std::mutex * ResolvedQueue::GetQueueMutex()
+{
+	return &*queueMutex;
+}
+
+uint32_t ResolvedQueue::GetBasedOn()
+{
+	return basedOn;
+}
+
+
+
 VK2D_API DeviceQueueResolver::DeviceQueueResolver(
 	VkInstance												instance,
 	VkPhysicalDevice										physicalDevice,
@@ -151,21 +214,29 @@ VK2D_API DeviceQueueResolver::DeviceQueueResolver(
 	is_good		= true;
 }
 
+
+
 VK2D_API DeviceQueueResolver::~DeviceQueueResolver()
 {}
+
+
 
 const VK2D_API std::vector<VkDeviceQueueCreateInfo> & VK2D_APIENTRY DeviceQueueResolver::GetDeviceQueueCreateInfos()
 {
 	return queueCreateInfos;
 }
 
+
+
 VK2D_API std::vector<ResolvedQueue> VK2D_APIENTRY DeviceQueueResolver::GetQueues( VkDevice device )
 {
 	std::vector<ResolvedQueue> ret( queueGetInfo.size() );
 	for( uint32_t i=0; i < ret.size(); ++i ) {
-		ret[ i ].queue				= VK_NULL_HANDLE;
-		ret[ i ].queueFamilyIndex	= UINT32_MAX;
-		ret[ i ].basedOn			= UINT32_MAX;
+		ret[ i ].queue					= VK_NULL_HANDLE;
+		ret[ i ].queueFamilyIndex		= UINT32_MAX;
+		ret[ i ].supportsPresentation	= VK_FALSE;
+		ret[ i ].queueMutex				= nullptr;
+		ret[ i ].basedOn				= UINT32_MAX;
 	}
 
 	// get the original queues first
@@ -175,6 +246,7 @@ VK2D_API std::vector<ResolvedQueue> VK2D_APIENTRY DeviceQueueResolver::GetQueues
 				vkGetDeviceQueue( device, queueGetInfo[ i ].queueFamilyIndex, queueGetInfo[ i ].queueIndex, &ret[ i ].queue );
 				ret[ i ].queueFamilyIndex		= queueGetInfo[ i ].queueFamilyIndex;
 				ret[ i ].supportsPresentation	= glfwGetPhysicalDevicePresentationSupport( refInstance, refPhysicalDevice, ret[ i ].queueFamilyIndex );
+				ret[ i ].queueMutex				= std::make_shared<std::mutex>();
 			}
 		}
 	}
@@ -184,6 +256,7 @@ VK2D_API std::vector<ResolvedQueue> VK2D_APIENTRY DeviceQueueResolver::GetQueues
 		if( queueGetInfo[ i ].basedOn != UINT32_MAX ) {
 			ret[ i ].queue				= ret[ queueGetInfo[ i ].basedOn ].queue;
 			ret[ i ].queueFamilyIndex	= ret[ queueGetInfo[ i ].basedOn ].queueFamilyIndex;
+			ret[ i ].queueMutex			= ret[ queueGetInfo[ i ].basedOn ].queueMutex;
 			ret[ i ].basedOn			= queueGetInfo[ i ].basedOn;
 		}
 	}
@@ -191,10 +264,14 @@ VK2D_API std::vector<ResolvedQueue> VK2D_APIENTRY DeviceQueueResolver::GetQueues
 	return ret;
 }
 
+
+
 bool DeviceQueueResolver::IsGood()
 {
 	return is_good;
 }
+
+
 
 } // _internal
 
