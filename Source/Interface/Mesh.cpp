@@ -300,6 +300,11 @@ VK2D_API void VK2D_APIENTRY vk2d::Mesh::SetMeshType(
 	vk2d::MeshType				type
 )
 {
+	if( !generated ) {
+		mesh_type	= type;
+		return;
+	}
+
 	switch( mesh_type ) {
 	case vk2d::MeshType::TRIANGLE_FILLED:
 		switch( type ) {
