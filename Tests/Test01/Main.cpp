@@ -13,7 +13,6 @@ constexpr double RAD			= PI * 2.0;
 
 class EventHandler : public vk2d::WindowEventHandler {
 public:
-
 	void							VK2D_APIENTRY		EventWindowClose(
 		vk2d::Window			*	window
 	)
@@ -57,103 +56,29 @@ int main()
 	while( !window->ShouldClose() ) {
 		++frame_counter;
 		if( !window->BeginRender() ) return -1;
-		/*
-		window->Draw_PieBox(
-			true,
-			{ -0.95f, -0.5f },
-			{ -0.05f, +0.5f },
-			frame_counter / 100.0f,
-			std::sin( frame_counter / 123.0f ) / 2.0f + 0.5f
-		);
 
-		window->Draw_Pie(
-			true,
-			{ +0.05f, -0.5f },
-			{ +0.95f, +0.5f },
-			frame_counter / 100.0f,
-			16.0f
-		);
-
-		vk2d::Vector2d position { -0.9f, -0.9f };
-
-		window->Draw_Texture(
-			position,
-			position + vk2d::Vector2d( ( std::cos( frame_counter / 123.0f ) / 10.0f + 0.3f ), ( std::sin( frame_counter / 123.0f ) / 10.0f + 0.3f ) ),
-			texture,
-			{ 1.0f, 1.0f, 1.0f, 1.0f }
-		);
-		*/
-
-		auto pie_box_mesh = vk2d::GenerateLatticeMesh(
+		auto lattice_mesh = vk2d::GenerateLatticeMesh(
 			{ -300.0f, -300.0f },
 			{ +300.0f, +300.0f },
-			{ 64, 64 },
-			false );
-//		pie_box_mesh.line_width		= 16.0f;
-		pie_box_mesh.SetMeshType( vk2d::MeshType::LINE);
-		pie_box_mesh.SetTexture( texture );
-
-		/*
-		pie_box_mesh.WaveUV(
-			frame_counter / 50.0f,
-			32.0f,
-			frame_counter / 600.0f,
-			{ 0.05f, 0.05f },
-			{  }
-		);
-		*/
-
-		auto gbegin	= vk2d::Vector2d( std::cos( frame_counter / 232.0f ) * 300, std::sin( frame_counter / 178.0f ) * 300 );
-		auto gend	= vk2d::Vector2d( std::cos( frame_counter / 124.0f ) * 300, std::sin( frame_counter / 196.0f ) * 300 );
-
-		/*
-		pie_box_mesh.SetVertexColorGradient(
-			{ 1, 0, 1, 1 },
-			{ 0, 1, 0, 1 },
-			gbegin,
-			gend
-		);
-		*/
-		window->DrawMesh( pie_box_mesh );
-
-		window->DrawCircle(
-			{ gbegin.x - 10, gbegin.y - 10 },
-			{ gbegin.x + 10, gbegin.y + 10 },
-			true,
-			64,
-			{ 0, 1, 1, 1 }
-		);
-		window->DrawCircle(
-			{ gend.x - 10, gend.y - 10 },
-			{ gend.x + 10, gend.y + 10 },
-			true,
-			64,
-			{ 1, 1, 0, 1 }
-		);
-
-		/*
-		auto lattice_mesh = vk2d::GenerateLatticeMesh(
-			{ -0.0f, -0.5f },
-			{ +1.0f, +0.5f },
 			{ 32.0f, 32.0f },
 			true
 		);
 		for( auto & v : lattice_mesh.vertices ) {
 			v.point_size	= 8.0f;
 		}
-		lattice_mesh.line_width	= 1.0f;
-//		lattice_mesh.mesh_type	= vk2d::MeshType::POINT;
-		lattice_mesh.texture	= texture;
+		lattice_mesh.SetLineSize( 1.0f );
+		lattice_mesh.SetMeshType( vk2d::MeshType::TRIANGLE_WIREFRAME );
+		lattice_mesh.SetTexture( texture );
 //		lattice_mesh.Rotate( frame_counter / 234.0f, { +0.5f, +0.0f } );
+
+		// Wave is broken, investigate.
 		lattice_mesh.Wave(
-			frame_counter / 50.0f,
-			16.0f,
-			frame_counter / 600.0f,
-			{ 0.04f, 0.04f },
-			{ +0.5f, +0.0f } );
+			0, //frame_counter / 50000.0f,
+			5.5f,
+			frame_counter / 60000.0f,
+			{ 16.0f, 16.0f } );
 
 		window->DrawMesh( lattice_mesh );
-		*/
 
 		if( !window->EndRender() ) return -1;
 	}
