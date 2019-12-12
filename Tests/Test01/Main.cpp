@@ -44,23 +44,6 @@ int main()
 
 	auto texture			= renderer->GetResourceManager()->LoadTextureResource( "../../TestData/GrafGear_128.png" );
 
-	std::vector<vk2d::Texel> texels( 64 * 64 );
-	for( auto & t : texels ) {
-		t.r = rand() % 255;
-		t.g = rand() % 255;
-		t.b = rand() % 255;
-		t.a = rand() % 255;
-	}
-
-	auto texture2			= renderer->GetResourceManager()->CreateTextureResource( 64, 64, texels );
-	auto texture3			= renderer->GetResourceManager()->CreateTextureResource( 64, 64, texels );
-	auto texture4			= renderer->GetResourceManager()->CreateTextureResource( 64, 64, texels );
-	auto texture5			= renderer->GetResourceManager()->CreateTextureResource( 64, 64, texels );
-	auto texture6			= renderer->GetResourceManager()->CreateTextureResource( 64, 64, texels );
-	auto texture7			= renderer->GetResourceManager()->CreateTextureResource( 64, 64, texels );
-	auto texture8			= renderer->GetResourceManager()->CreateTextureResource( 64, 64, texels );
-	auto texture9			= renderer->GetResourceManager()->CreateTextureResource( 64, 64, texels );
-
 	EventHandler							event_handler;
 	vk2d::WindowCreateInfo					window_create_info {};
 	window_create_info.width				= 800;
@@ -105,10 +88,10 @@ int main()
 			{ -300.0f, -300.0f },
 			{ +300.0f, +300.0f },
 			{ 64, 64 },
-			true );
+			false );
 //		pie_box_mesh.line_width		= 16.0f;
-//		pie_box_mesh.mesh_type		= vk2d::MeshType::TRIANGLE_WIREFRAME;
-		pie_box_mesh.SetTexture( texture2 );
+		pie_box_mesh.SetMeshType( vk2d::MeshType::LINE);
+		pie_box_mesh.SetTexture( texture );
 
 		/*
 		pie_box_mesh.WaveUV(
@@ -122,6 +105,7 @@ int main()
 
 		auto gbegin	= vk2d::Vector2d( std::cos( frame_counter / 232.0f ) * 300, std::sin( frame_counter / 178.0f ) * 300 );
 		auto gend	= vk2d::Vector2d( std::cos( frame_counter / 124.0f ) * 300, std::sin( frame_counter / 196.0f ) * 300 );
+
 		/*
 		pie_box_mesh.SetVertexColorGradient(
 			{ 1, 0, 1, 1 },
