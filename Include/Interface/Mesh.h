@@ -87,9 +87,9 @@ public:
 		vk2d::Vector2d								origin							= {} );
 
 	VK2D_API void									VK2D_APIENTRY					Wave(
-		float										rotation_amount_radians,
-		float										frequency,
 		float										direction_radians,
+		float										frequency,
+		float										animation,
 		vk2d::Vector2d								intensity,
 		vk2d::Vector2d								origin							= {} );
 
@@ -109,11 +109,11 @@ public:
 		vk2d::Vector2d								origin							= {} );
 
 	VK2D_API void									VK2D_APIENTRY					WaveUV(
-		float										rotation_amount_radians,
-		float										frequency,
 		float										direction_radians,
+		float										frequency,
+		float										animation,
 		vk2d::Vector2d								intensity,
-		vk2d::Vector2d								origin							= {} );
+		vk2d::Vector2d								origin							= { 0.5f, 0.5f } );
 
 	VK2D_API void									VK2D_APIENTRY					SetVertexColor(
 		vk2d::Color									new_color );

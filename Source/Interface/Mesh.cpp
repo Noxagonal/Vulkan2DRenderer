@@ -111,24 +111,39 @@ VK2D_API void VK2D_APIENTRY vk2d::Mesh::Scew(
 }
 
 VK2D_API void VK2D_APIENTRY vk2d::Mesh::Wave(
-	float						rotation_amount_radians,
-	float						frequency,
 	float						direction_radians,
+	float						frequency,
+	float						animation,
 	vk2d::Vector2d				intensity,
 	vk2d::Vector2d				origin
 )
 {
+	auto aabb	= CalculateAABBFromVertexList( vertices );
+	auto size	= aabb.bottom_right - aabb.top_left;
+
 	vk2d::Vector2d	dir {
 		std::cos( direction_radians ),
 		std::sin( direction_radians )
 	};
+	auto forward_rotation_matrix = vk2d::Matrix2(
+		+dir.x, -dir.y,
+		+dir.y, +dir.x
+	);
+	auto backward_rotation_matrix = vk2d::Matrix2(
+		+dir.x, +dir.y,
+		-dir.y, +dir.x
+	);
 
 	for( auto & i : vertices ) {
 		auto c		= i.vertex_coords - origin;
-		auto d		= ( c.x * dir.x + c.y * dir.y ) * frequency;
+		c			= backward_rotation_matrix * c;
+
+		auto d		= animation + float( frequency * ( c.x / size.x ) * RAD );
 		i.vertex_coords		= {
-			std::cos( rotation_amount_radians + d ) * intensity.x + c.x,
-			std::sin( rotation_amount_radians + d ) * intensity.y + c.y };
+			std::cos( d ) * intensity.x + c.x,
+			std::sin( d ) * intensity.y + c.y };
+
+		i.vertex_coords		= forward_rotation_matrix * i.vertex_coords;
 		i.vertex_coords		+= origin;
 	}
 }
@@ -182,9 +197,9 @@ VK2D_API void VK2D_APIENTRY vk2d::Mesh::ScewUV(
 }
 
 VK2D_API void VK2D_APIENTRY vk2d::Mesh::WaveUV(
-	float						rotation_amount_radians,
-	float						frequency,
 	float						direction_radians,
+	float						frequency,
+	float						animation,
 	vk2d::Vector2d				intensity,
 	vk2d::Vector2d				origin
 )
@@ -193,14 +208,26 @@ VK2D_API void VK2D_APIENTRY vk2d::Mesh::WaveUV(
 		std::cos( direction_radians ),
 		std::sin( direction_radians )
 	};
+	auto forward_rotation_matrix = vk2d::Matrix2(
+		+dir.x, -dir.y,
+		+dir.y, +dir.x
+	);
+	auto backward_rotation_matrix = vk2d::Matrix2(
+		+dir.x, +dir.y,
+		-dir.y, +dir.x
+	);
 
 	for( auto & i : vertices ) {
-		auto c		= i.uv_coords - origin;
-		auto d		= ( c.x * dir.x + c.y * dir.y ) * frequency;
-		i.uv_coords		= {
-			std::cos( rotation_amount_radians + d ) * intensity.x + c.x,
-			std::sin( rotation_amount_radians + d ) * intensity.y + c.y };
-		i.uv_coords		+= origin;
+		auto c				= i.uv_coords - origin;
+		c					= backward_rotation_matrix * c;
+
+		auto d				= animation + float( frequency * c.x * RAD );
+		i.uv_coords			= {
+			std::cos( d ) * intensity.x + c.x,
+			std::sin( d ) * intensity.y + c.y };
+
+		i.uv_coords			= forward_rotation_matrix * i.uv_coords;
+		i.uv_coords			+= origin;
 	}
 }
 

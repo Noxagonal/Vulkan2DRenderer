@@ -67,21 +67,23 @@ int main()
 			v.point_size	= 8.0f;
 		}
 		lattice_mesh.SetLineSize( 1.0f );
-		lattice_mesh.SetMeshType( vk2d::MeshType::TRIANGLE_WIREFRAME );
+		lattice_mesh.SetMeshType( vk2d::MeshType::TRIANGLE_FILLED );
 		lattice_mesh.SetTexture( texture );
 //		lattice_mesh.Rotate( frame_counter / 234.0f, { +0.5f, +0.0f } );
 
 		// Wave is broken, investigate.
 		lattice_mesh.Wave(
-			0, //frame_counter / 50000.0f,
-			5.5f,
-			frame_counter / 60000.0f,
-			{ 16.0f, 16.0f } );
+			frame_counter / 500.0f,
+			1.0f,
+			frame_counter / 60.0f,
+			{ 25.0f, 25.0f } );
 
 		window->DrawMesh( lattice_mesh );
 
 		if( !window->EndRender() ) return -1;
 	}
+
+	renderer->CloseOutputWindow( window );
 
 	return 0;
 }
