@@ -115,6 +115,7 @@ glslangValidator -V -o "$(SolutionDir)Source\Shaders\shader.frag.spv.h" "$(Solut
     <ClInclude Include="..\Include\Interface\RenderPrimitives.h" />
     <ClInclude Include="..\Include\Interface\Resource.h" />
     <ClInclude Include="..\Include\Interface\ResourceManager.h" />
+    <ClInclude Include="..\Include\Interface\Sampler.h" />
     <ClInclude Include="..\Include\Interface\TextureResource.h" />
     <ClInclude Include="..\Include\Interface\Window.h" />
     <ClInclude Include="..\Include\Vulkan2DRenderer.h" />
@@ -127,8 +128,11 @@ glslangValidator -V -o "$(SolutionDir)Source\Shaders\shader.frag.spv.h" "$(Solut
     <ClInclude Include="..\Source\Header\Core\VulkanMemoryManagement.h" />
     <ClInclude Include="..\Source\Header\Impl\RendererImpl.h" />
     <ClInclude Include="..\Source\Header\Impl\ResourceManagerImpl.h" />
+    <ClInclude Include="..\Source\Header\Impl\SamplerImpl.h" />
     <ClInclude Include="..\Source\Header\Impl\TextureResourceImpl.h" />
     <ClInclude Include="..\Source\Header\Impl\WindowImpl.h" />
+    <ClInclude Include="..\Source\Impl\SamplerImpl.cpp" />
+    <ClInclude Include="..\Source\Interface\Sampler.cpp" />
     <ClInclude Include="..\Source\Shaders\shader.frag.spv.h" />
     <ClInclude Include="..\Source\Shaders\shader.vert.spv.h" />
   </ItemGroup>

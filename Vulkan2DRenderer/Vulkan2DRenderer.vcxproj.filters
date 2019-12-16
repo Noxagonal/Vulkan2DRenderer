@@ -120,6 +120,18 @@
     <ClInclude Include="..\Include\Interface\Mesh.h">
       <Filter>Include\Interface</Filter>
     </ClInclude>
+    <ClInclude Include="..\Include\Interface\Sampler.h">
+      <Filter>Include\Interface</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Source\Header\Impl\SamplerImpl.h">
+      <Filter>Source\Header\Impl</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Source\Impl\SamplerImpl.cpp">
+      <Filter>Source\Impl</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Source\Interface\Sampler.cpp">
+      <Filter>Source\Interface</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\Source\Impl\RendererImpl.cpp">
