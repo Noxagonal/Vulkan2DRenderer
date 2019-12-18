@@ -7,6 +7,7 @@
 #include "../../Include/Interface/TextureResource.h"
 #include "../Header/Impl/TextureResourceImpl.h"
 #include "../../Include/Interface/Mesh.h"
+#include "../Header/Impl/SamplerImpl.h"
 
 #include <memory>
 #include <algorithm>
@@ -593,7 +594,7 @@ bool WindowImpl::BeginRender()
 				);
 			}
 
-			auto sampler_descriptor_set = renderer_parent->GetSamplerDescriptorSet( SamplerType::DEFAULT );
+			auto sampler_descriptor_set = renderer_parent->GetDefaultSampler()->impl->GetVulkanDescriptorSet();
 			vkCmdBindDescriptorSets(
 				command_buffer,
 				VK_PIPELINE_BIND_POINT_GRAPHICS,
@@ -601,6 +602,8 @@ bool WindowImpl::BeginRender()
 				0, 1, &sampler_descriptor_set,
 				0, nullptr
 			);
+
+			previous_sampler_descriptor_set		= sampler_descriptor_set;
 		}
 
 		// Begin render pass
@@ -848,7 +851,7 @@ void WindowImpl::DisableEvents(
 	}
 }
 
-bool WindowImpl::IsEventsDisabled()
+bool WindowImpl::AreEventsDisabled()
 {
 	return !!event_handler;
 }
@@ -1056,7 +1059,8 @@ void WindowImpl::DrawTriangleList(
 	const std::vector<Vertex>				&	vertices,
 	const std::vector<VertexIndex_3>		&	indices,
 	bool										filled,
-	TextureResource							*	texture
+	vk2d::TextureResource					*	texture,
+	vk2d::Sampler							*	sampler
 )
 {
 	auto index_count	= uint32_t( indices.size() * 3 );
@@ -1072,7 +1076,8 @@ void WindowImpl::DrawTriangleList(
 		vertices,
 		raw_indices,
 		filled,
-		texture
+		texture,
+		sampler
 	);
 }
 
@@ -1080,7 +1085,8 @@ void WindowImpl::DrawTriangleList(
 	const std::vector<Vertex>				&	vertices,
 	const std::vector<uint32_t>				&	raw_indices,
 	bool										filled,
-	TextureResource							*	texture
+	vk2d::TextureResource					*	texture,
+	vk2d::Sampler							*	sampler
 )
 {
 	auto command_buffer					= render_command_buffers[ next_image ];
@@ -1105,6 +1111,11 @@ void WindowImpl::DrawTriangleList(
 		texture
 	);
 
+	CmdBindSamplerIfDifferent(
+		command_buffer,
+		sampler
+	);
+
 	auto result = mesh_buffer->CmdPushMesh(
 		command_buffer,
 		vertices,
@@ -1125,7 +1136,8 @@ void WindowImpl::DrawTriangleList(
 void WindowImpl::DrawLineList(
 	const std::vector<Vertex>				&	vertices,
 	const std::vector<VertexIndex_2>		&	indices,
-	TextureResource							*	texture,
+	vk2d::TextureResource					*	texture,
+	vk2d::Sampler							*	sampler,
 	float										line_width
 )
 {
@@ -1141,6 +1153,7 @@ void WindowImpl::DrawLineList(
 		vertices,
 		raw_indices,
 		texture,
+		sampler,
 		line_width
 	);
 }
@@ -1148,7 +1161,8 @@ void WindowImpl::DrawLineList(
 void WindowImpl::DrawLineList(
 	const std::vector<Vertex>				&	vertices,
 	const std::vector<uint32_t>				&	raw_indices,
-	TextureResource							*	texture,
+	vk2d::TextureResource					*	texture,
+	vk2d::Sampler							*	sampler,
 	float										line_width
 )
 {
@@ -1165,6 +1179,11 @@ void WindowImpl::DrawLineList(
 	CmdBindTextureIfDifferent(
 		command_buffer,
 		texture
+	);
+
+	CmdBindSamplerIfDifferent(
+		command_buffer,
+		sampler
 	);
 
 	auto result = mesh_buffer->CmdPushMesh(
@@ -1191,7 +1210,8 @@ void WindowImpl::DrawLineList(
 
 void WindowImpl::DrawPointList(
 	const std::vector<Vertex>				&	vertices,
-	TextureResource							*	texture
+	vk2d::TextureResource					*	texture,
+	vk2d::Sampler							*	sampler
 )
 {
 	auto command_buffer					= render_command_buffers[ next_image ];
@@ -1206,6 +1226,11 @@ void WindowImpl::DrawPointList(
 	CmdBindTextureIfDifferent(
 		command_buffer,
 		texture
+	);
+
+	CmdBindSamplerIfDifferent(
+		command_buffer,
+		sampler
 	);
 
 	auto result = mesh_buffer->CmdPushMesh(
@@ -1350,7 +1375,8 @@ void WindowImpl::DrawMesh(
 			mesh.vertices,
 			mesh.indices,
 			true,
-			mesh.texture
+			mesh.texture,
+			mesh.sampler
 		);
 		break;
 	case vk2d::MeshType::TRIANGLE_WIREFRAME:
@@ -1358,7 +1384,8 @@ void WindowImpl::DrawMesh(
 			mesh.vertices,
 			mesh.indices,
 			false,
-			mesh.texture
+			mesh.texture,
+			mesh.sampler
 		);
 		break;
 	case vk2d::MeshType::LINE:
@@ -1366,13 +1393,15 @@ void WindowImpl::DrawMesh(
 			mesh.vertices,
 			mesh.indices,
 			mesh.texture,
+			mesh.sampler,
 			mesh.line_width
 		);
 		break;
 	case vk2d::MeshType::POINT:
 		DrawPointList(
 			mesh.vertices,
-			mesh.texture
+			mesh.texture,
+			mesh.sampler
 		);
 		break;
 	default:
@@ -2531,6 +2560,30 @@ void WindowImpl::CmdBindTextureIfDifferent(
 		);
 
 		previous_texture_descriptor_set	= texture_descriptor_set;
+	}
+}
+
+void WindowImpl::CmdBindSamplerIfDifferent(
+	VkCommandBuffer						command_buffer,
+	vk2d::Sampler					*	sampler )
+{
+	auto sampler_descriptor_set = renderer_parent->GetDefaultSampler()->impl->GetVulkanDescriptorSet();
+	if( sampler ) {
+		sampler_descriptor_set	= sampler->impl->GetVulkanDescriptorSet();
+	}
+
+	assert( sampler_descriptor_set );
+
+	if( previous_sampler_descriptor_set != sampler_descriptor_set ) {
+		vkCmdBindDescriptorSets(
+			command_buffer,
+			VK_PIPELINE_BIND_POINT_GRAPHICS,
+			renderer_parent->GetPipelineLayout(),
+			0, 1, &sampler_descriptor_set,
+			0, nullptr
+		);
+
+		previous_sampler_descriptor_set	= sampler_descriptor_set;
 	}
 }
 

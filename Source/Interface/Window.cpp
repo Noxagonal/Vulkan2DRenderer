@@ -128,10 +128,10 @@ VK2D_API void VK2D_APIENTRY Window::DisableEvents(
 	}
 }
 
-VK2D_API bool VK2D_APIENTRY Window::IsEventsDisabled()
+VK2D_API bool VK2D_APIENTRY Window::AreEventsDisabled()
 {
 	if( impl ) {
-		return impl->IsEventsDisabled();
+		return impl->AreEventsDisabled();
 	}
 	return true;
 }
@@ -311,7 +311,8 @@ VK2D_API void VK2D_APIENTRY Window::DrawTriangleList(
 	const std::vector<Vertex>				&	vertices,
 	const std::vector<VertexIndex_3>		&	indices,
 	bool										filled,
-	TextureResource							*	texture
+	vk2d::TextureResource					*	texture,
+	vk2d::Sampler							*	sampler
 )
 {
 	if( impl ) {
@@ -327,7 +328,8 @@ VK2D_API void VK2D_APIENTRY Window::DrawTriangleList(
 VK2D_API void VK2D_APIENTRY Window::DrawLineList(
 	const std::vector<Vertex>				&	vertices,
 	const std::vector<VertexIndex_2>		&	indices,
-	TextureResource							*	texture
+	vk2d::TextureResource					*	texture,
+	vk2d::Sampler							*	sampler
 )
 {
 	if( impl ) {
@@ -341,7 +343,8 @@ VK2D_API void VK2D_APIENTRY Window::DrawLineList(
 
 VK2D_API void VK2D_APIENTRY Window::DrawPointList(
 	const std::vector<Vertex>				&	vertices,
-	TextureResource							*	texture
+	vk2d::TextureResource					*	texture,
+	vk2d::Sampler							*	sampler
 )
 {
 	if( impl ) {

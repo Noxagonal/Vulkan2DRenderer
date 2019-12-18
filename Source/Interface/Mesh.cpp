@@ -304,7 +304,14 @@ VK2D_API void VK2D_APIENTRY vk2d::Mesh::SetTexture(
 	vk2d::TextureResource	*	texture_resource_pointer
 )
 {
-	texture = texture_resource_pointer;
+	texture		= texture_resource_pointer;
+}
+
+VK2D_API void VK2D_APIENTRY vk2d::Mesh::SetSampler(
+	vk2d::Sampler		*	sampler_pointer
+)
+{
+	sampler		= sampler_pointer;
 }
 
 VK2D_API void VK2D_APIENTRY vk2d::Mesh::SetPointSize(

@@ -103,7 +103,7 @@ public:
 	void											DisableEvents(
 		bool										disable_events );
 
-	bool											IsEventsDisabled();
+	bool											AreEventsDisabled();
 
 	void											SetFullscreen(
 		vk2d::Monitor							*	monitor,
@@ -158,29 +158,34 @@ public:
 		const std::vector<Vertex>				&	vertices,
 		const std::vector<VertexIndex_3>		&	indices,
 		bool										filled						= true,
-		vk2d::TextureResource					*	texture						= nullptr );
+		vk2d::TextureResource					*	texture						= nullptr,
+		vk2d::Sampler							*	sampler						= nullptr );
 
 	void											DrawTriangleList(
 		const std::vector<Vertex>				&	vertices,
 		const std::vector<uint32_t>				&	raw_indices,
 		bool										filled						= true,
-		vk2d::TextureResource					*	texture						= nullptr );
+		vk2d::TextureResource					*	texture						= nullptr,
+		vk2d::Sampler							*	sampler						= nullptr );
 
 	void											DrawLineList(
 		const std::vector<Vertex>				&	vertices,
 		const std::vector<VertexIndex_2>		&	indices,
 		vk2d::TextureResource					*	texture						= nullptr,
+		vk2d::Sampler							*	sampler						= nullptr,
 		float										line_width					= 1.0f );
 
 	void											DrawLineList(
 		const std::vector<Vertex>				&	vertices,
 		const std::vector<uint32_t>				&	raw_indices,
 		vk2d::TextureResource					*	texture						= nullptr,
+		vk2d::Sampler							*	sampler						= nullptr,
 		float										line_width					= 1.0f );
 
 	void											DrawPointList(
 		const std::vector<Vertex>				&	vertices,
-		vk2d::TextureResource					*	texture						= nullptr );
+		vk2d::TextureResource					*	texture						= nullptr,
+		vk2d::Sampler							*	sampler						= nullptr );
 
 	void											DrawLine(
 		Vector2d									point_1,
@@ -252,6 +257,10 @@ private:
 		VkCommandBuffer								command_buffer,
 		vk2d::TextureResource					*	texture );
 
+	void											CmdBindSamplerIfDifferent(
+		VkCommandBuffer								command_buffer,
+		vk2d::Sampler							*	sampler );
+
 	void											CmdSetLineWidthIfDifferent(
 		VkCommandBuffer								command_buffer,
 		float										line_width );
@@ -316,6 +325,7 @@ private:
 
 	vk2d::_internal::PipelineType					previous_pipeline_type					= vk2d::_internal::PipelineType::NONE;
 	VkDescriptorSet									previous_texture_descriptor_set			= {};
+	VkDescriptorSet									previous_sampler_descriptor_set			= {};
 	float											previous_line_width						= {};
 
 	std::unique_ptr<vk2d::_internal::MeshBuffer>	mesh_buffer								= {};

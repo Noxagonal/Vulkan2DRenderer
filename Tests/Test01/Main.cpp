@@ -41,6 +41,12 @@ int main()
 	auto renderer = vk2d::CreateRenderer( renderer_create_info );
 	if( !renderer ) return -1;
 
+	vk2d::SamplerCreateInfo sampler_create_info {};
+	sampler_create_info.address_mode_u		= vk2d::SamplerAddressMode::MIRRORED_REPEAT;
+	sampler_create_info.address_mode_v		= vk2d::SamplerAddressMode::CLAMP_TO_BORDER;
+	sampler_create_info.border_color		= vk2d::Color( 0.0f, 0.2f, 1.0f, 0.5f );
+	auto sampler			= renderer->CreateSampler( sampler_create_info );
+
 	auto texture			= renderer->GetResourceManager()->LoadTextureResource( "../../TestData/GrafGear_128.png" );
 
 	EventHandler							event_handler;
@@ -56,6 +62,15 @@ int main()
 	while( !window->ShouldClose() ) {
 		++frame_counter;
 		if( !window->BeginRender() ) return -1;
+		
+		/*
+		window->DrawBox(
+			{ -1000, -1000 },
+			{ +1000, +1000 },
+			true,
+			{ 0.1f, 0.4f, 0.6f, 1.0f }
+		);
+		*/
 
 		auto lattice_mesh = vk2d::GenerateLatticeMesh(
 			{ -300.0f, -300.0f },
@@ -69,21 +84,33 @@ int main()
 		lattice_mesh.SetLineSize( 1.0f );
 		lattice_mesh.SetMeshType( vk2d::MeshType::TRIANGLE_FILLED );
 		lattice_mesh.SetTexture( texture );
+		lattice_mesh.SetSampler( sampler );
 //		lattice_mesh.Rotate( frame_counter / 234.0f, { +0.5f, +0.0f } );
 
-		// Wave is broken, investigate.
-		lattice_mesh.Wave(
+		lattice_mesh.WaveUV(
 			frame_counter / 500.0f,
 			1.0f,
 			frame_counter / 60.0f,
-			{ 25.0f, 25.0f } );
+			{ 0.10f, 0.10f } );
 
 		window->DrawMesh( lattice_mesh );
 
+
+
+		auto box = vk2d::GenerateBoxMesh(
+			{ -200, -200 },
+			{ +200, +200 } );
+		box.ScaleUV(
+			{ 3.1f, 3.1f }
+		);
+		box.SetTexture( texture );
+		box.SetSampler( sampler );
+
+		window->DrawMesh( box );
+
+
 		if( !window->EndRender() ) return -1;
 	}
-
-	renderer->CloseOutputWindow( window );
 
 	return 0;
 }

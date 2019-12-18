@@ -12,6 +12,7 @@ class WindowImpl;
 }
 
 class TextureResource;
+class Sampler;
 
 
 
@@ -98,15 +99,15 @@ public:
 
 	VK2D_API void									VK2D_APIENTRY					RotateUV(
 		float										rotation_amount_radians,
-		vk2d::Vector2d								origin							= {} );
+		vk2d::Vector2d								origin							= { 0.5f, 0.5f } );
 
 	VK2D_API void									VK2D_APIENTRY					ScaleUV(
 		vk2d::Vector2d								scaling_amount,
-		vk2d::Vector2d								origin							= {} );
+		vk2d::Vector2d								origin							= { 0.5f, 0.5f } );
 
 	VK2D_API void									VK2D_APIENTRY					ScewUV(
 		vk2d::Vector2d								scew_amount,
-		vk2d::Vector2d								origin							= {} );
+		vk2d::Vector2d								origin							= { 0.5f, 0.5f } );
 
 	VK2D_API void									VK2D_APIENTRY					WaveUV(
 		float										direction_radians,
@@ -129,6 +130,9 @@ public:
 	VK2D_API void									VK2D_APIENTRY					SetTexture(
 		vk2d::TextureResource					*	texture_resource_pointer );
 
+	VK2D_API void									VK2D_APIENTRY					SetSampler(
+		vk2d::Sampler							*	sampler_pointer );
+
 	VK2D_API void									VK2D_APIENTRY					SetPointSize(
 		float										point_size );
 
@@ -147,6 +151,7 @@ private:
 	vk2d::MeshType									mesh_type						= vk2d::MeshType::TRIANGLE_FILLED;
 	float											line_width						= 1.0f;		// Only considered when rendering lines
 	vk2d::TextureResource						*	texture							= nullptr;	// Texture resource to be used when rendering, can be used in all modes
+	vk2d::Sampler								*	sampler							= nullptr;
 };
 
 

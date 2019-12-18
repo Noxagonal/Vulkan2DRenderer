@@ -2,6 +2,9 @@
 
 #include "../Core/SourceCommon.h"
 
+#include "../Core/DescriptorSet.h"
+#include "../Core/VulkanMemoryManagement.h"
+
 namespace vk2d {
 
 namespace _internal {
@@ -11,24 +14,29 @@ namespace _internal {
 class SamplerImpl {
 public:
 	SamplerImpl(
-		vk2d::Sampler					*	sampler,
-		vk2d::_internal::RendererImpl	*	renderer,
-		const vk2d::SamplerCreateInfo	&	create_info );
+		vk2d::Sampler						*	sampler,
+		vk2d::_internal::RendererImpl		*	renderer,
+		const vk2d::SamplerCreateInfo		&	create_info );
 
 	~SamplerImpl();
 
-	VkSampler								GetVulkanSampler();
+	VkSampler									GetVulkanSampler();
+	VkDescriptorSet								GetVulkanDescriptorSet();
+	VkBuffer									GetVulkanBuffer();
 
-	bool									IsGood();
+	bool										IsGood();
 
 private:
-	vk2d::Sampler						*	sampler_parent		= {};
-	vk2d::_internal::RendererImpl		*	renderer_parent		= {};
-	VkDevice								vk_device			= {};
+	vk2d::Sampler							*	sampler_parent		= {};
+	vk2d::_internal::RendererImpl			*	renderer_parent		= {};
+	VkDevice									vk_device			= {};
 
-	VkSampler								sampler				= {};
+	VkSampler									sampler				= {};
+	vk2d::_internal::PoolDescriptorSet			descriptor_set		= {};
 
-	bool									is_good				= {};
+	vk2d::_internal::CompleteBufferResource		sampler_data		= {};
+
+	bool										is_good				= {};
 };
 
 

@@ -2,12 +2,15 @@
 
 #include "../Core/Common.h"
 
+#include "../Interface/RenderPrimitives.h"
+
 #include <memory>
 
 namespace vk2d {
 
 namespace _internal {
 class RendererImpl;
+class WindowImpl;
 class SamplerImpl;
 } // _internal
 
@@ -34,19 +37,13 @@ enum class SamplerAddressMode {
 	MIRROR_CLAMP_TO_EDGE,
 };
 
-enum class SamplerBorderColor {
-	BLACK_TRANSPARENT,
-	BLACK_OPAQUE,
-	WHITE_OPAQUE,
-};
-
 struct SamplerCreateInfo {
 	vk2d::SamplerFilter					minification_filter				= vk2d::SamplerFilter::LINEAR;
 	vk2d::SamplerFilter					magnification_filter			= vk2d::SamplerFilter::LINEAR;
 	vk2d::SamplerMipmapMode				mipmap_mode						= vk2d::SamplerMipmapMode::LINEAR;
 	vk2d::SamplerAddressMode			address_mode_u					= vk2d::SamplerAddressMode::REPEAT;
 	vk2d::SamplerAddressMode			address_mode_v					= vk2d::SamplerAddressMode::REPEAT;
-	vk2d::SamplerBorderColor			border_color					= vk2d::SamplerBorderColor::BLACK_OPAQUE;
+	vk2d::Color							border_color					= { 0.0f, 0.0f, 0.0f, 1.0f };
 	bool								mipmap_enable					= true;
 	float								mipmap_max_anisotropy			= 16.0f;
 	float								mipmap_level_of_detail_bias		= 0.0f;
@@ -57,7 +54,8 @@ struct SamplerCreateInfo {
 
 
 class Sampler {
-	friend class RendererImpl;
+	friend class vk2d::_internal::RendererImpl;
+	friend class vk2d::_internal::WindowImpl;
 
 	VK2D_API																			Sampler(
 		vk2d::_internal::RendererImpl				*	renderer_parent,
