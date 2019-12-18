@@ -30,6 +30,7 @@ class Mesh;
 class Window;
 class Cursor;
 class Monitor;
+class Sampler;
 
 
 
@@ -418,7 +419,7 @@ public:
 	// Gets the status of are events disabled or not. If window has no event receiver this will always return true.
 	// Returns:
 	// true if events are disabled, false if they're enabled.
-	VK2D_API bool										VK2D_APIENTRY				IsEventsDisabled();
+	VK2D_API bool										VK2D_APIENTRY				AreEventsDisabled();
 
 	// Sets window to fullscreen to a specific window.
 	// Parameters:
@@ -545,16 +546,19 @@ public:
 		const std::vector<vk2d::Vertex>				&	vertices,
 		const std::vector<vk2d::VertexIndex_3>		&	indices,
 		bool											filled						= true,
-		vk2d::TextureResource						*	texture						= nullptr );
+		vk2d::TextureResource						*	texture						= nullptr,
+		vk2d::Sampler								*	sampler						= nullptr );
 
 	VK2D_API void										VK2D_APIENTRY				DrawLineList(
 		const std::vector<vk2d::Vertex>				&	vertices,
 		const std::vector<vk2d::VertexIndex_2>		&	indices,
-		vk2d::TextureResource						*	texture						= nullptr );
+		vk2d::TextureResource						*	texture						= nullptr,
+		vk2d::Sampler								*	sampler						= nullptr );
 
 	VK2D_API void										VK2D_APIENTRY				DrawPointList(
 		const std::vector<vk2d::Vertex>				&	vertices,
-		vk2d::TextureResource						*	texture						= nullptr );
+		vk2d::TextureResource						*	texture						= nullptr,
+		vk2d::Sampler								*	sampler						= nullptr );
 
 	VK2D_API void										VK2D_APIENTRY				DrawLine(
 		vk2d::Vector2d									point_1,

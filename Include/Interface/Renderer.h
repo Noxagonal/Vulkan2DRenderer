@@ -4,6 +4,7 @@
 
 #include "Window.h"
 #include "../Core/Version.hpp"
+#include "Sampler.h"
 
 #include <string>
 #include <memory>
@@ -223,6 +224,12 @@ public:
 		WindowCreateInfo															&	window_create_info );
 	VK2D_API void									VK2D_APIENTRY						CloseOutputWindow(
 		Window																		*	window );
+
+	VK2D_API vk2d::Sampler						*	VK2D_APIENTRY						CreateSampler(
+		const vk2d::SamplerCreateInfo			&	sampler_create_info );
+
+	VK2D_API void									VK2D_APIENTRY						DestroySampler(
+		vk2d::Sampler							*	sampler );
 
 	VK2D_API ResourceManager					*	VK2D_APIENTRY						GetResourceManager();
 

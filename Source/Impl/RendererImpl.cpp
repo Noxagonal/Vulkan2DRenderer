@@ -9,6 +9,7 @@
 #include "../Header/Core/ThreadPrivateResources.h"
 #include "../Header/Core/DescriptorSet.h"
 #include "../Header/Impl/WindowImpl.h"
+#include "../../Include/Interface/Sampler.h"
 
 #include "../Shaders/shader.vert.spv.h"
 #include "../Shaders/shader.frag.spv.h"
@@ -181,6 +182,7 @@ RendererImpl::RendererImpl( const RendererCreateInfo & renderer_create_info )
 //	instance_layers;
 //	instance_extensions;
 	device_extensions.push_back( VK_KHR_SWAPCHAIN_EXTENSION_NAME );
+	device_extensions.push_back( VK_KHR_SAMPLER_MIRROR_CLAMP_TO_EDGE_EXTENSION_NAME );
 	{
 		// Adding glfw instance extensions
 		uint32_t glfw_instance_extension_count = 0;
@@ -194,7 +196,7 @@ RendererImpl::RendererImpl( const RendererCreateInfo & renderer_create_info )
 	if( !PickPhysicalDevice() ) return;
 	if( !CreateDeviceAndQueues() ) return;
 	if( !CreateDescriptorSetLayouts() ) return;
-	if( !CreateSamplers() ) return;
+	if( !CreateDescriptorPool() ) return;
 	if( !CreatePipelineCache() ) return;
 	if( !CreateShaderModules() ) return;
 	if( !CreatePipelineLayout() ) return;
@@ -202,6 +204,7 @@ RendererImpl::RendererImpl( const RendererCreateInfo & renderer_create_info )
 	if( !CreateThreadPool() ) return;
 	if( !CreateResourceManager() ) return;
 	if( !CreateDefaultTexture() ) return;
+	if( !CreateDefaultSampler() ) return;
 
 	is_good		= true;
 }
@@ -211,7 +214,9 @@ RendererImpl::~RendererImpl()
 	vkDeviceWaitIdle( device );
 
 	windows.clear();
+	samplers.clear();
 
+	DestroyDefaultSampler();
 	DestroyDefaultTexture();
 	DestroyResourceManager();
 	DestroyThreadPool();
@@ -219,7 +224,7 @@ RendererImpl::~RendererImpl()
 	DestroyPipelineLayout();
 	DestroyShaderModules();
 	DestroyPipelineCache();
-	DestroySamplers();
+	DestroyDescriptorPool();
 	DestroyDescriptorSetLayouts();
 	DestroyDevice();
 	DestroyInstance();
@@ -310,12 +315,6 @@ vk2d::GamepadState RendererImpl::QueryGamepadState(
 
 
 
-
-
-
-
-
-
 Window * RendererImpl::CreateOutputWindow(
 	WindowCreateInfo	&	window_create_info
 )
@@ -329,14 +328,6 @@ Window * RendererImpl::CreateOutputWindow(
 	return {};
 }
 
-
-
-
-
-
-
-
-
 void RendererImpl::CloseOutputWindow(
 	Window				*	window
 )
@@ -347,6 +338,47 @@ void RendererImpl::CloseOutputWindow(
 	while( it != windows.end() ) {
 		if( it->get() == window ) {
 			it = windows.erase( it );
+			break;
+		} else {
+			++it;
+		}
+	}
+}
+
+
+
+vk2d::_internal::DescriptorAutoPool * RendererImpl::GetDescriptorPool()
+{
+	return descriptor_pool.get();
+}
+
+
+
+vk2d::Sampler * RendererImpl::CreateSampler(
+	const vk2d::SamplerCreateInfo	&	sampler_create_info
+)
+{
+	auto sampler	= std::unique_ptr<vk2d::Sampler>( new vk2d::Sampler( this, sampler_create_info ) );
+
+	if( sampler && sampler->IsGood() ) {
+		auto ret	= sampler.get();
+		samplers.push_back( std::move( sampler ) );
+		return ret;
+	} else {
+		return nullptr;
+	}
+}
+
+void RendererImpl::DestroySampler(
+	vk2d::Sampler					*	sampler
+)
+{
+	vkDeviceWaitIdle( device );
+
+	auto it = samplers.begin();
+	while( it != samplers.end() ) {
+		if( it->get() == sampler ) {
+			it = samplers.erase( it );
 			break;
 		} else {
 			++it;
@@ -469,17 +501,12 @@ const DescriptorSetLayout & RendererImpl::GetTextureDescriptorSetLayout() const
 
 VkDescriptorSet RendererImpl::GetDefaultTextureDescriptorSet() const
 {
-	return default_texture_descriptor_set;
+	return default_texture_descriptor_set.descriptorSet;
 }
 
-VkDescriptorSet RendererImpl::GetSamplerDescriptorSet( SamplerType sampler_type ) const
+vk2d::Sampler * RendererImpl::GetDefaultSampler() const
 {
-	return samplers[ uint32_t( sampler_type ) ].descriptor_set;
-}
-
-VkSampler RendererImpl::GetSampler( SamplerType sampler_type ) const
-{
-	return samplers[ uint32_t( sampler_type ) ].sampler;
+	return default_sampler.get();
 }
 
 DeviceMemoryPool * RendererImpl::GetDeviceMemoryPool() const
@@ -770,122 +797,46 @@ bool RendererImpl::CreateDeviceAndQueues()
 	return true;
 }
 
-
-
-
-
-
-
-
-
-bool RendererImpl::CreateSamplers()
+bool RendererImpl::CreateDescriptorPool()
 {
-	// Sampler 0
-	{
-		VkSamplerCreateInfo sampler_create_info {};
-		sampler_create_info.sType						= VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
-		sampler_create_info.pNext						= nullptr;
-		sampler_create_info.flags						= 0;
-		sampler_create_info.magFilter					= VK_FILTER_LINEAR;
-		sampler_create_info.minFilter					= VK_FILTER_LINEAR;
-		sampler_create_info.mipmapMode					= VK_SAMPLER_MIPMAP_MODE_LINEAR;
-		sampler_create_info.addressModeU				= VK_SAMPLER_ADDRESS_MODE_REPEAT;
-		sampler_create_info.addressModeV				= VK_SAMPLER_ADDRESS_MODE_REPEAT;
-		sampler_create_info.addressModeW				= VK_SAMPLER_ADDRESS_MODE_REPEAT;
-		sampler_create_info.mipLodBias					= 0.0f;
-		sampler_create_info.anisotropyEnable			= VK_TRUE;
-		sampler_create_info.maxAnisotropy				= physical_device_properties.limits.maxSamplerAnisotropy;
-		sampler_create_info.compareEnable				= VK_FALSE;
-		sampler_create_info.compareOp					= VK_COMPARE_OP_NEVER;
-		sampler_create_info.minLod						= 0.0f;
-		sampler_create_info.maxLod						= 32.0f;
-		sampler_create_info.borderColor					= VK_BORDER_COLOR_FLOAT_TRANSPARENT_BLACK;
-		sampler_create_info.unnormalizedCoordinates		= VK_FALSE;
+	descriptor_pool			= vk2d::_internal::CreateDescriptorAutoPool(
+		device
+	);
 
-		if( vkCreateSampler(
-			device,
-			&sampler_create_info,
-			nullptr,
-			&samplers[ 0 ].sampler
-		) != VK_SUCCESS ) {
-			if( report_function ) {
-				report_function( ReportSeverity::NON_CRITICAL_ERROR, "Cannot create sampler!" );
-			}
-			return false;
-		}
+	if( descriptor_pool ) {
+		return true;
+	}
+	return false;
+}
+
+
+
+
+
+
+
+
+
+bool RendererImpl::CreateDefaultSampler()
+{
+	vk2d::SamplerCreateInfo sampler_create_info {};
+	sampler_create_info.minification_filter				= vk2d::SamplerFilter::LINEAR;
+	sampler_create_info.magnification_filter			= vk2d::SamplerFilter::LINEAR;
+	sampler_create_info.mipmap_mode						= vk2d::SamplerMipmapMode::LINEAR;
+	sampler_create_info.address_mode_u					= vk2d::SamplerAddressMode::REPEAT;
+	sampler_create_info.address_mode_v					= vk2d::SamplerAddressMode::REPEAT;
+	sampler_create_info.border_color					= { 0.0f, 0.0f, 0.0f, 1.0f };
+	sampler_create_info.mipmap_enable					= true;
+	sampler_create_info.mipmap_max_anisotropy			= 16.0f;
+	sampler_create_info.mipmap_level_of_detail_bias		= 0.0f;
+	sampler_create_info.mipmap_min_level_of_detail		= 0.0f;
+	sampler_create_info.mipmap_max_level_of_detail		= 128.0f;
+	default_sampler			= std::unique_ptr<vk2d::Sampler>( new vk2d::Sampler( this, sampler_create_info ) );
+	if( default_sampler && default_sampler->IsGood() ) {
+		return true;
 	}
 
-	// Create descriptor pool and allocate descriptor sets.
-	std::vector<VkDescriptorSet> descriptor_sets( samplers.size() );
-	{
-		VkDescriptorPoolSize pool_size {};
-		pool_size.type								= VK_DESCRIPTOR_TYPE_SAMPLER;
-		pool_size.descriptorCount					= uint32_t( samplers.size() );
-		VkDescriptorPoolCreateInfo descriptor_pool_create_info {};
-		descriptor_pool_create_info.sType			= VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-		descriptor_pool_create_info.pNext			= nullptr;
-		descriptor_pool_create_info.flags			= 0;
-		descriptor_pool_create_info.maxSets			= uint32_t( samplers.size() );
-		descriptor_pool_create_info.poolSizeCount	= 1;
-		descriptor_pool_create_info.pPoolSizes		= &pool_size;
-		if( vkCreateDescriptorPool(
-			device,
-			&descriptor_pool_create_info,
-			nullptr,
-			&sampler_descriptor_pool
-		) != VK_SUCCESS ) {
-			if( report_function ) {
-				report_function( ReportSeverity::NON_CRITICAL_ERROR, "Cannot create samplers!" );
-			}
-			return false;
-		}
-
-		VkDescriptorSetLayout set_layout					= sampler_descriptor_set_layout->GetVulkanDescriptorSetLayout();
-		VkDescriptorSetAllocateInfo descriptor_set_allocate_info {};
-		descriptor_set_allocate_info.sType					= VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-		descriptor_set_allocate_info.pNext					= nullptr;
-		descriptor_set_allocate_info.descriptorPool			= sampler_descriptor_pool;
-		descriptor_set_allocate_info.descriptorSetCount		= uint32_t( samplers.size() );
-		descriptor_set_allocate_info.pSetLayouts			= &set_layout;
-		if( vkAllocateDescriptorSets(
-			device,
-			&descriptor_set_allocate_info,
-			descriptor_sets.data()
-		) != VK_SUCCESS ) {
-			if( report_function ) {
-				report_function( ReportSeverity::NON_CRITICAL_ERROR, "Cannot create sampler!" );
-			}
-			return false;
-		}
-	}
-
-	// Update descriptor sets.
-	for( size_t i = 0; i < samplers.size(); ++i ) {
-		samplers[ i ].descriptor_set			= descriptor_sets[ i ];
-
-		VkDescriptorImageInfo descriptor_image_info {};
-		descriptor_image_info.sampler			= samplers[ i ].sampler;
-		descriptor_image_info.imageView			= VK_NULL_HANDLE;
-		descriptor_image_info.imageLayout		= VK_IMAGE_LAYOUT_UNDEFINED;
-		VkWriteDescriptorSet descriptor_set_write {};
-		descriptor_set_write.sType				= VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-		descriptor_set_write.pNext				= nullptr;
-		descriptor_set_write.dstSet				= samplers[ i ].descriptor_set;
-		descriptor_set_write.dstBinding			= 0;
-		descriptor_set_write.dstArrayElement	= 0;
-		descriptor_set_write.descriptorCount	= 1;
-		descriptor_set_write.descriptorType		= VK_DESCRIPTOR_TYPE_SAMPLER;
-		descriptor_set_write.pImageInfo			= &descriptor_image_info;
-		descriptor_set_write.pBufferInfo		= nullptr;
-		descriptor_set_write.pTexelBufferView	= nullptr;
-		vkUpdateDescriptorSets(
-			device,
-			1, &descriptor_set_write,
-			0, nullptr
-		);
-	}
-
-	return true;
+	return false;
 }
 
 
@@ -990,13 +941,19 @@ bool RendererImpl::CreateDescriptorSetLayouts()
 
 	// Set 0 layout, sampler
 	{
-		std::array<VkDescriptorSetLayoutBinding, 1> descriptor_set_layout_bindings {};
+		std::array<VkDescriptorSetLayoutBinding, 2> descriptor_set_layout_bindings {};
 
 		descriptor_set_layout_bindings[ 0 ].binding				= 0;
 		descriptor_set_layout_bindings[ 0 ].descriptorType		= VK_DESCRIPTOR_TYPE_SAMPLER;
 		descriptor_set_layout_bindings[ 0 ].descriptorCount		= 1;
 		descriptor_set_layout_bindings[ 0 ].stageFlags			= VK_SHADER_STAGE_FRAGMENT_BIT;
 		descriptor_set_layout_bindings[ 0 ].pImmutableSamplers	= nullptr;
+
+		descriptor_set_layout_bindings[ 1 ].binding				= 1;
+		descriptor_set_layout_bindings[ 1 ].descriptorType		= VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+		descriptor_set_layout_bindings[ 1 ].descriptorCount		= 1;
+		descriptor_set_layout_bindings[ 1 ].stageFlags			= VK_SHADER_STAGE_FRAGMENT_BIT;
+		descriptor_set_layout_bindings[ 1 ].pImmutableSamplers	= nullptr;
 
 		VkDescriptorSetLayoutCreateInfo descriptor_set_layout_create_info {};
 		descriptor_set_layout_create_info.sType			= VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
@@ -1170,32 +1127,6 @@ bool RendererImpl::CreateResourceManager()
 
 bool RendererImpl::CreateDefaultTexture()
 {
-	// Create simple descriptor pool
-	{
-		std::array<VkDescriptorPoolSize, 1> pool_sizes {};
-		pool_sizes[ 0 ].type				= VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
-		pool_sizes[ 0 ].descriptorCount		= 1;
-
-		VkDescriptorPoolCreateInfo descriptor_pool_create_info {};
-		descriptor_pool_create_info.sType			= VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-		descriptor_pool_create_info.pNext			= nullptr;
-		descriptor_pool_create_info.flags			= 0;
-		descriptor_pool_create_info.maxSets			= 1;
-		descriptor_pool_create_info.poolSizeCount	= uint32_t( pool_sizes.size() );
-		descriptor_pool_create_info.pPoolSizes		= pool_sizes.data();
-
-		if( vkCreateDescriptorPool(
-			device,
-			&descriptor_pool_create_info,
-			nullptr,
-			&default_texture_descriptor_pool
-		) != VK_SUCCESS ) {
-			if( report_function ) {
-				report_function( ReportSeverity::NON_CRITICAL_ERROR, "Cannot create default texture!" );
-			}
-			return false;
-		}
-	}
 	{
 		// Create texture
 		{
@@ -1458,35 +1389,16 @@ bool RendererImpl::CreateDefaultTexture()
 	}
 	// Allocate and update default texture descriptor set.
 	{
-		auto set_layout = texture_descriptor_set_layout->GetVulkanDescriptorSetLayout();
-
-		VkDescriptorSetAllocateInfo descriptor_set_allocate_info {};
-		descriptor_set_allocate_info.sType					= VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-		descriptor_set_allocate_info.pNext					= nullptr;
-		descriptor_set_allocate_info.descriptorPool			= default_texture_descriptor_pool;
-		descriptor_set_allocate_info.descriptorSetCount		= 1;
-		descriptor_set_allocate_info.pSetLayouts			= &set_layout;
-
-		if( vkAllocateDescriptorSets(
-			device,
-			&descriptor_set_allocate_info,
-			&default_texture_descriptor_set
-		) != VK_SUCCESS ) {
-			if( report_function ) {
-				report_function( ReportSeverity::NON_CRITICAL_ERROR, "Cannot create default texture!" );
-			}
-			return false;
-		}
+		default_texture_descriptor_set	= descriptor_pool->AllocateDescriptorSet( *texture_descriptor_set_layout );
 
 		VkDescriptorImageInfo descriptor_image_info {};
 		descriptor_image_info.sampler			= VK_NULL_HANDLE;
 		descriptor_image_info.imageView			= default_texture.view;
 		descriptor_image_info.imageLayout		= VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-
 		std::array<VkWriteDescriptorSet, 1> descriptor_writes {};
 		descriptor_writes[ 0 ].sType			= VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 		descriptor_writes[ 0 ].pNext			= nullptr;
-		descriptor_writes[ 0 ].dstSet			= default_texture_descriptor_set;
+		descriptor_writes[ 0 ].dstSet			= default_texture_descriptor_set.descriptorSet;
 		descriptor_writes[ 0 ].dstBinding		= 0;
 		descriptor_writes[ 0 ].dstArrayElement	= 0;
 		descriptor_writes[ 0 ].descriptorCount	= 1;
@@ -1541,24 +1453,14 @@ void RendererImpl::DestroyDevice()
 	device					= {};
 }
 
-void RendererImpl::DestroySamplers()
+void RendererImpl::DestroyDescriptorPool()
 {
-	for( auto & s : samplers ) {
-		vkDestroySampler(
-			device,
-			s.sampler,
-			nullptr
-		);
-	}
+	descriptor_pool			= nullptr;
+}
 
-	vkDestroyDescriptorPool(
-		device,
-		sampler_descriptor_pool,
-		nullptr
-	);
-
-	samplers				= {};
-	sampler_descriptor_pool	= {};
+void RendererImpl::DestroyDefaultSampler()
+{
+	default_sampler				= {};
 }
 
 void RendererImpl::DestroyPipelineCache()
@@ -1623,16 +1525,10 @@ void RendererImpl::DestroyResourceManager()
 
 void RendererImpl::DestroyDefaultTexture()
 {
-	vkDestroyDescriptorPool(
-		device,
-		default_texture_descriptor_pool,
-		nullptr
-	);
-
+	descriptor_pool->FreeDescriptorSet( default_texture_descriptor_set );
 	device_memory_pool->FreeCompleteResource( default_texture );
 
 	default_texture						= {};
-	default_texture_descriptor_pool		= {};
 	default_texture_descriptor_set		= {};
 }
 

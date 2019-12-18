@@ -7,6 +7,7 @@
 #include "../../Include/Interface/Window.h"
 #include "../Header/Core/QueueResolver.h"
 #include "../../Include/Interface/ResourceManager.h"
+#include "../../Include/Interface/Sampler.h"
 
 
 
@@ -119,6 +120,25 @@ VK2D_API void VK2D_APIENTRY Renderer::CloseOutputWindow( Window * window )
 {
 	if( impl ) {
 		impl->CloseOutputWindow( window );
+	}
+}
+
+VK2D_API vk2d::Sampler * VK2D_APIENTRY Renderer::CreateSampler(
+	const vk2d::SamplerCreateInfo		&	sampler_create_info
+)
+{
+	if( impl ) {
+		return impl->CreateSampler( sampler_create_info );
+	}
+	return {};
+}
+
+VK2D_API void VK2D_APIENTRY Renderer::DestroySampler(
+	vk2d::Sampler						*	sampler
+)
+{
+	if( impl ) {
+		impl->DestroySampler( sampler );
 	}
 }
 

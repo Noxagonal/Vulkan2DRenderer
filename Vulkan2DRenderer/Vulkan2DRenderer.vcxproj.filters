@@ -120,6 +120,12 @@
     <ClInclude Include="..\Include\Interface\Mesh.h">
       <Filter>Include\Interface</Filter>
     </ClInclude>
+    <ClInclude Include="..\Include\Interface\Sampler.h">
+      <Filter>Include\Interface</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Source\Header\Impl\SamplerImpl.h">
+      <Filter>Source\Header\Impl</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\Source\Impl\RendererImpl.cpp">
@@ -172,6 +178,12 @@
     </ClCompile>
     <ClCompile Include="..\Source\Interface\Mesh.cpp">
       <Filter>Source\Interface</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\Interface\Sampler.cpp">
+      <Filter>Source\Interface</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\Impl\SamplerImpl.cpp">
+      <Filter>Source\Impl</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>
