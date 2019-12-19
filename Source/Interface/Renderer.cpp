@@ -142,6 +142,22 @@ VK2D_API void VK2D_APIENTRY Renderer::DestroySampler(
 	}
 }
 
+VK2D_API vk2d::Multisamples VK2D_APIENTRY Renderer::GetMaximumSupportedMultisampling()
+{
+	if( impl ) {
+		return impl->GetMaximumSupportedMultisampling();
+	}
+	return vk2d::Multisamples::SAMPLE_COUNT_1;
+}
+
+VK2D_API vk2d::Multisamples VK2D_APIENTRY Renderer::GetAllSupportedMultisampling()
+{
+	if( impl ) {
+		return impl->GetAllSupportedMultisampling();
+	}
+	return vk2d::Multisamples::SAMPLE_COUNT_1;
+}
+
 VK2D_API ResourceManager * VK2D_APIENTRY Renderer::GetResourceManager()
 {
 	if( impl ) return impl->GetResourceManager();

@@ -231,6 +231,9 @@ public:
 	VK2D_API void									VK2D_APIENTRY						DestroySampler(
 		vk2d::Sampler							*	sampler );
 
+	VK2D_API vk2d::Multisamples						VK2D_APIENTRY						GetMaximumSupportedMultisampling();
+	VK2D_API vk2d::Multisamples						VK2D_APIENTRY						GetAllSupportedMultisampling();
+
 	VK2D_API ResourceManager					*	VK2D_APIENTRY						GetResourceManager();
 
 private:

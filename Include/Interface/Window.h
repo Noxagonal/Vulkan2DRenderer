@@ -43,6 +43,14 @@ enum class Multisamples : uint32_t {
 	SAMPLE_COUNT_32		= 32,
 	SAMPLE_COUNT_64		= 64
 };
+inline vk2d::Multisamples operator&( vk2d::Multisamples m1, vk2d::Multisamples m2 )
+{
+	return vk2d::Multisamples( uint32_t( m1 ) & uint32_t( m2 ) );
+}
+inline vk2d::Multisamples operator|( vk2d::Multisamples m1, vk2d::Multisamples m2 )
+{
+	return vk2d::Multisamples( uint32_t( m1 ) | uint32_t( m2 ) );
+}
 
 enum class WindowCoordinateSpace : uint32_t {
 	TEXEL_SPACE,					// Default, ( 0, 0 ) at top left corner of the screen, bottom right is window extent.

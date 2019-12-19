@@ -386,6 +386,24 @@ void RendererImpl::DestroySampler(
 	}
 }
 
+vk2d::Multisamples RendererImpl::GetMaximumSupportedMultisampling()
+{
+	vk2d::Multisamples max_samples	= vk2d::Multisamples( physical_device_properties.limits.framebufferColorSampleCounts );
+	if( uint32_t( max_samples )			& uint32_t( vk2d::Multisamples::SAMPLE_COUNT_64 ) )	return vk2d::Multisamples::SAMPLE_COUNT_64;
+	else if( uint32_t( max_samples )	& uint32_t( vk2d::Multisamples::SAMPLE_COUNT_32 ) )	return vk2d::Multisamples::SAMPLE_COUNT_32;
+	else if( uint32_t( max_samples )	& uint32_t( vk2d::Multisamples::SAMPLE_COUNT_16 ) )	return vk2d::Multisamples::SAMPLE_COUNT_16;
+	else if( uint32_t( max_samples )	& uint32_t( vk2d::Multisamples::SAMPLE_COUNT_8 ) )	return vk2d::Multisamples::SAMPLE_COUNT_8;
+	else if( uint32_t( max_samples )	& uint32_t( vk2d::Multisamples::SAMPLE_COUNT_4 ) )	return vk2d::Multisamples::SAMPLE_COUNT_4;
+	else if( uint32_t( max_samples )	& uint32_t( vk2d::Multisamples::SAMPLE_COUNT_2 ) )	return vk2d::Multisamples::SAMPLE_COUNT_2;
+	else if( uint32_t( max_samples )	& uint32_t( vk2d::Multisamples::SAMPLE_COUNT_1 ) )	return vk2d::Multisamples::SAMPLE_COUNT_1;
+	return vk2d::Multisamples::SAMPLE_COUNT_1;
+}
+
+vk2d::Multisamples RendererImpl::GetAllSupportedMultisampling()
+{
+	return vk2d::Multisamples( physical_device_properties.limits.framebufferColorSampleCounts );
+}
+
 
 
 
