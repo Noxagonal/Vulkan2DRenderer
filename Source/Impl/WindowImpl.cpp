@@ -210,6 +210,19 @@ WindowImpl::WindowImpl(
 	window_title					= create_info_copy.title;
 	event_handler					= create_info_copy.event_handler;
 
+	{
+		samples							= create_info_copy.samples;
+		vk2d::Multisamples max_samples	= renderer_parent->GetMaximumSupportedMultisampling();
+		if( uint32_t( samples ) > uint32_t( max_samples ) ) {
+			// ERROR HERE but can continue;
+			samples						= max_samples;
+		}
+		vk2d::Multisamples supported_samples	= vk2d::Multisamples( renderer_parent->GetPhysicalDeviceProperties().limits.framebufferColorSampleCounts );
+		if( !( uint32_t( samples ) & uint32_t( supported_samples ) ) ) {
+			samples						= vk2d::Multisamples::SAMPLE_COUNT_1;
+		}
+	}
+
 	instance						= renderer_parent->GetVulkanInstance();
 	physical_device					= renderer_parent->GetVulkanPhysicalDevice();
 	device							= renderer_parent->GetVulkanDevice();
@@ -324,6 +337,10 @@ WindowImpl::~WindowImpl()
 			f,
 			nullptr
 		);
+	}
+
+	for( auto m : multisample_render_targets ) {
+		renderer_parent->GetDeviceMemoryPool()->FreeCompleteResource( m );
 	}
 
 	for( auto v : swapchain_image_views ) {
@@ -1464,6 +1481,9 @@ bool WindowImpl::RecreateResourcesAfterResizing( )
 	// Reallocate framebuffers
 	{
 		if( framebuffers.size() ) {
+			for( auto m : multisample_render_targets ) {
+				renderer_parent->GetDeviceMemoryPool()->FreeCompleteResource( m );
+			}
 			for( auto fb : framebuffers ) {
 				vkDestroyFramebuffer(
 					device,
@@ -1667,23 +1687,46 @@ bool WindowImpl::CreateSurface()
 
 bool WindowImpl::CreateRenderPass()
 {
+	bool use_multisampling	= samples != vk2d::Multisamples::SAMPLE_COUNT_1;
 
-	std::array<VkAttachmentDescription, 1>		color_attachment_descriptions {};
-	color_attachment_descriptions[ 0 ].flags			= 0;
-	color_attachment_descriptions[ 0 ].format			= surface_format.format;
-	color_attachment_descriptions[ 0 ].samples			= VkSampleCountFlagBits( create_info_copy.samples );
-	color_attachment_descriptions[ 0 ].loadOp			= VK_ATTACHMENT_LOAD_OP_CLEAR;
-	color_attachment_descriptions[ 0 ].storeOp			= VK_ATTACHMENT_STORE_OP_STORE;
-	color_attachment_descriptions[ 0 ].stencilLoadOp	= VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-	color_attachment_descriptions[ 0 ].stencilStoreOp	= VK_ATTACHMENT_STORE_OP_DONT_CARE;
-	color_attachment_descriptions[ 0 ].initialLayout	= VK_IMAGE_LAYOUT_UNDEFINED;
-	color_attachment_descriptions[ 0 ].finalLayout		= VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+	std::vector<VkAttachmentDescription>					color_attachment_descriptions {};
+	if( use_multisampling ) {
+		color_attachment_descriptions.resize( 2 );
+	} else {
+		color_attachment_descriptions.resize( 1 );
+	}
 
-	std::array<VkAttachmentReference, 0>		input_attachment_references {};
+	color_attachment_descriptions[ 0 ].flags				= 0;
+	color_attachment_descriptions[ 0 ].format				= surface_format.format;
+	color_attachment_descriptions[ 0 ].samples				= VkSampleCountFlagBits( samples );
+	color_attachment_descriptions[ 0 ].loadOp				= VK_ATTACHMENT_LOAD_OP_CLEAR;
+	color_attachment_descriptions[ 0 ].storeOp				= VK_ATTACHMENT_STORE_OP_STORE;
+	color_attachment_descriptions[ 0 ].stencilLoadOp		= VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+	color_attachment_descriptions[ 0 ].stencilStoreOp		= VK_ATTACHMENT_STORE_OP_DONT_CARE;
+	color_attachment_descriptions[ 0 ].initialLayout		= VK_IMAGE_LAYOUT_UNDEFINED;
+	color_attachment_descriptions[ 0 ].finalLayout			= use_multisampling ? VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL : VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
 
-	std::array<VkAttachmentReference, 1>		color_attachment_references {};
-	color_attachment_references[ 0 ].attachment		= 0;	// points to color_attachment_descriptions[ 0 ]
-	color_attachment_references[ 0 ].layout			= VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+	if( use_multisampling ) {
+		color_attachment_descriptions[ 1 ].flags			= 0;
+		color_attachment_descriptions[ 1 ].format			= surface_format.format;
+		color_attachment_descriptions[ 1 ].samples			= VK_SAMPLE_COUNT_1_BIT;
+		color_attachment_descriptions[ 1 ].loadOp			= VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+		color_attachment_descriptions[ 1 ].storeOp			= VK_ATTACHMENT_STORE_OP_STORE;
+		color_attachment_descriptions[ 1 ].stencilLoadOp	= VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+		color_attachment_descriptions[ 1 ].stencilStoreOp	= VK_ATTACHMENT_STORE_OP_DONT_CARE;
+		color_attachment_descriptions[ 1 ].initialLayout	= VK_IMAGE_LAYOUT_UNDEFINED;
+		color_attachment_descriptions[ 1 ].finalLayout		= VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+	}
+
+	std::array<VkAttachmentReference, 0>				input_attachment_references {};
+
+	std::array<VkAttachmentReference, 1>				color_attachment_references {};
+	color_attachment_references[ 0 ].attachment			= 0;	// points to color_attachment_descriptions[ 0 ]
+	color_attachment_references[ 0 ].layout				= VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+
+	std::array<VkAttachmentReference, 1>				resolve_attachment_references {};
+	resolve_attachment_references[ 0 ].attachment		= 1;	// points to color_attachment_descriptions[ 1 ]
+	resolve_attachment_references[ 0 ].layout			= VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 
 	VkAttachmentReference						depth_stencil_attachment {};
 	depth_stencil_attachment.attachment			= VK_ATTACHMENT_UNUSED;
@@ -1698,7 +1741,7 @@ bool WindowImpl::CreateRenderPass()
 	subpasses[ 0 ].pInputAttachments			= input_attachment_references.data();
 	subpasses[ 0 ].colorAttachmentCount			= uint32_t( color_attachment_references.size() );
 	subpasses[ 0 ].pColorAttachments			= color_attachment_references.data();
-	subpasses[ 0 ].pResolveAttachments			= create_info_copy.samples == Multisamples::SAMPLE_COUNT_1 ? nullptr : color_attachment_references.data();
+	subpasses[ 0 ].pResolveAttachments			= samples == Multisamples::SAMPLE_COUNT_1 ? nullptr : resolve_attachment_references.data();
 	subpasses[ 0 ].pDepthStencilAttachment		= &depth_stencil_attachment;
 	subpasses[ 0 ].preserveAttachmentCount		= uint32_t( preserve_attachments.size() );
 	subpasses[ 0 ].pPreserveAttachments			= preserve_attachments.data();
@@ -1861,7 +1904,7 @@ bool WindowImpl::CreateGraphicsPipelines()
 	multisample_state_create_info.sType						= VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
 	multisample_state_create_info.pNext						= nullptr;
 	multisample_state_create_info.flags						= 0;
-	multisample_state_create_info.rasterizationSamples		= VkSampleCountFlagBits( create_info_copy.samples );
+	multisample_state_create_info.rasterizationSamples		= VkSampleCountFlagBits( samples );
 	multisample_state_create_info.sampleShadingEnable		= VK_FALSE;
 	multisample_state_create_info.minSampleShading			= 1.0f;
 	multisample_state_create_info.pSampleMask				= nullptr;
@@ -2390,15 +2433,72 @@ bool WindowImpl::CreateFramebuffers()
 {
 	framebuffers.resize( swapchain_image_count );
 
+	bool use_multisampling		= samples != vk2d::Multisamples::SAMPLE_COUNT_1;
+	if( use_multisampling ) {
+		multisample_render_targets.resize( swapchain_image_count );
+	}
+
 	for( uint32_t i = 0; i < swapchain_image_count; ++i ) {
+		if( use_multisampling ) {
+			VkImageCreateInfo						image_create_info		{};
+			image_create_info.sType					= VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
+			image_create_info.pNext					= nullptr;
+			image_create_info.flags					= 0;
+			image_create_info.imageType				= VK_IMAGE_TYPE_2D;
+			image_create_info.format				= surface_format.format;
+			image_create_info.extent				= { extent.width, extent.height, 1 };
+			image_create_info.mipLevels				= 1;
+			image_create_info.arrayLayers			= 1;
+			image_create_info.samples				= VkSampleCountFlagBits( samples );
+			image_create_info.tiling				= VK_IMAGE_TILING_OPTIMAL;
+			image_create_info.usage					= VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+			image_create_info.sharingMode			= VK_SHARING_MODE_EXCLUSIVE;
+			image_create_info.queueFamilyIndexCount	= 0;
+			image_create_info.pQueueFamilyIndices	= nullptr;
+			image_create_info.initialLayout			= VK_IMAGE_LAYOUT_UNDEFINED;
+			VkImageViewCreateInfo					image_view_create_info	{};
+			image_view_create_info.sType			= VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+			image_view_create_info.pNext			= nullptr;
+			image_view_create_info.flags			= 0;
+			image_view_create_info.image			= VK_NULL_HANDLE;
+			image_view_create_info.viewType			= VK_IMAGE_VIEW_TYPE_2D;
+			image_view_create_info.format			= surface_format.format;
+			image_view_create_info.components		= {
+				VK_COMPONENT_SWIZZLE_IDENTITY,
+				VK_COMPONENT_SWIZZLE_IDENTITY,
+				VK_COMPONENT_SWIZZLE_IDENTITY,
+				VK_COMPONENT_SWIZZLE_IDENTITY
+			};
+			image_view_create_info.subresourceRange.aspectMask		= VK_IMAGE_ASPECT_COLOR_BIT;
+			image_view_create_info.subresourceRange.baseMipLevel	= 0;
+			image_view_create_info.subresourceRange.levelCount		= 1;
+			image_view_create_info.subresourceRange.baseArrayLayer	= 0;
+			image_view_create_info.subresourceRange.layerCount		= 1;
+
+			multisample_render_targets[ i ] = renderer_parent->GetDeviceMemoryPool()->CreateCompleteImageResource(
+				&image_create_info,
+				VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+				&image_view_create_info
+			);
+			if( multisample_render_targets[ i ] != VK_SUCCESS ) {
+				// ERROR REPORT HERE;
+				return false;
+			}
+		}
+
+		std::vector<VkImageView>	attachments;
+		if( use_multisampling ) {
+			attachments.push_back( multisample_render_targets[ i ].view );
+		}
+		attachments.push_back( swapchain_image_views[ i ] );
 
 		VkFramebufferCreateInfo framebuffer_create_info {};
 		framebuffer_create_info.sType				= VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
 		framebuffer_create_info.pNext				= nullptr;
 		framebuffer_create_info.flags				= 0;
 		framebuffer_create_info.renderPass			= render_pass;
-		framebuffer_create_info.attachmentCount		= 1;
-		framebuffer_create_info.pAttachments		= &swapchain_image_views[ i ];
+		framebuffer_create_info.attachmentCount		= uint32_t( attachments.size() );
+		framebuffer_create_info.pAttachments		= attachments.data();
 		framebuffer_create_info.width				= extent.width;
 		framebuffer_create_info.height				= extent.height;
 		framebuffer_create_info.layers				= 1;

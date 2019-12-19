@@ -54,6 +54,7 @@ int main()
 	window_create_info.width				= 800;
 	window_create_info.height				= 600;
 	window_create_info.coordinate_space		= vk2d::WindowCoordinateSpace::TEXEL_SPACE_CENTERED;
+	window_create_info.samples				= renderer->GetMaximumSupportedMultisampling();
 	window_create_info.event_handler		= &event_handler;
 	auto window = renderer->CreateOutputWindow( window_create_info );
 	if( !window ) return -1;
@@ -82,21 +83,21 @@ int main()
 			v.point_size	= 8.0f;
 		}
 		lattice_mesh.SetLineSize( 1.0f );
-		lattice_mesh.SetMeshType( vk2d::MeshType::TRIANGLE_FILLED );
+		lattice_mesh.SetMeshType( vk2d::MeshType::TRIANGLE_WIREFRAME );
 		lattice_mesh.SetTexture( texture );
 		lattice_mesh.SetSampler( sampler );
 //		lattice_mesh.Rotate( frame_counter / 234.0f, { +0.5f, +0.0f } );
 
-		lattice_mesh.WaveUV(
+		lattice_mesh.Wave(
 			frame_counter / 500.0f,
 			1.0f,
 			frame_counter / 60.0f,
-			{ 0.10f, 0.10f } );
+			{ 25.0f, 25.0f } );
 
 		window->DrawMesh( lattice_mesh );
 
 
-
+		/*
 		auto box = vk2d::GenerateBoxMesh(
 			{ -200, -200 },
 			{ +200, +200 } );
@@ -107,7 +108,7 @@ int main()
 		box.SetSampler( sampler );
 
 		window->DrawMesh( box );
-
+		*/
 
 		if( !window->EndRender() ) return -1;
 	}

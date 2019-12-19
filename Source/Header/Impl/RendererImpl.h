@@ -35,12 +35,6 @@ class MonitorImpl;
 
 
 
-enum class SamplerType : uint32_t {
-	DEFAULT,
-};
-
-
-
 struct WindowCoordinateScaling {
 	alignas( 8 )	vk2d::Vector2d		multiplier		= {};
 	alignas( 8 )	vk2d::Vector2d		offset			= {};
@@ -93,6 +87,9 @@ public:
 
 	void													DestroySampler(
 		vk2d::Sampler									*	sampler );
+
+	vk2d::Multisamples										GetMaximumSupportedMultisampling();
+	vk2d::Multisamples										GetAllSupportedMultisampling();
 
 	PFN_VK2D_ReportFunction									GetReportFunction() const;
 
