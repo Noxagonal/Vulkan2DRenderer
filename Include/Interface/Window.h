@@ -331,7 +331,7 @@ public:
 	// Screenshot events, called when screenshot save was successfully saved on disk or if there was an error, if error, error message is also given.
 	virtual void								VK2D_APIENTRY		EventScreenshot(
 		vk2d::Window						*	window,
-		const std::string					&	path,
+		const std::filesystem::path			&	path,
 		bool									success,
 		const std::string					&	errorMessage )
 	{};
@@ -390,8 +390,10 @@ public:
 	// Takes a screenshot of the next image that will be rendered.
 	// Parameters:
 	// [in] save_path: path where the screenshot will be saved to.
+	// [in] include_alpha: true if you want background to be transparent, false othervise
 	VK2D_API void										VK2D_APIENTRY				TakeScreenshot(
-		std::filesystem::path							save_path );
+		const std::filesystem::path					&	save_path,
+		bool											include_alpha				= false );
 
 	// Sets focus to this window, should be called before
 	// entering fullscreen from windowed mode.

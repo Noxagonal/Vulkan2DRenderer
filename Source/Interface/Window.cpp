@@ -71,10 +71,16 @@ VK2D_API void VK2D_APIENTRY Window::UpdateEvents()
 	}
 }
 
-VK2D_API void VK2D_APIENTRY Window::TakeScreenshot( std::filesystem::path save_path )
+VK2D_API void VK2D_APIENTRY Window::TakeScreenshot(
+	const std::filesystem::path		&	save_path,
+	bool								include_alpha
+)
 {
 	if( impl ) {
-		impl->TakeScreenshot( save_path );
+		impl->TakeScreenshot(
+			save_path,
+			include_alpha
+		);
 	}
 }
 

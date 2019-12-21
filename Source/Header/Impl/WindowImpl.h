@@ -14,6 +14,7 @@
 
 #include <vector>
 #include <memory>
+#include <atomic>
 
 namespace vk2d {
 
@@ -29,6 +30,7 @@ class WindowImpl;
 class CursorImpl;
 class MeshBuffer;
 class TextureResourceImpl;
+class ScreenshotSaverTask;
 
 enum class NextRenderCallFunction : uint32_t {
 	BEGIN		= 0,
@@ -47,7 +49,8 @@ enum class PipelineType : uint32_t {
 };
 
 class WindowImpl {
-	friend class Window;
+	friend class vk2d::Window;
+	friend class vk2d::_internal::ScreenshotSaverTask;
 	friend bool										AquireImage(
 		vk2d::_internal::WindowImpl				*	data,
 		VkPhysicalDevice							physical_device,
@@ -72,269 +75,290 @@ class WindowImpl {
 
 public:
 	WindowImpl(
-		vk2d::Window									*	window,
-		vk2d::_internal::RendererImpl					*	renderer,
-		const vk2d::WindowCreateInfo					&	window_create_info
+		vk2d::Window										*	window,
+		vk2d::_internal::RendererImpl						*	renderer,
+		const vk2d::WindowCreateInfo						&	window_create_info
 	);
 	~WindowImpl();
 
-	void													CloseWindow();
-	bool													ShouldClose();
+	void														CloseWindow();
+	bool														ShouldClose();
 
-	bool													BeginRender();
-	bool													EndRender();
+	bool														BeginRender();
+	bool														EndRender();
 
-	void													UpdateEvents();
+	void														UpdateEvents();
 
-	void													TakeScreenshot(
-		std::filesystem::path								save_path );
+	void														TakeScreenshot(
+		const std::filesystem::path							&	save_path,
+		bool													include_alpha );
 
-	void													Focus();
+	void														Focus();
 
-	void													SetOpacity(
-		float												opacity );
+	void														SetOpacity(
+		float													opacity );
 
-	float													GetOpacity();
+	float														GetOpacity();
 
-	void													Hide(
-		bool												hidden );
+	void														Hide(
+		bool													hidden );
 
-	bool													IsHidden();
+	bool														IsHidden();
 
-	void													DisableEvents(
-		bool												disable_events );
+	void														DisableEvents(
+		bool													disable_events );
 
-	bool													AreEventsDisabled();
+	bool														AreEventsDisabled();
 
-	void													SetFullscreen(
-		vk2d::Monitor									*	monitor,
-		uint32_t											frequency );
+	void														SetFullscreen(
+		vk2d::Monitor										*	monitor,
+		uint32_t												frequency );
 
-	bool													IsFullscreen();
+	bool														IsFullscreen();
 
-	std::array<double, 2>									GetCursorPosition();
+	std::array<double, 2>										GetCursorPosition();
 
-	void													SetCursorPosition(
-		double												x,
-		double												y );
+	void														SetCursorPosition(
+		double													x,
+		double													y );
 
-	void													SetCursor(
-		vk2d::Cursor									*	cursor );
+	void														SetCursor(
+		vk2d::Cursor										*	cursor );
 
-	std::string												GetClipboardString();
+	std::string													GetClipboardString();
 
-	void													SetClipboardString(
-		const std::string								&	str );
+	void														SetClipboardString(
+		const std::string									&	str );
 
-	void													SetTitle(
-		const std::string								&	title );
+	void														SetTitle(
+		const std::string									&	title );
 
-	std::string												GetTitle();
+	std::string													GetTitle();
 
-	void													SetIcon(
-		const std::vector<std::filesystem::path>&			image_paths );
+	void														SetIcon(
+		const std::vector<std::filesystem::path>&				image_paths );
 
-	void													SetPosition(
-		int32_t												x,
-		int32_t												y );
+	void														SetPosition(
+		int32_t													x,
+		int32_t													y );
 
-	std::array<int32_t, 2>									GetPosition();
+	std::array<int32_t, 2>										GetPosition();
 
-	void													Iconify(
-		bool												minimized );
+	void														Iconify(
+		bool													minimized );
 
-	bool													IsIconified();
+	bool														IsIconified();
 
-	void													SetMaximized(
-		bool												maximized );
+	void														SetMaximized(
+		bool													maximized );
 
-	bool													GetMaximized();
+	bool														GetMaximized();
 
-	void													SetCursorState(
-		vk2d::CursorState									new_state );
+	void														SetCursorState(
+		vk2d::CursorState										new_state );
 
-	vk2d::CursorState										GetCursorState();
+	vk2d::CursorState											GetCursorState();
 
-	void													DrawTriangleList(
-		const std::vector<Vertex>						&	vertices,
-		const std::vector<VertexIndex_3>				&	indices,
-		bool												filled						= true,
-		vk2d::TextureResource							*	texture						= nullptr,
-		vk2d::Sampler									*	sampler						= nullptr );
+	void														DrawTriangleList(
+		const std::vector<Vertex>							&	vertices,
+		const std::vector<VertexIndex_3>					&	indices,
+		bool													filled						= true,
+		vk2d::TextureResource								*	texture						= nullptr,
+		vk2d::Sampler										*	sampler						= nullptr );
 
-	void													DrawTriangleList(
-		const std::vector<Vertex>						&	vertices,
-		const std::vector<uint32_t>						&	raw_indices,
-		bool												filled						= true,
-		vk2d::TextureResource							*	texture						= nullptr,
-		vk2d::Sampler									*	sampler						= nullptr );
+	void														DrawTriangleList(
+		const std::vector<Vertex>							&	vertices,
+		const std::vector<uint32_t>							&	raw_indices,
+		bool													filled						= true,
+		vk2d::TextureResource								*	texture						= nullptr,
+		vk2d::Sampler										*	sampler						= nullptr );
 
-	void													DrawLineList(
-		const std::vector<Vertex>						&	vertices,
-		const std::vector<VertexIndex_2>				&	indices,
-		vk2d::TextureResource							*	texture						= nullptr,
-		vk2d::Sampler									*	sampler						= nullptr,
-		float												line_width					= 1.0f );
+	void														DrawLineList(
+		const std::vector<Vertex>							&	vertices,
+		const std::vector<VertexIndex_2>					&	indices,
+		vk2d::TextureResource								*	texture						= nullptr,
+		vk2d::Sampler										*	sampler						= nullptr,
+		float													line_width					= 1.0f );
 
-	void													DrawLineList(
-		const std::vector<Vertex>						&	vertices,
-		const std::vector<uint32_t>						&	raw_indices,
-		vk2d::TextureResource							*	texture						= nullptr,
-		vk2d::Sampler									*	sampler						= nullptr,
-		float												line_width					= 1.0f );
+	void														DrawLineList(
+		const std::vector<Vertex>							&	vertices,
+		const std::vector<uint32_t>							&	raw_indices,
+		vk2d::TextureResource								*	texture						= nullptr,
+		vk2d::Sampler										*	sampler						= nullptr,
+		float													line_width					= 1.0f );
 
-	void													DrawPointList(
-		const std::vector<Vertex>						&	vertices,
-		vk2d::TextureResource							*	texture						= nullptr,
-		vk2d::Sampler									*	sampler						= nullptr );
+	void														DrawPointList(
+		const std::vector<Vertex>							&	vertices,
+		vk2d::TextureResource								*	texture						= nullptr,
+		vk2d::Sampler										*	sampler						= nullptr );
 
-	void													DrawLine(
-		Vector2d											point_1,
-		Vector2d											point_2,
-		Color												color						= { 1.0f, 1.0f, 1.0f, 1.0f } );
+	void														DrawLine(
+		Vector2d												point_1,
+		Vector2d												point_2,
+		Color													color						= { 1.0f, 1.0f, 1.0f, 1.0f } );
 
-	void													DrawBox(
-		Vector2d											top_left,
-		Vector2d											bottom_right,
-		bool												filled						= true,
-		Color												color						= { 1.0f, 1.0f, 1.0f, 1.0f } );
+	void														DrawBox(
+		Vector2d												top_left,
+		Vector2d												bottom_right,
+		bool													filled						= true,
+		Color													color						= { 1.0f, 1.0f, 1.0f, 1.0f } );
 
-	void													DrawCircle(
-		Vector2d											top_left,
-		Vector2d											bottom_right,
-		bool												filled						= true,
-		float												edge_count					= 64.0f,
-		Color												color						= { 1.0f, 1.0f, 1.0f, 1.0f } );
+	void														DrawCircle(
+		Vector2d												top_left,
+		Vector2d												bottom_right,
+		bool													filled						= true,
+		float													edge_count					= 64.0f,
+		Color													color						= { 1.0f, 1.0f, 1.0f, 1.0f } );
 
-	void													DrawPie(
-		Vector2d											top_left,
-		Vector2d											bottom_right,
-		float												begin_angle_radians,
-		float												coverage,
-		bool												filled						= true,
-		float												edge_count					= 64.0f,
-		Color												color						= { 1.0f, 1.0f, 1.0f, 1.0f } );
+	void														DrawPie(
+		Vector2d												top_left,
+		Vector2d												bottom_right,
+		float													begin_angle_radians,
+		float													coverage,
+		bool													filled						= true,
+		float													edge_count					= 64.0f,
+		Color													color						= { 1.0f, 1.0f, 1.0f, 1.0f } );
 
-	void													DrawPieBox(
-		Vector2d											top_left,
-		Vector2d											bottom_right,
-		float												begin_angle_radians,
-		float												coverage,
-		bool												filled						= true,
-		Color												color						= { 1.0f, 1.0f, 1.0f, 1.0f } );
+	void														DrawPieBox(
+		Vector2d												top_left,
+		Vector2d												bottom_right,
+		float													begin_angle_radians,
+		float													coverage,
+		bool													filled						= true,
+		Color													color						= { 1.0f, 1.0f, 1.0f, 1.0f } );
 
-	void													DrawTexture(
-		Vector2d											top_left,
-		Vector2d											bottom_right,
-		vk2d::TextureResource							*	texture,
-		Color												color						= { 1.0f, 1.0f, 1.0f, 1.0f } );
+	void														DrawTexture(
+		Vector2d												top_left,
+		Vector2d												bottom_right,
+		vk2d::TextureResource								*	texture,
+		Color													color						= { 1.0f, 1.0f, 1.0f, 1.0f } );
 
-	void													DrawMesh(
-		const vk2d::Mesh								&	mesh );
+	void														DrawMesh(
+		const vk2d::Mesh									&	mesh );
 
-	bool													SynchronizeFrame();
+	bool														SynchronizeFrame();
 
 private:
-	bool													RecreateResourcesAfterResizing();
-	bool													CreateGLFWWindow();
-	bool													CreateSurface();
-	bool													CreateRenderPass();
-	bool													CreateGraphicsPipelines();
-	bool													CreateCommandPool();
-	bool													AllocateCommandBuffers();
+	bool														RecreateResourcesAfterResizing();
+	bool														CreateGLFWWindow();
+	bool														CreateSurface();
+	bool														CreateRenderPass();
+	bool														CreateGraphicsPipelines();
+	bool														CreateCommandPool();
+	bool														AllocateCommandBuffers();
 
 	// If old swapchain is still active, this function instead re-creates
 	// the swapchain recycling old resources whenever possible.
-	bool													CreateSwapchain();
-	bool													CreateFramebuffers();
-	bool													CreateWindowSynchronizationPrimitives();
-	bool													CreateFrameSynchronizationPrimitives();
+	bool														ReCreateSwapchain();
+	bool														ReCreateScreenshotResources();
+	bool														CreateFramebuffers();
+	bool														CreateWindowSynchronizationPrimitives();
+	bool														CreateFrameSynchronizationPrimitives();
 
-	void													CmdBindPipelineIfDifferent(
-		VkCommandBuffer										command_buffer,
-		vk2d::_internal::PipelineType						pipeline_type );
+	void														HandleScreenshotEvent();
 
-	void													CmdBindTextureIfDifferent(
-		VkCommandBuffer										command_buffer,
-		vk2d::TextureResource							*	texture );
+	void														CmdBindPipelineIfDifferent(
+		VkCommandBuffer											command_buffer,
+		vk2d::_internal::PipelineType							pipeline_type );
 
-	void													CmdBindSamplerIfDifferent(
-		VkCommandBuffer										command_buffer,
-		vk2d::Sampler									*	sampler );
+	void														CmdBindTextureIfDifferent(
+		VkCommandBuffer											command_buffer,
+		vk2d::TextureResource								*	texture );
 
-	void													CmdSetLineWidthIfDifferent(
-		VkCommandBuffer										command_buffer,
-		float												line_width );
+	void														CmdBindSamplerIfDifferent(
+		VkCommandBuffer											command_buffer,
+		vk2d::Sampler										*	sampler );
 
-	vk2d::Window										*	window_parent							= {};
-	vk2d::_internal::RendererImpl						*	renderer_parent							= {};
-	vk2d::WindowCreateInfo									create_info_copy						= {};
+	void														CmdSetLineWidthIfDifferent(
+		VkCommandBuffer											command_buffer,
+		float													line_width );
 
-	vk2d::WindowEventHandler							*	event_handler							= {};
-	VkOffset2D												position								= {};
-	bool													is_minimized							= {};
+	vk2d::Window											*	window_parent							= {};
+	vk2d::_internal::RendererImpl							*	renderer_parent							= {};
+	vk2d::WindowCreateInfo										create_info_copy						= {};
+
+	vk2d::WindowEventHandler								*	event_handler							= {};
+	VkOffset2D													position								= {};
+	bool														is_minimized							= {};
 
 	struct IconData {
-		std::vector<uint8_t>								image_data								= {};
-		GLFWimage											glfw_image								= {};
+		std::vector<uint8_t>									image_data								= {};
+		GLFWimage												glfw_image								= {};
 	};
-	std::vector<IconData>									icon_data								= {};
+	std::vector<IconData>										icon_data								= {};
 
-	VkInstance												instance								= {};
-	VkPhysicalDevice										physical_device							= {};
-	VkDevice												device									= {};
+	VkInstance													instance								= {};
+	VkPhysicalDevice											physical_device							= {};
+	VkDevice													device									= {};
 
-	vk2d::_internal::ResolvedQueue							primary_render_queue					= {};
+	vk2d::_internal::ResolvedQueue								primary_render_queue					= {};
 
-	vk2d::PFN_VK2D_ReportFunction							report_function							= {};
+	vk2d::PFN_VK2D_ReportFunction								report_function							= {};
 
-	GLFWwindow											*	glfw_window								= {};
-	std::string												window_title							= {};
+	GLFWwindow												*	glfw_window								= {};
+	std::string													window_title							= {};
 
-	vk2d::Multisamples										samples									= {};
+	vk2d::Multisamples											samples									= {};
 
-	VkSurfaceKHR											surface									= {};
-	VkSwapchainKHR											swapchain								= {};
-	std::vector<VkImage>									swapchain_images						= {};
-	std::vector<VkImageView>								swapchain_image_views					= {};
-	VkRenderPass											render_pass								= {};
-	std::vector<vk2d::_internal::CompleteImageResource>		multisample_render_targets				= {};
+	VkSurfaceKHR												surface									= {};
+	VkSwapchainKHR												swapchain								= {};
+	std::vector<VkImage>										swapchain_images						= {};
+	std::vector<VkImageView>									swapchain_image_views					= {};
+	VkRenderPass												render_pass								= {};
+	std::vector<vk2d::_internal::CompleteImageResource>			multisample_render_targets				= {};
 
-	VkCommandPool											command_pool							= {};
-	std::vector<VkCommandBuffer>							render_command_buffers					= {};	// For more overlapped execution multiple command buffers are needed.
-	VkCommandBuffer											mesh_transfer_command_buffer			= {};	// For data transfer each frame, this is small command buffer and can be re-recorded just before submitting the work.
-	VkSemaphore												mesh_transfer_semaphore					= {};
+	VkCommandPool												command_pool							= {};
+	std::vector<VkCommandBuffer>								render_command_buffers					= {};	// For more overlapped execution multiple command buffers are needed.
+	VkCommandBuffer												mesh_transfer_command_buffer			= {};	// For data transfer each frame, this is small command buffer and can be re-recorded just before submitting the work.
+	VkSemaphore													mesh_transfer_semaphore					= {};
 
-	VkExtent2D												min_extent								= {};
-	VkExtent2D												max_extent								= {};
-	VkExtent2D												extent									= {};
-	uint32_t												swapchain_image_count					= {};
-	VkSurfaceFormatKHR										surface_format							= {};
-	VkPresentModeKHR										present_mode							= {};
-	VkSurfaceCapabilitiesKHR								surface_capabilities					= {};
-	std::vector<VkFramebuffer>								framebuffers							= {};
+	VkExtent2D													min_extent								= {};
+	VkExtent2D													max_extent								= {};
+	VkExtent2D													extent									= {};
+	uint32_t													swapchain_image_count					= {};
+	VkSurfaceFormatKHR											surface_format							= {};
+	VkPresentModeKHR											present_mode							= {};
+	VkSurfaceCapabilitiesKHR									surface_capabilities					= {};
+	std::vector<VkFramebuffer>									framebuffers							= {};
 
-	uint32_t												next_image								= {};
-	uint32_t												previous_image							= {};
-	VkFence													aquire_image_fence						= {};
-	std::vector<VkSemaphore>								submit_to_present_semaphores			= {};
-	std::vector<VkFence>									gpu_to_cpu_frame_fences					= {};
-	bool													previous_frame_need_synchronization		= {};
+	uint32_t													next_image								= {};
+	uint32_t													previous_image							= {};
+	VkFence														aquire_image_fence						= {};
+	std::vector<VkSemaphore>									submit_to_present_semaphores			= {};
+	std::vector<VkFence>										gpu_to_cpu_frame_fences					= {};
+	bool														previous_frame_need_synchronization		= {};
 
-	std::vector<VkPipeline>									pipelines								= {};
+	std::vector<VkPipeline>										pipelines								= {};
 
-	vk2d::_internal::NextRenderCallFunction					next_render_call_function				= vk2d::_internal::NextRenderCallFunction::BEGIN;
-	bool													should_reconstruct						= {};
-	bool													should_close							= {};
+	vk2d::_internal::NextRenderCallFunction						next_render_call_function				= vk2d::_internal::NextRenderCallFunction::BEGIN;
+	bool														should_reconstruct						= {};
+	bool														should_close							= {};
 
-	vk2d::_internal::PipelineType							previous_pipeline_type					= vk2d::_internal::PipelineType::NONE;
-	VkDescriptorSet											previous_texture_descriptor_set			= {};
-	VkDescriptorSet											previous_sampler_descriptor_set			= {};
-	float													previous_line_width						= {};
+	vk2d::_internal::PipelineType								previous_pipeline_type					= vk2d::_internal::PipelineType::NONE;
+	VkDescriptorSet												previous_texture_descriptor_set			= {};
+	VkDescriptorSet												previous_sampler_descriptor_set			= {};
+	float														previous_line_width						= {};
 
-	std::unique_ptr<vk2d::_internal::MeshBuffer>			mesh_buffer								= {};
+	std::unique_ptr<vk2d::_internal::MeshBuffer>				mesh_buffer								= {};
 
-	bool													is_good									= {};
+	enum class ScreenshotState : uint32_t {
+		IDLE					= 0,	// doing nothing
+		REQUESTED,						// screenshot requested but nothing done yet
+		WAITING_RENDER,					// waiting for rendering to happen
+		WAITING_FILE_WRITE,				// waiting for file to be written
+		WAITING_EVENT_REPORT,			// waiting for system to report event in main thread after saving
+	};
+	std::atomic<vk2d::_internal::WindowImpl::ScreenshotState>	screenshot_state						= {};
+	std::filesystem::path										screenshot_path							= {};
+	bool														screenshot_alpha						= {};
+	vk2d::_internal::CompleteImageResource						screenshot_image						= {};
+	vk2d::_internal::CompleteBufferResource						screenshot_buffer						= {};
+	uint32_t													screenshot_swapchain_id					= {};
+	std::atomic_bool											screenshot_being_saved					= {};
+	bool														screenshot_event_error					= {};
+	std::string													screenshot_event_error_message			= {};
+
+	bool														is_good									= {};
 };
 
 

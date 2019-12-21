@@ -13,22 +13,42 @@ constexpr double RAD			= PI * 2.0;
 
 class EventHandler : public vk2d::WindowEventHandler {
 public:
-	void							VK2D_APIENTRY		EventWindowClose(
-		vk2d::Window			*	window
+	void								VK2D_APIENTRY		EventWindowClose(
+		vk2d::Window				*	window
 	)
 	{
 		window->CloseWindow();
 	};
 
-	void							VK2D_APIENTRY		EventKeyboard(
-		vk2d::Window			*	window,
-		vk2d::KeyboardButton		button,
-		int							scancode,
-		vk2d::ButtonAction			action,
-		vk2d::ModifierKeyFlags		modifierKeys )
+	void								VK2D_APIENTRY		EventKeyboard(
+		vk2d::Window				*	window,
+		vk2d::KeyboardButton			button,
+		int								scancode,
+		vk2d::ButtonAction				action,
+		vk2d::ModifierKeyFlags			modifierKeys
+	)
 	{
-		if( button == vk2d::KeyboardButton::KEY_ESCAPE && action == vk2d::ButtonAction::PRESS ) {
-			window->CloseWindow();
+		if( action == vk2d::ButtonAction::PRESS ) {
+			if( button == vk2d::KeyboardButton::KEY_ESCAPE ) {
+				window->CloseWindow();
+			}
+			if( button == vk2d::KeyboardButton::KEY_PRINT_SCREEN ) {
+				window->TakeScreenshot( "../../Screenshots/01.jpg", false );
+			}
+		}
+	};
+
+	void								VK2D_APIENTRY		EventScreenshot(
+		vk2d::Window				*	window,
+		const std::filesystem::path	&	path,
+		bool							success,
+		const std::string			&	errorMessage
+	)
+	{
+		if( success ) {
+			std::cout << "Screenshot saved successfully." << std::endl;
+		} else {
+			std::cout << "Screenshot error: " << errorMessage << std::endl;
 		}
 	};
 };

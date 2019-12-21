@@ -14,6 +14,9 @@
 #include <set>
 #include <stb_image.h>
 
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+#include <stb_image_write.h>
+
 
 
 namespace vk2d {
@@ -232,7 +235,8 @@ WindowImpl::WindowImpl(
 	if( !CreateSurface() ) return;
 	if( !CreateRenderPass() ) return;
 	if( !CreateGraphicsPipelines() ) return;
-	if( !CreateSwapchain() ) return;
+	if( !ReCreateSwapchain() ) return;
+	if( !ReCreateScreenshotResources() ) return;
 	if( !CreateFramebuffers() ) return;
 	if( !CreateCommandPool() ) return;
 	if( !AllocateCommandBuffers() ) return;
@@ -294,6 +298,16 @@ WindowImpl::WindowImpl(
 WindowImpl::~WindowImpl()
 {
 	vkDeviceWaitIdle( device );
+
+	while( screenshot_being_saved ) {
+		std::this_thread::sleep_for( std::chrono::microseconds( 500 ) );
+	};
+	if( screenshot_state == vk2d::_internal::WindowImpl::ScreenshotState::WAITING_EVENT_REPORT ) {
+		HandleScreenshotEvent();
+	}
+
+	renderer_parent->GetDeviceMemoryPool()->FreeCompleteResource( screenshot_image );
+	renderer_parent->GetDeviceMemoryPool()->FreeCompleteResource( screenshot_buffer );
 
 	mesh_buffer		= nullptr;
 
@@ -480,7 +494,6 @@ bool WindowImpl::BeginRender()
 		next_render_call_function = _internal::NextRenderCallFunction::END;
 	}
 
-	// TODO: check if we need to recreate the swapchain
 	if( should_reconstruct ) {
 		if( !RecreateResourcesAfterResizing() ) {
 			if( report_function ) {
@@ -678,6 +691,155 @@ bool WindowImpl::EndRender()
 		vkCmdEndRenderPass( render_command_buffer );
 	}
 
+	// Save screenshot if it was requested
+	{
+		if( screenshot_state == vk2d::_internal::WindowImpl::ScreenshotState::REQUESTED ) {
+
+			VkImageSubresourceRange subresource_range {};
+			subresource_range.aspectMask		= VK_IMAGE_ASPECT_COLOR_BIT;
+			subresource_range.baseMipLevel		= 0;
+			subresource_range.levelCount		= 1;
+			subresource_range.baseArrayLayer	= 0;
+			subresource_range.layerCount		= 1;
+			{
+				std::array<VkImageMemoryBarrier, 2> imageMemoryBarriers {};
+
+				// index 0: screenshot image
+				// Prepare screenshot image memory barrier
+				imageMemoryBarriers[ 0 ].sType					= VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+				imageMemoryBarriers[ 0 ].pNext					= nullptr;
+				imageMemoryBarriers[ 0 ].srcAccessMask			= 0;
+				imageMemoryBarriers[ 0 ].dstAccessMask			= VK_ACCESS_TRANSFER_WRITE_BIT;
+				imageMemoryBarriers[ 0 ].oldLayout				= VK_IMAGE_LAYOUT_UNDEFINED;
+				imageMemoryBarriers[ 0 ].newLayout				= VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+				imageMemoryBarriers[ 0 ].srcQueueFamilyIndex	= VK_QUEUE_FAMILY_IGNORED;
+				imageMemoryBarriers[ 0 ].dstQueueFamilyIndex	= VK_QUEUE_FAMILY_IGNORED;
+				imageMemoryBarriers[ 0 ].image					= screenshot_image.image;
+				imageMemoryBarriers[ 0 ].subresourceRange		= subresource_range;
+
+				// index 1: source image
+				// Transfer from whatever layout the image is in to transfer source
+				imageMemoryBarriers[ 1 ].sType					= VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+				imageMemoryBarriers[ 1 ].pNext					= nullptr;
+				imageMemoryBarriers[ 1 ].srcAccessMask			= VK_ACCESS_MEMORY_WRITE_BIT | VK_ACCESS_MEMORY_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT | VK_ACCESS_COLOR_ATTACHMENT_READ_BIT;
+				imageMemoryBarriers[ 1 ].dstAccessMask			= VK_ACCESS_TRANSFER_READ_BIT;
+				imageMemoryBarriers[ 1 ].oldLayout				= VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+				imageMemoryBarriers[ 1 ].newLayout				= VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
+				imageMemoryBarriers[ 1 ].srcQueueFamilyIndex	= VK_QUEUE_FAMILY_IGNORED;
+				imageMemoryBarriers[ 1 ].dstQueueFamilyIndex	= VK_QUEUE_FAMILY_IGNORED;
+				imageMemoryBarriers[ 1 ].image					= swapchain_images[ next_image ];
+				imageMemoryBarriers[ 1 ].subresourceRange		= subresource_range;
+
+				vkCmdPipelineBarrier( render_command_buffer,
+					VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+					VK_PIPELINE_STAGE_TRANSFER_BIT,
+					0,
+					0, nullptr,
+					0, nullptr,
+					uint32_t( imageMemoryBarriers.size() ), imageMemoryBarriers.data() );
+			}
+
+			// Blitting transfers data, works outside render pass and can change formats so we'll use it to basically just copy the image.
+			{
+				VkImageBlit blitRegion {};
+				blitRegion.srcSubresource.aspectMask		= VkImageAspectFlagBits::VK_IMAGE_ASPECT_COLOR_BIT;
+				blitRegion.srcSubresource.mipLevel			= 0;
+				blitRegion.srcSubresource.baseArrayLayer	= 0;
+				blitRegion.srcSubresource.layerCount		= 1;
+				blitRegion.srcOffsets[ 0 ]					= { 0, 0, 0 };
+				blitRegion.srcOffsets[ 1 ]					= { int32_t( extent.width ), int32_t( extent.height ), 1 };
+				blitRegion.dstSubresource					= blitRegion.srcSubresource;
+				blitRegion.dstOffsets[ 0 ]					= { 0, 0, 0 };
+				blitRegion.dstOffsets[ 1 ]					= { int32_t( extent.width ), int32_t( extent.height ), 1 };
+				vkCmdBlitImage( render_command_buffer,
+					swapchain_images[ next_image ],
+					VkImageLayout::VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+					screenshot_image.image,
+					VkImageLayout::VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+					1, &blitRegion,
+					VkFilter::VK_FILTER_LINEAR );
+			}
+			{
+				std::array<VkImageMemoryBarrier, 2> imageMemoryBarriers {};
+
+				// index 0: screenshot image
+				// Prepare screenshot image memory barrier
+				imageMemoryBarriers[ 0 ].sType					= VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+				imageMemoryBarriers[ 0 ].pNext					= nullptr;
+				imageMemoryBarriers[ 0 ].srcAccessMask			= VK_ACCESS_TRANSFER_WRITE_BIT;
+				imageMemoryBarriers[ 0 ].dstAccessMask			= VK_ACCESS_TRANSFER_READ_BIT;
+				imageMemoryBarriers[ 0 ].oldLayout				= VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+				imageMemoryBarriers[ 0 ].newLayout				= VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
+				imageMemoryBarriers[ 0 ].srcQueueFamilyIndex	= VK_QUEUE_FAMILY_IGNORED;
+				imageMemoryBarriers[ 0 ].dstQueueFamilyIndex	= VK_QUEUE_FAMILY_IGNORED;
+				imageMemoryBarriers[ 0 ].image					= screenshot_image.image;
+				imageMemoryBarriers[ 0 ].subresourceRange		= subresource_range;
+
+				// index 1: source image
+				// Transfer from whatever layout the image is in to transfer source
+				imageMemoryBarriers[ 1 ].sType					= VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+				imageMemoryBarriers[ 1 ].pNext					= nullptr;
+				imageMemoryBarriers[ 1 ].srcAccessMask			= VK_ACCESS_TRANSFER_READ_BIT;
+				imageMemoryBarriers[ 1 ].dstAccessMask			= VK_ACCESS_MEMORY_READ_BIT;
+				imageMemoryBarriers[ 1 ].oldLayout				= VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
+				imageMemoryBarriers[ 1 ].newLayout				= VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+				imageMemoryBarriers[ 1 ].srcQueueFamilyIndex	= VK_QUEUE_FAMILY_IGNORED;
+				imageMemoryBarriers[ 1 ].dstQueueFamilyIndex	= VK_QUEUE_FAMILY_IGNORED;
+				imageMemoryBarriers[ 1 ].image					= swapchain_images[ next_image ];
+				imageMemoryBarriers[ 1 ].subresourceRange		= subresource_range;
+
+				vkCmdPipelineBarrier( render_command_buffer,
+					VK_PIPELINE_STAGE_TRANSFER_BIT,
+					VK_PIPELINE_STAGE_TRANSFER_BIT,
+					0,
+					0, nullptr,
+					0, nullptr,
+					uint32_t( imageMemoryBarriers.size() ), imageMemoryBarriers.data() );
+			}
+			{
+				// Copy to host visible buffer
+				VkBufferImageCopy bufferImageCopyRegion {};
+				bufferImageCopyRegion.bufferOffset						= 0;
+				bufferImageCopyRegion.bufferRowLength					= 0;
+				bufferImageCopyRegion.bufferImageHeight					= 0;
+				bufferImageCopyRegion.imageSubresource.aspectMask		= VK_IMAGE_ASPECT_COLOR_BIT;
+				bufferImageCopyRegion.imageSubresource.mipLevel			= 0;
+				bufferImageCopyRegion.imageSubresource.baseArrayLayer	= 0;
+				bufferImageCopyRegion.imageSubresource.layerCount		= 1;
+				bufferImageCopyRegion.imageOffset						= { 0, 0, 0 };
+				bufferImageCopyRegion.imageExtent						= { extent.width, extent.height, 1 };
+				vkCmdCopyImageToBuffer( render_command_buffer,
+					screenshot_image.image,
+					VkImageLayout::VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+					screenshot_buffer.buffer,
+					1, &bufferImageCopyRegion );
+			}
+			{
+				// Make sure writes to screenshot buffer have finished
+				std::array<VkBufferMemoryBarrier, 1> bufferMemoryBarriers {};
+				bufferMemoryBarriers[ 0 ].sType					= VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER;
+				bufferMemoryBarriers[ 0 ].pNext					= nullptr;
+				bufferMemoryBarriers[ 0 ].srcAccessMask			= VK_ACCESS_TRANSFER_WRITE_BIT;
+				bufferMemoryBarriers[ 0 ].dstAccessMask			= VK_ACCESS_HOST_READ_BIT;
+				bufferMemoryBarriers[ 0 ].srcQueueFamilyIndex	= VK_QUEUE_FAMILY_IGNORED;
+				bufferMemoryBarriers[ 0 ].dstQueueFamilyIndex	= VK_QUEUE_FAMILY_IGNORED;
+				bufferMemoryBarriers[ 0 ].buffer				= screenshot_buffer.buffer;
+				bufferMemoryBarriers[ 0 ].offset				= 0;
+				bufferMemoryBarriers[ 0 ].size					= VK_WHOLE_SIZE;
+				vkCmdPipelineBarrier( render_command_buffer,
+					VK_PIPELINE_STAGE_TRANSFER_BIT,
+					VK_PIPELINE_STAGE_HOST_BIT,
+					0,
+					0, nullptr,
+					uint32_t( bufferMemoryBarriers.size() ), bufferMemoryBarriers.data(),
+					0, nullptr );
+			}
+			{
+				screenshot_state			= vk2d::_internal::WindowImpl::ScreenshotState::WAITING_RENDER;
+				screenshot_swapchain_id		= next_image;
+			}
+		}
+	}
 	// End command buffer
 	if( vkEndCommandBuffer( render_command_buffer ) != VK_SUCCESS ) {
 		if( report_function ) {
@@ -822,10 +984,15 @@ void WindowImpl::UpdateEvents()
 }
 
 void WindowImpl::TakeScreenshot(
-	std::filesystem::path		save_path
+	const std::filesystem::path		&	save_path,
+	bool								include_alpha
 )
 {
-	assert( 0 && "NOT IMPLEMENTED YET!" );
+	if( screenshot_state == vk2d::_internal::WindowImpl::ScreenshotState::IDLE ) {
+		screenshot_path		= save_path;
+		screenshot_state	= vk2d::_internal::WindowImpl::ScreenshotState::REQUESTED;
+		screenshot_alpha	= include_alpha;
+	}
 }
 
 void WindowImpl::Focus()
@@ -1433,6 +1600,125 @@ void WindowImpl::DrawMesh(
 
 
 
+class ScreenshotSaverTask : public vk2d::_internal::Task {
+public:
+	ScreenshotSaverTask(
+		vk2d::_internal::WindowImpl		*	window
+	) :
+		window( window )
+	{}
+
+	void									operator()(
+		ThreadPrivateResource			*	thread_resource )
+	{
+		assert( window->screenshot_state == vk2d::_internal::WindowImpl::ScreenshotState::WAITING_FILE_WRITE );
+
+		auto path				= window->screenshot_path;
+		auto pixel_count		= VkDeviceSize( window->extent.width ) * VkDeviceSize( window->extent.height );
+
+		// Try to map the memory for screenshot buffer data.
+		auto pixel_rgba_data = window->screenshot_buffer.memory.Map<uint8_t>();
+		if( !pixel_rgba_data ) {
+			// ERROR HANDLING HERE!
+			window->screenshot_event_error			= true;
+			window->screenshot_event_error_message	= "Internal error: Cannot map buffer data.";
+			window->screenshot_state				= vk2d::_internal::WindowImpl::ScreenshotState::WAITING_EVENT_REPORT;
+			window->screenshot_being_saved			= false;
+			return;
+		}
+		auto screenshot_data	= pixel_rgba_data;
+		int pixel_channels		= 4;
+
+		// Prepare for if we don't want to save the alpha channel.
+		std::vector<uint8_t> pixel_rgb_data;
+		if( !window->screenshot_alpha ) {
+			pixel_rgb_data.resize( pixel_count * 3 );
+			for( VkDeviceSize i = 0; i < pixel_count; ++i ) {
+				auto pixel_rgba_offset		= 4 * i;
+				auto pixel_rgb_offset		= 3 * i;
+				pixel_rgb_data[ pixel_rgb_offset + 0 ]	= pixel_rgba_data[ pixel_rgba_offset + 0 ];
+				pixel_rgb_data[ pixel_rgb_offset + 1 ]	= pixel_rgba_data[ pixel_rgba_offset + 1 ];
+				pixel_rgb_data[ pixel_rgb_offset + 2 ]	= pixel_rgba_data[ pixel_rgba_offset + 2 ];
+			}
+			screenshot_data		= pixel_rgb_data.data();
+			pixel_channels		= 3;
+		}
+
+		int stbi_write_success	= 0;
+		auto extension			= path.extension();
+		if( extension == ".png" ) {
+			stbi_write_success = stbi_write_png(
+				path.string().c_str(),
+				int( window->extent.width ),
+				int( window->extent.height ),
+				pixel_channels,
+				screenshot_data,
+				0
+			);
+		} else if( extension == ".bmp" ) {
+			stbi_write_success = stbi_write_bmp(
+				path.string().c_str(),
+				int( window->extent.width ),
+				int( window->extent.height ),
+				pixel_channels,
+				screenshot_data
+			);
+		} else if( extension == ".tga" ) {
+			stbi_write_success = stbi_write_tga(
+				path.string().c_str(),
+				int( window->extent.width ),
+				int( window->extent.height ),
+				pixel_channels,
+				screenshot_data
+			);
+		} else if( extension == ".jpg" ) {
+			stbi_write_success = stbi_write_jpg(
+				path.string().c_str(),
+				int( window->extent.width ),
+				int( window->extent.height ),
+				pixel_channels,
+				screenshot_data,
+				90
+			);
+		} else if( extension == ".jpeg" ) {
+			stbi_write_success = stbi_write_jpg(
+				path.string().c_str(),
+				int( window->extent.width ),
+				int( window->extent.height ),
+				pixel_channels,
+				screenshot_data,
+				90
+			);
+		} else {
+			// ERROR HANDLING HERE!
+			path += ".png";
+			stbi_write_success = stbi_write_png(
+				path.string().c_str(),
+				int( window->extent.width ),
+				int( window->extent.height ),
+				pixel_channels,
+				screenshot_data,
+				0
+			);
+		}
+		window->screenshot_buffer.memory.Unmap();
+
+		if( stbi_write_success ) {
+			window->screenshot_event_error			= false;
+			window->screenshot_event_error_message	= "";
+		} else {
+			// ERROR HANDLING HERE!
+			window->screenshot_event_error			= true;
+			window->screenshot_event_error_message	= std::string( "Cannot write screenshot '" ) + path.string() + "' to file.";
+		}
+
+		window->screenshot_state					= vk2d::_internal::WindowImpl::ScreenshotState::WAITING_EVENT_REPORT;
+		window->screenshot_being_saved				= false;
+	}
+
+	vk2d::_internal::WindowImpl			*	window			= {};
+	std::filesystem::path					path			= {};
+};
 
 bool WindowImpl::SynchronizeFrame()
 {
@@ -1457,6 +1743,24 @@ bool WindowImpl::SynchronizeFrame()
 			}
 			return false;
 		}
+
+		{
+			if( screenshot_state			== vk2d::_internal::WindowImpl::ScreenshotState::WAITING_RENDER &&
+				screenshot_swapchain_id		== previous_image ) {
+
+				screenshot_state			= vk2d::_internal::WindowImpl::ScreenshotState::WAITING_FILE_WRITE;
+				screenshot_being_saved		= true;
+
+				renderer_parent->GetThreadPool()->ScheduleTask(
+					std::make_unique<vk2d::_internal::ScreenshotSaverTask>( this ),
+					renderer_parent->GetGeneralThreads() );
+			}
+
+			if( screenshot_state == vk2d::_internal::WindowImpl::ScreenshotState::WAITING_EVENT_REPORT ) {
+				HandleScreenshotEvent();
+			}
+		}
+
 		// And we also don't need to synchronize later.
 		previous_frame_need_synchronization	= false;
 	}
@@ -1474,7 +1778,8 @@ bool WindowImpl::SynchronizeFrame()
 
 bool WindowImpl::RecreateResourcesAfterResizing( )
 {
-	if( !CreateSwapchain() ) return false;
+	if( !ReCreateSwapchain() ) return false;
+	if( !ReCreateScreenshotResources() ) return false;
 
 	// Check if any other resources need to be reallocated
 
@@ -2209,7 +2514,7 @@ bool WindowImpl::AllocateCommandBuffers()
 
 
 
-bool WindowImpl::CreateSwapchain()
+bool WindowImpl::ReCreateSwapchain()
 {
 	if( !SynchronizeFrame() ) return false;
 
@@ -2319,7 +2624,7 @@ bool WindowImpl::CreateSwapchain()
 			swapchain_create_info.imageColorSpace			= surface_format.colorSpace;
 			swapchain_create_info.imageExtent				= extent;
 			swapchain_create_info.imageArrayLayers			= 1;
-			swapchain_create_info.imageUsage				= VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+			swapchain_create_info.imageUsage				= VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
 			swapchain_create_info.imageSharingMode			= VK_SHARING_MODE_EXCLUSIVE;
 			swapchain_create_info.queueFamilyIndexCount		= 0;
 			swapchain_create_info.pQueueFamilyIndices		= nullptr;
@@ -2417,6 +2722,62 @@ bool WindowImpl::CreateSwapchain()
 	}
 
 	should_reconstruct		= false;
+
+	return true;
+}
+
+bool WindowImpl::ReCreateScreenshotResources()
+{
+	auto memory_pool	= renderer_parent->GetDeviceMemoryPool();
+	assert( memory_pool );
+
+	memory_pool->FreeCompleteResource( screenshot_buffer );
+	memory_pool->FreeCompleteResource( screenshot_image );
+
+	VkImageCreateInfo image_create_info {};
+	image_create_info.sType						= VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
+	image_create_info.pNext						= nullptr;
+	image_create_info.flags						= 0;
+	image_create_info.imageType					= VK_IMAGE_TYPE_2D;
+	image_create_info.format					= VK_FORMAT_R8G8B8A8_UNORM;
+	image_create_info.extent					= { extent.width, extent.height, 1 };
+	image_create_info.mipLevels					= 1;
+	image_create_info.arrayLayers				= 1;
+	image_create_info.samples					= VK_SAMPLE_COUNT_1_BIT;
+	image_create_info.tiling					= VK_IMAGE_TILING_OPTIMAL;
+	image_create_info.usage						= VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
+	image_create_info.sharingMode				= VK_SHARING_MODE_EXCLUSIVE;
+	image_create_info.queueFamilyIndexCount		= 0;
+	image_create_info.pQueueFamilyIndices		= nullptr;
+	image_create_info.initialLayout				= VK_IMAGE_LAYOUT_UNDEFINED;
+	screenshot_image = renderer_parent->GetDeviceMemoryPool()->CreateCompleteImageResource(
+		&image_create_info,
+		VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT
+	);
+	if( screenshot_image != VK_SUCCESS ) {
+		// ERROR REPORT!
+		screenshot_state	= vk2d::_internal::WindowImpl::ScreenshotState::IDLE;
+		return false;
+	}
+
+	VkBufferCreateInfo buffer_create_info {};
+	buffer_create_info.sType					= VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+	buffer_create_info.pNext					= nullptr;
+	buffer_create_info.flags					= 0;
+	buffer_create_info.size						= VkDeviceSize( extent.width ) * VkDeviceSize( extent.height ) * 4;
+	buffer_create_info.usage					= VK_BUFFER_USAGE_TRANSFER_DST_BIT;
+	buffer_create_info.sharingMode				= VK_SHARING_MODE_EXCLUSIVE;
+	buffer_create_info.queueFamilyIndexCount	= 0;
+	buffer_create_info.pQueueFamilyIndices		= nullptr;
+	screenshot_buffer = renderer_parent->GetDeviceMemoryPool()->CreateCompleteBufferResource(
+		&buffer_create_info,
+		VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT
+	);
+	if( screenshot_buffer != VK_SUCCESS ) {
+		// ERROR REPORT!
+		screenshot_state	= vk2d::_internal::WindowImpl::ScreenshotState::IDLE;
+		return false;
+	}
 
 	return true;
 }
@@ -2618,6 +2979,25 @@ bool WindowImpl::CreateFrameSynchronizationPrimitives()
 	}
 
 	return true;
+}
+
+void WindowImpl::HandleScreenshotEvent()
+{
+	assert( screenshot_state == vk2d::_internal::WindowImpl::ScreenshotState::WAITING_EVENT_REPORT );
+
+	if( event_handler ) {
+		event_handler->EventScreenshot(
+			window_parent,
+			screenshot_path,
+			!screenshot_event_error,
+			screenshot_event_error_message
+		);
+	}
+
+	screenshot_path					= "";
+	screenshot_event_error			= false;
+	screenshot_event_error_message	= "";
+	screenshot_state				= vk2d::_internal::WindowImpl::ScreenshotState::IDLE;
 }
 
 void WindowImpl::CmdBindPipelineIfDifferent(
