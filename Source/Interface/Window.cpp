@@ -371,8 +371,8 @@ VK2D_API void VK2D_APIENTRY Window::DrawPointList(
 }
 
 VK2D_API void VK2D_APIENTRY Window::DrawLine(
-	Vector2						point_1,
-	Vector2						point_2,
+	Vector2f						point_1,
+	Vector2f						point_2,
 	Colorf							color
 )
 {
@@ -386,8 +386,8 @@ VK2D_API void VK2D_APIENTRY Window::DrawLine(
 }
 
 VK2D_API void VK2D_APIENTRY Window::DrawBox(
-	Vector2						top_left,
-	Vector2						bottom_right,
+	Vector2f						top_left,
+	Vector2f						bottom_right,
 	bool							filled,
 	Colorf							color
 )
@@ -403,8 +403,8 @@ VK2D_API void VK2D_APIENTRY Window::DrawBox(
 }
 
 VK2D_API void VK2D_APIENTRY Window::DrawCircle(
-	Vector2						top_left,
-	Vector2						bottom_right,
+	Vector2f						top_left,
+	Vector2f						bottom_right,
 	bool							filled,
 	float							edge_count,
 	Colorf							color
@@ -422,8 +422,8 @@ VK2D_API void VK2D_APIENTRY Window::DrawCircle(
 }
 
 VK2D_API void VK2D_APIENTRY Window::DrawPie(
-	Vector2						top_left,
-	Vector2						bottom_right,
+	Vector2f						top_left,
+	Vector2f						bottom_right,
 	float							begin_angle_radians,
 	float							end_angle_radians,
 	bool							filled,
@@ -445,8 +445,8 @@ VK2D_API void VK2D_APIENTRY Window::DrawPie(
 }
 
 VK2D_API void VK2D_APIENTRY Window::DrawPieBox(
-	Vector2						top_left,
-	Vector2						bottom_right,
+	Vector2f						top_left,
+	Vector2f						bottom_right,
 	float							begin_angle_radians,
 	float							coverage,
 	bool							filled,
@@ -466,8 +466,8 @@ VK2D_API void VK2D_APIENTRY Window::DrawPieBox(
 }
 
 VK2D_API void VK2D_APIENTRY Window::DrawTexture(
-	Vector2					top_left,
-	Vector2					bottom_right,
+	Vector2f					top_left,
+	Vector2f					bottom_right,
 	vk2d::TextureResource	*	texture,
 	Colorf						color
 )

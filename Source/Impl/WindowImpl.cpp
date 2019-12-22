@@ -1448,8 +1448,8 @@ void WindowImpl::DrawPointList(
 }
 
 void WindowImpl::DrawLine(
-	Vector2						point_1,
-	Vector2						point_2,
+	Vector2f						point_1,
+	Vector2f						point_2,
 	Colorf							color )
 {
 	std::vector<Vertex>				vertices( 2 );
@@ -1472,8 +1472,8 @@ void WindowImpl::DrawLine(
 }
 
 void WindowImpl::DrawBox(
-	Vector2						top_left,
-	Vector2						bottom_right,
+	Vector2f						top_left,
+	Vector2f						bottom_right,
 	bool							filled,
 	Colorf							color )
 {
@@ -1486,8 +1486,8 @@ void WindowImpl::DrawBox(
 }
 
 void WindowImpl::DrawCircle(
-	Vector2						top_left,
-	Vector2						bottom_right,
+	Vector2f						top_left,
+	Vector2f						bottom_right,
 	bool							filled,
 	float							edge_count,
 	Colorf							color
@@ -1504,8 +1504,8 @@ void WindowImpl::DrawCircle(
 }
 
 void WindowImpl::DrawPie(
-	Vector2						top_left,
-	Vector2						bottom_right,
+	Vector2f						top_left,
+	Vector2f						bottom_right,
 	float							begin_angle_radians,
 	float							coverage,
 	bool							filled,
@@ -1526,8 +1526,8 @@ void WindowImpl::DrawPie(
 }
 
 void WindowImpl::DrawPieBox(
-	Vector2						top_left,
-	Vector2						bottom_right,
+	Vector2f						top_left,
+	Vector2f						bottom_right,
 	float							begin_angle_radians,
 	float							coverage,
 	bool							filled,
@@ -1546,8 +1546,8 @@ void WindowImpl::DrawPieBox(
 }
 
 void WindowImpl::DrawTexture(
-	Vector2						top_left,
-	Vector2						bottom_right,
+	Vector2f						top_left,
+	Vector2f						bottom_right,
 	vk2d::TextureResource		*	texture,
 	Colorf							color
 )

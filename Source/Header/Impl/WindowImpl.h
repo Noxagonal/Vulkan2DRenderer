@@ -197,26 +197,26 @@ public:
 		vk2d::Sampler										*	sampler						= nullptr );
 
 	void														DrawLine(
-		Vector2												point_1,
-		Vector2												point_2,
+		Vector2f												point_1,
+		Vector2f												point_2,
 		Colorf													color						= { 1.0f, 1.0f, 1.0f, 1.0f } );
 
 	void														DrawBox(
-		Vector2												top_left,
-		Vector2												bottom_right,
+		Vector2f												top_left,
+		Vector2f												bottom_right,
 		bool													filled						= true,
 		Colorf													color						= { 1.0f, 1.0f, 1.0f, 1.0f } );
 
 	void														DrawCircle(
-		Vector2												top_left,
-		Vector2												bottom_right,
+		Vector2f												top_left,
+		Vector2f												bottom_right,
 		bool													filled						= true,
 		float													edge_count					= 64.0f,
 		Colorf													color						= { 1.0f, 1.0f, 1.0f, 1.0f } );
 
 	void														DrawPie(
-		Vector2												top_left,
-		Vector2												bottom_right,
+		Vector2f												top_left,
+		Vector2f												bottom_right,
 		float													begin_angle_radians,
 		float													coverage,
 		bool													filled						= true,
@@ -224,16 +224,16 @@ public:
 		Colorf													color						= { 1.0f, 1.0f, 1.0f, 1.0f } );
 
 	void														DrawPieBox(
-		Vector2												top_left,
-		Vector2												bottom_right,
+		Vector2f												top_left,
+		Vector2f												bottom_right,
 		float													begin_angle_radians,
 		float													coverage,
 		bool													filled						= true,
 		Colorf													color						= { 1.0f, 1.0f, 1.0f, 1.0f } );
 
 	void														DrawTexture(
-		Vector2												top_left,
-		Vector2												bottom_right,
+		Vector2f												top_left,
+		Vector2f												bottom_right,
 		vk2d::TextureResource								*	texture,
 		Colorf													color						= { 1.0f, 1.0f, 1.0f, 1.0f } );
 

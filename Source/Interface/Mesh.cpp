@@ -13,7 +13,7 @@ constexpr double RAD			= PI * 2.0;
 
 
 vk2d::AABB2d CalculateAABBFromPointList(
-	const std::vector<vk2d::Vector2>		&	points
+	const std::vector<vk2d::Vector2f>		&	points
 )
 {
 	vk2d::AABB2d ret { points[ 0 ], points[ 0 ] };
@@ -65,7 +65,7 @@ vk2d::Vertex CreateDefaultValueVertex()
 
 
 VK2D_API void VK2D_APIENTRY vk2d::Mesh::Translate(
-	const vk2d::Vector2		movement )
+	const vk2d::Vector2f		movement )
 {
 	for( auto & i : vertices ) {
 		i.vertex_coords		+= movement;
@@ -74,7 +74,7 @@ VK2D_API void VK2D_APIENTRY vk2d::Mesh::Translate(
 
 VK2D_API void VK2D_APIENTRY vk2d::Mesh::Rotate(
 	float						rotation_amount_radians,
-	vk2d::Vector2				origin )
+	vk2d::Vector2f				origin )
 {
 	auto rotation_matrix	= vk2d::CreateRotationMatrix( rotation_amount_radians );
 
@@ -86,8 +86,8 @@ VK2D_API void VK2D_APIENTRY vk2d::Mesh::Rotate(
 }
 
 VK2D_API void VK2D_APIENTRY vk2d::Mesh::Scale(
-	vk2d::Vector2				scaling_amount,
-	vk2d::Vector2				origin
+	vk2d::Vector2f				scaling_amount,
+	vk2d::Vector2f				origin
 )
 {
 	for( auto & i : vertices ) {
@@ -98,8 +98,8 @@ VK2D_API void VK2D_APIENTRY vk2d::Mesh::Scale(
 }
 
 VK2D_API void VK2D_APIENTRY vk2d::Mesh::Scew(
-	vk2d::Vector2				scew_amount,
-	vk2d::Vector2				origin
+	vk2d::Vector2f				scew_amount,
+	vk2d::Vector2f				origin
 )
 {
 	for( auto & i : vertices ) {
@@ -114,14 +114,14 @@ VK2D_API void VK2D_APIENTRY vk2d::Mesh::Wave(
 	float						direction_radians,
 	float						frequency,
 	float						animation,
-	vk2d::Vector2				intensity,
-	vk2d::Vector2				origin
+	vk2d::Vector2f				intensity,
+	vk2d::Vector2f				origin
 )
 {
 	auto aabb	= CalculateAABBFromVertexList( vertices );
 	auto size	= aabb.bottom_right - aabb.top_left;
 
-	vk2d::Vector2	dir {
+	vk2d::Vector2f	dir {
 		std::cos( direction_radians ),
 		std::sin( direction_radians )
 	};
@@ -149,7 +149,7 @@ VK2D_API void VK2D_APIENTRY vk2d::Mesh::Wave(
 }
 
 VK2D_API void VK2D_APIENTRY vk2d::Mesh::TranslateUV(
-	const vk2d::Vector2		movement
+	const vk2d::Vector2f		movement
 )
 {
 	for( auto & i : vertices ) {
@@ -159,7 +159,7 @@ VK2D_API void VK2D_APIENTRY vk2d::Mesh::TranslateUV(
 
 VK2D_API void VK2D_APIENTRY vk2d::Mesh::RotateUV(
 	float						rotation_amount_radians,
-	vk2d::Vector2				origin
+	vk2d::Vector2f				origin
 )
 {
 	auto rotation_matrix	= vk2d::CreateRotationMatrix( rotation_amount_radians );
@@ -172,8 +172,8 @@ VK2D_API void VK2D_APIENTRY vk2d::Mesh::RotateUV(
 }
 
 VK2D_API void VK2D_APIENTRY vk2d::Mesh::ScaleUV(
-	vk2d::Vector2				scaling_amount,
-	vk2d::Vector2				origin
+	vk2d::Vector2f				scaling_amount,
+	vk2d::Vector2f				origin
 )
 {
 	for( auto & i : vertices ) {
@@ -184,8 +184,8 @@ VK2D_API void VK2D_APIENTRY vk2d::Mesh::ScaleUV(
 }
 
 VK2D_API void VK2D_APIENTRY vk2d::Mesh::ScewUV(
-	vk2d::Vector2				scew_amount,
-	vk2d::Vector2				origin
+	vk2d::Vector2f				scew_amount,
+	vk2d::Vector2f				origin
 )
 {
 	for( auto & i : vertices ) {
@@ -200,11 +200,11 @@ VK2D_API void VK2D_APIENTRY vk2d::Mesh::WaveUV(
 	float						direction_radians,
 	float						frequency,
 	float						animation,
-	vk2d::Vector2				intensity,
-	vk2d::Vector2				origin
+	vk2d::Vector2f				intensity,
+	vk2d::Vector2f				origin
 )
 {
-	vk2d::Vector2	dir {
+	vk2d::Vector2f	dir {
 		std::cos( direction_radians ),
 		std::sin( direction_radians )
 	};
@@ -242,12 +242,12 @@ VK2D_API void VK2D_APIENTRY vk2d::Mesh::SetVertexColor(
 VK2D_API void VK2D_APIENTRY vk2d::Mesh::SetVertexColorGradient(
 	vk2d::Colorf					color_1,
 	vk2d::Colorf					color_2,
-	vk2d::Vector2				coord_1,
-	vk2d::Vector2				coord_2
+	vk2d::Vector2f				coord_1,
+	vk2d::Vector2f				coord_2
 )
 {
-	vk2d::Vector2				coord_vector	= coord_2 - coord_1;
-	vk2d::Vector2				coord_dir		= {};
+	vk2d::Vector2f				coord_vector	= coord_2 - coord_1;
+	vk2d::Vector2f				coord_dir		= {};
 	float						coord_lenght	= std::sqrt( coord_vector.x * coord_vector.x + coord_vector.y * coord_vector.y );
 	if( coord_lenght > 0.0f ) {
 		coord_dir					= coord_vector / coord_lenght;
@@ -409,7 +409,7 @@ VK2D_API void VK2D_APIENTRY vk2d::Mesh::SetMeshType(
 
 
 VK2D_API vk2d::Mesh VK2D_APIENTRY vk2d::GeneratePointMeshFromList(
-	const std::vector<vk2d::Vector2>		&	points
+	const std::vector<vk2d::Vector2f>		&	points
 )
 {
 	auto aabb			= CalculateAABBFromPointList( points );
@@ -431,7 +431,7 @@ VK2D_API vk2d::Mesh VK2D_APIENTRY vk2d::GeneratePointMeshFromList(
 }
 
 VK2D_API vk2d::Mesh VK2D_APIENTRY vk2d::GenerateLineMeshFromList(
-	const std::vector<vk2d::Vector2>		&	points,
+	const std::vector<vk2d::Vector2f>		&	points,
 	const std::vector<vk2d::VertexIndex_2>	&	indices
 )
 {
@@ -449,7 +449,7 @@ VK2D_API vk2d::Mesh VK2D_APIENTRY vk2d::GenerateLineMeshFromList(
 }
 
 VK2D_API vk2d::Mesh VK2D_APIENTRY vk2d::GenerateTriangleMeshFromList(
-	const std::vector<vk2d::Vector2>		&	points,
+	const std::vector<vk2d::Vector2f>		&	points,
 	const std::vector<vk2d::VertexIndex_3>	&	indices,
 	bool										filled
 )
@@ -473,8 +473,8 @@ VK2D_API vk2d::Mesh VK2D_APIENTRY vk2d::GenerateTriangleMeshFromList(
 }
 
 VK2D_API vk2d::Mesh VK2D_APIENTRY vk2d::GenerateBoxMesh(
-	vk2d::Vector2				top_left,
-	vk2d::Vector2				bottom_right,
+	vk2d::Vector2f				top_left,
+	vk2d::Vector2f				bottom_right,
 	bool						filled
 )
 {
@@ -530,15 +530,15 @@ VK2D_API vk2d::Mesh VK2D_APIENTRY vk2d::GenerateBoxMesh(
 }
 
 VK2D_API vk2d::Mesh VK2D_APIENTRY vk2d::GenerateCircleMesh(
-	vk2d::Vector2			top_left,
-	vk2d::Vector2			bottom_right,
+	vk2d::Vector2f			top_left,
+	vk2d::Vector2f			bottom_right,
 	bool					filled,
 	float					edge_count
 )
 {
 	if( edge_count < 3.0f ) edge_count = 3.0f;
 
-	Vector2 center_point					= {
+	Vector2f center_point					= {
 		( top_left.x + bottom_right.x ) / 2.0f,
 		( top_left.y + bottom_right.y ) / 2.0f
 	};
@@ -604,8 +604,8 @@ VK2D_API vk2d::Mesh VK2D_APIENTRY vk2d::GenerateCircleMesh(
 }
 
 VK2D_API vk2d::Mesh VK2D_APIENTRY vk2d::GeneratePieMesh(
-	vk2d::Vector2		top_left,
-	vk2d::Vector2		bottom_right,
+	vk2d::Vector2f		top_left,
+	vk2d::Vector2f		bottom_right,
 	float				begin_angle_radians,
 	float				coverage,
 	bool				filled,
@@ -618,7 +618,7 @@ VK2D_API vk2d::Mesh VK2D_APIENTRY vk2d::GeneratePieMesh(
 	if( coverage > 1.0f )			coverage		= 1.0f;
 	if( coverage <= 0.0f )			return ret;		// Nothing to draw
 
-	Vector2 center_point					= {
+	Vector2f center_point					= {
 		( top_left.x + bottom_right.x ) / 2.0f,
 		( top_left.y + bottom_right.y ) / 2.0f
 	};
@@ -751,8 +751,8 @@ VK2D_API vk2d::Mesh VK2D_APIENTRY vk2d::GeneratePieMesh(
 }
 
 VK2D_API vk2d::Mesh VK2D_APIENTRY vk2d::GeneratePieBoxMesh(
-	vk2d::Vector2		top_left,
-	vk2d::Vector2		bottom_right,
+	vk2d::Vector2f		top_left,
+	vk2d::Vector2f		bottom_right,
 	float				begin_angle_radians,
 	float				coverage,
 	bool				filled
@@ -767,7 +767,7 @@ VK2D_API vk2d::Mesh VK2D_APIENTRY vk2d::GeneratePieBoxMesh(
 		return ret;		// Nothing to draw
 	}
 
-	Vector2 center_point					= {
+	Vector2f center_point					= {
 		( top_left.x + bottom_right.x ) / 2.0f,
 		( top_left.y + bottom_right.y ) / 2.0f
 	};
@@ -790,7 +790,7 @@ VK2D_API vk2d::Mesh VK2D_APIENTRY vk2d::GeneratePieBoxMesh(
 		PIE_BEGIN,
 		PIE_END,
 	};
-	std::array<Vector2, 6>	unordered_outer_points { {
+	std::array<Vector2f, 6>	unordered_outer_points { {
 		{ top_left.x,		top_left.y		},
 		{ bottom_right.x,	top_left.y		},
 		{ bottom_right.x,	bottom_right.y	},
@@ -802,13 +802,13 @@ VK2D_API vk2d::Mesh VK2D_APIENTRY vk2d::GeneratePieBoxMesh(
 		// Specialized version of Ray to AABB intersecion test that
 		// always intersects and returns the exit coordinates only.
 		auto RayExitIntersection	=[](
-			Vector2 box_coords_1,
-			Vector2 box_coords_2,
-			Vector2 box_center,		// ray origin, and box center are both at the same coordinates
-			Vector2 ray_end
-			) -> Vector2
+			Vector2f box_coords_1,
+			Vector2f box_coords_2,
+			Vector2f box_center,		// ray origin, and box center are both at the same coordinates
+			Vector2f ray_end
+			) -> Vector2f
 		{
-			Vector2	ray_begin			= box_center;
+			Vector2f	ray_begin			= box_center;
 			float		clipped_exit		= 1.0;
 
 			// Clipping on x and y axis
@@ -821,15 +821,15 @@ VK2D_API vk2d::Mesh VK2D_APIENTRY vk2d::GeneratePieBoxMesh(
 			dim_high_y			= std::max( dim_low_y, dim_high_y );
 			clipped_exit		= std::min( dim_high_y, dim_high_x );
 
-			Vector2 collider_localized				= ray_end - ray_begin;
-			Vector2 localized_intersection_point	= collider_localized * clipped_exit;
-			Vector2 globalized_intersection_point	= localized_intersection_point + box_center;
+			Vector2f collider_localized				= ray_end - ray_begin;
+			Vector2f localized_intersection_point	= collider_localized * clipped_exit;
+			Vector2f globalized_intersection_point	= localized_intersection_point + box_center;
 			return globalized_intersection_point;
 		};
 
 		float ray_lenght			= center_to_edge_x + center_to_edge_y;
-		Vector2 ray_angle_1_end	= { std::cos( begin_angle_radians ) * ray_lenght, std::sin( begin_angle_radians ) * ray_lenght };
-		Vector2 ray_angle_2_end	= { std::cos( end_angle_radians ) * ray_lenght, std::sin( end_angle_radians ) * ray_lenght };
+		Vector2f ray_angle_1_end	= { std::cos( begin_angle_radians ) * ray_lenght, std::sin( begin_angle_radians ) * ray_lenght };
+		Vector2f ray_angle_2_end	= { std::cos( end_angle_radians ) * ray_lenght, std::sin( end_angle_radians ) * ray_lenght };
 		ray_angle_1_end				+= center_point;
 		ray_angle_2_end				+= center_point;
 
@@ -848,8 +848,8 @@ VK2D_API vk2d::Mesh VK2D_APIENTRY vk2d::GeneratePieBoxMesh(
 	}
 
 	auto IsOnSameXAxis	= [](
-		Vector2			point_1,
-		Vector2			point_2
+		Vector2f			point_1,
+		Vector2f			point_2
 		) -> bool
 	{
 		if( point_1.y < point_2.y + 0.0001f &&
@@ -860,8 +860,8 @@ VK2D_API vk2d::Mesh VK2D_APIENTRY vk2d::GeneratePieBoxMesh(
 	};
 
 	auto IsOnSameYAxis	= [](
-		Vector2			point_1,
-		Vector2			point_2
+		Vector2f			point_1,
+		Vector2f			point_2
 		) -> bool
 	{
 		if( point_1.x < point_2.x + 0.0001f &&
@@ -872,7 +872,7 @@ VK2D_API vk2d::Mesh VK2D_APIENTRY vk2d::GeneratePieBoxMesh(
 	};
 
 	// Generate an ordered point list
-	std::vector<Vector2> outer_point_list;
+	std::vector<Vector2f> outer_point_list;
 	{
 		// We'll linearize / unwrap the box so that a single number represents x/y coordinates
 		//
@@ -883,7 +883,7 @@ VK2D_API vk2d::Mesh VK2D_APIENTRY vk2d::GeneratePieBoxMesh(
 		struct LinearPoint {
 			uint32_t		original_linear_point_index		= {};
 			float			linear_coords					= {};
-			Vector2		actual_coords					= {};
+			Vector2f		actual_coords					= {};
 		};
 		float distance_counter = 0.0f;
 		std::array<LinearPoint, 6>	linear_points { {
@@ -905,7 +905,7 @@ VK2D_API vk2d::Mesh VK2D_APIENTRY vk2d::GeneratePieBoxMesh(
 			)
 		{
 			// Find which side of the box the point is located at
-			Vector2 actual_coords	= unordered_outer_points[ index ];
+			Vector2f actual_coords	= unordered_outer_points[ index ];
 
 			if( IsOnSameXAxis( actual_coords, unordered_outer_points[ 0 ] ) ) {
 				// Top
@@ -975,7 +975,7 @@ VK2D_API vk2d::Mesh VK2D_APIENTRY vk2d::GeneratePieBoxMesh(
 
 		for( auto opl : outer_point_list ) {
 			v.vertex_coords		= opl;
-			v.uv_coords			= ( opl - unordered_outer_points[ 0 ] ) / Vector2( width, height );
+			v.uv_coords			= ( opl - unordered_outer_points[ 0 ] ) / Vector2f( width, height );
 			ret.vertices.push_back( v );
 		}
 	}
@@ -1010,9 +1010,9 @@ VK2D_API vk2d::Mesh VK2D_APIENTRY vk2d::GeneratePieBoxMesh(
 }
 
 VK2D_API vk2d::Mesh VK2D_APIENTRY vk2d::GenerateLatticeMesh(
-	vk2d::Vector2			top_left,
-	vk2d::Vector2			bottom_right,
-	vk2d::Vector2			subdivisions,
+	vk2d::Vector2f			top_left,
+	vk2d::Vector2f			bottom_right,
+	vk2d::Vector2f			subdivisions,
 	bool					filled )
 {
 	vk2d::Mesh ret;
@@ -1021,9 +1021,9 @@ VK2D_API vk2d::Mesh VK2D_APIENTRY vk2d::GenerateLatticeMesh(
 	uint32_t vertex_count_y			= uint32_t( std::ceil( subdivisions.y ) ) + 2;
 	uint32_t total_vertex_count		= vertex_count_x * vertex_count_y;
 
-	vk2d::Vector2 mesh_size		= bottom_right - top_left;
-	vk2d::Vector2 vertex_spacing	= mesh_size / ( subdivisions + vk2d::Vector2( 1.0f, 1.0f ) );
-	vk2d::Vector2 uv_spacing		= vk2d::Vector2( 1.0f, 1.0f ) / ( subdivisions + vk2d::Vector2( 1.0f, 1.0f ) );
+	vk2d::Vector2f mesh_size		= bottom_right - top_left;
+	vk2d::Vector2f vertex_spacing	= mesh_size / ( subdivisions + vk2d::Vector2f( 1.0f, 1.0f ) );
+	vk2d::Vector2f uv_spacing		= vk2d::Vector2f( 1.0f, 1.0f ) / ( subdivisions + vk2d::Vector2f( 1.0f, 1.0f ) );
 
 	ret.vertices.resize( total_vertex_count );
 	ClearVerticesToDefaultValues( ret.vertices );

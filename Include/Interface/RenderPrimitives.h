@@ -92,7 +92,7 @@ struct Vector2Base {
 	}
 };
 
-using Vector2			= vk2d::Vector2Base<float>;
+using Vector2f			= vk2d::Vector2Base<float>;
 using Vector2d			= vk2d::Vector2Base<double>;
 using Vector2i			= vk2d::Vector2Base<int32_t>;
 using Vector2u			= vk2d::Vector2Base<uint32_t>;
@@ -153,7 +153,7 @@ struct Matrix2Base {
 
 	vk2d::Vector2Base<T> operator*( const vk2d::Vector2Base<T> & other )
 	{
-		vk2d::Vector2 ret = {};
+		vk2d::Vector2f ret = {};
 		ret.x			= row_1.x * other.x + row_1.y * other.y;
 		ret.y			= row_2.x * other.x + row_2.y * other.y;
 		return ret;
@@ -191,15 +191,15 @@ inline vk2d::Matrix2 CreateRotationMatrix(
 }
 
 struct AABB2d {
-	vk2d::Vector2				top_left			= {};
-	vk2d::Vector2				bottom_right		= {};
+	vk2d::Vector2f				top_left			= {};
+	vk2d::Vector2f				bottom_right		= {};
 
 	AABB2d()							= default;
 	AABB2d( float x1, float y1, float x2, float y2 ) : top_left( { x1, y1 } ), bottom_right( { x2, y2 } )
 	{};
 	AABB2d( const AABB2d & other )		= default;
 	AABB2d( AABB2d && other )			= default;
-	AABB2d( const std::initializer_list<vk2d::Vector2> & elements )
+	AABB2d( const std::initializer_list<vk2d::Vector2f> & elements )
 	{
 		assert( elements.size() <= 2 );
 		auto e = elements.begin();
@@ -210,21 +210,21 @@ struct AABB2d {
 	AABB2d & operator=( const AABB2d & other )	= default;
 	AABB2d & operator=( AABB2d && other )		= default;
 
-	AABB2d operator+( vk2d::Vector2 other ) const
+	AABB2d operator+( vk2d::Vector2f other ) const
 	{
 		return { top_left + other, bottom_right + other };
 	}
-	AABB2d operator-( vk2d::Vector2 other ) const
+	AABB2d operator-( vk2d::Vector2f other ) const
 	{
 		return { top_left - other, bottom_right - other };
 	}
-	AABB2d & operator+=( vk2d::Vector2 other )
+	AABB2d & operator+=( vk2d::Vector2f other )
 	{
 		top_left += other;
 		bottom_right += other;
 		return *this;
 	}
-	AABB2d & operator-=( vk2d::Vector2 other )
+	AABB2d & operator-=( vk2d::Vector2f other )
 	{
 		top_left -= other;
 		bottom_right -= other;
@@ -271,8 +271,8 @@ using Color32			= vk2d::ColorBase<uint32_t>;
 
 
 struct Vertex {
-	Vector2						vertex_coords;			// 2 x 32 bits
-	Vector2						uv_coords;				// 2 x 32 bits
+	Vector2f						vertex_coords;			// 2 x 32 bits
+	Vector2f						uv_coords;				// 2 x 32 bits
 	Colorf						color;					// 4 x 32 bits
 	float						point_size;				// 1 x 32 bits
 private:

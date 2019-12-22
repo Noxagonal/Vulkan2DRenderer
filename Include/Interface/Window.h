@@ -568,26 +568,26 @@ public:
 		vk2d::Sampler								*	sampler						= nullptr );
 
 	VK2D_API void										VK2D_APIENTRY				DrawLine(
-		vk2d::Vector2									point_1,
-		vk2d::Vector2									point_2,
+		vk2d::Vector2f									point_1,
+		vk2d::Vector2f									point_2,
 		vk2d::Colorf									color						= { 1.0f, 1.0f, 1.0f, 1.0f } );
 
 	VK2D_API void										VK2D_APIENTRY				DrawBox(
-		vk2d::Vector2									top_left,
-		vk2d::Vector2									bottom_right,
+		vk2d::Vector2f									top_left,
+		vk2d::Vector2f									bottom_right,
 		bool											filled						= true,
 		vk2d::Colorf									color						= { 1.0f, 1.0f, 1.0f, 1.0f } );
 
 	VK2D_API void										VK2D_APIENTRY				DrawCircle(
-		vk2d::Vector2									top_left,
-		vk2d::Vector2									bottom_right,
+		vk2d::Vector2f									top_left,
+		vk2d::Vector2f									bottom_right,
 		bool											filled						= true,
 		float											edge_count					= 64.0f,
 		vk2d::Colorf									color						= { 1.0f, 1.0f, 1.0f, 1.0f } );
 
 	VK2D_API void										VK2D_APIENTRY				DrawPie(
-		vk2d::Vector2									top_left,
-		vk2d::Vector2									bottom_right,
+		vk2d::Vector2f									top_left,
+		vk2d::Vector2f									bottom_right,
 		float											begin_angle_radians,
 		float											coverage,
 		bool											filled						= true,
@@ -595,16 +595,16 @@ public:
 		vk2d::Colorf									color						= { 1.0f, 1.0f, 1.0f, 1.0f } );
 
 	VK2D_API void										VK2D_APIENTRY				DrawPieBox(
-		vk2d::Vector2									top_left,
-		vk2d::Vector2									bottom_right,
+		vk2d::Vector2f									top_left,
+		vk2d::Vector2f									bottom_right,
 		float											begin_angle_radians,
 		float											coverage,
 		bool											filled						= true,
 		vk2d::Colorf									color						= { 1.0f, 1.0f, 1.0f, 1.0f } );
 
 	VK2D_API void										VK2D_APIENTRY				DrawTexture(
-		vk2d::Vector2									top_left,
-		vk2d::Vector2									bottom_right,
+		vk2d::Vector2f									top_left,
+		vk2d::Vector2f									bottom_right,
 		vk2d::TextureResource						*	texture,
 		vk2d::Colorf									color						= { 1.0f, 1.0f, 1.0f, 1.0f } );
 
