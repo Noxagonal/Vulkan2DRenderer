@@ -116,7 +116,7 @@ public:
 
 	bool														IsFullscreen();
 
-	std::array<double, 2>										GetCursorPosition();
+	vk2d::Vector2d												GetCursorPosition();
 
 	void														SetCursorPosition(
 		double													x,
@@ -139,15 +139,14 @@ public:
 		const std::vector<std::filesystem::path>&				image_paths );
 
 	void														SetPosition(
-		int32_t													x,
-		int32_t													y );
+		vk2d::Vector2i											new_position );
 
-	std::array<int32_t, 2>										GetPosition();
+	vk2d::Vector2i												GetPosition();
 
 	void														SetSize(
-		vk2d::Vector2du											new_size );
+		vk2d::Vector2u											new_size );
 
-	vk2d::Vector2du												GetSize();
+	vk2d::Vector2u												GetSize();
 
 	void														Iconify(
 		bool													minimized );
@@ -198,45 +197,45 @@ public:
 		vk2d::Sampler										*	sampler						= nullptr );
 
 	void														DrawLine(
-		Vector2d												point_1,
-		Vector2d												point_2,
-		Color													color						= { 1.0f, 1.0f, 1.0f, 1.0f } );
+		Vector2												point_1,
+		Vector2												point_2,
+		Colorf													color						= { 1.0f, 1.0f, 1.0f, 1.0f } );
 
 	void														DrawBox(
-		Vector2d												top_left,
-		Vector2d												bottom_right,
+		Vector2												top_left,
+		Vector2												bottom_right,
 		bool													filled						= true,
-		Color													color						= { 1.0f, 1.0f, 1.0f, 1.0f } );
+		Colorf													color						= { 1.0f, 1.0f, 1.0f, 1.0f } );
 
 	void														DrawCircle(
-		Vector2d												top_left,
-		Vector2d												bottom_right,
+		Vector2												top_left,
+		Vector2												bottom_right,
 		bool													filled						= true,
 		float													edge_count					= 64.0f,
-		Color													color						= { 1.0f, 1.0f, 1.0f, 1.0f } );
+		Colorf													color						= { 1.0f, 1.0f, 1.0f, 1.0f } );
 
 	void														DrawPie(
-		Vector2d												top_left,
-		Vector2d												bottom_right,
+		Vector2												top_left,
+		Vector2												bottom_right,
 		float													begin_angle_radians,
 		float													coverage,
 		bool													filled						= true,
 		float													edge_count					= 64.0f,
-		Color													color						= { 1.0f, 1.0f, 1.0f, 1.0f } );
+		Colorf													color						= { 1.0f, 1.0f, 1.0f, 1.0f } );
 
 	void														DrawPieBox(
-		Vector2d												top_left,
-		Vector2d												bottom_right,
+		Vector2												top_left,
+		Vector2												bottom_right,
 		float													begin_angle_radians,
 		float													coverage,
 		bool													filled						= true,
-		Color													color						= { 1.0f, 1.0f, 1.0f, 1.0f } );
+		Colorf													color						= { 1.0f, 1.0f, 1.0f, 1.0f } );
 
 	void														DrawTexture(
-		Vector2d												top_left,
-		Vector2d												bottom_right,
+		Vector2												top_left,
+		Vector2												bottom_right,
 		vk2d::TextureResource								*	texture,
-		Color													color						= { 1.0f, 1.0f, 1.0f, 1.0f } );
+		Colorf													color						= { 1.0f, 1.0f, 1.0f, 1.0f } );
 
 	void														DrawMesh(
 		const vk2d::Mesh									&	mesh );
@@ -378,8 +377,7 @@ class CursorImpl {
 public:
 												CursorImpl(
 		const std::filesystem::path			&	image_path,
-		int32_t									hot_spot_x,
-		int32_t									hot_spot_y );
+		vk2d::Vector2i							hot_spot );
 
 	// Cursor constructor, raw data version.
 	// Image data needs to be in format RGBA, 8 bits per channel, 32 bits per pixel,
@@ -390,11 +388,9 @@ public:
 	// [in] hot_spot_x: where the active location of the cursor is, x location.
 	// [in] hot_spot_y: where the active location of the cursor is, y location.
 												CursorImpl(
-		uint32_t								image_size_x,
-		uint32_t								image_size_y,
-		const std::vector<vk2d::Color>		&	image_data,
-		int32_t									hot_spot_x,
-		int32_t									hot_spot_y );
+		vk2d::Vector2u							image_size,
+		const std::vector<vk2d::Color8>		&	image_data,
+		vk2d::Vector2i							hot_spot );
 
 	// Copy constructor from another cursor.
 												CursorImpl(
@@ -417,13 +413,13 @@ public:
 
 	bool										IsGood();
 
-	const std::vector<vk2d::Color>			&	GetPixelData();
+	const std::vector<vk2d::Color8>			&	GetPixelData();
 	GLFWcursor								*	GetGLFWcursor();
-	std::array<uint32_t, 2>						GetSize();
-	std::array<int32_t, 2>						GetHotSpot();
+	vk2d::Vector2u								GetSize();
+	vk2d::Vector2i								GetHotSpot();
 
 private:
-	std::vector<vk2d::Color>					pixel_data						= {};
+	std::vector<vk2d::Color8>					pixel_data						= {};
 	GLFWcursor								*	cursor							= nullptr;
 	VkExtent2D									extent							= {};
 	VkOffset2D									hotSpot							= {};

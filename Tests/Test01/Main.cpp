@@ -64,15 +64,14 @@ int main()
 	vk2d::SamplerCreateInfo sampler_create_info {};
 	sampler_create_info.address_mode_u		= vk2d::SamplerAddressMode::MIRRORED_REPEAT;
 	sampler_create_info.address_mode_v		= vk2d::SamplerAddressMode::CLAMP_TO_BORDER;
-	sampler_create_info.border_color		= vk2d::Color( 0.0f, 0.2f, 1.0f, 0.5f );
+	sampler_create_info.border_color		= vk2d::Colorf( 0.0f, 0.2f, 1.0f, 0.5f );
 	auto sampler			= renderer->CreateSampler( sampler_create_info );
 
 	auto texture			= renderer->GetResourceManager()->LoadTextureResource( "../../TestData/GrafGear_128.png" );
 
 	EventHandler							event_handler;
 	vk2d::WindowCreateInfo					window_create_info {};
-	window_create_info.width				= 800;
-	window_create_info.height				= 600;
+	window_create_info.size					= { 800, 600 };
 	window_create_info.coordinate_space		= vk2d::WindowCoordinateSpace::TEXEL_SPACE_CENTERED;
 	window_create_info.samples				= renderer->GetMaximumSupportedMultisampling();
 	window_create_info.event_handler		= &event_handler;

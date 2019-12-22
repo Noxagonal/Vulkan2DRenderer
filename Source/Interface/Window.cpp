@@ -159,7 +159,7 @@ VK2D_API bool VK2D_APIENTRY Window::IsFullscreen()
 	return {};
 }
 
-VK2D_API std::array<double, 2>VK2D_APIENTRY Window::GetCursorPosition()
+VK2D_API vk2d::Vector2d VK2D_APIENTRY Window::GetCursorPosition()
 {
 	if( impl ) {
 		return impl->GetCursorPosition();
@@ -225,16 +225,15 @@ VK2D_API void VK2D_APIENTRY Window::SetIcon(
 }
 
 VK2D_API void VK2D_APIENTRY Window::SetPosition(
-	int32_t				x,
-	int32_t				y
+	vk2d::Vector2i			new_position
 )
 {
 	if( impl ) {
-		impl->SetPosition( x, y );
+		impl->SetPosition( new_position );
 	}
 }
 
-VK2D_API std::array<int32_t, 2>VK2D_APIENTRY Window::GetPosition()
+VK2D_API vk2d::Vector2i VK2D_APIENTRY Window::GetPosition()
 {
 	if( impl ) {
 		return impl->GetPosition();
@@ -242,12 +241,12 @@ VK2D_API std::array<int32_t, 2>VK2D_APIENTRY Window::GetPosition()
 	return {};
 }
 
-VK2D_API void VK2D_APIENTRY Window::SetSize( vk2d::Vector2du new_size )
+VK2D_API void VK2D_APIENTRY Window::SetSize( vk2d::Vector2u new_size )
 {
 	impl->SetSize( new_size );
 }
 
-VK2D_API vk2d::Vector2du VK2D_APIENTRY Window::GetSize()
+VK2D_API vk2d::Vector2u VK2D_APIENTRY Window::GetSize()
 {
 	return impl->GetSize();
 }
@@ -372,9 +371,9 @@ VK2D_API void VK2D_APIENTRY Window::DrawPointList(
 }
 
 VK2D_API void VK2D_APIENTRY Window::DrawLine(
-	Vector2d						point_1,
-	Vector2d						point_2,
-	Color							color
+	Vector2						point_1,
+	Vector2						point_2,
+	Colorf							color
 )
 {
 	if( impl ) {
@@ -387,10 +386,10 @@ VK2D_API void VK2D_APIENTRY Window::DrawLine(
 }
 
 VK2D_API void VK2D_APIENTRY Window::DrawBox(
-	Vector2d						top_left,
-	Vector2d						bottom_right,
+	Vector2						top_left,
+	Vector2						bottom_right,
 	bool							filled,
-	Color							color
+	Colorf							color
 )
 {
 	if( impl ) {
@@ -404,11 +403,11 @@ VK2D_API void VK2D_APIENTRY Window::DrawBox(
 }
 
 VK2D_API void VK2D_APIENTRY Window::DrawCircle(
-	Vector2d						top_left,
-	Vector2d						bottom_right,
+	Vector2						top_left,
+	Vector2						bottom_right,
 	bool							filled,
 	float							edge_count,
-	Color							color
+	Colorf							color
 )
 {
 	if( impl ) {
@@ -423,13 +422,13 @@ VK2D_API void VK2D_APIENTRY Window::DrawCircle(
 }
 
 VK2D_API void VK2D_APIENTRY Window::DrawPie(
-	Vector2d						top_left,
-	Vector2d						bottom_right,
+	Vector2						top_left,
+	Vector2						bottom_right,
 	float							begin_angle_radians,
 	float							end_angle_radians,
 	bool							filled,
 	float							edge_count,
-	Color							color
+	Colorf							color
 )
 {
 	if( impl ) {
@@ -446,12 +445,12 @@ VK2D_API void VK2D_APIENTRY Window::DrawPie(
 }
 
 VK2D_API void VK2D_APIENTRY Window::DrawPieBox(
-	Vector2d						top_left,
-	Vector2d						bottom_right,
+	Vector2						top_left,
+	Vector2						bottom_right,
 	float							begin_angle_radians,
 	float							coverage,
 	bool							filled,
-	Color							color
+	Colorf							color
 )
 {
 	if( impl ) {
@@ -467,10 +466,10 @@ VK2D_API void VK2D_APIENTRY Window::DrawPieBox(
 }
 
 VK2D_API void VK2D_APIENTRY Window::DrawTexture(
-	Vector2d					top_left,
-	Vector2d					bottom_right,
+	Vector2					top_left,
+	Vector2					bottom_right,
 	vk2d::TextureResource	*	texture,
-	Color						color
+	Colorf						color
 )
 {
 	if( impl ) {
@@ -502,14 +501,12 @@ VK2D_API void VK2D_APIENTRY Window::DrawMesh(
 
 Cursor::Cursor(
 	const std::filesystem::path		&	image_path,
-	int32_t								hot_spot_x,
-	int32_t								hot_spot_y
+	vk2d::Vector2i						hot_spot
 )
 {
 	impl		= std::make_unique<vk2d::_internal::CursorImpl>(
 		image_path,
-		hot_spot_x,
-		hot_spot_y
+		hot_spot
 	);
 	if( impl && impl->IsGood() ) {
 		is_good			= true;
@@ -520,19 +517,15 @@ Cursor::Cursor(
 }
 
 Cursor::Cursor(
-	uint32_t							image_size_x,
-	uint32_t							image_size_y,
-	const std::vector<vk2d::Color>	&	image_data,
-	int32_t								hot_spot_x,
-	int32_t								hot_spot_y
+	vk2d::Vector2u							image_size,
+	const std::vector<vk2d::Color8>		&	image_data,
+	vk2d::Vector2i							hot_spot
 )
 {
 	impl		= std::make_unique<vk2d::_internal::CursorImpl>(
-		image_size_x,
-		image_size_y,
+		image_size,
 		image_data,
-		hot_spot_x,
-		hot_spot_y
+		hot_spot
 	);
 	if( impl && impl->IsGood() ) {
 		is_good			= true;
@@ -547,11 +540,9 @@ Cursor::Cursor(
 )
 {
 	impl		= std::make_unique<vk2d::_internal::CursorImpl>(
-		other.impl->GetSize()[ 0 ],
-		other.impl->GetSize()[ 1 ],
+		other.impl->GetSize(),
 		other.impl->GetPixelData(),
-		other.impl->GetHotSpot()[ 0 ],
-		other.impl->GetHotSpot()[ 1 ]
+		other.impl->GetHotSpot()
 	);
 	if( impl && impl->IsGood() ) {
 		is_good			= true;
@@ -568,11 +559,9 @@ VK2D_API vk2d::Cursor & VK2D_APIENTRY Cursor::operator=(
 	vk2d::Cursor	&	other )
 {
 	impl		= std::make_unique<vk2d::_internal::CursorImpl>(
-		other.impl->GetSize()[ 0 ],
-		other.impl->GetSize()[ 1 ],
+		other.impl->GetSize(),
 		other.impl->GetPixelData(),
-		other.impl->GetHotSpot()[ 0 ],
-		other.impl->GetHotSpot()[ 1 ]
+		other.impl->GetHotSpot()
 		);
 	if( impl && impl->IsGood() ) {
 		is_good			= true;
@@ -584,7 +573,7 @@ VK2D_API vk2d::Cursor & VK2D_APIENTRY Cursor::operator=(
 	return *this;
 }
 
-VK2D_API std::array<uint32_t, 2> VK2D_APIENTRY Cursor::GetSize()
+VK2D_API vk2d::Vector2u VK2D_APIENTRY Cursor::GetSize()
 {
 	if( impl ) {
 		return impl->GetSize();
@@ -592,7 +581,7 @@ VK2D_API std::array<uint32_t, 2> VK2D_APIENTRY Cursor::GetSize()
 	return {};
 }
 
-VK2D_API std::array<int32_t, 2> VK2D_APIENTRY Cursor::GetHotSpot()
+VK2D_API vk2d::Vector2i VK2D_APIENTRY Cursor::GetHotSpot()
 {
 	if( impl ) {
 		return impl->GetHotSpot();
@@ -600,7 +589,7 @@ VK2D_API std::array<int32_t, 2> VK2D_APIENTRY Cursor::GetHotSpot()
 	return {};
 }
 
-VK2D_API std::vector<vk2d::Color> VK2D_APIENTRY Cursor::GetPixelData()
+VK2D_API std::vector<vk2d::Color8> VK2D_APIENTRY Cursor::GetPixelData()
 {
 	if( impl ) {
 		return impl->GetPixelData();

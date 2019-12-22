@@ -36,8 +36,8 @@ class MonitorImpl;
 
 
 struct WindowCoordinateScaling {
-	alignas( 8 )	vk2d::Vector2d		multiplier		= {};
-	alignas( 8 )	vk2d::Vector2d		offset			= {};
+	alignas( 8 )	vk2d::Vector2		multiplier		= {};
+	alignas( 8 )	vk2d::Vector2		offset			= {};
 };
 
 

@@ -237,18 +237,18 @@ public:
 	// Window position changed.
 	virtual void								VK2D_APIENTRY		EventWindowPosition(
 		vk2d::Window						*	window,
-		int32_t									position_x,
-		int32_t									position_y )
+		vk2d::Vector2i							position )
 	{};
 
 	// Window size changed.
 	virtual void								VK2D_APIENTRY		EventWindowSize(
 		vk2d::Window						*	window,
-		uint32_t								size_x,
-		uint32_t								size_y )
+		vk2d::Vector2u							size )
 	{};
 
-	// Window was closed, either via the "X" or someone called Window::Close().
+	// Window wants to close, either the window "X" was pressed or system wants to close the window.
+	// This function will not be called when the window will actually close, only when window wants to be closed.
+	// Window::CloseWindow() does not call this event.
 	virtual void								VK2D_APIENTRY		EventWindowClose(
 		vk2d::Window						*	window )
 	{};
@@ -288,8 +288,7 @@ public:
 	// Cursor position on window changed.
 	virtual void								VK2D_APIENTRY		EventCursorPosition(
 		vk2d::Window						*	window,
-		double									x,
-		double									y )
+		vk2d::Vector2d							position )
 	{};
 
 	// Cursor entered or left window client area.
@@ -301,15 +300,14 @@ public:
 	// Scrolling happened, y for vertical scrolling, x for horisontal.
 	virtual void								VK2D_APIENTRY		EventScroll(
 		vk2d::Window						*	window,
-		double									x,
-		double									y )
+		vk2d::Vector2d							scroll )
 	{};
 
 	// Keyboard button was pressed, released or kept down ( repeating ).
 	virtual void								VK2D_APIENTRY		EventKeyboard(
 		vk2d::Window						*	window,
 		vk2d::KeyboardButton					button,
-		int										scancode,
+		int32_t									scancode,
 		vk2d::ButtonAction						action,
 		vk2d::ModifierKeyFlags					modifierKeys )
 	{};
@@ -345,18 +343,14 @@ struct WindowCreateInfo {
 	bool								maximized					= false;		// Is the window maximized to fill the screen when created.
 	bool								transparent_framebuffer		= false;		// Is the alpha value of the render interpreted as a transparent window background.
 	vk2d::WindowCoordinateSpace			coordinate_space			= WindowCoordinateSpace::TEXEL_SPACE; // Window coordinate system to be used, see WindowCoordinateSpace.
-	uint32_t							width						= 0;			// Window framebuffer initial width.
-	uint32_t							height						= 0;			// Window framebuffer initial height.
-	uint32_t							min_width					= 32;			// Minimum width of the window, will be adjusted to suit the hardware.
-	uint32_t							min_height					= 32;			// Minimum height of the window, will be adjusted to suit the hardware.
-	uint32_t							max_width					= UINT32_MAX;	// Maximum width of the window, will be adjusted to suit the hardware.
-	uint32_t							max_height					= UINT32_MAX;	// Maximum height of the window, will be adjusted to suit the hardware.
-	vk2d::Monitor					*	fullscreen_monitor			= {};			// Fullscreen monitor index, nullptr is windowed, use Renderer::GetPrimaryMonitor() to use primary monitor for fullscreen.
+	vk2d::Vector2u						size						= { 0, 0 };		// Window framebuffer initial size
+	vk2d::Vector2u						min_size					= { 32, 32 };	// Minimum size of the window, will be adjusted to suit the hardware.
+	vk2d::Vector2u						max_size					= { UINT32_MAX, UINT32_MAX };	// Maximum size of the window, will be adjusted to suit the hardware.
+	vk2d::Monitor					*	fullscreen_monitor			= {};			// Fullscreen monitor pointer, nullptr is windowed, use Renderer::GetPrimaryMonitor() to use primary monitor for fullscreen.
 	uint32_t							fullscreen_refresh_rate		= UINT32_MAX;	// Refresh rate in fullscreen mode, UINT32_MAX uses maximum refresh rate available.
 	bool								vsync						= true;			// Vertical synchronization, works in both windowed and fullscreen modes, usually best left on for 2d graphics.
-	Multisamples						samples						= Multisamples::SAMPLE_COUNT_1;	// Multisampling, must be a value in Multisamples enum.
+	Multisamples						samples						= Multisamples::SAMPLE_COUNT_1;	// Multisampling, must be a single value in vk2d::Multisamples enum.
 	std::string							title						= "";			// Window title.
-	std::filesystem::path				window_icon					= "";
 	vk2d::WindowEventHandler		*	event_handler				= nullptr;
 };
 
@@ -446,16 +440,15 @@ public:
 
 	// Get cursor position.
 	// Returns:
-	// Array of 2 doubles returning the X and Y coordinates of the mouse cursor position, respectively.
-	VK2D_API std::array<double, 2>						VK2D_APIENTRY				GetCursorPosition();
+	// Vector returning the X and Y coordinates of the mouse cursor position, respectively.
+	VK2D_API vk2d::Vector2d								VK2D_APIENTRY				GetCursorPosition();
 
 	// Set cursor position.
 	// Parameters:
 	// [in] x: new x location of the cursor
 	// [in] y: new y location of the cursor
 	VK2D_API void										VK2D_APIENTRY				SetCursorPosition(
-		double											x,
-		double											y );
+		vk2d::Vector2d									new_position );
 
 	// Set cursor.
 	// Sets the cursor image for the window, hardware cursor.
@@ -500,18 +493,17 @@ public:
 	// [in] x: new window position x coordinate.
 	// [in] y: new window position y coordinate.
 	VK2D_API void										VK2D_APIENTRY				SetPosition(
-		int32_t											x,
-		int32_t											y );
+		vk2d::Vector2i									new_position );
 
 	// Get window position on screen.
 	// Returns:
-	// An array of 2 int32_t's where first element is X location and second element is Y location.
-	VK2D_API std::array<int32_t, 2>						VK2D_APIENTRY				GetPosition();
+	// An vector containing x and y locations.
+	VK2D_API vk2d::Vector2i								VK2D_APIENTRY				GetPosition();
 
 	VK2D_API void										VK2D_APIENTRY				SetSize(
-		vk2d::Vector2du									new_size );
+		vk2d::Vector2u									new_size );
 
-	VK2D_API vk2d::Vector2du							VK2D_APIENTRY				GetSize();
+	VK2D_API vk2d::Vector2u								VK2D_APIENTRY				GetSize();
 
 	// Sets the window to be minimized or normal.
 	// Parameters:
@@ -576,45 +568,45 @@ public:
 		vk2d::Sampler								*	sampler						= nullptr );
 
 	VK2D_API void										VK2D_APIENTRY				DrawLine(
-		vk2d::Vector2d									point_1,
-		vk2d::Vector2d									point_2,
-		vk2d::Color										color						= { 1.0f, 1.0f, 1.0f, 1.0f } );
+		vk2d::Vector2									point_1,
+		vk2d::Vector2									point_2,
+		vk2d::Colorf									color						= { 1.0f, 1.0f, 1.0f, 1.0f } );
 
 	VK2D_API void										VK2D_APIENTRY				DrawBox(
-		vk2d::Vector2d									top_left,
-		vk2d::Vector2d									bottom_right,
+		vk2d::Vector2									top_left,
+		vk2d::Vector2									bottom_right,
 		bool											filled						= true,
-		vk2d::Color										color						= { 1.0f, 1.0f, 1.0f, 1.0f } );
+		vk2d::Colorf									color						= { 1.0f, 1.0f, 1.0f, 1.0f } );
 
 	VK2D_API void										VK2D_APIENTRY				DrawCircle(
-		vk2d::Vector2d									top_left,
-		vk2d::Vector2d									bottom_right,
+		vk2d::Vector2									top_left,
+		vk2d::Vector2									bottom_right,
 		bool											filled						= true,
 		float											edge_count					= 64.0f,
-		vk2d::Color										color						= { 1.0f, 1.0f, 1.0f, 1.0f } );
+		vk2d::Colorf									color						= { 1.0f, 1.0f, 1.0f, 1.0f } );
 
 	VK2D_API void										VK2D_APIENTRY				DrawPie(
-		vk2d::Vector2d									top_left,
-		vk2d::Vector2d									bottom_right,
+		vk2d::Vector2									top_left,
+		vk2d::Vector2									bottom_right,
 		float											begin_angle_radians,
 		float											coverage,
 		bool											filled						= true,
 		float											edge_count					= 64.0f,
-		vk2d::Color										color						= { 1.0f, 1.0f, 1.0f, 1.0f } );
+		vk2d::Colorf									color						= { 1.0f, 1.0f, 1.0f, 1.0f } );
 
 	VK2D_API void										VK2D_APIENTRY				DrawPieBox(
-		vk2d::Vector2d									top_left,
-		vk2d::Vector2d									bottom_right,
+		vk2d::Vector2									top_left,
+		vk2d::Vector2									bottom_right,
 		float											begin_angle_radians,
 		float											coverage,
 		bool											filled						= true,
-		vk2d::Color										color						= { 1.0f, 1.0f, 1.0f, 1.0f } );
+		vk2d::Colorf									color						= { 1.0f, 1.0f, 1.0f, 1.0f } );
 
 	VK2D_API void										VK2D_APIENTRY				DrawTexture(
-		vk2d::Vector2d									top_left,
-		vk2d::Vector2d									bottom_right,
+		vk2d::Vector2									top_left,
+		vk2d::Vector2									bottom_right,
 		vk2d::TextureResource						*	texture,
-		vk2d::Color										color						= { 1.0f, 1.0f, 1.0f, 1.0f } );
+		vk2d::Colorf									color						= { 1.0f, 1.0f, 1.0f, 1.0f } );
 
 	VK2D_API void										VK2D_APIENTRY				DrawMesh(
 		const vk2d::Mesh							&	mesh );
@@ -640,8 +632,7 @@ public:
 	// [in] hot_spot_y: where the active location of the cursor is, y location.
 	VK2D_API																		Cursor(
 		const std::filesystem::path			&	image_path,
-		int32_t									hot_spot_x,
-		int32_t									hot_spot_y );
+		vk2d::Vector2i							hot_spot );
 
 	// Cursor constructor, raw data version.
 	// Image data needs to be in format RGBA, 8 bits per channel, 32 bits per pixel,
@@ -652,11 +643,9 @@ public:
 	// [in] hot_spot_x: where the active location of the cursor is, x location.
 	// [in] hot_spot_y: where the active location of the cursor is, y location.
 	VK2D_API																		Cursor(
-		uint32_t								image_size_x,
-		uint32_t								image_size_y,
-		const std::vector<vk2d::Color>		&	image_data,
-		int32_t									hot_spot_x,
-		int32_t									hot_spot_y );
+		vk2d::Vector2u							image_size,
+		const std::vector<vk2d::Color8>		&	image_data,
+		vk2d::Vector2i							hot_spot );
 
 	// Copy constructor from another cursor.
 	VK2D_API																		Cursor(
@@ -677,9 +666,9 @@ public:
 	VK2D_API vk2d::Cursor					&	VK2D_APIENTRY						operator=(
 		vk2d::Cursor						&&	other )								= default;
 
-	VK2D_API std::array<uint32_t, 2>			VK2D_APIENTRY						GetSize();
-	VK2D_API std::array<int32_t, 2>				VK2D_APIENTRY						GetHotSpot();
-	VK2D_API std::vector<vk2d::Color>			VK2D_APIENTRY						GetPixelData();
+	VK2D_API vk2d::Vector2u						VK2D_APIENTRY						GetSize();
+	VK2D_API vk2d::Vector2i						VK2D_APIENTRY						GetHotSpot();
+	VK2D_API std::vector<vk2d::Color8>			VK2D_APIENTRY						GetPixelData();
 
 private:
 	std::unique_ptr<vk2d::_internal::CursorImpl>	impl							= nullptr;
@@ -695,8 +684,7 @@ private:
 
 // Monitor video mode tells you one of the supported modes the monitor can natively work in.
 struct MonitorVideoMode {
-	uint32_t			size_x;
-	uint32_t			size_y;
+	vk2d::Vector2u		size;
 	uint32_t			redBits;
 	uint32_t			greenBits;
 	uint32_t			blueBits;

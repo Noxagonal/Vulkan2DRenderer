@@ -66,7 +66,7 @@ void glfwWindowPosCallback( GLFWwindow * glfwWindow, int x, int y )
 	auto impl = reinterpret_cast<vk2d::_internal::WindowImpl*>( glfwGetWindowUserPointer( glfwWindow ) );
 	impl->position = { int32_t( x ), int32_t( y ) };
 	if( impl->event_handler ) {
-		impl->event_handler->EventWindowPosition( impl->window_parent, int32_t( x ), int32_t( y ) );
+		impl->event_handler->EventWindowPosition( impl->window_parent, { int32_t( x ), int32_t( y ) }  );
 	}
 }
 
@@ -77,7 +77,7 @@ void glfwWindowSizeCallback( GLFWwindow * glfwWindow, int x, int y )
 	impl->extent					= { uint32_t( x ), uint32_t( y ) };
 	impl->should_reconstruct		= true;
 	if( impl->event_handler ) {
-		impl->event_handler->EventWindowSize( impl->window_parent, uint32_t( x ), uint32_t( y ) );
+		impl->event_handler->EventWindowSize( impl->window_parent, { uint32_t( x ), uint32_t( y ) } );
 	}
 }
 
@@ -133,7 +133,7 @@ void glfwFramebufferSizeCallback( GLFWwindow * glfwWindow, int x, int y )
 	impl->extent					= { uint32_t( x ), uint32_t( y ) };
 	impl->should_reconstruct		= true;
 	if( impl->event_handler ) {
-		impl->event_handler->EventWindowSize( impl->window_parent, uint32_t( x ), uint32_t( y ) );
+		impl->event_handler->EventWindowSize( impl->window_parent, { uint32_t( x ), uint32_t( y ) } );
 	}
 }
 
@@ -151,7 +151,7 @@ void glfwCursorPosCallback( GLFWwindow * glfwWindow, double x, double y )
 {
 	auto impl = reinterpret_cast<vk2d::_internal::WindowImpl*>( glfwGetWindowUserPointer( glfwWindow ) );
 	if( impl->event_handler ) {
-		impl->event_handler->EventCursorPosition( impl->window_parent, x, y );
+		impl->event_handler->EventCursorPosition( impl->window_parent, { x, y } );
 	}
 }
 
@@ -167,7 +167,7 @@ void glfwScrollCallback( GLFWwindow * glfwWindow, double x, double y )
 {
 	auto impl = reinterpret_cast<vk2d::_internal::WindowImpl*>( glfwGetWindowUserPointer( glfwWindow ) );
 	if( impl->event_handler ) {
-		impl->event_handler->EventScroll( impl->window_parent, x, y );
+		impl->event_handler->EventScroll( impl->window_parent, { x, y } );
 	}
 }
 
@@ -1059,7 +1059,7 @@ bool WindowImpl::IsFullscreen()
 	return !!glfwGetWindowMonitor( glfw_window );
 }
 
-std::array<double, 2> WindowImpl::GetCursorPosition()
+vk2d::Vector2d WindowImpl::GetCursorPosition()
 {
 	double x = 0, y = 0;
 	glfwGetCursorPos( glfw_window, &x, &y );
@@ -1138,27 +1138,28 @@ void WindowImpl::SetIcon(
 }
 
 void WindowImpl::SetPosition(
-	int32_t			x,
-	int32_t			y
+	vk2d::Vector2i		new_position
 )
 {
-	glfwSetWindowPos( glfw_window, x, y );
+	glfwSetWindowPos( glfw_window, new_position.x, new_position.y );
 }
 
-std::array<int32_t, 2> WindowImpl::GetPosition()
+vk2d::Vector2i WindowImpl::GetPosition()
 {
-	return std::array<int32_t, 2>();
+	int x = 0, y = 0;
+	glfwGetWindowPos( glfw_window, &x, &y );
+	return { int32_t( x ), int32_t( y ) };
 }
 
 void WindowImpl::SetSize(
-	vk2d::Vector2du			new_size
+	vk2d::Vector2u			new_size
 )
 {
 	extent					= { uint32_t( new_size.x ), uint32_t( new_size.y ) };
 	should_reconstruct		= true;
 }
 
-vk2d::Vector2du WindowImpl::GetSize()
+vk2d::Vector2u WindowImpl::GetSize()
 {
 	return { extent.width, extent.height };
 }
@@ -1447,9 +1448,9 @@ void WindowImpl::DrawPointList(
 }
 
 void WindowImpl::DrawLine(
-	Vector2d						point_1,
-	Vector2d						point_2,
-	Color							color )
+	Vector2						point_1,
+	Vector2						point_2,
+	Colorf							color )
 {
 	std::vector<Vertex>				vertices( 2 );
 	std::vector<VertexIndex_2>		indices( 1 );
@@ -1471,10 +1472,10 @@ void WindowImpl::DrawLine(
 }
 
 void WindowImpl::DrawBox(
-	Vector2d						top_left,
-	Vector2d						bottom_right,
+	Vector2						top_left,
+	Vector2						bottom_right,
 	bool							filled,
-	Color							color )
+	Colorf							color )
 {
 	auto mesh = vk2d::GenerateBoxMesh(
 		top_left,
@@ -1485,11 +1486,11 @@ void WindowImpl::DrawBox(
 }
 
 void WindowImpl::DrawCircle(
-	Vector2d						top_left,
-	Vector2d						bottom_right,
+	Vector2						top_left,
+	Vector2						bottom_right,
 	bool							filled,
 	float							edge_count,
-	Color							color
+	Colorf							color
 )
 {
 	auto mesh = vk2d::GenerateCircleMesh(
@@ -1503,13 +1504,13 @@ void WindowImpl::DrawCircle(
 }
 
 void WindowImpl::DrawPie(
-	Vector2d						top_left,
-	Vector2d						bottom_right,
+	Vector2						top_left,
+	Vector2						bottom_right,
 	float							begin_angle_radians,
 	float							coverage,
 	bool							filled,
 	float							edge_count,
-	Color							color
+	Colorf							color
 )
 {
 	auto mesh = vk2d::GeneratePieMesh(
@@ -1525,12 +1526,12 @@ void WindowImpl::DrawPie(
 }
 
 void WindowImpl::DrawPieBox(
-	Vector2d						top_left,
-	Vector2d						bottom_right,
+	Vector2						top_left,
+	Vector2						bottom_right,
 	float							begin_angle_radians,
 	float							coverage,
 	bool							filled,
-	Color							color
+	Colorf							color
 )
 {
 	auto mesh = vk2d::GeneratePieBoxMesh(
@@ -1545,10 +1546,10 @@ void WindowImpl::DrawPieBox(
 }
 
 void WindowImpl::DrawTexture(
-	Vector2d						top_left,
-	Vector2d						bottom_right,
+	Vector2						top_left,
+	Vector2						bottom_right,
 	vk2d::TextureResource		*	texture,
-	Color							color
+	Colorf							color
 )
 {
 	auto mesh = vk2d::GenerateBoxMesh(
@@ -1890,8 +1891,8 @@ bool WindowImpl::CreateGLFWWindow()
 	}
 
 	glfw_window = glfwCreateWindow(
-		int( create_info_copy.width ),
-		int( create_info_copy.height ),
+		int( create_info_copy.size.x ),
+		int( create_info_copy.size.y ),
 		window_title.c_str(),
 		monitor,
 		nullptr );
@@ -2555,12 +2556,12 @@ bool WindowImpl::ReCreateSwapchain()
 		// Figure out image dimensions and set window minimum and maximum sizes
 		{
 			min_extent		= {
-				create_info_copy.min_width,
-				create_info_copy.min_height
+				create_info_copy.min_size.x,
+				create_info_copy.min_size.y
 			};
 			max_extent		= {
-				create_info_copy.max_width,
-				create_info_copy.max_height
+				create_info_copy.max_size.x,
+				create_info_copy.max_size.y
 			};
 
 			// Set window size limits
@@ -3103,44 +3104,41 @@ void WindowImpl::CmdSetLineWidthIfDifferent(
 
 
 CursorImpl::CursorImpl(
-	const std::filesystem::path		&	image_path,
-	int32_t								hot_spot_x,
-	int32_t								hot_spot_y
+	const std::filesystem::path			&	image_path,
+	vk2d::Vector2i							hot_spot
 )
 {
 	int x = 0, y = 0, channels = 0;
 	auto stbiData = stbi_load( image_path.string().c_str(), &x, &y, &channels, 4 );
 	if( stbiData ) {
-		std::vector<vk2d::Color> data( x * y );
-		std::memcpy( data.data(), stbiData, data.size() * sizeof( vk2d::Color ) );
+		std::vector<vk2d::Color8> data( x * y );
+		std::memcpy( data.data(), stbiData, data.size() * sizeof( vk2d::Colorf ) );
 		free( stbiData );
-		*this = vk2d::_internal::CursorImpl( uint32_t( x ), uint32_t( y ), data, hot_spot_x, hot_spot_y );
+		*this = vk2d::_internal::CursorImpl( { uint32_t( x ), uint32_t( y ) }, data, hot_spot );
 	}
 }
 
 CursorImpl::CursorImpl(
-	uint32_t							image_size_x,
-	uint32_t							image_size_y,
-	const std::vector<vk2d::Color>	&	image_data,
-	int32_t								hot_spot_x,
-	int32_t								hot_spot_y
+	vk2d::Vector2u							image_size,
+	const std::vector<vk2d::Color8>		&	image_data,
+	vk2d::Vector2i							hot_spot
 )
 {
-	if( size_t( image_size_x ) * size_t( image_size_y ) > image_data.size() ) {
+	if( size_t( image_size.x ) * size_t( image_size.y ) > image_data.size() ) {
 		return;
 	}
 
-	pixel_data.resize( size_t( image_size_x ) * size_t( image_size_y ) * sizeof( vk2d::Color ) );
-	std::memcpy( pixel_data.data(), image_data.data(), pixel_data.size() * sizeof( vk2d::Color ) );
+	pixel_data.resize( size_t( image_size.x ) * size_t( image_size.y ) * sizeof( vk2d::Color8 ) );
+	std::memcpy( pixel_data.data(), image_data.data(), pixel_data.size() * sizeof( vk2d::Color8 ) );
 
 	GLFWimage glfwImage {};
-	glfwImage.width		= image_size_x;
-	glfwImage.height	= image_size_y;
+	glfwImage.width		= image_size.x;
+	glfwImage.height	= image_size.y;
 	glfwImage.pixels	= (uint8_t*)pixel_data.data();
-	cursor				= glfwCreateCursor( &glfwImage, int( hot_spot_x ), int( hot_spot_y ) );
+	cursor				= glfwCreateCursor( &glfwImage, int( hot_spot.x ), int( hot_spot.y ) );
 	if( cursor ) {
-		hotSpot	= { hot_spot_x, hot_spot_y };
-		extent	= { image_size_x, image_size_y };
+		hotSpot	= { hot_spot.x, hot_spot.y };
+		extent	= { image_size.x, image_size.y };
 	} else {
 		return;
 	}
@@ -3153,11 +3151,9 @@ CursorImpl::CursorImpl(
 {
 	this->~CursorImpl();
 	*this	= vk2d::_internal::CursorImpl(
-		other.extent.width,
-		other.extent.height,
+		{ other.extent.width, other.extent.height },
 		other.pixel_data,
-		other.hotSpot.x,
-		other.hotSpot.y
+		{ other.hotSpot.x, other.hotSpot.y }
 	);
 }
 
@@ -3174,11 +3170,9 @@ vk2d::_internal::CursorImpl & CursorImpl::operator=(
 {
 	this->~CursorImpl();
 	*this	= vk2d::_internal::CursorImpl(
-		other.extent.width,
-		other.extent.height,
+		{ other.extent.width, other.extent.height },
 		other.pixel_data,
-		other.hotSpot.x,
-		other.hotSpot.y
+		{ other.hotSpot.x, other.hotSpot.y }
 	);
 
 	return *this;
@@ -3189,7 +3183,7 @@ bool CursorImpl::IsGood()
 	return is_good;
 }
 
-const std::vector<vk2d::Color>& CursorImpl::GetPixelData()
+const std::vector<vk2d::Color8> & CursorImpl::GetPixelData()
 {
 	return pixel_data;
 }
@@ -3199,12 +3193,12 @@ GLFWcursor * CursorImpl::GetGLFWcursor()
 	return cursor;
 }
 
-std::array<uint32_t, 2> CursorImpl::GetSize()
+vk2d::Vector2u CursorImpl::GetSize()
 {
 	return { extent.width, extent.height };
 }
 
-std::array<int32_t, 2> CursorImpl::GetHotSpot()
+vk2d::Vector2i CursorImpl::GetHotSpot()
 {
 	return { hotSpot.x, hotSpot.y };
 }

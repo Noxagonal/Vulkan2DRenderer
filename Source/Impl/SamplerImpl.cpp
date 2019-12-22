@@ -8,7 +8,7 @@
 
 
 struct SamplerData {
-	vk2d::Color				borderColor			= {};
+	vk2d::Colorf				borderColor			= {};
 	std::array<float, 4>	borderColorEnable	= {};
 };
 
