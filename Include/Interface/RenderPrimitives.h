@@ -10,15 +10,16 @@
 namespace vk2d {
 
 
-struct Vector2d {
-	float x		= 0.0f;
-	float y		= 0.0f;
+template<typename T>
+struct Vector2dBase {
+	T x		= 0.0f;
+	T y		= 0.0f;
 
-	Vector2d()								= default;
-	Vector2d( float x, float y ) : x( x ), y( y ) {};
-	Vector2d( const Vector2d & other )		= default;
-	Vector2d( Vector2d && other )			= default;
-	Vector2d( const std::initializer_list<float> & elements )
+	Vector2dBase()																= default;
+	Vector2dBase( T x, T y ) : x( x ), y( y ) {};
+	Vector2dBase( const vk2d::Vector2dBase<T> & other )							= default;
+	Vector2dBase( vk2d::Vector2dBase<T> && other )								= default;
+	Vector2dBase( const std::initializer_list<T> & elements )
 	{
 		assert( elements.size() <= 2 );
 		auto e = elements.begin();
@@ -26,64 +27,64 @@ struct Vector2d {
 		if( e ) y = *e++;
 	}
 
-	Vector2d & operator=( const Vector2d & other )	= default;
-	Vector2d & operator=( Vector2d && other )		= default;
+	vk2d::Vector2dBase<T> & operator=( const vk2d::Vector2dBase<T> & other )	= default;
+	vk2d::Vector2dBase<T> & operator=( vk2d::Vector2dBase<T> && other )			= default;
 
-	Vector2d operator+( Vector2d other ) const
+	vk2d::Vector2dBase<T> operator+( vk2d::Vector2dBase<T> other ) const
 	{
 		return { x + other.x, y + other.y };
 	}
-	Vector2d operator-( Vector2d other ) const
+	vk2d::Vector2dBase<T> operator-( vk2d::Vector2dBase<T> other ) const
 	{
 		return { x - other.x, y - other.y };
 	}
-	Vector2d operator*( Vector2d other ) const
+	vk2d::Vector2dBase<T> operator*( vk2d::Vector2dBase<T> other ) const
 	{
 		return { x * other.x, y * other.y };
 	}
-	Vector2d operator/( Vector2d other ) const
+	vk2d::Vector2dBase<T> operator/( vk2d::Vector2dBase<T> other ) const
 	{
 		return { x / other.x, y / other.y };
 	}
-	Vector2d operator*( float other ) const
+	vk2d::Vector2dBase<T> operator*( T other ) const
 	{
 		return { x * other, y * other };
 	}
-	Vector2d operator/( float other ) const
+	vk2d::Vector2dBase<T> operator/( T other ) const
 	{
 		return { x / other, y / other };
 	}
-	Vector2d & operator+=( Vector2d other )
+	vk2d::Vector2dBase<T> & operator+=( vk2d::Vector2dBase<T> other )
 	{
 		x += other.x;
 		y += other.y;
 		return *this;
 	}
-	Vector2d & operator-=( Vector2d other )
+	vk2d::Vector2dBase<T> & operator-=( vk2d::Vector2dBase<T> other )
 	{
 		x -= other.x;
 		y -= other.y;
 		return *this;
 	}
-	Vector2d & operator*=( Vector2d other )
+	vk2d::Vector2dBase<T> & operator*=( vk2d::Vector2dBase<T> other )
 	{
 		x *= other.x;
 		y *= other.y;
 		return *this;
 	}
-	Vector2d & operator/=( Vector2d other )
+	vk2d::Vector2dBase<T> & operator/=( vk2d::Vector2dBase<T> other )
 	{
 		x /= other.x;
 		y /= other.y;
 		return *this;
 	}
-	Vector2d & operator*=( float other )
+	vk2d::Vector2dBase<T> & operator*=( T other )
 	{
 		x *= other;
 		y *= other;
 		return *this;
 	}
-	Vector2d & operator/=( float other )
+	vk2d::Vector2dBase<T> & operator/=( T other )
 	{
 		x /= other;
 		y /= other;
@@ -91,19 +92,26 @@ struct Vector2d {
 	}
 };
 
-struct Matrix2 {
-	vk2d::Vector2d	row_1 {};
-	vk2d::Vector2d	row_2 {};
+using Vector2d			= vk2d::Vector2dBase<float>;
+using Vector2di			= vk2d::Vector2dBase<int32_t>;
+using Vector2du			= vk2d::Vector2dBase<uint32_t>;
 
-	Matrix2()									= default;
-	Matrix2( const vk2d::Matrix2 & other )		= default;
-	Matrix2( vk2d::Matrix2 && other )			= default;
-	Matrix2( float identity )
+
+
+template<typename T>
+struct Matrix2Base {
+	vk2d::Vector2dBase<T>	row_1 {};
+	vk2d::Vector2dBase<T>	row_2 {};
+
+	Matrix2Base()											= default;
+	Matrix2Base( const vk2d::Matrix2Base<T> & other )		= default;
+	Matrix2Base( vk2d::Matrix2Base<T> && other )			= default;
+	Matrix2Base( float identity )
 	{
 		row_1	= { identity, 0.0f };
 		row_2	= { 0.0f, identity };
 	}
-	Matrix2( const std::initializer_list<float> & elements )
+	Matrix2Base( const std::initializer_list<T> & elements )
 	{
 		assert( elements.size() <= 4 );
 		auto e = elements.begin();
@@ -112,7 +120,7 @@ struct Matrix2 {
 		if( e ) row_2.x = *e++;
 		if( e ) row_2.y = *e++;
 	}
-	Matrix2(
+	Matrix2Base(
 		float r1_c1, float r1_c2,
 		float r2_c1, float r2_c2
 	)
@@ -121,20 +129,20 @@ struct Matrix2 {
 		row_2	= { r2_c1, r2_c2 };
 	}
 
-	vk2d::Matrix2 & operator=( const vk2d::Matrix2 & other )	= default;
-	vk2d::Matrix2 & operator=( vk2d::Matrix2 && other )			= default;
+	vk2d::Matrix2Base<T> & operator=( const vk2d::Matrix2Base<T> & other )		= default;
+	vk2d::Matrix2Base<T> & operator=( vk2d::Matrix2Base<T> && other )			= default;
 
-	vk2d::Matrix2 operator*( float multiplier )
+	vk2d::Matrix2Base<T> operator*( T multiplier )
 	{
-		vk2d::Matrix2 ret = {};
+		vk2d::Matrix2Base<T> ret = {};
 		ret.row_1		= row_1 * multiplier;
 		ret.row_2		= row_2 * multiplier;
 		return ret;
 	}
 
-	vk2d::Matrix2 operator*( const vk2d::Matrix2 & other )
+	vk2d::Matrix2Base<T> operator*( const vk2d::Matrix2Base<T> & other )
 	{
-		vk2d::Matrix2 ret = *this;
+		vk2d::Matrix2Base<T> ret = *this;
 		ret.row_1.x		= row_1.x * other.row_1.x + row_1.y * other.row_2.x;
 		ret.row_1.y		= row_1.x * other.row_1.y + row_1.y * other.row_2.y;
 		ret.row_2.x		= row_2.x * other.row_1.x + row_2.y * other.row_2.x;
@@ -142,7 +150,7 @@ struct Matrix2 {
 		return ret;
 	}
 
-	vk2d::Vector2d operator*( const vk2d::Vector2d & other )
+	vk2d::Vector2dBase<T> operator*( const vk2d::Vector2dBase<T> & other )
 	{
 		vk2d::Vector2d ret = {};
 		ret.x			= row_1.x * other.x + row_1.y * other.y;
@@ -150,17 +158,23 @@ struct Matrix2 {
 		return ret;
 	}
 
-	vk2d::Matrix2 & operator*=( float multiplier )
+	vk2d::Matrix2Base<T> & operator*=( T multiplier )
 	{
 		*this	= *this * multiplier;
 		return *this;
 	}
-	vk2d::Matrix2 & operator*=( const vk2d::Matrix2 & other )
+	vk2d::Matrix2Base<T> & operator*=( const vk2d::Matrix2Base<T> & other )
 	{
 		*this	= *this * other;
 		return *this;
 	}
 };
+
+using Matrix2			= vk2d::Matrix2Base<float>;
+using Matrix2i			= vk2d::Matrix2Base<int32_t>;
+using Matrix2u			= vk2d::Matrix2Base<uint32_t>;
+
+
 
 inline vk2d::Matrix2 CreateRotationMatrix(
 	float rotation

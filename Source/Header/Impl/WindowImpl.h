@@ -144,6 +144,11 @@ public:
 
 	std::array<int32_t, 2>										GetPosition();
 
+	void														SetSize(
+		vk2d::Vector2du											new_size );
+
+	vk2d::Vector2du												GetSize();
+
 	void														Iconify(
 		bool													minimized );
 
@@ -414,7 +419,7 @@ public:
 
 	const std::vector<vk2d::Color>			&	GetPixelData();
 	GLFWcursor								*	GetGLFWcursor();
-	std::array<uint32_t, 2>						GetExtent();
+	std::array<uint32_t, 2>						GetSize();
 	std::array<int32_t, 2>						GetHotSpot();
 
 private:

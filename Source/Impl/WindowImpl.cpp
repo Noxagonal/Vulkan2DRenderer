@@ -1150,6 +1150,19 @@ std::array<int32_t, 2> WindowImpl::GetPosition()
 	return std::array<int32_t, 2>();
 }
 
+void WindowImpl::SetSize(
+	vk2d::Vector2du			new_size
+)
+{
+	extent					= { uint32_t( new_size.x ), uint32_t( new_size.y ) };
+	should_reconstruct		= true;
+}
+
+vk2d::Vector2du WindowImpl::GetSize()
+{
+	return { extent.width, extent.height };
+}
+
 void WindowImpl::Iconify(
 	bool			iconified
 )
@@ -3186,7 +3199,7 @@ GLFWcursor * CursorImpl::GetGLFWcursor()
 	return cursor;
 }
 
-std::array<uint32_t, 2> CursorImpl::GetExtent()
+std::array<uint32_t, 2> CursorImpl::GetSize()
 {
 	return { extent.width, extent.height };
 }

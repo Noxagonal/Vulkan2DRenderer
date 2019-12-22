@@ -508,6 +508,11 @@ public:
 	// An array of 2 int32_t's where first element is X location and second element is Y location.
 	VK2D_API std::array<int32_t, 2>						VK2D_APIENTRY				GetPosition();
 
+	VK2D_API void										VK2D_APIENTRY				SetSize(
+		vk2d::Vector2du									new_size );
+
+	VK2D_API vk2d::Vector2du							VK2D_APIENTRY				GetSize();
+
 	// Sets the window to be minimized or normal.
 	// Parameters:
 	// [in] minimized: true will minimize the window to the taskbar, false if you want to clear it.
@@ -672,7 +677,7 @@ public:
 	VK2D_API vk2d::Cursor					&	VK2D_APIENTRY						operator=(
 		vk2d::Cursor						&&	other )								= default;
 
-	VK2D_API std::array<uint32_t, 2>			VK2D_APIENTRY						GetExtent();
+	VK2D_API std::array<uint32_t, 2>			VK2D_APIENTRY						GetSize();
 	VK2D_API std::array<int32_t, 2>				VK2D_APIENTRY						GetHotSpot();
 	VK2D_API std::vector<vk2d::Color>			VK2D_APIENTRY						GetPixelData();
 

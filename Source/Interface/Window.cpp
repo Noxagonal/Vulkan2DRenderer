@@ -242,6 +242,16 @@ VK2D_API std::array<int32_t, 2>VK2D_APIENTRY Window::GetPosition()
 	return {};
 }
 
+VK2D_API void VK2D_APIENTRY Window::SetSize( vk2d::Vector2du new_size )
+{
+	impl->SetSize( new_size );
+}
+
+VK2D_API vk2d::Vector2du VK2D_APIENTRY Window::GetSize()
+{
+	return impl->GetSize();
+}
+
 VK2D_API void VK2D_APIENTRY Window::Iconify( bool iconified )
 {
 	if( impl ) {
@@ -537,8 +547,8 @@ Cursor::Cursor(
 )
 {
 	impl		= std::make_unique<vk2d::_internal::CursorImpl>(
-		other.impl->GetExtent()[ 0 ],
-		other.impl->GetExtent()[ 1 ],
+		other.impl->GetSize()[ 0 ],
+		other.impl->GetSize()[ 1 ],
 		other.impl->GetPixelData(),
 		other.impl->GetHotSpot()[ 0 ],
 		other.impl->GetHotSpot()[ 1 ]
@@ -558,8 +568,8 @@ VK2D_API vk2d::Cursor & VK2D_APIENTRY Cursor::operator=(
 	vk2d::Cursor	&	other )
 {
 	impl		= std::make_unique<vk2d::_internal::CursorImpl>(
-		other.impl->GetExtent()[ 0 ],
-		other.impl->GetExtent()[ 1 ],
+		other.impl->GetSize()[ 0 ],
+		other.impl->GetSize()[ 1 ],
 		other.impl->GetPixelData(),
 		other.impl->GetHotSpot()[ 0 ],
 		other.impl->GetHotSpot()[ 1 ]
@@ -574,10 +584,10 @@ VK2D_API vk2d::Cursor & VK2D_APIENTRY Cursor::operator=(
 	return *this;
 }
 
-VK2D_API std::array<uint32_t, 2> VK2D_APIENTRY Cursor::GetExtent()
+VK2D_API std::array<uint32_t, 2> VK2D_APIENTRY Cursor::GetSize()
 {
 	if( impl ) {
-		return impl->GetExtent();
+		return impl->GetSize();
 	}
 	return {};
 }
