@@ -119,8 +119,7 @@ public:
 	vk2d::Vector2d												GetCursorPosition();
 
 	void														SetCursorPosition(
-		double													x,
-		double													y );
+		vk2d::Vector2d											new_position );
 
 	void														SetCursor(
 		vk2d::Cursor										*	cursor );

@@ -168,12 +168,11 @@ VK2D_API vk2d::Vector2d VK2D_APIENTRY Window::GetCursorPosition()
 }
 
 VK2D_API void VK2D_APIENTRY Window::SetCursorPosition(
-	double			x,
-	double			y
+	vk2d::Vector2d			new_position
 )
 {
 	if( impl ) {
-		impl->SetCursorPosition( x, y );
+		impl->SetCursorPosition( new_position );
 	}
 }
 

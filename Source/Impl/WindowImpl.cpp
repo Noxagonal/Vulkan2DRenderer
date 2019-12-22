@@ -1066,9 +1066,11 @@ vk2d::Vector2d WindowImpl::GetCursorPosition()
 	return { x, y };
 }
 
-void WindowImpl::SetCursorPosition( double x, double y )
+void WindowImpl::SetCursorPosition(
+	vk2d::Vector2d		new_position
+)
 {
-	glfwSetCursorPos( glfw_window, x, y );
+	glfwSetCursorPos( glfw_window, new_position.x, new_position.y );
 }
 
 void WindowImpl::SetCursor( vk2d::Cursor * cursor )
