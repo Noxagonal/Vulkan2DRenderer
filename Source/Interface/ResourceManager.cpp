@@ -13,12 +13,14 @@ VK2D_API vk2d::ResourceManager::ResourceManager(
 )
 {
 	impl = std::make_unique<vk2d::_internal::ResourceManagerImpl>( parent_renderer );
-	if( !impl )	return;
-	if( !impl->IsGood() ) {
+	if( impl && impl->IsGood() ) {
+		is_good	= true;
+	} else {
+		is_good	= false;
 		impl	= nullptr;
+		parent_renderer->Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot create resource manager implementation!" );
 		return;
 	}
-	is_good		= true;
 }
 
 VK2D_API vk2d::ResourceManager::~ResourceManager()
@@ -29,26 +31,24 @@ VK2D_API vk2d::TextureResource *VK2D_APIENTRY vk2d::ResourceManager::CreateTextu
 	const std::vector<vk2d::Color8>	&	texels
 )
 {
-	if( impl ) return impl->CreateTextureResource(
+	return impl->CreateTextureResource(
 		size,
 		texels
 	);
-	return nullptr;
 }
 
 VK2D_API vk2d::TextureResource * VK2D_APIENTRY vk2d::ResourceManager::LoadTextureResource(
 	std::filesystem::path		file_path
 )
 {
-	if( impl ) return impl->LoadTextureResource( file_path );
-	return nullptr;
+	return impl->LoadTextureResource( file_path );
 }
 
 VK2D_API void VK2D_APIENTRY vk2d::ResourceManager::DestroyResource(
 	vk2d::Resource		*	resource
 )
 {
-	if( impl ) impl->DestroyResource( resource );
+	impl->DestroyResource( resource );
 }
 
 VK2D_API bool VK2D_APIENTRY vk2d::ResourceManager::IsGood()

@@ -143,12 +143,12 @@ typedef void ( VK2D_APIENTRY *GamepadEventCallbackFun )(
 
 
 struct RendererCreateInfo {
-	std::string					application_name				= {};
-	vk2d::Version				application_version				= {};
-	std::string					engine_name						= {};
-	vk2d::Version				engine_version					= {};
-	PFN_VK2D_ReportFunction		report_function					= {};
-	uint32_t					resource_loader_thread_count	= UINT32_MAX;
+	std::string						application_name				= {};
+	vk2d::Version					application_version				= {};
+	std::string						engine_name						= {};
+	vk2d::Version					engine_version					= {};
+	vk2d::PFN_VK2D_ReportFunction	report_function					= {};
+	uint32_t						resource_loader_thread_count	= UINT32_MAX;
 };
 
 

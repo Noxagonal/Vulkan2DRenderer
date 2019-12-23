@@ -241,8 +241,10 @@ public:
 
 	bool														SynchronizeFrame();
 
+	bool														IsGood();
+
 private:
-	bool														RecreateResourcesAfterResizing();
+	bool														RecreateWindowSizeDependantResources();
 	bool														CreateGLFWWindow();
 	bool														CreateSurface();
 	bool														CreateRenderPass();
@@ -350,6 +352,7 @@ private:
 		WAITING_RENDER,					// waiting for rendering to happen
 		WAITING_FILE_WRITE,				// waiting for file to be written
 		WAITING_EVENT_REPORT,			// waiting for system to report event in main thread after saving
+		IDLE_ERROR				= UINT32_MAX,	// error state, screenshots disabled
 	};
 	std::atomic<vk2d::_internal::WindowImpl::ScreenshotState>	screenshot_state						= {};
 	std::filesystem::path										screenshot_path							= {};
@@ -359,7 +362,7 @@ private:
 	uint32_t													screenshot_swapchain_id					= {};
 	std::atomic_bool											screenshot_being_saved					= {};
 	bool														screenshot_event_error					= {};
-	std::string													screenshot_event_error_message			= {};
+	std::string													screenshot_event_message			= {};
 
 	bool														is_good									= {};
 };

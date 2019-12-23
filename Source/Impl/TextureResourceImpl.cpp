@@ -58,9 +58,11 @@ bool vk2d::_internal::TextureResourceImpl::MTLoad(
 		uint32_t	channels;
 	} image_info;
 
-	auto primary_render_queue_family_index		= resource_manager->GetRenderer()->GetPrimaryRenderQueue().GetQueueFamilyIndex();
-	auto secondary_render_queue_family_index	= resource_manager->GetRenderer()->GetSecondaryRenderQueue().GetQueueFamilyIndex();
-	auto primary_transfer_queue_family_index	= resource_manager->GetRenderer()->GetPrimaryTransferQueue().GetQueueFamilyIndex();
+	auto renderer		= resource_manager->GetRenderer();
+
+	auto primary_render_queue_family_index		= renderer->GetPrimaryRenderQueue().GetQueueFamilyIndex();
+	auto secondary_render_queue_family_index	= renderer->GetSecondaryRenderQueue().GetQueueFamilyIndex();
+	auto primary_transfer_queue_family_index	= renderer->GetPrimaryTransferQueue().GetQueueFamilyIndex();
 
 	bool is_primary_render_needed				= secondary_render_queue_family_index != primary_render_queue_family_index;
 
@@ -93,6 +95,7 @@ bool vk2d::_internal::TextureResourceImpl::MTLoad(
 			stbi_image_free( image_data );
 
 			if( staging_buffer != VK_SUCCESS ) {
+				renderer->Report( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot create texture resource staging buffer!" );
 				return false;
 			}
 
@@ -117,6 +120,10 @@ bool vk2d::_internal::TextureResourceImpl::MTLoad(
 				VK_BUFFER_USAGE_TRANSFER_SRC_BIT
 			);
 
+			if( staging_buffer != VK_SUCCESS ) {
+				renderer->Report( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot create texture resource staging buffer!" );
+				return false;
+			}
 		}
 	}
 
@@ -179,6 +186,10 @@ bool vk2d::_internal::TextureResourceImpl::MTLoad(
 			VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
 			&image_view_create_info
 		);
+		if( image != VK_SUCCESS ) {
+			renderer->Report( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot create texture resource image!" );
+			return false;
+		}
 	}
 
 	// 4. Allocate a command buffer from thread resources
@@ -196,6 +207,7 @@ bool vk2d::_internal::TextureResourceImpl::MTLoad(
 				&command_buffer_allocate_info,
 				&primary_render_command_buffer
 			) != VK_SUCCESS ) {
+				renderer->Report( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot allocate command buffers for texture data upload!" );
 				return false;
 			}
 
@@ -208,6 +220,7 @@ bool vk2d::_internal::TextureResourceImpl::MTLoad(
 				primary_render_command_buffer,
 				&command_buffer_begin_info
 			) != VK_SUCCESS ) {
+				renderer->Report( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot record command buffers for texture data upload!" );
 				return false;
 			}
 		} else {
@@ -587,6 +600,7 @@ bool vk2d::_internal::TextureResourceImpl::MTLoad(
 			nullptr,
 			&transfer_semaphore
 		) != VK_SUCCESS ) {
+			renderer->Report( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot create semaphore for texture data upload synchronization!" );
 			return false;
 		}
 
@@ -597,6 +611,7 @@ bool vk2d::_internal::TextureResourceImpl::MTLoad(
 				nullptr,
 				&blit_semaphore
 			) != VK_SUCCESS ) {
+				renderer->Report( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot create semaphore for texture data upload synchronization!" );
 				return false;
 			}
 		}
@@ -607,6 +622,7 @@ bool vk2d::_internal::TextureResourceImpl::MTLoad(
 			nullptr,
 			&texture_complete_fence
 		) != VK_SUCCESS ) {
+			renderer->Report( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot create fence for texture data upload synchronization!" );
 			return false;
 		}
 	}
@@ -614,13 +630,16 @@ bool vk2d::_internal::TextureResourceImpl::MTLoad(
 	// 8. Submit command buffer to the GPU, get a fence handle to indicate when the image is ready to be used.
 	{
 		if( vkEndCommandBuffer( primary_transfer_command_buffer ) != VK_SUCCESS ) {
+			renderer->Report( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot compile transfer command buffer for texture data upload!" );
 			return false;
 		}
 		if( vkEndCommandBuffer( secondary_render_command_buffer ) != VK_SUCCESS ) {
+			renderer->Report( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot compile secondary render command buffer for texture mipmap creation!" );
 			return false;
 		}
 		if( is_primary_render_needed ) {
 			if( vkEndCommandBuffer( primary_render_command_buffer ) != VK_SUCCESS ) {
+				renderer->Report( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot compile primary render command buffer for texture queue family handover finalization!" );
 				return false;
 			}
 		}
@@ -642,6 +661,7 @@ bool vk2d::_internal::TextureResourceImpl::MTLoad(
 				submit_info,
 				VK_NULL_HANDLE
 			) != VK_SUCCESS ) {
+				renderer->Report( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot submit texture upload command buffer!" );
 				return false;
 			}
 		}
@@ -663,6 +683,7 @@ bool vk2d::_internal::TextureResourceImpl::MTLoad(
 				submit_info,
 				is_primary_render_needed ? VK_NULL_HANDLE : texture_complete_fence
 			) != VK_SUCCESS ) {
+				renderer->Report( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot submit texture mipmap generation command buffer!" );
 				return false;
 			}
 		}
@@ -684,6 +705,7 @@ bool vk2d::_internal::TextureResourceImpl::MTLoad(
 				submit_info,
 				texture_complete_fence
 			) != VK_SUCCESS ) {
+				renderer->Report( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot submit texture queue family handover command buffer!" );
 				return false;
 			}
 		}
@@ -823,6 +845,7 @@ bool vk2d::_internal::TextureResourceImpl::WaitUntilLoaded()
 	if( is_loaded )						return true;
 	if( !is_good )						return false;
 	while( !texture->load_function_ran ) {
+		// TODO: use more sophisticated synchronization.
 		// Semi busy loop for now.
 		std::this_thread::sleep_for( std::chrono::microseconds( 10 ) );
 	}
@@ -845,6 +868,7 @@ bool vk2d::_internal::TextureResourceImpl::WaitUntilLoaded()
 
 	} else {
 		texture->failed_to_load	= true;
+		resource_manager->GetRenderer()->Report( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Resource failed to load properly while waiting for it in 'WaitUntilLoaded()'!" );
 		return false;
 	};
 

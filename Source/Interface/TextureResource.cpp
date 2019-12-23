@@ -3,6 +3,7 @@
 
 #include "../../Include/Interface/TextureResource.h"
 #include "../Header/Impl/TextureResourceImpl.h"
+#include "../Header/Impl/ResourceManagerImpl.h"
 
 
 
@@ -14,6 +15,7 @@ VK2D_API vk2d::TextureResource::TextureResource(
 	if( !impl )	return;
 	if( !impl->IsGood() ) {
 		impl	= nullptr;
+		resource_manager_parent->GetRenderer()->Report( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot create texture resource implementation!" );
 		return;
 	}
 	is_good		= true;
@@ -24,14 +26,12 @@ VK2D_API vk2d::TextureResource::~TextureResource()
 
 VK2D_API bool VK2D_APIENTRY vk2d::TextureResource::IsLoaded()
 {
-	if( impl ) return impl->IsLoaded();
-	return false;
+	return impl->IsLoaded();
 }
 
 VK2D_API bool VK2D_APIENTRY vk2d::TextureResource::WaitUntilLoaded()
 {
-	if( impl ) return impl->WaitUntilLoaded();
-	return false;
+	return impl->WaitUntilLoaded();
 }
 
 VK2D_API bool VK2D_APIENTRY vk2d::TextureResource::IsGood()
@@ -43,13 +43,12 @@ VK2D_API bool VK2D_APIENTRY vk2d::TextureResource::MTLoad(
 	vk2d::_internal::ThreadPrivateResource	*	thread_resource
 )
 {
-	if( impl ) return impl->MTLoad( thread_resource );
-	return false;
+	return impl->MTLoad( thread_resource );
 }
 
 VK2D_API void VK2D_APIENTRY vk2d::TextureResource::MTUnload(
 	vk2d::_internal::ThreadPrivateResource	*	thread_resource
 )
 {
-	if( impl ) impl->MTUnload( thread_resource );
+	impl->MTUnload( thread_resource );
 }

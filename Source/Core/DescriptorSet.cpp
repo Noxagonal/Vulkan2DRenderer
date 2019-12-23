@@ -2,6 +2,7 @@
 #include "../Header/Core/SourceCommon.h"
 
 #include "../Header/Core/DescriptorSet.h"
+#include "../Header/Impl/RendererImpl.h"
 
 #include <memory>
 #include <vector>
@@ -52,16 +53,16 @@ double vk2d::_internal::DescriptorPoolRequirements::CheckCompatibilityWith(
 }
 
 vk2d::_internal::DescriptorSetLayout::DescriptorSetLayout(
+	vk2d::_internal::RendererImpl			*	renderer,
 	VkDevice									device,
 	const VkDescriptorSetLayoutCreateInfo	*	pCreateInfo )
 {
-	refDevice		= device;
-	if( !device ) {
-		assert( 0 && "No device!" );
-		return;
-	}
+	assert( renderer );
+	assert( device );
 
-	createInfo					= *pCreateInfo;
+	renderer_parent		= renderer;
+	refDevice			= device;
+	createInfo			= *pCreateInfo;
 
 	// Create the actual descriptor set layout
 	{
@@ -71,6 +72,7 @@ vk2d::_internal::DescriptorSetLayout::DescriptorSetLayout(
 			nullptr,
 			&setLayout
 		) != VK_SUCCESS ) {
+			renderer_parent->Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot create descriptor set layout!" );
 			return;
 		}
 
@@ -91,7 +93,8 @@ vk2d::_internal::DescriptorSetLayout::~DescriptorSetLayout()
 	vkDestroyDescriptorSetLayout(
 		refDevice,
 		setLayout,
-		nullptr );
+		nullptr
+	);
 }
 
 VkDescriptorSetLayout vk2d::_internal::DescriptorSetLayout::GetVulkanDescriptorSetLayout() const
@@ -117,11 +120,13 @@ vk2d::_internal::DescriptorSetLayout::operator VkDescriptorSetLayout() const
 
 
 std::unique_ptr<vk2d::_internal::DescriptorSetLayout> vk2d::_internal::CreateDescriptorSetLayout(
+	vk2d::_internal::RendererImpl			*	renderer,
 	VkDevice									device,
 	const VkDescriptorSetLayoutCreateInfo	*	pCreateInfo
 )
 {
 	auto unique_object = std::unique_ptr<vk2d::_internal::DescriptorSetLayout>( new vk2d::_internal::DescriptorSetLayout(
+		renderer,
 		device,
 		pCreateInfo ) );
 	if( unique_object && unique_object->is_good ) return unique_object;
@@ -138,14 +143,14 @@ vk2d::_internal::PoolDescriptorSet::operator VkResult() const
 
 
 vk2d::_internal::DescriptorAutoPool::DescriptorAutoPool(
-	VkDevice				device
+	vk2d::_internal::RendererImpl	*	renderer,
+	VkDevice							device
 )
 {
+	assert( renderer );
+	assert( device );
+	renderer_parent			= renderer;
 	refDevice				= device;
-	if( !refDevice ) {
-		assert( 0 && "No device!" );
-		return;
-	}
 
 	is_good		= true;
 }
@@ -220,6 +225,7 @@ vk2d::_internal::PoolDescriptorSet vk2d::_internal::DescriptorAutoPool::Allocate
 				sc.second->isFull	= true;
 				break;
 			default:
+				renderer_parent->Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot allocate Vulkan descriptor sets!" );
 				ret.result			= result;
 				return ret;
 			}
@@ -260,6 +266,7 @@ vk2d::_internal::PoolDescriptorSet vk2d::_internal::DescriptorAutoPool::Allocate
 				&newCategory.pool
 			);
 			if( result != VK_SUCCESS ) {
+				renderer_parent->Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot create Vulkan descriptor pool!" );
 				ret.result	= result;
 				return ret;
 			}
@@ -279,6 +286,7 @@ vk2d::_internal::PoolDescriptorSet vk2d::_internal::DescriptorAutoPool::Allocate
 				&set
 			);
 			if( result != VK_SUCCESS ) {
+				renderer_parent->Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot allocate Vulkan descriptor sets!" );
 				ret.result	= result;
 				return ret;
 			}
@@ -334,11 +342,17 @@ void vk2d::_internal::DescriptorAutoPool::FreeDescriptorSet(
 
 
 std::unique_ptr<vk2d::_internal::DescriptorAutoPool> vk2d::_internal::CreateDescriptorAutoPool(
-	VkDevice		device
+	vk2d::_internal::RendererImpl	*	renderer,
+	VkDevice							device
 )
 {
 	auto unique_object = std::unique_ptr<vk2d::_internal::DescriptorAutoPool>( new vk2d::_internal::DescriptorAutoPool(
+		renderer,
 		device ) );
-	if( unique_object && unique_object->is_good ) return unique_object;
+	if( unique_object && unique_object->is_good ) {
+		return unique_object;
+	} else {
+		renderer->Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot create descriptor auto pool!" );
+	}
 	return {};
 }

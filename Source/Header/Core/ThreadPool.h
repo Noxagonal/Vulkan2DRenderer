@@ -178,6 +178,8 @@ private:
 	uint64_t											AddTask(
 		std::unique_ptr<vk2d::_internal::Task>			new_task );
 
+	vk2d::_internal::RendererImpl										*	renderer_parent				= {};
+
 	std::unique_ptr<vk2d::_internal::ThreadSharedResource>					thread_shared_resource		= {};
 	std::vector<std::unique_ptr<vk2d::_internal::ThreadPrivateResource>>	thread_private_resources	= {};
 	std::vector<vk2d::_internal::ThreadSignal>								thread_signals				= {};

@@ -17,7 +17,7 @@ class DeviceMemoryPool;
 class ThreadLoaderResource : public vk2d::_internal::ThreadPrivateResource {
 public:
 	ThreadLoaderResource(
-		vk2d::_internal::RendererImpl * parent
+		vk2d::_internal::RendererImpl * renderer_parent
 	);
 
 	~ThreadLoaderResource()

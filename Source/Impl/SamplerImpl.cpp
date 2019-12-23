@@ -48,7 +48,11 @@ vk2d::_internal::SamplerImpl::SamplerImpl(
 		magFilter	= VkFilter::VK_FILTER_CUBIC_EXT;
 		break;
 	default:
-		// Error report here
+		renderer_parent->Report(
+			vk2d::ReportSeverity::WARNING,
+			"Sampler parameter: 'vk2d::SamplerCreateInfo::magnification_filter'\n"
+			"was none of 'vk2d::SamplerFilter' options,\n"
+			"defaulting to 'vk2d::SamplerFilter::LINEAR'" );
 		magFilter	= VkFilter::VK_FILTER_LINEAR;
 		break;
 	}
@@ -65,7 +69,11 @@ vk2d::_internal::SamplerImpl::SamplerImpl(
 		minFilter	= VkFilter::VK_FILTER_CUBIC_EXT;
 		break;
 	default:
-		// Error report here
+		renderer_parent->Report(
+			vk2d::ReportSeverity::WARNING,
+			"Sampler parameter: 'vk2d::SamplerCreateInfo::minification_filter'\n"
+			"was none of 'vk2d::SamplerFilter' options,\n"
+			"defaulting to 'vk2d::SamplerFilter::LINEAR'" );
 		minFilter	= VkFilter::VK_FILTER_LINEAR;
 		break;
 	}
@@ -79,7 +87,11 @@ vk2d::_internal::SamplerImpl::SamplerImpl(
 		mipmapMode	= VkSamplerMipmapMode::VK_SAMPLER_MIPMAP_MODE_LINEAR;
 		break;
 	default:
-		// Error report here
+		renderer_parent->Report(
+			vk2d::ReportSeverity::WARNING,
+			"Sampler parameter: 'vk2d::SamplerCreateInfo::mipmap_mode'\n"
+			"was none of 'vk2d::SamplerMipmapMode' options,\n"
+			"defaulting to 'vk2d::SamplerMipmapMode::LINEAR'" );
 		mipmapMode	= VkSamplerMipmapMode::VK_SAMPLER_MIPMAP_MODE_LINEAR;
 		break;
 	}
@@ -103,7 +115,11 @@ vk2d::_internal::SamplerImpl::SamplerImpl(
 		addressModeU	= VkSamplerAddressMode::VK_SAMPLER_ADDRESS_MODE_MIRROR_CLAMP_TO_EDGE;
 		break;
 	default:
-		// Error report here
+		renderer_parent->Report(
+			vk2d::ReportSeverity::WARNING,
+			"Sampler parameter: 'vk2d::SamplerCreateInfo::address_mode_u'\n"
+			"was none of 'vk2d::SamplerAddressMode' options,\n"
+			"defaulting to 'vk2d::SamplerAddressMode::REPEAT'" );
 		addressModeU	= VkSamplerAddressMode::VK_SAMPLER_ADDRESS_MODE_REPEAT;
 		break;
 	}
@@ -127,7 +143,11 @@ vk2d::_internal::SamplerImpl::SamplerImpl(
 		addressModeV	= VkSamplerAddressMode::VK_SAMPLER_ADDRESS_MODE_MIRROR_CLAMP_TO_EDGE;
 		break;
 	default:
-		// Error report here
+		renderer_parent->Report(
+			vk2d::ReportSeverity::WARNING,
+			"Sampler parameter: 'vk2d::SamplerCreateInfo::address_mode_v'\n"
+			"was none of 'vk2d::SamplerAddressMode' options,\n"
+			"defaulting to 'vk2d::SamplerAddressMode::REPEAT'" );
 		addressModeV	= VkSamplerAddressMode::VK_SAMPLER_ADDRESS_MODE_REPEAT;
 		break;
 	}
@@ -136,7 +156,14 @@ vk2d::_internal::SamplerImpl::SamplerImpl(
 	if( anisotropyEnable ) {
 		if( create_info.minification_filter == vk2d::SamplerFilter::CUBIC ||
 			create_info.magnification_filter == vk2d::SamplerFilter::CUBIC ) {
-			// Error report here
+			renderer_parent->Report(
+				vk2d::ReportSeverity::WARNING,
+				"Sampler parameter: 'vk2d::SamplerCreateInfo::mipmap_enable'\n"
+				"was set to 'true' even though\n"
+				"'vk2d::SamplerCreateInfo::minification_filter' or\n"
+				"'vk2d::SamplerCreateInfo::minification_filter'\n"
+				"was set to 'vk2d::SamplerFilter::CUBIC'.\n"
+				"When using cubic filtering, mipmaps must be disabled.");
 			anisotropyEnable	= false;
 		}
 	}
@@ -171,7 +198,7 @@ vk2d::_internal::SamplerImpl::SamplerImpl(
 		nullptr,
 		&sampler
 	) != VK_SUCCESS ) {
-		// Error report here
+		renderer_parent->Report( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot create Vulkan sampler!" );
 		return;
 	}
 
@@ -189,7 +216,7 @@ vk2d::_internal::SamplerImpl::SamplerImpl(
 		VkMemoryPropertyFlagBits::VK_MEMORY_PROPERTY_HOST_CACHED_BIT
 	);
 	if( sampler_data != VK_SUCCESS ) {
-		// HANDLE ERROR HERE!
+		renderer_parent->Report( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot create sampler data!" );
 		return;
 	}
 	{
@@ -204,7 +231,7 @@ vk2d::_internal::SamplerImpl::SamplerImpl(
 		renderer_parent->GetSamplerDescriptorSetLayout()
 	);
 	if( descriptor_set != VK_SUCCESS ) {
-		// HANDLE ERROR HERE!
+		renderer_parent->Report( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot create sampler descriptor set!" );
 		return;
 	}
 

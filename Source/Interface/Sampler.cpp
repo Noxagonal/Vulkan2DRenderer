@@ -3,6 +3,7 @@
 
 #include "../../Include/Interface/Sampler.h"
 #include "../Header/Impl/SamplerImpl.h"
+#include "../Header/Impl/RendererImpl.h"
 
 VK2D_API vk2d::Sampler::Sampler(
 	vk2d::_internal::RendererImpl			*	renderer_parent,
@@ -20,6 +21,7 @@ VK2D_API vk2d::Sampler::Sampler(
 	} else {
 		impl		= nullptr;
 		is_good		= false;
+		renderer_parent->Report( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot create sampler implementation!" );
 	}
 }
 

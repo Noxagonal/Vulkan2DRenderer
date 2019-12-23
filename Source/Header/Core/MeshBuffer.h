@@ -17,6 +17,8 @@ namespace vk2d {
 
 namespace _internal {
 
+class RendererImpl;
+
 
 
 class MeshBuffer {
@@ -37,6 +39,7 @@ public:
 	};
 
 	MeshBuffer(
+		vk2d::_internal::RendererImpl					*	renderer,
 		VkDevice											device,
 		const VkPhysicalDeviceLimits					&	physicald_device_limits,
 		vk2d::_internal::WindowImpl						*	window_data,
@@ -78,7 +81,7 @@ private:
 		~BufferBlock();
 		bool												CopyVectorsToStagingBuffers();
 
-		vk2d::_internal::MeshBuffer						*	parent								= {};
+		vk2d::_internal::MeshBuffer						*	renderer_parent								= {};
 
 		std::vector<vk2d::Vertex>							vertices							= {};
 		std::vector<uint32_t>								indices								= {};
@@ -96,11 +99,8 @@ private:
 		VkDeviceSize										aligned_vertex_buffer_byte_offset	= {};
 		VkDeviceSize										aligned_index_buffer_byte_offset	= {};
 
-		VkBuffer											staging_buffer						= {};
-		VkBuffer											device_buffer						= {};
-
-		vk2d::_internal::PoolMemory							staging_buffer_memory				= {};
-		vk2d::_internal::PoolMemory							device_buffer_memory				= {};
+		vk2d::_internal::CompleteBufferResource				staging_buffer						= {};
+		vk2d::_internal::CompleteBufferResource				device_buffer						= {};
 
 		bool												is_good								= {};
 	};
@@ -124,9 +124,10 @@ private:
 		uint32_t											vertex_count,
 		uint32_t											index_count );
 
+	vk2d::_internal::RendererImpl						*	renderer_parent					= {};
 	VkDevice												device							= {};
 	VkPhysicalDeviceLimits									physicald_device_limits			= {};
-	_internal::WindowImpl								*	window_data						= {};
+	vk2d::_internal::WindowImpl							*	window_data						= {};
 	vk2d::_internal::DeviceMemoryPool					*	device_memory_pool				= {};
 
 	bool													first_draw						= {};

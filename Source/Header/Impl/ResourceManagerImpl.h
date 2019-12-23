@@ -56,7 +56,7 @@ private:
 	// This is just to select a loader thread prior to resource loading.
 	uint32_t										SelectLoaderThread();
 
-	vk2d::_internal::RendererImpl				*	parent								= {};
+	vk2d::_internal::RendererImpl				*	renderer_parent						= {};
 	VkDevice										device								= {};
 
 	vk2d::_internal::ThreadPool					*	thread_pool							= {};

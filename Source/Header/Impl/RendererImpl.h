@@ -93,6 +93,10 @@ public:
 
 	vk2d::PFN_VK2D_ReportFunction							GetReportFunction() const;
 
+	void													Report(
+		vk2d::ReportSeverity								severity,
+		const std::string								&	message );
+
 	vk2d::_internal::ThreadPool							*	GetThreadPool() const;
 	const std::vector<uint32_t>							&	GetLoaderThreads() const;
 	const std::vector<uint32_t>							&	GetGeneralThreads() const;
@@ -169,6 +173,7 @@ private:
 	std::vector<const char*>								device_extensions					= {};
 
 	vk2d::PFN_VK2D_ReportFunction							report_function						= {};
+	std::mutex												report_mutex;
 
 	std::unique_ptr<vk2d::ResourceManager>					resource_manager					= {};
 	std::unique_ptr<vk2d::_internal::ThreadPool>			thread_pool							= {};

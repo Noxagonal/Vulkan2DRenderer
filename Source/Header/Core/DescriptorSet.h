@@ -12,6 +12,7 @@ namespace _internal {
 
 
 
+class RendererImpl;
 class DescriptorPoolRequirements;
 class DescriptorSetLayout;
 class DescriptorAutoPool;
@@ -59,11 +60,13 @@ struct PoolCategory {
 
 class vk2d::_internal::DescriptorSetLayout {
 	friend std::unique_ptr<vk2d::_internal::DescriptorSetLayout>	CreateDescriptorSetLayout(
+		vk2d::_internal::RendererImpl							*	renderer,
 		VkDevice													device,
 		const VkDescriptorSetLayoutCreateInfo					*	pCreateInfo );
 
 private:
 																	DescriptorSetLayout(
+		vk2d::_internal::RendererImpl							*	renderer,
 		VkDevice													device,
 		const VkDescriptorSetLayoutCreateInfo					*	pCreateInfo );
 public:
@@ -80,6 +83,8 @@ public:
 																	operator VkDescriptorSetLayout() const;
 
 private:
+	vk2d::_internal::RendererImpl								*	renderer_parent							= {};
+
 	VkDescriptorSetLayoutCreateInfo									createInfo								= {};
 	VkDevice														refDevice								= {};
 	VkDescriptorSetLayout											setLayout								= {};
@@ -89,6 +94,7 @@ private:
 };
 
 std::unique_ptr<vk2d::_internal::DescriptorSetLayout>				CreateDescriptorSetLayout(
+	vk2d::_internal::RendererImpl								*	renderer,
 	VkDevice														device,
 	const VkDescriptorSetLayoutCreateInfo						*	pCreateInfo );
 
@@ -110,10 +116,12 @@ private:
 
 class DescriptorAutoPool {
 	friend std::unique_ptr<vk2d::_internal::DescriptorAutoPool>		CreateDescriptorAutoPool(
+		vk2d::_internal::RendererImpl							*	renderer,
 		VkDevice													device );
 
 private:
 																	DescriptorAutoPool(
+		vk2d::_internal::RendererImpl							*	renderer,
 		VkDevice													device );
 public:
 																	~DescriptorAutoPool();
@@ -125,6 +133,8 @@ public:
 		 vk2d::_internal::PoolDescriptorSet						&	pDescriptorSet );
 
 private:
+	vk2d::_internal::RendererImpl								*	renderer_parent			= {};
+
 	VkDevice														refDevice				= {};
 	std::vector<vk2d::_internal::PoolCategory>						poolCategories			= {};
 
@@ -132,6 +142,7 @@ private:
 };
 
 std::unique_ptr<vk2d::_internal::DescriptorAutoPool>				CreateDescriptorAutoPool(
+	vk2d::_internal::RendererImpl								*	renderer,
 	VkDevice														device );
 
 

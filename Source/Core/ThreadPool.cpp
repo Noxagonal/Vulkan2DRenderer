@@ -98,7 +98,6 @@ public:
 		task_list.emplace_back( std::move( new_task ) );
 	}
 
-
 	std::mutex											thread_wakeup_mutex;
 	std::condition_variable								thread_wakeup;
 

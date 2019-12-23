@@ -84,16 +84,11 @@ VK2D_API vk2d::_internal::DeviceQueueResolver::DeviceQueueResolver(
 	VkPhysicalDevice										physicalDevice,
 	std::vector<std::pair<VkQueueFlags, float>>				queueTypes )
 {
+	assert( instance );
+	assert( physicalDevice );
+
 	refInstance			= instance;
 	refPhysicalDevice	= physicalDevice;
-	if( !refInstance ) {
-		assert( 0 );
-		return;
-	}
-	if( !refPhysicalDevice ) {
-		assert( 0 );
-		return;
-	}
 
 	std::vector<VkQueueFamilyProperties> family_properties;
 	{

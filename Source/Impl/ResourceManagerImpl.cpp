@@ -26,6 +26,7 @@ public:
 	{
 		if( !resource->MTLoad( thread_resource ) ) {
 			resource->failed_to_load	= true;
+			resource_manager->GetRenderer()->Report( vk2d::ReportSeverity::WARNING, "Resource loading failed!" );
 		}
 		resource->load_function_ran		= true;
 	}
@@ -63,16 +64,16 @@ vk2d::_internal::ResourceManagerImpl::ResourceManagerImpl(
 	vk2d::_internal::RendererImpl	*	parent_renderer
 )
 {
-	parent			= parent_renderer;
-	assert( parent );
+	renderer_parent			= parent_renderer;
+	assert( renderer_parent );
 
-	device			= parent->GetVulkanDevice();
+	device			= renderer_parent->GetVulkanDevice();
 	assert( device );
 
-	thread_pool		= parent->GetThreadPool();
+	thread_pool		= renderer_parent->GetThreadPool();
 	assert( thread_pool );
 
-	loader_threads	= parent->GetLoaderThreads();
+	loader_threads	= renderer_parent->GetLoaderThreads();
 
 	is_good		= true;
 }
@@ -119,7 +120,11 @@ vk2d::TextureResource * vk2d::_internal::ResourceManagerImpl::LoadTextureResourc
 
 	auto resource		= std::unique_ptr<vk2d::TextureResource>( new vk2d::TextureResource( this ) );
 	auto resource_ptr	= resource.get();
-	if( !resource || !resource->IsGood() ) return nullptr; // Could not create resource.
+	if( !resource || !resource->IsGood() ) {
+		// Could not create resource.
+		GetRenderer()->Report( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot create texture resource handle!" );
+		return nullptr;
+	}
 
 	resource->path			= file_path;
 	resource->is_from_file	= true;
@@ -136,8 +141,11 @@ vk2d::TextureResource * vk2d::_internal::ResourceManagerImpl::CreateTextureResou
 {
 	auto resource		= std::unique_ptr<vk2d::TextureResource>( new vk2d::TextureResource( this ) );
 	auto resource_ptr	= resource.get();
-	if( !resource || !resource->IsGood() ) return nullptr; // Could not create resource.
-
+	if( !resource || !resource->IsGood() ) {
+		// Could not create resource.
+		GetRenderer()->Report( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot create texture resource handle!" );
+		return nullptr;
+	}
 	resource->impl->extent			= { size.x, size.y };
 	resource->impl->texture_data	= texture_data;
 	resource->is_from_file	= false;
@@ -175,7 +183,7 @@ void vk2d::_internal::ResourceManagerImpl::DestroyResource(
 
 vk2d::_internal::RendererImpl * vk2d::_internal::ResourceManagerImpl::GetRenderer() const
 {
-	return parent;
+	return renderer_parent;
 }
 
 vk2d::_internal::ThreadPool * vk2d::_internal::ResourceManagerImpl::GetThreadPool() const

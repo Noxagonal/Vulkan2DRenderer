@@ -153,7 +153,12 @@ vk2d::_internal::RendererImpl::RendererImpl( const RendererCreateInfo & renderer
 
 	// Initialize glfw if this is the first renderer.
 	if( renderer_count == 0 ) {
-		glfwInit();
+		if( glfwInit() != GLFW_TRUE ) {
+			if( renderer_create_info.report_function ) {
+				renderer_create_info.report_function( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot initialize GLFW!" );
+			}
+			return;
+		}
 		glfwWindowHint( GLFW_CLIENT_API, GLFW_NO_API );
 		glfwSetMonitorCallback( vk2d::_internal::glfwMonitorCallback );
 		glfwSetJoystickCallback( vk2d::_internal::glfwJoystickEventCallback );
@@ -164,7 +169,7 @@ vk2d::_internal::RendererImpl::RendererImpl( const RendererCreateInfo & renderer
 	// Check if vulkan is supported
 	if( glfwVulkanSupported() == GLFW_FALSE ) {
 		if( renderer_create_info.report_function ) {
-			renderer_create_info.report_function( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Vulkan is not supported on this machine!\nUpdating your graphics drivers might fix this issue!" );
+			renderer_create_info.report_function( vk2d::ReportSeverity::CRITICAL_ERROR, "Vulkan is not supported on this machine!\nUpdating your graphics drivers might fix this issue!" );
 		}
 		return;
 	}
@@ -369,7 +374,9 @@ void vk2d::_internal::RendererImpl::DestroySampler(
 	vk2d::Sampler					*	sampler
 )
 {
-	vkDeviceWaitIdle( device );
+	if( vkDeviceWaitIdle( device ) != VK_SUCCESS ) {
+		Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Device lost!" );
+	}
 
 	auto it = samplers.begin();
 	while( it != samplers.end() ) {
@@ -411,6 +418,20 @@ vk2d::Multisamples vk2d::_internal::RendererImpl::GetAllSupportedMultisampling()
 vk2d::PFN_VK2D_ReportFunction vk2d::_internal::RendererImpl::GetReportFunction() const
 {
 	return report_function;
+}
+
+void vk2d::_internal::RendererImpl::Report(
+	vk2d::ReportSeverity		severity,
+	const std::string		&	message
+)
+{
+	if( report_function ) {
+		std::lock_guard<std::mutex> report_lock( report_mutex );
+		report_function(
+			severity,
+			message
+		);
+	}
 }
 
 vk2d::_internal::ThreadPool * vk2d::_internal::RendererImpl::GetThreadPool() const
@@ -684,9 +705,7 @@ bool vk2d::_internal::RendererImpl::CreateInstance()
 			&instance
 		);
 		if( result != VK_SUCCESS ) {
-			if( create_info_copy.report_function ) {
-				create_info_copy.report_function( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Cannot create vulkan instance!" );
-			}
+			Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot create vulkan instance!" );
 			return false;
 		}
 	}
@@ -695,9 +714,7 @@ bool vk2d::_internal::RendererImpl::CreateInstance()
 	{
 		auto createDebugUtilsMessenger = (PFN_vkCreateDebugUtilsMessengerEXT)vkGetInstanceProcAddr( instance, "vkCreateDebugUtilsMessengerEXT" );
 		if( !createDebugUtilsMessenger ) {
-			if( create_info_copy.report_function ) {
-				create_info_copy.report_function( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Cannot create vulkan debug object!" );
-			}
+			Report( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot create vulkan debug object!" );
 			return false;
 		}
 		auto result = createDebugUtilsMessenger(
@@ -707,9 +724,7 @@ bool vk2d::_internal::RendererImpl::CreateInstance()
 			&debug_utils_messenger
 		);
 		if( result != VK_SUCCESS ) {
-			if( create_info_copy.report_function ) {
-				create_info_copy.report_function( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Cannot create vulkan debug object!" );
-			}
+			Report( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot create vulkan debug object!" );
 			return false;
 		}
 	}
@@ -729,6 +744,9 @@ bool vk2d::_internal::RendererImpl::CreateInstance()
 bool vk2d::_internal::RendererImpl::PickPhysicalDevice()
 {
 	physical_device	= PickBestPhysicalDevice();
+	if( !physical_device ) {
+		Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Cannot find physical device!" );
+	}
 
 	if( physical_device ) {
 		vkGetPhysicalDeviceProperties(
@@ -767,9 +785,7 @@ bool vk2d::_internal::RendererImpl::CreateDeviceAndQueues()
 	};
 	DeviceQueueResolver queue_resolver( instance, physical_device, queue_requests );
 	if( !queue_resolver.IsGood() ) {
-		if( create_info_copy.report_function ) {
-			create_info_copy.report_function( vk2d::ReportSeverity::CRITICAL_ERROR, "Out of host ram!" );
-		}
+		Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot create queue resolver!" );
 		return false;
 	}
 	auto queue_create_infos = queue_resolver.GetDeviceQueueCreateInfos();
@@ -798,17 +814,13 @@ bool vk2d::_internal::RendererImpl::CreateDeviceAndQueues()
 		&device
 	);
 	if( result != VK_SUCCESS ) {
-		if( create_info_copy.report_function ) {
-			create_info_copy.report_function( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Cannot create vulkan device!" );
-		}
+		Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot create Vulkan device!" );
 		return false;
 	}
 
 	auto resolved_queues = queue_resolver.GetQueues( device );
 	if( resolved_queues.size() != queue_requests.size() ) {
-		if( create_info_copy.report_function ) {
-			create_info_copy.report_function( vk2d::ReportSeverity::CRITICAL_ERROR, "Out of host ram!" );
-		}
+		Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot get correct amount of queues from queue resolver!" );
 		return false;
 	}
 	primary_render_queue		= resolved_queues[ 0 ];
@@ -822,6 +834,7 @@ bool vk2d::_internal::RendererImpl::CreateDeviceAndQueues()
 bool vk2d::_internal::RendererImpl::CreateDescriptorPool()
 {
 	descriptor_pool			= vk2d::_internal::CreateDescriptorAutoPool(
+		this,
 		device
 	);
 
@@ -858,6 +871,7 @@ bool vk2d::_internal::RendererImpl::CreateDefaultSampler()
 		return true;
 	}
 
+	Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot create default sampler!" );
 	return false;
 }
 
@@ -884,9 +898,7 @@ bool vk2d::_internal::RendererImpl::CreatePipelineCache()
 		nullptr,
 		&pipeline_cache
 	) != VK_SUCCESS ) {
-		if( report_function ) {
-			report_function( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Cannot create pipeline cache!" );
-		}
+		Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot create Vulkan pipeline cache!" );
 		return false;
 	}
 
@@ -918,9 +930,7 @@ bool vk2d::_internal::RendererImpl::CreateShaderModules()
 			nullptr,
 			&vertex_shader_module
 		) != VK_SUCCESS ) {
-			if( report_function ) {
-				report_function( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Cannot create vertex shader module!" );
-			}
+			Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot create Vulkan vertex shader module!" );
 			return false;
 		}
 	}
@@ -939,9 +949,7 @@ bool vk2d::_internal::RendererImpl::CreateShaderModules()
 			nullptr,
 			&fragment_shader_module
 		) != VK_SUCCESS ) {
-			if( report_function ) {
-				report_function( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Cannot create fragment shader module!" );
-			}
+			Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot create Vulkan fragment shader module!" );
 			return false;
 		}
 	}
@@ -985,13 +993,12 @@ bool vk2d::_internal::RendererImpl::CreateDescriptorSetLayouts()
 		descriptor_set_layout_create_info.pBindings		= descriptor_set_layout_bindings.data();
 
 		sampler_descriptor_set_layout		= vk2d::_internal::CreateDescriptorSetLayout(
+			this,
 			device,
 			&descriptor_set_layout_create_info
 		);
 		if( !sampler_descriptor_set_layout ) {
-			if( report_function ) {
-				report_function( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Cannot create descriptor set layout!" );
-			}
+			Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot create sampler descriptor set layout!" );
 			return false;
 		}
 	}
@@ -1014,13 +1021,12 @@ bool vk2d::_internal::RendererImpl::CreateDescriptorSetLayouts()
 		descriptor_set_layout_create_info.pBindings		= descriptor_set_layout_bindings.data();
 
 		texture_descriptor_set_layout		= vk2d::_internal::CreateDescriptorSetLayout(
+			this,
 			device,
 			&descriptor_set_layout_create_info
 		);
 		if( !texture_descriptor_set_layout ) {
-			if( report_function ) {
-				report_function( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Cannot create descriptor set layout!" );
-			}
+			Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot create image descriptor set layout!" );
 			return false;
 		}
 	}
@@ -1065,9 +1071,7 @@ bool vk2d::_internal::RendererImpl::CreatePipelineLayout()
 		nullptr,
 		&pipeline_layout
 	) != VK_SUCCESS ) {
-		if( report_function ) {
-			report_function( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Cannot create pipeline layout!" );
-		}
+		Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot create Vulkan pipeline layout!" );
 		return false;
 	}
 
@@ -1081,9 +1085,7 @@ bool vk2d::_internal::RendererImpl::CreateDeviceMemoryPool()
 		device
 	);
 	if( !device_memory_pool ) {
-		if( report_function ) {
-			report_function( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Cannot create Vulkan Device memory pool!" );
-		}
+		Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot create memory pool!" );
 		return false;
 	}
 	return true;
@@ -1100,9 +1102,7 @@ bool vk2d::_internal::RendererImpl::CreateThreadPool()
 	if( loader_thread_count > thread_count )	loader_thread_count		= thread_count;
 	if( loader_thread_count == 0 )				loader_thread_count		= 1;
 
-	uint32_t general_thread_count = thread_count - loader_thread_count;
-	if( general_thread_count > thread_count )	general_thread_count	= thread_count;
-	if( general_thread_count == 0 )				general_thread_count	= 1;
+	uint32_t general_thread_count = 1;
 
 	std::vector<std::unique_ptr<vk2d::_internal::ThreadPrivateResource>> thread_resources;
 	for( uint32_t i = 0; i < loader_thread_count; ++i ) {
@@ -1121,13 +1121,11 @@ bool vk2d::_internal::RendererImpl::CreateThreadPool()
 		general_threads[ i ]	= loader_thread_count + i;
 	}
 
-	thread_pool				= std::make_unique<ThreadPool>( std::move( thread_resources ) );
+	thread_pool				= std::make_unique<vk2d::_internal::ThreadPool>( std::move( thread_resources ) );
 	if( thread_pool && thread_pool->IsGood() ) {
 		return true;
 	} else {
-		if( report_function ) {
-			report_function( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Cannot create thread pool!" );
-		}
+		Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot create thread pool!" );
 		return false;
 	}
 }
@@ -1140,9 +1138,7 @@ bool vk2d::_internal::RendererImpl::CreateResourceManager()
 	if( resource_manager && resource_manager->IsGood() ) {
 		return true;
 	} else {
-		if( report_function ) {
-			report_function( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Cannot create resource manager!" );
-		}
+		Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot create resource manager!" );
 		return false;
 	}
 }
@@ -1194,9 +1190,7 @@ bool vk2d::_internal::RendererImpl::CreateDefaultTexture()
 				&image_view_create_info
 			);
 			if( default_texture != VK_SUCCESS ) {
-				if( report_function ) {
-					report_function( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Cannot create default texture!" );
-				}
+				Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot create default texture!" );
 				return false;
 			}
 		}
@@ -1216,9 +1210,7 @@ bool vk2d::_internal::RendererImpl::CreateDefaultTexture()
 					nullptr,
 					&cpool
 				) != VK_SUCCESS ) {
-					if( report_function ) {
-						report_function( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Cannot create default texture!" );
-					}
+					Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot create default texture!" );
 					return false;
 				}
 
@@ -1233,9 +1225,7 @@ bool vk2d::_internal::RendererImpl::CreateDefaultTexture()
 					&command_buffer_allocate_info,
 					&cbuffer
 				) != VK_SUCCESS ) {
-					if( report_function ) {
-						report_function( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Cannot create default texture!" );
-					}
+					Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot create default texture!" );
 					return false;
 				}
 			}
@@ -1250,9 +1240,7 @@ bool vk2d::_internal::RendererImpl::CreateDefaultTexture()
 					cbuffer,
 					&cbuffer_begin_info
 				) != VK_SUCCESS ) {
-					if( report_function ) {
-						report_function( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Cannot create default texture!" );
-					}
+					Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot create default texture!" );
 					return false;
 				}
 
@@ -1335,9 +1323,7 @@ bool vk2d::_internal::RendererImpl::CreateDefaultTexture()
 				if( vkEndCommandBuffer(
 					cbuffer
 				) != VK_SUCCESS ) {
-					if( report_function ) {
-						report_function( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Cannot create default texture!" );
-					}
+					Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot create default texture!" );
 					return false;
 				}
 			}
@@ -1355,9 +1341,7 @@ bool vk2d::_internal::RendererImpl::CreateDefaultTexture()
 						nullptr,
 						&fence
 					) != VK_SUCCESS ) {
-						if( report_function ) {
-							report_function( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Cannot create default texture!" );
-						}
+						Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot create default texture!" );
 						return false;
 					}
 				}
@@ -1375,9 +1359,7 @@ bool vk2d::_internal::RendererImpl::CreateDefaultTexture()
 					submit_info,
 					fence
 				) != VK_SUCCESS ) {
-					if( report_function ) {
-						report_function( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Cannot create default texture!" );
-					}
+					Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot create default texture!" );
 					return false;
 				}
 
@@ -1387,9 +1369,7 @@ bool vk2d::_internal::RendererImpl::CreateDefaultTexture()
 					VK_TRUE,
 					UINT64_MAX
 				) != VK_SUCCESS ) {
-					if( report_function ) {
-						report_function( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Cannot create default texture!" );
-					}
+					Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot create default texture!" );
 					return false;
 				}
 
@@ -1482,7 +1462,7 @@ void vk2d::_internal::RendererImpl::DestroyDescriptorPool()
 
 void vk2d::_internal::RendererImpl::DestroyDefaultSampler()
 {
-	default_sampler				= {};
+	default_sampler			= {};
 }
 
 void vk2d::_internal::RendererImpl::DestroyPipelineCache()
@@ -1565,10 +1545,14 @@ void vk2d::_internal::RendererImpl::DestroyDefaultTexture()
 std::vector<VkPhysicalDevice> vk2d::_internal::RendererImpl::EnumeratePhysicalDevices()
 {
 	uint32_t physical_device_count		= UINT32_MAX;
-	vkEnumeratePhysicalDevices( instance, &physical_device_count, nullptr );
-	std::vector<VkPhysicalDevice> physical_devices( physical_device_count );
-	vkEnumeratePhysicalDevices( instance, &physical_device_count, physical_devices.data() );
-	return physical_devices;
+	if( vkEnumeratePhysicalDevices( instance, &physical_device_count, nullptr ) == VK_SUCCESS ) {
+		std::vector<VkPhysicalDevice> physical_devices( physical_device_count );
+		if( vkEnumeratePhysicalDevices( instance, &physical_device_count, physical_devices.data() ) == VK_SUCCESS ) {
+			return physical_devices;
+		}
+	}
+	Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot enumerate physical devices!" );
+	return {};
 }
 
 
@@ -1625,6 +1609,10 @@ VkPhysicalDevice vk2d::_internal::RendererImpl::PickBestPhysicalDevice()
 			best_score_so_far		= scores[ i ];
 			best_physical_device	= physicalDevices[ i ];
 		}
+	}
+
+	if( !best_physical_device ) {
+		Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Cannot find physical device capable of presenting to any surface!" );
 	}
 
 	return best_physical_device;

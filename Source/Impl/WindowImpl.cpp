@@ -12,6 +12,7 @@
 #include <memory>
 #include <algorithm>
 #include <set>
+#include <sstream>
 #include <stb_image.h>
 
 #define STB_IMAGE_WRITE_IMPLEMENTATION
@@ -267,7 +268,13 @@ vk2d::_internal::WindowImpl::WindowImpl(
 		samples							= create_info_copy.samples;
 		vk2d::Multisamples max_samples	= renderer_parent->GetMaximumSupportedMultisampling();
 		if( uint32_t( samples ) > uint32_t( max_samples ) ) {
-			// ERROR HERE but can continue;
+			std::stringstream ss;
+			ss << "Window parameter: 'vk2d::WindowCreateInfo::samples' was larger than the system supports.\n"
+				<< "Maximum supported amount for this system is: '" << uint32_t( max_samples ) << "'.";
+			renderer_parent->Report(
+				vk2d::ReportSeverity::WARNING,
+				ss.str()
+			);
 			samples						= max_samples;
 		}
 		vk2d::Multisamples supported_samples	= vk2d::Multisamples( renderer_parent->GetPhysicalDeviceProperties().limits.framebufferColorSampleCounts );
@@ -286,7 +293,7 @@ vk2d::_internal::WindowImpl::WindowImpl(
 	if( !CreateRenderPass() ) return;
 	if( !CreateGraphicsPipelines() ) return;
 	if( !ReCreateSwapchain() ) return;
-	if( !ReCreateScreenshotResources() ) return;
+	ReCreateScreenshotResources();
 	if( !CreateFramebuffers() ) return;
 	if( !CreateCommandPool() ) return;
 	if( !AllocateCommandBuffers() ) return;
@@ -300,9 +307,7 @@ vk2d::_internal::WindowImpl::WindowImpl(
 		renderer->GetDeviceMemoryPool() );
 
 	if( !mesh_buffer ) {
-		if( report_function ) {
-			report_function( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Cannot create mesh buffers!" );
-		}
+		renderer_parent->Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot create MeshBuffer object!" );
 		return;
 	}
 
@@ -465,7 +470,7 @@ bool vk2d::_internal::WindowImpl::ShouldClose()
 
 
 bool vk2d::_internal::AquireImage(
-	vk2d::_internal::WindowImpl		*	data,
+	vk2d::_internal::WindowImpl		*	impl,
 	VkPhysicalDevice					physical_device,
 	VkDevice							device,
 	vk2d::_internal::ResolvedQueue	&	primary_render_queue,
@@ -473,37 +478,35 @@ bool vk2d::_internal::AquireImage(
 {
 	auto result = vkAcquireNextImageKHR(
 		device,
-		data->swapchain,
+		impl->swapchain,
 		UINT64_MAX,
 		VK_NULL_HANDLE,
-		data->aquire_image_fence,
-		&data->next_image
+		impl->aquire_image_fence,
+		&impl->next_image
 	);
 	if( result != VK_SUCCESS ) {
 		if( result == VK_SUBOPTIMAL_KHR ) {
 			// Image aquired but is not optimal, continue but recreate swapchain next time we begin the render again.
-			data->should_reconstruct		= true;
+			impl->renderer_parent->Report( vk2d::ReportSeverity::INFO, "Aquired suboptimal image, continue but recreate swapchain next frame." );
+			impl->should_reconstruct		= true;
 		} else if( result == VK_ERROR_OUT_OF_DATE_KHR ) {
 			// Image was not aquired so we cannot present anything until we recreate the swapchain.
+			impl->renderer_parent->Report( vk2d::ReportSeverity::INFO, "Could not aquire image, out of date swapchain, recreate swapchain now." );
 			if( nested_counter ) {
 				// Breaking out of nested call here, we tried aquiring an image twice before
 				// now and it didn't work so we can assume it will not work and we can give up here.
-				if( data->report_function ) {
-					data->report_function( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Cannot aquire a swapchain image after retry!" );
-				}
+				impl->renderer_parent->Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Could not aquire image after retry, out of date swapchain, Cannot recreate swapchain!" );
 				return false;
 			}
 			// Cannot continue before we recreate the swapchain
-			if( !data->RecreateResourcesAfterResizing() ) {
-				if( data->report_function ) {
-					data->report_function( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Cannot recreate swapchain!" );
-				}
+			if( !impl->RecreateWindowSizeDependantResources() ) {
+				impl->renderer_parent->Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot recreate window resources after resizing window!" );
 				return false;
 			}
 			// After recreating the swapchain and resources, try to aquire
 			// next image again, if that fails we should stop trying.
 			if( !AquireImage(
-				data,
+				impl,
 				physical_device,
 				device,
 				primary_render_queue,
@@ -512,21 +515,20 @@ bool vk2d::_internal::AquireImage(
 
 			}
 		} else {
-			if( data->report_function ) {
-				data->report_function( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Cannot aquire next image!" );
-			}
+			impl->renderer_parent->Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot aquire next swapchain image!" );
+
 			return false;
 		}
 	}
 	vkWaitForFences(
 		device,
-		1, &data->aquire_image_fence,
+		1, &impl->aquire_image_fence,
 		VK_TRUE,
 		UINT64_MAX
 	);
 	vkResetFences(
 		device,
-		1, &data->aquire_image_fence
+		1, &impl->aquire_image_fence
 	);
 
 	return true;
@@ -536,19 +538,15 @@ bool vk2d::_internal::WindowImpl::BeginRender()
 {
 	// Calls to BeginRender() and EndRender() should alternate, check it's our turn
 	if( next_render_call_function != vk2d::_internal::NextRenderCallFunction::BEGIN ) {
-		if( report_function ) {
-			report_function( vk2d::ReportSeverity::WARNING, "BeginRender() Called twice in a row!" );
-		}
+		renderer_parent->Report( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "'Window::BeginRender()' Called twice in a row!" );
 		return false;
 	} else {
 		next_render_call_function = vk2d::_internal::NextRenderCallFunction::END;
 	}
 
 	if( should_reconstruct ) {
-		if( !RecreateResourcesAfterResizing() ) {
-			if( report_function ) {
-				report_function( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Cannot recreate swapchain!" );
-			}
+		if( !RecreateWindowSizeDependantResources() ) {
+			renderer_parent->Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot recreate window resources after resizing window!" );
 			return false;
 		}
 	}
@@ -563,9 +561,7 @@ bool vk2d::_internal::WindowImpl::BeginRender()
 			device,
 			primary_render_queue
 		) ) {
-			if( report_function ) {
-				report_function( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Cannot aquire next swapchain image!" );
-			}
+			renderer_parent->Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot aquire next swapchain image!" );
 			return false;
 		}
 	}
@@ -575,7 +571,10 @@ bool vk2d::_internal::WindowImpl::BeginRender()
 	// make sure that we don't start overwriting a command buffer until it's execution has completely
 	// finished, so we'll have to synchronize the frame early in here.
 	if( next_image == previous_image ) {
-		if( !SynchronizeFrame() ) return false;
+		if( !SynchronizeFrame() ) {
+			renderer_parent->Report( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot synchronize frame, cannot output to window!" );
+			return false;
+		}
 	}
 
 	// Begin command buffer
@@ -592,9 +591,7 @@ bool vk2d::_internal::WindowImpl::BeginRender()
 			command_buffer,
 			&command_buffer_begin_info
 		) != VK_SUCCESS ) {
-			if( report_function ) {
-				report_function( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Cannot begin recording command buffer!" );
-			}
+			renderer_parent->Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot record primary render command buffer!" );
 			return false;
 		}
 
@@ -726,9 +723,7 @@ bool vk2d::_internal::WindowImpl::EndRender()
 {
 	// Calls to BeginRender() and EndRender() should alternate, check it's our turn
 	if( next_render_call_function != vk2d::_internal::NextRenderCallFunction::END ) {
-		if( report_function ) {
-			report_function( vk2d::ReportSeverity::WARNING, "EndRender() Called twice in a row!" );
-		}
+		renderer_parent->Report( vk2d::ReportSeverity::WARNING, "'Window::EndRender()' Called twice in a row!" );
 		return false;
 	} else {
 		next_render_call_function = vk2d::_internal::NextRenderCallFunction::BEGIN;
@@ -892,16 +887,16 @@ bool vk2d::_internal::WindowImpl::EndRender()
 	}
 	// End command buffer
 	if( vkEndCommandBuffer( render_command_buffer ) != VK_SUCCESS ) {
-		if( report_function ) {
-			report_function( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Cannot compile command buffer at EndRender()!" );
-		}
+		renderer_parent->Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot compile primary render command buffer!" );
 		return false;
 	}
 
 	// Synchronize the previous frame here, this waits for the previous
 	// frame to finish fully rendering before continuing execution.
-	if( !SynchronizeFrame() ) return false;
-
+	if( !SynchronizeFrame() ) {
+		renderer_parent->Report( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot synchronize frame, cannot output to window!" );
+		return false;
+	}
 	// Record command buffer to upload mesh data to GPU
 	{
 		// Begin command buffer
@@ -918,9 +913,7 @@ bool vk2d::_internal::WindowImpl::EndRender()
 				mesh_transfer_command_buffer,
 				&transfer_command_buffer_begin_info
 			) != VK_SUCCESS ) {
-				if( report_function ) {
-					report_function( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Cannot begin mesh GPU transfer command buffer!" );
-				}
+				renderer_parent->Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot record mesh to GPU transfer command buffer!" );
 				return false;
 			}
 		}
@@ -930,9 +923,7 @@ bool vk2d::_internal::WindowImpl::EndRender()
 			if( !mesh_buffer->CmdUploadMeshDataToGPU(
 				mesh_transfer_command_buffer
 			) ) {
-				if( report_function ) {
-					report_function( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Cannot record commands to transfer mesh to GPU!" );
-				}
+				renderer_parent->Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot record commands to mesh to GPU transfer command buffer!" );
 				return false;
 			}
 		}
@@ -942,9 +933,7 @@ bool vk2d::_internal::WindowImpl::EndRender()
 			if( vkEndCommandBuffer(
 				mesh_transfer_command_buffer
 			) != VK_SUCCESS ) {
-				if( report_function ) {
-					report_function( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Cannot compile commands to transfer mesh to GPU!" );
-				}
+				renderer_parent->Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot compile mesh to GPU transfer command buffer!" );
 				return false;
 			}
 		}
@@ -979,14 +968,10 @@ bool vk2d::_internal::WindowImpl::EndRender()
 			submit_infos,
 			gpu_to_cpu_frame_fences[ next_image ]
 		) != VK_SUCCESS ) {
-			if( report_function ) {
-				report_function( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Cannot submit command buffer to queue!" );
-			}
+			renderer_parent->Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot submit frame end command buffers!" );
 			return false;
 		}
 	}
-
-	vkDeviceWaitIdle( device );
 
 	// Present swapchain image
 	{
@@ -1008,15 +993,11 @@ bool vk2d::_internal::WindowImpl::EndRender()
 				result == VK_SUBOPTIMAL_KHR || present_result == VK_SUBOPTIMAL_KHR ) {
 				should_reconstruct	= true;
 			} else {
-				if( report_function ) {
-					report_function( vk2d::ReportSeverity::WARNING, "Cannot present image!" );
-				}
+				renderer_parent->Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot present render results to window!" );
 				return false;
 			}
 		}
 	}
-
-	vkDeviceWaitIdle( device );
 
 	previous_image						= next_image;
 	previous_frame_need_synchronization	= true;
@@ -1248,7 +1229,9 @@ bool vk2d::_internal::WindowImpl::GetMaximized()
 	return glfwGetWindowAttrib( glfw_window, GLFW_MAXIMIZED );
 }
 
-void vk2d::_internal::WindowImpl::SetCursorState( vk2d::CursorState new_state )
+void vk2d::_internal::WindowImpl::SetCursorState(
+	vk2d::CursorState		new_state
+)
 {
 	switch( new_state ) {
 	case vk2d::CursorState::NORMAL:
@@ -1261,6 +1244,11 @@ void vk2d::_internal::WindowImpl::SetCursorState( vk2d::CursorState new_state )
 		glfwSetInputMode( glfw_window, GLFW_CURSOR, GLFW_CURSOR_DISABLED );
 		break;
 	default:
+		renderer_parent->Report(
+			vk2d::ReportSeverity::WARNING,
+			"Parameter error: 'Window::SetCursorState()' -> parameter: 'new_state' was not any value in\n"
+			"'vk2d::CursorState', defaulting to 'vk2d::CursorState::NORMAL'"
+		);
 		glfwSetInputMode( glfw_window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
 		break;
 	}
@@ -1277,6 +1265,7 @@ vk2d::CursorState vk2d::_internal::WindowImpl::GetCursorState()
 	case GLFW_CURSOR_DISABLED:
 		return vk2d::CursorState::LOCKED;
 	default:
+		assert( 0 && "Should not happen" );
 		return vk2d::CursorState::NORMAL;
 	}
 }
@@ -1347,12 +1336,12 @@ void vk2d::_internal::WindowImpl::DrawTriangleList(
 	if( filled ) {
 		CmdBindPipelineIfDifferent(
 			command_buffer,
-			_internal::PipelineType::FILLED_POLYGON_LIST
+			vk2d::_internal::PipelineType::FILLED_POLYGON_LIST
 		);
 	} else {
 		CmdBindPipelineIfDifferent(
 			command_buffer,
-			_internal::PipelineType::WIREFRAME_POLYGON_LIST
+			vk2d::_internal::PipelineType::WIREFRAME_POLYGON_LIST
 		);
 	}
 
@@ -1380,6 +1369,8 @@ void vk2d::_internal::WindowImpl::DrawTriangleList(
 			int32_t( result.offsets.vertex_offset ),
 			0
 		);
+	} else {
+		renderer_parent->Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot push mesh into mesh render queue!" );
 	}
 }
 
@@ -1455,6 +1446,8 @@ void vk2d::_internal::WindowImpl::DrawLineList(
 			int32_t( result.offsets.vertex_offset ),
 			0
 		);
+	} else {
+		renderer_parent->Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot push mesh into mesh render queue!" );
 	}
 }
 
@@ -1496,6 +1489,8 @@ void vk2d::_internal::WindowImpl::DrawPointList(
 			result.offsets.vertex_offset,
 			0
 		);
+	} else {
+		renderer_parent->Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot push mesh into mesh render queue!" );
 	}
 }
 
@@ -1686,9 +1681,9 @@ public:
 		// Try to map the memory for screenshot buffer data.
 		auto pixel_rgba_data = window->screenshot_buffer.memory.Map<uint8_t>();
 		if( !pixel_rgba_data ) {
-			// ERROR HANDLING HERE!
+			window->renderer_parent->Report( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot save screenshot, cannot map screenshot buffer memory!" );
 			window->screenshot_event_error			= true;
-			window->screenshot_event_error_message	= "Internal error: Cannot map buffer data.";
+			window->screenshot_event_message	= "Internal error: Cannot map buffer data.";
 			window->screenshot_state				= vk2d::_internal::WindowImpl::ScreenshotState::WAITING_EVENT_REPORT;
 			window->screenshot_being_saved			= false;
 			return;
@@ -1757,7 +1752,7 @@ public:
 				90
 			);
 		} else {
-			// ERROR HANDLING HERE!
+			window->renderer_parent->Report( vk2d::ReportSeverity::INFO, "Screenshot extension was not known, saving screenshot as .png" );
 			path += ".png";
 			stbi_write_success = stbi_write_png(
 				path.string().c_str(),
@@ -1772,11 +1767,11 @@ public:
 
 		if( stbi_write_success ) {
 			window->screenshot_event_error			= false;
-			window->screenshot_event_error_message	= "";
+			window->screenshot_event_message		= std::string( "Screenshot successfully saved at: " ) + path.string();
 		} else {
-			// ERROR HANDLING HERE!
+			window->renderer_parent->Report( vk2d::ReportSeverity::WARNING, std::string( "Cannot save screenshot: '" ) + path.string() + "'" );
 			window->screenshot_event_error			= true;
-			window->screenshot_event_error_message	= std::string( "Cannot write screenshot '" ) + path.string() + "' to file.";
+			window->screenshot_event_message		= std::string( "Cannot save screenshot '" ) + path.string() + "'";
 		}
 
 		window->screenshot_state					= vk2d::_internal::WindowImpl::ScreenshotState::WAITING_EVENT_REPORT;
@@ -1801,18 +1796,14 @@ bool vk2d::_internal::WindowImpl::SynchronizeFrame()
 			VK_TRUE,
 			UINT64_MAX
 		) != VK_SUCCESS ) {
-			if( report_function ) {
-				report_function( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Error synchronizing frame!" );
-			}
+			renderer_parent->Report( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot properly synchronize frame." );
 			return false;
 		}
 		if( vkResetFences(
 			device,
 			1, &gpu_to_cpu_frame_fences[ previous_image ]
 		) != VK_SUCCESS ) {
-			if( report_function ) {
-				report_function( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Error synchronizing frame!" );
-			}
+			renderer_parent->Report( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot properly synchronize frame." );
 			return false;
 		}
 
@@ -1840,20 +1831,25 @@ bool vk2d::_internal::WindowImpl::SynchronizeFrame()
 	return true;
 }
 
-
-
-
-
-
-
-
-
-bool vk2d::_internal::WindowImpl::RecreateResourcesAfterResizing( )
+bool vk2d::_internal::WindowImpl::IsGood()
 {
-	if( !ReCreateSwapchain() ) return false;
-	if( !ReCreateScreenshotResources() ) return false;
+	return is_good;
+}
 
-	// Check if any other resources need to be reallocated
+
+
+
+
+
+
+
+
+bool vk2d::_internal::WindowImpl::RecreateWindowSizeDependantResources( )
+{
+	renderer_parent->Report( vk2d::ReportSeverity::INFO, "Begin recreating window resources." );
+
+	if( !ReCreateSwapchain() ) return false;
+	ReCreateScreenshotResources();
 
 	// Reallocate framebuffers
 	{
@@ -1916,6 +1912,8 @@ bool vk2d::_internal::WindowImpl::RecreateResourcesAfterResizing( )
 
 	should_reconstruct		= false;
 
+	renderer_parent->Report( vk2d::ReportSeverity::INFO, "Done recreating window resources." );
+
 	return true;
 }
 
@@ -1954,9 +1952,7 @@ bool vk2d::_internal::WindowImpl::CreateGLFWWindow()
 		monitor,
 		nullptr );
 	if( !glfw_window ) {
-		if( report_function ) {
-			report_function( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Cannot create window!" );
-		}
+		renderer_parent->Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot create glfw window!" );
 		return false;
 	}
 
@@ -1981,9 +1977,7 @@ bool vk2d::_internal::WindowImpl::CreateSurface()
 			&surface
 		);
 		if( result != VK_SUCCESS ) {
-			if( report_function ) {
-				report_function( ReportSeverity::NON_CRITICAL_ERROR, "Cannot create window surface!" );
-			}
+			renderer_parent->Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot create Vulkan surface!" );
 			return false;
 		}
 
@@ -1995,9 +1989,7 @@ bool vk2d::_internal::WindowImpl::CreateSurface()
 			&surface_supported
 		);
 		if( !surface_supported ) {
-			if( report_function ) {
-				report_function( ReportSeverity::NON_CRITICAL_ERROR, "Vulkan surface does not support presentation using primary queue!" );
-			}
+			renderer_parent->Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Vulkan surface does not support presentation using primary render queue, cannot continue!" );
 			return false;
 		}
 	}
@@ -2007,9 +1999,7 @@ bool vk2d::_internal::WindowImpl::CreateSurface()
 		surface,
 		&surface_capabilities
 	) != VK_SUCCESS ) {
-		if( report_function ) {
-			report_function( ReportSeverity::NON_CRITICAL_ERROR, "Cannot get physical device surface capabilities!" );
-		}
+		renderer_parent->Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Cannot get physical device surface capabilities, cannot continue!" );
 		return false;
 	}
 
@@ -2017,9 +2007,7 @@ bool vk2d::_internal::WindowImpl::CreateSurface()
 	{
 		VkImageUsageFlags required_image_support = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
 		if( !( ( surface_capabilities.supportedUsageFlags & required_image_support ) == required_image_support ) ) {
-			if( report_function ) {
-				report_function( ReportSeverity::NON_CRITICAL_ERROR, "Window surface does not support color attachments!" );
-			}
+			renderer_parent->Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Window Vulkan surface does not support required image capabilities, cannot continue!" );
 			return false;
 		}
 	}
@@ -2029,19 +2017,25 @@ bool vk2d::_internal::WindowImpl::CreateSurface()
 		std::vector<VkSurfaceFormatKHR> surface_formats;
 		{
 			uint32_t surface_format_count = 0;
-			vkGetPhysicalDeviceSurfaceFormatsKHR(
+			if( vkGetPhysicalDeviceSurfaceFormatsKHR(
 				physical_device,
 				surface,
 				&surface_format_count,
 				nullptr
-			);
+			) != VK_SUCCESS ) {
+				renderer_parent->Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot query physical device surface formats, cannot continue!" );
+				return false;
+			}
 			surface_formats.resize( surface_format_count );
-			vkGetPhysicalDeviceSurfaceFormatsKHR(
+			if( vkGetPhysicalDeviceSurfaceFormatsKHR(
 				physical_device,
 				surface,
 				&surface_format_count,
 				surface_formats.data()
-			);
+			) != VK_SUCCESS ) {
+				renderer_parent->Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot query physical device surface formats, cannot continue!" );
+				return false;
+			}
 		}
 		surface_format = surface_formats[ 0 ];
 		if( surface_format.format == VK_FORMAT_UNDEFINED ) {
@@ -2157,9 +2151,7 @@ bool vk2d::_internal::WindowImpl::CreateRenderPass()
 		nullptr,
 		&render_pass
 	) != VK_SUCCESS ) {
-		if( report_function ) {
-			report_function( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Cannot create render pass!" );
-		}
+		renderer_parent->Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot create Vulkan render pass!" );
 		return false;
 	}
 
@@ -2378,9 +2370,7 @@ bool vk2d::_internal::WindowImpl::CreateGraphicsPipelines()
 			nullptr,
 			&pipelines[ size_t( vk2d::_internal::PipelineType::FILLED_POLYGON_LIST ) ]
 		) != VK_SUCCESS ) {
-			if( report_function ) {
-				report_function( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Cannot create graphics pipeline!" );
-			}
+			renderer_parent->Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot create Vulkan graphics pipeline!" );
 			return false;
 		}
 	}
@@ -2412,9 +2402,7 @@ bool vk2d::_internal::WindowImpl::CreateGraphicsPipelines()
 			nullptr,
 			&pipelines[ size_t( vk2d::_internal::PipelineType::WIREFRAME_POLYGON_LIST ) ]
 		) != VK_SUCCESS ) {
-			if( report_function ) {
-				report_function( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Cannot create graphics pipeline!" );
-			}
+			renderer_parent->Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot create Vulkan graphics pipeline!" );
 			return false;
 		}
 	}
@@ -2454,9 +2442,7 @@ bool vk2d::_internal::WindowImpl::CreateGraphicsPipelines()
 			nullptr,
 			&pipelines[ size_t( vk2d::_internal::PipelineType::LINE_LIST ) ]
 		) != VK_SUCCESS ) {
-			if( report_function ) {
-				report_function( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Cannot create graphics pipeline!" );
-			}
+			renderer_parent->Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot create Vulkan graphics pipeline!" );
 			return false;
 		}
 	}
@@ -2496,9 +2482,7 @@ bool vk2d::_internal::WindowImpl::CreateGraphicsPipelines()
 			nullptr,
 			&pipelines[ size_t( vk2d::_internal::PipelineType::POINT_LIST ) ]
 		) != VK_SUCCESS ) {
-			if( report_function ) {
-				report_function( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Cannot create graphics pipeline!" );
-			}
+			renderer_parent->Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot create Vulkan graphics pipeline!" );
 			return false;
 		}
 	}
@@ -2529,9 +2513,7 @@ bool vk2d::_internal::WindowImpl::CreateCommandPool()
 		nullptr,
 		&command_pool
 	) != VK_SUCCESS ) {
-		if( report_function ) {
-			report_function( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Cannot create vulkan command pool!" );
-		}
+		renderer_parent->Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot create window Vulkan command pool!" );
 		return false;
 	}
 
@@ -2563,9 +2545,7 @@ bool vk2d::_internal::WindowImpl::AllocateCommandBuffers()
 		&command_buffer_allocate_info,
 		temp.data()
 	) != VK_SUCCESS ) {
-		if( report_function ) {
-			report_function( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Cannot allocate command buffers!" );
-		}
+		renderer_parent->Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot allocate window Vulkan command buffers!" );
 		return false;
 	}
 
@@ -2631,11 +2611,14 @@ bool vk2d::_internal::WindowImpl::ReCreateSwapchain()
 			);
 
 			// Get new surface capabilities as window extent might have changed
-			vkGetPhysicalDeviceSurfaceCapabilitiesKHR(
+			if( vkGetPhysicalDeviceSurfaceCapabilitiesKHR(
 				physical_device,
 				surface,
 				&surface_capabilities
-			);
+			) != VK_SUCCESS ) {
+				renderer_parent->Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot query physical device surface capabilities, cannot continue!" );
+				return false;
+			}
 
 			extent	= surface_capabilities.currentExtent;
 		}
@@ -2652,19 +2635,25 @@ bool vk2d::_internal::WindowImpl::ReCreateSwapchain()
 				std::vector<VkPresentModeKHR> surface_present_modes;
 				{
 					uint32_t present_mode_count = 0;
-					vkGetPhysicalDeviceSurfacePresentModesKHR(
+					if( vkGetPhysicalDeviceSurfacePresentModesKHR(
 						physical_device,
 						surface,
 						&present_mode_count,
 						nullptr
-					);
+					) != VK_SUCCESS ) {
+						renderer_parent->Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot query physical device surface present modes!" );
+						return false;
+					}
 					surface_present_modes.resize( present_mode_count );
-					vkGetPhysicalDeviceSurfacePresentModesKHR(
+					if( vkGetPhysicalDeviceSurfacePresentModesKHR(
 						physical_device,
 						surface,
 						&present_mode_count,
 						surface_present_modes.data()
-					);
+					) != VK_SUCCESS ) {
+						renderer_parent->Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot query physical device surface present modes!" );
+						return false;
+					}
 				}
 				// Since there are only 2 things we're interested in finding we'll do a simple
 				// check if we could find either, if we found the better one, break out so we
@@ -2712,9 +2701,7 @@ bool vk2d::_internal::WindowImpl::ReCreateSwapchain()
 				&swapchain
 			);
 			if( result != VK_SUCCESS ) {
-				if( report_function ) {
-					report_function( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Cannot create vulkan swapchain!" );
-				}
+				renderer_parent->Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot create Vulkan swapchain!" );
 				return false;
 			}
 		}
@@ -2722,19 +2709,25 @@ bool vk2d::_internal::WindowImpl::ReCreateSwapchain()
 		// Get swapchain images and create image views
 		{
 			uint32_t swapchain_image_count = 0;
-			vkGetSwapchainImagesKHR(
+			if( vkGetSwapchainImagesKHR(
 				device,
 				swapchain,
 				&swapchain_image_count,
 				nullptr
-			);
+			) != VK_SUCCESS ) {
+				renderer_parent->Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot query Vulkan swapchain images!" );
+				return false;
+			}
 			swapchain_images.resize( swapchain_image_count );
-			vkGetSwapchainImagesKHR(
+			if( vkGetSwapchainImagesKHR(
 				device,
 				swapchain,
 				&swapchain_image_count,
 				swapchain_images.data()
-			);
+			) != VK_SUCCESS ) {
+				renderer_parent->Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot query Vulkan swapchain images!" );
+				return false;
+			}
 
 			// Destroy old swapchain image views if they exist
 			for( auto v : swapchain_image_views ) {
@@ -2774,9 +2767,7 @@ bool vk2d::_internal::WindowImpl::ReCreateSwapchain()
 					&swapchain_image_views[ i ]
 				);
 				if( result != VK_SUCCESS ) {
-					if( report_function ) {
-						report_function( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Cannot create image views for swapchain!" );
-					}
+					renderer_parent->Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot create Vulkan swapchain image views!" );
 					return false;
 				}
 			}
@@ -2799,6 +2790,10 @@ bool vk2d::_internal::WindowImpl::ReCreateSwapchain()
 
 bool vk2d::_internal::WindowImpl::ReCreateScreenshotResources()
 {
+	while( screenshot_being_saved ) {
+		std::this_thread::sleep_for( std::chrono::microseconds( 10 ) );
+	}
+
 	auto memory_pool	= renderer_parent->GetDeviceMemoryPool();
 	assert( memory_pool );
 
@@ -2826,8 +2821,8 @@ bool vk2d::_internal::WindowImpl::ReCreateScreenshotResources()
 		VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT
 	);
 	if( screenshot_image != VK_SUCCESS ) {
-		// ERROR REPORT!
-		screenshot_state	= vk2d::_internal::WindowImpl::ScreenshotState::IDLE;
+		renderer_parent->Report( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot create internal screenshot image, screenshots disabled!" );
+		screenshot_state	= vk2d::_internal::WindowImpl::ScreenshotState::IDLE_ERROR;
 		return false;
 	}
 
@@ -2845,8 +2840,8 @@ bool vk2d::_internal::WindowImpl::ReCreateScreenshotResources()
 		VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT
 	);
 	if( screenshot_buffer != VK_SUCCESS ) {
-		// ERROR REPORT!
-		screenshot_state	= vk2d::_internal::WindowImpl::ScreenshotState::IDLE;
+		renderer_parent->Report( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot create internal screenshot buffer, screenshots disabled!" );
+		screenshot_state	= vk2d::_internal::WindowImpl::ScreenshotState::IDLE_ERROR;
 		return false;
 	}
 
@@ -2888,6 +2883,7 @@ bool vk2d::_internal::WindowImpl::CreateFramebuffers()
 			image_create_info.queueFamilyIndexCount	= 0;
 			image_create_info.pQueueFamilyIndices	= nullptr;
 			image_create_info.initialLayout			= VK_IMAGE_LAYOUT_UNDEFINED;
+
 			VkImageViewCreateInfo					image_view_create_info	{};
 			image_view_create_info.sType			= VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
 			image_view_create_info.pNext			= nullptr;
@@ -2913,7 +2909,7 @@ bool vk2d::_internal::WindowImpl::CreateFramebuffers()
 				&image_view_create_info
 			);
 			if( multisample_render_targets[ i ] != VK_SUCCESS ) {
-				// ERROR REPORT HERE;
+				renderer_parent->Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot create multisample render targets!" );
 				return false;
 			}
 		}
@@ -2941,9 +2937,7 @@ bool vk2d::_internal::WindowImpl::CreateFramebuffers()
 			nullptr,
 			&framebuffers[ i ]
 		) != VK_SUCCESS ) {
-			if( report_function ) {
-				report_function( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Cannot create framebuffers!" );
-			}
+			renderer_parent->Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot create Vulkan framebuffers!" );
 			return false;
 		}
 	}
@@ -2971,9 +2965,7 @@ bool vk2d::_internal::WindowImpl::CreateWindowSynchronizationPrimitives()
 		nullptr,
 		&aquire_image_fence
 	) != VK_SUCCESS ) {
-		if( report_function ) {
-			report_function( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Cannot create image aquisition fence!" );
-		}
+		renderer_parent->Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot create image aquisition fence!" );
 		return false;
 	}
 
@@ -2988,9 +2980,7 @@ bool vk2d::_internal::WindowImpl::CreateWindowSynchronizationPrimitives()
 		nullptr,
 		&mesh_transfer_semaphore
 	) != VK_SUCCESS ) {
-		if( report_function ) {
-			report_function( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Cannot create mesh transfer semaphore!" );
-		}
+		renderer_parent->Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot create mesh transfer semaphore!" );
 		return false;
 	}
 
@@ -3021,9 +3011,7 @@ bool vk2d::_internal::WindowImpl::CreateFrameSynchronizationPrimitives()
 			nullptr,
 			&s
 		) != VK_SUCCESS ) {
-			if( report_function ) {
-				report_function( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Cannot create synchronization semaphores!" );
-			}
+			renderer_parent->Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot create frame synchronization semaphores!" );
 			return false;
 		}
 	}
@@ -3042,9 +3030,7 @@ bool vk2d::_internal::WindowImpl::CreateFrameSynchronizationPrimitives()
 			nullptr,
 			&f
 		) != VK_SUCCESS ) {
-			if( report_function ) {
-				report_function( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Cannot create synchronization fences!" );
-			}
+			renderer_parent->Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot create frame synchronization fences!" );
 			return false;
 		}
 	}
@@ -3061,13 +3047,13 @@ void vk2d::_internal::WindowImpl::HandleScreenshotEvent()
 			window_parent,
 			screenshot_path,
 			!screenshot_event_error,
-			screenshot_event_error_message
+			screenshot_event_message
 		);
 	}
 
 	screenshot_path					= "";
 	screenshot_event_error			= false;
-	screenshot_event_error_message	= "";
+	screenshot_event_message		= "";
 	screenshot_state				= vk2d::_internal::WindowImpl::ScreenshotState::IDLE;
 }
 
@@ -3076,6 +3062,8 @@ void vk2d::_internal::WindowImpl::CmdBindPipelineIfDifferent(
 	vk2d::_internal::PipelineType		pipeline_type
 )
 {
+	assert( uint32_t( pipeline_type ) < uint32_t( vk2d::_internal::PipelineType::PIPELINE_TYPE_COUNT ) );
+
 	if( previous_pipeline_type != pipeline_type ) {
 		vkCmdBindPipeline(
 			command_buffer,
@@ -3182,6 +3170,7 @@ vk2d::_internal::CursorImpl::CursorImpl(
 )
 {
 	if( size_t( image_size.x ) * size_t( image_size.y ) > image_data.size() ) {
+		NEED ERROR REPORTING HERE!;
 		return;
 	}
 
@@ -3197,6 +3186,7 @@ vk2d::_internal::CursorImpl::CursorImpl(
 		hotSpot	= { hot_spot.x, hot_spot.y };
 		extent	= { image_size.x, image_size.y };
 	} else {
+		NEED ERROR REPORTING HERE!;
 		return;
 	}
 
@@ -3324,6 +3314,13 @@ void vk2d::_internal::MonitorImpl::SetGammaRamp(
 )
 {
 	auto modifiable_ramp = ramp;
+
+	if( ( modifiable_ramp.count != uint32_t( modifiable_ramp.red.size() ) ) ||
+		( modifiable_ramp.count != uint32_t( modifiable_ramp.green.size() ) ) ||
+		( modifiable_ramp.count != uint32_t( modifiable_ramp.blue.size() ) ) ) {
+		NEED ERROR REPORTING HERE!;
+		return;
+	}
 
 	GLFWgammaramp glfwRamp {};
 	glfwRamp.size		= modifiable_ramp.count;
