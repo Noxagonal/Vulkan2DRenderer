@@ -60,12 +60,42 @@ VK2D_API vk2d::Monitor *VK2D_APIENTRY vk2d::Renderer::GetPrimaryMonitor()
 
 
 VK2D_API void VK2D_APIENTRY vk2d::Renderer::SetMonitorUpdateCallback(
-	vk2d::MonitorUpdateCallbackFun		monitor_update_callback_funtion
+	vk2d::MonitorUpdateCallbackFun			monitor_update_callback_funtion
 )
 {
 	impl->SetMonitorUpdateCallback(
 		monitor_update_callback_funtion
 	);
+}
+
+VK2D_API vk2d::Cursor * VK2D_APIENTRY vk2d::Renderer::CreateCursor(
+	const std::filesystem::path			&	image_path,
+	vk2d::Vector2i							hot_spot
+)
+{
+	return impl->CreateCursor(
+		image_path,
+		hot_spot
+	);
+}
+
+VK2D_API vk2d::Cursor * VK2D_APIENTRY vk2d::Renderer::CreateCursor(
+	vk2d::Vector2u							image_size,
+	const std::vector<vk2d::Color8>		&	image_data,
+	vk2d::Vector2i							hot_spot
+)
+{
+	return impl->CreateCursor(
+		image_size,
+		image_data,
+		hot_spot
+	);
+}
+
+VK2D_API void VK2D_APIENTRY vk2d::Renderer::DestroyCursor(
+	vk2d::Cursor						*	cursor )
+{
+	impl->DestroyCursor( cursor );
 }
 
 VK2D_API void VK2D_APIENTRY vk2d::Renderer::SetGamepadEventCallback(

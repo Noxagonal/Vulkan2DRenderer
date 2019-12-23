@@ -26,6 +26,7 @@ class Window;
 class Monitor;
 class Renderer;
 class ResourceManager;
+class Cursor;
 
 namespace _internal {
 
@@ -57,6 +58,18 @@ public:
 
 	void													SetMonitorUpdateCallback(
 		vk2d::MonitorUpdateCallbackFun						monitor_update_callback_funtion );
+
+	vk2d::Cursor										*	CreateCursor(
+		const std::filesystem::path						&	image_path,
+		vk2d::Vector2i										hot_spot );
+
+	vk2d::Cursor										*	CreateCursor(
+		vk2d::Vector2u										image_size,
+		const std::vector<vk2d::Color8>					&	image_data,
+		vk2d::Vector2i										hot_spot );
+
+	void													DestroyCursor(
+		vk2d::Cursor									*	cursor );
 
 	vk2d::GamepadEventCallbackFun							GetGamepadEventCallback();
 
@@ -214,6 +227,7 @@ private:
 	vk2d::_internal::PoolDescriptorSet						default_texture_descriptor_set		= {};
 
 	std::vector<std::unique_ptr<vk2d::Window>>				windows								= {};
+	std::vector<std::unique_ptr<vk2d::Cursor>>				cursors								= {};
 	std::vector<std::unique_ptr<vk2d::Sampler>>				samplers							= {};
 
 	vk2d::GamepadEventCallbackFun							joystick_event_callback				= {};

@@ -301,6 +301,7 @@ vk2d::_internal::WindowImpl::WindowImpl(
 	if( !CreateFrameSynchronizationPrimitives() ) return;
 
 	mesh_buffer		= std::make_unique<vk2d::_internal::MeshBuffer>(
+		renderer_parent,
 		device,
 		renderer->GetPhysicalDeviceProperties().limits,
 		this,
@@ -3149,28 +3150,44 @@ void vk2d::_internal::WindowImpl::CmdSetLineWidthIfDifferent(
 
 
 vk2d::_internal::CursorImpl::CursorImpl(
+	vk2d::_internal::RendererImpl		*	renderer,
 	const std::filesystem::path			&	image_path,
 	vk2d::Vector2i							hot_spot
 )
 {
+	renderer_parent		= renderer;
+	assert( renderer_parent );
+
 	int x = 0, y = 0, channels = 0;
 	auto stbiData = stbi_load( image_path.string().c_str(), &x, &y, &channels, 4 );
 	if( stbiData ) {
 		std::vector<vk2d::Color8> data( x * y );
 		std::memcpy( data.data(), stbiData, data.size() * sizeof( vk2d::Color8 ) );
 		free( stbiData );
-		*this = vk2d::_internal::CursorImpl( { uint32_t( x ), uint32_t( y ) }, data, hot_spot );
+		*this = vk2d::_internal::CursorImpl(
+			renderer,
+			{ uint32_t( x ), uint32_t( y ) },
+			data,
+			hot_spot
+		);
 	}
 }
 
 vk2d::_internal::CursorImpl::CursorImpl(
+	vk2d::_internal::RendererImpl		*	renderer,
 	vk2d::Vector2u							image_size,
 	const std::vector<vk2d::Color8>		&	image_data,
 	vk2d::Vector2i							hot_spot
 )
 {
-	if( size_t( image_size.x ) * size_t( image_size.y ) > image_data.size() ) {
-		NEED ERROR REPORTING HERE!;
+	renderer_parent		= renderer;
+	assert( renderer_parent );
+
+	if( size_t( image_size.x ) * size_t( image_size.y ) != image_data.size() ) {
+		std::stringstream ss;
+		ss << "Cannot create cursor, image dimensions do not match required texel count.\n"
+			<< "Cursor dimensions are: X=" << image_size.x << " Y=" << image_size.y << ".";
+		renderer_parent->Report( vk2d::ReportSeverity::NON_CRITICAL_ERROR, ss.str() );
 		return;
 	}
 
@@ -3186,7 +3203,7 @@ vk2d::_internal::CursorImpl::CursorImpl(
 		hotSpot	= { hot_spot.x, hot_spot.y };
 		extent	= { image_size.x, image_size.y };
 	} else {
-		NEED ERROR REPORTING HERE!;
+		renderer_parent->Report( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot create cursor!" );
 		return;
 	}
 
@@ -3198,6 +3215,7 @@ vk2d::_internal::CursorImpl::CursorImpl(
 {
 	this->~CursorImpl();
 	*this	= vk2d::_internal::CursorImpl(
+		other.renderer_parent,
 		{ other.extent.width, other.extent.height },
 		other.pixel_data,
 		{ other.hotSpot.x, other.hotSpot.y }
@@ -3217,6 +3235,7 @@ vk2d::_internal::CursorImpl & vk2d::_internal::CursorImpl::operator=(
 {
 	this->~CursorImpl();
 	*this	= vk2d::_internal::CursorImpl(
+		other.renderer_parent,
 		{ other.extent.width, other.extent.height },
 		other.pixel_data,
 		{ other.hotSpot.x, other.hotSpot.y }
@@ -3228,6 +3247,11 @@ vk2d::_internal::CursorImpl & vk2d::_internal::CursorImpl::operator=(
 bool vk2d::_internal::CursorImpl::IsGood()
 {
 	return is_good;
+}
+
+vk2d::_internal::RendererImpl * vk2d::_internal::CursorImpl::GetRenderer()
+{
+	return renderer_parent;
 }
 
 const std::vector<vk2d::Color8> & vk2d::_internal::CursorImpl::GetPixelData()
@@ -3269,6 +3293,8 @@ vk2d::_internal::MonitorImpl::MonitorImpl(
 	this->name					= name;
 	this->current_video_mode	= current_video_mode;
 	this->video_modes			= video_modes;
+
+	assert( this->monitor );
 
 	is_good						= true;
 }
@@ -3318,7 +3344,6 @@ void vk2d::_internal::MonitorImpl::SetGammaRamp(
 	if( ( modifiable_ramp.count != uint32_t( modifiable_ramp.red.size() ) ) ||
 		( modifiable_ramp.count != uint32_t( modifiable_ramp.green.size() ) ) ||
 		( modifiable_ramp.count != uint32_t( modifiable_ramp.blue.size() ) ) ) {
-		NEED ERROR REPORTING HERE!;
 		return;
 	}
 

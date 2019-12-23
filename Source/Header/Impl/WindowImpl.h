@@ -378,6 +378,7 @@ class CursorImpl {
 
 public:
 												CursorImpl(
+		vk2d::_internal::RendererImpl		*	renderer,
 		const std::filesystem::path			&	image_path,
 		vk2d::Vector2i							hot_spot );
 
@@ -390,6 +391,7 @@ public:
 	// [in] hot_spot_x: where the active location of the cursor is, x location.
 	// [in] hot_spot_y: where the active location of the cursor is, y location.
 												CursorImpl(
+		vk2d::_internal::RendererImpl		*	renderer,
 		vk2d::Vector2u							image_size,
 		const std::vector<vk2d::Color8>		&	image_data,
 		vk2d::Vector2i							hot_spot );
@@ -415,12 +417,14 @@ public:
 
 	bool										IsGood();
 
+	vk2d::_internal::RendererImpl			*	GetRenderer();
 	const std::vector<vk2d::Color8>			&	GetPixelData();
 	GLFWcursor								*	GetGLFWcursor();
 	vk2d::Vector2u								GetSize();
 	vk2d::Vector2i								GetHotSpot();
 
 private:
+	vk2d::_internal::RendererImpl			*	renderer_parent					= {};
 	std::vector<vk2d::Color8>					pixel_data						= {};
 	GLFWcursor								*	cursor							= nullptr;
 	VkExtent2D									extent							= {};
@@ -481,10 +485,10 @@ public:
 	bool												IsGood();
 
 private:
-	GLFWmonitor										*	monitor								= nullptr;
+	GLFWmonitor										*	monitor								= {};
 	VkOffset2D											position							= {};
 	VkExtent2D											physical_size						= {};
-	std::string											name								= "";
+	std::string											name								= {};
 	MonitorVideoMode									current_video_mode					= {};
 	std::vector<MonitorVideoMode>						video_modes;
 

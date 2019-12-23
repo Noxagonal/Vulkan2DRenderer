@@ -1,7 +1,13 @@
 #pragma once
 
+// Enable debugging
+#define VK2D_BUILD_OPTION_DEBUG_ENABLE									1
+
 // Use Vulkan validation
 #define VK2D_BUILD_OPTION_VULKAN_VALIDATION								1
+
+// If using Vulkan validation, show verbose messages
+#define VK2D_BUILD_OPTION_VULKAN_VALIDATION_SEVERITY_VERBOSE			0
 
 // If using Vulkan validation, show info messages
 #define VK2D_BUILD_OPTION_VULKAN_VALIDATION_SEVERITY_INFO				0

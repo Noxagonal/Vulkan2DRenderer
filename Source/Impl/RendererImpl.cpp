@@ -28,6 +28,53 @@ namespace vk2d {
 
 namespace _internal {
 
+
+
+void VK2D_APIENTRY VK2D_default_ReportFunction(
+	vk2d::ReportSeverity			severity,
+	std::string						message
+)
+{
+	switch( severity ) {
+	case vk2d::ReportSeverity::NONE:
+		vk2d::SetConsoleColor();
+		break;
+	case vk2d::ReportSeverity::VERBOSE:
+		vk2d::SetConsoleColor( vk2d::ConsoleColor::DARK_GRAY );
+		break;
+	case vk2d::ReportSeverity::INFO:
+		vk2d::SetConsoleColor( vk2d::ConsoleColor::DARK_GREEN );
+		break;
+	case vk2d::ReportSeverity::PERFORMANCE_WARNING:
+		vk2d::SetConsoleColor( vk2d::ConsoleColor::BLUE );
+		break;
+	case vk2d::ReportSeverity::WARNING:
+		vk2d::SetConsoleColor( vk2d::ConsoleColor::DARK_YELLOW );
+		break;
+	case vk2d::ReportSeverity::NON_CRITICAL_ERROR:
+		vk2d::SetConsoleColor( vk2d::ConsoleColor::RED );
+		break;
+	case vk2d::ReportSeverity::CRITICAL_ERROR:
+		vk2d::SetConsoleColor( vk2d::ConsoleColor::WHITE, vk2d::ConsoleColor::DARK_RED );
+		break;
+	default:
+		vk2d::SetConsoleColor();
+		break;
+	}
+
+	std::cout << message << "\n";
+	vk2d::SetConsoleColor();
+
+	if( severity == vk2d::ReportSeverity::CRITICAL_ERROR ) {
+#ifdef _WIN32
+		MessageBox( NULL, message.c_str(), "Critical error!", MB_OK | MB_ICONERROR );
+#endif
+		std::exit( -1 );
+	}
+}
+
+
+
 vk2d::Monitor									primary_monitor				= {};
 std::vector<vk2d::Monitor>						all_monitors				= {};
 std::list<vk2d::_internal::RendererImpl*>		renderer_listeners			= {};
@@ -177,6 +224,12 @@ vk2d::_internal::RendererImpl::RendererImpl( const RendererCreateInfo & renderer
 	create_info_copy	= renderer_create_info;
 	report_function		= create_info_copy.report_function;
 
+#if VK2D_BUILD_OPTION_DEBUG_ENABLE
+	if( report_function == nullptr ) {
+		report_function = VK2D_default_ReportFunction;
+}
+#endif
+
 //	Introduce layers and extensions here
 //	instance_layers;
 //	instance_extensions;
@@ -213,6 +266,7 @@ vk2d::_internal::RendererImpl::~RendererImpl()
 	vkDeviceWaitIdle( device );
 
 	windows.clear();
+	cursors.clear();
 	samplers.clear();
 
 	DestroyDefaultSampler();
@@ -259,6 +313,63 @@ void vk2d::_internal::RendererImpl::SetMonitorUpdateCallback(
 )
 {
 	monitor_update_callback		= monitor_update_callback_funtion;
+}
+
+vk2d::Cursor * vk2d::_internal::RendererImpl::CreateCursor(
+	const std::filesystem::path			&	image_path,
+	vk2d::Vector2i							hot_spot
+)
+{
+	auto cursor = std::unique_ptr<vk2d::Cursor>( new vk2d::Cursor(
+		this,
+		image_path,
+		hot_spot
+	) );
+	if( cursor && cursor->IsGood() ) {
+		auto ret = cursor.get();
+		cursors.push_back( std::move( cursor ) );
+		return ret;
+	} else {
+		Report( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot create cursor!" );
+	}
+	return {};
+}
+
+vk2d::Cursor * vk2d::_internal::RendererImpl::CreateCursor(
+	vk2d::Vector2u							image_size,
+	const std::vector<vk2d::Color8>		&	image_data,
+	vk2d::Vector2i							hot_spot
+)
+{
+	auto cursor = std::unique_ptr<vk2d::Cursor>( new vk2d::Cursor(
+		this,
+		image_size,
+		image_data,
+		hot_spot
+	) );
+	if( cursor && cursor->IsGood() ) {
+		auto ret = cursor.get();
+		cursors.push_back( std::move( cursor ) );
+		return ret;
+	} else {
+		Report( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot create cursor!" );
+	}
+	return {};
+}
+
+void vk2d::_internal::RendererImpl::DestroyCursor(
+	vk2d::Cursor		*	cursor
+)
+{
+	auto it = cursors.begin();
+	while( it != cursors.end() ) {
+		if( it->get() == cursor ) {
+			it = cursors.erase( it );
+			return;
+		} else {
+			++it;
+		}
+	}
 }
 
 vk2d::GamepadEventCallbackFun vk2d::_internal::RendererImpl::GetGamepadEventCallback()
@@ -575,20 +686,27 @@ VkBool32 VKAPI_PTR DebugMessenger(
 	void*                                            pUserData )
 {
 	std::string str_severity;
+	vk2d::ReportSeverity vk2d_severity;
 	switch( messageSeverity ) {
 	case VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT:
-		str_severity = "VERBOSE";
+		vk2d_severity	= vk2d::ReportSeverity::VERBOSE;
+		str_severity	= "VERBOSE";
 		break;
 	case VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT:
-		str_severity = "INFO";
+		vk2d_severity	= vk2d::ReportSeverity::INFO;
+		str_severity	= "INFO";
 		break;
 	case VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT:
-		str_severity = "WARNING";
+		vk2d_severity	= vk2d::ReportSeverity::WARNING;
+		str_severity	= "WARNING";
 		break;
 	case VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT:
-		str_severity = "ERROR";
+		vk2d_severity	= vk2d::ReportSeverity::NON_CRITICAL_ERROR;
+		str_severity	= "ERROR";
 		break;
 	default:
+		vk2d_severity	= vk2d::ReportSeverity::INFO;
+		str_severity	= "<UNKNOWN>";
 		assert( 0 );
 		break;
 	}
@@ -605,27 +723,22 @@ VkBool32 VKAPI_PTR DebugMessenger(
 		str_type = "PERFORMANCE";
 		break;
 	default:
+		str_type = "<UNKNOWN>";
+		assert( 0 );
 		break;
 	}
 
 	std::stringstream ss_title;
-	ss_title << str_type << " " << str_severity;
+	ss_title << "Vulkan Validation: " << str_type << " " << str_severity;
 
 	std::stringstream ss_message;
-	ss_message << ss_title.str() << ":\n\n" << pCallbackData->pMessage << "\n";
+	ss_message << ss_title.str() << ":\n - " << pCallbackData->pMessage << "\n";
 	// TODO: labels, object, message id name / number;
 
-	auto str_message = ss_message.str();
-	std::cout << str_message << "\n";
+	auto renderer = reinterpret_cast<vk2d::_internal::RendererImpl*>( pUserData );
+	assert( renderer );
 
-#if VK_USE_PLATFORM_WIN32_KHR
-	UINT MBIType		= 0;
-	if( messageSeverity >= VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT )	MBIType	= MB_ICONWARNING;
-	if( messageSeverity >= VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT )		MBIType	= MB_ICONERROR;
-	if( MBIType ) {
-		MessageBox( NULL, str_message.c_str(), ss_title.str().c_str(), MB_OK | MB_SYSTEMMODAL | MBIType );
-	}
-#endif
+	renderer->Report( vk2d_severity, ss_message.str() );
 
 	return VK_FALSE;
 }
@@ -652,6 +765,9 @@ bool vk2d::_internal::RendererImpl::CreateInstance()
 	instance_extensions.push_back( VK_EXT_DEBUG_UTILS_EXTENSION_NAME );
 
 	VkDebugUtilsMessageSeverityFlagsEXT severity_flags {};
+#if VK2D_BUILD_OPTION_VULKAN_VALIDATION_SEVERITY_VERBOSE
+	severity_flags		|= VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT;
+#endif
 #if VK2D_BUILD_OPTION_VULKAN_VALIDATION_SEVERITY_INFO
 	severity_flags		|= VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT;
 #endif
@@ -672,7 +788,7 @@ bool vk2d::_internal::RendererImpl::CreateInstance()
 		VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT |
 		VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
 	debug_utils_create_info.pfnUserCallback		= vk2d::_internal::DebugMessenger;
-	debug_utils_create_info.pUserData			= nullptr;
+	debug_utils_create_info.pUserData			= this;
 #endif
 
 	{

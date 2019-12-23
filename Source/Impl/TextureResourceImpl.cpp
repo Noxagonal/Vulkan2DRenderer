@@ -634,12 +634,12 @@ bool vk2d::_internal::TextureResourceImpl::MTLoad(
 			return false;
 		}
 		if( vkEndCommandBuffer( secondary_render_command_buffer ) != VK_SUCCESS ) {
-			renderer->Report( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot compile secondary render command buffer for texture mipmap creation!" );
+			renderer->Report( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot compile secondary render queue command buffer for texture mipmap creation!" );
 			return false;
 		}
 		if( is_primary_render_needed ) {
 			if( vkEndCommandBuffer( primary_render_command_buffer ) != VK_SUCCESS ) {
-				renderer->Report( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot compile primary render command buffer for texture queue family handover finalization!" );
+				renderer->Report( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot compile primary render queue command buffer for texture queue family handover finalization!" );
 				return false;
 			}
 		}

@@ -32,11 +32,12 @@ class ResourceManager;
 
 enum class ReportSeverity : uint32_t {
 	NONE					= 0,	// Not valid severity value
-	INFO					= 1,	// Useful to know what the application is doing
-	PERFORMANCE_WARNING		= 2,	// Serious bottlenecks in performance somewhere, you should check it out
-	WARNING					= 3,	// Failed to load a resource so something might be missing but can still continue with visual defects
-	NON_CRITICAL_ERROR		= 5,	// Error that still allows the application to continue running, might not get a picture though
-	CRITICAL_ERROR			= 6,	// Critical error, abandon ship, application has no option but to terminate... Immediately
+	VERBOSE,						// Reports everything, usually tmi.
+	INFO,							// Useful to know what the application is doing
+	PERFORMANCE_WARNING,			// Serious bottlenecks in performance somewhere, you should check it out
+	WARNING,						// Failed to load a resource so something might be missing but can still continue with visual defects
+	NON_CRITICAL_ERROR,				// Error that still allows the application to continue running, might not get a picture though
+	CRITICAL_ERROR,					// Critical error, abandon ship, application has no option but to terminate... Immediately
 };
 
 
@@ -186,6 +187,28 @@ public:
 	// [in] monitor_update_callback_function: Function that gets called if monitor was removed or added to the system.
 	VK2D_API void									VK2D_APIENTRY						SetMonitorUpdateCallback(
 		vk2d::MonitorUpdateCallbackFun				monitor_update_callback_funtion );
+
+	// Create cursor from image file.
+	// [in] imagePath: path to an image.
+	// [in] hot_spot_x: where the active location of the cursor is.
+	VK2D_API vk2d::Cursor						*	VK2D_APIENTRY						CreateCursor(
+		const std::filesystem::path				&	image_path,
+		vk2d::Vector2i								hot_spot );
+
+	// Create cursor from raw texel data.
+	// Texel order is left to right, top to bottom.
+	// [in] image_size: size of the image in pixels.
+	// [in] image_data: raw image data.
+	// [in] hot_spot: where the active location of the cursor is.
+	VK2D_API vk2d::Cursor						*	VK2D_APIENTRY						CreateCursor(
+		vk2d::Vector2u								image_size,
+		const std::vector<vk2d::Color8>			&	image_data,
+		vk2d::Vector2i								hot_spot );
+
+	// Destroy cursor.
+	// [in] cursor: cursor to be destroyed.
+	VK2D_API void									VK2D_APIENTRY						DestroyCursor(
+		vk2d::Cursor							*	cursor );
 
 	// Set gamepad event callback function, the callback function gets
 	// called if a gamepad gets added or removed from the system.

@@ -102,6 +102,7 @@ bool vk2d::_internal::ThreadLoaderResource::ThreadBegin()
 	// Descriptor pool
 	{
 		descriptor_auto_pool	= vk2d::_internal::CreateDescriptorAutoPool(
+			renderer,
 			device
 		);
 		if( !descriptor_auto_pool ) {

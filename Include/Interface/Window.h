@@ -622,31 +622,32 @@ private:
 
 // Cursor objects hold a cursor image and the cursor image hot spot.
 class Cursor {
+	friend class vk2d::_internal::RendererImpl;
 	friend class vk2d::Window;
 	friend class vk2d::_internal::WindowImpl;
 
-public:
-	// Cursor constructor, image path version.
+	// Create cursor from image file.
+	// [in] renderer: renderer parent.
 	// [in] imagePath: path to an image.
-	// [in] hot_spot_x: where the active location of the cursor is, x location.
-	// [in] hot_spot_y: where the active location of the cursor is, y location.
+	// [in] hot_spot_x: where the active location of the cursor is.
 	VK2D_API																		Cursor(
+		vk2d::_internal::RendererImpl		*	renderer,
 		const std::filesystem::path			&	image_path,
 		vk2d::Vector2i							hot_spot );
 
-	// Cursor constructor, raw data version.
-	// Image data needs to be in format RGBA, 8 bits per channel, 32 bits per pixel,
-	// in order left to right - top to bottom.
-	// [in] image_size: size of the image in pixels, x dimension.
-	// [in] image_size: size of the image in pixels, y dimension.
+	// Create cursor from raw texel data.
+	// Texel order is left to right, top to bottom.
+	// [in] renderer: renderer parent.
+	// [in] image_size: size of the image in pixels.
 	// [in] image_data: raw image data.
-	// [in] hot_spot_x: where the active location of the cursor is, x location.
-	// [in] hot_spot_y: where the active location of the cursor is, y location.
+	// [in] hot_spot: where the active location of the cursor is.
 	VK2D_API																		Cursor(
+		vk2d::_internal::RendererImpl		*	renderer,
 		vk2d::Vector2u							image_size,
 		const std::vector<vk2d::Color8>		&	image_data,
 		vk2d::Vector2i							hot_spot );
 
+public:
 	// Copy constructor from another cursor.
 	VK2D_API																		Cursor(
 		vk2d::Cursor						&	other );
@@ -670,8 +671,10 @@ public:
 	VK2D_API vk2d::Vector2i						VK2D_APIENTRY						GetHotSpot();
 	VK2D_API std::vector<vk2d::Color8>			VK2D_APIENTRY						GetPixelData();
 
+	VK2D_API bool								VK2D_APIENTRY						IsGood();
+
 private:
-	std::unique_ptr<vk2d::_internal::CursorImpl>	impl							= nullptr;
+	std::unique_ptr<vk2d::_internal::CursorImpl>	impl							= {};
 
 	bool										is_good								= {};
 };
@@ -692,7 +695,28 @@ struct MonitorVideoMode {
 };
 
 // Gamma ramp for manual gamma adjustment per color
-struct GammaRamp {
+class GammaRamp {
+	friend class vk2d::_internal::MonitorImpl;
+
+public:
+	GammaRamp()										= default;
+	~GammaRamp()									= default;
+	GammaRamp( const vk2d::GammaRamp & other )		= default;
+	GammaRamp( vk2d::GammaRamp && other )			= default;
+
+	inline void AddNode(
+		uint16_t		r,
+		uint16_t		g,
+		uint16_t		b
+	)
+	{
+		red.push_back( r );
+		green.push_back( g );
+		blue.push_back( b );
+		++count;
+	}
+
+private:
 	std::vector<uint16_t>		red;
 	std::vector<uint16_t>		green;
 	std::vector<uint16_t>		blue;
@@ -707,7 +731,7 @@ class Monitor {
 	friend class vk2d::_internal::WindowImpl;
 	friend void vk2d::_internal::UpdateMonitorLists();
 
-	// Monitor constructor from data directly, used internally.
+	// Monitor constructor from implementation directly, used internally.
 	VK2D_API																				Monitor(
 		std::unique_ptr<vk2d::_internal::MonitorImpl>	&&	preconstructed_impl );
 

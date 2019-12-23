@@ -402,30 +402,34 @@ VK2D_API void VK2D_APIENTRY vk2d::Window::DrawMesh(
 
 
 VK2D_API vk2d::Cursor::Cursor(
-	const std::filesystem::path		&	image_path,
-	vk2d::Vector2i						hot_spot
+	vk2d::_internal::RendererImpl		*	renderer,
+	const std::filesystem::path			&	image_path,
+	vk2d::Vector2i							hot_spot
 )
 {
 	impl		= std::make_unique<vk2d::_internal::CursorImpl>(
+		renderer,
 		image_path,
 		hot_spot
 	);
 	if( impl && impl->IsGood() ) {
 		is_good			= true;
 	} else {
-		ERROR HANDING HERE!;
+		renderer->Report( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot create cursor implementation!" );
 		is_good			= false;
 		impl			= nullptr;
 	}
 }
 
 VK2D_API vk2d::Cursor::Cursor(
+	vk2d::_internal::RendererImpl		*	renderer,
 	vk2d::Vector2u							image_size,
 	const std::vector<vk2d::Color8>		&	image_data,
 	vk2d::Vector2i							hot_spot
 )
 {
 	impl		= std::make_unique<vk2d::_internal::CursorImpl>(
+		renderer,
 		image_size,
 		image_data,
 		hot_spot
@@ -433,7 +437,7 @@ VK2D_API vk2d::Cursor::Cursor(
 	if( impl && impl->IsGood() ) {
 		is_good			= true;
 	} else {
-		ERROR HANDING HERE!;
+		renderer->Report( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot create cursor implementation!" );
 		is_good			= false;
 		impl			= nullptr;
 	}
@@ -444,6 +448,7 @@ VK2D_API vk2d::Cursor::Cursor(
 )
 {
 	impl		= std::make_unique<vk2d::_internal::CursorImpl>(
+		other.impl->GetRenderer(),
 		other.impl->GetSize(),
 		other.impl->GetPixelData(),
 		other.impl->GetHotSpot()
@@ -451,7 +456,7 @@ VK2D_API vk2d::Cursor::Cursor(
 	if( impl && impl->IsGood() ) {
 		is_good			= true;
 	} else {
-		ERROR HANDING HERE!;
+		other.impl->GetRenderer()->Report( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot create cursor implementation!" );
 		is_good			= false;
 		impl			= nullptr;
 	}
@@ -464,6 +469,7 @@ VK2D_API vk2d::Cursor & VK2D_APIENTRY vk2d::Cursor::operator=(
 	vk2d::Cursor	&	other )
 {
 	impl		= std::make_unique<vk2d::_internal::CursorImpl>(
+		other.impl->GetRenderer(),
 		other.impl->GetSize(),
 		other.impl->GetPixelData(),
 		other.impl->GetHotSpot()
@@ -471,7 +477,7 @@ VK2D_API vk2d::Cursor & VK2D_APIENTRY vk2d::Cursor::operator=(
 	if( impl && impl->IsGood() ) {
 		is_good			= true;
 	} else {
-		ERROR HANDING HERE!;
+		other.impl->GetRenderer()->Report( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot create cursor implementation!" );
 		is_good			= false;
 		impl			= nullptr;
 	}
@@ -494,6 +500,11 @@ VK2D_API std::vector<vk2d::Color8> VK2D_APIENTRY vk2d::Cursor::GetPixelData()
 	return impl->GetPixelData();
 }
 
+VK2D_API bool VK2D_APIENTRY vk2d::Cursor::IsGood()
+{
+	return is_good;
+}
+
 
 
 
@@ -508,7 +519,6 @@ VK2D_API vk2d::Monitor::Monitor(
 	if( impl && impl->IsGood() ) {
 		is_good		= true;
 	} else {
-		ERROR HANDING HERE!;
 		is_good		= false;
 		impl		= nullptr;
 	}
@@ -529,7 +539,6 @@ VK2D_API vk2d::Monitor::Monitor(
 	if( impl && impl->IsGood() ) {
 		is_good		= true;
 	} else {
-		ERROR HANDING HERE!;
 		impl		= nullptr;
 		is_good		= false;
 	}
@@ -579,7 +588,6 @@ VK2D_API vk2d::Monitor & VK2D_APIENTRY vk2d::Monitor::operator=(
 	if( impl && impl->IsGood() ) {
 		is_good		= true;
 	} else {
-		ERROR HANDING HERE!;
 		is_good		= false;
 		impl		= nullptr;
 	}
