@@ -6,10 +6,12 @@
 #include "../Header/Core/DescriptorSet.h"
 #include "../Header/Core/VulkanMemoryManagement.h"
 
-vk2d::_internal::ThreadLoaderResource::ThreadLoaderResource( RendererImpl * parent )
+
+
+vk2d::_internal::ThreadLoaderResource::ThreadLoaderResource( RendererImpl * renderer_parent )
 {
-	this->renderer	= parent;
-	device			= parent->GetVulkanDevice();
+	this->renderer	= renderer_parent;
+	device			= renderer_parent->GetVulkanDevice();
 }
 
 vk2d::_internal::RendererImpl * vk2d::_internal::ThreadLoaderResource::GetRenderer() const
@@ -100,6 +102,7 @@ bool vk2d::_internal::ThreadLoaderResource::ThreadBegin()
 	// Descriptor pool
 	{
 		descriptor_auto_pool	= vk2d::_internal::CreateDescriptorAutoPool(
+			renderer,
 			device
 		);
 		if( !descriptor_auto_pool ) {

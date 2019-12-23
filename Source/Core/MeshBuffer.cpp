@@ -5,6 +5,7 @@
 #include "../../Include/Interface/RenderPrimitives.h"
 #include "../Header/Core/VulkanMemoryManagement.h"
 #include "../Header/Impl/WindowImpl.h"
+#include "../Header/Impl/RendererImpl.h"
 
 #include "../Header/Core/VulkanMemoryManagement.h"
 
@@ -12,30 +13,31 @@
 
 
 
-namespace vk2d {
-
-namespace _internal {
-
-
-
-MeshBuffer::MeshBuffer(
+vk2d::_internal::MeshBuffer::MeshBuffer(
+	vk2d::_internal::RendererImpl	*	renderer,
 	VkDevice							device,
 	const VkPhysicalDeviceLimits	&	physicald_device_limits,
-	_internal::WindowImpl			*	window_data,
+	vk2d::_internal::WindowImpl		*	window_data,
 	DeviceMemoryPool				*	device_memory_pool )
 {
+	assert( renderer );
+	assert( device );
+	assert( window_data );
+	assert( device_memory_pool );
+
+	this->renderer_parent				= renderer;
 	this->device						= device;
 	this->physicald_device_limits		= physicald_device_limits;
 	this->window_data					= window_data;
 	this->device_memory_pool			= device_memory_pool;
 
-	first_draw					= true;
+	first_draw							= true;
 }
 
-MeshBuffer::~MeshBuffer()
+vk2d::_internal::MeshBuffer::~MeshBuffer()
 {}
 
-MeshBuffer::PushResult MeshBuffer::CmdPushMesh(
+vk2d::_internal::MeshBuffer::PushResult vk2d::_internal::MeshBuffer::CmdPushMesh(
 	VkCommandBuffer						command_buffer,
 	const std::vector<Vertex>		&	new_vertices,
 	const std::vector<uint32_t>		&	new_indices )
@@ -52,12 +54,12 @@ MeshBuffer::PushResult MeshBuffer::CmdPushMesh(
 		vkCmdBindVertexBuffers(
 			command_buffer,
 			0,
-			1, &reserve_result.buffer_block->device_buffer,
+			1, &reserve_result.buffer_block->device_buffer.buffer,
 			&buffer_offset
 		);
 		vkCmdBindIndexBuffer(
 			command_buffer,
-			reserve_result.buffer_block->device_buffer,
+			reserve_result.buffer_block->device_buffer.buffer,
 			reserve_result.buffer_block->aligned_index_buffer_byte_offset,
 			VK_INDEX_TYPE_UINT32
 		);
@@ -73,13 +75,13 @@ MeshBuffer::PushResult MeshBuffer::CmdPushMesh(
 
 	first_draw	= false;
 
-	MeshBuffer::PushResult ret {};
+	vk2d::_internal::MeshBuffer::PushResult ret {};
 	ret.offsets = reserve_result.offsets;
 	ret.success = true;
 	return ret;
 }
 
-bool MeshBuffer::CmdUploadMeshDataToGPU(
+bool vk2d::_internal::MeshBuffer::CmdUploadMeshDataToGPU(
 	VkCommandBuffer			command_buffer
 )
 {
@@ -99,8 +101,8 @@ bool MeshBuffer::CmdUploadMeshDataToGPU(
 
 		vkCmdCopyBuffer(
 			command_buffer,
-			bp->staging_buffer,
-			bp->device_buffer,
+			bp->staging_buffer.buffer,
+			bp->device_buffer.buffer,
 			uint32_t( regions.size() ),
 			regions.data()
 		);
@@ -112,12 +114,12 @@ bool MeshBuffer::CmdUploadMeshDataToGPU(
 	return true;
 }
 
-MeshBuffer::BufferBlock * MeshBuffer::AllocateBufferBlockAndStore(
+vk2d::_internal::MeshBuffer::BufferBlock * vk2d::_internal::MeshBuffer::AllocateBufferBlockAndStore(
 	VkDeviceSize								vertex_portion_byte_size,
 	VkDeviceSize								index_portion_byte_size
 )
 {
-	auto block = std::make_unique<MeshBuffer::BufferBlock>(
+	auto block = std::make_unique<vk2d::_internal::MeshBuffer::BufferBlock>(
 		this,
 		vertex_portion_byte_size,
 		index_portion_byte_size );
@@ -130,8 +132,8 @@ MeshBuffer::BufferBlock * MeshBuffer::AllocateBufferBlockAndStore(
 	return {};
 }
 
-void MeshBuffer::FreeBufferBlockFromStorage(
-	BufferBlock			*	buffer_block
+void vk2d::_internal::MeshBuffer::FreeBufferBlockFromStorage(
+	vk2d::_internal::MeshBuffer::BufferBlock	*	buffer_block
 )
 {
 	auto it = buffer_blocks.begin();
@@ -144,7 +146,7 @@ void MeshBuffer::FreeBufferBlockFromStorage(
 	}
 }
 
-MeshBuffer::ReserveSpaceResult MeshBuffer::ReserveSpaceForMesh(
+vk2d::_internal::MeshBuffer::ReserveSpaceResult vk2d::_internal::MeshBuffer::ReserveSpaceForMesh(
 	uint32_t				vertex_count,
 	uint32_t				index_count
 )
@@ -161,7 +163,7 @@ MeshBuffer::ReserveSpaceResult MeshBuffer::ReserveSpaceForMesh(
 			VkDeviceSize buffer_index_size_left		= bp->total_aligned_index_byte_size - bp->used_aligned_index_byte_size;
 			if( vertex_byte_size <= buffer_vertex_size_left &&
 				index_byte_size <= buffer_index_size_left ) {
-				MeshBuffer::ReserveSpaceResult		ret {};
+				vk2d::_internal::MeshBuffer::ReserveSpaceResult		ret {};
 				ret.buffer_block					= bp;
 				ret.buffer_block_need_binding		= first_draw;
 				ret.offsets.first_index				= bp->block_index_count;
@@ -191,7 +193,7 @@ MeshBuffer::ReserveSpaceResult MeshBuffer::ReserveSpaceForMesh(
 			std::max( index_byte_size, VkDeviceSize( VK2D_BUILD_OPTION_MESH_BUFFER_BLOCK_INDEX_SIZE ) )
 		);
 		if( bp ) {
-			MeshBuffer::ReserveSpaceResult		ret {};
+			vk2d::_internal::MeshBuffer::ReserveSpaceResult		ret {};
 			ret.buffer_block					= bp;
 			ret.buffer_block_need_binding		= true;
 			ret.offsets.first_index				= bp->block_index_count;
@@ -222,16 +224,16 @@ MeshBuffer::ReserveSpaceResult MeshBuffer::ReserveSpaceForMesh(
 
 
 
-MeshBuffer::BufferBlock::BufferBlock(
-	MeshBuffer				*	mesh_buffer_parent,
-	VkDeviceSize				buffer_vertex_byte_size,
-	VkDeviceSize				buffer_index_byte_size
+vk2d::_internal::MeshBuffer::BufferBlock::BufferBlock(
+	vk2d::_internal::MeshBuffer	*	mesh_buffer_parent,
+	VkDeviceSize					buffer_vertex_byte_size,
+	VkDeviceSize					buffer_index_byte_size
 )
 {
-	parent			= mesh_buffer_parent;
+	renderer_parent			= mesh_buffer_parent;
 
-	total_aligned_vertex_byte_size				= CalculateAlignmentForBuffer( buffer_vertex_byte_size, parent->physicald_device_limits );
-	total_aligned_index_byte_size				= CalculateAlignmentForBuffer( buffer_index_byte_size, parent->physicald_device_limits );
+	total_aligned_vertex_byte_size				= vk2d::_internal::CalculateAlignmentForBuffer( buffer_vertex_byte_size, renderer_parent->physicald_device_limits );
+	total_aligned_index_byte_size				= vk2d::_internal::CalculateAlignmentForBuffer( buffer_index_byte_size, renderer_parent->physicald_device_limits );
 	total_aligned_buffer_byte_size				= total_aligned_vertex_byte_size + total_aligned_index_byte_size;
 
 	vertices.reserve( total_aligned_vertex_byte_size / sizeof( Vertex ) );
@@ -251,50 +253,42 @@ MeshBuffer::BufferBlock::BufferBlock(
 
 	// Staging buffer.
 	buffer_create_info.usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
-	if( vkCreateBuffer(
-		parent->device,
-		&buffer_create_info,
-		nullptr,
-		&staging_buffer
-	) != VK_SUCCESS ) return;
-
-	staging_buffer_memory = parent->device_memory_pool->AllocateAndBindBufferMemory(
-		staging_buffer,
+	staging_buffer			= renderer_parent->device_memory_pool->CreateCompleteBufferResource(
 		&buffer_create_info,
 		VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT
 	);
+	if( staging_buffer != VK_SUCCESS ) {
+		renderer_parent->renderer_parent->Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot create MeshBuffer staging buffer!" );
+		return;
+	}
 
 	// Device buffer.
 	buffer_create_info.usage = VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT;
-	if( vkCreateBuffer(
-		parent->device,
-		&buffer_create_info,
-		nullptr,
-		&device_buffer
-	) != VK_SUCCESS ) return;
-
-	device_buffer_memory = parent->device_memory_pool->AllocateAndBindBufferMemory(
-		device_buffer,
+	device_buffer			= renderer_parent->device_memory_pool->CreateCompleteBufferResource(
 		&buffer_create_info,
 		VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT
 	);
+	if( staging_buffer != VK_SUCCESS ) {
+		renderer_parent->renderer_parent->Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot create MeshBuffer device buffer!" );
+		return;
+	}
 
 	is_good			= true;
 }
 
-MeshBuffer::BufferBlock::~BufferBlock()
+vk2d::_internal::MeshBuffer::BufferBlock::~BufferBlock()
 {
-	vkDestroyBuffer( parent->device, staging_buffer, nullptr );
-	vkDestroyBuffer( parent->device, device_buffer, nullptr );
-
-	parent->device_memory_pool->FreeMemory( staging_buffer_memory );
-	parent->device_memory_pool->FreeMemory( device_buffer_memory );
+	renderer_parent->device_memory_pool->FreeCompleteResource( staging_buffer );
+	renderer_parent->device_memory_pool->FreeCompleteResource( device_buffer );
 }
 
-bool MeshBuffer::BufferBlock::CopyVectorsToStagingBuffers()
+bool vk2d::_internal::MeshBuffer::BufferBlock::CopyVectorsToStagingBuffers()
 {
-	void * original_mapped_memory = staging_buffer_memory.Map<void*>();
-	if( !original_mapped_memory ) return false;
+	void * original_mapped_memory = staging_buffer.memory.Map<void*>();
+	if( !original_mapped_memory ) {
+		renderer_parent->renderer_parent->Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot map MeshBuffer staging buffer data!" );
+		return false;
+	}
 
 	void * vertex_mapped_memory	= (uint8_t*)original_mapped_memory + aligned_vertex_buffer_byte_offset;
 	void * index_mapped_memory	= (uint8_t*)original_mapped_memory + aligned_index_buffer_byte_offset;
@@ -319,7 +313,7 @@ bool MeshBuffer::BufferBlock::CopyVectorsToStagingBuffers()
 //		}
 	}
 
-	staging_buffer_memory.Unmap();
+	staging_buffer.memory.Unmap();
 
 	vertices.clear();
 	indices.clear();
@@ -332,9 +326,3 @@ bool MeshBuffer::BufferBlock::CopyVectorsToStagingBuffers()
 
 	return true;
 }
-
-
-
-} // _internal
-
-} // vk2d

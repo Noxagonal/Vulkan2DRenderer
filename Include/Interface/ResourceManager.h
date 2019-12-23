@@ -2,6 +2,7 @@
 
 #include "../Core/Common.h"
 #include "../Interface/TextureResource.h"
+#include "RenderPrimitives.h"
 
 #include <memory>
 #include <filesystem>
@@ -17,25 +18,24 @@ class ResourceManagerImpl;
 }
 
 class ResourceManager {
-	friend class _internal::RendererImpl;
+	friend class vk2d::_internal::RendererImpl;
 
 public:
 	VK2D_API																ResourceManager(
-		_internal::RendererImpl											*	parent_renderer
+		vk2d::_internal::RendererImpl									*	parent_renderer
 	);
 
 	VK2D_API																~ResourceManager();
 
 	VK2D_API TextureResource				*	VK2D_APIENTRY				CreateTextureResource(
-		uint32_t								extent_x,
-		uint32_t								extent_y,
-		const std::vector<vk2d::Texel>		&	texels );
+		vk2d::Vector2u							size,
+		const std::vector<vk2d::Color8>		&	texels );
 
-	VK2D_API TextureResource				*	VK2D_APIENTRY				LoadTextureResource(
+	VK2D_API vk2d::TextureResource			*	VK2D_APIENTRY				LoadTextureResource(
 		std::filesystem::path												file_path );
 
 	VK2D_API void								VK2D_APIENTRY				DestroyResource(
-		Resource														*	resource );
+		vk2d::Resource													*	resource );
 
 	VK2D_API bool								VK2D_APIENTRY				IsGood();
 

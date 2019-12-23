@@ -12,6 +12,7 @@ namespace _internal {
 
 
 
+class RendererImpl;
 class DescriptorPoolRequirements;
 class DescriptorSetLayout;
 class DescriptorAutoPool;
@@ -33,7 +34,7 @@ struct PoolDescriptorSet;
 // that would waste the least amount of resources, this problem becomes more severe when considering different amounts
 // of different descriptor types, we need some heuristics for this and 100% resource utilization will be near impossible.
 class DescriptorPoolRequirements {
-	friend class DescriptorSetLayout;
+	friend class vk2d::_internal::DescriptorSetLayout;
 
 public:
 	inline const std::array<uint32_t, VK_DESCRIPTOR_TYPE_RANGE_SIZE>	&	GetBindingAmounts() const
@@ -57,13 +58,15 @@ struct PoolCategory {
 	uint64_t						counter							= {};
 };
 
-class DescriptorSetLayout {
-	friend std::unique_ptr<DescriptorSetLayout>						CreateDescriptorSetLayout(
+class vk2d::_internal::DescriptorSetLayout {
+	friend std::unique_ptr<vk2d::_internal::DescriptorSetLayout>	CreateDescriptorSetLayout(
+		vk2d::_internal::RendererImpl							*	renderer,
 		VkDevice													device,
 		const VkDescriptorSetLayoutCreateInfo					*	pCreateInfo );
 
 private:
 																	DescriptorSetLayout(
+		vk2d::_internal::RendererImpl							*	renderer,
 		VkDevice													device,
 		const VkDescriptorSetLayoutCreateInfo					*	pCreateInfo );
 public:
@@ -71,24 +74,27 @@ public:
 																	~DescriptorSetLayout();
 
 	 VkDescriptorSetLayout											GetVulkanDescriptorSetLayout() const;
-	 const VkDescriptorSetLayoutCreateInfo				&			GetDescriptorSetLayoutCreateInfo() const;
+	 const VkDescriptorSetLayoutCreateInfo						&	GetDescriptorSetLayoutCreateInfo() const;
 
 	// Somewhat specialized and mostly used only by the VKRende lirar,
 	// Read more above in the DescriptorPoolCategory struct defniton.
-	 const DescriptorPoolRequirements					&			GetDescriptorPoolRequirements() const;
+	 const vk2d::_internal::DescriptorPoolRequirements			&	GetDescriptorPoolRequirements() const;
 
 																	operator VkDescriptorSetLayout() const;
 
 private:
+	vk2d::_internal::RendererImpl								*	renderer_parent							= {};
+
 	VkDescriptorSetLayoutCreateInfo									createInfo								= {};
 	VkDevice														refDevice								= {};
 	VkDescriptorSetLayout											setLayout								= {};
-	DescriptorPoolRequirements										descriptorPoolRequirements				= {};
+	vk2d::_internal::DescriptorPoolRequirements						descriptorPoolRequirements				= {};
 
 	bool															is_good									= {};
 };
 
-std::unique_ptr<DescriptorSetLayout>								CreateDescriptorSetLayout(
+std::unique_ptr<vk2d::_internal::DescriptorSetLayout>				CreateDescriptorSetLayout(
+	vk2d::_internal::RendererImpl								*	renderer,
 	VkDevice														device,
 	const VkDescriptorSetLayoutCreateInfo						*	pCreateInfo );
 
@@ -97,7 +103,7 @@ std::unique_ptr<DescriptorSetLayout>								CreateDescriptorSetLayout(
 
 
 struct PoolDescriptorSet {
-	friend class DescriptorAutoPool;
+	friend class vk2d::_internal::DescriptorAutoPool;
 
 	operator VkResult() const;
 
@@ -109,29 +115,34 @@ private:
 };
 
 class DescriptorAutoPool {
-	friend std::unique_ptr<DescriptorAutoPool>						CreateDescriptorAutoPool(
+	friend std::unique_ptr<vk2d::_internal::DescriptorAutoPool>		CreateDescriptorAutoPool(
+		vk2d::_internal::RendererImpl							*	renderer,
 		VkDevice													device );
 
 private:
 																	DescriptorAutoPool(
+		vk2d::_internal::RendererImpl							*	renderer,
 		VkDevice													device );
 public:
 																	~DescriptorAutoPool();
 
-	 PoolDescriptorSet												AllocateDescriptorSet(
-		const DescriptorSetLayout								&	rForDescriptorSetLaout);
+	vk2d::_internal::PoolDescriptorSet								AllocateDescriptorSet(
+		const vk2d::_internal::DescriptorSetLayout				&	rForDescriptorSetLaout);
 
 	 void															FreeDescriptorSet(
-		PoolDescriptorSet										&	pDescriptorSet );
+		 vk2d::_internal::PoolDescriptorSet						&	pDescriptorSet );
 
 private:
+	vk2d::_internal::RendererImpl								*	renderer_parent			= {};
+
 	VkDevice														refDevice				= {};
-	std::vector<PoolCategory>										poolCategories			= {};
+	std::vector<vk2d::_internal::PoolCategory>						poolCategories			= {};
 
 	bool															is_good					= {};
 };
 
-std::unique_ptr<DescriptorAutoPool>									CreateDescriptorAutoPool(
+std::unique_ptr<vk2d::_internal::DescriptorAutoPool>				CreateDescriptorAutoPool(
+	vk2d::_internal::RendererImpl								*	renderer,
 	VkDevice														device );
 
 

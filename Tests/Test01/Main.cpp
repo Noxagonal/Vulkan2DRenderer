@@ -13,22 +13,42 @@ constexpr double RAD			= PI * 2.0;
 
 class EventHandler : public vk2d::WindowEventHandler {
 public:
-	void							VK2D_APIENTRY		EventWindowClose(
-		vk2d::Window			*	window
+	void								VK2D_APIENTRY		EventWindowClose(
+		vk2d::Window				*	window
 	)
 	{
 		window->CloseWindow();
 	};
 
-	void							VK2D_APIENTRY		EventKeyboard(
-		vk2d::Window			*	window,
-		vk2d::KeyboardButton		button,
-		int							scancode,
-		vk2d::ButtonAction			action,
-		vk2d::ModifierKeyFlags		modifierKeys )
+	void								VK2D_APIENTRY		EventKeyboard(
+		vk2d::Window				*	window,
+		vk2d::KeyboardButton			button,
+		int								scancode,
+		vk2d::ButtonAction				action,
+		vk2d::ModifierKeyFlags			modifierKeys
+	)
 	{
-		if( button == vk2d::KeyboardButton::KEY_ESCAPE && action == vk2d::ButtonAction::PRESS ) {
-			window->CloseWindow();
+		if( action == vk2d::ButtonAction::PRESS ) {
+			if( button == vk2d::KeyboardButton::KEY_ESCAPE ) {
+				window->CloseWindow();
+			}
+			if( button == vk2d::KeyboardButton::KEY_PRINT_SCREEN ) {
+				window->TakeScreenshot( "../../Screenshots/01.jpg", false );
+			}
+		}
+	};
+
+	void								VK2D_APIENTRY		EventScreenshot(
+		vk2d::Window				*	window,
+		const std::filesystem::path	&	path,
+		bool							success,
+		const std::string			&	errorMessage
+	)
+	{
+		if( success ) {
+			std::cout << "Screenshot saved successfully." << std::endl;
+		} else {
+			std::cout << "Screenshot error: " << errorMessage << std::endl;
 		}
 	};
 };
@@ -44,15 +64,14 @@ int main()
 	vk2d::SamplerCreateInfo sampler_create_info {};
 	sampler_create_info.address_mode_u		= vk2d::SamplerAddressMode::MIRRORED_REPEAT;
 	sampler_create_info.address_mode_v		= vk2d::SamplerAddressMode::CLAMP_TO_BORDER;
-	sampler_create_info.border_color		= vk2d::Color( 0.0f, 0.2f, 1.0f, 0.5f );
+	sampler_create_info.border_color		= vk2d::Colorf( 0.0f, 0.2f, 1.0f, 0.5f );
 	auto sampler			= renderer->CreateSampler( sampler_create_info );
 
 	auto texture			= renderer->GetResourceManager()->LoadTextureResource( "../../TestData/GrafGear_128.png" );
 
 	EventHandler							event_handler;
 	vk2d::WindowCreateInfo					window_create_info {};
-	window_create_info.width				= 800;
-	window_create_info.height				= 600;
+	window_create_info.size					= { 800, 600 };
 	window_create_info.coordinate_space		= vk2d::WindowCoordinateSpace::TEXEL_SPACE_CENTERED;
 	window_create_info.samples				= renderer->GetMaximumSupportedMultisampling();
 	window_create_info.event_handler		= &event_handler;

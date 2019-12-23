@@ -27,7 +27,10 @@ VkDeviceSize								CalculateAlignmentForBuffer(
 	return VkDeviceSize( ( ( ( int64_t( unaligned_size ) - 1 ) / buffer_alignment ) + 1 ) * buffer_alignment );
 }
 
-VK2D_API uint32_t VK2D_APIENTRY FindMemoryTypeIndex( const VkPhysicalDeviceMemoryProperties & memoryProperties, const VkMemoryRequirements & memoryRequirements, VkMemoryPropertyFlags propertyFlags )
+uint32_t FindMemoryTypeIndex(
+	const VkPhysicalDeviceMemoryProperties		&	memoryProperties,
+	const VkMemoryRequirements					&	memoryRequirements,
+	VkMemoryPropertyFlags							propertyFlags )
 {
 	for( uint32_t i=0; i < memoryProperties.memoryTypeCount; ++i ) {
 		if( memoryRequirements.memoryTypeBits & ( 1 << i ) ) {
@@ -39,7 +42,7 @@ VK2D_API uint32_t VK2D_APIENTRY FindMemoryTypeIndex( const VkPhysicalDeviceMemor
 	return UINT32_MAX;
 }
 
-VK2D_API VkMemoryRequirements VK2D_APIENTRY GetBufferMemoryRequirements(
+VkMemoryRequirements GetBufferMemoryRequirements(
 	VkDevice			device,
 	VkBuffer			buffer )
 {
@@ -48,7 +51,7 @@ VK2D_API VkMemoryRequirements VK2D_APIENTRY GetBufferMemoryRequirements(
 	return ret;
 }
 
-VK2D_API VkMemoryRequirements VK2D_APIENTRY GetImageMemoryRequirements(
+VkMemoryRequirements GetImageMemoryRequirements(
 	VkDevice			device,
 	VkImage				image )
 {
@@ -57,7 +60,7 @@ VK2D_API VkMemoryRequirements VK2D_APIENTRY GetImageMemoryRequirements(
 	return ret;
 }
 
-void VK2D_APIENTRY FreeChunkMemory(
+void FreeChunkMemory(
 	VkDevice					device,
 	VkDeviceMemory				memory,
 	VkAllocationCallbacks	*	pAllocationCallbacks )
@@ -67,7 +70,15 @@ void VK2D_APIENTRY FreeChunkMemory(
 	vkFreeMemory( device, memory, pAllocationCallbacks );
 }
 
-VK2D_API DeviceMemoryPool::DeviceMemoryPool(
+
+
+} // _internal
+
+} // vk2d
+
+
+
+vk2d::_internal::DeviceMemoryPool::DeviceMemoryPool(
 	VkPhysicalDevice					physicalDevice,
 	VkDevice							device,
 	VkDeviceSize						linearAllocationChunkSize,
@@ -99,17 +110,17 @@ VK2D_API DeviceMemoryPool::DeviceMemoryPool(
 	is_good			= true;
 }
 
-VK2D_API DeviceMemoryPool::~DeviceMemoryPool()
+vk2d::_internal::DeviceMemoryPool::~DeviceMemoryPool()
 {
 	if( data ) {
 		for( auto & c : data->linearChunks ) {
 			for( auto & t : c ) {
-				FreeChunkMemory( data->refDevice, t.memory, nullptr );
+				vk2d::_internal::FreeChunkMemory( data->refDevice, t.memory, nullptr );
 			}
 		}
 		for( auto & c : data->nonLinearChunks ) {
 			for( auto & t : c ) {
-				FreeChunkMemory( data->refDevice, t.memory, nullptr );
+				vk2d::_internal::FreeChunkMemory( data->refDevice, t.memory, nullptr );
 			}
 		}
 		data->linearChunks.clear();
@@ -117,31 +128,31 @@ VK2D_API DeviceMemoryPool::~DeviceMemoryPool()
 	}
 }
 
-VK2D_API PoolMemory VK2D_APIENTRY DeviceMemoryPool::AllocateBufferMemory(
+vk2d::_internal::PoolMemory vk2d::_internal::DeviceMemoryPool::AllocateBufferMemory(
 	VkBuffer						buffer,
 	const VkBufferCreateInfo	*	pBufferCreateInfo,
 	VkMemoryPropertyFlags			propertyFlags )
 {
 	if( data ) {
-		auto memoryRequirements			= GetBufferMemoryRequirements( data->refDevice, buffer );
-		auto memoryTypeIndex			= FindMemoryTypeIndex( data->physicalDeviceMemoryProperties, memoryRequirements, propertyFlags );
+		auto memoryRequirements			= vk2d::_internal::GetBufferMemoryRequirements( data->refDevice, buffer );
+		auto memoryTypeIndex			= vk2d::_internal::FindMemoryTypeIndex( data->physicalDeviceMemoryProperties, memoryRequirements, propertyFlags );
 
-		if( memoryTypeIndex == UINT32_MAX ) return PoolMemory();
+		if( memoryTypeIndex == UINT32_MAX ) return vk2d::_internal::PoolMemory();
 		return AllocateMemory( true, memoryRequirements, memoryTypeIndex );
 	}
 	return {};
 }
 
-VK2D_API PoolMemory VK2D_APIENTRY DeviceMemoryPool::AllocateImageMemory(
+vk2d::_internal::PoolMemory vk2d::_internal::DeviceMemoryPool::AllocateImageMemory(
 	VkImage							image,
 	const VkImageCreateInfo		*	pImageCreateInfo,
 	VkMemoryPropertyFlags			propertyFlags )
 {
 	if( data ) {
-		auto memoryRequirements			= GetImageMemoryRequirements( data->refDevice, image );
-		auto memoryTypeIndex			= FindMemoryTypeIndex( data->physicalDeviceMemoryProperties, memoryRequirements, propertyFlags );
+		auto memoryRequirements			= vk2d::_internal::GetImageMemoryRequirements( data->refDevice, image );
+		auto memoryTypeIndex			= vk2d::_internal::FindMemoryTypeIndex( data->physicalDeviceMemoryProperties, memoryRequirements, propertyFlags );
 
-		if( memoryTypeIndex == UINT32_MAX ) return PoolMemory();
+		if( memoryTypeIndex == UINT32_MAX ) return vk2d::_internal::PoolMemory();
 		if( pImageCreateInfo->tiling == VK_IMAGE_TILING_OPTIMAL ) {
 			return AllocateMemory( false, memoryRequirements, memoryTypeIndex );
 		} else {
@@ -151,12 +162,12 @@ VK2D_API PoolMemory VK2D_APIENTRY DeviceMemoryPool::AllocateImageMemory(
 	return {};
 }
 
-VK2D_API PoolMemory VK2D_APIENTRY DeviceMemoryPool::AllocateAndBindBufferMemory(
+vk2d::_internal::PoolMemory vk2d::_internal::DeviceMemoryPool::AllocateAndBindBufferMemory(
 	VkBuffer						buffer,
 	const VkBufferCreateInfo	*	pBufferCreateInfo,
 	VkMemoryPropertyFlags			propertyFlags )
 {
-	PoolMemory memory = AllocateBufferMemory(
+	vk2d::_internal::PoolMemory memory = AllocateBufferMemory(
 		buffer,
 		pBufferCreateInfo,
 		propertyFlags );
@@ -178,12 +189,12 @@ VK2D_API PoolMemory VK2D_APIENTRY DeviceMemoryPool::AllocateAndBindBufferMemory(
 	return memory;
 }
 
-VK2D_API PoolMemory VK2D_APIENTRY DeviceMemoryPool::AllocateAndBindImageMemory(
+vk2d::_internal::PoolMemory vk2d::_internal::DeviceMemoryPool::AllocateAndBindImageMemory(
 	VkImage							image,
 	const VkImageCreateInfo		*	pImageCreateInfo,
 	VkMemoryPropertyFlags			propertyFlags )
 {
-	PoolMemory memory = AllocateImageMemory(
+	vk2d::_internal::PoolMemory memory = AllocateImageMemory(
 		image,
 		pImageCreateInfo,
 		propertyFlags );
@@ -205,7 +216,7 @@ VK2D_API PoolMemory VK2D_APIENTRY DeviceMemoryPool::AllocateAndBindImageMemory(
 	return memory;
 }
 
-VK2D_API CompleteBufferResource VK2D_APIENTRY DeviceMemoryPool::CreateCompleteBufferResource(
+vk2d::_internal::CompleteBufferResource vk2d::_internal::DeviceMemoryPool::CreateCompleteBufferResource(
 	const VkBufferCreateInfo		*	pBufferCreateInfo,
 	VkMemoryPropertyFlags				propertyFlags,
 	const VkBufferViewCreateInfo	*	pBufferViewCreateInfo )
@@ -256,7 +267,7 @@ VK2D_API CompleteBufferResource VK2D_APIENTRY DeviceMemoryPool::CreateCompleteBu
 		}
 	}
 
-	CompleteBufferResource resource {};
+	vk2d::_internal::CompleteBufferResource resource {};
 	resource.result			= VK_SUCCESS;
 	resource.buffer			= object;
 	resource.view			= view;
@@ -264,7 +275,7 @@ VK2D_API CompleteBufferResource VK2D_APIENTRY DeviceMemoryPool::CreateCompleteBu
 	return resource;
 }
 
-VK2D_API CompleteImageResource VK2D_APIENTRY DeviceMemoryPool::CreateCompleteImageResource(
+vk2d::_internal::CompleteImageResource vk2d::_internal::DeviceMemoryPool::CreateCompleteImageResource(
 	const VkImageCreateInfo			*	pImageCreateInfo,
 	VkMemoryPropertyFlags				propertyFlags,
 	const VkImageViewCreateInfo		*	pImageViewCreateInfo )	// Optional
@@ -315,7 +326,7 @@ VK2D_API CompleteImageResource VK2D_APIENTRY DeviceMemoryPool::CreateCompleteIma
 		}
 	}
 
-	CompleteImageResource resource {};
+	vk2d::_internal::CompleteImageResource resource {};
 	resource.result			= VK_SUCCESS;
 	resource.image			= object;
 	resource.view			= view;
@@ -323,8 +334,8 @@ VK2D_API CompleteImageResource VK2D_APIENTRY DeviceMemoryPool::CreateCompleteIma
 	return resource;
 }
 
-VK2D_API void VK2D_APIENTRY DeviceMemoryPool::FreeMemory(
-	PoolMemory			&	memory )
+void vk2d::_internal::DeviceMemoryPool::FreeMemory(
+	vk2d::_internal::PoolMemory			&	memory )
 {
 	if( memory.isAllocated ) {
 		FreeBlock( memory.memoryTypeIndex, memory.isLinear, memory.chunkID, memory.blockID );
@@ -332,8 +343,8 @@ VK2D_API void VK2D_APIENTRY DeviceMemoryPool::FreeMemory(
 	memory.isAllocated		= false;
 }
 
-VK2D_API void VK2D_APIENTRY DeviceMemoryPool::FreeCompleteResource(
-	CompleteBufferResource		&	resource )
+void vk2d::_internal::DeviceMemoryPool::FreeCompleteResource(
+	vk2d::_internal::CompleteBufferResource		&	resource )
 {
 	vkDestroyBuffer(
 		data->refDevice,
@@ -349,8 +360,8 @@ VK2D_API void VK2D_APIENTRY DeviceMemoryPool::FreeCompleteResource(
 	resource = {};
 }
 
-VK2D_API void VK2D_APIENTRY DeviceMemoryPool::FreeCompleteResource(
-	CompleteImageResource		&	resource )
+void vk2d::_internal::DeviceMemoryPool::FreeCompleteResource(
+	vk2d::_internal::CompleteImageResource		&	resource )
 {
 	vkDestroyImage(
 		data->refDevice,
@@ -367,7 +378,7 @@ VK2D_API void VK2D_APIENTRY DeviceMemoryPool::FreeCompleteResource(
 }
 
 VkPhysicalDeviceProperties emptyVkPhysicalDeviceProperties {};
-VK2D_API const VkPhysicalDeviceProperties & VK2D_APIENTRY DeviceMemoryPool::GetPhysicalDeviceProperties()
+const VkPhysicalDeviceProperties & vk2d::_internal::DeviceMemoryPool::GetPhysicalDeviceProperties()
 {
 	if( data ) {
 		return data->physicalDeviceProperties;
@@ -376,7 +387,7 @@ VK2D_API const VkPhysicalDeviceProperties & VK2D_APIENTRY DeviceMemoryPool::GetP
 }
 
 VkPhysicalDeviceMemoryProperties emptyVkPhysicalDeviceMemoryProperties {};
-VK2D_API const VkPhysicalDeviceMemoryProperties & VK2D_APIENTRY DeviceMemoryPool::GetPhysicalDeviceMemoryProperties()
+const VkPhysicalDeviceMemoryProperties & vk2d::_internal::DeviceMemoryPool::GetPhysicalDeviceMemoryProperties()
 {
 	if( data ) {
 		return data->physicalDeviceMemoryProperties;
@@ -384,10 +395,10 @@ VK2D_API const VkPhysicalDeviceMemoryProperties & VK2D_APIENTRY DeviceMemoryPool
 	return emptyVkPhysicalDeviceMemoryProperties;
 }
 
-VK2D_API std::pair<VkResult, DeviceMemoryPoolChunk*> VK2D_APIENTRY DeviceMemoryPool::AllocateChunk(
-	std::list<DeviceMemoryPoolChunk>	*	chunkGroup,
-	VkDeviceSize							size,
-	uint32_t								memoryTypeIndex )
+std::pair<VkResult, vk2d::_internal::DeviceMemoryPoolChunk*> vk2d::_internal::DeviceMemoryPool::AllocateChunk(
+	std::list<vk2d::_internal::DeviceMemoryPoolChunk>	*	chunkGroup,
+	VkDeviceSize											size,
+	uint32_t												memoryTypeIndex )
 {
 	assert( chunkGroup );
 
@@ -402,7 +413,7 @@ VK2D_API std::pair<VkResult, DeviceMemoryPoolChunk*> VK2D_APIENTRY DeviceMemoryP
 		return { result, nullptr };
 	}
 
-	chunkGroup->push_back( DeviceMemoryPoolChunk() );
+	chunkGroup->push_back( vk2d::_internal::DeviceMemoryPoolChunk() );
 	auto new_chunk		= &chunkGroup->back();
 	new_chunk->id		= data->chunkIDCounter;
 	new_chunk->memory	= memory;
@@ -417,8 +428,8 @@ VK2D_API std::pair<VkResult, DeviceMemoryPoolChunk*> VK2D_APIENTRY DeviceMemoryP
 	return { result, new_chunk };
 }
 
-VK2D_API DeviceMemoryPoolChunk::Block * VK2D_APIENTRY DeviceMemoryPool::AllocateBlockInChunk(
-	DeviceMemoryPoolChunk		*	chunk,
+vk2d::_internal::DeviceMemoryPoolChunk::Block * vk2d::_internal::DeviceMemoryPool::AllocateBlockInChunk(
+	vk2d::_internal::DeviceMemoryPoolChunk		*	chunk,
 	VkMemoryRequirements		&	rMemoryRequirements )
 {
 	assert( chunk );
@@ -446,7 +457,7 @@ VK2D_API DeviceMemoryPoolChunk::Block * VK2D_APIENTRY DeviceMemoryPool::Allocate
 	return nullptr;
 }
 
-VK2D_API PoolMemory VK2D_APIENTRY DeviceMemoryPool::AllocateMemory(
+vk2d::_internal::PoolMemory vk2d::_internal::DeviceMemoryPool::AllocateMemory(
 	bool					isLinear,
 	VkMemoryRequirements	memoryRequirements,
 	uint32_t				memoryTypeIndex )
@@ -455,15 +466,15 @@ VK2D_API PoolMemory VK2D_APIENTRY DeviceMemoryPool::AllocateMemory(
 
 	assert( memoryTypeIndex != UINT32_MAX );
 
-	std::list<DeviceMemoryPoolChunk>	*	chunkGroup		= nullptr;
+	std::list<vk2d::_internal::DeviceMemoryPoolChunk>	*	chunkGroup		= nullptr;
 	if( isLinear ) {
 		chunkGroup		= &data->linearChunks[ memoryTypeIndex ];
 	} else {
 		chunkGroup		= &data->nonLinearChunks[ memoryTypeIndex ];
 	}
 
-	DeviceMemoryPoolChunk			*	selectedChunk	= nullptr;
-	DeviceMemoryPoolChunk::Block	*	selectedBlock	= nullptr;
+	vk2d::_internal::DeviceMemoryPoolChunk			*	selectedChunk	= nullptr;
+	vk2d::_internal::DeviceMemoryPoolChunk::Block	*	selectedBlock	= nullptr;
 	for( auto & c : *chunkGroup ) {
 		selectedChunk	= &c;
 		selectedBlock					= AllocateBlockInChunk( selectedChunk, memoryRequirements );
@@ -484,7 +495,7 @@ VK2D_API PoolMemory VK2D_APIENTRY DeviceMemoryPool::AllocateMemory(
 
 		// ran out of memory
 		if( !selectedChunk ) {
-			PoolMemory pm {};
+			vk2d::_internal::PoolMemory pm {};
 			pm.result		= allocatedChunkInfo.first;
 			return pm;
 		}
@@ -494,14 +505,14 @@ VK2D_API PoolMemory VK2D_APIENTRY DeviceMemoryPool::AllocateMemory(
 		// should never happen, error
 		assert( selectedBlock );
 		if( !selectedBlock ) {
-			PoolMemory pm {};
+			vk2d::_internal::PoolMemory pm {};
 			pm.result		= allocatedChunkInfo.first;
 			return pm;
 		}
 	}
 
 	// construct PoolMemory
-	PoolMemory ret {};
+	vk2d::_internal::PoolMemory ret {};
 	ret.allocated_from		= data.get();
 	ret.memory				= selectedChunk->memory;
 	ret.offset				= selectedBlock->offset;
@@ -516,9 +527,9 @@ VK2D_API PoolMemory VK2D_APIENTRY DeviceMemoryPool::AllocateMemory(
 	return ret;
 }
 
-VK2D_API void VK2D_APIENTRY DeviceMemoryPool::FreeChunk(
-	std::list<DeviceMemoryPoolChunk>	*	chunkGroup,
-	DeviceMemoryPoolChunk				*	chunk
+void vk2d::_internal::DeviceMemoryPool::FreeChunk(
+	std::list<vk2d::_internal::DeviceMemoryPoolChunk>	*	chunkGroup,
+	vk2d::_internal::DeviceMemoryPoolChunk				*	chunk
 )
 {
 	assert( chunkGroup );
@@ -532,7 +543,7 @@ VK2D_API void VK2D_APIENTRY DeviceMemoryPool::FreeChunk(
 	}
 }
 
-VK2D_API void VK2D_APIENTRY DeviceMemoryPool::FreeBlock(
+void vk2d::_internal::DeviceMemoryPool::FreeBlock(
 	uint32_t		memoryTypeIndex,
 	bool			isLinear,
 	uint64_t		chunkID,
@@ -542,14 +553,14 @@ VK2D_API void VK2D_APIENTRY DeviceMemoryPool::FreeBlock(
 	assert( chunkID != UINT64_MAX );
 	assert( blockID != UINT64_MAX );
 
-	std::list<DeviceMemoryPoolChunk>	*	chunkGroup		= nullptr;
+	std::list<vk2d::_internal::DeviceMemoryPoolChunk>	*	chunkGroup		= nullptr;
 	if( isLinear ) {
 		chunkGroup						= &data->linearChunks[ memoryTypeIndex ];
 	} else {
 		chunkGroup						= &data->nonLinearChunks[ memoryTypeIndex ];
 	}
 
-	DeviceMemoryPoolChunk				*	selectedChunk	= nullptr;
+	vk2d::_internal::DeviceMemoryPoolChunk				*	selectedChunk	= nullptr;
 	for( auto & c : *chunkGroup ) {
 		if( c.id == chunkID ) {
 			selectedChunk				= &c;
@@ -573,14 +584,14 @@ VK2D_API void VK2D_APIENTRY DeviceMemoryPool::FreeBlock(
 
 
 
-VK2D_API std::unique_ptr<DeviceMemoryPool> VK2D_APIENTRY MakeDeviceMemoryPool(
+std::unique_ptr<vk2d::_internal::DeviceMemoryPool> vk2d::_internal::MakeDeviceMemoryPool(
 	VkPhysicalDevice		physicalDevice,
 	VkDevice				device,
 	VkDeviceSize			linearAllocationChunkSize,
 	VkDeviceSize			nonLinearAllocationChunkSize )
 {
-	auto device_memory_pool = std::unique_ptr<DeviceMemoryPool>(
-		new DeviceMemoryPool(
+	auto device_memory_pool = std::unique_ptr<vk2d::_internal::DeviceMemoryPool>(
+		new vk2d::_internal::DeviceMemoryPool(
 			physicalDevice,
 			device,
 			linearAllocationChunkSize,
@@ -591,9 +602,3 @@ VK2D_API std::unique_ptr<DeviceMemoryPool> VK2D_APIENTRY MakeDeviceMemoryPool(
 	}
 	return {};
 }
-
-
-
-} // _internal
-
-} // vk2d

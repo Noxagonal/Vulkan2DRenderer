@@ -43,7 +43,7 @@ struct SamplerCreateInfo {
 	vk2d::SamplerMipmapMode				mipmap_mode						= vk2d::SamplerMipmapMode::LINEAR;
 	vk2d::SamplerAddressMode			address_mode_u					= vk2d::SamplerAddressMode::REPEAT;
 	vk2d::SamplerAddressMode			address_mode_v					= vk2d::SamplerAddressMode::REPEAT;
-	vk2d::Color							border_color					= { 0.0f, 0.0f, 0.0f, 1.0f };
+	vk2d::Colorf						border_color					= { 0.0f, 0.0f, 0.0f, 1.0f };
 	bool								mipmap_enable					= true;
 	float								mipmap_max_anisotropy			= 16.0f;
 	float								mipmap_level_of_detail_bias		= 0.0f;
