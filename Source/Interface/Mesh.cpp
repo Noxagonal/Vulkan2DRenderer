@@ -7,16 +7,15 @@
 
 
 
-constexpr double PI				= 3.14159265358979323846;
-constexpr double RAD			= PI * 2.0;
+namespace vk2d {
+namespace _internal {
 
-
-
-vk2d::AABB2d CalculateAABBFromPointList(
-	const std::vector<vk2d::Vector2f>		&	points
+template<typename T>
+vk2d::AABB2Base<T> CalculateAABBFromPointList(
+	const std::vector<vk2d::Vector2Base<T>>		&	points
 )
 {
-	vk2d::AABB2d ret { points[ 0 ], points[ 0 ] };
+	vk2d::AABB2Base<T> ret { points[ 0 ], points[ 0 ] };
 	for( auto p : points ) {
 		ret.top_left.x		= std::min( ret.top_left.x, p.x );
 		ret.top_left.y		= std::min( ret.top_left.y, p.y );
@@ -26,11 +25,11 @@ vk2d::AABB2d CalculateAABBFromPointList(
 	return ret;
 }
 
-vk2d::AABB2d CalculateAABBFromVertexList(
+vk2d::AABB2f CalculateAABBFromVertexList(
 	const std::vector<vk2d::Vertex>			&	vertices
 )
 {
-	vk2d::AABB2d ret { vertices[ 0 ].vertex_coords, vertices[ 0 ].vertex_coords };
+	vk2d::AABB2f ret { vertices[ 0 ].vertex_coords, vertices[ 0 ].vertex_coords };
 	for( auto p : vertices ) {
 		ret.top_left.x		= std::min( ret.top_left.x, p.vertex_coords.x );
 		ret.top_left.y		= std::min( ret.top_left.y, p.vertex_coords.y );
@@ -61,6 +60,9 @@ vk2d::Vertex CreateDefaultValueVertex()
 	v.point_size		= 1.0f;
 	return v;
 }
+
+} // _internal
+} // vk2d
 
 
 
@@ -118,18 +120,18 @@ VK2D_API void VK2D_APIENTRY vk2d::Mesh::Wave(
 	vk2d::Vector2f				origin
 )
 {
-	auto aabb	= CalculateAABBFromVertexList( vertices );
+	auto aabb	= vk2d::_internal::CalculateAABBFromVertexList( vertices );
 	auto size	= aabb.bottom_right - aabb.top_left;
 
 	vk2d::Vector2f	dir {
 		std::cos( direction_radians ),
 		std::sin( direction_radians )
 	};
-	auto forward_rotation_matrix = vk2d::Matrix2(
+	auto forward_rotation_matrix = vk2d::Matrix2f(
 		+dir.x, -dir.y,
 		+dir.y, +dir.x
 	);
-	auto backward_rotation_matrix = vk2d::Matrix2(
+	auto backward_rotation_matrix = vk2d::Matrix2f(
 		+dir.x, +dir.y,
 		-dir.y, +dir.x
 	);
@@ -208,11 +210,11 @@ VK2D_API void VK2D_APIENTRY vk2d::Mesh::WaveUV(
 		std::cos( direction_radians ),
 		std::sin( direction_radians )
 	};
-	auto forward_rotation_matrix = vk2d::Matrix2(
+	auto forward_rotation_matrix = vk2d::Matrix2f(
 		+dir.x, -dir.y,
 		+dir.y, +dir.x
 	);
-	auto backward_rotation_matrix = vk2d::Matrix2(
+	auto backward_rotation_matrix = vk2d::Matrix2f(
 		+dir.x, +dir.y,
 		-dir.y, +dir.x
 	);
@@ -232,7 +234,7 @@ VK2D_API void VK2D_APIENTRY vk2d::Mesh::WaveUV(
 }
 
 VK2D_API void VK2D_APIENTRY vk2d::Mesh::SetVertexColor(
-	vk2d::Colorf					new_color )
+	vk2d::Colorf				new_color )
 {
 	for( auto & v : vertices ) {
 		v.color		= new_color;
@@ -240,8 +242,8 @@ VK2D_API void VK2D_APIENTRY vk2d::Mesh::SetVertexColor(
 }
 
 VK2D_API void VK2D_APIENTRY vk2d::Mesh::SetVertexColorGradient(
-	vk2d::Colorf					color_1,
-	vk2d::Colorf					color_2,
+	vk2d::Colorf				color_1,
+	vk2d::Colorf				color_2,
 	vk2d::Vector2f				coord_1,
 	vk2d::Vector2f				coord_2
 )
@@ -256,11 +258,11 @@ VK2D_API void VK2D_APIENTRY vk2d::Mesh::SetVertexColorGradient(
 		coord_dir					= { 1.0f, 0.0f };
 	}
 
-	auto forward_rotation_matrix = vk2d::Matrix2(
+	auto forward_rotation_matrix = vk2d::Matrix2f(
 		+coord_dir.x, -coord_dir.y,
 		+coord_dir.y, +coord_dir.x
 	);
-	auto backward_rotation_matrix = vk2d::Matrix2(
+	auto backward_rotation_matrix = vk2d::Matrix2f(
 		+coord_dir.x, +coord_dir.y,
 		-coord_dir.y, +coord_dir.x
 	);
@@ -292,7 +294,7 @@ VK2D_API void VK2D_APIENTRY vk2d::Mesh::SetVertexColorGradient(
 
 VK2D_API void VK2D_APIENTRY vk2d::Mesh::ConfineUVToBoundingBox()
 {
-	auto aabb = CalculateAABBFromVertexList( vertices );
+	auto aabb = vk2d::_internal::CalculateAABBFromVertexList( vertices );
 	auto size = aabb.bottom_right - aabb.top_left;
 	for( auto & v : vertices ) {
 		auto vp = v.vertex_coords - aabb.top_left;
@@ -412,13 +414,13 @@ VK2D_API vk2d::Mesh VK2D_APIENTRY vk2d::GeneratePointMeshFromList(
 	const std::vector<vk2d::Vector2f>		&	points
 )
 {
-	auto aabb			= CalculateAABBFromPointList( points );
+	auto aabb			= vk2d::_internal::CalculateAABBFromPointList( points );
 	auto aabb_origin	= aabb.top_left;
 	auto aabb_size		= aabb.bottom_right - aabb_origin;
 
 	Mesh mesh;
 	mesh.vertices.resize( points.size() );
-	ClearVerticesToDefaultValues( mesh.vertices );
+	vk2d::_internal::ClearVerticesToDefaultValues( mesh.vertices );
 	for( size_t i = 0; i < points.size(); ++i ) {
 		mesh.vertices[ i ].vertex_coords	= points[ i ];
 		mesh.vertices[ i ].uv_coords		= ( points[ i ] - aabb_origin ) / aabb_size;
@@ -480,7 +482,7 @@ VK2D_API vk2d::Mesh VK2D_APIENTRY vk2d::GenerateBoxMesh(
 {
 	vk2d::Mesh ret;
 	ret.vertices.resize( 4 );
-	ClearVerticesToDefaultValues( ret.vertices );
+	vk2d::_internal::ClearVerticesToDefaultValues( ret.vertices );
 
 	// 0. Top left
 	ret.vertices[ 0 ].vertex_coords		= { top_left.x,			top_left.y };
@@ -554,7 +556,7 @@ VK2D_API vk2d::Mesh VK2D_APIENTRY vk2d::GenerateCircleMesh(
 	vk2d::Mesh ret;
 
 	ret.vertices.resize( edge_count_integer );
-	ClearVerticesToDefaultValues( ret.vertices );
+	vk2d::_internal::ClearVerticesToDefaultValues( ret.vertices );
 
 	for( uint32_t i = 0; i < edge_count_integer; ++i ) {
 		ret.vertices[ i ].vertex_coords		= {
@@ -642,7 +644,7 @@ VK2D_API vk2d::Mesh VK2D_APIENTRY vk2d::GeneratePieMesh(
 	ret.vertices.reserve( size_t( edge_count_integer ) + 2 );
 	// Center vertex.
 	{
-		auto v = CreateDefaultValueVertex();
+		auto v = vk2d::_internal::CreateDefaultValueVertex();
 		v.vertex_coords		= center_point;
 		v.uv_coords			= { 0.5f, 0.5f };
 		ret.vertices.push_back( v );
@@ -654,7 +656,7 @@ VK2D_API vk2d::Mesh VK2D_APIENTRY vk2d::GeneratePieMesh(
 
 	// Start vertex.
 	{
-		auto v = CreateDefaultValueVertex();
+		auto v = vk2d::_internal::CreateDefaultValueVertex();
 		v.vertex_coords		= {
 			std::cos( begin_angle_radians ) * center_to_edge_x + center_point.x,
 			std::sin( begin_angle_radians ) * center_to_edge_y + center_point.y
@@ -672,7 +674,7 @@ VK2D_API vk2d::Mesh VK2D_APIENTRY vk2d::GeneratePieMesh(
 		for( uint32_t i = intermediate_point_begin + 1; i < intermediate_point_end + 1; ++i ) {
 			if( double( rotation_step_size ) * i > RAD ) break;
 
-			auto v = CreateDefaultValueVertex();
+			auto v = vk2d::_internal::CreateDefaultValueVertex();
 			v.vertex_coords		= {
 				std::cos( rotation_step_size * i ) * center_to_edge_x + center_point.x,
 				std::sin( rotation_step_size * i ) * center_to_edge_y + center_point.y
@@ -688,7 +690,7 @@ VK2D_API vk2d::Mesh VK2D_APIENTRY vk2d::GeneratePieMesh(
 		float rotation_step		= 0.0f;
 		while( rotation_step	< end_angle_radians - RAD ) {
 
-			auto v = CreateDefaultValueVertex();
+			auto v = vk2d::_internal::CreateDefaultValueVertex();
 			v.vertex_coords		= {
 				std::cos( rotation_step ) * center_to_edge_x + center_point.x,
 				std::sin( rotation_step ) * center_to_edge_y + center_point.y
@@ -705,7 +707,7 @@ VK2D_API vk2d::Mesh VK2D_APIENTRY vk2d::GeneratePieMesh(
 
 	// End vertex.
 	{
-		auto v = CreateDefaultValueVertex();
+		auto v = vk2d::_internal::CreateDefaultValueVertex();
 		v.vertex_coords		= {
 			std::cos( end_angle_radians ) * center_to_edge_x + center_point.x,
 			std::sin( end_angle_radians ) * center_to_edge_y + center_point.y
@@ -968,7 +970,7 @@ VK2D_API vk2d::Mesh VK2D_APIENTRY vk2d::GeneratePieBoxMesh(
 	{
 		ret.vertices.reserve( 7 );
 
-		auto v = CreateDefaultValueVertex();
+		auto v = vk2d::_internal::CreateDefaultValueVertex();
 		v.vertex_coords		= center_point;
 		v.uv_coords			= { 0.5f, 0.5f };
 		ret.vertices.push_back( v );
@@ -1026,7 +1028,7 @@ VK2D_API vk2d::Mesh VK2D_APIENTRY vk2d::GenerateLatticeMesh(
 	vk2d::Vector2f uv_spacing		= vk2d::Vector2f( 1.0f, 1.0f ) / ( subdivisions + vk2d::Vector2f( 1.0f, 1.0f ) );
 
 	ret.vertices.resize( total_vertex_count );
-	ClearVerticesToDefaultValues( ret.vertices );
+	vk2d::_internal::ClearVerticesToDefaultValues( ret.vertices );
 
 	for( size_t y = 0; y < vertex_count_y - 1; ++y ) {
 		for( size_t x = 0; x < vertex_count_x - 1; ++x ) {

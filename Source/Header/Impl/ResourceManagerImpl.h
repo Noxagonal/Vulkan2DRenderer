@@ -22,23 +22,26 @@ class ResourceImpl;
 class ResourceManagerImpl {
 public:
 	ResourceManagerImpl(
-		_internal::RendererImpl					*	parent_renderer
+		vk2d::_internal::RendererImpl					*	parent_renderer
 	);
 	~ResourceManagerImpl();
 
-	TextureResource								*	LoadTextureResource(
+	vk2d::TextureResource						*	LoadTextureResource(
 		const std::filesystem::path				&	file_path );
 
-	TextureResource								*	CreateTextureResource(
-		uint32_t									size_x,
-		uint32_t									size_y,
-		const std::vector<vk2d::Texel>			&	texture_data );
+	vk2d::TextureResource						*	CreateTextureResource(
+		vk2d::Vector2u								size,
+		const std::vector<vk2d::Color8>			&	texture_data );
+
+	vk2d::TextureResource						*	CreateTextureResource(
+		vk2d::Vector2u								size,
+		const std::vector<vk2d::Color16>		&	texture_data );
 
 	void											DestroyResource(
-		Resource								*	resource );
+		vk2d::Resource							*	resource );
 
-	_internal::RendererImpl						*	GetRenderer() const;
-	_internal::ThreadPool						*	GetThreadPool() const;
+	vk2d::_internal::RendererImpl				*	GetRenderer() const;
+	vk2d::_internal::ThreadPool					*	GetThreadPool() const;
 	const std::vector<uint32_t>					&	GetLoaderThreads() const;
 	const std::vector<uint32_t>					&	GetGeneralThreads() const;
 	VkDevice										GetVulkanDevice() const;
@@ -53,10 +56,10 @@ private:
 	// This is just to select a loader thread prior to resource loading.
 	uint32_t										SelectLoaderThread();
 
-	_internal::RendererImpl						*	parent								= {};
+	vk2d::_internal::RendererImpl				*	parent								= {};
 	VkDevice										device								= {};
 
-	ThreadPool									*	thread_pool							= {};
+	vk2d::_internal::ThreadPool					*	thread_pool							= {};
 	std::vector<uint32_t>							loader_threads						= {};
 	std::vector<uint32_t>							general_threads						= {};
 
@@ -65,7 +68,7 @@ private:
 	uint32_t										current_loader_thread_index			= {};
 
 	std::mutex										resources_mutex						= {};
-	std::list<std::unique_ptr<Resource>>			resources							= {};
+	std::list<std::unique_ptr<vk2d::Resource>>		resources							= {};
 
 	bool											is_good								= {};
 };

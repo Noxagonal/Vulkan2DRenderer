@@ -44,62 +44,62 @@ enum class ReportSeverity : uint32_t {
 
 
 enum class Gamepad : int32_t {
-	GAMEPAD_1			= 0,
-	GAMEPAD_2			= 1,
-	GAMEPAD_3			= 2,
-	GAMEPAD_4			= 3,
-	GAMEPAD_5			= 4,
-	GAMEPAD_6			= 5,
-	GAMEPAD_7			= 6,
-	GAMEPAD_8			= 7,
-	GAMEPAD_9			= 8,
-	GAMEPAD_10			= 9,
-	GAMEPAD_11			= 10,
-	GAMEPAD_12			= 11,
-	GAMEPAD_13			= 12,
-	GAMEPAD_14			= 13,
-	GAMEPAD_15			= 14,
-	GAMEPAD_16			= 15,
-	GAMEPAD_LAST		= GAMEPAD_16,
+	GAMEPAD_1				= 0,
+	GAMEPAD_2				= 1,
+	GAMEPAD_3				= 2,
+	GAMEPAD_4				= 3,
+	GAMEPAD_5				= 4,
+	GAMEPAD_6				= 5,
+	GAMEPAD_7				= 6,
+	GAMEPAD_8				= 7,
+	GAMEPAD_9				= 8,
+	GAMEPAD_10				= 9,
+	GAMEPAD_11				= 10,
+	GAMEPAD_12				= 11,
+	GAMEPAD_13				= 12,
+	GAMEPAD_14				= 13,
+	GAMEPAD_15				= 14,
+	GAMEPAD_16				= 15,
+	GAMEPAD_LAST			= GAMEPAD_16,
 };
 
 enum class GamepadEvent : int32_t {
-	CONNECTED			= 0x00040001,
-	DISCONNECTED		= 0x00040002,
+	CONNECTED				= 0x00040001,
+	DISCONNECTED			= 0x00040002,
 };
 
 enum class GamepadButtons : int32_t {
-	A				= 0,
-	B				= 1,
-	X				= 2,
-	Y				= 3,
-	LEFT_BUMPER		= 4,
-	RIGHT_BUMPER	= 5,
-	BACK			= 6,
-	START			= 7,
-	GUIDE			= 8,
-	LEFT_THUMB		= 9,
-	RIGHT_THUMB		= 10,
-	DPAD_UP			= 11,
-	DPAD_RIGHT		= 12,
-	DPAD_DOWN		= 13,
-	DPAD_LEFT		= 14,
-	LAST			= DPAD_LEFT,
+	A						= 0,
+	B						= 1,
+	X						= 2,
+	Y						= 3,
+	LEFT_BUMPER				= 4,
+	RIGHT_BUMPER			= 5,
+	BACK					= 6,
+	START					= 7,
+	GUIDE					= 8,
+	LEFT_THUMB				= 9,
+	RIGHT_THUMB				= 10,
+	DPAD_UP					= 11,
+	DPAD_RIGHT				= 12,
+	DPAD_DOWN				= 13,
+	DPAD_LEFT				= 14,
+	LAST					= DPAD_LEFT,
 
-	CROSS			= A,
-	CIRCLE			= B,
-	SQUARE			= X,
-	TRIANGLE		= Y,
+	CROSS					= A,
+	CIRCLE					= B,
+	SQUARE					= X,
+	TRIANGLE				= Y,
 };
 
 enum class GamepadAxis : int32_t {
-	LEFT_X				= 0,
-	LEFT_Y				= 1,
-	RIGHT_X				= 2,
-	RIGHT_Y				= 3,
-	LEFT_TRIGGER		= 4,
-	RIGHT_TRIGGER		= 5,
-	LAST				= RIGHT_TRIGGER
+	LEFT_X					= 0,
+	LEFT_Y					= 1,
+	RIGHT_X					= 2,
+	RIGHT_Y					= 3,
+	LEFT_TRIGGER			= 4,
+	RIGHT_TRIGGER			= 5,
+	LAST					= RIGHT_TRIGGER
 };
 
 
@@ -130,7 +130,7 @@ public:
 
 
 typedef void ( VK2D_APIENTRY *PFN_VK2D_ReportFunction )(
-	ReportSeverity					severity,
+	vk2d::ReportSeverity			severity,
 	std::string						message );
 
 typedef void ( VK2D_APIENTRY *MonitorUpdateCallbackFun )(
@@ -144,22 +144,24 @@ typedef void ( VK2D_APIENTRY *GamepadEventCallbackFun )(
 
 struct RendererCreateInfo {
 	std::string					application_name				= {};
-	Version						application_version				= {};
+	vk2d::Version				application_version				= {};
 	std::string					engine_name						= {};
-	Version						engine_version					= {};
+	vk2d::Version				engine_version					= {};
 	PFN_VK2D_ReportFunction		report_function					= {};
 	uint32_t					resource_loader_thread_count	= UINT32_MAX;
 };
 
 
 class Renderer {
-	friend VK2D_API std::unique_ptr<vk2d::Renderer> VK2D_APIENTRY CreateRenderer( const RendererCreateInfo & renderer_create_info );
-	friend class Window;
+	friend VK2D_API std::unique_ptr<vk2d::Renderer> VK2D_APIENTRY CreateRenderer(
+		const vk2d::RendererCreateInfo		&	renderer_create_info
+	);
+	friend class vk2d::Window;
 	 
 private:
 	// Do not use directly, instead use vk2d::CreateRender() to get a renderer.
 	VK2D_API																			Renderer(
-		const RendererCreateInfo													&	renderer_create_info );
+		const vk2d::RendererCreateInfo												&	renderer_create_info );
 
 public:
 	VK2D_API																			~Renderer();
@@ -183,7 +185,7 @@ public:
 	// Parameters:
 	// [in] monitor_update_callback_function: Function that gets called if monitor was removed or added to the system.
 	VK2D_API void									VK2D_APIENTRY						SetMonitorUpdateCallback(
-		MonitorUpdateCallbackFun					monitor_update_callback_funtion );
+		vk2d::MonitorUpdateCallbackFun				monitor_update_callback_funtion );
 
 	// Set gamepad event callback function, the callback function gets
 	// called if a gamepad gets added or removed from the system.
@@ -220,10 +222,10 @@ public:
 //	VK2D_API void									VK2D_APIENTRY						SetGamepadMapping();
 
 
-	VK2D_API Window								*	VK2D_APIENTRY						CreateOutputWindow(
-		WindowCreateInfo															&	window_create_info );
+	VK2D_API vk2d::Window						*	VK2D_APIENTRY						CreateOutputWindow(
+		vk2d::WindowCreateInfo														&	window_create_info );
 	VK2D_API void									VK2D_APIENTRY						CloseOutputWindow(
-		Window																		*	window );
+		vk2d::Window																*	window );
 
 	VK2D_API vk2d::Sampler						*	VK2D_APIENTRY						CreateSampler(
 		const vk2d::SamplerCreateInfo			&	sampler_create_info );
@@ -234,7 +236,7 @@ public:
 	VK2D_API vk2d::Multisamples						VK2D_APIENTRY						GetMaximumSupportedMultisampling();
 	VK2D_API vk2d::Multisamples						VK2D_APIENTRY						GetAllSupportedMultisampling();
 
-	VK2D_API ResourceManager					*	VK2D_APIENTRY						GetResourceManager();
+	VK2D_API vk2d::ResourceManager				*	VK2D_APIENTRY						GetResourceManager();
 
 private:
 	std::unique_ptr<vk2d::_internal::RendererImpl>	impl;

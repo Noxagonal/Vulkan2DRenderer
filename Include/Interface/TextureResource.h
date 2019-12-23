@@ -17,15 +17,6 @@ class UnloadTask;
 
 
 
-struct Texel {
-	uint8_t			r;
-	uint8_t			g;
-	uint8_t			b;
-	uint8_t			a;
-};
-
-
-
 class TextureResource :
 	public Resource
 {
@@ -35,28 +26,28 @@ class TextureResource :
 	friend class vk2d::_internal::UnloadTask;
 	friend class vk2d::_internal::WindowImpl;
 
-	VK2D_API									TextureResource(
-		_internal::ResourceManagerImpl		*	resource_manager_parent );
+	VK2D_API																				TextureResource(
+		vk2d::_internal::ResourceManagerImpl				*	resource_manager_parent );
 
 public:
-	VK2D_API									~TextureResource();
+	VK2D_API																				~TextureResource();
 
-	VK2D_API bool				VK2D_APIENTRY	IsLoaded();
-	VK2D_API bool				VK2D_APIENTRY	WaitUntilLoaded();
+	VK2D_API bool												VK2D_APIENTRY				IsLoaded();
+	VK2D_API bool												VK2D_APIENTRY				WaitUntilLoaded();
 
-	VK2D_API bool				VK2D_APIENTRY	IsGood();
+	VK2D_API bool												VK2D_APIENTRY				IsGood();
 
 protected:
-	VK2D_API virtual bool		VK2D_APIENTRY	MTLoad(
-		_internal::ThreadPrivateResource	*	thread_resource );
+	VK2D_API virtual bool										VK2D_APIENTRY				MTLoad(
+		vk2d::_internal::ThreadPrivateResource				*	thread_resource );
 
-	VK2D_API virtual void		VK2D_APIENTRY	MTUnload(
-		_internal::ThreadPrivateResource	*	thread_resource );
+	VK2D_API virtual void										VK2D_APIENTRY				MTUnload(
+		vk2d::_internal::ThreadPrivateResource				*	thread_resource );
 
 private:
-	std::unique_ptr<_internal::TextureResourceImpl>		impl					= {};
+	std::unique_ptr<vk2d::_internal::TextureResourceImpl>		impl						= {};
 
-	bool										is_good							= {};
+	bool														is_good						= {};
 };
 
 

@@ -22,14 +22,14 @@ namespace _internal {
 class MeshBuffer {
 public:
 	struct MeshOffsets {
-		uint32_t									first_index;
-		uint32_t									vertex_offset;
-		VkDeviceSize								vertex_byte_offset;
-		VkDeviceSize								index_byte_offset;
+		uint32_t											first_index;
+		uint32_t											vertex_offset;
+		VkDeviceSize										vertex_byte_offset;
+		VkDeviceSize										index_byte_offset;
 	};
 	struct PushResult {
-		MeshOffsets									offsets;
-		bool										success;
+		vk2d::_internal::MeshBuffer::MeshOffsets			offsets;
+		bool												success;
 		inline explicit operator bool()
 		{
 			return	success;
@@ -37,10 +37,10 @@ public:
 	};
 
 	MeshBuffer(
-		VkDevice									device,
-		const VkPhysicalDeviceLimits			&	physicald_device_limits,
-		_internal::WindowImpl					*	window_data,
-		DeviceMemoryPool						*	device_memory_pool );
+		VkDevice											device,
+		const VkPhysicalDeviceLimits					&	physicald_device_limits,
+		vk2d::_internal::WindowImpl						*	window_data,
+		vk2d::_internal::DeviceMemoryPool				*	device_memory_pool );
 
 	~MeshBuffer();
 
@@ -49,93 +49,91 @@ public:
 	// and adds vertex and index data to host visible buffer.
 	// Returns mesh offsets of whatever buffer object this mesh was
 	// put into, needed when recording a Vulkan draw command.
-	PushResult										CmdPushMesh(
-		VkCommandBuffer								command_buffer,
-		const std::vector<Vertex>				&	new_vertices,
-		const std::vector<uint32_t>				&	new_indices );
+	vk2d::_internal::MeshBuffer::PushResult					CmdPushMesh(
+		VkCommandBuffer										command_buffer,
+		const std::vector<vk2d::Vertex>					&	new_vertices,
+		const std::vector<uint32_t>						&	new_indices );
 
-	bool											CmdUploadMeshDataToGPU(
-		VkCommandBuffer								command_buffer );
+	bool													CmdUploadMeshDataToGPU(
+		VkCommandBuffer										command_buffer );
 
 	// Gets the total amount of individual meshes that have been pushed so far.
-	size_t											GetPushedMeshCount();
+	size_t													GetPushedMeshCount();
 
 	// This gets the total amount of vertices already pushed in
-	size_t											GetTotalVertexCount();
+	size_t													GetTotalVertexCount();
 
 	// This gets the total amount of indices already pushed in
-	size_t											GetTotalIndexCount();
+	size_t													GetTotalIndexCount();
 
 private:
 	class BufferBlock {
-		friend class MeshBuffer;
+		friend class vk2d::_internal::MeshBuffer;
 
 	public:
 		BufferBlock(
-			MeshBuffer							*	mesh_buffer_parent,
-			VkDeviceSize							buffer_vertex_byte_size,
-			VkDeviceSize							buffer_index_bute_size );
+			vk2d::_internal::MeshBuffer					*	mesh_buffer_parent,
+			VkDeviceSize									buffer_vertex_byte_size,
+			VkDeviceSize									buffer_index_bute_size );
 		~BufferBlock();
-		bool										CopyVectorsToStagingBuffers();
+		bool												CopyVectorsToStagingBuffers();
 
-		MeshBuffer								*	parent								= {};
+		vk2d::_internal::MeshBuffer						*	parent								= {};
 
-		std::vector<Vertex>							vertices							= {};
-		std::vector<uint32_t>						indices								= {};
+		std::vector<vk2d::Vertex>							vertices							= {};
+		std::vector<uint32_t>								indices								= {};
 
-		uint32_t									block_vertex_count					= {};
-		uint32_t									block_index_count					= {};
+		uint32_t											block_vertex_count					= {};
+		uint32_t											block_index_count					= {};
 
-		VkDeviceSize								total_aligned_buffer_byte_size		= {};
-		VkDeviceSize								total_aligned_vertex_byte_size		= {};
-		VkDeviceSize								total_aligned_index_byte_size		= {};
+		VkDeviceSize										total_aligned_buffer_byte_size		= {};
+		VkDeviceSize										total_aligned_vertex_byte_size		= {};
+		VkDeviceSize										total_aligned_index_byte_size		= {};
 
-		VkDeviceSize								used_aligned_vertex_byte_size		= {};
-		VkDeviceSize								used_aligned_index_byte_size		= {};
+		VkDeviceSize										used_aligned_vertex_byte_size		= {};
+		VkDeviceSize										used_aligned_index_byte_size		= {};
 
-		VkDeviceSize								aligned_vertex_buffer_byte_offset	= {};
-		VkDeviceSize								aligned_index_buffer_byte_offset	= {};
+		VkDeviceSize										aligned_vertex_buffer_byte_offset	= {};
+		VkDeviceSize										aligned_index_buffer_byte_offset	= {};
 
-		VkBuffer									staging_buffer						= {};
-		VkBuffer									device_buffer						= {};
+		VkBuffer											staging_buffer						= {};
+		VkBuffer											device_buffer						= {};
 
-		PoolMemory									staging_buffer_memory				= {};
-		PoolMemory									device_buffer_memory				= {};
+		vk2d::_internal::PoolMemory							staging_buffer_memory				= {};
+		vk2d::_internal::PoolMemory							device_buffer_memory				= {};
 
-		bool										is_good								= {};
+		bool												is_good								= {};
 	};
 	struct ReserveSpaceResult {
-		BufferBlock								*	buffer_block						= {};	// nullptr if failed.
-		bool										buffer_block_need_binding			= {};	// Tells if the buffer block changed since last time.
-		MeshOffsets									offsets								= {};
+		vk2d::_internal::MeshBuffer::BufferBlock		*	buffer_block						= {};	// nullptr if failed.
+		bool												buffer_block_need_binding			= {};	// Tells if the buffer block changed since last time.
+		vk2d::_internal::MeshBuffer::MeshOffsets			offsets								= {};
 	};
 
 	// Creates a new buffer block and stores it internally,
 	// returns a pointer to it if successful or nullptr on failure.
-	BufferBlock									*	AllocateBufferBlockAndStore(
-		VkDeviceSize								vertex_portion_byte_size,
-		VkDeviceSize								index_portion_byte_size );
+	vk2d::_internal::MeshBuffer::BufferBlock			*	AllocateBufferBlockAndStore(
+		VkDeviceSize										vertex_portion_byte_size,
+		VkDeviceSize										index_portion_byte_size );
 
 	// Removes a buffer block with matching pointer from internal storage.
-	void											FreeBufferBlockFromStorage(
-		BufferBlock								*	buffer_block );
+	void													FreeBufferBlockFromStorage(
+		vk2d::_internal::MeshBuffer::BufferBlock		*	buffer_block );
 
-	ReserveSpaceResult								ReserveSpaceForMesh(
-		uint32_t									vertex_count,
-		uint32_t									index_count );
+	vk2d::_internal::MeshBuffer::ReserveSpaceResult			ReserveSpaceForMesh(
+		uint32_t											vertex_count,
+		uint32_t											index_count );
 
+	VkDevice												device							= {};
+	VkPhysicalDeviceLimits									physicald_device_limits			= {};
+	_internal::WindowImpl								*	window_data						= {};
+	vk2d::_internal::DeviceMemoryPool					*	device_memory_pool				= {};
 
+	bool													first_draw						= {};
 
-	typedef std::vector<std::unique_ptr<BufferBlock>> BufferBlockArray;
-	BufferBlockArray								buffer_blocks					= {};
-	BufferBlockArray::iterator						current_buffer_block			= {};
-
-	VkDevice										device							= {};
-	VkPhysicalDeviceLimits							physicald_device_limits			= {};
-	_internal::WindowImpl						*	window_data						= {};
-	DeviceMemoryPool							*	device_memory_pool				= {};
-
-	bool											first_draw				= {};
+	using BufferBlockArray									= std::vector<std::unique_ptr<vk2d::_internal::MeshBuffer::BufferBlock>>;
+	vk2d::_internal::MeshBuffer::BufferBlockArray			buffer_blocks					= {};
+	vk2d::_internal::MeshBuffer::BufferBlockArray::iterator	current_buffer_block			= {};
 };
 
 

@@ -43,11 +43,11 @@ struct WindowCoordinateScaling {
 
 
 class RendererImpl {
-	friend class Renderer;
+	friend class vk2d::Renderer;
 
 public:
 	RendererImpl(
-		const RendererCreateInfo						&	renderer_create_info );
+		const vk2d::RendererCreateInfo					&	renderer_create_info );
 
 	~RendererImpl();
 
@@ -75,10 +75,10 @@ public:
 	// TODO: gamepad mapping
 	void													SetGamepadMapping();
 
-	Window												*	CreateOutputWindow(
-		WindowCreateInfo								&	window_create_info );
+	vk2d::Window										*	CreateOutputWindow(
+		vk2d::WindowCreateInfo							&	window_create_info );
 	void													CloseOutputWindow(
-		Window											*	window );
+		vk2d::Window									*	window );
 
 	vk2d::_internal::DescriptorAutoPool					*	GetDescriptorPool();
 
@@ -91,21 +91,21 @@ public:
 	vk2d::Multisamples										GetMaximumSupportedMultisampling();
 	vk2d::Multisamples										GetAllSupportedMultisampling();
 
-	PFN_VK2D_ReportFunction									GetReportFunction() const;
+	vk2d::PFN_VK2D_ReportFunction							GetReportFunction() const;
 
-	ThreadPool											*	GetThreadPool() const;
+	vk2d::_internal::ThreadPool							*	GetThreadPool() const;
 	const std::vector<uint32_t>							&	GetLoaderThreads() const;
 	const std::vector<uint32_t>							&	GetGeneralThreads() const;
-	ResourceManager										*	GetResourceManager() const;
+	vk2d::ResourceManager								*	GetResourceManager() const;
 
 	VkInstance												GetVulkanInstance() const;
 	VkPhysicalDevice										GetVulkanPhysicalDevice() const;
 	VkDevice												GetVulkanDevice() const;
 
-	ResolvedQueue											GetPrimaryRenderQueue() const;
-	ResolvedQueue											GetSecondaryRenderQueue() const;
-	ResolvedQueue											GetPrimaryComputeQueue() const;
-	ResolvedQueue											GetPrimaryTransferQueue() const;
+	vk2d::_internal::ResolvedQueue							GetPrimaryRenderQueue() const;
+	vk2d::_internal::ResolvedQueue							GetSecondaryRenderQueue() const;
+	vk2d::_internal::ResolvedQueue							GetPrimaryComputeQueue() const;
+	vk2d::_internal::ResolvedQueue							GetPrimaryTransferQueue() const;
 
 	const VkPhysicalDeviceProperties					&	GetPhysicalDeviceProperties() const;
 	const VkPhysicalDeviceMemoryProperties				&	GetPhysicalDeviceMemoryProperties() const;
@@ -116,13 +116,13 @@ public:
 
 	VkPipelineCache											GetPipelineCache() const;
 	VkPipelineLayout										GetPipelineLayout() const;
-	const DescriptorSetLayout							&	GetSamplerDescriptorSetLayout() const;
-	const DescriptorSetLayout							&	GetTextureDescriptorSetLayout() const;
+	const vk2d::_internal::DescriptorSetLayout			&	GetSamplerDescriptorSetLayout() const;
+	const vk2d::_internal::DescriptorSetLayout			&	GetTextureDescriptorSetLayout() const;
 
 	VkDescriptorSet											GetDefaultTextureDescriptorSet() const;
 	vk2d::Sampler										*	GetDefaultSampler() const;
 
-	DeviceMemoryPool									*	GetDeviceMemoryPool() const;
+	vk2d::_internal::DeviceMemoryPool					*	GetDeviceMemoryPool() const;
 
 	bool													IsGood() const;
 
@@ -168,7 +168,7 @@ private:
 	std::vector<const char*>								instance_extensions					= {};
 	std::vector<const char*>								device_extensions					= {};
 
-	PFN_VK2D_ReportFunction									report_function						= {};
+	vk2d::PFN_VK2D_ReportFunction							report_function						= {};
 
 	std::unique_ptr<vk2d::ResourceManager>					resource_manager					= {};
 	std::unique_ptr<vk2d::_internal::ThreadPool>			thread_pool							= {};
@@ -190,16 +190,16 @@ private:
 	VkPipelineCache											pipeline_cache						= {};
 	VkPipelineLayout										pipeline_layout						= {};
 
-	std::unique_ptr<DescriptorSetLayout>					sampler_descriptor_set_layout		= {};
-	std::unique_ptr<DescriptorSetLayout>					sampler_data_descriptor_set_layout	= {};
-	std::unique_ptr<DescriptorSetLayout>					texture_descriptor_set_layout		= {};
+	std::unique_ptr<vk2d::_internal::DescriptorSetLayout>	sampler_descriptor_set_layout		= {};
+	std::unique_ptr<vk2d::_internal::DescriptorSetLayout>	sampler_data_descriptor_set_layout	= {};
+	std::unique_ptr<vk2d::_internal::DescriptorSetLayout>	texture_descriptor_set_layout		= {};
 
-	ResolvedQueue											primary_render_queue				= {};
-	ResolvedQueue											secondary_render_queue				= {};
-	ResolvedQueue											primary_compute_queue				= {};
-	ResolvedQueue											primary_transfer_queue				= {};
+	vk2d::_internal::ResolvedQueue							primary_render_queue				= {};
+	vk2d::_internal::ResolvedQueue							secondary_render_queue				= {};
+	vk2d::_internal::ResolvedQueue							primary_compute_queue				= {};
+	vk2d::_internal::ResolvedQueue							primary_transfer_queue				= {};
 
-	std::unique_ptr<DeviceMemoryPool>						device_memory_pool					= {};
+	std::unique_ptr<vk2d::_internal::DeviceMemoryPool>		device_memory_pool					= {};
 
 	std::unique_ptr<vk2d::_internal::DescriptorAutoPool>	descriptor_pool						= {};
 
@@ -208,7 +208,7 @@ private:
 	vk2d::_internal::CompleteImageResource					default_texture						= {};
 	vk2d::_internal::PoolDescriptorSet						default_texture_descriptor_set		= {};
 
-	std::vector<std::unique_ptr<Window>>					windows								= {};
+	std::vector<std::unique_ptr<vk2d::Window>>				windows								= {};
 	std::vector<std::unique_ptr<vk2d::Sampler>>				samplers							= {};
 
 	vk2d::GamepadEventCallbackFun							joystick_event_callback				= {};

@@ -7,10 +7,16 @@
 
 
 
+namespace vk2d {
+namespace _internal {
+
 struct SamplerData {
 	vk2d::Colorf				borderColor			= {};
-	std::array<float, 4>	borderColorEnable	= {};
+	std::array<float, 4>		borderColorEnable	= {};
 };
+
+} // _internal
+} // vk2d
 
 
 
@@ -173,7 +179,7 @@ vk2d::_internal::SamplerImpl::SamplerImpl(
 	buffer_create_info.sType					= VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
 	buffer_create_info.pNext					= nullptr;
 	buffer_create_info.flags					= 0;
-	buffer_create_info.size						= sizeof( SamplerData );
+	buffer_create_info.size						= sizeof( vk2d::_internal::SamplerData );
 	buffer_create_info.usage					= VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
 	buffer_create_info.sharingMode				= VK_SHARING_MODE_EXCLUSIVE;
 	buffer_create_info.queueFamilyIndexCount	= 0;
@@ -187,11 +193,11 @@ vk2d::_internal::SamplerImpl::SamplerImpl(
 		return;
 	}
 	{
-		SamplerData sd;
+		vk2d::_internal::SamplerData sd;
 		sd.borderColor				= create_info.border_color;
 		sd.borderColorEnable[ 0 ]	= float( create_info.address_mode_u == vk2d::SamplerAddressMode::CLAMP_TO_BORDER );
 		sd.borderColorEnable[ 1 ]	= float( create_info.address_mode_v == vk2d::SamplerAddressMode::CLAMP_TO_BORDER );
-		sampler_data.memory.DataCopy( &sd, sizeof( SamplerData ) );
+		sampler_data.memory.DataCopy( &sd, sizeof( vk2d::_internal::SamplerData ) );
 	}
 
 	descriptor_set		= renderer_parent->GetDescriptorPool()->AllocateDescriptorSet(
@@ -222,7 +228,7 @@ vk2d::_internal::SamplerImpl::SamplerImpl(
 	VkDescriptorBufferInfo sampler_data_info {};
 	sampler_data_info.buffer				= sampler_data.buffer;
 	sampler_data_info.offset				= 0;
-	sampler_data_info.range					= sizeof( SamplerData );
+	sampler_data_info.range					= sizeof( vk2d::_internal::SamplerData );
 	descriptor_write[ 1 ].sType				= VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 	descriptor_write[ 1 ].pNext				= nullptr;
 	descriptor_write[ 1 ].dstSet			= descriptor_set.descriptorSet;

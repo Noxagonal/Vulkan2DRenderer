@@ -342,14 +342,14 @@ struct WindowCreateInfo {
 	bool								focused						= true;			// Is the window focused and brought forth when created.
 	bool								maximized					= false;		// Is the window maximized to fill the screen when created.
 	bool								transparent_framebuffer		= false;		// Is the alpha value of the render interpreted as a transparent window background.
-	vk2d::WindowCoordinateSpace			coordinate_space			= WindowCoordinateSpace::TEXEL_SPACE; // Window coordinate system to be used, see WindowCoordinateSpace.
+	vk2d::WindowCoordinateSpace			coordinate_space			= vk2d::WindowCoordinateSpace::TEXEL_SPACE; // Window coordinate system to be used, see WindowCoordinateSpace.
 	vk2d::Vector2u						size						= { 0, 0 };		// Window framebuffer initial size
 	vk2d::Vector2u						min_size					= { 32, 32 };	// Minimum size of the window, will be adjusted to suit the hardware.
 	vk2d::Vector2u						max_size					= { UINT32_MAX, UINT32_MAX };	// Maximum size of the window, will be adjusted to suit the hardware.
 	vk2d::Monitor					*	fullscreen_monitor			= {};			// Fullscreen monitor pointer, nullptr is windowed, use Renderer::GetPrimaryMonitor() to use primary monitor for fullscreen.
 	uint32_t							fullscreen_refresh_rate		= UINT32_MAX;	// Refresh rate in fullscreen mode, UINT32_MAX uses maximum refresh rate available.
 	bool								vsync						= true;			// Vertical synchronization, works in both windowed and fullscreen modes, usually best left on for 2d graphics.
-	Multisamples						samples						= Multisamples::SAMPLE_COUNT_1;	// Multisampling, must be a single value in vk2d::Multisamples enum.
+	vk2d::Multisamples					samples						= vk2d::Multisamples::SAMPLE_COUNT_1;	// Multisampling, must be a single value in vk2d::Multisamples enum.
 	std::string							title						= "";			// Window title.
 	vk2d::WindowEventHandler		*	event_handler				= nullptr;
 };
@@ -357,13 +357,13 @@ struct WindowCreateInfo {
 
 
 class Window {
-	friend class _internal::RendererImpl;
+	friend class vk2d::_internal::RendererImpl;
 
 private:
 	// Only accessible through Renderer::CreateOutputWindow();
 	VK2D_API																		Window(
-		_internal::RendererImpl						*	renderer_parent,
-		WindowCreateInfo							&	window_create_info );
+		vk2d::_internal::RendererImpl				*	renderer_parent,
+		vk2d::WindowCreateInfo						&	window_create_info );
 
 public:
 	VK2D_API																		~Window();
@@ -613,7 +613,7 @@ public:
 
 
 private:
-	std::unique_ptr<_internal::WindowImpl>				impl				= {};
+	std::unique_ptr<vk2d::_internal::WindowImpl>		impl				= {};
 
 	bool												is_good				= {};
 };

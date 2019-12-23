@@ -22,8 +22,8 @@ struct ThreadSignal;
 
 
 class Task {
-	friend class ThreadPool;
-	friend class ThreadSharedResource;
+	friend class vk2d::_internal::ThreadPool;
+	friend class vk2d::_internal::ThreadSharedResource;
 
 public:
 	Task()
@@ -60,7 +60,7 @@ public:
 	}
 
 	virtual void									operator()(
-		ThreadPrivateResource					*	thread_resource )			= 0;
+		vk2d::_internal::ThreadPrivateResource	*	thread_resource )			= 0;
 
 private:
 	std::vector<uint32_t>							locked_to_threads			= {};
@@ -74,18 +74,18 @@ private:
 // This tells a specific thread what to do immediately after the
 // thread has been created and what to do before joining the thread.
 class ThreadPrivateResource {
-	friend class ThreadPool;
+	friend class vk2d::_internal::ThreadPool;
 	friend void ThreadPoolWorkerThread(
-		ThreadSharedResource		*	thread_shared_resource,
-		ThreadPrivateResource		*	thread_private_resource,
-		ThreadSignal				*	thread_signals
+		vk2d::_internal::ThreadSharedResource		*	thread_shared_resource,
+		vk2d::_internal::ThreadPrivateResource		*	thread_private_resource,
+		vk2d::_internal::ThreadSignal				*	thread_signals
 	);
 
 public:
 	ThreadPrivateResource()
 	{};
-	ThreadPrivateResource( const ThreadPrivateResource & other )	= delete;
-	ThreadPrivateResource( ThreadPrivateResource && other )			= default;
+	ThreadPrivateResource( const vk2d::_internal::ThreadPrivateResource & other )		= delete;
+	ThreadPrivateResource( vk2d::_internal::ThreadPrivateResource && other )			= default;
 
 	virtual					~ThreadPrivateResource()
 	{};
@@ -115,19 +115,19 @@ private:
 
 // Used to pass signals between specific threads and the main thread
 struct ThreadSignal {
-	ThreadSignal()									= default;
-	ThreadSignal( const ThreadSignal & other )
+	ThreadSignal()												= default;
+	ThreadSignal( const vk2d::_internal::ThreadSignal & other )
 	{
 		init_success	= other.init_success.load();
 		init_error		= other.init_error.load();
 		ready_to_join	= other.ready_to_join.load();
 	}
-	ThreadSignal( ThreadSignal && other )			= default;
-	~ThreadSignal()									= default;
+	ThreadSignal( vk2d::_internal::ThreadSignal && other )		= default;
+	~ThreadSignal()												= default;
 
-	std::atomic_bool		init_success			= {};
-	std::atomic_bool		init_error				= {};
-	std::atomic_bool		ready_to_join			= {};
+	std::atomic_bool		init_success						= {};
+	std::atomic_bool		init_error							= {};
+	std::atomic_bool		ready_to_join						= {};
 };
 
 
@@ -138,7 +138,7 @@ public:
 	// MAIN THREAD ONLY!
 	// PARAMETER IS CONSUMED, VALUES ARE MOVED OUT, DO NOT USE AFTER THIS FUNCTION!
 	ThreadPool(
-		std::vector<std::unique_ptr<ThreadPrivateResource>>		&&	thread_resources );
+		std::vector<std::unique_ptr<vk2d::_internal::ThreadPrivateResource>>		&&	thread_resources );
 
 	// MAIN THREAD ONLY!
 	virtual												~ThreadPool();
@@ -176,16 +176,16 @@ public:
 
 private:
 	uint64_t											AddTask(
-		std::unique_ptr<Task>							new_task );
+		std::unique_ptr<vk2d::_internal::Task>			new_task );
 
-	std::unique_ptr<ThreadSharedResource>				thread_shared_resource		= {};
-	std::vector<std::unique_ptr<ThreadPrivateResource>>	thread_private_resources	= {};
-	std::vector<ThreadSignal>							thread_signals				= {};
-	std::vector<std::thread>							threads						= {};
+	std::unique_ptr<vk2d::_internal::ThreadSharedResource>					thread_shared_resource		= {};
+	std::vector<std::unique_ptr<vk2d::_internal::ThreadPrivateResource>>	thread_private_resources	= {};
+	std::vector<vk2d::_internal::ThreadSignal>								thread_signals				= {};
+	std::vector<std::thread>												threads						= {};
 
-	std::atomic_bool									shutting_down				= {};
+	std::atomic_bool														shutting_down				= {};
 
-	bool												is_good						= {};
+	bool																	is_good						= {};
 };
 
 

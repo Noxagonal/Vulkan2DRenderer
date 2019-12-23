@@ -3,6 +3,17 @@
 #include "BuildOptions.h"
 #include "Platform.h"
 
+
+
+namespace vk2d {
+
+constexpr double PI				= 3.14159265358979323846;
+constexpr double RAD			= PI * 2.0;
+
+} // vk2d
+
+
+
 #if defined( VK_USE_PLATFORM_WIN32_KHR )
 
 // define dynamic library export/import

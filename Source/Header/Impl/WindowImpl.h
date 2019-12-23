@@ -135,7 +135,7 @@ public:
 	std::string													GetTitle();
 
 	void														SetIcon(
-		const std::vector<std::filesystem::path>&				image_paths );
+		const std::vector<std::filesystem::path>			&	image_paths );
 
 	void														SetPosition(
 		vk2d::Vector2i											new_position );
@@ -163,78 +163,78 @@ public:
 	vk2d::CursorState											GetCursorState();
 
 	void														DrawTriangleList(
-		const std::vector<Vertex>							&	vertices,
+		const std::vector<vk2d::Vertex>						&	vertices,
 		const std::vector<VertexIndex_3>					&	indices,
 		bool													filled						= true,
 		vk2d::TextureResource								*	texture						= nullptr,
 		vk2d::Sampler										*	sampler						= nullptr );
 
 	void														DrawTriangleList(
-		const std::vector<Vertex>							&	vertices,
+		const std::vector<vk2d::Vertex>						&	vertices,
 		const std::vector<uint32_t>							&	raw_indices,
 		bool													filled						= true,
 		vk2d::TextureResource								*	texture						= nullptr,
 		vk2d::Sampler										*	sampler						= nullptr );
 
 	void														DrawLineList(
-		const std::vector<Vertex>							&	vertices,
+		const std::vector<vk2d::Vertex>						&	vertices,
 		const std::vector<VertexIndex_2>					&	indices,
 		vk2d::TextureResource								*	texture						= nullptr,
 		vk2d::Sampler										*	sampler						= nullptr,
 		float													line_width					= 1.0f );
 
 	void														DrawLineList(
-		const std::vector<Vertex>							&	vertices,
+		const std::vector<vk2d::Vertex>						&	vertices,
 		const std::vector<uint32_t>							&	raw_indices,
 		vk2d::TextureResource								*	texture						= nullptr,
 		vk2d::Sampler										*	sampler						= nullptr,
 		float													line_width					= 1.0f );
 
 	void														DrawPointList(
-		const std::vector<Vertex>							&	vertices,
+		const std::vector<vk2d::Vertex>						&	vertices,
 		vk2d::TextureResource								*	texture						= nullptr,
 		vk2d::Sampler										*	sampler						= nullptr );
 
 	void														DrawLine(
-		Vector2f												point_1,
-		Vector2f												point_2,
-		Colorf													color						= { 1.0f, 1.0f, 1.0f, 1.0f } );
+		vk2d::Vector2f											point_1,
+		vk2d::Vector2f											point_2,
+		vk2d::Colorf											color						= { 1.0f, 1.0f, 1.0f, 1.0f } );
 
 	void														DrawBox(
-		Vector2f												top_left,
-		Vector2f												bottom_right,
+		vk2d::Vector2f											top_left,
+		vk2d::Vector2f											bottom_right,
 		bool													filled						= true,
-		Colorf													color						= { 1.0f, 1.0f, 1.0f, 1.0f } );
+		vk2d::Colorf											color						= { 1.0f, 1.0f, 1.0f, 1.0f } );
 
 	void														DrawCircle(
-		Vector2f												top_left,
-		Vector2f												bottom_right,
+		vk2d::Vector2f											top_left,
+		vk2d::Vector2f											bottom_right,
 		bool													filled						= true,
 		float													edge_count					= 64.0f,
-		Colorf													color						= { 1.0f, 1.0f, 1.0f, 1.0f } );
+		vk2d::Colorf											color						= { 1.0f, 1.0f, 1.0f, 1.0f } );
 
 	void														DrawPie(
-		Vector2f												top_left,
-		Vector2f												bottom_right,
+		vk2d::Vector2f											top_left,
+		vk2d::Vector2f											bottom_right,
 		float													begin_angle_radians,
 		float													coverage,
 		bool													filled						= true,
 		float													edge_count					= 64.0f,
-		Colorf													color						= { 1.0f, 1.0f, 1.0f, 1.0f } );
+		vk2d::Colorf											color						= { 1.0f, 1.0f, 1.0f, 1.0f } );
 
 	void														DrawPieBox(
-		Vector2f												top_left,
-		Vector2f												bottom_right,
+		vk2d::Vector2f											top_left,
+		vk2d::Vector2f											bottom_right,
 		float													begin_angle_radians,
 		float													coverage,
 		bool													filled						= true,
-		Colorf													color						= { 1.0f, 1.0f, 1.0f, 1.0f } );
+		vk2d::Colorf											color						= { 1.0f, 1.0f, 1.0f, 1.0f } );
 
 	void														DrawTexture(
-		Vector2f												top_left,
-		Vector2f												bottom_right,
+		vk2d::Vector2f											top_left,
+		vk2d::Vector2f											bottom_right,
 		vk2d::TextureResource								*	texture,
-		Colorf													color						= { 1.0f, 1.0f, 1.0f, 1.0f } );
+		vk2d::Colorf											color						= { 1.0f, 1.0f, 1.0f, 1.0f } );
 
 	void														DrawMesh(
 		const vk2d::Mesh									&	mesh );
@@ -288,7 +288,7 @@ private:
 		std::vector<uint8_t>									image_data								= {};
 		GLFWimage												glfw_image								= {};
 	};
-	std::vector<IconData>										icon_data								= {};
+	std::vector<vk2d::_internal::WindowImpl::IconData>			icon_data								= {};
 
 	VkInstance													instance								= {};
 	VkPhysicalDevice											physical_device							= {};

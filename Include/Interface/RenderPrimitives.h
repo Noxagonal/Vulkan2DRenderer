@@ -171,35 +171,40 @@ struct Matrix2Base {
 	}
 };
 
-using Matrix2			= vk2d::Matrix2Base<float>;
+using Matrix2f			= vk2d::Matrix2Base<float>;
 using Matrix2d			= vk2d::Matrix2Base<double>;
 using Matrix2i			= vk2d::Matrix2Base<int32_t>;
 using Matrix2u			= vk2d::Matrix2Base<uint32_t>;
 
 
 
-inline vk2d::Matrix2 CreateRotationMatrix(
+inline vk2d::Matrix2f CreateRotationMatrix(
 	float rotation
 )
 {
 	auto x = std::cos( rotation );
 	auto y = std::sin( rotation );
-	return vk2d::Matrix2(
+	return vk2d::Matrix2f(
 		+x, -y,
 		+y, +x
 	);
 }
 
-struct AABB2d {
-	vk2d::Vector2f				top_left			= {};
-	vk2d::Vector2f				bottom_right		= {};
 
-	AABB2d()							= default;
-	AABB2d( float x1, float y1, float x2, float y2 ) : top_left( { x1, y1 } ), bottom_right( { x2, y2 } )
+
+template<typename T>
+struct AABB2Base {
+	vk2d::Vector2Base<T>		top_left			= {};
+	vk2d::Vector2Base<T>		bottom_right		= {};
+
+	AABB2Base()									= default;
+	AABB2Base( T x1, T y1, T x2, T y2
+	) :
+		top_left( { x1, y1 } ), bottom_right( { x2, y2 } )
 	{};
-	AABB2d( const AABB2d & other )		= default;
-	AABB2d( AABB2d && other )			= default;
-	AABB2d( const std::initializer_list<vk2d::Vector2f> & elements )
+	AABB2Base( const vk2d::AABB2Base<T> & other )	= default;
+	AABB2Base( vk2d::AABB2Base<T> && other )		= default;
+	AABB2Base( const std::initializer_list<vk2d::Vector2Base<T>> & elements )
 	{
 		assert( elements.size() <= 2 );
 		auto e = elements.begin();
@@ -207,30 +212,37 @@ struct AABB2d {
 		if( e ) bottom_right = *e++;
 	}
 
-	AABB2d & operator=( const AABB2d & other )	= default;
-	AABB2d & operator=( AABB2d && other )		= default;
+	vk2d::AABB2Base<T> & operator=( const vk2d::AABB2Base<T> & other )	= default;
+	vk2d::AABB2Base<T> & operator=( vk2d::AABB2Base<T> && other )			= default;
 
-	AABB2d operator+( vk2d::Vector2f other ) const
+	vk2d::AABB2Base<T> operator+( vk2d::Vector2Base<T> other ) const
 	{
 		return { top_left + other, bottom_right + other };
 	}
-	AABB2d operator-( vk2d::Vector2f other ) const
+	vk2d::AABB2Base<T> operator-( vk2d::Vector2Base<T> other ) const
 	{
 		return { top_left - other, bottom_right - other };
 	}
-	AABB2d & operator+=( vk2d::Vector2f other )
+	vk2d::AABB2Base<T> & operator+=( vk2d::Vector2Base<T> other )
 	{
 		top_left += other;
 		bottom_right += other;
 		return *this;
 	}
-	AABB2d & operator-=( vk2d::Vector2f other )
+	vk2d::AABB2Base<T> & operator-=( vk2d::Vector2Base<T> other )
 	{
 		top_left -= other;
 		bottom_right -= other;
 		return *this;
 	}
 };
+
+using AABB2f			= AABB2Base<float>;
+using AABB2d			= AABB2Base<double>;
+using AABB2i			= AABB2Base<int32_t>;
+using AABB2u			= AABB2Base<uint32_t>;
+
+
 
 template<typename T>
 struct ColorBase {
@@ -271,9 +283,9 @@ using Color32			= vk2d::ColorBase<uint32_t>;
 
 
 struct Vertex {
-	Vector2f						vertex_coords;			// 2 x 32 bits
-	Vector2f						uv_coords;				// 2 x 32 bits
-	Colorf						color;					// 4 x 32 bits
+	vk2d::Vector2f				vertex_coords;			// 2 x 32 bits
+	vk2d::Vector2f				uv_coords;				// 2 x 32 bits
+	vk2d::Colorf				color;					// 4 x 32 bits
 	float						point_size;				// 1 x 32 bits
 private:
 	float						padding[ 3 ];			// Reserved, padding Vertex struct to 128 bit boundaries

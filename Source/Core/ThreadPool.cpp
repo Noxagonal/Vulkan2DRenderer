@@ -20,7 +20,7 @@ class ThreadSharedResource {
 public:
 
 	Task * FindWork(
-		ThreadPrivateResource * thread_private_resource
+		vk2d::_internal::ThreadPrivateResource * thread_private_resource
 	)
 	{
 		std::lock_guard<std::mutex> lock_guard( task_list_mutex );
@@ -45,7 +45,7 @@ public:
 					// Finished tasks are removed from task_list.
 					const auto & dependencies = task->GetDependencies();
 					if( std::any_of( task_list.begin(), task_list.end(), [ &dependencies ](
-						std::unique_ptr<Task> & t )
+						std::unique_ptr<vk2d::_internal::Task> & t )
 						{
 							return std::any_of( dependencies.begin(), dependencies.end(), [ &t ]( uint64_t d )
 								{
@@ -72,7 +72,7 @@ public:
 		return nullptr;
 	}
 
-	void TaskComplete( Task * task )
+	void TaskComplete( vk2d::_internal::Task * task )
 	{
 		std::lock_guard<std::mutex> lock_guard( task_list_mutex );
 		auto it = task_list.begin();
@@ -92,28 +92,28 @@ public:
 	}
 
 	void AddTask(
-		std::unique_ptr<Task> new_task )
+		std::unique_ptr<vk2d::_internal::Task> new_task )
 	{
 		std::lock_guard<std::mutex> lock_guard( task_list_mutex );
 		task_list.emplace_back( std::move( new_task ) );
 	}
 
 
-	std::mutex								thread_wakeup_mutex;
-	std::condition_variable					thread_wakeup;
+	std::mutex											thread_wakeup_mutex;
+	std::condition_variable								thread_wakeup;
 
-	std::atomic_bool						threads_should_exit;
+	std::atomic_bool									threads_should_exit;
 
-	std::mutex								task_list_mutex;
-	std::deque<std::unique_ptr<Task>>		task_list;
+	std::mutex											task_list_mutex;
+	std::deque<std::unique_ptr<vk2d::_internal::Task>>	task_list;
 };
 
 
 
 void ThreadPoolWorkerThread(
-	ThreadSharedResource		*	thread_shared_resource,
-	ThreadPrivateResource		*	thread_private_resource,
-	ThreadSignal				*	thread_signals
+	vk2d::_internal::ThreadSharedResource		*	thread_shared_resource,
+	vk2d::_internal::ThreadPrivateResource		*	thread_private_resource,
+	vk2d::_internal::ThreadSignal				*	thread_signals
 )
 {
 	auto success = thread_private_resource->ThreadBegin();
@@ -148,15 +148,19 @@ void ThreadPoolWorkerThread(
 	thread_signals->ready_to_join		= true;
 }
 
+} // _internal
+
+} // vk2d
 
 
-ThreadPool::ThreadPool(
-	std::vector<std::unique_ptr<ThreadPrivateResource>> &&	thread_resources
+
+vk2d::_internal::ThreadPool::ThreadPool(
+	std::vector<std::unique_ptr<vk2d::_internal::ThreadPrivateResource>>	&&	thread_resources
 )
 {
 	thread_signals.resize( thread_resources.size() );
 	threads.reserve( thread_resources.size() );
-	thread_shared_resource		= std::make_unique<ThreadSharedResource>();
+	thread_shared_resource		= std::make_unique<vk2d::_internal::ThreadSharedResource>();
 	thread_private_resources	= std::move( thread_resources );
 	for( size_t i = 0; i < thread_private_resources.size(); ++i ) {
 		thread_private_resources[ i ]->thread_index		= uint32_t( i );
@@ -175,7 +179,7 @@ ThreadPool::ThreadPool(
 
 
 
-ThreadPool::~ThreadPool()
+vk2d::_internal::ThreadPool::~ThreadPool()
 {
 	shutting_down	= true;
 
@@ -202,17 +206,17 @@ ThreadPool::~ThreadPool()
 	}
 }
 
-std::thread::id ThreadPool::GetThreadID( uint32_t thread_index ) const
+std::thread::id vk2d::_internal::ThreadPool::GetThreadID( uint32_t thread_index ) const
 {
 	return threads[ thread_index ].get_id();
 }
 
-bool ThreadPool::IsGood() const
+bool vk2d::_internal::ThreadPool::IsGood() const
 {
 	return is_good;
 }
 
-void ThreadPool::WaitIdle()
+void vk2d::_internal::ThreadPool::WaitIdle()
 {
 	while( !thread_shared_resource->IsTaskListEmpty() ) {
 		thread_shared_resource->thread_wakeup.notify_all();
@@ -223,7 +227,7 @@ void ThreadPool::WaitIdle()
 
 std::atomic_uint64_t task_index_counter		= 0;
 
-uint64_t ThreadPool::AddTask( std::unique_ptr<Task> new_task )
+uint64_t vk2d::_internal::ThreadPool::AddTask( std::unique_ptr<Task> new_task )
 {
 	if( !is_good ) return false;
 
@@ -233,8 +237,3 @@ uint64_t ThreadPool::AddTask( std::unique_ptr<Task> new_task )
 
 	return index;
 }
-
-
-} // _internal
-
-} // vk2d

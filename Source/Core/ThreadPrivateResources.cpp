@@ -6,6 +6,8 @@
 #include "../Header/Core/DescriptorSet.h"
 #include "../Header/Core/VulkanMemoryManagement.h"
 
+
+
 vk2d::_internal::ThreadLoaderResource::ThreadLoaderResource( RendererImpl * parent )
 {
 	this->renderer	= parent;

@@ -9,13 +9,12 @@
 #include <vector>
 #include <assert.h>
 
-namespace vk2d {
-
-namespace _internal {
 
 
-
-VkResult ResolvedQueue::Submit( const VkSubmitInfo & submit_info, VkFence fence )
+VkResult vk2d::_internal::ResolvedQueue::Submit(
+	const VkSubmitInfo		&	submit_info,
+	VkFence						fence
+)
 {
 	std::lock_guard<std::mutex> lock_guard( *queueMutex );
 
@@ -27,7 +26,9 @@ VkResult ResolvedQueue::Submit( const VkSubmitInfo & submit_info, VkFence fence 
 	);
 }
 
-VkResult ResolvedQueue::Submit( const std::vector<VkSubmitInfo> submit_infos, VkFence fence )
+VkResult vk2d::_internal::ResolvedQueue::Submit(
+	const std::vector<VkSubmitInfo>		submit_infos,
+	VkFence								fence )
 {
 	std::lock_guard<std::mutex> lock_guard( *queueMutex );
 
@@ -39,7 +40,9 @@ VkResult ResolvedQueue::Submit( const std::vector<VkSubmitInfo> submit_infos, Vk
 	);
 }
 
-VkResult ResolvedQueue::Present( const VkPresentInfoKHR & present_info )
+VkResult vk2d::_internal::ResolvedQueue::Present(
+	const VkPresentInfoKHR		&	present_info
+)
 {
 	std::lock_guard<std::mutex> lock_guard( *queueMutex );
 
@@ -49,34 +52,34 @@ VkResult ResolvedQueue::Present( const VkPresentInfoKHR & present_info )
 	);
 }
 
-VkQueue ResolvedQueue::GetQueue()
+VkQueue vk2d::_internal::ResolvedQueue::GetQueue()
 {
 	return queue;
 }
 
-uint32_t ResolvedQueue::GetQueueFamilyIndex()
+uint32_t vk2d::_internal::ResolvedQueue::GetQueueFamilyIndex()
 {
 	return queueFamilyIndex;
 }
 
-VkBool32 ResolvedQueue::IsPresentationSupported()
+VkBool32 vk2d::_internal::ResolvedQueue::IsPresentationSupported()
 {
 	return supportsPresentation;
 }
 
-std::mutex * ResolvedQueue::GetQueueMutex()
+std::mutex * vk2d::_internal::ResolvedQueue::GetQueueMutex()
 {
 	return &*queueMutex;
 }
 
-uint32_t ResolvedQueue::GetBasedOn()
+uint32_t vk2d::_internal::ResolvedQueue::GetBasedOn()
 {
 	return basedOn;
 }
 
 
 
-VK2D_API DeviceQueueResolver::DeviceQueueResolver(
+VK2D_API vk2d::_internal::DeviceQueueResolver::DeviceQueueResolver(
 	VkInstance												instance,
 	VkPhysicalDevice										physicalDevice,
 	std::vector<std::pair<VkQueueFlags, float>>				queueTypes )
@@ -216,19 +219,19 @@ VK2D_API DeviceQueueResolver::DeviceQueueResolver(
 
 
 
-VK2D_API DeviceQueueResolver::~DeviceQueueResolver()
+vk2d::_internal::DeviceQueueResolver::~DeviceQueueResolver()
 {}
 
 
 
-const VK2D_API std::vector<VkDeviceQueueCreateInfo> & VK2D_APIENTRY DeviceQueueResolver::GetDeviceQueueCreateInfos()
+const std::vector<VkDeviceQueueCreateInfo> & vk2d::_internal::DeviceQueueResolver::GetDeviceQueueCreateInfos()
 {
 	return queueCreateInfos;
 }
 
 
 
-VK2D_API std::vector<ResolvedQueue> VK2D_APIENTRY DeviceQueueResolver::GetQueues( VkDevice device )
+std::vector<vk2d::_internal::ResolvedQueue> vk2d::_internal::DeviceQueueResolver::GetQueues( VkDevice device )
 {
 	std::vector<ResolvedQueue> ret( queueGetInfo.size() );
 	for( uint32_t i=0; i < ret.size(); ++i ) {
@@ -266,13 +269,7 @@ VK2D_API std::vector<ResolvedQueue> VK2D_APIENTRY DeviceQueueResolver::GetQueues
 
 
 
-bool DeviceQueueResolver::IsGood()
+bool vk2d::_internal::DeviceQueueResolver::IsGood()
 {
 	return is_good;
 }
-
-
-
-} // _internal
-
-} // vk2d
