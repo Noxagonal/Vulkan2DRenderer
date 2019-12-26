@@ -1,6 +1,0 @@
-D:/Projektit/C++/Vulkan2DRenderer/ExternalLibraries/glfw-3.3-VisualStudio2019/CMakeFiles/uninstall.dir
-D:/Projektit/C++/Vulkan2DRenderer/ExternalLibraries/glfw-3.3-VisualStudio2019/CMakeFiles/INSTALL.dir
-D:/Projektit/C++/Vulkan2DRenderer/ExternalLibraries/glfw-3.3-VisualStudio2019/CMakeFiles/ALL_BUILD.dir
-D:/Projektit/C++/Vulkan2DRenderer/ExternalLibraries/glfw-3.3-VisualStudio2019/CMakeFiles/ZERO_CHECK.dir
-D:/Projektit/C++/Vulkan2DRenderer/ExternalLibraries/glfw-3.3-VisualStudio2019/src/CMakeFiles/glfw.dir
-D:/Projektit/C++/Vulkan2DRenderer/ExternalLibraries/glfw-3.3-VisualStudio2019/src/CMakeFiles/INSTALL.dir
