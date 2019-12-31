@@ -2,12 +2,15 @@
 
 #include "../Core/Common.h"
 
+#include <initializer_list>
+#include <cmath>
 #include <array>
 #include <assert.h>
 
 
 
 namespace vk2d {
+
 
 
 template<typename T>
@@ -208,8 +211,17 @@ struct AABB2Base {
 	{
 		assert( elements.size() <= 2 );
 		auto e = elements.begin();
-		if( e ) top_left = *e++;
-		if( e ) bottom_right = *e++;
+		if( e ) top_left		= *e++;
+		if( e ) bottom_right	= *e++;
+	}
+	AABB2Base( const std::initializer_list<T> & elements )
+	{
+		assert( elements.size() <= 4 );
+		auto e = elements.begin();
+		if( e ) top_left.x		= *e++;
+		if( e ) top_left.y		= *e++;
+		if( e ) bottom_right.x	= *e++;
+		if( e ) bottom_right.y	= *e++;
 	}
 
 	vk2d::AABB2Base<T> & operator=( const vk2d::AABB2Base<T> & other )	= default;

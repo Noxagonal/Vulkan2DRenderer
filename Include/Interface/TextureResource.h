@@ -2,6 +2,7 @@
 
 #include "../Core/Common.h"
 #include "Resource.h"
+#include "../../Include/Interface/RenderPrimitives.h"
 
 #include <memory>
 
@@ -26,16 +27,41 @@ class TextureResource :
 	friend class vk2d::_internal::UnloadTask;
 	friend class vk2d::_internal::WindowImpl;
 
+	// Texture from file constructor.
 	VK2D_API																				TextureResource(
-		vk2d::_internal::ResourceManagerImpl				*	resource_manager_parent );
+		vk2d::Resource										*	parent_resource,
+		vk2d::_internal::ResourceManagerImpl				*	resource_manager_parent,
+		uint32_t												loader_thread,
+		std::filesystem::path									file_path );
+
+	// Array texture from files constructor.
+	VK2D_API																				TextureResource(
+		vk2d::Resource										*	parent_resource,
+		vk2d::_internal::ResourceManagerImpl				*	resource_manager_parent,
+		uint32_t												loader_thread,
+		std::vector<std::filesystem::path>						file_paths_listing );
+
+	// Texture from data constructor.
+	VK2D_API																				TextureResource(
+		vk2d::Resource										*	parent_resource,
+		vk2d::_internal::ResourceManagerImpl				*	resource_manager_parent,
+		uint32_t												loader_thread,
+		vk2d::Vector2u											size,
+		const std::vector<vk2d::Color8>						&	texels );
+
+	// Array texture from data constructor.
+	VK2D_API																				TextureResource(
+		vk2d::Resource										*	parent_resource,
+		vk2d::_internal::ResourceManagerImpl				*	resource_manager_parent,
+		uint32_t												loader_thread,
+		vk2d::Vector2u											size,
+		const std::vector<std::vector<vk2d::Color8>*>		&	texels_listing );
 
 public:
 	VK2D_API																				~TextureResource();
 
 	VK2D_API bool												VK2D_APIENTRY				IsLoaded();
 	VK2D_API bool												VK2D_APIENTRY				WaitUntilLoaded();
-
-	VK2D_API bool												VK2D_APIENTRY				IsGood();
 
 protected:
 	VK2D_API virtual bool										VK2D_APIENTRY				MTLoad(
@@ -46,8 +72,6 @@ protected:
 
 private:
 	std::unique_ptr<vk2d::_internal::TextureResourceImpl>		impl						= {};
-
-	bool														is_good						= {};
 };
 
 

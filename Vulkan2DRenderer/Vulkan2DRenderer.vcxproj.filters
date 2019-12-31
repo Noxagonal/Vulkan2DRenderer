@@ -126,6 +126,12 @@
     <ClInclude Include="..\Source\Header\Impl\SamplerImpl.h">
       <Filter>Source\Header\Impl</Filter>
     </ClInclude>
+    <ClInclude Include="..\Include\Interface\FontResource.h">
+      <Filter>Include\Interface</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Source\Header\Impl\FontResourceImpl.h">
+      <Filter>Source\Header\Impl</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\Source\Impl\RendererImpl.cpp">
@@ -183,6 +189,12 @@
       <Filter>Source\Interface</Filter>
     </ClCompile>
     <ClCompile Include="..\Source\Impl\SamplerImpl.cpp">
+      <Filter>Source\Impl</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\Interface\FontResource.cpp">
+      <Filter>Source\Interface</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\Impl\FontResourceImpl.cpp">
       <Filter>Source\Impl</Filter>
     </ClCompile>
   </ItemGroup>

@@ -8,17 +8,111 @@
 
 
 VK2D_API vk2d::TextureResource::TextureResource(
-	vk2d::_internal::ResourceManagerImpl		*	resource_manager_parent
+	vk2d::Resource							*	parent_resource,
+	vk2d::_internal::ResourceManagerImpl	*	resource_manager_parent,
+	uint32_t									loader_thread,
+	std::filesystem::path						file_path
+) : vk2d::Resource(
+	loader_thread,
+	resource_manager_parent,
+	parent_resource,
+	file_path
 )
 {
-	impl		= std::make_unique<vk2d::_internal::TextureResourceImpl>( this, resource_manager_parent );
-	if( !impl )	return;
-	if( !impl->IsGood() ) {
+	impl		= std::make_unique<vk2d::_internal::TextureResourceImpl>(
+		this,
+		resource_manager_parent
+	);
+	if( impl && impl->IsGood() ) {
+		is_good	= true;
+	} else {
+		is_good	= false;
 		impl	= nullptr;
 		resource_manager_parent->GetRenderer()->Report( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot create texture resource implementation!" );
 		return;
 	}
-	is_good		= true;
+}
+
+VK2D_API vk2d::TextureResource::TextureResource(
+	vk2d::Resource							*	parent_resource,
+	vk2d::_internal::ResourceManagerImpl	*	resource_manager_parent,
+	uint32_t									loader_thread,
+	std::vector<std::filesystem::path>			file_paths_listing
+) : vk2d::Resource(
+	loader_thread,
+	resource_manager_parent,
+	parent_resource,
+	file_paths_listing
+)
+{
+	impl		= std::make_unique<vk2d::_internal::TextureResourceImpl>(
+		this,
+		resource_manager_parent
+		);
+	if( impl && impl->IsGood() ) {
+		is_good	= true;
+	} else {
+		is_good	= false;
+		impl	= nullptr;
+		resource_manager_parent->GetRenderer()->Report( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot create texture resource implementation!" );
+		return;
+	}
+}
+
+VK2D_API vk2d::TextureResource::TextureResource(
+	vk2d::Resource							*	parent_resource,
+	vk2d::_internal::ResourceManagerImpl	*	resource_manager_parent,
+	uint32_t									loader_thread,
+	vk2d::Vector2u								size,
+	const std::vector<vk2d::Color8>			&	texels
+) : vk2d::Resource(
+	loader_thread,
+	resource_manager_parent,
+	parent_resource
+)
+{
+	impl		= std::make_unique<vk2d::_internal::TextureResourceImpl>(
+		this,
+		resource_manager_parent,
+		size,
+		texels
+	);
+	if( impl && impl->IsGood() ) {
+		is_good	= true;
+	} else {
+		is_good	= false;
+		impl	= nullptr;
+		resource_manager_parent->GetRenderer()->Report( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot create texture resource implementation!" );
+		return;
+	}
+}
+
+VK2D_API vk2d::TextureResource::TextureResource(
+	vk2d::Resource									*	parent_resource,
+	vk2d::_internal::ResourceManagerImpl			*	resource_manager_parent,
+	uint32_t											loader_thread,
+	vk2d::Vector2u										size,
+	const std::vector<std::vector<vk2d::Color8>*>	&	texels_listing
+) : vk2d::Resource(
+	loader_thread,
+	resource_manager_parent,
+	parent_resource
+)
+{
+	impl		= std::make_unique<vk2d::_internal::TextureResourceImpl>(
+		this,
+		resource_manager_parent,
+		size,
+		texels_listing
+		);
+	if( impl && impl->IsGood() ) {
+		is_good	= true;
+	} else {
+		is_good	= false;
+		impl	= nullptr;
+		resource_manager_parent->GetRenderer()->Report( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot create texture resource implementation!" );
+		return;
+	}
 }
 
 VK2D_API vk2d::TextureResource::~TextureResource()
@@ -32,11 +126,6 @@ VK2D_API bool VK2D_APIENTRY vk2d::TextureResource::IsLoaded()
 VK2D_API bool VK2D_APIENTRY vk2d::TextureResource::WaitUntilLoaded()
 {
 	return impl->WaitUntilLoaded();
-}
-
-VK2D_API bool VK2D_APIENTRY vk2d::TextureResource::IsGood()
-{
-	return is_good;
 }
 
 VK2D_API bool VK2D_APIENTRY vk2d::TextureResource::MTLoad(

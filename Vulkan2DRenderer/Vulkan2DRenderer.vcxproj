@@ -110,6 +110,7 @@ glslangValidator -V -o "$(SolutionDir)Source\Shaders\shader.frag.spv.h" "$(Solut
     <ClInclude Include="..\Include\Core\Common.h" />
     <ClInclude Include="..\Include\Core\Platform.h" />
     <ClInclude Include="..\Include\Core\Version.hpp" />
+    <ClInclude Include="..\Include\Interface\FontResource.h" />
     <ClInclude Include="..\Include\Interface\Mesh.h" />
     <ClInclude Include="..\Include\Interface\Renderer.h" />
     <ClInclude Include="..\Include\Interface\RenderPrimitives.h" />
@@ -126,12 +127,15 @@ glslangValidator -V -o "$(SolutionDir)Source\Shaders\shader.frag.spv.h" "$(Solut
     <ClInclude Include="..\Source\Header\Core\ThreadPool.h" />
     <ClInclude Include="..\Source\Header\Core\ThreadPrivateResources.h" />
     <ClInclude Include="..\Source\Header\Core\VulkanMemoryManagement.h" />
+    <ClInclude Include="..\Source\Header\Impl\FontResourceImpl.h" />
     <ClInclude Include="..\Source\Header\Impl\RendererImpl.h" />
     <ClInclude Include="..\Source\Header\Impl\ResourceManagerImpl.h" />
     <ClInclude Include="..\Source\Header\Impl\SamplerImpl.h" />
     <ClInclude Include="..\Source\Header\Impl\TextureResourceImpl.h" />
     <ClInclude Include="..\Source\Header\Impl\WindowImpl.h" />
+    <ClCompile Include="..\Source\Impl\FontResourceImpl.cpp" />
     <ClCompile Include="..\Source\Impl\SamplerImpl.cpp" />
+    <ClCompile Include="..\Source\Interface\FontResource.cpp" />
     <ClCompile Include="..\Source\Interface\Sampler.cpp" />
     <ClInclude Include="..\Source\Shaders\shader.frag.spv.h" />
     <ClInclude Include="..\Source\Shaders\shader.vert.spv.h" />

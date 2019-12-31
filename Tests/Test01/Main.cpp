@@ -68,6 +68,8 @@ int main()
 	auto sampler			= renderer->CreateSampler( sampler_create_info );
 
 	auto texture			= renderer->GetResourceManager()->LoadTextureResource( "../../TestData/GrafGear_128.png" );
+	auto font				= renderer->GetResourceManager()->LoadFontResource( "../../TestData/Fonts/Ethnocentric/ethnocentric rg.ttf" );
+//	auto font				= renderer->GetResourceManager()->LoadFontResource( "../../TestData/Fonts/DroidSandMono/DroidSansMono.ttf" );
 
 	EventHandler							event_handler;
 	vk2d::WindowCreateInfo					window_create_info {};
@@ -102,8 +104,8 @@ int main()
 			v.point_size	= 8.0f;
 		}
 		lattice_mesh.SetLineSize( 1.0f );
-		lattice_mesh.SetMeshType( vk2d::MeshType::TRIANGLE_WIREFRAME );
-		lattice_mesh.SetTexture( texture );
+		lattice_mesh.SetMeshType( vk2d::MeshType::TRIANGLE_FILLED );
+		lattice_mesh.SetTexture( font->GetTextureResource() );
 		lattice_mesh.SetSampler( sampler );
 //		lattice_mesh.Rotate( frame_counter / 234.0f, { +0.5f, +0.0f } );
 

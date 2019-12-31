@@ -29,11 +29,23 @@ constexpr double RAD			= PI * 2.0;
 #endif
 #endif
 
+// Calling convension
 #define VK2D_APIENTRY		__stdcall
 
+
+
+// Debug enable or disable
 #if defined( _DEBUG )
 #define VK2D_DEBUG			1
 #endif
+
+
+
+// Warning helper for visual studio, other compilers can use #warning
+#define _VK2D_WARNING_STRINGIFY_SUB(x) #x
+#define _VK2D_WARNING_STRINGIFY(x) _VK2D_WARNING_STRINGIFY_SUB(x)
+// Usage: #pragma VK2D_WARNING( "message" )
+#define VK2D_WARNING( txt ) message( __FILE__"(" _VK2D_WARNING_STRINGIFY(__LINE__) ") : warning: " txt )
 
 #else
 

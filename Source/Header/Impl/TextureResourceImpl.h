@@ -23,51 +23,64 @@ class TextureResourceImpl
 	friend class vk2d::_internal::DestroyTextureLoadResources;
 
 public:
-	TextureResourceImpl(
-		vk2d::TextureResource					*	texture_resource_parent,
-		vk2d::_internal::ResourceManagerImpl	*	resource_manager );
+															TextureResourceImpl(
+		vk2d::TextureResource							*	texture_resource_parent,
+		vk2d::_internal::ResourceManagerImpl			*	resource_manager );
 
-	~TextureResourceImpl();
+															TextureResourceImpl(
+		vk2d::TextureResource							*	texture_resource_parent,
+		vk2d::_internal::ResourceManagerImpl			*	resource_manager,
+		vk2d::Vector2u										size,
+		const std::vector<vk2d::Color8>					&	texels );
 
-	bool											MTLoad(
-		vk2d::_internal::ThreadPrivateResource	*	thread_resource );
+															TextureResourceImpl(
+		vk2d::TextureResource							*	texture_resource_parent,
+		vk2d::_internal::ResourceManagerImpl			*	resource_manager,
+		vk2d::Vector2u										size,
+		const std::vector<std::vector<vk2d::Color8>*>	&	texels );
 
-	void											MTUnload(
-		vk2d::_internal::ThreadPrivateResource	*	thread_resource );
+															~TextureResourceImpl();
 
-	bool											IsLoaded();
-	bool											WaitUntilLoaded();
+	bool													MTLoad(
+		vk2d::_internal::ThreadPrivateResource			*	thread_resource );
 
-	VkDescriptorSet									GetDescriptorSet() const;
+	void													MTUnload(
+		vk2d::_internal::ThreadPrivateResource			*	thread_resource );
 
-	bool											IsGood() const;
+	bool													IsLoaded();
+	bool													WaitUntilLoaded();
+
+	VkDescriptorSet											GetDescriptorSet() const;
+
+	bool													IsGood() const;
 
 private:
-	void											ScheduleTextureLoadResourceDestruction();
+	void													ScheduleTextureLoadResourceDestruction();
 
-	vk2d::TextureResource						*	texture										= {};
-	_internal::ResourceManagerImpl				*	resource_manager							= {};
-	vk2d::_internal::ThreadLoaderResource		*	loader_thread_resource						= {};
+	vk2d::TextureResource								*	texture_parent								= {};
+	_internal::ResourceManagerImpl						*	resource_manager							= {};
+	vk2d::_internal::ThreadLoaderResource				*	loader_thread_resource						= {};
 
-	vk2d::_internal::CompleteBufferResource			staging_buffer								= {};
-	vk2d::_internal::CompleteImageResource			image										= {};
+	std::vector<vk2d::_internal::CompleteBufferResource>	staging_buffers								= {};
+	vk2d::_internal::CompleteImageResource					image										= {};
 
-	VkExtent2D										extent										= {};
-	std::vector<vk2d::Color8>						texture_data								= {};
+	uint32_t												image_layer_count							= {};
+	VkExtent2D												extent										= {};
+	std::vector<std::vector<vk2d::Color8>>					texture_data								= {};
 
-	vk2d::_internal::PoolDescriptorSet				descriptor_set								= {};
+	vk2d::_internal::PoolDescriptorSet						descriptor_set								= {};
 
-	VkCommandBuffer									primary_render_command_buffer				= {};
-	VkCommandBuffer									secondary_render_command_buffer				= {};
-	VkCommandBuffer									primary_transfer_command_buffer				= {};
+	VkCommandBuffer											primary_render_command_buffer				= {};
+	VkCommandBuffer											secondary_render_command_buffer				= {};
+	VkCommandBuffer											primary_transfer_command_buffer				= {};
 
-	VkSemaphore										transfer_semaphore							= {};
-	VkSemaphore										blit_semaphore								= {};
-	VkFence											texture_complete_fence						= {};
+	VkSemaphore												transfer_semaphore							= {};
+	VkSemaphore												blit_semaphore								= {};
+	VkFence													texture_complete_fence						= {};
 
-	std::mutex										is_loaded_mutex								= {};
-	bool											is_loaded									= {};
-	bool											is_good										= {};
+	std::mutex												is_loaded_mutex								= {};
+	bool													is_loaded									= {};
+	bool													is_good										= {};
 };
 
 

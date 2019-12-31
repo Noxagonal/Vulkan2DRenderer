@@ -26,22 +26,58 @@ VK2D_API vk2d::ResourceManager::ResourceManager(
 VK2D_API vk2d::ResourceManager::~ResourceManager()
 {}
 
-VK2D_API vk2d::TextureResource *VK2D_APIENTRY vk2d::ResourceManager::CreateTextureResource(
+VK2D_API vk2d::TextureResource * VK2D_APIENTRY vk2d::ResourceManager::CreateTextureResource(
 	vk2d::Vector2u						size,
 	const std::vector<vk2d::Color8>	&	texels
 )
 {
 	return impl->CreateTextureResource(
 		size,
-		texels
+		texels,
+		nullptr
 	);
 }
 
 VK2D_API vk2d::TextureResource * VK2D_APIENTRY vk2d::ResourceManager::LoadTextureResource(
-	std::filesystem::path		file_path
+	const std::filesystem::path		&	file_path
 )
 {
-	return impl->LoadTextureResource( file_path );
+	return impl->LoadTextureResource(
+		file_path,
+		nullptr
+	);
+}
+
+VK2D_API vk2d::TextureResource * VK2D_APIENTRY vk2d::ResourceManager::CreateArrayTextureResource(
+	vk2d::Vector2u										size,
+	const std::vector<std::vector<vk2d::Color8>*>	&	texels_listing
+)
+{
+	return impl->CreateArrayTextureResource(
+		size,
+		texels_listing,
+		nullptr
+	);
+}
+
+VK2D_API vk2d::TextureResource * VK2D_APIENTRY vk2d::ResourceManager::LoadArrayTextureResource(
+	const std::vector<std::filesystem::path>		&	file_path_listing
+)
+{
+	return impl->LoadArrayTextureResource(
+		file_path_listing,
+		nullptr
+	);
+}
+
+VK2D_API vk2d::FontResource * VK2D_APIENTRY vk2d::ResourceManager::LoadFontResource(
+	const std::filesystem::path		&	file_path
+)
+{
+	return impl->LoadFontResource(
+		file_path,
+		nullptr
+	);
 }
 
 VK2D_API void VK2D_APIENTRY vk2d::ResourceManager::DestroyResource(
