@@ -235,7 +235,7 @@ bool vk2d::_internal::TextureResourceImpl::MTLoad(
 		image_view_create_info.pNext				= nullptr;
 		image_view_create_info.flags				= 0;
 		image_view_create_info.image				= VK_NULL_HANDLE;	// CreateCompleteImageResource() will replace this with proper image handle
-		image_view_create_info.viewType				= VK_IMAGE_VIEW_TYPE_2D;
+		image_view_create_info.viewType				= VK_IMAGE_VIEW_TYPE_2D_ARRAY;
 		image_view_create_info.format				= VK_FORMAT_R8G8B8A8_UNORM;
 		image_view_create_info.components			= {
 			VK_COMPONENT_SWIZZLE_IDENTITY,
@@ -782,35 +782,38 @@ bool vk2d::_internal::TextureResourceImpl::MTLoad(
 	}
 
 	// 9. Allocate and update descriptor set that points to the image.
-	{
-		descriptor_set = loader_thread_resource->GetDescriptorAutoPool()->AllocateDescriptorSet(
-			resource_manager->GetRenderer()->GetTextureDescriptorSetLayout()
-		);
-		if( descriptor_set != VK_SUCCESS ) {
-			return false;
-		}
+	// Not used anymore because array textures require combined texture samplers.
+//	{
+//		descriptor_set = loader_thread_resource->GetDescriptorAutoPool()->AllocateDescriptorSet(
+//			resource_manager->GetRenderer()->GetTextureDescriptorSetLayout()
+//		);
+//		if( descriptor_set != VK_SUCCESS ) {
+//			return false;
+//		}
+//
+//		VkDescriptorImageInfo descriptor_image_info {};
+//		descriptor_image_info.sampler		= VK_NULL_HANDLE;
+//		descriptor_image_info.imageView		= image.view;
+//		descriptor_image_info.imageLayout	= VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+//		VkWriteDescriptorSet descriptor_write {};
+//		descriptor_write.sType				= VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+//		descriptor_write.pNext				= nullptr;
+//		descriptor_write.dstSet				= descriptor_set.descriptorSet;
+//		descriptor_write.dstBinding			= 0;
+//		descriptor_write.dstArrayElement	= 0;
+//		descriptor_write.descriptorCount	= 1;
+//		descriptor_write.descriptorType		= VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
+//		descriptor_write.pImageInfo			= &descriptor_image_info;
+//		descriptor_write.pBufferInfo		= nullptr;
+//		descriptor_write.pTexelBufferView	= nullptr;
+//		vkUpdateDescriptorSets(
+//			resource_manager->GetVulkanDevice(),
+//			1, &descriptor_write,
+//			0, nullptr
+//		);
+//	}
 
-		VkDescriptorImageInfo descriptor_image_info {};
-		descriptor_image_info.sampler		= VK_NULL_HANDLE;
-		descriptor_image_info.imageView		= image.view;
-		descriptor_image_info.imageLayout	= VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-		VkWriteDescriptorSet descriptor_write {};
-		descriptor_write.sType				= VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-		descriptor_write.pNext				= nullptr;
-		descriptor_write.dstSet				= descriptor_set.descriptorSet;
-		descriptor_write.dstBinding			= 0;
-		descriptor_write.dstArrayElement	= 0;
-		descriptor_write.descriptorCount	= 1;
-		descriptor_write.descriptorType		= VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
-		descriptor_write.pImageInfo			= &descriptor_image_info;
-		descriptor_write.pBufferInfo		= nullptr;
-		descriptor_write.pTexelBufferView	= nullptr;
-		vkUpdateDescriptorSets(
-			resource_manager->GetVulkanDevice(),
-			1, &descriptor_write,
-			0, nullptr
-		);
-	}
+	image_layout	= VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 
 	return true;
 }
@@ -831,9 +834,9 @@ void vk2d::_internal::TextureResourceImpl::MTUnload(
 	// definitely be either or. MTUnload() does not ever get called before MTLoad().
 	texture_parent->WaitUntilLoaded();
 
-	loader_thread_resource->GetDescriptorAutoPool()->FreeDescriptorSet(
-		descriptor_set
-	);
+//	loader_thread_resource->GetDescriptorAutoPool()->FreeDescriptorSet(
+//		descriptor_set
+//	);
 
 	vkDestroyFence(
 		loader_thread_resource->GetVulkanDevice(),
@@ -948,9 +951,29 @@ bool vk2d::_internal::TextureResourceImpl::WaitUntilLoaded()
 	return false;
 }
 
-VkDescriptorSet vk2d::_internal::TextureResourceImpl::GetDescriptorSet() const
+//VkDescriptorSet vk2d::_internal::TextureResourceImpl::GetDescriptorSet() const
+//{
+//	return descriptor_set.descriptorSet;
+//}
+
+VkImage vk2d::_internal::TextureResourceImpl::GetVulkanImage() const
 {
-	return descriptor_set.descriptorSet;
+	return image.image;
+}
+
+VkImageView vk2d::_internal::TextureResourceImpl::GetVulkanImageView() const
+{
+	return image.view;
+}
+
+VkImageLayout vk2d::_internal::TextureResourceImpl::GetVulkanImageLayout() const
+{
+	return image_layout;
+}
+
+uint32_t vk2d::_internal::TextureResourceImpl::GetLayerCount() const
+{
+	return image_layer_count;
 }
 
 bool vk2d::_internal::TextureResourceImpl::IsGood() const

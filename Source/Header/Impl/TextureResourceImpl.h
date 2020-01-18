@@ -50,7 +50,11 @@ public:
 	bool													IsLoaded();
 	bool													WaitUntilLoaded();
 
-	VkDescriptorSet											GetDescriptorSet() const;
+//	VkDescriptorSet											GetDescriptorSet() const;
+	VkImage													GetVulkanImage() const;
+	VkImageView												GetVulkanImageView() const;
+	VkImageLayout											GetVulkanImageLayout() const;
+	uint32_t												GetLayerCount() const;
 
 	bool													IsGood() const;
 
@@ -63,12 +67,13 @@ private:
 
 	std::vector<vk2d::_internal::CompleteBufferResource>	staging_buffers								= {};
 	vk2d::_internal::CompleteImageResource					image										= {};
+	VkImageLayout											image_layout								= {};
 
 	uint32_t												image_layer_count							= {};
 	VkExtent2D												extent										= {};
 	std::vector<std::vector<vk2d::Color8>>					texture_data								= {};
 
-	vk2d::_internal::PoolDescriptorSet						descriptor_set								= {};
+//	vk2d::_internal::PoolDescriptorSet						descriptor_set								= {};
 
 	VkCommandBuffer											primary_render_command_buffer				= {};
 	VkCommandBuffer											secondary_render_command_buffer				= {};

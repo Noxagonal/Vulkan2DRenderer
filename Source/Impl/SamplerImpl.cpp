@@ -7,19 +7,6 @@
 
 
 
-namespace vk2d {
-namespace _internal {
-
-struct SamplerData {
-	vk2d::Colorf				borderColor			= {};
-	std::array<float, 4>		borderColorEnable	= {};
-};
-
-} // _internal
-} // vk2d
-
-
-
 vk2d::_internal::SamplerImpl::SamplerImpl(
 	vk2d::Sampler					*	sampler_parent,
 	vk2d::_internal::RendererImpl	*	renderer_parent,
@@ -206,7 +193,7 @@ vk2d::_internal::SamplerImpl::SamplerImpl(
 	buffer_create_info.sType					= VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
 	buffer_create_info.pNext					= nullptr;
 	buffer_create_info.flags					= 0;
-	buffer_create_info.size						= sizeof( vk2d::_internal::SamplerData );
+	buffer_create_info.size						= sizeof( vk2d::_internal::SamplerImpl::BufferData );
 	buffer_create_info.usage					= VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
 	buffer_create_info.sharingMode				= VK_SHARING_MODE_EXCLUSIVE;
 	buffer_create_info.queueFamilyIndexCount	= 0;
@@ -220,58 +207,58 @@ vk2d::_internal::SamplerImpl::SamplerImpl(
 		return;
 	}
 	{
-		vk2d::_internal::SamplerData sd;
+		vk2d::_internal::SamplerImpl::BufferData sd;
 		sd.borderColor				= create_info.border_color;
 		sd.borderColorEnable[ 0 ]	= float( create_info.address_mode_u == vk2d::SamplerAddressMode::CLAMP_TO_BORDER );
 		sd.borderColorEnable[ 1 ]	= float( create_info.address_mode_v == vk2d::SamplerAddressMode::CLAMP_TO_BORDER );
-		sampler_data.memory.DataCopy( &sd, sizeof( vk2d::_internal::SamplerData ) );
+		sampler_data.memory.DataCopy( &sd, sizeof( vk2d::_internal::SamplerImpl::BufferData ) );
 	}
 
-	descriptor_set		= renderer_parent->GetDescriptorPool()->AllocateDescriptorSet(
-		renderer_parent->GetSamplerDescriptorSetLayout()
-	);
-	if( descriptor_set != VK_SUCCESS ) {
-		renderer_parent->Report( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot create sampler descriptor set!" );
-		return;
-	}
-
-	std::array<VkWriteDescriptorSet, 2> descriptor_write {};
-
-	VkDescriptorImageInfo sampler_info {};
-	sampler_info.sampler					= sampler;
-	sampler_info.imageView					= VK_NULL_HANDLE;
-	sampler_info.imageLayout				= VK_IMAGE_LAYOUT_UNDEFINED;
-	descriptor_write[ 0 ].sType				= VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-	descriptor_write[ 0 ].pNext				= nullptr;
-	descriptor_write[ 0 ].dstSet			= descriptor_set.descriptorSet;
-	descriptor_write[ 0 ].dstBinding		= 0;
-	descriptor_write[ 0 ].dstArrayElement	= 0;
-	descriptor_write[ 0 ].descriptorCount	= 1;
-	descriptor_write[ 0 ].descriptorType	= VK_DESCRIPTOR_TYPE_SAMPLER;
-	descriptor_write[ 0 ].pImageInfo		= &sampler_info;
-	descriptor_write[ 0 ].pBufferInfo		= nullptr;
-	descriptor_write[ 0 ].pTexelBufferView	= nullptr;
-
-	VkDescriptorBufferInfo sampler_data_info {};
-	sampler_data_info.buffer				= sampler_data.buffer;
-	sampler_data_info.offset				= 0;
-	sampler_data_info.range					= sizeof( vk2d::_internal::SamplerData );
-	descriptor_write[ 1 ].sType				= VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-	descriptor_write[ 1 ].pNext				= nullptr;
-	descriptor_write[ 1 ].dstSet			= descriptor_set.descriptorSet;
-	descriptor_write[ 1 ].dstBinding		= 1;
-	descriptor_write[ 1 ].dstArrayElement	= 0;
-	descriptor_write[ 1 ].descriptorCount	= 1;
-	descriptor_write[ 1 ].descriptorType	= VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-	descriptor_write[ 1 ].pImageInfo		= nullptr;
-	descriptor_write[ 1 ].pBufferInfo		= &sampler_data_info;
-	descriptor_write[ 1 ].pTexelBufferView	= nullptr;
-
-	vkUpdateDescriptorSets(
-		renderer_parent->GetVulkanDevice(),
-		uint32_t( descriptor_write.size() ), descriptor_write.data(),
-		0, nullptr
-	);
+//	descriptor_set		= renderer_parent->GetDescriptorPool()->AllocateDescriptorSet(
+//		renderer_parent->GetSamplerTextureDescriptorSetLayout()
+//	);
+//	if( descriptor_set != VK_SUCCESS ) {
+//		renderer_parent->Report( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot create sampler descriptor set!" );
+//		return;
+//	}
+//
+//	std::array<VkWriteDescriptorSet, 2> descriptor_write {};
+//
+//	VkDescriptorImageInfo sampler_info {};
+//	sampler_info.sampler					= sampler;
+//	sampler_info.imageView					= VK_NULL_HANDLE;
+//	sampler_info.imageLayout				= VK_IMAGE_LAYOUT_UNDEFINED;
+//	descriptor_write[ 0 ].sType				= VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+//	descriptor_write[ 0 ].pNext				= nullptr;
+//	descriptor_write[ 0 ].dstSet			= descriptor_set.descriptorSet;
+//	descriptor_write[ 0 ].dstBinding		= 0;
+//	descriptor_write[ 0 ].dstArrayElement	= 0;
+//	descriptor_write[ 0 ].descriptorCount	= 1;
+//	descriptor_write[ 0 ].descriptorType	= VK_DESCRIPTOR_TYPE_SAMPLER;
+//	descriptor_write[ 0 ].pImageInfo		= &sampler_info;
+//	descriptor_write[ 0 ].pBufferInfo		= nullptr;
+//	descriptor_write[ 0 ].pTexelBufferView	= nullptr;
+//
+//	VkDescriptorBufferInfo sampler_data_info {};
+//	sampler_data_info.buffer				= sampler_data.buffer;
+//	sampler_data_info.offset				= 0;
+//	sampler_data_info.range					= sizeof( vk2d::_internal::SamplerData );
+//	descriptor_write[ 1 ].sType				= VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+//	descriptor_write[ 1 ].pNext				= nullptr;
+//	descriptor_write[ 1 ].dstSet			= descriptor_set.descriptorSet;
+//	descriptor_write[ 1 ].dstBinding		= 1;
+//	descriptor_write[ 1 ].dstArrayElement	= 0;
+//	descriptor_write[ 1 ].descriptorCount	= 1;
+//	descriptor_write[ 1 ].descriptorType	= VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+//	descriptor_write[ 1 ].pImageInfo		= nullptr;
+//	descriptor_write[ 1 ].pBufferInfo		= &sampler_data_info;
+//	descriptor_write[ 1 ].pTexelBufferView	= nullptr;
+//
+//	vkUpdateDescriptorSets(
+//		renderer_parent->GetVulkanDevice(),
+//		uint32_t( descriptor_write.size() ), descriptor_write.data(),
+//		0, nullptr
+//	);
 
 	is_good			= true;
 }
@@ -284,7 +271,7 @@ vk2d::_internal::SamplerImpl::~SamplerImpl()
 		sampler,
 		nullptr
 	);
-	renderer_parent->GetDescriptorPool()->FreeDescriptorSet( descriptor_set );
+//	renderer_parent->GetDescriptorPool()->FreeDescriptorSet( descriptor_set );
 }
 
 VkSampler vk2d::_internal::SamplerImpl::GetVulkanSampler()
@@ -292,12 +279,12 @@ VkSampler vk2d::_internal::SamplerImpl::GetVulkanSampler()
 	return sampler;
 }
 
-VkDescriptorSet vk2d::_internal::SamplerImpl::GetVulkanDescriptorSet()
-{
-	return descriptor_set.descriptorSet;
-}
+//VkDescriptorSet vk2d::_internal::SamplerImpl::GetVulkanDescriptorSet()
+//{
+//	return descriptor_set.descriptorSet;
+//}
 
-VkBuffer vk2d::_internal::SamplerImpl::GetVulkanBuffer()
+VkBuffer vk2d::_internal::SamplerImpl::GetVulkanBufferForSamplerData()
 {
 	return sampler_data.buffer;
 }

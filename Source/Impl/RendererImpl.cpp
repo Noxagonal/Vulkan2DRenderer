@@ -10,6 +10,7 @@
 #include "../Header/Core/DescriptorSet.h"
 #include "../Header/Impl/WindowImpl.h"
 #include "../../Include/Interface/Sampler.h"
+#include "../../Include/Interface/TextureResource.h"
 
 #include "../Shaders/shader.vert.spv.h"
 #include "../Shaders/shader.frag.spv.h"
@@ -66,9 +67,41 @@ void VK2D_APIENTRY VK2D_default_ReportFunction(
 	vk2d::SetConsoleColor();
 
 	if( severity == vk2d::ReportSeverity::CRITICAL_ERROR ) {
+
+#if VK2D_BUILD_OPTION_VULKAN_COMMAND_BUFFER_CHECKMARKS
+		auto checkpoints = vk2d::_internal::GetCommandBufferCheckpoints();
+		if( checkpoints.size() ) {
+			std::cout << "\n\nLatest command buffer checkpoint marker stages: " << checkpoints.size() << "\n";
+			for( auto & c : checkpoints ) {
+				auto data = reinterpret_cast<vk2d::_internal::CommandBufferCheckpointData*>( c.pCheckpointMarker );
+				std::stringstream ss;
+				ss << vk2d::_internal::CommandBufferCheckpointTypeToString( data->type )
+					<< " : " << data->name
+					<< vk2d::_internal::VkPipelineStageFlagBitsToString( c.stage );
+				std::cout << ss.str() << "\n";
+			}
+			std::cout << "\nCommand buffer checkmark trail:\n";
+			auto c = reinterpret_cast<CommandBufferCheckpointData*>( checkpoints[ 0 ].pCheckpointMarker )->previous;
+			while( c ) {
+				auto current = c;
+				auto previous= current->previous;
+				c = previous;
+
+				std::stringstream ss;
+				ss << vk2d::_internal::CommandBufferCheckpointTypeToString( current->type )
+					<< " : " << current->name << "\n";
+				std::cout << ss.str();
+
+				delete current;
+			}
+			delete reinterpret_cast<CommandBufferCheckpointData*>( checkpoints[ 0 ].pCheckpointMarker );
+		}
+#endif
+
 #ifdef _WIN32
 		MessageBox( NULL, message.c_str(), "Critical error!", MB_OK | MB_ICONERROR );
 #endif
+
 		std::exit( -1 );
 	}
 }
@@ -227,14 +260,13 @@ vk2d::_internal::RendererImpl::RendererImpl( const RendererCreateInfo & renderer
 #if VK2D_BUILD_OPTION_DEBUG_ENABLE
 	if( report_function == nullptr ) {
 		report_function = VK2D_default_ReportFunction;
-}
+	}
 #endif
 
 //	Introduce layers and extensions here
 //	instance_layers;
-//	instance_extensions;
-	device_extensions.push_back( VK_KHR_SWAPCHAIN_EXTENSION_NAME );
-	device_extensions.push_back( VK_KHR_SAMPLER_MIRROR_CLAMP_TO_EDGE_EXTENSION_NAME );
+//	Instance extensions.
+	instance_extensions.push_back( VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME );
 	{
 		// Adding glfw instance extensions
 		uint32_t glfw_instance_extension_count = 0;
@@ -244,9 +276,24 @@ vk2d::_internal::RendererImpl::RendererImpl( const RendererCreateInfo & renderer
 		}
 	}
 
+	// Device extensions.
+	device_extensions.push_back( VK_KHR_SWAPCHAIN_EXTENSION_NAME );
+	device_extensions.push_back( VK_KHR_SAMPLER_MIRROR_CLAMP_TO_EDGE_EXTENSION_NAME );
+
+#if VK2D_BUILD_OPTION_VULKAN_COMMAND_BUFFER_CHECKMARKS
+	device_extensions.push_back( VK_NV_DEVICE_DIAGNOSTIC_CHECKPOINTS_EXTENSION_NAME );
+#endif
+
 	if( !CreateInstance() ) return;
 	if( !PickPhysicalDevice() ) return;
 	if( !CreateDeviceAndQueues() ) return;
+
+#if VK2D_BUILD_OPTION_VULKAN_COMMAND_BUFFER_CHECKMARKS
+	if( renderer_count == 1 ) {
+		vk2d::_internal::SetCommandBufferCheckpointHost( this );
+	}
+#endif
+
 	if( !CreateDescriptorSetLayouts() ) return;
 	if( !CreateDescriptorPool() ) return;
 	if( !CreatePipelineCache() ) return;
@@ -635,19 +682,29 @@ VkPipelineLayout vk2d::_internal::RendererImpl::GetPipelineLayout() const
 	return pipeline_layout;
 }
 
-const vk2d::_internal::DescriptorSetLayout & vk2d::_internal::RendererImpl::GetSamplerDescriptorSetLayout() const
+const vk2d::_internal::DescriptorSetLayout & vk2d::_internal::RendererImpl::GetSamplerTextureDescriptorSetLayout() const
 {
-	return *sampler_descriptor_set_layout;
+	return *sampler_texture_descriptor_set_layout;
 }
 
-const vk2d::_internal::DescriptorSetLayout & vk2d::_internal::RendererImpl::GetTextureDescriptorSetLayout() const
+const vk2d::_internal::DescriptorSetLayout & vk2d::_internal::RendererImpl::GetUniformBufferDescriptorSetLayout() const
 {
-	return *texture_descriptor_set_layout;
+	return *uniform_buffer_descriptor_set_layout;
 }
 
-VkDescriptorSet vk2d::_internal::RendererImpl::GetDefaultTextureDescriptorSet() const
+const vk2d::_internal::DescriptorSetLayout & vk2d::_internal::RendererImpl::GetStorageBufferDescriptorSetLayout() const
 {
-	return default_texture_descriptor_set.descriptorSet;
+	return *storage_buffer_descriptor_set_layout;
+}
+
+//VkDescriptorSet vk2d::_internal::RendererImpl::GetDefaultTextureDescriptorSet() const
+//{
+//	return default_texture_descriptor_set.descriptorSet;
+//}
+
+vk2d::TextureResource * vk2d::_internal::RendererImpl::GetDefaultTexture() const
+{
+	return default_texture;
 }
 
 vk2d::Sampler * vk2d::_internal::RendererImpl::GetDefaultSampler() const
@@ -778,9 +835,29 @@ bool vk2d::_internal::RendererImpl::CreateInstance()
 	severity_flags		|= VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
 #endif
 
+	std::vector<VkValidationFeatureEnableEXT> enabled_validation_features {
+#if VK2D_BUILD_OPTION_VULKAN_GPU_ASSISTED_VALIDATION
+		VK_VALIDATION_FEATURE_ENABLE_GPU_ASSISTED_EXT,
+		VK_VALIDATION_FEATURE_ENABLE_GPU_ASSISTED_RESERVE_BINDING_SLOT_EXT,
+#endif
+#if VK2D_BUILD_OPTION_VULKAN_VALIDATION_BEST_PRACTICES
+		VK_VALIDATION_FEATURE_ENABLE_BEST_PRACTICES_EXT,
+#endif
+	};
+	std::vector<VkValidationFeatureDisableEXT> disabled_validation_features {
+	};
+
+	VkValidationFeaturesEXT validation_features {};
+	validation_features.sType							= VK_STRUCTURE_TYPE_VALIDATION_FEATURES_EXT;
+	validation_features.pNext							= nullptr;
+	validation_features.enabledValidationFeatureCount	= uint32_t( enabled_validation_features.size() );
+	validation_features.pEnabledValidationFeatures		= enabled_validation_features.data();
+	validation_features.disabledValidationFeatureCount	= uint32_t( disabled_validation_features.size() );
+	validation_features.pDisabledValidationFeatures		= disabled_validation_features.data();
+
 	VkDebugUtilsMessengerCreateInfoEXT			debug_utils_create_info {};
 	debug_utils_create_info.sType				= VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
-	debug_utils_create_info.pNext				= nullptr;
+	debug_utils_create_info.pNext				= &validation_features;
 	debug_utils_create_info.flags				= 0;
 	debug_utils_create_info.messageSeverity		= severity_flags;
 	debug_utils_create_info.messageType			=
@@ -896,8 +973,8 @@ bool vk2d::_internal::RendererImpl::CreateDeviceAndQueues()
 	std::vector<std::pair<VkQueueFlags, float>> queue_requests {
 		{ VK_QUEUE_GRAPHICS_BIT, 1.0f },
 		{ VK_QUEUE_GRAPHICS_BIT, 0.2f },
-		{ VK_QUEUE_COMPUTE_BIT, 1.0f },
-		{ VK_QUEUE_TRANSFER_BIT, 1.0f }
+		{ VK_QUEUE_COMPUTE_BIT, 0.9f },
+		{ VK_QUEUE_TRANSFER_BIT, 0.5f }
 	};
 	DeviceQueueResolver queue_resolver( instance, physical_device, queue_requests );
 	if( !queue_resolver.IsGood() ) {
@@ -910,6 +987,8 @@ bool vk2d::_internal::RendererImpl::CreateDeviceAndQueues()
 	features.samplerAnisotropy					= VK_TRUE;
 	features.fillModeNonSolid					= VK_TRUE;
 	features.wideLines							= VK_TRUE;
+	features.geometryShader						= VK_TRUE;
+//	features.fragmentStoresAndAtomics			= VK_TRUE;
 
 	VkDeviceCreateInfo device_create_info {};
 	device_create_info.sType					= VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
@@ -985,10 +1064,11 @@ bool vk2d::_internal::RendererImpl::CreateDefaultSampler()
 	default_sampler			= std::unique_ptr<vk2d::Sampler>( new vk2d::Sampler( this, sampler_create_info ) );
 	if( default_sampler && default_sampler->IsGood() ) {
 		return true;
+	} else {
+		default_sampler		= nullptr;
+		Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot create default sampler!" );
+		return false;
 	}
-
-	Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot create default sampler!" );
-	return false;
 }
 
 
@@ -1083,14 +1163,16 @@ bool vk2d::_internal::RendererImpl::CreateShaderModules()
 
 bool vk2d::_internal::RendererImpl::CreateDescriptorSetLayouts()
 {
-	// These must match shader layout.
+	// These must match shader set types.
 
-	// Set 0 layout, sampler
+	// Set 1 layout, Combined image sampler and sampler data
+	// Binding 0 = Combined image sampler
+	// Binding 1 = Uniform buffer for sampler data
 	{
 		std::array<VkDescriptorSetLayoutBinding, 2> descriptor_set_layout_bindings {};
 
 		descriptor_set_layout_bindings[ 0 ].binding				= 0;
-		descriptor_set_layout_bindings[ 0 ].descriptorType		= VK_DESCRIPTOR_TYPE_SAMPLER;
+		descriptor_set_layout_bindings[ 0 ].descriptorType		= VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;	// Need this to access array textures
 		descriptor_set_layout_bindings[ 0 ].descriptorCount		= 1;
 		descriptor_set_layout_bindings[ 0 ].stageFlags			= VK_SHADER_STAGE_FRAGMENT_BIT;
 		descriptor_set_layout_bindings[ 0 ].pImmutableSamplers	= nullptr;
@@ -1108,25 +1190,25 @@ bool vk2d::_internal::RendererImpl::CreateDescriptorSetLayouts()
 		descriptor_set_layout_create_info.bindingCount	= uint32_t( descriptor_set_layout_bindings.size() );
 		descriptor_set_layout_create_info.pBindings		= descriptor_set_layout_bindings.data();
 
-		sampler_descriptor_set_layout		= vk2d::_internal::CreateDescriptorSetLayout(
+		sampler_texture_descriptor_set_layout		= vk2d::_internal::CreateDescriptorSetLayout(
 			this,
 			device,
 			&descriptor_set_layout_create_info
 		);
-		if( !sampler_descriptor_set_layout ) {
+		if( !sampler_texture_descriptor_set_layout ) {
 			Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot create sampler descriptor set layout!" );
 			return false;
 		}
 	}
 
-	// Set 0 layout, image
+	// General uniform buffer descriptor set layout
 	{
 		std::array<VkDescriptorSetLayoutBinding, 1> descriptor_set_layout_bindings {};
 
 		descriptor_set_layout_bindings[ 0 ].binding				= 0;
-		descriptor_set_layout_bindings[ 0 ].descriptorType		= VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
+		descriptor_set_layout_bindings[ 0 ].descriptorType		= VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 		descriptor_set_layout_bindings[ 0 ].descriptorCount		= 1;
-		descriptor_set_layout_bindings[ 0 ].stageFlags			= VK_SHADER_STAGE_FRAGMENT_BIT;
+		descriptor_set_layout_bindings[ 0 ].stageFlags			= VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
 		descriptor_set_layout_bindings[ 0 ].pImmutableSamplers	= nullptr;
 
 		VkDescriptorSetLayoutCreateInfo descriptor_set_layout_create_info {};
@@ -1136,13 +1218,41 @@ bool vk2d::_internal::RendererImpl::CreateDescriptorSetLayouts()
 		descriptor_set_layout_create_info.bindingCount	= uint32_t( descriptor_set_layout_bindings.size() );
 		descriptor_set_layout_create_info.pBindings		= descriptor_set_layout_bindings.data();
 
-		texture_descriptor_set_layout		= vk2d::_internal::CreateDescriptorSetLayout(
+		uniform_buffer_descriptor_set_layout			= vk2d::_internal::CreateDescriptorSetLayout(
 			this,
 			device,
 			&descriptor_set_layout_create_info
 		);
-		if( !texture_descriptor_set_layout ) {
-			Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot create image descriptor set layout!" );
+		if( !uniform_buffer_descriptor_set_layout ) {
+			Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot create storage buffer descriptor set layout!" );
+			return false;
+		}
+	}
+
+	// General storage buffer descriptor set layout
+	{
+		std::array<VkDescriptorSetLayoutBinding, 1> descriptor_set_layout_bindings {};
+
+		descriptor_set_layout_bindings[ 0 ].binding				= 0;
+		descriptor_set_layout_bindings[ 0 ].descriptorType		= VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+		descriptor_set_layout_bindings[ 0 ].descriptorCount		= 1;
+		descriptor_set_layout_bindings[ 0 ].stageFlags			= VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
+		descriptor_set_layout_bindings[ 0 ].pImmutableSamplers	= nullptr;
+
+		VkDescriptorSetLayoutCreateInfo descriptor_set_layout_create_info {};
+		descriptor_set_layout_create_info.sType			= VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+		descriptor_set_layout_create_info.pNext			= nullptr;
+		descriptor_set_layout_create_info.flags			= 0;
+		descriptor_set_layout_create_info.bindingCount	= uint32_t( descriptor_set_layout_bindings.size() );
+		descriptor_set_layout_create_info.pBindings		= descriptor_set_layout_bindings.data();
+
+		storage_buffer_descriptor_set_layout			= vk2d::_internal::CreateDescriptorSetLayout(
+			this,
+			device,
+			&descriptor_set_layout_create_info
+		);
+		if( !storage_buffer_descriptor_set_layout ) {
+			Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot create storage buffer descriptor set layout!" );
 			return false;
 		}
 	}
@@ -1163,14 +1273,16 @@ bool vk2d::_internal::RendererImpl::CreatePipelineLayout()
 	// This must match shader layout.
 
 	std::vector<VkDescriptorSetLayout> set_layouts {
-		sampler_descriptor_set_layout->GetVulkanDescriptorSetLayout(),
-		texture_descriptor_set_layout->GetVulkanDescriptorSetLayout()
+		uniform_buffer_descriptor_set_layout->GetVulkanDescriptorSetLayout(),	// Pipeline set 0 is WindowFrameData.
+		storage_buffer_descriptor_set_layout->GetVulkanDescriptorSetLayout(),	// Pipeline set 1 is vertex index buffer as storage buffer.
+		sampler_texture_descriptor_set_layout->GetVulkanDescriptorSetLayout(),	// Pipeline set 2 is combined sampler texture and it's data uniform.
+		storage_buffer_descriptor_set_layout->GetVulkanDescriptorSetLayout()	// Pipeline set 3 is texture channel weight data.
 	};
 
 	std::array<VkPushConstantRange, 1> push_constant_ranges {};
-	push_constant_ranges[ 0 ].stageFlags	= VK_SHADER_STAGE_VERTEX_BIT;
+	push_constant_ranges[ 0 ].stageFlags	= VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
 	push_constant_ranges[ 0 ].offset		= 0;
-	push_constant_ranges[ 0 ].size			= uint32_t( sizeof( vk2d::_internal::WindowCoordinateScaling ) );
+	push_constant_ranges[ 0 ].size			= uint32_t( sizeof( vk2d::_internal::PushConstants ) );
 
 	VkPipelineLayoutCreateInfo pipeline_layout_create_info {};
 	pipeline_layout_create_info.sType					= VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
@@ -1261,277 +1373,284 @@ bool vk2d::_internal::RendererImpl::CreateResourceManager()
 
 bool vk2d::_internal::RendererImpl::CreateDefaultTexture()
 {
-	{
-		// Create texture
-		{
-			VkImageCreateInfo image_create_info {};
-			image_create_info.sType						= VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
-			image_create_info.pNext						= nullptr;
-			image_create_info.flags						= 0;
-			image_create_info.imageType					= VK_IMAGE_TYPE_2D;
-			image_create_info.format					= VK_FORMAT_R8G8B8A8_UNORM;
-			image_create_info.extent					= { 1, 1, 1 };
-			image_create_info.mipLevels					= 1;
-			image_create_info.arrayLayers				= 1;
-			image_create_info.samples					= VK_SAMPLE_COUNT_1_BIT;
-			image_create_info.tiling					= VK_IMAGE_TILING_OPTIMAL;
-			image_create_info.usage						= VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
-			image_create_info.sharingMode				= VK_SHARING_MODE_EXCLUSIVE;
-			image_create_info.queueFamilyIndexCount		= 0;
-			image_create_info.pQueueFamilyIndices		= nullptr;
-			image_create_info.initialLayout				= VK_IMAGE_LAYOUT_UNDEFINED;
+	default_texture		= resource_manager->CreateTextureResource(
+		vk2d::Vector2u( 1, 1 ),
+		{ vk2d::Color8( 255, 255, 255, 255 ) }
+	);
 
-			VkImageViewCreateInfo image_view_create_info {};
-			image_view_create_info.sType				= VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-			image_view_create_info.pNext				= nullptr;
-			image_view_create_info.flags				= 0;
-			image_view_create_info.image				= VK_NULL_HANDLE;
-			image_view_create_info.viewType				= VK_IMAGE_VIEW_TYPE_2D;
-			image_view_create_info.format				= image_create_info.format;
-			image_view_create_info.components			= {
-				VK_COMPONENT_SWIZZLE_IDENTITY,
-				VK_COMPONENT_SWIZZLE_IDENTITY,
-				VK_COMPONENT_SWIZZLE_IDENTITY,
-				VK_COMPONENT_SWIZZLE_IDENTITY
-			};
-			image_view_create_info.subresourceRange.aspectMask		= VK_IMAGE_ASPECT_COLOR_BIT;
-			image_view_create_info.subresourceRange.baseMipLevel	= 0;
-			image_view_create_info.subresourceRange.levelCount		= 1;
-			image_view_create_info.subresourceRange.baseArrayLayer	= 0;
-			image_view_create_info.subresourceRange.layerCount		= 1;
-
-			default_texture		= device_memory_pool->CreateCompleteImageResource(
-				&image_create_info,
-				VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-				&image_view_create_info
-			);
-			if( default_texture != VK_SUCCESS ) {
-				Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot create default texture!" );
-				return false;
-			}
-		}
-		// Clear default texture image
-		{
-			VkCommandPool		cpool		= VK_NULL_HANDLE;
-			VkCommandBuffer		cbuffer		= VK_NULL_HANDLE;
-			{
-				VkCommandPoolCreateInfo pool_create_info {};
-				pool_create_info.sType				= VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
-				pool_create_info.pNext				= nullptr;
-				pool_create_info.flags				= VK_COMMAND_POOL_CREATE_TRANSIENT_BIT;
-				pool_create_info.queueFamilyIndex	= primary_render_queue.GetQueueFamilyIndex();
-				if( vkCreateCommandPool(
-					device,
-					&pool_create_info,
-					nullptr,
-					&cpool
-				) != VK_SUCCESS ) {
-					Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot create default texture!" );
-					return false;
-				}
-
-				VkCommandBufferAllocateInfo command_buffer_allocate_info {};
-				command_buffer_allocate_info.sType					= VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-				command_buffer_allocate_info.pNext					= nullptr;
-				command_buffer_allocate_info.commandPool			= cpool;
-				command_buffer_allocate_info.level					= VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-				command_buffer_allocate_info.commandBufferCount		= 1;
-				if( vkAllocateCommandBuffers(
-					device,
-					&command_buffer_allocate_info,
-					&cbuffer
-				) != VK_SUCCESS ) {
-					Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot create default texture!" );
-					return false;
-				}
-			}
-			// Record clear commands
-			{
-				VkCommandBufferBeginInfo cbuffer_begin_info {};
-				cbuffer_begin_info.sType				= VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-				cbuffer_begin_info.pNext				= nullptr;
-				cbuffer_begin_info.flags				= VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
-				cbuffer_begin_info.pInheritanceInfo		= nullptr;
-				if( vkBeginCommandBuffer(
-					cbuffer,
-					&cbuffer_begin_info
-				) != VK_SUCCESS ) {
-					Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot create default texture!" );
-					return false;
-				}
-
-				{
-					VkImageMemoryBarrier image_memory_barrier {};
-					image_memory_barrier.sType								= VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-					image_memory_barrier.pNext								= nullptr;
-					image_memory_barrier.srcAccessMask						= 0;
-					image_memory_barrier.dstAccessMask						= VK_ACCESS_MEMORY_WRITE_BIT;
-					image_memory_barrier.oldLayout							= VK_IMAGE_LAYOUT_UNDEFINED;
-					image_memory_barrier.newLayout							= VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
-					image_memory_barrier.srcQueueFamilyIndex				= VK_QUEUE_FAMILY_IGNORED;
-					image_memory_barrier.dstQueueFamilyIndex				= VK_QUEUE_FAMILY_IGNORED;
-					image_memory_barrier.image								= default_texture.image;
-					image_memory_barrier.subresourceRange.aspectMask		= VK_IMAGE_ASPECT_COLOR_BIT;
-					image_memory_barrier.subresourceRange.baseMipLevel		= 0;
-					image_memory_barrier.subresourceRange.levelCount		= 1;
-					image_memory_barrier.subresourceRange.baseArrayLayer	= 0;
-					image_memory_barrier.subresourceRange.layerCount		= 1;
-					vkCmdPipelineBarrier(
-						cbuffer,
-						VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
-						VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
-						0,
-						0, nullptr,
-						0, nullptr,
-						1, &image_memory_barrier
-					);
-				}
-
-				{
-					VkClearColorValue color {};
-					color.float32[ 0 ]		= 1.0f;
-					color.float32[ 1 ]		= 1.0f;
-					color.float32[ 2 ]		= 1.0f;
-					color.float32[ 3 ]		= 1.0f;
-					VkImageSubresourceRange range {};
-					range.aspectMask		= VK_IMAGE_ASPECT_COLOR_BIT;
-					range.baseMipLevel		= 0;
-					range.levelCount		= 1;
-					range.baseArrayLayer	= 0;
-					range.layerCount		= 1;
-					vkCmdClearColorImage(
-						cbuffer,
-						default_texture.image,
-						VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-						&color,
-						1,
-						&range
-					);
-				}
-
-				{
-					VkImageMemoryBarrier image_memory_barrier {};
-					image_memory_barrier.sType								= VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-					image_memory_barrier.pNext								= nullptr;
-					image_memory_barrier.srcAccessMask						= VK_ACCESS_MEMORY_WRITE_BIT;
-					image_memory_barrier.dstAccessMask						= VK_ACCESS_MEMORY_READ_BIT;
-					image_memory_barrier.oldLayout							= VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
-					image_memory_barrier.newLayout							= VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-					image_memory_barrier.srcQueueFamilyIndex				= VK_QUEUE_FAMILY_IGNORED;
-					image_memory_barrier.dstQueueFamilyIndex				= VK_QUEUE_FAMILY_IGNORED;
-					image_memory_barrier.image								= default_texture.image;
-					image_memory_barrier.subresourceRange.aspectMask		= VK_IMAGE_ASPECT_COLOR_BIT;
-					image_memory_barrier.subresourceRange.baseMipLevel		= 0;
-					image_memory_barrier.subresourceRange.levelCount		= 1;
-					image_memory_barrier.subresourceRange.baseArrayLayer	= 0;
-					image_memory_barrier.subresourceRange.layerCount		= 1;
-					vkCmdPipelineBarrier(
-						cbuffer,
-						VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
-						VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
-						0,
-						0, nullptr,
-						0, nullptr,
-						1, &image_memory_barrier
-					);
-				}
-
-				if( vkEndCommandBuffer(
-					cbuffer
-				) != VK_SUCCESS ) {
-					Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot create default texture!" );
-					return false;
-				}
-			}
-			// Submit and wait for command buffer completion
-			{
-				VkFence fence	= VK_NULL_HANDLE;
-				{
-					VkFenceCreateInfo fence_create_info {};
-					fence_create_info.sType			= VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
-					fence_create_info.pNext			= nullptr;
-					fence_create_info.flags			= 0;
-					if( vkCreateFence(
-						device,
-						&fence_create_info,
-						nullptr,
-						&fence
-					) != VK_SUCCESS ) {
-						Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot create default texture!" );
-						return false;
-					}
-				}
-				VkSubmitInfo submit_info {};
-				submit_info.sType					= VK_STRUCTURE_TYPE_SUBMIT_INFO;
-				submit_info.pNext					= nullptr;
-				submit_info.waitSemaphoreCount		= 0;
-				submit_info.pWaitSemaphores			= nullptr;
-				submit_info.pWaitDstStageMask		= nullptr;
-				submit_info.commandBufferCount		= 1;
-				submit_info.pCommandBuffers			= &cbuffer;
-				submit_info.signalSemaphoreCount	= 0;
-				submit_info.pSignalSemaphores		= nullptr;
-				if( primary_render_queue.Submit(
-					submit_info,
-					fence
-				) != VK_SUCCESS ) {
-					Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot create default texture!" );
-					return false;
-				}
-
-				if( vkWaitForFences(
-					device,
-					1, &fence,
-					VK_TRUE,
-					UINT64_MAX
-				) != VK_SUCCESS ) {
-					Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot create default texture!" );
-					return false;
-				}
-
-				vkDestroyFence(
-					device,
-					fence,
-					nullptr
-				);
-			}
-			// Cleanup.
-			{
-				vkDestroyCommandPool(
-					device,
-					cpool,
-					nullptr
-				);
-			}
-		}
-	}
-	// Allocate and update default texture descriptor set.
-	{
-		default_texture_descriptor_set	= descriptor_pool->AllocateDescriptorSet( *texture_descriptor_set_layout );
-
-		VkDescriptorImageInfo descriptor_image_info {};
-		descriptor_image_info.sampler			= VK_NULL_HANDLE;
-		descriptor_image_info.imageView			= default_texture.view;
-		descriptor_image_info.imageLayout		= VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-		std::array<VkWriteDescriptorSet, 1> descriptor_writes {};
-		descriptor_writes[ 0 ].sType			= VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-		descriptor_writes[ 0 ].pNext			= nullptr;
-		descriptor_writes[ 0 ].dstSet			= default_texture_descriptor_set.descriptorSet;
-		descriptor_writes[ 0 ].dstBinding		= 0;
-		descriptor_writes[ 0 ].dstArrayElement	= 0;
-		descriptor_writes[ 0 ].descriptorCount	= 1;
-		descriptor_writes[ 0 ].descriptorType	= VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
-		descriptor_writes[ 0 ].pImageInfo		= &descriptor_image_info;
-		descriptor_writes[ 0 ].pBufferInfo		= nullptr;
-		descriptor_writes[ 0 ].pTexelBufferView	= nullptr;
-
-		vkUpdateDescriptorSets(
-			device,
-			uint32_t( descriptor_writes.size() ),
-			descriptor_writes.data(),
-			0, nullptr
-		);
-	}
+	// Old default texture. Using a regular texture resource now.
+//	{
+//		// Create texture
+//		{
+//			VkImageCreateInfo image_create_info {};
+//			image_create_info.sType						= VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
+//			image_create_info.pNext						= nullptr;
+//			image_create_info.flags						= 0;
+//			image_create_info.imageType					= VK_IMAGE_TYPE_2D;
+//			image_create_info.format					= VK_FORMAT_R8G8B8A8_UNORM;
+//			image_create_info.extent					= { 1, 1, 1 };
+//			image_create_info.mipLevels					= 1;
+//			image_create_info.arrayLayers				= 1;
+//			image_create_info.samples					= VK_SAMPLE_COUNT_1_BIT;
+//			image_create_info.tiling					= VK_IMAGE_TILING_OPTIMAL;
+//			image_create_info.usage						= VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
+//			image_create_info.sharingMode				= VK_SHARING_MODE_EXCLUSIVE;
+//			image_create_info.queueFamilyIndexCount		= 0;
+//			image_create_info.pQueueFamilyIndices		= nullptr;
+//			image_create_info.initialLayout				= VK_IMAGE_LAYOUT_UNDEFINED;
+//
+//			VkImageViewCreateInfo image_view_create_info {};
+//			image_view_create_info.sType				= VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+//			image_view_create_info.pNext				= nullptr;
+//			image_view_create_info.flags				= 0;
+//			image_view_create_info.image				= VK_NULL_HANDLE;
+//			image_view_create_info.viewType				= VK_IMAGE_VIEW_TYPE_2D;
+//			image_view_create_info.format				= image_create_info.format;
+//			image_view_create_info.components			= {
+//				VK_COMPONENT_SWIZZLE_IDENTITY,
+//				VK_COMPONENT_SWIZZLE_IDENTITY,
+//				VK_COMPONENT_SWIZZLE_IDENTITY,
+//				VK_COMPONENT_SWIZZLE_IDENTITY
+//			};
+//			image_view_create_info.subresourceRange.aspectMask		= VK_IMAGE_ASPECT_COLOR_BIT;
+//			image_view_create_info.subresourceRange.baseMipLevel	= 0;
+//			image_view_create_info.subresourceRange.levelCount		= 1;
+//			image_view_create_info.subresourceRange.baseArrayLayer	= 0;
+//			image_view_create_info.subresourceRange.layerCount		= 1;
+//
+//			default_texture		= device_memory_pool->CreateCompleteImageResource(
+//				&image_create_info,
+//				VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+//				&image_view_create_info
+//			);
+//			if( default_texture != VK_SUCCESS ) {
+//				Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot create default texture!" );
+//				return false;
+//			}
+//		}
+//		// Clear default texture image
+//		{
+//			VkCommandPool		cpool		= VK_NULL_HANDLE;
+//			VkCommandBuffer		cbuffer		= VK_NULL_HANDLE;
+//			{
+//				VkCommandPoolCreateInfo pool_create_info {};
+//				pool_create_info.sType				= VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+//				pool_create_info.pNext				= nullptr;
+//				pool_create_info.flags				= VK_COMMAND_POOL_CREATE_TRANSIENT_BIT;
+//				pool_create_info.queueFamilyIndex	= primary_render_queue.GetQueueFamilyIndex();
+//				if( vkCreateCommandPool(
+//					device,
+//					&pool_create_info,
+//					nullptr,
+//					&cpool
+//				) != VK_SUCCESS ) {
+//					Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot create default texture!" );
+//					return false;
+//				}
+//
+//				VkCommandBufferAllocateInfo command_buffer_allocate_info {};
+//				command_buffer_allocate_info.sType					= VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+//				command_buffer_allocate_info.pNext					= nullptr;
+//				command_buffer_allocate_info.commandPool			= cpool;
+//				command_buffer_allocate_info.level					= VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+//				command_buffer_allocate_info.commandBufferCount		= 1;
+//				if( vkAllocateCommandBuffers(
+//					device,
+//					&command_buffer_allocate_info,
+//					&cbuffer
+//				) != VK_SUCCESS ) {
+//					Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot create default texture!" );
+//					return false;
+//				}
+//			}
+//			// Record clear commands
+//			{
+//				VkCommandBufferBeginInfo cbuffer_begin_info {};
+//				cbuffer_begin_info.sType				= VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+//				cbuffer_begin_info.pNext				= nullptr;
+//				cbuffer_begin_info.flags				= VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+//				cbuffer_begin_info.pInheritanceInfo		= nullptr;
+//				if( vkBeginCommandBuffer(
+//					cbuffer,
+//					&cbuffer_begin_info
+//				) != VK_SUCCESS ) {
+//					Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot create default texture!" );
+//					return false;
+//				}
+//
+//				{
+//					VkImageMemoryBarrier image_memory_barrier {};
+//					image_memory_barrier.sType								= VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+//					image_memory_barrier.pNext								= nullptr;
+//					image_memory_barrier.srcAccessMask						= 0;
+//					image_memory_barrier.dstAccessMask						= VK_ACCESS_MEMORY_WRITE_BIT;
+//					image_memory_barrier.oldLayout							= VK_IMAGE_LAYOUT_UNDEFINED;
+//					image_memory_barrier.newLayout							= VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+//					image_memory_barrier.srcQueueFamilyIndex				= VK_QUEUE_FAMILY_IGNORED;
+//					image_memory_barrier.dstQueueFamilyIndex				= VK_QUEUE_FAMILY_IGNORED;
+//					image_memory_barrier.image								= default_texture.image;
+//					image_memory_barrier.subresourceRange.aspectMask		= VK_IMAGE_ASPECT_COLOR_BIT;
+//					image_memory_barrier.subresourceRange.baseMipLevel		= 0;
+//					image_memory_barrier.subresourceRange.levelCount		= 1;
+//					image_memory_barrier.subresourceRange.baseArrayLayer	= 0;
+//					image_memory_barrier.subresourceRange.layerCount		= 1;
+//					vkCmdPipelineBarrier(
+//						cbuffer,
+//						VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
+//						VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
+//						0,
+//						0, nullptr,
+//						0, nullptr,
+//						1, &image_memory_barrier
+//					);
+//				}
+//
+//				{
+//					VkClearColorValue color {};
+//					color.float32[ 0 ]		= 1.0f;
+//					color.float32[ 1 ]		= 1.0f;
+//					color.float32[ 2 ]		= 1.0f;
+//					color.float32[ 3 ]		= 1.0f;
+//					VkImageSubresourceRange range {};
+//					range.aspectMask		= VK_IMAGE_ASPECT_COLOR_BIT;
+//					range.baseMipLevel		= 0;
+//					range.levelCount		= 1;
+//					range.baseArrayLayer	= 0;
+//					range.layerCount		= 1;
+//					vkCmdClearColorImage(
+//						cbuffer,
+//						default_texture.image,
+//						VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+//						&color,
+//						1,
+//						&range
+//					);
+//				}
+//
+//				{
+//					VkImageMemoryBarrier image_memory_barrier {};
+//					image_memory_barrier.sType								= VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+//					image_memory_barrier.pNext								= nullptr;
+//					image_memory_barrier.srcAccessMask						= VK_ACCESS_MEMORY_WRITE_BIT;
+//					image_memory_barrier.dstAccessMask						= VK_ACCESS_MEMORY_READ_BIT;
+//					image_memory_barrier.oldLayout							= VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+//					image_memory_barrier.newLayout							= VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+//					image_memory_barrier.srcQueueFamilyIndex				= VK_QUEUE_FAMILY_IGNORED;
+//					image_memory_barrier.dstQueueFamilyIndex				= VK_QUEUE_FAMILY_IGNORED;
+//					image_memory_barrier.image								= default_texture.image;
+//					image_memory_barrier.subresourceRange.aspectMask		= VK_IMAGE_ASPECT_COLOR_BIT;
+//					image_memory_barrier.subresourceRange.baseMipLevel		= 0;
+//					image_memory_barrier.subresourceRange.levelCount		= 1;
+//					image_memory_barrier.subresourceRange.baseArrayLayer	= 0;
+//					image_memory_barrier.subresourceRange.layerCount		= 1;
+//					vkCmdPipelineBarrier(
+//						cbuffer,
+//						VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
+//						VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
+//						0,
+//						0, nullptr,
+//						0, nullptr,
+//						1, &image_memory_barrier
+//					);
+//				}
+//
+//				if( vkEndCommandBuffer(
+//					cbuffer
+//				) != VK_SUCCESS ) {
+//					Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot create default texture!" );
+//					return false;
+//				}
+//			}
+//			// Submit and wait for command buffer completion
+//			{
+//				VkFence fence	= VK_NULL_HANDLE;
+//				{
+//					VkFenceCreateInfo fence_create_info {};
+//					fence_create_info.sType			= VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
+//					fence_create_info.pNext			= nullptr;
+//					fence_create_info.flags			= 0;
+//					if( vkCreateFence(
+//						device,
+//						&fence_create_info,
+//						nullptr,
+//						&fence
+//					) != VK_SUCCESS ) {
+//						Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot create default texture!" );
+//						return false;
+//					}
+//				}
+//				VkSubmitInfo submit_info {};
+//				submit_info.sType					= VK_STRUCTURE_TYPE_SUBMIT_INFO;
+//				submit_info.pNext					= nullptr;
+//				submit_info.waitSemaphoreCount		= 0;
+//				submit_info.pWaitSemaphores			= nullptr;
+//				submit_info.pWaitDstStageMask		= nullptr;
+//				submit_info.commandBufferCount		= 1;
+//				submit_info.pCommandBuffers			= &cbuffer;
+//				submit_info.signalSemaphoreCount	= 0;
+//				submit_info.pSignalSemaphores		= nullptr;
+//				if( primary_render_queue.Submit(
+//					submit_info,
+//					fence
+//				) != VK_SUCCESS ) {
+//					Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot create default texture!" );
+//					return false;
+//				}
+//
+//				if( vkWaitForFences(
+//					device,
+//					1, &fence,
+//					VK_TRUE,
+//					UINT64_MAX
+//				) != VK_SUCCESS ) {
+//					Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot create default texture!" );
+//					return false;
+//				}
+//
+//				vkDestroyFence(
+//					device,
+//					fence,
+//					nullptr
+//				);
+//			}
+//			// Cleanup.
+//			{
+//				vkDestroyCommandPool(
+//					device,
+//					cpool,
+//					nullptr
+//				);
+//			}
+//		}
+//	}
+//
+//	// Allocate and update default texture descriptor set.
+//	{
+//		default_texture_descriptor_set	= descriptor_pool->AllocateDescriptorSet( *texture_descriptor_set_layout );
+//
+//		VkDescriptorImageInfo descriptor_image_info {};
+//		descriptor_image_info.sampler			= VK_NULL_HANDLE;
+//		descriptor_image_info.imageView			= default_texture.view;
+//		descriptor_image_info.imageLayout		= VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+//		std::array<VkWriteDescriptorSet, 1> descriptor_writes {};
+//		descriptor_writes[ 0 ].sType			= VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+//		descriptor_writes[ 0 ].pNext			= nullptr;
+//		descriptor_writes[ 0 ].dstSet			= default_texture_descriptor_set.descriptorSet;
+//		descriptor_writes[ 0 ].dstBinding		= 0;
+//		descriptor_writes[ 0 ].dstArrayElement	= 0;
+//		descriptor_writes[ 0 ].descriptorCount	= 1;
+//		descriptor_writes[ 0 ].descriptorType	= VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
+//		descriptor_writes[ 0 ].pImageInfo		= &descriptor_image_info;
+//		descriptor_writes[ 0 ].pBufferInfo		= nullptr;
+//		descriptor_writes[ 0 ].pTexelBufferView	= nullptr;
+//
+//		vkUpdateDescriptorSets(
+//			device,
+//			uint32_t( descriptor_writes.size() ),
+//			descriptor_writes.data(),
+//			0, nullptr
+//		);
+//	}
 
 	return true;
 }
@@ -1611,8 +1730,9 @@ void vk2d::_internal::RendererImpl::DestroyShaderModules()
 
 void vk2d::_internal::RendererImpl::DestroyDescriptorSetLayouts()
 {
-	sampler_descriptor_set_layout	= nullptr;
-	texture_descriptor_set_layout	= nullptr;
+	sampler_texture_descriptor_set_layout	= nullptr;
+	uniform_buffer_descriptor_set_layout	= nullptr;
+	storage_buffer_descriptor_set_layout	= nullptr;
 }
 
 void vk2d::_internal::RendererImpl::DestroyPipelineLayout()
@@ -1643,11 +1763,15 @@ void vk2d::_internal::RendererImpl::DestroyResourceManager()
 
 void vk2d::_internal::RendererImpl::DestroyDefaultTexture()
 {
-	descriptor_pool->FreeDescriptorSet( default_texture_descriptor_set );
-	device_memory_pool->FreeCompleteResource( default_texture );
-
+	resource_manager->DestroyResource( default_texture );
 	default_texture						= {};
-	default_texture_descriptor_set		= {};
+
+	// Old code replaced by texture resource.
+//	descriptor_pool->FreeDescriptorSet( default_texture_descriptor_set );
+//	device_memory_pool->FreeCompleteResource( default_texture );
+
+//	default_texture						= {};
+//	default_texture_descriptor_set		= {};
 }
 
 

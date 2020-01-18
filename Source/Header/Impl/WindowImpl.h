@@ -8,6 +8,7 @@
 #include "../../Header/Core/MeshBuffer.h"
 #include "../Core/QueueResolver.h"
 #include "../Core/VulkanMemoryManagement.h"
+#include "../Core/DescriptorSet.h"
 
 #define GLFW_INCLUDE_NONE
 #include <GLFW/glfw3.h>
@@ -15,6 +16,7 @@
 #include <vector>
 #include <memory>
 #include <atomic>
+#include <map>
 
 namespace vk2d {
 
@@ -163,35 +165,40 @@ public:
 	vk2d::CursorState											GetCursorState();
 
 	void														DrawTriangleList(
+		const std::vector<vk2d::VertexIndex_3>				&	indices,
 		const std::vector<vk2d::Vertex>						&	vertices,
-		const std::vector<VertexIndex_3>					&	indices,
+		const std::vector<float>							&	texture_channels,
 		bool													filled						= true,
 		vk2d::TextureResource								*	texture						= nullptr,
 		vk2d::Sampler										*	sampler						= nullptr );
 
 	void														DrawTriangleList(
-		const std::vector<vk2d::Vertex>						&	vertices,
 		const std::vector<uint32_t>							&	raw_indices,
+		const std::vector<vk2d::Vertex>						&	vertices,
+		const std::vector<float>							&	texture_channels,
 		bool													filled						= true,
 		vk2d::TextureResource								*	texture						= nullptr,
 		vk2d::Sampler										*	sampler						= nullptr );
 
 	void														DrawLineList(
+		const std::vector<vk2d::VertexIndex_2>				&	indices,
 		const std::vector<vk2d::Vertex>						&	vertices,
-		const std::vector<VertexIndex_2>					&	indices,
+		const std::vector<float>							&	texture_channels,
 		vk2d::TextureResource								*	texture						= nullptr,
 		vk2d::Sampler										*	sampler						= nullptr,
 		float													line_width					= 1.0f );
 
 	void														DrawLineList(
-		const std::vector<vk2d::Vertex>						&	vertices,
 		const std::vector<uint32_t>							&	raw_indices,
+		const std::vector<vk2d::Vertex>						&	vertices,
+		const std::vector<float>							&	texture_channels,
 		vk2d::TextureResource								*	texture						= nullptr,
 		vk2d::Sampler										*	sampler						= nullptr,
 		float													line_width					= 1.0f );
 
 	void														DrawPointList(
 		const std::vector<vk2d::Vertex>						&	vertices,
+		const std::vector<float>							&	texture_channels,
 		vk2d::TextureResource								*	texture						= nullptr,
 		vk2d::Sampler										*	sampler						= nullptr );
 
@@ -259,6 +266,7 @@ private:
 	bool														CreateFramebuffers();
 	bool														CreateWindowSynchronizationPrimitives();
 	bool														CreateFrameSynchronizationPrimitives();
+	bool														CreateWindowFrameDataBuffer();
 
 	void														HandleScreenshotEvent();
 
@@ -266,6 +274,20 @@ private:
 		VkCommandBuffer											command_buffer,
 		vk2d::_internal::PipelineType							pipeline_type );
 
+	void														CmdBindTextureSamplerIfDifferent(
+		VkCommandBuffer											command_buffer,
+		vk2d::Sampler										*	sampler,
+		vk2d::TextureResource								*	texture );
+
+	struct SamplerTextureDescriptorPoolData {
+		vk2d::_internal::PoolDescriptorSet						descriptor_set								= {};
+		std::chrono::time_point<std::chrono::steady_clock>		previous_access_time						= {};	// For cleanup
+	};
+
+	std::map<vk2d::Sampler*, std::map<vk2d::TextureResource*, vk2d::_internal::WindowImpl::SamplerTextureDescriptorPoolData>>
+		sampler_texture_descriptor_sets							= {};
+
+	/*
 	void														CmdBindTextureIfDifferent(
 		VkCommandBuffer											command_buffer,
 		vk2d::TextureResource								*	texture );
@@ -273,78 +295,86 @@ private:
 	void														CmdBindSamplerIfDifferent(
 		VkCommandBuffer											command_buffer,
 		vk2d::Sampler										*	sampler );
+	*/
 
 	void														CmdSetLineWidthIfDifferent(
 		VkCommandBuffer											command_buffer,
 		float													line_width );
 
-	vk2d::Window											*	window_parent							= {};
-	vk2d::_internal::RendererImpl							*	renderer_parent							= {};
-	vk2d::WindowCreateInfo										create_info_copy						= {};
+	bool														CmdUpdateFrameData(
+		VkCommandBuffer											command_buffer );
 
-	vk2d::WindowEventHandler								*	event_handler							= {};
-	VkOffset2D													position								= {};
-	bool														is_minimized							= {};
+	vk2d::Window											*	window_parent								= {};
+	vk2d::_internal::RendererImpl							*	renderer_parent								= {};
+	vk2d::WindowCreateInfo										create_info_copy							= {};
+
+	vk2d::WindowEventHandler								*	event_handler								= {};
+	VkOffset2D													position									= {};
+	bool														is_minimized								= {};
 
 	struct IconData {
-		std::vector<uint8_t>									image_data								= {};
-		GLFWimage												glfw_image								= {};
+		std::vector<uint8_t>									image_data									= {};
+		GLFWimage												glfw_image									= {};
 	};
-	std::vector<vk2d::_internal::WindowImpl::IconData>			icon_data								= {};
+	std::vector<vk2d::_internal::WindowImpl::IconData>			icon_data									= {};
 
-	VkInstance													instance								= {};
-	VkPhysicalDevice											physical_device							= {};
-	VkDevice													device									= {};
+	VkInstance													instance									= {};
+	VkPhysicalDevice											physical_device								= {};
+	VkDevice													device										= {};
 
-	vk2d::_internal::ResolvedQueue								primary_render_queue					= {};
+	vk2d::_internal::ResolvedQueue								primary_render_queue						= {};
 
-	vk2d::PFN_VK2D_ReportFunction								report_function							= {};
+	vk2d::PFN_VK2D_ReportFunction								report_function								= {};
 
-	GLFWwindow												*	glfw_window								= {};
-	std::string													window_title							= {};
+	GLFWwindow												*	glfw_window									= {};
+	std::string													window_title								= {};
 
-	vk2d::Multisamples											samples									= {};
+	vk2d::Multisamples											samples										= {};
 
-	VkSurfaceKHR												surface									= {};
-	VkSwapchainKHR												swapchain								= {};
-	std::vector<VkImage>										swapchain_images						= {};
-	std::vector<VkImageView>									swapchain_image_views					= {};
-	VkRenderPass												render_pass								= {};
-	std::vector<vk2d::_internal::CompleteImageResource>			multisample_render_targets				= {};
+	VkSurfaceKHR												surface										= {};
+	VkSwapchainKHR												swapchain									= {};
+	std::vector<VkImage>										swapchain_images							= {};
+	std::vector<VkImageView>									swapchain_image_views						= {};
+	VkRenderPass												render_pass									= {};
+	std::vector<vk2d::_internal::CompleteImageResource>			multisample_render_targets					= {};
 
-	VkCommandPool												command_pool							= {};
-	std::vector<VkCommandBuffer>								render_command_buffers					= {};	// For more overlapped execution multiple command buffers are needed.
-	VkCommandBuffer												mesh_transfer_command_buffer			= {};	// For data transfer each frame, this is small command buffer and can be re-recorded just before submitting the work.
-	VkSemaphore													mesh_transfer_semaphore					= {};
+	VkCommandPool												command_pool								= {};
+	std::vector<VkCommandBuffer>								render_command_buffers						= {};	// For more overlapped execution multiple command buffers are needed.
+	VkCommandBuffer												complementary_transfer_command_buffer				= {};	// For data transfer each frame, this is small command buffer and can be re-recorded just before submitting the work.
+	VkSemaphore													mesh_transfer_semaphore						= {};
 
-	VkExtent2D													min_extent								= {};
-	VkExtent2D													max_extent								= {};
-	VkExtent2D													extent									= {};
-	uint32_t													swapchain_image_count					= {};
-	VkSurfaceFormatKHR											surface_format							= {};
-	VkPresentModeKHR											present_mode							= {};
-	VkSurfaceCapabilitiesKHR									surface_capabilities					= {};
-	std::vector<VkFramebuffer>									framebuffers							= {};
+	VkExtent2D													min_extent									= {};
+	VkExtent2D													max_extent									= {};
+	VkExtent2D													extent										= {};
+	uint32_t													swapchain_image_count						= {};
+	VkSurfaceFormatKHR											surface_format								= {};
+	VkPresentModeKHR											present_mode								= {};
+	VkSurfaceCapabilitiesKHR									surface_capabilities						= {};
+	std::vector<VkFramebuffer>									framebuffers								= {};
 
-	uint32_t													next_image								= {};
-	uint32_t													previous_image							= {};
-	VkFence														aquire_image_fence						= {};
-	std::vector<VkSemaphore>									submit_to_present_semaphores			= {};
-	std::vector<VkFence>										gpu_to_cpu_frame_fences					= {};
-	bool														previous_frame_need_synchronization		= {};
+	uint32_t													next_image									= {};
+	uint32_t													previous_image								= {};
+	VkFence														aquire_image_fence							= {};
+	std::vector<VkSemaphore>									submit_to_present_semaphores				= {};
+	std::vector<VkFence>										gpu_to_cpu_frame_fences						= {};
+	bool														previous_frame_need_synchronization			= {};
 
-	std::vector<VkPipeline>										pipelines								= {};
+	vk2d::_internal::CompleteBufferResource						frame_data_staging_buffer					= {};
+	vk2d::_internal::CompleteBufferResource						frame_data_device_buffer					= {};
+	vk2d::_internal::PoolDescriptorSet							frame_data_descriptor_set					= {};
 
-	vk2d::_internal::NextRenderCallFunction						next_render_call_function				= vk2d::_internal::NextRenderCallFunction::BEGIN;
-	bool														should_reconstruct						= {};
-	bool														should_close							= {};
+	std::vector<VkPipeline>										pipelines									= {};
 
-	vk2d::_internal::PipelineType								previous_pipeline_type					= vk2d::_internal::PipelineType::NONE;
-	VkDescriptorSet												previous_texture_descriptor_set			= {};
-	VkDescriptorSet												previous_sampler_descriptor_set			= {};
-	float														previous_line_width						= {};
+	vk2d::_internal::NextRenderCallFunction						next_render_call_function					= vk2d::_internal::NextRenderCallFunction::BEGIN;
+	bool														should_reconstruct							= {};
+	bool														should_close								= {};
 
-	std::unique_ptr<vk2d::_internal::MeshBuffer>				mesh_buffer								= {};
+	vk2d::_internal::PipelineType								previous_pipeline_type						= vk2d::_internal::PipelineType::NONE;
+	vk2d::TextureResource									*	previous_texture							= {};
+	vk2d::Sampler											*	previous_sampler							= {};
+	float														previous_line_width							= {};
+
+	std::unique_ptr<vk2d::_internal::MeshBuffer>				mesh_buffer									= {};
 
 	enum class ScreenshotState : uint32_t {
 		IDLE					= 0,	// doing nothing

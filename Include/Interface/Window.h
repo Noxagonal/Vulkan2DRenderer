@@ -550,20 +550,23 @@ public:
 	VK2D_API bool										VK2D_APIENTRY				EndRender();
 
 	VK2D_API void										VK2D_APIENTRY				DrawTriangleList(
-		const std::vector<vk2d::Vertex>				&	vertices,
 		const std::vector<vk2d::VertexIndex_3>		&	indices,
+		const std::vector<vk2d::Vertex>				&	vertices,
+		const std::vector<float>					&	texture_channels,
 		bool											filled						= true,
 		vk2d::TextureResource						*	texture						= nullptr,
 		vk2d::Sampler								*	sampler						= nullptr );
 
 	VK2D_API void										VK2D_APIENTRY				DrawLineList(
-		const std::vector<vk2d::Vertex>				&	vertices,
 		const std::vector<vk2d::VertexIndex_2>		&	indices,
+		const std::vector<vk2d::Vertex>				&	vertices,
+		const std::vector<float>					&	texture_channels,
 		vk2d::TextureResource						*	texture						= nullptr,
 		vk2d::Sampler								*	sampler						= nullptr );
 
 	VK2D_API void										VK2D_APIENTRY				DrawPointList(
 		const std::vector<vk2d::Vertex>				&	vertices,
+		const std::vector<float>					&	texture_channels,
 		vk2d::TextureResource						*	texture						= nullptr,
 		vk2d::Sampler								*	sampler						= nullptr );
 

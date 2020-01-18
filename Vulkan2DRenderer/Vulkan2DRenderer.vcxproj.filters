@@ -197,5 +197,8 @@
     <ClCompile Include="..\Source\Impl\FontResourceImpl.cpp">
       <Filter>Source\Impl</Filter>
     </ClCompile>
+    <ClCompile Include="..\Source\Core\SourceCommon.cpp">
+      <Filter>Source\Core</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

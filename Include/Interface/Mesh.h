@@ -12,6 +12,7 @@ class WindowImpl;
 }
 
 class TextureResource;
+class FontResource;
 class Sampler;
 
 
@@ -142,8 +143,23 @@ public:
 	VK2D_API void									VK2D_APIENTRY					SetMeshType(
 		vk2d::MeshType								type );
 
+	// Vertices are stored here, see vk2d::Vertex for details.
 	std::vector<vk2d::Vertex>						vertices						= {};
+
+	// Indices are stored here, for triangles indices are in groups of 3,
+	// and for lines indices are in groups of 2.
 	std::vector<uint32_t>							indices							= {};
+
+	// Texture channel weights are used to mix between different texture's arrays per vertex,
+	// the group size varies per amount of texture's arrays.
+	// For example if a texture with 3 arrays is used with this mesh then texture_channel_weights
+	// group size should be 3 floats per vertex. The sum of values per group should be 1.0 for
+	// coherent visuals. If weights { 1.0, 0.0, 0.0 } are used on vertex then that vertex will
+	// have only one active texture array layer effecting it, if weights { 0.0, 0.5, 0.5 } are
+	// used then texture's array 0 has no effect, array 1 and 2 are mixed together 50% each for
+	// that particular vertex, fragments inbetween vertices have different layers mixed smoothly.
+	// If this is left at size 0 then only texture array layer of 0 is used for all vertices.
+	std::vector<float>								texture_channel_weights			= {};
 
 private:
 	bool											generated						= false;
@@ -199,6 +215,12 @@ VK2D_API vk2d::Mesh									VK2D_APIENTRY					GenerateLatticeMesh(
 	vk2d::Vector2f									bottom_right,
 	vk2d::Vector2f									subdivisions,
 	bool											filled							= true );
+
+VK2D_API vk2d::Mesh									VK2D_APIENTRY					GenerateTextMesh(
+	vk2d::FontResource							*	font,
+	vk2d::Vector2f									origin,
+	std::string										text,
+	vk2d::Vector2f									scale							= vk2d::Vector2f( 1.0f, 1.0f ) );
 
 
 

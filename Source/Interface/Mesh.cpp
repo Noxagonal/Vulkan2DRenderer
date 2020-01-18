@@ -1102,3 +1102,16 @@ VK2D_API vk2d::Mesh VK2D_APIENTRY vk2d::GenerateLatticeMesh(
 
 	return ret;
 }
+
+VK2D_API vk2d::Mesh VK2D_APIENTRY vk2d::GenerateTextMesh(
+	vk2d::FontResource		*	font,
+	vk2d::Vector2f				origin,
+	std::string					text,
+	vk2d::Vector2f				scale )
+{
+	/*
+	DO THIS SHIT!
+	return mesh;
+	*/
+	return {};
+}

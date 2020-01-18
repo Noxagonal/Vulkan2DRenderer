@@ -128,6 +128,11 @@ VK2D_API bool VK2D_APIENTRY vk2d::TextureResource::WaitUntilLoaded()
 	return impl->WaitUntilLoaded();
 }
 
+VK2D_API uint32_t VK2D_APIENTRY vk2d::TextureResource::GetLayerCount()
+{
+	return impl->GetLayerCount();
+}
+
 VK2D_API bool VK2D_APIENTRY vk2d::TextureResource::MTLoad(
 	vk2d::_internal::ThreadPrivateResource	*	thread_resource
 )

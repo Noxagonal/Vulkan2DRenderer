@@ -94,13 +94,15 @@ bool vk2d::_internal::FontResourceImpl::MTLoad(
 	auto loader_thread_resource		= static_cast<vk2d::_internal::ThreadLoaderResource*>( thread_resource );
 	auto renderer					= loader_thread_resource->GetRenderer();
 	auto path_str					= font_resource_parent->GetFilePaths()[ 0 ].string();
-	auto path						= path_str.c_str();
-	auto glyph_size					= uint32_t( 50 );	// TODO: proper parameter
-	auto glyph_atlas_padding		= uint32_t( 8 );	// Empty space around the glyph in atlas texture
+	auto glyph_size					= uint32_t( 50 );	// TODO: Make into parameter.
+	auto glyph_atlas_padding		= uint32_t( 8 );	// TODO: Experiment with this to find the best value.
 	auto max_texture_size			= renderer->GetPhysicalDeviceProperties().limits.maxImageDimension2D;
 	auto min_texture_size			= std::min( uint32_t( 512 ), max_texture_size );
 
-	auto average_to_max_weight		= 0.05;		// 0 is towards average, 1 is towards maximum
+	// Average to max weight is used to estimate glyph space requirements on atlas textures.
+	// Average size is average size of a glyph, Maximum size is maximum size of a glyph.
+	// 0 is towards average, 1 is towards maximum
+	auto average_to_max_weight		= 0.05;
 	auto total_glyph_count			= uint64_t( 0 );
 	auto maximum_glyph_size			= vk2d::Vector2d( 0.0, 0.0 );
 	auto average_glyph_size			= vk2d::Vector2d( 0.0, 0.0 );
@@ -114,7 +116,7 @@ bool vk2d::_internal::FontResourceImpl::MTLoad(
 			FT_Face face {};
 			auto ft_error = FT_New_Face(
 				loader_thread_resource->GetFreeTypeInstance(),
-				path,
+				path_str.c_str(),
 				-1,
 				&face
 			);
@@ -157,7 +159,7 @@ bool vk2d::_internal::FontResourceImpl::MTLoad(
 			{
 				auto ft_error = FT_New_Face(
 					loader_thread_resource->GetFreeTypeInstance(),
-					path,
+					path_str.c_str(),
 					i,
 					&face
 				);
@@ -433,6 +435,8 @@ void vk2d::_internal::FontResourceImpl::MTUnload( vk2d::_internal::ThreadPrivate
 
 vk2d::TextureResource * vk2d::_internal::FontResourceImpl::GetTextureResource()
 {
+	WaitUntilLoaded();
+
 	std::lock_guard<std::mutex> lock_guard( is_loaded_mutex );
 	return texture_resource;
 }
@@ -448,6 +452,7 @@ vk2d::_internal::FontResourceImpl::AtlasTexture * vk2d::_internal::FontResourceI
 
 	new_atlas_texture->data.resize( size_t( atlas_size ) * size_t( atlas_size ) );
 	new_atlas_texture->index		= uint32_t( atlas_textures.size() );
+	std::memset( new_atlas_texture->data.data(), 0, new_atlas_texture->data.size() * sizeof( vk2d::Color8 ) );
 
 	auto new_atlas_texture_ptr		= new_atlas_texture.get();
 	atlas_textures.push_back( std::move( new_atlas_texture ) );

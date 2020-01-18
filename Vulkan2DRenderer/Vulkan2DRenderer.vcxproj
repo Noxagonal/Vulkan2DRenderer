@@ -133,6 +133,7 @@ glslangValidator -V -o "$(SolutionDir)Source\Shaders\shader.frag.spv.h" "$(Solut
     <ClInclude Include="..\Source\Header\Impl\SamplerImpl.h" />
     <ClInclude Include="..\Source\Header\Impl\TextureResourceImpl.h" />
     <ClInclude Include="..\Source\Header\Impl\WindowImpl.h" />
+    <ClCompile Include="..\Source\Core\SourceCommon.cpp" />
     <ClCompile Include="..\Source\Impl\FontResourceImpl.cpp" />
     <ClCompile Include="..\Source\Impl\SamplerImpl.cpp" />
     <ClCompile Include="..\Source\Interface\FontResource.cpp" />

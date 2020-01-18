@@ -39,45 +39,100 @@ vk2d::_internal::MeshBuffer::~MeshBuffer()
 
 vk2d::_internal::MeshBuffer::PushResult vk2d::_internal::MeshBuffer::CmdPushMesh(
 	VkCommandBuffer						command_buffer,
-	const std::vector<Vertex>		&	new_vertices,
-	const std::vector<uint32_t>		&	new_indices )
+	const std::vector<uint32_t>		&	new_indices,
+	const std::vector<vk2d::Vertex>	&	new_vertices,
+	const std::vector<float>			new_texture_channels )
 {
-	auto reserve_result = ReserveSpaceForMesh(
+	auto reserve_result			= ReserveSpaceForMesh(
+		uint32_t( new_indices.size() ),
 		uint32_t( new_vertices.size() ),
-		uint32_t( new_indices.size() )
+		uint32_t( new_texture_channels.size() )
 	);
 
-	if( !reserve_result.buffer_block ) return {};
+	if( !reserve_result.success ) return {};
 
-	if( reserve_result.buffer_block_need_binding ) {
-		VkDeviceSize buffer_offset = reserve_result.buffer_block->aligned_vertex_buffer_byte_offset;
-		vkCmdBindVertexBuffers(
+	if( bound_index_buffer_block != reserve_result.index_block ) {
+		vk2d::_internal::CmdInsertCommandBufferCheckpoint(
 			command_buffer,
-			0,
-			1, &reserve_result.buffer_block->device_buffer.buffer,
-			&buffer_offset
+			"MeshBuffer",
+			vk2d::_internal::CommandBufferCheckpointType::BIND_INDEX_BUFFER
 		);
 		vkCmdBindIndexBuffer(
 			command_buffer,
-			reserve_result.buffer_block->device_buffer.buffer,
-			reserve_result.buffer_block->aligned_index_buffer_byte_offset,
+			reserve_result.index_block->device_buffer.buffer,
+			0,
 			VK_INDEX_TYPE_UINT32
 		);
+		vkCmdBindDescriptorSets(
+			command_buffer,
+			VK_PIPELINE_BIND_POINT_GRAPHICS,
+			renderer_parent->GetPipelineLayout(),
+			DESCRIPTOR_SET_ALLOCATION_INDEX_BUFFER_AS_STORAGE_BUFFER,
+			1, &reserve_result.index_block->descriptor_set.descriptorSet,
+			0, nullptr
+		);
+		bound_index_buffer_block	= reserve_result.index_block;
+	}
+	if( bound_vertex_buffer_block != reserve_result.vertex_block ) {
+		VkDeviceSize offset = 0;
+		vk2d::_internal::CmdInsertCommandBufferCheckpoint(
+			command_buffer,
+			"MeshBuffer",
+			vk2d::_internal::CommandBufferCheckpointType::BIND_VERTEX_BUFFER
+		);
+		vkCmdBindVertexBuffers(
+			command_buffer,
+			0,
+			1, &reserve_result.vertex_block->device_buffer.buffer,
+			&offset
+		);
+		bound_vertex_buffer_block	= reserve_result.vertex_block;
+	}
+	if( bound_texture_channel_buffer_block != reserve_result.texture_channel_block ) {
+
+		vk2d::_internal::CmdInsertCommandBufferCheckpoint(
+			command_buffer,
+			"MeshBuffer",
+			vk2d::_internal::CommandBufferCheckpointType::BIND_DESCRIPTOR_SET
+		);
+		vkCmdBindDescriptorSets(
+			command_buffer,
+			VK_PIPELINE_BIND_POINT_GRAPHICS,
+			renderer_parent->GetPipelineLayout(),
+			DESCRIPTOR_SET_ALLOCATION_TEXTURE_CHANNEL_WEIGHTS,
+			1, &reserve_result.texture_channel_block->descriptor_set.descriptorSet,
+			0, nullptr
+		);
+		bound_texture_channel_buffer_block	= reserve_result.texture_channel_block;
 	}
 
 	{
-		auto & bv = reserve_result.buffer_block->vertices;
-		auto & bi = reserve_result.buffer_block->indices;
+		auto & ib = reserve_result.index_block->host_data;
+		auto & vb = reserve_result.vertex_block->host_data;
+		auto & tb = reserve_result.texture_channel_block->host_data;
 
-		bv.insert( bv.end(), new_vertices.begin(), new_vertices.end() );
-		bi.insert( bi.end(), new_indices.begin(), new_indices.end() );
+		if( new_indices.size() ) {
+			ib.insert( ib.begin(), new_indices.begin(), new_indices.end() );
+		}
+		if( new_vertices.size() ) {
+			vb.insert( vb.begin(), new_vertices.begin(), new_vertices.end() );
+		}
+		if( new_texture_channels.size() ) {
+			tb.insert( tb.begin(), new_texture_channels.begin(), new_texture_channels.end() );
+		}
 	}
 
-	first_draw	= false;
+	first_draw						= false;
 
 	vk2d::_internal::MeshBuffer::PushResult ret {};
-	ret.offsets = reserve_result.offsets;
-	ret.success = true;
+	ret.location_info				= reserve_result;
+	ret.success						= true;
+
+	pushed_mesh_count				+= 1;
+	pushed_index_count				+= uint32_t( new_indices.size() );
+	pushed_vertex_count				+= uint32_t( new_vertices.size() );
+	pushed_texture_channel_count	+= uint32_t( new_texture_channels.size() );
+
 	return ret;
 }
 
@@ -85,244 +140,355 @@ bool vk2d::_internal::MeshBuffer::CmdUploadMeshDataToGPU(
 	VkCommandBuffer			command_buffer
 )
 {
-	for( auto & b : buffer_blocks ) {
-		auto bp = b.get();
+	// Index buffer
+	for( auto & b : index_buffer_blocks ) {
+		auto bb = b.get();
 
-		std::array<VkBufferCopy, 2> regions {};
-		regions[ 0 ].srcOffset = bp->aligned_vertex_buffer_byte_offset;
-		regions[ 0 ].dstOffset = bp->aligned_vertex_buffer_byte_offset;
-		regions[ 0 ].size = bp->used_aligned_vertex_byte_size;
+		bb->CopyVectorsToStagingBuffers();
 
-		regions[ 1 ].srcOffset = bp->aligned_index_buffer_byte_offset;
-		regions[ 1 ].dstOffset = bp->aligned_index_buffer_byte_offset;
-		regions[ 1 ].size = bp->used_aligned_index_byte_size;
-
-		bp->CopyVectorsToStagingBuffers();
-
+		std::array<VkBufferCopy, 1> copy_regions {};
+		copy_regions[ 0 ].srcOffset		= 0;
+		copy_regions[ 0 ].dstOffset		= 0;
+		copy_regions[ 0 ].size			= bb->used_byte_size;
 		vkCmdCopyBuffer(
 			command_buffer,
-			bp->staging_buffer.buffer,
-			bp->device_buffer.buffer,
-			uint32_t( regions.size() ),
-			regions.data()
+			bb->staging_buffer.buffer,
+			bb->device_buffer.buffer,
+			uint32_t( copy_regions.size() ),
+			copy_regions.data()
 		);
+		bb->used_byte_size				= 0;
 	}
 
-	current_buffer_block	= buffer_blocks.begin();
-	first_draw				= true;
+	// Vertex buffer
+	for( auto & b : vertex_buffer_blocks ) {
+		auto bb = b.get();
+
+		bb->CopyVectorsToStagingBuffers();
+
+		std::array<VkBufferCopy, 1> copy_regions {};
+		copy_regions[ 0 ].srcOffset		= 0;
+		copy_regions[ 0 ].dstOffset		= 0;
+		copy_regions[ 0 ].size			= bb->used_byte_size;
+		vkCmdCopyBuffer(
+			command_buffer,
+			bb->staging_buffer.buffer,
+			bb->device_buffer.buffer,
+			uint32_t( copy_regions.size() ),
+			copy_regions.data()
+		);
+		bb->used_byte_size				= 0;
+	}
+
+	// Texture channel buffer
+	for( auto & b : texture_channel_buffer_blocks ) {
+		auto bb = b.get();
+
+		bb->CopyVectorsToStagingBuffers();
+
+		std::array<VkBufferCopy, 1> copy_regions {};
+		copy_regions[ 0 ].srcOffset		= 0;
+		copy_regions[ 0 ].dstOffset		= 0;
+		copy_regions[ 0 ].size			= bb->used_byte_size;
+		vkCmdCopyBuffer(
+			command_buffer,
+			bb->staging_buffer.buffer,
+			bb->device_buffer.buffer,
+			uint32_t( copy_regions.size() ),
+			copy_regions.data()
+		);
+		bb->used_byte_size				= 0;
+	}
+
+	pushed_mesh_count					= 0;
+	pushed_index_count					= 0;
+	pushed_vertex_count					= 0;
+	pushed_texture_channel_count		= 0;
+	bound_index_buffer_block			= nullptr;
+	bound_vertex_buffer_block			= nullptr;
+	bound_texture_channel_buffer_block	= nullptr;
+	first_draw							= true;
 
 	return true;
 }
 
-vk2d::_internal::MeshBuffer::BufferBlock * vk2d::_internal::MeshBuffer::AllocateBufferBlockAndStore(
-	VkDeviceSize								vertex_portion_byte_size,
-	VkDeviceSize								index_portion_byte_size
+uint32_t vk2d::_internal::MeshBuffer::GetPushedMeshCount()
+{
+	return pushed_mesh_count;
+}
+
+uint32_t vk2d::_internal::MeshBuffer::GetTotalVertexCount()
+{
+	return pushed_vertex_count;
+}
+
+uint32_t vk2d::_internal::MeshBuffer::GetTotalIndexCount()
+{
+	return pushed_index_count;
+}
+
+uint32_t vk2d::_internal::MeshBuffer::GetTotalTextureChannelCount()
+{
+	return pushed_texture_channel_count;
+}
+
+vk2d::_internal::MeshBuffer::MeshBlockLocationInfo vk2d::_internal::MeshBuffer::ReserveSpaceForMesh(
+	uint32_t		index_count,
+	uint32_t		vertex_count,
+	uint32_t		texture_channel_count
 )
 {
-	auto block = std::make_unique<vk2d::_internal::MeshBuffer::BufferBlock>(
-		this,
-		vertex_portion_byte_size,
-		index_portion_byte_size );
-	if( block && block->is_good ) {
-		auto ret = block.get();
-		buffer_blocks.push_back( std::move( block ) );
-		return ret;
+	vk2d::_internal::MeshBufferBlock<uint32_t>		*	index_buffer_block				= nullptr;
+	vk2d::_internal::MeshBufferBlock<vk2d::Vertex>	*	vertex_buffer_block				= nullptr;
+	vk2d::_internal::MeshBufferBlock<float>			*	texture_channel_buffer_block	= nullptr;
+
+	VkDeviceSize										index_buffer_position			= 0;
+	VkDeviceSize										vertex_buffer_position			= 0;
+	VkDeviceSize										texture_channel_buffer_position	= 0;
+
+	index_count				= std::max( 1u, index_count );
+	vertex_count			= std::max( 1u, vertex_count );
+	texture_channel_count	= std::max( 1u, texture_channel_count );
+
+	{
+		// Index buffer block
+		index_buffer_block					= FindIndexBufferWithEnoughSpace( index_count );
+		if( !index_buffer_block ) {
+			renderer_parent->Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot reserve space for mesh in MeshBuffer, cannot find or create index MeshBufferBlock with enough free space!" );
+			return {};
+		}
+		index_buffer_position				= index_buffer_block->ReserveSpace( index_count );
+
+		// Vertex buffer block
+		vertex_buffer_block					= FindVertexBufferWithEnoughSpace( vertex_count );
+		if( !vertex_buffer_block ) {
+			renderer_parent->Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot reserve space for mesh in MeshBuffer, cannot find or create vertex MeshBufferBlock with enough free space!" );
+			return {};
+		}
+		vertex_buffer_position				= vertex_buffer_block->ReserveSpace( vertex_count );
+
+		// Texture channel buffer block
+		texture_channel_buffer_block		= FindTextureChannelBufferWithEnoughSpace( texture_channel_count );
+		if( !texture_channel_buffer_block ) {
+			renderer_parent->Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot reserve space for mesh in MeshBuffer, cannot find or create texture channel MeshBufferBlock with enough free space!" );
+			return {};
+		}
+		texture_channel_buffer_position		= texture_channel_buffer_block->ReserveSpace( texture_channel_count );
 	}
 
-	return {};
+	vk2d::_internal::MeshBuffer::MeshBlockLocationInfo location_info {};
+	location_info.index_block					= index_buffer_block;
+	location_info.vertex_block					= vertex_buffer_block;
+	location_info.texture_channel_block			= texture_channel_buffer_block;
+
+	location_info.index_size					= index_count;
+	location_info.index_byte_size				= index_count * sizeof( index_buffer_block->host_data.front() );
+	location_info.index_offset					= uint32_t( index_buffer_position / sizeof( index_buffer_block->host_data.front() ) );
+	location_info.index_byte_offset				= index_buffer_position;
+
+	location_info.vertex_size					= vertex_count;
+	location_info.vertex_byte_size				= vertex_count * sizeof( vertex_buffer_block->host_data.front() );
+	location_info.vertex_offset					= uint32_t( vertex_buffer_position / sizeof( vertex_buffer_block->host_data.front() ) );
+	location_info.vertex_byte_offset			= vertex_buffer_position;
+
+	location_info.texture_channel_size			= texture_channel_count;
+	location_info.texture_channel_byte_size		= texture_channel_count * sizeof( texture_channel_buffer_block->host_data.front() );
+	location_info.texture_channel_offset		= uint32_t( texture_channel_buffer_position / sizeof( texture_channel_buffer_block->host_data.front() ) );
+	location_info.texture_channel_byte_offset	= texture_channel_buffer_position;
+
+	location_info.success						= true;
+
+	return location_info;
+}
+
+vk2d::_internal::MeshBufferBlock<uint32_t>* vk2d::_internal::MeshBuffer::FindIndexBufferWithEnoughSpace(
+	uint32_t count
+)
+{
+	for( auto & i : index_buffer_blocks ) {
+		if( i->CheckDataFits( count ) ) {
+			return i.get();
+		}
+	}
+	// Not found in existing blocks, create new
+	{
+		auto new_block = AllocateIndexBufferBlockAndStore(
+			std::max(
+				VkDeviceSize( count ) * sizeof( index_buffer_blocks.front()->host_data.front() ),
+				VkDeviceSize( VK2D_BUILD_OPTION_MESH_BUFFER_BLOCK_INDEX_SIZE )
+			)
+		);
+
+		if( new_block && new_block->IsGood() ) {
+			assert( new_block->CheckDataFits( count ) );
+			return new_block;
+		} else {
+			renderer_parent->Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot create new index MeshBufferBlock!" );
+			return nullptr;
+		}
+	}
+	return nullptr;
+}
+
+vk2d::_internal::MeshBufferBlock<vk2d::Vertex>* vk2d::_internal::MeshBuffer::FindVertexBufferWithEnoughSpace(
+	uint32_t count
+)
+{
+	for( auto & i : vertex_buffer_blocks ) {
+		if( i->CheckDataFits( count ) ) {
+			return i.get();
+		}
+	}
+	// Not found in existing blocks, create new
+	{
+		auto new_block = AllocateVertexBufferBlockAndStore(
+			std::max(
+				VkDeviceSize( count ) * sizeof( vertex_buffer_blocks.front()->host_data.front() ),
+				VkDeviceSize( VK2D_BUILD_OPTION_MESH_BUFFER_BLOCK_VERTEX_SIZE )
+			)
+		);
+
+		if( new_block && new_block->IsGood() ) {
+			assert( new_block->CheckDataFits( count ) );
+			return new_block;
+		} else {
+			renderer_parent->Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot create new vertex MeshBufferBlock!" );
+			return nullptr;
+		}
+	}
+	return nullptr;
+}
+
+vk2d::_internal::MeshBufferBlock<float>* vk2d::_internal::MeshBuffer::FindTextureChannelBufferWithEnoughSpace(
+	uint32_t count
+)
+{
+	for( auto & i : texture_channel_buffer_blocks ) {
+		if( i->CheckDataFits( count ) ) {
+			return i.get();
+		}
+	}
+	// Not found in existing blocks, create new
+	{
+		auto new_block = AllocateTextureChannelBufferBlockAndStore(
+			std::max(
+				VkDeviceSize( count ) * sizeof( texture_channel_buffer_blocks.front()->host_data.front() ),
+				VkDeviceSize( VK2D_BUILD_OPTION_MESH_BUFFER_BLOCK_TEXTURE_CHANNEL_SIZE )
+			)
+		);
+
+		if( new_block && new_block->IsGood() ) {
+			assert( new_block->CheckDataFits( count ) );
+			return new_block;
+		} else {
+			renderer_parent->Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot create new texture channel MeshBufferBlock!" );
+			return nullptr;
+		}
+	}
+	return nullptr;
+}
+
+vk2d::_internal::MeshBufferBlock<uint32_t>* vk2d::_internal::MeshBuffer::AllocateIndexBufferBlockAndStore(
+	VkDeviceSize byte_size
+)
+{
+	auto buffer_block	= std::make_unique<vk2d::_internal::MeshBufferBlock<uint32_t>>(
+		this,
+		byte_size,
+		VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
+		vk2d::_internal::MeshBufferDescriptorSetType::STORAGE
+		);
+	if( buffer_block && buffer_block->IsGood() ) {
+		auto ret		= buffer_block.get();
+		index_buffer_blocks.push_back( std::move( buffer_block ) );
+		return ret;
+	} else {
+		return nullptr;
+	}
+}
+
+vk2d::_internal::MeshBufferBlock<vk2d::Vertex>* vk2d::_internal::MeshBuffer::AllocateVertexBufferBlockAndStore(
+	VkDeviceSize byte_size
+)
+{
+	auto buffer_block	= std::make_unique<vk2d::_internal::MeshBufferBlock<vk2d::Vertex>>(
+		this,
+		byte_size,
+		VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
+		vk2d::_internal::MeshBufferDescriptorSetType::NONE
+		);
+	if( buffer_block && buffer_block->IsGood() ) {
+		auto ret		= buffer_block.get();
+		vertex_buffer_blocks.push_back( std::move( buffer_block ) );
+		return ret;
+	} else {
+		return nullptr;
+	}
+}
+
+vk2d::_internal::MeshBufferBlock<float>* vk2d::_internal::MeshBuffer::AllocateTextureChannelBufferBlockAndStore(
+	VkDeviceSize byte_size
+)
+{
+	auto buffer_block	= std::make_unique<vk2d::_internal::MeshBufferBlock<float>>(
+		this,
+		byte_size,
+		VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
+		vk2d::_internal::MeshBufferDescriptorSetType::STORAGE
+		);
+	if( buffer_block && buffer_block->IsGood() ) {
+		auto ret		= buffer_block.get();
+		texture_channel_buffer_blocks.push_back( std::move( buffer_block ) );
+		return ret;
+	} else {
+		return nullptr;
+	}
 }
 
 void vk2d::_internal::MeshBuffer::FreeBufferBlockFromStorage(
-	vk2d::_internal::MeshBuffer::BufferBlock	*	buffer_block
+	vk2d::_internal::MeshBufferBlock<uint32_t>		*	buffer_block
 )
 {
-	auto it = buffer_blocks.begin();
-	while( it != buffer_blocks.end() ) {
-		if( it->get() == buffer_block ) {
-			it = buffer_blocks.erase( it );
-			return;
-		}
-		++it;
-	}
-}
-
-vk2d::_internal::MeshBuffer::ReserveSpaceResult vk2d::_internal::MeshBuffer::ReserveSpaceForMesh(
-	uint32_t				vertex_count,
-	uint32_t				index_count
-)
-{
-	VkDeviceSize vertex_byte_size			= VkDeviceSize( vertex_count ) * sizeof( Vertex );
-	VkDeviceSize index_byte_size			= VkDeviceSize( index_count ) * sizeof( uint32_t );
-
-	bool buffer_blocks_list_empty_initially = buffer_blocks.empty();
-	if( !buffer_blocks_list_empty_initially ) {
-		// Find from existing space, start from last location, advance to the next buffer block if needed
-		while( current_buffer_block != buffer_blocks.end() ) {
-			auto bp = current_buffer_block->get();
-			VkDeviceSize buffer_vertex_size_left	= bp->total_aligned_vertex_byte_size - bp->used_aligned_vertex_byte_size;
-			VkDeviceSize buffer_index_size_left		= bp->total_aligned_index_byte_size - bp->used_aligned_index_byte_size;
-			if( vertex_byte_size <= buffer_vertex_size_left &&
-				index_byte_size <= buffer_index_size_left ) {
-				vk2d::_internal::MeshBuffer::ReserveSpaceResult		ret {};
-				ret.buffer_block					= bp;
-				ret.buffer_block_need_binding		= first_draw;
-				ret.offsets.first_index				= bp->block_index_count;
-				ret.offsets.vertex_offset			= bp->block_vertex_count;
-				ret.offsets.vertex_byte_offset		= bp->used_aligned_vertex_byte_size;
-				ret.offsets.index_byte_offset		= bp->used_aligned_index_byte_size;
-				bp->used_aligned_vertex_byte_size	+= vertex_byte_size;
-				bp->used_aligned_index_byte_size	+= index_byte_size;
-				bp->block_vertex_count				+= vertex_count;
-				bp->block_index_count				+= index_count;
-				return ret;
-			} else {
-				if( bp->used_aligned_vertex_byte_size == 0 ) {
-					this->window_data->SynchronizeFrame();
-					current_buffer_block = buffer_blocks.erase( current_buffer_block );
-				} else {
-					++current_buffer_block;
-				}
+	if( index_buffer_blocks.size() ) {
+		auto it = index_buffer_blocks.begin();
+		while( it != index_buffer_blocks.end() ) {
+			if( it->get() == buffer_block ) {
+				index_buffer_blocks.erase( it );
+				return;
 			}
+			++it;
 		}
 	}
-
-	// Not enough space, allocate more
-	{
-		auto bp		= AllocateBufferBlockAndStore(
-			std::max( vertex_byte_size, VkDeviceSize( VK2D_BUILD_OPTION_MESH_BUFFER_BLOCK_VERTEX_SIZE ) ),
-			std::max( index_byte_size, VkDeviceSize( VK2D_BUILD_OPTION_MESH_BUFFER_BLOCK_INDEX_SIZE ) )
-		);
-		if( bp ) {
-			vk2d::_internal::MeshBuffer::ReserveSpaceResult		ret {};
-			ret.buffer_block					= bp;
-			ret.buffer_block_need_binding		= true;
-			ret.offsets.first_index				= bp->block_index_count;
-			ret.offsets.vertex_offset			= bp->block_vertex_count;
-			ret.offsets.vertex_byte_offset		= bp->used_aligned_vertex_byte_size;
-			ret.offsets.index_byte_offset		= bp->used_aligned_index_byte_size;
-			bp->used_aligned_vertex_byte_size	+= vertex_byte_size;
-			bp->used_aligned_index_byte_size	+= index_byte_size;
-			bp->block_vertex_count				+= vertex_count;
-			bp->block_index_count				+= index_count;
-			if( buffer_blocks_list_empty_initially ) {
-				current_buffer_block = buffer_blocks.begin();
-			} else {
-				current_buffer_block = buffer_blocks.end() - 1;
-			}
-			return ret;
-		}
-	}
-
-	return {};
 }
 
-
-
-
-
-
-
-
-
-vk2d::_internal::MeshBuffer::BufferBlock::BufferBlock(
-	vk2d::_internal::MeshBuffer	*	mesh_buffer_parent,
-	VkDeviceSize					buffer_vertex_byte_size,
-	VkDeviceSize					buffer_index_byte_size
+void vk2d::_internal::MeshBuffer::FreeBufferBlockFromStorage(
+	vk2d::_internal::MeshBufferBlock<vk2d::Vertex>	*	buffer_block
 )
 {
-	renderer_parent			= mesh_buffer_parent;
-
-	total_aligned_vertex_byte_size				= vk2d::_internal::CalculateAlignmentForBuffer( buffer_vertex_byte_size, renderer_parent->physicald_device_limits );
-	total_aligned_index_byte_size				= vk2d::_internal::CalculateAlignmentForBuffer( buffer_index_byte_size, renderer_parent->physicald_device_limits );
-	total_aligned_buffer_byte_size				= total_aligned_vertex_byte_size + total_aligned_index_byte_size;
-
-	vertices.reserve( total_aligned_vertex_byte_size / sizeof( Vertex ) );
-	indices.reserve( total_aligned_index_byte_size / sizeof( uint32_t ) );
-
-	aligned_vertex_buffer_byte_offset			= 0;
-	aligned_index_buffer_byte_offset			= total_aligned_vertex_byte_size;
-
-	VkBufferCreateInfo buffer_create_info {};
-	buffer_create_info.sType					= VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-	buffer_create_info.pNext					= nullptr;
-	buffer_create_info.flags					= 0;
-	buffer_create_info.size						= total_aligned_buffer_byte_size;
-	buffer_create_info.sharingMode				= VK_SHARING_MODE_EXCLUSIVE;
-	buffer_create_info.queueFamilyIndexCount	= 0;
-	buffer_create_info.pQueueFamilyIndices		= nullptr;
-
-	// Staging buffer.
-	buffer_create_info.usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
-	staging_buffer			= renderer_parent->device_memory_pool->CreateCompleteBufferResource(
-		&buffer_create_info,
-		VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT
-	);
-	if( staging_buffer != VK_SUCCESS ) {
-		renderer_parent->renderer_parent->Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot create MeshBuffer staging buffer!" );
-		return;
+	if( vertex_buffer_blocks.size() ) {
+		auto it = vertex_buffer_blocks.begin();
+		while( it != vertex_buffer_blocks.end() ) {
+			if( it->get() == buffer_block ) {
+				vertex_buffer_blocks.erase( it );
+				return;
+			}
+			++it;
+		}
 	}
-
-	// Device buffer.
-	buffer_create_info.usage = VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT;
-	device_buffer			= renderer_parent->device_memory_pool->CreateCompleteBufferResource(
-		&buffer_create_info,
-		VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT
-	);
-	if( staging_buffer != VK_SUCCESS ) {
-		renderer_parent->renderer_parent->Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot create MeshBuffer device buffer!" );
-		return;
-	}
-
-	is_good			= true;
 }
 
-vk2d::_internal::MeshBuffer::BufferBlock::~BufferBlock()
+void vk2d::_internal::MeshBuffer::FreeBufferBlockFromStorage(
+	vk2d::_internal::MeshBufferBlock<float>			*	buffer_block 
+)
 {
-	renderer_parent->device_memory_pool->FreeCompleteResource( staging_buffer );
-	renderer_parent->device_memory_pool->FreeCompleteResource( device_buffer );
-}
-
-bool vk2d::_internal::MeshBuffer::BufferBlock::CopyVectorsToStagingBuffers()
-{
-	void * original_mapped_memory = staging_buffer.memory.Map<void*>();
-	if( !original_mapped_memory ) {
-		renderer_parent->renderer_parent->Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot map MeshBuffer staging buffer data!" );
-		return false;
+	if( texture_channel_buffer_blocks.size() ) {
+		auto it = texture_channel_buffer_blocks.begin();
+		while( it != texture_channel_buffer_blocks.end() ) {
+			if( it->get() == buffer_block ) {
+				texture_channel_buffer_blocks.erase( it );
+				return;
+			}
+			++it;
+		}
 	}
-
-	void * vertex_mapped_memory	= (uint8_t*)original_mapped_memory + aligned_vertex_buffer_byte_offset;
-	void * index_mapped_memory	= (uint8_t*)original_mapped_memory + aligned_index_buffer_byte_offset;
-	{
-		// Copy over the vertex data to staging buffer
-		std::memcpy( vertex_mapped_memory, vertices.data(), vertices.size() * sizeof( Vertex ) );
-
-		// Clear inbetween bits, just in case
-//		VkDeviceSize vertex_index_buffer_gap	=  total_aligned_vertex_byte_size - VkDeviceSize( vertices.size() );
-//		if( vertex_index_buffer_gap ) {
-//			std::memset( (uint8_t*)vertex_mapped_memory + VkDeviceSize( vertices.size() ), 0, vertex_index_buffer_gap );
-//		}
-	}
-	{
-		// Copy over the index data to staging buffer
-		std::memcpy( index_mapped_memory, indices.data(), indices.size() * sizeof( uint32_t ) );
-
-		// Clear tail of the buffer, just in case
-//		VkDeviceSize buffer_tail_size	= total_aligned_index_byte_size - VkDeviceSize( indices.size() );
-//		if( buffer_tail_size ) {
-//			std::memset( (uint8_t*)index_mapped_memory + VkDeviceSize( indices.size() ), 0, buffer_tail_size );
-//		}
-	}
-
-	staging_buffer.memory.Unmap();
-
-	vertices.clear();
-	indices.clear();
-
-	block_vertex_count				= 0;
-	block_index_count				= 0;
-
-	used_aligned_vertex_byte_size	= 0;
-	used_aligned_index_byte_size	= 0;
-
-	return true;
 }

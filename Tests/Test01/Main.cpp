@@ -75,7 +75,7 @@ int main()
 	vk2d::WindowCreateInfo					window_create_info {};
 	window_create_info.size					= { 800, 600 };
 	window_create_info.coordinate_space		= vk2d::WindowCoordinateSpace::TEXEL_SPACE_CENTERED;
-	window_create_info.samples				= renderer->GetMaximumSupportedMultisampling();
+//	window_create_info.samples				= renderer->GetMaximumSupportedMultisampling();
 	window_create_info.event_handler		= &event_handler;
 	auto window = renderer->CreateOutputWindow( window_create_info );
 	if( !window ) return -1;
@@ -85,14 +85,13 @@ int main()
 		++frame_counter;
 		if( !window->BeginRender() ) return -1;
 		
-		/*
-		window->DrawBox(
-			{ -1000, -1000 },
-			{ +1000, +1000 },
-			true,
-			{ 0.1f, 0.4f, 0.6f, 1.0f }
-		);
-		*/
+
+//		window->DrawTexture(
+//			{ -100, -100 },
+//			{ +100, +100 },
+//			texture,
+//			{ 0.1f, 0.4f, 0.6f, 1.0f }
+//		);
 
 		auto lattice_mesh = vk2d::GenerateLatticeMesh(
 			{ -300.0f, -300.0f },
@@ -106,8 +105,15 @@ int main()
 		lattice_mesh.SetLineSize( 1.0f );
 		lattice_mesh.SetMeshType( vk2d::MeshType::TRIANGLE_FILLED );
 		lattice_mesh.SetTexture( font->GetTextureResource() );
+//		lattice_mesh.SetTexture( texture );
 		lattice_mesh.SetSampler( sampler );
 //		lattice_mesh.Rotate( frame_counter / 234.0f, { +0.5f, +0.0f } );
+		lattice_mesh.texture_channel_weights.resize( size_t( font->GetTextureResource()->GetLayerCount() ) * lattice_mesh.vertices.size() );
+		for( size_t i = 0; i < lattice_mesh.vertices.size(); ++i ) {
+			size_t offset = i * font->GetTextureResource()->GetLayerCount();
+			lattice_mesh.texture_channel_weights[ offset + 0 ]	= 0.0f;
+			lattice_mesh.texture_channel_weights[ offset + 1 ]	= 1.0f;
+		}
 
 		lattice_mesh.Wave(
 			frame_counter / 500.0f,
@@ -116,6 +122,33 @@ int main()
 			{ 25.0f, 25.0f } );
 
 		window->DrawMesh( lattice_mesh );
+//
+//
+//		window->DrawBox(
+//			{ 100, 100 },
+//			{ 300, 300 },
+//			true,
+//			vk2d::Colorf( 0, 1, 0, 1 )
+//		);
+//
+//		auto circle_mesh = vk2d::GenerateCircleMesh(
+//			vk2d::Vector2f( -300, -300 ),
+//			vk2d::Vector2f( -100, -100 ),
+//			true,
+//			64.0f
+//		);
+//		circle_mesh.SetVertexColor( vk2d::Colorf( 1, 0, 0, 1 ) );
+//		circle_mesh.SetMeshType( vk2d::MeshType::TRIANGLE_WIREFRAME );
+//		circle_mesh.Wave(
+//			frame_counter / 500.0f,
+//			1.0f,
+//			frame_counter / 60.0f,
+//			{ 15.0f, 15.0f },
+//			{ -200.0f, -200.0f } );
+//
+//		window->DrawMesh(
+//			circle_mesh
+//		);
 
 
 		/*
