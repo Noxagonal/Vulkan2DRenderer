@@ -40,26 +40,28 @@ class MonitorImpl;
 // Descriptor set allocations.
 constexpr uint32_t DESCRIPTOR_SET_ALLOCATION_WINDOW_FRAME_DATA					= 0;
 constexpr uint32_t DESCRIPTOR_SET_ALLOCATION_INDEX_BUFFER_AS_STORAGE_BUFFER		= 1;
-constexpr uint32_t DESCRIPTOR_SET_ALLOCATION_TEXTURE_AND_SAMPLER				= 2;
-constexpr uint32_t DESCRIPTOR_SET_ALLOCATION_TEXTURE_CHANNEL_WEIGHTS			= 3;
+constexpr uint32_t DESCRIPTOR_SET_ALLOCATION_VERTEX_BUFFER_AS_STORAGE_BUFFER	= 2;
+constexpr uint32_t DESCRIPTOR_SET_ALLOCATION_TEXTURE_AND_SAMPLER				= 3;
+constexpr uint32_t DESCRIPTOR_SET_ALLOCATION_TEXTURE_CHANNEL_WEIGHTS			= 4;
 
 
 
 struct WindowCoordinateScaling {
-	vk2d::Vector2f				multiplier				= {};
-	vk2d::Vector2f				offset					= {};
+	alignas( 8 )	vk2d::Vector2f				multiplier				= {};
+	alignas( 8 )	vk2d::Vector2f				offset					= {};
 };
 
 struct WindowFrameData {
-	WindowCoordinateScaling		coordinate_scaling		= {};
+	alignas( 8 )	WindowCoordinateScaling		coordinate_scaling		= {};
 };
 
 struct PushConstants
 {
-	uint32_t index_offset;				// Offset into the index buffer.
-	uint32_t index_count;				// Amount of indices this shader should handle.
-	uint32_t texture_channel_offset;	// Location of the texture channels in the texture channel weights ssbo.
-	uint32_t texture_channel_count;		// Just the amount of texture channels.
+	alignas( 4 )	uint32_t					index_offset			= {};	// Offset into the index buffer.
+	alignas( 4 )	uint32_t					index_count				= {};	// Amount of indices this shader should handle.
+	alignas( 4 )	uint32_t					vertex_offset			= {};	// Offset to first vertex in vertex buffer.
+	alignas( 4 )	uint32_t					texture_channel_offset	= {};	// Location of the texture channels in the texture channel weights ssbo.
+	alignas( 4 )	uint32_t					texture_channel_count	= {};	// Just the amount of texture channels.
 };
 
 

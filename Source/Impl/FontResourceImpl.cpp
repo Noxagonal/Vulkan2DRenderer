@@ -231,6 +231,7 @@ bool vk2d::_internal::FontResourceImpl::MTLoad(
 	{
 		auto estimated_glyph_space_requirements		= average_glyph_size * ( 1.0 - average_to_max_weight ) + maximum_glyph_size * average_to_max_weight;
 		auto estimated_average_space_requirements	= estimated_glyph_space_requirements / 1.5;	// aim to have 1 to 4 textures to optimzise memory usage
+//		auto estimated_average_space_requirements	= estimated_glyph_space_requirements / 5.0;	// aim to have 1 to 4 textures to optimzise memory usage
 		atlas_size			=
 			RoundToCeilingPowerOfTwo(
 				uint32_t(

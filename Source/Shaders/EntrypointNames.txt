@@ -1,0 +1,17 @@
+
+// GLSL and Spir-V lack support for multiple entrypoints per shader program,
+// this system eliminates that to some extent. Shaders with the same interface
+// can now be contained within a single file with custom entrypoints. Final
+// spir-v is saved in a C++ header file for each of the entrypoints. To use
+// entrypoints in GLSL, make any function void <EntryPointName>(void) and add
+// that entrypoint name here. One similarly named entrypoint per stage,
+// different stages can use the same entrypoint name, for example name
+// MultitexturedTriangle can be used in both vertex and fragment shaders.
+// Any line after -> // is considered a comment, similarly to C++.
+
+// One entrypoint name per line, only white space and comments around it.
+
+Basic
+MultitexturedTriangle
+MultitexturedLine
+MultitexturedPoint

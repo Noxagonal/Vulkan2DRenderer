@@ -294,13 +294,13 @@ using Color32			= vk2d::ColorBase<uint32_t>;
 
 
 
+// Vertex is a single point of which polygons or lines can be formed between.
+// Or you could just render the points on their own.
 struct Vertex {
-	vk2d::Vector2f				vertex_coords;			// 2 x 32 bits
-	vk2d::Vector2f				uv_coords;				// 2 x 32 bits
-	vk2d::Colorf				color;					// 4 x 32 bits
-	float						point_size;				// 1 x 32 bits
-private:
-	float						padding[ 3 ];			// Reserved, padding Vertex struct to 128 bit boundaries
+	alignas( 8 )	vk2d::Vector2f			vertex_coords;			// 2 x 32 bits
+	alignas( 8 )	vk2d::Vector2f			uv_coords;				// 2 x 32 bits
+	alignas( 16 )	vk2d::Colorf			color;					// 4 x 32 bits
+	alignas( 4 )	float					point_size;				// 1 x 32 bits
 };
 
 struct VertexIndex_2 {

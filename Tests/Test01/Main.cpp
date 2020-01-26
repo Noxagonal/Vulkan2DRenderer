@@ -103,16 +103,26 @@ int main()
 			v.point_size	= 8.0f;
 		}
 		lattice_mesh.SetLineSize( 1.0f );
+		lattice_mesh.SetVertexColorGradient(
+			{ 0.0, 1.0, 0.0, 1.0 },
+			{ 0.0, 0.0, 1.0, 1.0 },
+			{ -200, -200 },
+			{ 200, 200 }
+		);
 		lattice_mesh.SetMeshType( vk2d::MeshType::TRIANGLE_FILLED );
 		lattice_mesh.SetTexture( font->GetTextureResource() );
 //		lattice_mesh.SetTexture( texture );
 		lattice_mesh.SetSampler( sampler );
 //		lattice_mesh.Rotate( frame_counter / 234.0f, { +0.5f, +0.0f } );
 		lattice_mesh.texture_channel_weights.resize( size_t( font->GetTextureResource()->GetLayerCount() ) * lattice_mesh.vertices.size() );
+		srand( 20 );
 		for( size_t i = 0; i < lattice_mesh.vertices.size(); ++i ) {
 			size_t offset = i * font->GetTextureResource()->GetLayerCount();
-			lattice_mesh.texture_channel_weights[ offset + 0 ]	= 0.0f;
-			lattice_mesh.texture_channel_weights[ offset + 1 ]	= 1.0f;
+			lattice_mesh.texture_channel_weights[ offset + 0 ]	= ( rand() % 1000 ) / 1000.0f;
+			lattice_mesh.texture_channel_weights[ offset + 1 ]	= ( rand() % 1000 ) / 1000.0f;
+			lattice_mesh.texture_channel_weights[ offset + 2 ]	= ( rand() % 1000 ) / 1000.0f;
+			lattice_mesh.texture_channel_weights[ offset + 3 ]	= ( rand() % 1000 ) / 1000.0f;
+//			lattice_mesh.texture_channel_weights[ offset + 1 ]	= 1.0f - lattice_mesh.texture_channel_weights[ offset + 0 ];
 		}
 
 		lattice_mesh.Wave(
@@ -122,15 +132,27 @@ int main()
 			{ 25.0f, 25.0f } );
 
 		window->DrawMesh( lattice_mesh );
-//
-//
-//		window->DrawBox(
-//			{ 100, 100 },
-//			{ 300, 300 },
-//			true,
-//			vk2d::Colorf( 0, 1, 0, 1 )
-//		);
-//
+
+		{
+			std::vector<vk2d::VertexIndex_3> indices( 1 );
+			indices[ 0 ]	= { 0, 1, 2 };
+			std::vector<vk2d::Vertex> vertices( 3 );
+			vertices[ 0 ].vertex_coords		= { 0, -200 };
+			vertices[ 0 ].uv_coords			= { 0.5, 0.0 };
+			vertices[ 0 ].color				= { 1.0, 0.0, 0.0, 1.0 };
+			vertices[ 0 ].point_size		= 1;
+			vertices[ 1 ].vertex_coords		= { -200, 200 };
+			vertices[ 1 ].uv_coords			= { 0.0, 1.0 };
+			vertices[ 1 ].color				= { 0.0, 1.0, 0.0, 1.0 };
+			vertices[ 1 ].point_size		= 1;
+			vertices[ 2 ].vertex_coords		= { 200, 200 };
+			vertices[ 2 ].uv_coords			= { 1.0, 1.0 };
+			vertices[ 2 ].color				= { 0.0, 0.0, 1.0, 1.0 };
+			vertices[ 2 ].point_size		= 1;
+
+			window->DrawTriangleList( indices, vertices, {} );
+		}
+
 //		auto circle_mesh = vk2d::GenerateCircleMesh(
 //			vk2d::Vector2f( -300, -300 ),
 //			vk2d::Vector2f( -100, -100 ),

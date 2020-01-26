@@ -80,12 +80,20 @@ vk2d::_internal::MeshBuffer::PushResult vk2d::_internal::MeshBuffer::CmdPushMesh
 			"MeshBuffer",
 			vk2d::_internal::CommandBufferCheckpointType::BIND_VERTEX_BUFFER
 		);
-		vkCmdBindVertexBuffers(
+		vkCmdBindDescriptorSets(
 			command_buffer,
-			0,
-			1, &reserve_result.vertex_block->device_buffer.buffer,
-			&offset
+			VK_PIPELINE_BIND_POINT_GRAPHICS,
+			renderer_parent->GetPipelineLayout(),
+			DESCRIPTOR_SET_ALLOCATION_VERTEX_BUFFER_AS_STORAGE_BUFFER,
+			1, &reserve_result.vertex_block->descriptor_set.descriptorSet,
+			0, nullptr
 		);
+//		vkCmdBindVertexBuffers(
+//			command_buffer,
+//			0,
+//			1, &reserve_result.vertex_block->device_buffer.buffer,
+//			&offset
+//		);
 		bound_vertex_buffer_block	= reserve_result.vertex_block;
 	}
 	if( bound_texture_channel_buffer_block != reserve_result.texture_channel_block ) {
@@ -112,13 +120,13 @@ vk2d::_internal::MeshBuffer::PushResult vk2d::_internal::MeshBuffer::CmdPushMesh
 		auto & tb = reserve_result.texture_channel_block->host_data;
 
 		if( new_indices.size() ) {
-			ib.insert( ib.begin(), new_indices.begin(), new_indices.end() );
+			ib.insert( ib.end(), new_indices.begin(), new_indices.end() );
 		}
 		if( new_vertices.size() ) {
-			vb.insert( vb.begin(), new_vertices.begin(), new_vertices.end() );
+			vb.insert( vb.end(), new_vertices.begin(), new_vertices.end() );
 		}
 		if( new_texture_channels.size() ) {
-			tb.insert( tb.begin(), new_texture_channels.begin(), new_texture_channels.end() );
+			tb.insert( tb.end(), new_texture_channels.begin(), new_texture_channels.end() );
 		}
 	}
 
@@ -414,8 +422,8 @@ vk2d::_internal::MeshBufferBlock<vk2d::Vertex>* vk2d::_internal::MeshBuffer::All
 	auto buffer_block	= std::make_unique<vk2d::_internal::MeshBufferBlock<vk2d::Vertex>>(
 		this,
 		byte_size,
-		VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
-		vk2d::_internal::MeshBufferDescriptorSetType::NONE
+		VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
+		vk2d::_internal::MeshBufferDescriptorSetType::STORAGE
 		);
 	if( buffer_block && buffer_block->IsGood() ) {
 		auto ret		= buffer_block.get();

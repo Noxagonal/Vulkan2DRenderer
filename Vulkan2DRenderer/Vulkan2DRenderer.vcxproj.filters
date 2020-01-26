@@ -37,10 +37,28 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="cpp.hint" />
-    <None Include="..\Source\Shaders\shader.frag">
+    <None Include="..\Source\Shaders\Basic.frag">
       <Filter>Source\Shaders</Filter>
     </None>
-    <None Include="..\Source\Shaders\shader.vert">
+    <None Include="..\Source\Shaders\Basic.vert">
+      <Filter>Source\Shaders</Filter>
+    </None>
+    <None Include="..\Source\Shaders\LineMultitextured.frag">
+      <Filter>Source\Shaders</Filter>
+    </None>
+    <None Include="..\Source\Shaders\LineMultitextured.vert">
+      <Filter>Source\Shaders</Filter>
+    </None>
+    <None Include="..\Source\Shaders\PointMultitextured.frag">
+      <Filter>Source\Shaders</Filter>
+    </None>
+    <None Include="..\Source\Shaders\PointMultitextured.vert">
+      <Filter>Source\Shaders</Filter>
+    </None>
+    <None Include="..\Source\Shaders\TriangleMultitextured.frag">
+      <Filter>Source\Shaders</Filter>
+    </None>
+    <None Include="..\Source\Shaders\TriangleMultitextured.vert">
       <Filter>Source\Shaders</Filter>
     </None>
   </ItemGroup>
@@ -89,12 +107,6 @@
     </ClInclude>
     <ClInclude Include="..\Source\Header\Impl\WindowImpl.h">
       <Filter>Source\Header\Impl</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Source\Shaders\shader.frag.spv.h">
-      <Filter>Source\Shaders</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Source\Shaders\shader.vert.spv.h">
-      <Filter>Source\Shaders</Filter>
     </ClInclude>
     <ClInclude Include="..\Source\Header\Core\DescriptorSet.h">
       <Filter>Source\Header\Core</Filter>

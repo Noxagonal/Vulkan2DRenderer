@@ -1369,6 +1369,7 @@ void vk2d::_internal::WindowImpl::DrawTriangleList(
 		PushConstants pc {};
 		pc.index_offset				= push_result.location_info.index_offset;
 		pc.index_count				= 3;
+		pc.vertex_offset			= push_result.location_info.vertex_offset;
 		pc.texture_channel_offset	= push_result.location_info.texture_channel_offset;
 		pc.texture_channel_count	= texture->impl->GetLayerCount();
 
@@ -1395,7 +1396,6 @@ void vk2d::_internal::WindowImpl::DrawTriangleList(
 			int32_t( push_result.location_info.vertex_offset ),
 			0
 		);
-
 		vk2d::_internal::CmdInsertCommandBufferCheckpoint(
 			command_buffer,
 			"MeshBuffer",
@@ -2236,31 +2236,31 @@ bool vk2d::_internal::WindowImpl::CreateGraphicsPipelines()
 	shader_stages[ 1 ].pSpecializationInfo		= nullptr;
 
 	// Make sure this matches Vertex in RenderPrimitives.h
-	std::array<VkVertexInputBindingDescription, 1> vertex_input_binding_descriptions {};
-	vertex_input_binding_descriptions[ 0 ].binding		= 0;
-	vertex_input_binding_descriptions[ 0 ].stride		= sizeof( vk2d::Vertex );
-	vertex_input_binding_descriptions[ 0 ].inputRate	= VK_VERTEX_INPUT_RATE_VERTEX;
+	std::array<VkVertexInputBindingDescription, 0> vertex_input_binding_descriptions {};
+//	vertex_input_binding_descriptions[ 0 ].binding		= 0;
+//	vertex_input_binding_descriptions[ 0 ].stride		= sizeof( vk2d::Vertex );
+//	vertex_input_binding_descriptions[ 0 ].inputRate	= VK_VERTEX_INPUT_RATE_VERTEX;
 
-	std::array<VkVertexInputAttributeDescription, 4> vertex_input_attribute_descriptions {};
-	vertex_input_attribute_descriptions[ 0 ].location	= 0;
-	vertex_input_attribute_descriptions[ 0 ].binding	= 0;
-	vertex_input_attribute_descriptions[ 0 ].format		= VK_FORMAT_R32G32_SFLOAT;
-	vertex_input_attribute_descriptions[ 0 ].offset		= offsetof( vk2d::Vertex, vertex_coords );
-
-	vertex_input_attribute_descriptions[ 1 ].location	= 1;
-	vertex_input_attribute_descriptions[ 1 ].binding	= 0;
-	vertex_input_attribute_descriptions[ 1 ].format		= VK_FORMAT_R32G32_SFLOAT;
-	vertex_input_attribute_descriptions[ 1 ].offset		= offsetof( vk2d::Vertex, uv_coords );
-
-	vertex_input_attribute_descriptions[ 2 ].location	= 2;
-	vertex_input_attribute_descriptions[ 2 ].binding	= 0;
-	vertex_input_attribute_descriptions[ 2 ].format		= VK_FORMAT_R32G32B32A32_SFLOAT;
-	vertex_input_attribute_descriptions[ 2 ].offset		= offsetof( vk2d::Vertex, color );
-
-	vertex_input_attribute_descriptions[ 3 ].location	= 3;
-	vertex_input_attribute_descriptions[ 3 ].binding	= 0;
-	vertex_input_attribute_descriptions[ 3 ].format		= VK_FORMAT_R32_SFLOAT;
-	vertex_input_attribute_descriptions[ 3 ].offset		= offsetof( vk2d::Vertex, point_size );
+	std::array<VkVertexInputAttributeDescription, 0> vertex_input_attribute_descriptions {};
+//	vertex_input_attribute_descriptions[ 0 ].location	= 0;
+//	vertex_input_attribute_descriptions[ 0 ].binding	= 0;
+//	vertex_input_attribute_descriptions[ 0 ].format		= VK_FORMAT_R32G32_SFLOAT;
+//	vertex_input_attribute_descriptions[ 0 ].offset		= offsetof( vk2d::Vertex, vertex_coords );
+//
+//	vertex_input_attribute_descriptions[ 1 ].location	= 1;
+//	vertex_input_attribute_descriptions[ 1 ].binding	= 0;
+//	vertex_input_attribute_descriptions[ 1 ].format		= VK_FORMAT_R32G32_SFLOAT;
+//	vertex_input_attribute_descriptions[ 1 ].offset		= offsetof( vk2d::Vertex, uv_coords );
+//
+//	vertex_input_attribute_descriptions[ 2 ].location	= 2;
+//	vertex_input_attribute_descriptions[ 2 ].binding	= 0;
+//	vertex_input_attribute_descriptions[ 2 ].format		= VK_FORMAT_R32G32B32A32_SFLOAT;
+//	vertex_input_attribute_descriptions[ 2 ].offset		= offsetof( vk2d::Vertex, color );
+//
+//	vertex_input_attribute_descriptions[ 3 ].location	= 3;
+//	vertex_input_attribute_descriptions[ 3 ].binding	= 0;
+//	vertex_input_attribute_descriptions[ 3 ].format		= VK_FORMAT_R32_SFLOAT;
+//	vertex_input_attribute_descriptions[ 3 ].offset		= offsetof( vk2d::Vertex, point_size );
 
 	VkPipelineVertexInputStateCreateInfo vertex_input_state_create_info {};
 	vertex_input_state_create_info.sType							= VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
@@ -2281,14 +2281,14 @@ bool vk2d::_internal::WindowImpl::CreateGraphicsPipelines()
 	VkViewport viewport {};
 	viewport.x			= 0;
 	viewport.y			= 0;
-	viewport.width		= 800;
-	viewport.height		= 600;
+	viewport.width		= 512;
+	viewport.height		= 512;
 	viewport.minDepth	= 0.0f;
 	viewport.maxDepth	= 1.0f;
 
 	VkRect2D scissor {
 		{ 0, 0 },
-		{ 800, 600 }
+		{ 512, 512 }
 	};
 
 	VkPipelineViewportStateCreateInfo viewport_state_create_info {};
