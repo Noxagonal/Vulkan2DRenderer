@@ -1,5 +1,8 @@
 #pragma once
 
+#include "SingleTexturedVertex.vert.spv.h"
+#include "SingleTexturedFragment.frag.spv.h"
+#include "SingleTexturedFragmentWithUVBorderColor.frag.spv.h"
 #include "MultitexturedVertex.vert.spv.h"
 #include "MultitexturedFragmentTriangle.frag.spv.h"
 #include "MultitexturedFragmentTriangleWithUVBorderColor.frag.spv.h"

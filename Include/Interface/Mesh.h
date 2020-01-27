@@ -17,15 +17,6 @@ class Sampler;
 
 
 
-enum class MeshType : uint32_t {
-	TRIANGLE_FILLED,
-	TRIANGLE_WIREFRAME,
-	LINE,
-	POINT,
-};
-
-
-
 class Mesh {
 	friend class vk2d::_internal::WindowImpl;
 	friend VK2D_API vk2d::Mesh						VK2D_APIENTRY					GeneratePointMeshFromList(

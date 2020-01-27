@@ -120,9 +120,11 @@
     <ClInclude Include="..\Include\Interface\TextureResource.h" />
     <ClInclude Include="..\Include\Interface\Window.h" />
     <ClInclude Include="..\Include\Vulkan2DRenderer.h" />
+    <ClCompile Include="..\Source\Core\ShaderInterface.cpp" />
     <ClInclude Include="..\Source\Header\Core\DescriptorSet.h" />
     <ClInclude Include="..\Source\Header\Core\MeshBuffer.h" />
     <ClInclude Include="..\Source\Header\Core\QueueResolver.h" />
+    <ClInclude Include="..\Source\Header\Core\ShaderInterface.h" />
     <ClInclude Include="..\Source\Header\Core\SourceCommon.h" />
     <ClInclude Include="..\Source\Header\Core\ThreadPool.h" />
     <ClInclude Include="..\Source\Header\Core\ThreadPrivateResources.h" />

@@ -19,6 +19,7 @@ struct Vertex {
 	vec2		UVs;
 	vec4		color;
 	float		point_size;
+	uint		single_texture_channel;
 };
 layout(std430, set=2, binding=0) readonly buffer	VertexBuffer {
 	Vertex		ssbo[];

@@ -1,18 +1,21 @@
 #pragma once
 
-#include "../Header/Core/SourceCommon.h"
+#include "../Core/SourceCommon.h"
 #include "../../../Include/Interface/Renderer.h"
 
 #include "../../Header/Core/VulkanMemoryManagement.h"
 #include "../Core/QueueResolver.h"
 
-#include "../Impl/WindowImpl.h"
 #include "../Core/DescriptorSet.h"
+#include "../Core/ShaderInterface.h"
+
+#include "WindowImpl.h"
 
 #include <list>
 #include <vector>
 #include <array>
 #include <memory>
+#include <map>
 
 #define GLFW_INCLUDE_NONE
 #include <GLFW/glfw3.h>
@@ -24,45 +27,19 @@ namespace vk2d {
 
 class Window;
 class Monitor;
+class Cursor;
 class Renderer;
 class ResourceManager;
-class Cursor;
 class TextureResource;
 
 namespace _internal {
 
 class ThreadPool;
 class DescriptorSetLayout;
+class WindowImpl;
 class MonitorImpl;
+class CursorImpl;
 
-
-
-// Descriptor set allocations.
-constexpr uint32_t DESCRIPTOR_SET_ALLOCATION_WINDOW_FRAME_DATA					= 0;
-constexpr uint32_t DESCRIPTOR_SET_ALLOCATION_INDEX_BUFFER_AS_STORAGE_BUFFER		= 1;
-constexpr uint32_t DESCRIPTOR_SET_ALLOCATION_VERTEX_BUFFER_AS_STORAGE_BUFFER	= 2;
-constexpr uint32_t DESCRIPTOR_SET_ALLOCATION_TEXTURE_AND_SAMPLER				= 3;
-constexpr uint32_t DESCRIPTOR_SET_ALLOCATION_TEXTURE_CHANNEL_WEIGHTS			= 4;
-
-
-
-struct WindowCoordinateScaling {
-	alignas( 8 )	vk2d::Vector2f				multiplier				= {};
-	alignas( 8 )	vk2d::Vector2f				offset					= {};
-};
-
-struct WindowFrameData {
-	alignas( 8 )	WindowCoordinateScaling		coordinate_scaling		= {};
-};
-
-struct PushConstants
-{
-	alignas( 4 )	uint32_t					index_offset			= {};	// Offset into the index buffer.
-	alignas( 4 )	uint32_t					index_count				= {};	// Amount of indices this shader should handle.
-	alignas( 4 )	uint32_t					vertex_offset			= {};	// Offset to first vertex in vertex buffer.
-	alignas( 4 )	uint32_t					texture_channel_offset	= {};	// Location of the texture channels in the texture channel weights ssbo.
-	alignas( 4 )	uint32_t					texture_channel_count	= {};	// Just the amount of texture channels.
-};
 
 
 
@@ -152,8 +129,14 @@ public:
 	const VkPhysicalDeviceMemoryProperties				&	GetPhysicalDeviceMemoryProperties() const;
 	const VkPhysicalDeviceFeatures						&	GetPhysicalDeviceFeatures() const;
 
-	VkShaderModule											GetVertexShaderModule() const;
-	VkShaderModule											GetFragmentShaderModule() const;
+	vk2d::_internal::ShaderStages							GetShaderStages(
+		vk2d::_internal::ShaderStagesID						id ) const;
+
+	vk2d::_internal::ShaderStages							GetCompatibleShaderStages(
+		bool												multitextured,
+		bool												custom_uv_border_color,
+		uint32_t											vertices_per_primitive
+	);
 
 	VkPipelineCache											GetPipelineCache() const;
 	VkPipelineLayout										GetPipelineLayout() const;
@@ -230,8 +213,9 @@ private:
 	VkPhysicalDeviceMemoryProperties						physical_device_memory_properties		= {};
 	VkPhysicalDeviceFeatures								physical_device_features				= {};
 
-	VkShaderModule											vertex_shader_module					= {};
-	VkShaderModule											fragment_shader_module					= {};
+	std::vector<VkShaderModule>								shader_modules							= {};
+	std::map<vk2d::_internal::ShaderStagesID, vk2d::_internal::ShaderStages>	shader_stages		= {};
+
 	VkPipelineCache											pipeline_cache							= {};
 	VkPipelineLayout										pipeline_layout							= {};
 

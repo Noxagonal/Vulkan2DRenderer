@@ -18,6 +18,7 @@ struct			Vertex {
 	vec2		UVs;
 	vec4		color;
 	float		point_size;
+	uint		single_texture_channel;
 };
 layout(std430, set=2, binding=0) readonly buffer	VertexBuffer {
 	Vertex		ssbo[];
@@ -27,7 +28,7 @@ layout(std430, set=2, binding=0) readonly buffer	VertexBuffer {
 layout(set=3, binding=0) uniform sampler2DArray		image_sampler;
 layout(std140, set=3, binding=1) uniform			image_sampler_data {
 	vec4		border_color;
-	vec4		border_color_enable;
+	uvec2		border_color_enable;
 } sampler_data;
 
 // Set 4: Texture channel weights
@@ -235,13 +236,13 @@ vec4 CalculatePointWeightedTextureColor()
 // Multiple textures can be used with varying amount of weight.
 void MultitexturedFragmentTriangleWithUVBorderColor()
 {
-	if( sampler_data.border_color_enable.x > 0.5 ) {
+	if( sampler_data.border_color_enable.x > 0 ) {
 		if( fragment_input_UV.x < 0.0 || fragment_input_UV.x > 1.0 ) {
 			final_fragment_color	= sampler_data.border_color;
 			return;
 		}
 	}
-	if( sampler_data.border_color_enable.y > 0.5 ) {
+	if( sampler_data.border_color_enable.y > 0 ) {
 		if( fragment_input_UV.y < 0.0 || fragment_input_UV.y > 1.0 ) {
 			final_fragment_color	= sampler_data.border_color;
 			return;
@@ -274,13 +275,13 @@ void MultitexturedFragmentTriangle()
 // Multiple textures can be used with varying amount of weight.
 void MultitexturedFragmentLineWithUVBorderColor()
 {
-	if( sampler_data.border_color_enable.x > 0.5 ) {
+	if( sampler_data.border_color_enable.x > 0 ) {
 		if( fragment_input_UV.x < 0.0 || fragment_input_UV.x > 1.0 ) {
 			final_fragment_color	= sampler_data.border_color;
 			return;
 		}
 	}
-	if( sampler_data.border_color_enable.y > 0.5 ) {
+	if( sampler_data.border_color_enable.y > 0 ) {
 		if( fragment_input_UV.y < 0.0 || fragment_input_UV.y > 1.0 ) {
 			final_fragment_color	= sampler_data.border_color;
 			return;
@@ -313,13 +314,13 @@ void MultitexturedFragmentLine()
 // Multiple textures can be used with varying amount of weight.
 void MultitexturedFragmentPointWithUVBorderColor()
 {
-	if( sampler_data.border_color_enable.x > 0.5 ) {
+	if( sampler_data.border_color_enable.x > 0 ) {
 		if( fragment_input_UV.x < 0.0 || fragment_input_UV.x > 1.0 ) {
 			final_fragment_color	= sampler_data.border_color;
 			return;
 		}
 	}
-	if( sampler_data.border_color_enable.y > 0.5 ) {
+	if( sampler_data.border_color_enable.y > 0 ) {
 		if( fragment_input_UV.y < 0.0 || fragment_input_UV.y > 1.0 ) {
 			final_fragment_color	= sampler_data.border_color;
 			return;

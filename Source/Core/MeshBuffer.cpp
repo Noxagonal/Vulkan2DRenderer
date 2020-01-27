@@ -88,12 +88,6 @@ vk2d::_internal::MeshBuffer::PushResult vk2d::_internal::MeshBuffer::CmdPushMesh
 			1, &reserve_result.vertex_block->descriptor_set.descriptorSet,
 			0, nullptr
 		);
-//		vkCmdBindVertexBuffers(
-//			command_buffer,
-//			0,
-//			1, &reserve_result.vertex_block->device_buffer.buffer,
-//			&offset
-//		);
 		bound_vertex_buffer_block	= reserve_result.vertex_block;
 	}
 	if( bound_texture_channel_buffer_block != reserve_result.texture_channel_block ) {
@@ -253,10 +247,6 @@ vk2d::_internal::MeshBuffer::MeshBlockLocationInfo vk2d::_internal::MeshBuffer::
 	VkDeviceSize										index_buffer_position			= 0;
 	VkDeviceSize										vertex_buffer_position			= 0;
 	VkDeviceSize										texture_channel_buffer_position	= 0;
-
-	index_count				= std::max( 1u, index_count );
-	vertex_count			= std::max( 1u, vertex_count );
-	texture_channel_count	= std::max( 1u, texture_channel_count );
 
 	{
 		// Index buffer block

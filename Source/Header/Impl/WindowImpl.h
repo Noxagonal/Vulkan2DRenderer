@@ -3,12 +3,13 @@
 #include "../Core/SourceCommon.h"
 
 #include "../../../Include/Interface/Renderer.h"
-#include "../../../Include/Interface/Window.h"
 
 #include "../../Header/Core/MeshBuffer.h"
 #include "../Core/QueueResolver.h"
 #include "../Core/VulkanMemoryManagement.h"
 #include "../Core/DescriptorSet.h"
+#include "../Impl/RendererImpl.h"
+#include "../Core/ShaderInterface.h"
 
 #define GLFW_INCLUDE_NONE
 #include <GLFW/glfw3.h>
@@ -21,6 +22,7 @@
 namespace vk2d {
 
 class Window;
+class Monitor;
 class Cursor;
 class TextureResource;
 class Mesh;
@@ -29,25 +31,16 @@ namespace _internal {
 
 class RendererImpl;
 class WindowImpl;
+class MonitorImpl;
 class CursorImpl;
 class MeshBuffer;
 class TextureResourceImpl;
 class ScreenshotSaverTask;
+class ShaderStages;
 
 enum class NextRenderCallFunction : uint32_t {
 	BEGIN		= 0,
 	END			= 1,
-};
-
-enum class PipelineType : uint32_t {
-	FILLED_POLYGON_LIST,
-	WIREFRAME_POLYGON_LIST,
-	LINE_LIST,
-	POINT_LIST,
-
-	PIPELINE_TYPE_COUNT,
-
-	NONE						= UINT32_MAX,
 };
 
 class WindowImpl {
@@ -255,7 +248,6 @@ private:
 	bool														CreateGLFWWindow();
 	bool														CreateSurface();
 	bool														CreateRenderPass();
-	bool														CreateGraphicsPipelines();
 	bool														CreateCommandPool();
 	bool														AllocateCommandBuffers();
 
@@ -270,9 +262,15 @@ private:
 
 	void														HandleScreenshotEvent();
 
+	VkPipeline													GetPipeline(
+		const vk2d::_internal::PipelineSettings				&	settings );
+
+	VkPipeline													CreatePipeline(
+		const vk2d::_internal::PipelineSettings				&	settings );
+
 	void														CmdBindPipelineIfDifferent(
 		VkCommandBuffer											command_buffer,
-		vk2d::_internal::PipelineType							pipeline_type );
+		vk2d::_internal::PipelineSettings						pipeline_settings );
 
 	void														CmdBindTextureSamplerIfDifferent(
 		VkCommandBuffer											command_buffer,
@@ -286,16 +284,6 @@ private:
 
 	std::map<vk2d::Sampler*, std::map<vk2d::TextureResource*, vk2d::_internal::WindowImpl::SamplerTextureDescriptorPoolData>>
 		sampler_texture_descriptor_sets							= {};
-
-	/*
-	void														CmdBindTextureIfDifferent(
-		VkCommandBuffer											command_buffer,
-		vk2d::TextureResource								*	texture );
-
-	void														CmdBindSamplerIfDifferent(
-		VkCommandBuffer											command_buffer,
-		vk2d::Sampler										*	sampler );
-	*/
 
 	void														CmdSetLineWidthIfDifferent(
 		VkCommandBuffer											command_buffer,
@@ -363,13 +351,13 @@ private:
 	vk2d::_internal::CompleteBufferResource						frame_data_device_buffer					= {};
 	vk2d::_internal::PoolDescriptorSet							frame_data_descriptor_set					= {};
 
-	std::vector<VkPipeline>										pipelines									= {};
+	std::map<PipelineSettings, VkPipeline>						pipelines									= {};
 
 	vk2d::_internal::NextRenderCallFunction						next_render_call_function					= vk2d::_internal::NextRenderCallFunction::BEGIN;
 	bool														should_reconstruct							= {};
 	bool														should_close								= {};
 
-	vk2d::_internal::PipelineType								previous_pipeline_type						= vk2d::_internal::PipelineType::NONE;
+	vk2d::_internal::PipelineSettings							previous_pipeline_settings					= {};
 	vk2d::TextureResource									*	previous_texture							= {};
 	vk2d::Sampler											*	previous_sampler							= {};
 	float														previous_line_width							= {};

@@ -207,58 +207,14 @@ vk2d::_internal::SamplerImpl::SamplerImpl(
 		return;
 	}
 	{
+		border_color_enable.x		= uint32_t( create_info.address_mode_u == vk2d::SamplerAddressMode::CLAMP_TO_BORDER );
+		border_color_enable.y		= uint32_t( create_info.address_mode_v == vk2d::SamplerAddressMode::CLAMP_TO_BORDER );
+
 		vk2d::_internal::SamplerImpl::BufferData sd;
 		sd.borderColor				= create_info.border_color;
-		sd.borderColorEnable[ 0 ]	= float( create_info.address_mode_u == vk2d::SamplerAddressMode::CLAMP_TO_BORDER );
-		sd.borderColorEnable[ 1 ]	= float( create_info.address_mode_v == vk2d::SamplerAddressMode::CLAMP_TO_BORDER );
+		sd.borderColorEnable		= border_color_enable;
 		sampler_data.memory.DataCopy( &sd, sizeof( vk2d::_internal::SamplerImpl::BufferData ) );
 	}
-
-//	descriptor_set		= renderer_parent->GetDescriptorPool()->AllocateDescriptorSet(
-//		renderer_parent->GetSamplerTextureDescriptorSetLayout()
-//	);
-//	if( descriptor_set != VK_SUCCESS ) {
-//		renderer_parent->Report( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot create sampler descriptor set!" );
-//		return;
-//	}
-//
-//	std::array<VkWriteDescriptorSet, 2> descriptor_write {};
-//
-//	VkDescriptorImageInfo sampler_info {};
-//	sampler_info.sampler					= sampler;
-//	sampler_info.imageView					= VK_NULL_HANDLE;
-//	sampler_info.imageLayout				= VK_IMAGE_LAYOUT_UNDEFINED;
-//	descriptor_write[ 0 ].sType				= VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-//	descriptor_write[ 0 ].pNext				= nullptr;
-//	descriptor_write[ 0 ].dstSet			= descriptor_set.descriptorSet;
-//	descriptor_write[ 0 ].dstBinding		= 0;
-//	descriptor_write[ 0 ].dstArrayElement	= 0;
-//	descriptor_write[ 0 ].descriptorCount	= 1;
-//	descriptor_write[ 0 ].descriptorType	= VK_DESCRIPTOR_TYPE_SAMPLER;
-//	descriptor_write[ 0 ].pImageInfo		= &sampler_info;
-//	descriptor_write[ 0 ].pBufferInfo		= nullptr;
-//	descriptor_write[ 0 ].pTexelBufferView	= nullptr;
-//
-//	VkDescriptorBufferInfo sampler_data_info {};
-//	sampler_data_info.buffer				= sampler_data.buffer;
-//	sampler_data_info.offset				= 0;
-//	sampler_data_info.range					= sizeof( vk2d::_internal::SamplerData );
-//	descriptor_write[ 1 ].sType				= VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-//	descriptor_write[ 1 ].pNext				= nullptr;
-//	descriptor_write[ 1 ].dstSet			= descriptor_set.descriptorSet;
-//	descriptor_write[ 1 ].dstBinding		= 1;
-//	descriptor_write[ 1 ].dstArrayElement	= 0;
-//	descriptor_write[ 1 ].descriptorCount	= 1;
-//	descriptor_write[ 1 ].descriptorType	= VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-//	descriptor_write[ 1 ].pImageInfo		= nullptr;
-//	descriptor_write[ 1 ].pBufferInfo		= &sampler_data_info;
-//	descriptor_write[ 1 ].pTexelBufferView	= nullptr;
-//
-//	vkUpdateDescriptorSets(
-//		renderer_parent->GetVulkanDevice(),
-//		uint32_t( descriptor_write.size() ), descriptor_write.data(),
-//		0, nullptr
-//	);
 
 	is_good			= true;
 }
@@ -287,6 +243,16 @@ VkSampler vk2d::_internal::SamplerImpl::GetVulkanSampler()
 VkBuffer vk2d::_internal::SamplerImpl::GetVulkanBufferForSamplerData()
 {
 	return sampler_data.buffer;
+}
+
+vk2d::Vector2u vk2d::_internal::SamplerImpl::GetBorderColorEnable()
+{
+	return border_color_enable;
+}
+
+bool vk2d::_internal::SamplerImpl::IsAnyBorderColorEnabled()
+{
+	return bool( border_color_enable.x || border_color_enable.y );
 }
 
 bool vk2d::_internal::SamplerImpl::IsGood()

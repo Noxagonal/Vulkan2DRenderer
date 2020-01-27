@@ -114,14 +114,14 @@ int main()
 //		lattice_mesh.SetTexture( texture );
 		lattice_mesh.SetSampler( sampler );
 //		lattice_mesh.Rotate( frame_counter / 234.0f, { +0.5f, +0.0f } );
-		lattice_mesh.texture_channel_weights.resize( size_t( font->GetTextureResource()->GetLayerCount() ) * lattice_mesh.vertices.size() );
+		auto texture_channel_count = font->GetTextureResource()->GetLayerCount();
+		lattice_mesh.texture_channel_weights.resize( size_t( texture_channel_count ) * lattice_mesh.vertices.size() );
 		srand( 20 );
 		for( size_t i = 0; i < lattice_mesh.vertices.size(); ++i ) {
-			size_t offset = i * font->GetTextureResource()->GetLayerCount();
-			lattice_mesh.texture_channel_weights[ offset + 0 ]	= ( rand() % 1000 ) / 1000.0f;
-			lattice_mesh.texture_channel_weights[ offset + 1 ]	= ( rand() % 1000 ) / 1000.0f;
-			lattice_mesh.texture_channel_weights[ offset + 2 ]	= ( rand() % 1000 ) / 1000.0f;
-			lattice_mesh.texture_channel_weights[ offset + 3 ]	= ( rand() % 1000 ) / 1000.0f;
+			size_t offset = i * texture_channel_count;
+			for( size_t o = 0; o < texture_channel_count; ++o ) {
+				lattice_mesh.texture_channel_weights[ offset + o ]	= ( rand() % 1000 ) / 1000.0f;
+			}
 //			lattice_mesh.texture_channel_weights[ offset + 1 ]	= 1.0f - lattice_mesh.texture_channel_weights[ offset + 0 ];
 		}
 

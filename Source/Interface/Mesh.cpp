@@ -39,26 +39,24 @@ vk2d::AABB2f CalculateAABBFromVertexList(
 	return ret;
 }
 
-void ClearVerticesToDefaultValues(
+inline vk2d::Vertex CreateDefaultValueVertex()
+{
+	vk2d::Vertex v;
+	v.vertex_coords				= {};
+	v.uv_coords					= {};
+	v.color						= { 1.0f, 1.0f, 1.0f, 1.0f };
+	v.point_size				= 1.0f;
+	v.single_texture_channel	= 0;
+	return v;
+}
+
+inline void ClearVerticesToDefaultValues(
 	std::vector<vk2d::Vertex>				&	vertices
 )
 {
 	for( auto & v : vertices ) {
-		v.vertex_coords			= {};
-		v.uv_coords				= {};
-		v.color					= { 1.0f, 1.0f, 1.0f, 1.0f };
-		v.point_size			= 1.0f;
+		v = CreateDefaultValueVertex();
 	}
-}
-
-vk2d::Vertex CreateDefaultValueVertex()
-{
-	vk2d::Vertex v;
-	v.vertex_coords		= {};
-	v.uv_coords			= {};
-	v.color				= { 1.0f, 1.0f, 1.0f, 1.0f };
-	v.point_size		= 1.0f;
-	return v;
 }
 
 } // _internal

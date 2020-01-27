@@ -132,6 +132,12 @@
     <ClInclude Include="..\Source\Header\Impl\FontResourceImpl.h">
       <Filter>Source\Header\Impl</Filter>
     </ClInclude>
+    <ClInclude Include="..\Source\Core\ShaderInterface.cpp">
+      <Filter>Source\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Source\Header\Core\ShaderInterface.h">
+      <Filter>Source\Header\Core</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\Source\Impl\RendererImpl.cpp">

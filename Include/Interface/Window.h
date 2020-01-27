@@ -356,6 +356,193 @@ struct WindowCreateInfo {
 
 
 
+
+
+
+
+// Monitor video mode tells you one of the supported modes the monitor can natively work in.
+struct MonitorVideoMode {
+	vk2d::Vector2u		size;
+	uint32_t			redBits;
+	uint32_t			greenBits;
+	uint32_t			blueBits;
+	uint32_t			refreshRate;
+};
+
+// Gamma ramp for manual gamma adjustment per color
+class GammaRamp {
+	friend class vk2d::_internal::MonitorImpl;
+
+public:
+	GammaRamp()										= default;
+	~GammaRamp()									= default;
+	GammaRamp( const vk2d::GammaRamp & other )		= default;
+	GammaRamp( vk2d::GammaRamp && other )			= default;
+
+	inline void AddNode(
+		uint16_t		r,
+		uint16_t		g,
+		uint16_t		b
+	)
+	{
+		red.push_back( r );
+		green.push_back( g );
+		blue.push_back( b );
+		++count;
+	}
+
+private:
+	std::vector<uint16_t>		red;
+	std::vector<uint16_t>		green;
+	std::vector<uint16_t>		blue;
+	uint32_t					count;
+};
+
+
+
+// Monitor object holds information about the physical monitor
+class Monitor {
+	friend class vk2d::Window;
+	friend class vk2d::_internal::WindowImpl;
+	friend void vk2d::_internal::UpdateMonitorLists();
+
+	// Monitor constructor from implementation directly, used internally.
+	VK2D_API																				Monitor(
+		std::unique_ptr<vk2d::_internal::MonitorImpl>	&&	preconstructed_impl );
+
+public:
+	// Monitor constructor for an empty monitor.
+	VK2D_API																				Monitor()			= default;
+
+	// Monitor copy constructor.
+	VK2D_API																				Monitor(
+		const vk2d::Monitor								&	other );
+
+	// Monitor move constructor.
+	VK2D_API																				Monitor(
+		vk2d::Monitor									&&	other )							= default;
+
+	// Monitor destructor.
+	VK2D_API																				~Monitor()			= default;
+
+	// Get current video mode, resolution, bits per color and refresh rate.
+	// Returns:
+	// A const reference to MonitorVideoMode object.
+	VK2D_API vk2d::MonitorVideoMode							VK2D_APIENTRY					GetCurrentVideoMode() const;
+
+	// Get all video modes, resolutions, bits per color and refresh rates.
+	// Returns:
+	// A vector of MonitorVideoMode objects.
+	VK2D_API std::vector<vk2d::MonitorVideoMode>			VK2D_APIENTRY					GetVideoModes() const;
+
+	// Set monitor gamma.
+	// Parameters:
+	// [in] gamma: gamma value between 0 and 1.
+	VK2D_API void											VK2D_APIENTRY					SetGamma(
+		float												gamma );
+
+	// Get monitor gamma ramp.
+	// Gamma ramps work similarly to gamma but per color and per color value.
+	// Returns:
+	// GammaRamp object which will tell you gamma per color.
+	VK2D_API vk2d::GammaRamp								VK2D_APIENTRY					GetGammaRamp();
+
+	// Set monitor gamma ramp.
+	// Gamma ramps work similarly to gamma but per color and per color value.
+	// It is recommended that the amount of gamma ramp values is set to 255
+	// as that is supported by all monitors on all platforms.
+	// Parameters:
+	// [in] ramp: GammaRamp object into which we should change the gamma to.
+	VK2D_API void											VK2D_APIENTRY					SetGammaRamp(
+		const vk2d::GammaRamp							&	ramp );
+
+	// Copy operator.
+	VK2D_API vk2d::Monitor								&	VK2D_APIENTRY					operator=(
+		const vk2d::Monitor								&	other );
+
+	// Move operator.
+	VK2D_API vk2d::Monitor								&	VK2D_APIENTRY					operator=(
+		vk2d::Monitor									&&	other )							= default;
+
+	VK2D_API bool											VK2D_APIENTRY					IsGood();
+
+private:
+	std::unique_ptr<vk2d::_internal::MonitorImpl>			impl							= nullptr;
+
+	bool													is_good							= {};
+};
+
+
+
+
+
+
+
+// Cursor objects hold a cursor image and the cursor image hot spot.
+class Cursor {
+	friend class vk2d::_internal::RendererImpl;
+	friend class vk2d::Window;
+	friend class vk2d::_internal::WindowImpl;
+
+	// Create cursor from image file.
+	// [in] renderer: renderer parent.
+	// [in] imagePath: path to an image.
+	// [in] hot_spot_x: where the active location of the cursor is.
+	VK2D_API																		Cursor(
+		vk2d::_internal::RendererImpl		*	renderer,
+		const std::filesystem::path			&	image_path,
+		vk2d::Vector2i							hot_spot );
+
+	// Create cursor from raw texel data.
+	// Texel order is left to right, top to bottom.
+	// [in] renderer: renderer parent.
+	// [in] image_size: size of the image in pixels.
+	// [in] image_data: raw image data.
+	// [in] hot_spot: where the active location of the cursor is.
+	VK2D_API																		Cursor(
+		vk2d::_internal::RendererImpl		*	renderer,
+		vk2d::Vector2u							image_size,
+		const std::vector<vk2d::Color8>		&	image_data,
+		vk2d::Vector2i							hot_spot );
+
+public:
+	// Copy constructor from another cursor.
+	VK2D_API																		Cursor(
+		vk2d::Cursor						&	other );
+
+	// Move constructor from another cursor.
+	VK2D_API																		Cursor(
+		vk2d::Cursor						&&	other )								= default;
+
+	// Destructor for cursor.
+	VK2D_API																		~Cursor();
+
+	// Copy operator from another cursor.
+	VK2D_API vk2d::Cursor					&	VK2D_APIENTRY						operator=(
+		vk2d::Cursor						&	other );
+
+	// Move operator from another cursor.
+	VK2D_API vk2d::Cursor					&	VK2D_APIENTRY						operator=(
+		vk2d::Cursor						&&	other )								= default;
+
+	VK2D_API vk2d::Vector2u						VK2D_APIENTRY						GetSize();
+	VK2D_API vk2d::Vector2i						VK2D_APIENTRY						GetHotSpot();
+	VK2D_API std::vector<vk2d::Color8>			VK2D_APIENTRY						GetPixelData();
+
+	VK2D_API bool								VK2D_APIENTRY						IsGood();
+
+private:
+	std::unique_ptr<vk2d::_internal::CursorImpl>	impl							= {};
+
+	bool										is_good								= {};
+};
+
+
+
+
+
+
+
 class Window {
 	friend class vk2d::_internal::RendererImpl;
 
@@ -620,187 +807,6 @@ private:
 
 	bool												is_good				= {};
 };
-
-
-
-// Cursor objects hold a cursor image and the cursor image hot spot.
-class Cursor {
-	friend class vk2d::_internal::RendererImpl;
-	friend class vk2d::Window;
-	friend class vk2d::_internal::WindowImpl;
-
-	// Create cursor from image file.
-	// [in] renderer: renderer parent.
-	// [in] imagePath: path to an image.
-	// [in] hot_spot_x: where the active location of the cursor is.
-	VK2D_API																		Cursor(
-		vk2d::_internal::RendererImpl		*	renderer,
-		const std::filesystem::path			&	image_path,
-		vk2d::Vector2i							hot_spot );
-
-	// Create cursor from raw texel data.
-	// Texel order is left to right, top to bottom.
-	// [in] renderer: renderer parent.
-	// [in] image_size: size of the image in pixels.
-	// [in] image_data: raw image data.
-	// [in] hot_spot: where the active location of the cursor is.
-	VK2D_API																		Cursor(
-		vk2d::_internal::RendererImpl		*	renderer,
-		vk2d::Vector2u							image_size,
-		const std::vector<vk2d::Color8>		&	image_data,
-		vk2d::Vector2i							hot_spot );
-
-public:
-	// Copy constructor from another cursor.
-	VK2D_API																		Cursor(
-		vk2d::Cursor						&	other );
-
-	// Move constructor from another cursor.
-	VK2D_API																		Cursor(
-		vk2d::Cursor						&&	other )								= default;
-
-	// Destructor for cursor.
-	VK2D_API																		~Cursor();
-
-	// Copy operator from another cursor.
-	VK2D_API vk2d::Cursor					&	VK2D_APIENTRY						operator=(
-		vk2d::Cursor						&	other );
-
-	// Move operator from another cursor.
-	VK2D_API vk2d::Cursor					&	VK2D_APIENTRY						operator=(
-		vk2d::Cursor						&&	other )								= default;
-
-	VK2D_API vk2d::Vector2u						VK2D_APIENTRY						GetSize();
-	VK2D_API vk2d::Vector2i						VK2D_APIENTRY						GetHotSpot();
-	VK2D_API std::vector<vk2d::Color8>			VK2D_APIENTRY						GetPixelData();
-
-	VK2D_API bool								VK2D_APIENTRY						IsGood();
-
-private:
-	std::unique_ptr<vk2d::_internal::CursorImpl>	impl							= {};
-
-	bool										is_good								= {};
-};
-
-
-
-
-
-
-
-// Monitor video mode tells you one of the supported modes the monitor can natively work in.
-struct MonitorVideoMode {
-	vk2d::Vector2u		size;
-	uint32_t			redBits;
-	uint32_t			greenBits;
-	uint32_t			blueBits;
-	uint32_t			refreshRate;
-};
-
-// Gamma ramp for manual gamma adjustment per color
-class GammaRamp {
-	friend class vk2d::_internal::MonitorImpl;
-
-public:
-	GammaRamp()										= default;
-	~GammaRamp()									= default;
-	GammaRamp( const vk2d::GammaRamp & other )		= default;
-	GammaRamp( vk2d::GammaRamp && other )			= default;
-
-	inline void AddNode(
-		uint16_t		r,
-		uint16_t		g,
-		uint16_t		b
-	)
-	{
-		red.push_back( r );
-		green.push_back( g );
-		blue.push_back( b );
-		++count;
-	}
-
-private:
-	std::vector<uint16_t>		red;
-	std::vector<uint16_t>		green;
-	std::vector<uint16_t>		blue;
-	uint32_t					count;
-};
-
-
-
-// Monitor object holds information about the physical monitor
-class Monitor {
-	friend class vk2d::Window;
-	friend class vk2d::_internal::WindowImpl;
-	friend void vk2d::_internal::UpdateMonitorLists();
-
-	// Monitor constructor from implementation directly, used internally.
-	VK2D_API																				Monitor(
-		std::unique_ptr<vk2d::_internal::MonitorImpl>	&&	preconstructed_impl );
-
-public:
-	// Monitor constructor for an empty monitor.
-	VK2D_API																				Monitor()			= default;
-
-	// Monitor copy constructor.
-	VK2D_API																				Monitor(
-		const vk2d::Monitor								&	other );
-
-	// Monitor move constructor.
-	VK2D_API																				Monitor(
-		vk2d::Monitor									&&	other )							= default;
-
-	// Monitor destructor.
-	VK2D_API																				~Monitor()			= default;
-
-	// Get current video mode, resolution, bits per color and refresh rate.
-	// Returns:
-	// A const reference to MonitorVideoMode object.
-	VK2D_API vk2d::MonitorVideoMode							VK2D_APIENTRY					GetCurrentVideoMode() const;
-
-	// Get all video modes, resolutions, bits per color and refresh rates.
-	// Returns:
-	// A vector of MonitorVideoMode objects.
-	VK2D_API std::vector<vk2d::MonitorVideoMode>			VK2D_APIENTRY					GetVideoModes() const;
-
-	// Set monitor gamma.
-	// Parameters:
-	// [in] gamma: gamma value between 0 and 1.
-	VK2D_API void											VK2D_APIENTRY					SetGamma(
-		float												gamma );
-
-	// Get monitor gamma ramp.
-	// Gamma ramps work similarly to gamma but per color and per color value.
-	// Returns:
-	// GammaRamp object which will tell you gamma per color.
-	VK2D_API vk2d::GammaRamp								VK2D_APIENTRY					GetGammaRamp();
-
-	// Set monitor gamma ramp.
-	// Gamma ramps work similarly to gamma but per color and per color value.
-	// It is recommended that the amount of gamma ramp values is set to 255
-	// as that is supported by all monitors on all platforms.
-	// Parameters:
-	// [in] ramp: GammaRamp object into which we should change the gamma to.
-	VK2D_API void											VK2D_APIENTRY					SetGammaRamp(
-		const vk2d::GammaRamp							&	ramp );
-
-	// Copy operator.
-	VK2D_API vk2d::Monitor								&	VK2D_APIENTRY					operator=(
-		const vk2d::Monitor								&	other );
-
-	// Move operator.
-	VK2D_API vk2d::Monitor								&	VK2D_APIENTRY					operator=(
-		vk2d::Monitor									&&	other )							= default;
-
-	VK2D_API bool											VK2D_APIENTRY					IsGood();
-
-private:
-	std::unique_ptr<vk2d::_internal::MonitorImpl>			impl							= nullptr;
-
-	bool													is_good							= {};
-};
-
-
 
 
 

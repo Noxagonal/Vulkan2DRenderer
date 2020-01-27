@@ -224,6 +224,11 @@ void glfwJoystickEventCallback( int joystick, int event )
 
 
 
+
+
+
+
+
 uint64_t vk2d::_internal::RendererImpl::renderer_count				= 0;
 
 vk2d::_internal::RendererImpl::RendererImpl( const RendererCreateInfo & renderer_create_info )
@@ -661,14 +666,53 @@ const VkPhysicalDeviceFeatures & vk2d::_internal::RendererImpl::GetPhysicalDevic
 	return physical_device_features;
 }
 
-VkShaderModule vk2d::_internal::RendererImpl::GetVertexShaderModule() const
+vk2d::_internal::ShaderStages vk2d::_internal::RendererImpl::GetShaderStages(
+	vk2d::_internal::ShaderStagesID			id ) const
 {
-	return vertex_shader_module;
+	auto collection = shader_stages.find( id );
+	if( collection != shader_stages.end() ) {
+		return collection->second;
+	}
+	return {};
 }
 
-VkShaderModule vk2d::_internal::RendererImpl::GetFragmentShaderModule() const
+vk2d::_internal::ShaderStages vk2d::_internal::RendererImpl::GetCompatibleShaderStages(
+	bool				multitextured,
+	bool				custom_uv_border_color,
+	uint32_t			vertices_per_primitive
+)
 {
-	return fragment_shader_module;
+	if( multitextured ) {
+		if( custom_uv_border_color ) {
+			if( vertices_per_primitive == 1 ) {
+				return GetShaderStages( vk2d::_internal::ShaderStagesID::MULTITEXTURED_POINT_UV_BORDER_COLOR );
+			}
+			if( vertices_per_primitive == 2 ) {
+				return GetShaderStages( vk2d::_internal::ShaderStagesID::MULTITEXTURED_LINE_UV_BORDER_COLOR );
+			}
+			if( vertices_per_primitive == 3 ) {
+				return GetShaderStages( vk2d::_internal::ShaderStagesID::MULTITEXTURED_TRIANGLE_UV_BORDER_COLOR );
+			}
+		} else {
+			if( vertices_per_primitive == 1 ) {
+				return GetShaderStages( vk2d::_internal::ShaderStagesID::MULTITEXTURED_POINT );
+			}
+			if( vertices_per_primitive == 2 ) {
+				return GetShaderStages( vk2d::_internal::ShaderStagesID::MULTITEXTURED_LINE );
+			}
+			if( vertices_per_primitive == 3 ) {
+				return GetShaderStages( vk2d::_internal::ShaderStagesID::MULTITEXTURED_TRIANGLE );
+			}
+		}
+	} else {
+		if( custom_uv_border_color ) {
+			return GetShaderStages( vk2d::_internal::ShaderStagesID::SINGLE_TEXTURED_UV_BORDER_COLOR );
+		} else {
+			return GetShaderStages( vk2d::_internal::ShaderStagesID::SINGLE_TEXTURED );
+		}
+	}
+
+	return {};
 }
 
 VkPipelineCache vk2d::_internal::RendererImpl::GetPipelineCache() const
@@ -695,11 +739,6 @@ const vk2d::_internal::DescriptorSetLayout & vk2d::_internal::RendererImpl::GetS
 {
 	return *storage_buffer_descriptor_set_layout;
 }
-
-//VkDescriptorSet vk2d::_internal::RendererImpl::GetDefaultTextureDescriptorSet() const
-//{
-//	return default_texture_descriptor_set.descriptorSet;
-//}
 
 vk2d::TextureResource * vk2d::_internal::RendererImpl::GetDefaultTexture() const
 {
@@ -1110,44 +1149,103 @@ bool vk2d::_internal::RendererImpl::CreatePipelineCache()
 
 bool vk2d::_internal::RendererImpl::CreateShaderModules()
 {
-
+	auto CreateModule = [ this ](
+		uint32_t	*	code,
+		size_t			element_count
+		) -> VkShaderModule
 	{
 		VkShaderModuleCreateInfo shader_create_info {};
 		shader_create_info.sType		= VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
 		shader_create_info.pNext		= nullptr;
 		shader_create_info.flags		= 0;
-		shader_create_info.codeSize		= MultitexturedVertex_vert_shader_data.size() * sizeof( uint32_t );
-		shader_create_info.pCode		= MultitexturedVertex_vert_shader_data.data();
+		shader_create_info.codeSize		= element_count * sizeof( uint32_t );
+		shader_create_info.pCode		= code;
 
+		VkShaderModule shader_module {};
 		if( vkCreateShaderModule(
 			device,
 			&shader_create_info,
 			nullptr,
-			&vertex_shader_module
+			&shader_module
 		) != VK_SUCCESS ) {
-			Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot create Vulkan vertex shader module!" );
-			return false;
+			Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot create Vulkan shader module!" );
+			return {};
 		}
-	}
+		return shader_module;
+	};
 
-	{
-		VkShaderModuleCreateInfo shader_create_info {};
-		shader_create_info.sType		= VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
-		shader_create_info.pNext		= nullptr;
-		shader_create_info.flags		= 0;
-		shader_create_info.codeSize		= MultitexturedFragmentTriangle_frag_shader_data.size() * sizeof( uint32_t );
-		shader_create_info.pCode		= MultitexturedFragmentTriangle_frag_shader_data.data();
 
-		if( vkCreateShaderModule(
-			device,
-			&shader_create_info,
-			nullptr,
-			&fragment_shader_module
-		) != VK_SUCCESS ) {
-			Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot create Vulkan fragment shader module!" );
-			return false;
-		}
-	}
+
+	// Create individual shader modules for single textured entries.
+	auto single_textured_vertex								= CreateModule(
+		SingleTexturedVertex_vert_shader_data.data(),
+		SingleTexturedVertex_vert_shader_data.size()
+	);
+	auto single_textured_fragment							= CreateModule(
+		SingleTexturedFragment_frag_shader_data.data(),
+		SingleTexturedFragment_frag_shader_data.size()
+	);
+	auto single_textured_fragment_uv_border_color			= CreateModule(
+		SingleTexturedFragmentWithUVBorderColor_frag_shader_data.data(),
+		SingleTexturedFragmentWithUVBorderColor_frag_shader_data.size()
+	);
+
+
+
+	// Create individual shader modules for single textured entries.
+	auto multitextured_vertex								= CreateModule(
+		MultitexturedVertex_vert_shader_data.data(),
+		MultitexturedVertex_vert_shader_data.size()
+	);
+
+	auto multitextured_fragment_triangle					= CreateModule(
+		MultitexturedFragmentTriangle_frag_shader_data.data(),
+		MultitexturedFragmentTriangle_frag_shader_data.size()
+	);
+	auto multitextured_fragment_line						= CreateModule(
+		MultitexturedFragmentLine_frag_shader_data.data(),
+		MultitexturedFragmentLine_frag_shader_data.size()
+	);
+	auto multitextured_fragment_point						= CreateModule(
+		MultitexturedFragmentPoint_frag_shader_data.data(),
+		MultitexturedFragmentPoint_frag_shader_data.size()
+	);
+	auto multitextured_fragment_triangle_uv_border_color	= CreateModule(
+		MultitexturedFragmentTriangleWithUVBorderColor_frag_shader_data.data(),
+		MultitexturedFragmentTriangleWithUVBorderColor_frag_shader_data.size()
+	);
+	auto multitextured_fragment_line_uv_border_color		= CreateModule(
+		MultitexturedFragmentLineWithUVBorderColor_frag_shader_data.data(),
+		MultitexturedFragmentLineWithUVBorderColor_frag_shader_data.size()
+	);
+	auto multitextured_fragment_point_uv_border_color		= CreateModule(
+		MultitexturedFragmentPointWithUVBorderColor_frag_shader_data.data(),
+		MultitexturedFragmentPointWithUVBorderColor_frag_shader_data.size()
+	);
+
+	// List all individual shader modules into a vector
+	shader_modules.push_back( single_textured_vertex );
+	shader_modules.push_back( single_textured_fragment );
+	shader_modules.push_back( single_textured_fragment_uv_border_color );
+
+	shader_modules.push_back( multitextured_vertex );
+	shader_modules.push_back( multitextured_fragment_triangle );
+	shader_modules.push_back( multitextured_fragment_line );
+	shader_modules.push_back( multitextured_fragment_point );
+	shader_modules.push_back( multitextured_fragment_triangle_uv_border_color );
+	shader_modules.push_back( multitextured_fragment_line_uv_border_color );
+	shader_modules.push_back( multitextured_fragment_point_uv_border_color );
+
+	// Collect a listing of shader units, which is a collection of shader modules needed to create a pipeline.
+	shader_stages[ vk2d::_internal::ShaderStagesID::SINGLE_TEXTURED ]							= vk2d::_internal::ShaderStages( single_textured_vertex, single_textured_fragment );
+	shader_stages[ vk2d::_internal::ShaderStagesID::SINGLE_TEXTURED_UV_BORDER_COLOR ]			= vk2d::_internal::ShaderStages( single_textured_vertex, single_textured_fragment_uv_border_color );
+
+	shader_stages[ vk2d::_internal::ShaderStagesID::MULTITEXTURED_TRIANGLE ]					= vk2d::_internal::ShaderStages( multitextured_vertex, multitextured_fragment_triangle );
+	shader_stages[ vk2d::_internal::ShaderStagesID::MULTITEXTURED_LINE ]						= vk2d::_internal::ShaderStages( multitextured_vertex, multitextured_fragment_line );
+	shader_stages[ vk2d::_internal::ShaderStagesID::MULTITEXTURED_POINT ]						= vk2d::_internal::ShaderStages( multitextured_vertex, multitextured_fragment_point );
+	shader_stages[ vk2d::_internal::ShaderStagesID::MULTITEXTURED_TRIANGLE_UV_BORDER_COLOR ]	= vk2d::_internal::ShaderStages( multitextured_vertex, multitextured_fragment_triangle_uv_border_color );
+	shader_stages[ vk2d::_internal::ShaderStagesID::MULTITEXTURED_LINE_UV_BORDER_COLOR ]		= vk2d::_internal::ShaderStages( multitextured_vertex, multitextured_fragment_line_uv_border_color );
+	shader_stages[ vk2d::_internal::ShaderStagesID::MULTITEXTURED_POINT_UV_BORDER_COLOR ]		= vk2d::_internal::ShaderStages( multitextured_vertex, multitextured_fragment_point_uv_border_color );
 
 	return true;
 }
@@ -1438,19 +1536,14 @@ void vk2d::_internal::RendererImpl::DestroyPipelineCache()
 
 void vk2d::_internal::RendererImpl::DestroyShaderModules()
 {
-	vkDestroyShaderModule(
-		device,
-		vertex_shader_module,
-		nullptr
-	);
-	vkDestroyShaderModule(
-		device,
-		fragment_shader_module,
-		nullptr
-	);
-
-	vertex_shader_module		= {};
-	fragment_shader_module		= {};
+	for( auto s : shader_modules ) {
+		vkDestroyShaderModule(
+			device,
+			s,
+			nullptr
+		);
+	}
+	shader_modules.clear();
 }
 
 void vk2d::_internal::RendererImpl::DestroyDescriptorSetLayouts()
