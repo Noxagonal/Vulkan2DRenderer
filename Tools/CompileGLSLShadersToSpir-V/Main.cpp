@@ -116,7 +116,8 @@ int main( int argc, char * argv[] )
 	}
 
 	// Create header file that includes every shader
-	auto include_file = ofstream( "Spir-V/IncludeAllShaders.h" );
+	auto include_file_path = glsl_location / "Spir-V" / "IncludeAllShaders.h";
+	auto include_file = ofstream( include_file_path );
 	include_file << "#pragma once\n\n";
 	for( auto & e : file_entries ) {
 		auto filename = e.destination_file.filename();

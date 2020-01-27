@@ -1,7 +1,11 @@
 #version 450
 #extension GL_KHR_vulkan_glsl : enable
 
-// const uint VERTEX_SIZE_IN_FLOATS = 12;
+
+
+////////////////////////////////////////////////////////////////
+// Shader program interface.
+////////////////////////////////////////////////////////////////
 
 // Set 0: Window frame data.
 layout(std140, set=0, binding=0) uniform			WindowFrameData {
@@ -30,24 +34,25 @@ layout(std140, push_constant) uniform PushConstants {
 } push_constants;
 
 // Output to fragment shader
-layout(location=0) out vec2 fragment_output_UV;
-layout(location=1) out vec4 fragment_output_color;
-layout(location=2) out vec2 fragment_output_original_coords;
+layout(location=0) out		vec2	fragment_output_UV;
+layout(location=1) out		vec4	fragment_output_color;
+layout(location=2) out		vec2	fragment_output_original_coords;
+layout(location=3) out flat	uint	fragment_output_vertex_index;
 
 
 
-// Entrypoint
-void MultitexturedTriangle()
+////////////////////////////////////////////////////////////////
+// Entrypoints.
+////////////////////////////////////////////////////////////////
+
+void MultitexturedVertex()
 {
 	fragment_output_UV				= vertex_buffer.ssbo[ gl_VertexIndex ].UVs;
 	fragment_output_color			= vertex_buffer.ssbo[ gl_VertexIndex ].color;
 	vec2 vertex_coords				= vertex_buffer.ssbo[ gl_VertexIndex ].coords;
 	vec2 transformed_vertex_coords	= vertex_coords * window_frame_data.multiplier + window_frame_data.offset;
 	fragment_output_original_coords	= vertex_coords;
+	fragment_output_vertex_index	= gl_VertexIndex;
 	gl_Position						= vec4( transformed_vertex_coords, 1.0f, 1.0f );
 	gl_PointSize					= vertex_buffer.ssbo[ gl_VertexIndex ].point_size;
-
-//	DEBUGGING.
-//	gl_Position						= vec4( vertex_input_coords / vec2( 800.0, 600.0 ), 1.0f, 1.0f );
-//	gl_PointSize					= 1.0;
 }

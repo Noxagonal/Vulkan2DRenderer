@@ -95,16 +95,12 @@
 </Command>
     </PostBuildEvent>
     <PreBuildEvent>
-      <Command>"$(SolutionDir)Tools\CompileGLSLShadersToSpir-V\Bin\CompileGLSLShadersToSpir-V.exe" -ShaderPath "$(SolutionDir)Source\Shaders" -DebugInfo</Command>
+      <Command>"$(SolutionDir)Tools\CompileGLSLShadersToSpir-V\Bin\CompileGLSLShadersToSpir-V.exe" -ShaderPath "$(SolutionDir)Source\Shaders"</Command>
     </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <None Include="..\Source\Shaders\Basic.frag" />
-    <None Include="..\Source\Shaders\Basic.vert" />
-    <None Include="..\Source\Shaders\LineMultitextured.frag" />
-    <None Include="..\Source\Shaders\LineMultitextured.vert" />
-    <None Include="..\Source\Shaders\PointMultitextured.frag" />
-    <None Include="..\Source\Shaders\PointMultitextured.vert" />
+    <None Include="..\Source\Shaders\SingleTextured.frag" />
+    <None Include="..\Source\Shaders\SingleTextured.vert" />
     <None Include="..\Source\Shaders\TriangleMultitextured.frag" />
     <None Include="..\Source\Shaders\TriangleMultitextured.vert" />
     <None Include="cpp.hint" />
@@ -161,6 +157,9 @@
     <ClCompile Include="..\Source\Interface\ResourceManager.cpp" />
     <ClCompile Include="..\Source\Interface\TextureResource.cpp" />
     <ClCompile Include="..\Source\Interface\Window.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="..\Source\Shaders\EntrypointNames.txt" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

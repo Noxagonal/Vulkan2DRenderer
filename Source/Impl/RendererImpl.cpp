@@ -1116,8 +1116,8 @@ bool vk2d::_internal::RendererImpl::CreateShaderModules()
 		shader_create_info.sType		= VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
 		shader_create_info.pNext		= nullptr;
 		shader_create_info.flags		= 0;
-		shader_create_info.codeSize		= MultitexturedTriangle_vert_shader_data.size() * sizeof( uint32_t );
-		shader_create_info.pCode		= MultitexturedTriangle_vert_shader_data.data();
+		shader_create_info.codeSize		= MultitexturedVertex_vert_shader_data.size() * sizeof( uint32_t );
+		shader_create_info.pCode		= MultitexturedVertex_vert_shader_data.data();
 
 		if( vkCreateShaderModule(
 			device,
@@ -1135,8 +1135,8 @@ bool vk2d::_internal::RendererImpl::CreateShaderModules()
 		shader_create_info.sType		= VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
 		shader_create_info.pNext		= nullptr;
 		shader_create_info.flags		= 0;
-		shader_create_info.codeSize		= MultitexturedTriangle_frag_shader_data.size() * sizeof( uint32_t );
-		shader_create_info.pCode		= MultitexturedTriangle_frag_shader_data.data();
+		shader_create_info.codeSize		= MultitexturedFragmentTriangle_frag_shader_data.size() * sizeof( uint32_t );
+		shader_create_info.pCode		= MultitexturedFragmentTriangle_frag_shader_data.data();
 
 		if( vkCreateShaderModule(
 			device,

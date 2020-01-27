@@ -37,28 +37,16 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="cpp.hint" />
-    <None Include="..\Source\Shaders\Basic.frag">
-      <Filter>Source\Shaders</Filter>
-    </None>
-    <None Include="..\Source\Shaders\Basic.vert">
-      <Filter>Source\Shaders</Filter>
-    </None>
-    <None Include="..\Source\Shaders\LineMultitextured.frag">
-      <Filter>Source\Shaders</Filter>
-    </None>
-    <None Include="..\Source\Shaders\LineMultitextured.vert">
-      <Filter>Source\Shaders</Filter>
-    </None>
-    <None Include="..\Source\Shaders\PointMultitextured.frag">
-      <Filter>Source\Shaders</Filter>
-    </None>
-    <None Include="..\Source\Shaders\PointMultitextured.vert">
-      <Filter>Source\Shaders</Filter>
-    </None>
     <None Include="..\Source\Shaders\TriangleMultitextured.frag">
       <Filter>Source\Shaders</Filter>
     </None>
     <None Include="..\Source\Shaders\TriangleMultitextured.vert">
+      <Filter>Source\Shaders</Filter>
+    </None>
+    <None Include="..\Source\Shaders\SingleTextured.frag">
+      <Filter>Source\Shaders</Filter>
+    </None>
+    <None Include="..\Source\Shaders\SingleTextured.vert">
       <Filter>Source\Shaders</Filter>
     </None>
   </ItemGroup>
@@ -212,5 +200,10 @@
     <ClCompile Include="..\Source\Core\SourceCommon.cpp">
       <Filter>Source\Core</Filter>
     </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="..\Source\Shaders\EntrypointNames.txt">
+      <Filter>Source\Shaders</Filter>
+    </Text>
   </ItemGroup>
 </Project>

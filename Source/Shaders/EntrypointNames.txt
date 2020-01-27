@@ -11,7 +11,16 @@
 
 // One entrypoint name per line, only white space and comments around it.
 
-Basic
-MultitexturedTriangle
-MultitexturedLine
-MultitexturedPoint
+SingleTexturedVertex								// Used for all single textured vertex shaders
+MultitexturedVertex									// Used for all multitextured vertex shaders
+
+SingleTexturedFragment								// Single textured triangle, no custom UV border color
+SingleTexturedFragmentWithUVBorderColor				// Single textured triangle, with custom UV border color
+
+MultitexturedFragmentTriangle						// Multitextured triangle, no custom UV border color
+MultitexturedFragmentTriangleWithUVBorderColor		// Multitextured triangle, with custom UV border color
+MultitexturedFragmentLine							// Multitextured line, no custom UV border color
+MultitexturedFragmentLineWithUVBorderColor			// Multitextured line, with custom UV border color
+MultitexturedFragmentPoint							// Multitextured point, no custom UV border color
+MultitexturedFragmentPointWithUVBorderColor			// Multitextured point, with custom UV border color
+
