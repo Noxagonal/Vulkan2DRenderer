@@ -68,7 +68,7 @@ int main()
 	auto sampler			= renderer->CreateSampler( sampler_create_info );
 
 	auto texture			= renderer->GetResourceManager()->LoadTextureResource( "../../TestData/GrafGear_128.png" );
-	auto font				= renderer->GetResourceManager()->LoadFontResource( "../../TestData/Fonts/Ethnocentric/ethnocentric rg.ttf" );
+	auto font				= renderer->GetResourceManager()->LoadFontResource( "../../TestData/Fonts/Ethnocentric/ethnocentric rg.ttf", 41 );
 //	auto font				= renderer->GetResourceManager()->LoadFontResource( "../../TestData/Fonts/DroidSandMono/DroidSansMono.ttf" );
 
 	EventHandler							event_handler;
@@ -112,18 +112,21 @@ int main()
 		lattice_mesh.SetMeshType( vk2d::MeshType::TRIANGLE_FILLED );
 		lattice_mesh.SetTexture( font->GetTextureResource() );
 //		lattice_mesh.SetTexture( texture );
-		lattice_mesh.SetSampler( sampler );
+//		lattice_mesh.SetSampler( sampler );
 //		lattice_mesh.Rotate( frame_counter / 234.0f, { +0.5f, +0.0f } );
 		auto texture_channel_count = font->GetTextureResource()->GetLayerCount();
-		lattice_mesh.texture_channel_weights.resize( size_t( texture_channel_count ) * lattice_mesh.vertices.size() );
 		srand( 20 );
-		for( size_t i = 0; i < lattice_mesh.vertices.size(); ++i ) {
-			size_t offset = i * texture_channel_count;
-			for( size_t o = 0; o < texture_channel_count; ++o ) {
-				lattice_mesh.texture_channel_weights[ offset + o ]	= ( rand() % 1000 ) / 1000.0f;
-			}
-//			lattice_mesh.texture_channel_weights[ offset + 1 ]	= 1.0f - lattice_mesh.texture_channel_weights[ offset + 0 ];
+		for( auto & v : lattice_mesh.vertices ) {
+			v.single_texture_channel = 0; //rand() % texture_channel_count;
 		}
+//		lattice_mesh.texture_channel_weights.resize( size_t( texture_channel_count ) * lattice_mesh.vertices.size() );
+//		for( size_t i = 0; i < lattice_mesh.vertices.size(); ++i ) {
+//			size_t offset = i * texture_channel_count;
+//			for( size_t o = 0; o < texture_channel_count; ++o ) {
+//				lattice_mesh.texture_channel_weights[ offset + o ]	= ( rand() % 1000 ) / 1000.0f;
+//			}
+////			lattice_mesh.texture_channel_weights[ offset + 1 ]	= 1.0f - lattice_mesh.texture_channel_weights[ offset + 0 ];
+//		}
 
 		lattice_mesh.Wave(
 			frame_counter / 500.0f,

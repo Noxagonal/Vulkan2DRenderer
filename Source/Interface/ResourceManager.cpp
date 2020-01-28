@@ -71,12 +71,18 @@ VK2D_API vk2d::TextureResource * VK2D_APIENTRY vk2d::ResourceManager::LoadArrayT
 }
 
 VK2D_API vk2d::FontResource * VK2D_APIENTRY vk2d::ResourceManager::LoadFontResource(
-	const std::filesystem::path		&	file_path
+	const std::filesystem::path		&	file_path,
+	uint32_t							glyph_texel_size,
+	bool								use_alpha,
+	uint32_t							glyph_atlas_padding
 )
 {
 	return impl->LoadFontResource(
 		file_path,
-		nullptr
+		nullptr,
+		glyph_texel_size,
+		use_alpha,
+		glyph_atlas_padding
 	);
 }
 

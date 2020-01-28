@@ -24,12 +24,20 @@ uint32_t RoundToCeilingPowerOfTwo( uint32_t value )
 
 vk2d::_internal::FontResourceImpl::FontResourceImpl(
 	vk2d::FontResource						*	font_resource,
-	vk2d::_internal::ResourceManagerImpl	*	resource_manager )
+	vk2d::_internal::ResourceManagerImpl	*	resource_manager,
+	uint32_t									glyph_texel_size,
+	bool										use_alpha,
+	uint32_t									glyph_atlas_padding
+)
 {
-	font_resource_parent		= font_resource;
-	resource_manager_parent		= resource_manager;
+	this->font_resource_parent			= font_resource;
+	this->resource_manager_parent		= resource_manager;
 	assert( font_resource_parent );
 	assert( resource_manager_parent );
+
+	this->glyph_texel_size				= glyph_texel_size;
+	this->glyph_atlas_padding			= glyph_atlas_padding;
+	this->use_alpha						= use_alpha;
 
 	is_good		= true;
 }
@@ -94,10 +102,8 @@ bool vk2d::_internal::FontResourceImpl::MTLoad(
 	auto loader_thread_resource		= static_cast<vk2d::_internal::ThreadLoaderResource*>( thread_resource );
 	auto renderer					= loader_thread_resource->GetRenderer();
 	auto path_str					= font_resource_parent->GetFilePaths()[ 0 ].string();
-	auto glyph_size					= uint32_t( 50 );	// TODO: Make into parameter.
-	auto glyph_atlas_padding		= uint32_t( 8 );	// TODO: Experiment with this to find the best value.
 	auto max_texture_size			= renderer->GetPhysicalDeviceProperties().limits.maxImageDimension2D;
-	auto min_texture_size			= std::min( uint32_t( 512 ), max_texture_size );
+	auto min_texture_size			= std::min( uint32_t( 128 ), max_texture_size );
 
 	// Average to max weight is used to estimate glyph space requirements on atlas textures.
 	// Average size is average size of a glyph, Maximum size is maximum size of a glyph.
@@ -175,7 +181,7 @@ bool vk2d::_internal::FontResourceImpl::MTLoad(
 				auto ft_error = FT_Set_Pixel_Sizes(
 					face,
 					0,
-					glyph_size
+					glyph_texel_size
 				);
 				if( ft_error ) {
 					renderer->Report(
@@ -271,7 +277,7 @@ bool vk2d::_internal::FontResourceImpl::MTLoad(
 				}
 			}
 			{
-				auto ft_render_error = FT_Render_Glyph( face.face->glyph, FT_RENDER_MODE_NORMAL );
+				auto ft_render_error = FT_Render_Glyph( face.face->glyph, use_alpha ? FT_RENDER_MODE_NORMAL : FT_RENDER_MODE_MONO );
 				if( ft_render_error ) {
 					renderer->Report( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot load font, cannot render glyph!" );
 					return false;
@@ -326,10 +332,10 @@ bool vk2d::_internal::FontResourceImpl::MTLoad(
 						auto &	dst			= final_glyph_pixels[ texel_pos ];
 						auto	src			= &ft_bitmap.buffer[ texel_pos * 4 ];
 
-						dst.r				= src[ 1 ];
-						dst.g				= src[ 2 ];
-						dst.b				= src[ 3 ];
-						dst.a				= src[ 0 ];
+						dst.r				= src[ 2 ];
+						dst.g				= src[ 1 ];
+						dst.b				= src[ 0 ];
+						dst.a				= src[ 3 ];
 					}
 				}
 			}
