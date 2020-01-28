@@ -1,6 +1,8 @@
 
 #include "../Header/Core/SourceCommon.h"
 
+#include "../../Include/Interface/Mesh.h"
+
 #include "../../Include/Interface/ResourceManager.h"
 #include "../Header/Impl/ResourceManagerImpl.h"
 
@@ -74,6 +76,7 @@ VK2D_API vk2d::FontResource * VK2D_APIENTRY vk2d::ResourceManager::LoadFontResou
 	const std::filesystem::path		&	file_path,
 	uint32_t							glyph_texel_size,
 	bool								use_alpha,
+	uint32_t							fallback_character,
 	uint32_t							glyph_atlas_padding
 )
 {
@@ -82,6 +85,7 @@ VK2D_API vk2d::FontResource * VK2D_APIENTRY vk2d::ResourceManager::LoadFontResou
 		nullptr,
 		glyph_texel_size,
 		use_alpha,
+		fallback_character,
 		glyph_atlas_padding
 	);
 }

@@ -84,7 +84,6 @@ int main()
 	while( !window->ShouldClose() ) {
 		++frame_counter;
 		if( !window->BeginRender() ) return -1;
-		
 
 //		window->DrawTexture(
 //			{ -100, -100 },
@@ -155,6 +154,20 @@ int main()
 
 			window->DrawTriangleList( indices, vertices, {} );
 		}
+
+		auto text = vk2d::GenerateTextMesh(
+			font,
+			vk2d::Vector2f( 0, 0 ),
+			"Testing...",
+			std::sin( frame_counter / 100.0f ) * 20.0f
+			// vk2d::Vector2f( std::cos( frame_counter / 100.0 ), std::sin( frame_counter / 100.0 ) )
+		);
+		text.Wave(
+			frame_counter / 500.0f,
+			1.0f,
+			frame_counter / 60.0f,
+			{ 25.0f, 25.0f } );
+		window->DrawMesh( text );
 
 //		auto circle_mesh = vk2d::GenerateCircleMesh(
 //			vk2d::Vector2f( -300, -300 ),

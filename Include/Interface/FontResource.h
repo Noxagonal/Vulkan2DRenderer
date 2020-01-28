@@ -8,6 +8,20 @@
 namespace vk2d {
 
 class TextureResource;
+class Mesh;
+
+
+
+VK2D_API vk2d::Mesh VK2D_APIENTRY GenerateTextMesh(
+	vk2d::FontResource						*	font,
+	vk2d::Vector2f								origin,
+	std::string									text,
+	float										kerning,
+	vk2d::Vector2f								scale,
+	bool										vertical,
+	uint32_t									font_face );
+
+
 
 namespace _internal {
 
@@ -23,6 +37,14 @@ class FontResource
 {
 	friend class vk2d::_internal::ResourceManagerImpl;
 	friend class vk2d::_internal::FontResourceImpl;
+	friend VK2D_API vk2d::Mesh VK2D_APIENTRY vk2d::GenerateTextMesh(
+		vk2d::FontResource								*	font,
+		vk2d::Vector2f										origin,
+		std::string											text,
+		float												kerning,
+		vk2d::Vector2f										scale,
+		bool												vertical,
+		uint32_t											font_face );
 
 public:
 	VK2D_API																					FontResource(
@@ -32,6 +54,7 @@ public:
 		std::filesystem::path								file_path,
 		uint32_t											glyph_texel_size,
 		bool												use_alpha,
+		uint32_t											fallback_character,
 		uint32_t											glyph_atlas_padding );
 
 	VK2D_API																					~FontResource();

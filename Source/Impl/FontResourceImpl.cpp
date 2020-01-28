@@ -1,5 +1,8 @@
 
 #include "../Header/Core/SourceCommon.h"
+
+#include "../../Include/Interface/Mesh.h"
+
 #include "../Header/Impl/FontResourceImpl.h"
 #include "../../Include/Interface/FontResource.h"
 
@@ -27,6 +30,7 @@ vk2d::_internal::FontResourceImpl::FontResourceImpl(
 	vk2d::_internal::ResourceManagerImpl	*	resource_manager,
 	uint32_t									glyph_texel_size,
 	bool										use_alpha,
+	uint32_t									fallback_character,
 	uint32_t									glyph_atlas_padding
 )
 {
@@ -37,6 +41,7 @@ vk2d::_internal::FontResourceImpl::FontResourceImpl(
 
 	this->glyph_texel_size				= glyph_texel_size;
 	this->glyph_atlas_padding			= glyph_atlas_padding;
+	this->fallback_character			= fallback_character;
 	this->use_alpha						= use_alpha;
 
 	is_good		= true;
@@ -95,9 +100,7 @@ bool vk2d::_internal::FontResourceImpl::MTLoad(
 )
 {
 	// TODO: additional parameters:
-	// Alpha blended glyph atlasses.
 	// From raw file.
-	// Set font size.
 
 	auto loader_thread_resource		= static_cast<vk2d::_internal::ThreadLoaderResource*>( thread_resource );
 	auto renderer					= loader_thread_resource->GetRenderer();
@@ -108,10 +111,12 @@ bool vk2d::_internal::FontResourceImpl::MTLoad(
 	// Average to max weight is used to estimate glyph space requirements on atlas textures.
 	// Average size is average size of a glyph, Maximum size is maximum size of a glyph.
 	// 0 is towards average, 1 is towards maximum
-	auto average_to_max_weight		= 0.05;
-	auto total_glyph_count			= uint64_t( 0 );
-	auto maximum_glyph_size			= vk2d::Vector2d( 0.0, 0.0 );
-	auto average_glyph_size			= vk2d::Vector2d( 0.0, 0.0 );
+	auto average_to_max_weight					= 0.05;
+	auto total_glyph_count						= uint64_t( 0 );
+	auto maximum_glyph_size						= vk2d::Vector2d( 0.0, 0.0 );
+	auto maximum_glyph_bitmap_size				= vk2d::Vector2d( 0.0, 0.0 );
+	auto maximum_glyph_bitmap_occupancy_size	= vk2d::Vector2d( 0.0, 0.0 );
+	auto average_glyph_bitmap_occupancy_size	= vk2d::Vector2d( 0.0, 0.0 );
 
 	if( font_resource_parent->IsFromFile() ) {
 		// Try to load from file.
@@ -196,22 +201,40 @@ bool vk2d::_internal::FontResourceImpl::MTLoad(
 			total_glyph_count			+= uint64_t( face->num_glyphs ) + 1;
 			for( decltype( face->num_glyphs ) i = 0; i < face->num_glyphs; ++i ) {
 
-				auto ft_load_error = FT_Load_Glyph( face, FT_UInt( i ), FT_LOAD_BITMAP_METRICS_ONLY );
+				auto ft_load_error = FT_Load_Glyph( face, FT_UInt( i ), FT_LOAD_DEFAULT );
 				if( ft_load_error ) {
 					renderer->Report( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot load font, cannot load glyph for bitmap metrics!" );
 					return false;
 				}
 
-				auto glyph_space_occupancy	=
+				auto glyph_size =
 					vk2d::Vector2d(
-						double( face->glyph->bitmap.width	+ glyph_atlas_padding ),
-						double( face->glyph->bitmap.rows	+ glyph_atlas_padding )
+						double( face->glyph->metrics.width ),
+						double( face->glyph->metrics.height )
 					);
 
-				maximum_glyph_size.x	= std::max( maximum_glyph_size.x, glyph_space_occupancy.x );
-				maximum_glyph_size.y	= std::max( maximum_glyph_size.y, glyph_space_occupancy.y );
+				auto glyph_bitmap_size =
+					vk2d::Vector2d(
+						double( face->glyph->bitmap.width ),
+						double( face->glyph->bitmap.rows )
+					);
 
-				average_glyph_size		+= glyph_space_occupancy;
+				auto glyph_bitmap_space_occupancy =
+					vk2d::Vector2d(
+						double( face->glyph->bitmap.width + glyph_atlas_padding ),
+						double( face->glyph->bitmap.rows + glyph_atlas_padding )
+					);
+
+				maximum_glyph_size.x					= std::max( maximum_glyph_size.x, glyph_size.x );
+				maximum_glyph_size.y					= std::max( maximum_glyph_size.y, glyph_size.y );
+
+				maximum_glyph_bitmap_size.x				= std::max( maximum_glyph_bitmap_size.x, glyph_bitmap_size.x );
+				maximum_glyph_bitmap_size.y				= std::max( maximum_glyph_bitmap_size.y, glyph_bitmap_size.y );
+
+				maximum_glyph_bitmap_occupancy_size.x	= std::max( maximum_glyph_bitmap_occupancy_size.x, glyph_bitmap_space_occupancy.x );
+				maximum_glyph_bitmap_occupancy_size.y	= std::max( maximum_glyph_bitmap_occupancy_size.y, glyph_bitmap_space_occupancy.y );
+
+				average_glyph_bitmap_occupancy_size		+= glyph_bitmap_space_occupancy;
 			}
 
 			face_infos[ i ].face	= face;
@@ -232,10 +255,10 @@ bool vk2d::_internal::FontResourceImpl::MTLoad(
 	// This code tries to find a tradeoff between texture size and amount so that 1 to 3 textures are
 	// created. For example if glyphs do not fit into 3 textures of size 512 * 512, a larger 1024 * 1024
 	// texture is created which should be able to contain the glyphs.
-	average_glyph_size	+= vk2d::Vector2d( double( glyph_atlas_padding ), double( glyph_atlas_padding ) ) * 2.0;
-	average_glyph_size	/= float( total_glyph_count );
+	average_glyph_bitmap_occupancy_size	+= vk2d::Vector2d( double( glyph_atlas_padding ), double( glyph_atlas_padding ) ) * 2.0;
+	average_glyph_bitmap_occupancy_size	/= float( total_glyph_count );
 	{
-		auto estimated_glyph_space_requirements		= average_glyph_size * ( 1.0 - average_to_max_weight ) + maximum_glyph_size * average_to_max_weight;
+		auto estimated_glyph_space_requirements		= average_glyph_bitmap_occupancy_size * ( 1.0 - average_to_max_weight ) + maximum_glyph_bitmap_occupancy_size * average_to_max_weight;
 		auto estimated_average_space_requirements	= estimated_glyph_space_requirements / 1.5;	// aim to have 1 to 4 textures to optimzise memory usage
 //		auto estimated_average_space_requirements	= estimated_glyph_space_requirements / 5.0;	// aim to have 1 to 4 textures to optimzise memory usage
 		atlas_size			=
@@ -261,7 +284,10 @@ bool vk2d::_internal::FontResourceImpl::MTLoad(
 		return false;
 	}
 
-	current_atlas_texture	= CreateNewAtlasTexture();
+	current_atlas_texture						= CreateNewAtlasTexture();
+
+	auto glyph_size_bitmap_size_ratio_vector	= maximum_glyph_bitmap_size / maximum_glyph_size;
+	auto glyph_size_bitmap_size_ratio			= std::max( glyph_size_bitmap_size_ratio_vector.x, glyph_size_bitmap_size_ratio_vector.y );
 
 	// Process all glyphs from all font faces
 	for( size_t face_index = 0; face_index < face_infos.size(); ++face_index ) {
@@ -270,7 +296,7 @@ bool vk2d::_internal::FontResourceImpl::MTLoad(
 
 		for( auto glyph_index = 0; glyph_index < face.face->num_glyphs; ++glyph_index ) {
 			{
-				auto ft_load_error = FT_Load_Char( face.face, glyph_index, FT_LOAD_DEFAULT );
+				auto ft_load_error = FT_Load_Glyph( face.face, glyph_index, FT_LOAD_DEFAULT );
 				if( ft_load_error ) {
 					renderer->Report( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot load font, cannot load glyph!" );
 					return false;
@@ -371,50 +397,65 @@ bool vk2d::_internal::FontResourceImpl::MTLoad(
 					float( atlas_location.location.bottom_right.y ) / float( atlas_size )
 				};
 
-				vk2d::_internal::FontResourceImpl::GlyphInfo glyph_info {};
-				glyph_info.face_index				= uint32_t( face_index );
-				glyph_info.atlas_index				= atlas_location.atlas_index;
-				glyph_info.uv_coords				= uv_coords;
+				auto & metrics								= face.face->glyph->metrics;
+				auto glyph_size								= vk2d::Vector2d( metrics.width, metrics.height ) * glyph_size_bitmap_size_ratio;
+				auto glyph_hori_top_left					= vk2d::Vector2d( metrics.horiBearingX, -metrics.horiBearingY ) * glyph_size_bitmap_size_ratio;
+				auto glyph_hori_bottom_right				= glyph_hori_top_left + glyph_size;
+				auto glyph_vert_top_left					= vk2d::Vector2d( metrics.vertBearingX, metrics.vertBearingY ) * glyph_size_bitmap_size_ratio;
+				auto glyph_vert_bottom_right				= glyph_vert_top_left + glyph_size;
+				auto hori_advance							= metrics.horiAdvance * glyph_size_bitmap_size_ratio;
+				auto vert_advance							= metrics.vertAdvance * glyph_size_bitmap_size_ratio;
 
-				face.glyph_infos[ glyph_index ]		= glyph_info;
+				vk2d::_internal::GlyphInfo glyph_info {};
+				glyph_info.face_index						= uint32_t( face_index );
+				glyph_info.atlas_index						= atlas_location.atlas_index;
+				glyph_info.uv_coords						= uv_coords;
+				glyph_info.horisontal_coords.top_left		= vk2d::Vector2f( float( glyph_hori_top_left.x ), float( glyph_hori_top_left.y ) );
+				glyph_info.horisontal_coords.bottom_right	= vk2d::Vector2f( float( glyph_hori_bottom_right.x ), float( glyph_hori_bottom_right.y ) );
+				glyph_info.vertical_coords.top_left			= vk2d::Vector2f( float( glyph_vert_top_left.x ), float( glyph_vert_top_left.y ) );
+				glyph_info.vertical_coords.bottom_right		= vk2d::Vector2f( float( glyph_vert_bottom_right.x ), float( glyph_vert_bottom_right.y ) );
+				glyph_info.horisontal_advance				= float( hori_advance );
+				glyph_info.vertical_advance					= float( vert_advance );
+
+				face.glyph_infos[ glyph_index ]				= glyph_info;
 			}
+		}
+
+		// Create character map and get fallback character
+		{
+			FT_ULong		charcode				= {};
+			FT_UInt			gindex					= {};
+			FT_ULong		fallback_glyph_index	= {};
+
+			charcode				= FT_Get_First_Char( face.face, &gindex );
+			fallback_glyph_index	= gindex;
+			while( gindex != 0 ) {
+				face.charmap[ uint32_t( charcode ) ]	= uint32_t( gindex );
+
+				charcode = FT_Get_Next_Char( face.face, charcode, &gindex );
+			}
+
+			if( auto f = FT_Get_Char_Index( face.face, FT_ULong( fallback_character ) ) ) {
+				fallback_glyph_index	= f;
+			}
+
+			face.fallback_glyph_index	= fallback_glyph_index;
 		}
 	}
 
-	// This should be disabled once the 
-#pragma VK2D_WARNING( "REMOVE THIS AFTER THOROUGHLY TESTING FONT LIBRARY!" )
-	if( atlas_textures.size() >= 4 ) {
-		renderer->Report( vk2d::ReportSeverity::INFO, "Internal info: Created 4 or more textures for font library, could be balanced better." );
-		assert( 0 && "Too many textures, should have used one or two larger textures instead!" );
-	}
-
-#pragma VK2D_WARNING( "REMOVE THIS AFTER THOROUGHLY TESTING FONT LIBRARY!" )
-	if( atlas_size > min_texture_size ) {
-		if( atlas_textures.size() == 1 ) {
-			if( atlas_textures[ 0 ]->previous_row_height < uint32_t( atlas_size * 0.70 ) ) {
-				// Texture is underutilized
-				renderer->Report( vk2d::ReportSeverity::INFO, "Internal info: Created a single underutilized texture for font library, could be balanced better." );
-				assert( 0 && "Underutilized texture, should have used multiple smaller textures!" );
-			}
-		}
+	// Destroy font faces, we don't need them anymore.
+	for( auto & f : face_infos ) {
+		FT_Done_Face( f.face );
+		f.face		= nullptr;
 	}
 
 	// Everything is baked into the atlas, create texture resource to store it.
-	std::vector<std::vector<vk2d::Color8>*>		texture_data_array( atlas_textures.size() );
-	for( size_t i = 0; i < atlas_textures.size(); ++i ) {
-		texture_data_array[ i ]		= &atlas_textures[ i ]->data;
-
-		/*
-		// DEBUG: WRITE TO FILE!
-		std::stringstream ss;
-		ss << "GlyphAtlasTest_"
-			<< i
-			<< ".jpg";
-		stbi_write_jpg( ss.str().c_str(), atlas_size, atlas_size, 4, atlas_textures[ i ]->data.data(), 90 );
-		*/
-	}
-
 	{
+		std::vector<std::vector<vk2d::Color8>*>		texture_data_array( atlas_textures.size() );
+		for( size_t i = 0; i < atlas_textures.size(); ++i ) {
+			texture_data_array[ i ]		= &atlas_textures[ i ]->data;
+		}
+
 		std::lock_guard<std::mutex> lock_guard( is_loaded_mutex );
 
 		texture_resource = resource_manager_parent->CreateArrayTextureResource(
@@ -431,13 +472,26 @@ bool vk2d::_internal::FontResourceImpl::MTLoad(
 	return true;
 }
 
-void vk2d::_internal::FontResourceImpl::MTUnload( vk2d::_internal::ThreadPrivateResource * thread_resource )
+void vk2d::_internal::FontResourceImpl::MTUnload(
+	vk2d::_internal::ThreadPrivateResource		*	thread_resource
+)
 {
+	// Make sure font faces are destroyed.
 	for( auto f : face_infos ) {
 		FT_Done_Face( f.face );
 	}
 	face_infos.clear();
 
+}
+
+bool vk2d::_internal::FontResourceImpl::FaceExists(
+	uint32_t font_face
+) const
+{
+	if( size_t( font_face ) < face_infos.size() ) {
+		return true;
+	}
+	return false;
 }
 
 vk2d::TextureResource * vk2d::_internal::FontResourceImpl::GetTextureResource()
@@ -446,6 +500,23 @@ vk2d::TextureResource * vk2d::_internal::FontResourceImpl::GetTextureResource()
 
 	std::lock_guard<std::mutex> lock_guard( is_loaded_mutex );
 	return texture_resource;
+}
+
+const vk2d::_internal::GlyphInfo * vk2d::_internal::FontResourceImpl::GetGlyphInfo(
+	uint32_t		font_face,
+	uint32_t		character
+) const
+{
+	auto & face_info	= face_infos[ font_face ];
+	auto & charmap		= face_info.charmap;
+	auto glyph_it		= charmap.find( character );
+	auto glyph_index	= uint32_t( 0 );
+	if( glyph_it != charmap.end() ) {
+		glyph_index		= glyph_it->second;
+	} else {
+		glyph_index		= face_info.fallback_glyph_index;
+	}
+	return &face_info.glyph_infos[ glyph_index ];
 }
 
 bool vk2d::_internal::FontResourceImpl::IsGood()

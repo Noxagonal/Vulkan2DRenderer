@@ -5,6 +5,8 @@
 #include "../Core/ThreadPrivateResources.h"
 #include "../../../Include/Interface/RenderPrimitives.h"
 
+#include <map>
+
 #include <ft2build.h>
 #include FT_FREETYPE_H
 
@@ -17,6 +19,20 @@ namespace _internal {
 
 class ResourceManagerImpl;
 
+
+
+struct GlyphInfo {
+	uint32_t											face_index							= {};
+	uint32_t											atlas_index							= {};
+	vk2d::AABB2f										uv_coords							= {};
+	vk2d::AABB2f										horisontal_coords					= {};
+	vk2d::AABB2f										vertical_coords						= {};
+	float												horisontal_advance					= {};
+	float												vertical_advance					= {};
+};
+
+
+
 class FontResourceImpl {
 public:
 	FontResourceImpl(
@@ -24,6 +40,7 @@ public:
 		vk2d::_internal::ResourceManagerImpl		*	resource_manager,
 		uint32_t										glyph_texel_size,
 		bool											use_alpha,
+		uint32_t										fallback_character,
 		uint32_t										glyph_atlas_padding );
 
 	~FontResourceImpl();
@@ -38,7 +55,14 @@ public:
 	void																					MTUnload(
 		vk2d::_internal::ThreadPrivateResource		*	thread_resource );
 
+	bool																					FaceExists(
+		uint32_t										font_face ) const;
+
 	vk2d::TextureResource							*										GetTextureResource();
+
+	const vk2d::_internal::GlyphInfo				*										GetGlyphInfo(
+		uint32_t										font_face,
+		uint32_t										character ) const;
 
 	bool																					IsGood();
 
@@ -55,14 +79,11 @@ private:
 		uint32_t										atlas_index							= {};
 		vk2d::AABB2u									location							= {};
 	};
-	struct GlyphInfo {
-		uint32_t										face_index							= {};
-		uint32_t										atlas_index							= {};
-		vk2d::AABB2f									uv_coords							= {};
-	};
 	struct FaceInfo {
 		FT_Face											face								= {};
-		std::vector<GlyphInfo>							glyph_infos							= {};
+		std::vector<vk2d::_internal::GlyphInfo>			glyph_infos							= {};
+		std::map<uint32_t, uint32_t>					charmap								= {};	// link character to a GlyphInfo vector
+		uint32_t										fallback_glyph_index				= {};
 	};
 
 	AtlasTexture									*										CreateNewAtlasTexture();
@@ -87,6 +108,7 @@ private:
 	bool												use_alpha							= {};
 	uint32_t											glyph_texel_size					= {};
 	uint32_t											glyph_atlas_padding					= {};
+	uint32_t											fallback_character					= {};
 
 	uint32_t											atlas_size							= {};
 

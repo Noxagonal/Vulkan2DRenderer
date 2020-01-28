@@ -46,6 +46,7 @@ public:
 		const std::filesystem::path							&	file_path,
 		uint32_t												glyph_texel_size			= 64,
 		bool													use_alpha					= true,
+		uint32_t												fallback_character			= '*',
 		uint32_t												glyph_atlas_padding			= 8 );
 
 	VK2D_API void												VK2D_APIENTRY				DestroyResource(
