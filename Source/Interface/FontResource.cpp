@@ -1,6 +1,8 @@
 
 #include "../Header/Core/SourceCommon.h"
 
+#include "../../Include/Interface/Mesh.h"
+
 #include "../../Include/Interface/FontResource.h"
 #include "../Header/Impl/FontResourceImpl.h"
 
@@ -13,6 +15,7 @@ VK2D_API vk2d::FontResource::FontResource(
 	std::filesystem::path						file_path,
 	uint32_t									glyph_texel_size,
 	bool										use_alpha,
+	uint32_t									fallback_character,
 	uint32_t									glyph_atlas_padding
 ) :
 	vk2d::Resource(
@@ -27,6 +30,7 @@ VK2D_API vk2d::FontResource::FontResource(
 		resource_manager,
 		glyph_texel_size,
 		use_alpha,
+		fallback_character,
 		glyph_atlas_padding
 	);
 	if( impl && impl->IsGood() ) {

@@ -1,6 +1,8 @@
 
 #include "../Header/Core/SourceCommon.h"
 
+#include "../../Include/Interface/Mesh.h"
+
 #include "../Header/Impl/ResourceManagerImpl.h"
 #include "../Header/Core/ThreadPool.h"
 #include "../../Include/Interface/TextureResource.h"
@@ -224,6 +226,7 @@ vk2d::FontResource * vk2d::_internal::ResourceManagerImpl::LoadFontResource(
 	vk2d::Resource						*	parent_resource,
 	uint32_t								glyph_texel_size,
 	bool									use_alpha,
+	uint32_t								fallback_character,
 	uint32_t								glyph_atlas_padding
 )
 {
@@ -238,6 +241,7 @@ vk2d::FontResource * vk2d::_internal::ResourceManagerImpl::LoadFontResource(
 				file_path,
 				glyph_texel_size,
 				use_alpha,
+				fallback_character,
 				glyph_atlas_padding
 			)
 		);

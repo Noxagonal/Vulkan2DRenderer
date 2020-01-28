@@ -52,6 +52,7 @@ public:
 		vk2d::Resource									*	parent_resource,
 		uint32_t											glyph_texel_size,
 		bool												use_alpha,
+		uint32_t											fallback_character,
 		uint32_t											glyph_atlas_padding );
 
 	void													DestroyResource(

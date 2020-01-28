@@ -3,6 +3,9 @@
 
 #include "../../Include/Interface/Mesh.h"
 
+#include "../../Include/Interface/FontResource.h"
+#include "../Header/Impl/FontResourceImpl.h"
+
 #include <float.h>
 
 
@@ -1105,11 +1108,86 @@ VK2D_API vk2d::Mesh VK2D_APIENTRY vk2d::GenerateTextMesh(
 	vk2d::FontResource		*	font,
 	vk2d::Vector2f				origin,
 	std::string					text,
-	vk2d::Vector2f				scale )
+	float						kerning,
+	vk2d::Vector2f				scale,
+	bool						vertical,
+	uint32_t					font_face )
 {
-	/*
-	DO THIS SHIT!
+	if( !font ) return {};
+	if( !font->impl.get() ) return {};
+	auto fi = font->impl.get();
+	fi->WaitUntilLoaded();
+	if( !fi->FaceExists( font_face ) ) return {};
+	
+	vk2d::Mesh mesh;
+	mesh.vertices.reserve( text.size() * 4 );
+	mesh.indices.reserve( text.size() * 6 );
+
+	auto AppendBox =[ &mesh, scale ](
+		const vk2d::Vector2f	&	location,
+		const vk2d::AABB2f		&	coords,
+		const vk2d::AABB2f		&	uv_coords,
+		uint32_t					texture_channel
+		)
+	{
+		auto vertex_offset		= mesh.vertices.size();
+		auto index_offset		= mesh.indices.size();
+
+		auto tcoords			= ( coords + location );
+		tcoords.top_left		*= scale;
+		tcoords.bottom_right	*= scale;
+
+		mesh.vertices.resize( vertex_offset + 4 );
+		mesh.vertices[ vertex_offset + 0 ].vertex_coords			= vk2d::Vector2f( tcoords.top_left.x, tcoords.top_left.y );
+		mesh.vertices[ vertex_offset + 0 ].uv_coords				= vk2d::Vector2f( uv_coords.top_left.x, uv_coords.top_left.y );
+		mesh.vertices[ vertex_offset + 0 ].color					= vk2d::Colorf( 1.0f, 1.0f, 1.0f, 1.0f );
+		mesh.vertices[ vertex_offset + 0 ].point_size				= 1;
+		mesh.vertices[ vertex_offset + 0 ].single_texture_channel	= texture_channel;
+
+		mesh.vertices[ vertex_offset + 1 ].vertex_coords			= vk2d::Vector2f( tcoords.bottom_right.x, tcoords.top_left.y );
+		mesh.vertices[ vertex_offset + 1 ].uv_coords				= vk2d::Vector2f( uv_coords.bottom_right.x, uv_coords.top_left.y );
+		mesh.vertices[ vertex_offset + 1 ].color					= vk2d::Colorf( 1.0f, 1.0f, 1.0f, 1.0f );
+		mesh.vertices[ vertex_offset + 1 ].point_size				= 1;
+		mesh.vertices[ vertex_offset + 1 ].single_texture_channel	= texture_channel;
+
+		mesh.vertices[ vertex_offset + 2 ].vertex_coords			= vk2d::Vector2f( tcoords.top_left.x, tcoords.bottom_right.y );
+		mesh.vertices[ vertex_offset + 2 ].uv_coords				= vk2d::Vector2f( uv_coords.top_left.x, uv_coords.bottom_right.y );
+		mesh.vertices[ vertex_offset + 2 ].color					= vk2d::Colorf( 1.0f, 1.0f, 1.0f, 1.0f );
+		mesh.vertices[ vertex_offset + 2 ].point_size				= 1;
+		mesh.vertices[ vertex_offset + 2 ].single_texture_channel	= texture_channel;
+
+		mesh.vertices[ vertex_offset + 3 ].vertex_coords			= vk2d::Vector2f( tcoords.bottom_right.x, tcoords.bottom_right.y );
+		mesh.vertices[ vertex_offset + 3 ].uv_coords				= vk2d::Vector2f( uv_coords.bottom_right.x, uv_coords.bottom_right.y );
+		mesh.vertices[ vertex_offset + 3 ].color					= vk2d::Colorf( 1.0f, 1.0f, 1.0f, 1.0f );
+		mesh.vertices[ vertex_offset + 3 ].point_size				= 1;
+		mesh.vertices[ vertex_offset + 3 ].single_texture_channel	= texture_channel;
+
+		mesh.indices.resize( index_offset + 6 );
+		mesh.indices[ index_offset + 0 ]	= vertex_offset + 0;
+		mesh.indices[ index_offset + 1 ]	= vertex_offset + 2;
+		mesh.indices[ index_offset + 2 ]	= vertex_offset + 1;
+		mesh.indices[ index_offset + 3 ]	= vertex_offset + 1;
+		mesh.indices[ index_offset + 4 ]	= vertex_offset + 2;
+		mesh.indices[ index_offset + 5 ]	= vertex_offset + 3;
+	};
+
+	auto location	= origin;
+	if( vertical ) {
+		// Writing vertical text
+		for( auto c : text ) {
+			auto gi = fi->GetGlyphInfo( font_face, c );
+			AppendBox( location, gi->vertical_coords, gi->uv_coords, gi->atlas_index );
+			location.y	+= gi->horisontal_advance + kerning;
+		}
+	} else {
+		// Writing horisontal text
+		for( auto c : text ) {
+			auto gi = fi->GetGlyphInfo( font_face, c );
+			AppendBox( location, gi->horisontal_coords, gi->uv_coords, gi->atlas_index );
+			location.x	+= gi->horisontal_advance + kerning;
+		}
+	}
+
+	mesh.SetTexture( fi->GetTextureResource() );
 	return mesh;
-	*/
-	return {};
 }

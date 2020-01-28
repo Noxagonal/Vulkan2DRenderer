@@ -19,6 +19,7 @@ class Sampler;
 
 class Mesh {
 	friend class vk2d::_internal::WindowImpl;
+
 	friend VK2D_API vk2d::Mesh						VK2D_APIENTRY					GeneratePointMeshFromList(
 		const std::vector<vk2d::Vector2f>		&	points );
 
@@ -62,6 +63,14 @@ class Mesh {
 		vk2d::Vector2f								bottom_right,
 		vk2d::Vector2f								subdivisions,
 		bool										filled );
+
+	friend VK2D_API vk2d::Mesh						VK2D_APIENTRY					GenerateTextMesh(
+		vk2d::FontResource						*	font,
+		vk2d::Vector2f								origin,
+		std::string									text,
+		vk2d::Vector2f								scale,
+		bool										vertical,
+		uint32_t									font_face );
 
 public:
 	VK2D_API void									VK2D_APIENTRY					Translate(
@@ -211,7 +220,10 @@ VK2D_API vk2d::Mesh									VK2D_APIENTRY					GenerateTextMesh(
 	vk2d::FontResource							*	font,
 	vk2d::Vector2f									origin,
 	std::string										text,
-	vk2d::Vector2f									scale							= vk2d::Vector2f( 1.0f, 1.0f ) );
+	float											kerning							= 0.0f,
+	vk2d::Vector2f									scale							= vk2d::Vector2f( 1.0f, 1.0f ),
+	bool											vertical						= false,
+	uint32_t										font_face						= 0 );
 
 
 
