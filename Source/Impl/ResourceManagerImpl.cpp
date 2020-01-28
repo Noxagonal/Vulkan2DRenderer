@@ -4,7 +4,7 @@
 #include "../Header/Impl/ResourceManagerImpl.h"
 #include "../Header/Core/ThreadPool.h"
 #include "../../Include/Interface/TextureResource.h"
-#include "../Header/Impl/TextureResourceImpl.h"
+#include "../../Include/Interface/FontResource.h"
 
 
 
@@ -80,18 +80,43 @@ vk2d::_internal::ResourceManagerImpl::ResourceManagerImpl(
 
 vk2d::_internal::ResourceManagerImpl::~ResourceManagerImpl()
 {
-	std::lock_guard<std::mutex> lock_guard( resources_mutex );
+	// Wait for all resources to finish loading, giving time to finish.
+	while( true ) {
+		bool loaded = true;
+		{
+			std::unique_lock<std::recursive_mutex> unique_lock( resources_mutex );
 
-	auto it = resources.begin();
-	while( it != resources.end() ) {
-		( *it )->WaitUntilLoaded();
-		thread_pool->ScheduleTask(
-			std::make_unique<vk2d::_internal::UnloadTask>(
-				this, std::move( *it )
-				),
-			{ ( *it )->GetLoaderThread() }
-		);
-		it = resources.erase( it );
+			auto it = resources.begin();
+			while( it != resources.end() ) {
+				if( !( *it )->IsLoaded() ) {
+					if( !( *it )->FailedToLoad() ) {
+						// Not completely loaded yet
+						loaded = false;
+					}
+				}
+				// Okay to continue
+				++it;
+			}
+			if( loaded ) break;
+		}
+		std::this_thread::sleep_for( std::chrono::microseconds( 10 ) );
+	}
+
+	// Everythign should be up to date now and we can start scheduling resource unloading.
+	{
+		std::unique_lock<std::recursive_mutex> unique_lock( resources_mutex );
+
+		auto it = resources.begin();
+		while( it != resources.end() ) {
+			( *it )->WaitUntilLoaded();
+			thread_pool->ScheduleTask(
+				std::make_unique<vk2d::_internal::UnloadTask>(
+					this, std::move( *it )
+					),
+				{ ( *it )->GetLoaderThread() }
+			);
+			it = resources.erase( it );
+		}
 	}
 
 	thread_pool->WaitIdle();
@@ -100,60 +125,122 @@ vk2d::_internal::ResourceManagerImpl::~ResourceManagerImpl()
 
 
 vk2d::TextureResource * vk2d::_internal::ResourceManagerImpl::LoadTextureResource(
-	const std::filesystem::path		&	file_path )
+	const std::filesystem::path			&	file_path,
+	vk2d::Resource						*	parent_resource )
 {
-	std::lock_guard<std::mutex> lock_guard( resources_mutex );
+	std::lock_guard<std::recursive_mutex>		resources_lock( resources_mutex );
 
-	/*
-	// RETURNING EXISTING RESOURCES IS NOT SUPPORTED ANYMORE.
-	// User will keep track of resources, resource manager only makes
-	// sure everything gets destroyed at the end of the application.
-
-	// find resource if it exists
-	for( auto & res : resources ) {
-		auto texres = dynamic_cast<TextureResource*>( res.get() );
-		if( res->IsFromFile() && res->GetFilePath() == file_path ) {
-			return texres;
-		}
-	}
-	*/
-
-	auto resource		= std::unique_ptr<vk2d::TextureResource>( new vk2d::TextureResource( this ) );
-	auto resource_ptr	= resource.get();
+	auto resource		= std::unique_ptr<vk2d::TextureResource>(
+		new vk2d::TextureResource(
+			parent_resource,
+			this,
+			SelectLoaderThread(),
+			file_path )
+		);
 	if( !resource || !resource->IsGood() ) {
 		// Could not create resource.
 		GetRenderer()->Report( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot create texture resource handle!" );
 		return nullptr;
 	}
 
-	resource->path			= file_path;
-	resource->is_from_file	= true;
-	resource->loader_thread	= SelectLoaderThread();
-	resources.push_back( std::move( resource ) );
-
-	thread_pool->ScheduleTask( std::make_unique<vk2d::_internal::LoadTask>( this, resource_ptr ), { resource_ptr->loader_thread } );
-	return resource_ptr;
+	return AttachResource( std::move( resource ) );
 }
 
 vk2d::TextureResource * vk2d::_internal::ResourceManagerImpl::CreateTextureResource(
-	vk2d::Vector2u						size,
-	const std::vector<vk2d::Color8>	&	texture_data )
+	vk2d::Vector2u							size,
+	const std::vector<vk2d::Color8>		&	texture_data,
+	vk2d::Resource						*	parent_resource )
 {
-	auto resource		= std::unique_ptr<vk2d::TextureResource>( new vk2d::TextureResource( this ) );
-	auto resource_ptr	= resource.get();
+	std::lock_guard<std::recursive_mutex>		resources_lock( resources_mutex );
+
+	auto resource		= std::unique_ptr<vk2d::TextureResource>(
+		new vk2d::TextureResource(
+			parent_resource,
+			this,
+			SelectLoaderThread(),
+			size,
+			texture_data
+		)
+	);
 	if( !resource || !resource->IsGood() ) {
 		// Could not create resource.
 		GetRenderer()->Report( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot create texture resource handle!" );
 		return nullptr;
 	}
-	resource->impl->extent			= { size.x, size.y };
-	resource->impl->texture_data	= texture_data;
-	resource->is_from_file	= false;
-	resource->loader_thread	= SelectLoaderThread();
-	resources.push_back( std::move( resource ) );
 
-	thread_pool->ScheduleTask( std::make_unique<vk2d::_internal::LoadTask>( this, resource_ptr ), { resource_ptr->loader_thread } );
-	return resource_ptr;
+	return AttachResource( std::move( resource ) );
+}
+
+vk2d::TextureResource * vk2d::_internal::ResourceManagerImpl::LoadArrayTextureResource(
+	const std::vector<std::filesystem::path>		&	file_path_listing,
+	vk2d::Resource									*	parent_resource )
+{
+	std::lock_guard<std::recursive_mutex>		resources_lock( resources_mutex );
+
+	auto resource		= std::unique_ptr<vk2d::TextureResource>(
+		new vk2d::TextureResource(
+			parent_resource,
+			this,
+			SelectLoaderThread(),
+			file_path_listing )
+		);
+	if( !resource || !resource->IsGood() ) {
+		// Could not create resource.
+		GetRenderer()->Report( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot create texture resource handle!" );
+		return nullptr;
+	}
+
+	return AttachResource( std::move( resource ) );
+}
+
+vk2d::TextureResource * vk2d::_internal::ResourceManagerImpl::CreateArrayTextureResource(
+	vk2d::Vector2u										size,
+	const std::vector<std::vector<vk2d::Color8>*>	&	texture_data_listings,
+	vk2d::Resource									*	parent_resource )
+{
+	std::lock_guard<std::recursive_mutex>		resources_lock( resources_mutex );
+
+	auto resource		=
+		std::unique_ptr<vk2d::TextureResource>(
+			new vk2d::TextureResource(
+				parent_resource,
+				this,
+				SelectLoaderThread(),
+				size,
+				texture_data_listings
+			)
+		);
+	if( !resource || !resource->IsGood() ) {
+		// Could not create resource.
+		GetRenderer()->Report( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot create texture resource handle!" );
+		return nullptr;
+	}
+
+	return AttachResource( std::move( resource ) );
+}
+
+vk2d::FontResource * vk2d::_internal::ResourceManagerImpl::LoadFontResource(
+	const std::filesystem::path			&	file_path,
+	vk2d::Resource						*	parent_resource )
+{
+	std::lock_guard<std::recursive_mutex>		resources_lock( resources_mutex );
+
+	auto resource		=
+		std::unique_ptr<vk2d::FontResource>(
+			new vk2d::FontResource(
+				parent_resource,
+				this,
+				SelectLoaderThread(),
+				file_path
+			)
+		);
+	if( !resource || !resource->IsGood() ) {
+		// Could not create resource.
+		GetRenderer()->Report( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot create font resource handle!" );
+		return nullptr;
+	}
+
+	return AttachResource( std::move( resource ) );
 }
 
 void vk2d::_internal::ResourceManagerImpl::DestroyResource(
@@ -164,8 +251,9 @@ void vk2d::_internal::ResourceManagerImpl::DestroyResource(
 
 	// We'll have to wait until the resource is definitely loaded, or encountered an error.
 	resource->WaitUntilLoaded();
+	resource->DestroySubresources();
 
-	std::lock_guard<std::mutex> lock_guard( resources_mutex );
+	std::lock_guard<std::recursive_mutex> lock_guard( resources_mutex );
 
 	// find resource if it exists
 	auto it = resources.begin();
@@ -209,6 +297,17 @@ VkDevice vk2d::_internal::ResourceManagerImpl::GetVulkanDevice() const
 bool vk2d::_internal::ResourceManagerImpl::IsGood() const
 {
 	return is_good;
+}
+
+void vk2d::_internal::ResourceManagerImpl::ScheduleResourceLoad( vk2d::Resource * resource_ptr )
+{
+	thread_pool->ScheduleTask(
+		std::make_unique<vk2d::_internal::LoadTask>(
+			this,
+			resource_ptr
+			),
+		{ resource_ptr->loader_thread }
+	);
 }
 
 uint32_t vk2d::_internal::ResourceManagerImpl::SelectLoaderThread()

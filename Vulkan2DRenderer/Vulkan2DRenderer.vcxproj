@@ -44,13 +44,13 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <OutDir>$(SolutionDir)Lib\$(Configuration)\</OutDir>
-    <IncludePath>$(VK_SDK_PATH)\Include;$(SolutionDir)ExternalLibraries\glfw-3.3\include;$(SolutionDir)ExternalLibraries\stb;$(IncludePath)</IncludePath>
-    <LibraryPath>$(VK_SDK_PATH)\Lib;$(SolutionDir)ExternalLibraries\glfw-3.3-VisualStudio2019\src\Release;$(LibraryPath)</LibraryPath>
+    <IncludePath>$(VK_SDK_PATH)\Include;$(SolutionDir)ExternalLibraries\freetype-2.10.1\include;$(SolutionDir)ExternalLibraries\glfw-3.3\include;$(SolutionDir)ExternalLibraries\stb;$(IncludePath)</IncludePath>
+    <LibraryPath>$(VK_SDK_PATH)\Lib;$(SolutionDir)ExternalLibraries\VisualStudio2019\freetype-2.10.1\Release;$(SolutionDir)ExternalLibraries\VisualStudio2019\glfw-3.3\src\Release;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <OutDir>$(SolutionDir)Lib\$(Configuration)\</OutDir>
-    <IncludePath>$(VK_SDK_PATH)\Include;$(SolutionDir)ExternalLibraries\glfw-3.3\include;$(SolutionDir)ExternalLibraries\stb;$(IncludePath)</IncludePath>
-    <LibraryPath>$(VK_SDK_PATH)\Lib;$(SolutionDir)ExternalLibraries\glfw-3.3-VisualStudio2019\src\Release;$(LibraryPath)</LibraryPath>
+    <IncludePath>$(VK_SDK_PATH)\Include;$(SolutionDir)ExternalLibraries\freetype-2.10.1\include;$(SolutionDir)ExternalLibraries\glfw-3.3\include;$(SolutionDir)ExternalLibraries\stb;$(IncludePath)</IncludePath>
+    <LibraryPath>$(VK_SDK_PATH)\Lib;$(SolutionDir)ExternalLibraries\VisualStudio2019\freetype-2.10.1\Release;$(SolutionDir)ExternalLibraries\VisualStudio2019\glfw-3.3\src\Release;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
@@ -63,15 +63,14 @@
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
-      <AdditionalDependencies>vulkan-1.lib;glfw3.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>vulkan-1.lib;freetype.lib;glfw3.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
       <Command>copy "$(SolutionDir)Lib\$(Configuration)\Vulkan2DRenderer.dll" "$(SolutionDir)Tests\Executables\$(Configuration)"
 </Command>
     </PostBuildEvent>
     <PreBuildEvent>
-      <Command>glslangValidator -V -o "$(SolutionDir)Source\Shaders\shader.vert.spv.h" "$(SolutionDir)Source\Shaders\shader.vert" --vn vertex_shader_data
-glslangValidator -V -o "$(SolutionDir)Source\Shaders\shader.frag.spv.h" "$(SolutionDir)Source\Shaders\shader.frag" --vn fragment_shader_data</Command>
+      <Command>"$(SolutionDir)Tools\CompileGLSLShadersToSpir-V\Bin\CompileGLSLShadersToSpir-V.exe" -ShaderPath "$(SolutionDir)Source\Shaders" -DebugInfo</Command>
     </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -89,20 +88,21 @@ glslangValidator -V -o "$(SolutionDir)Source\Shaders\shader.frag.spv.h" "$(Solut
       <SubSystem>Console</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalDependencies>vulkan-1.lib;glfw3.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>vulkan-1.lib;freetype.lib;glfw3.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
       <Command>copy "$(SolutionDir)Lib\$(Configuration)\Vulkan2DRenderer.dll" "$(SolutionDir)Tests\Executables\$(Configuration)"
 </Command>
     </PostBuildEvent>
     <PreBuildEvent>
-      <Command>glslangValidator -V -o "$(SolutionDir)Source\Shaders\shader.vert.spv.h" "$(SolutionDir)Source\Shaders\shader.vert" --vn vertex_shader_data
-glslangValidator -V -o "$(SolutionDir)Source\Shaders\shader.frag.spv.h" "$(SolutionDir)Source\Shaders\shader.frag" --vn fragment_shader_data</Command>
+      <Command>"$(SolutionDir)Tools\CompileGLSLShadersToSpir-V\Bin\CompileGLSLShadersToSpir-V.exe" -ShaderPath "$(SolutionDir)Source\Shaders"</Command>
     </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <None Include="..\Source\Shaders\shader.frag" />
-    <None Include="..\Source\Shaders\shader.vert" />
+    <None Include="..\Source\Shaders\SingleTextured.frag" />
+    <None Include="..\Source\Shaders\SingleTextured.vert" />
+    <None Include="..\Source\Shaders\TriangleMultitextured.frag" />
+    <None Include="..\Source\Shaders\TriangleMultitextured.vert" />
     <None Include="cpp.hint" />
   </ItemGroup>
   <ItemGroup>
@@ -110,6 +110,7 @@ glslangValidator -V -o "$(SolutionDir)Source\Shaders\shader.frag.spv.h" "$(Solut
     <ClInclude Include="..\Include\Core\Common.h" />
     <ClInclude Include="..\Include\Core\Platform.h" />
     <ClInclude Include="..\Include\Core\Version.hpp" />
+    <ClInclude Include="..\Include\Interface\FontResource.h" />
     <ClInclude Include="..\Include\Interface\Mesh.h" />
     <ClInclude Include="..\Include\Interface\Renderer.h" />
     <ClInclude Include="..\Include\Interface\RenderPrimitives.h" />
@@ -119,22 +120,26 @@ glslangValidator -V -o "$(SolutionDir)Source\Shaders\shader.frag.spv.h" "$(Solut
     <ClInclude Include="..\Include\Interface\TextureResource.h" />
     <ClInclude Include="..\Include\Interface\Window.h" />
     <ClInclude Include="..\Include\Vulkan2DRenderer.h" />
+    <ClCompile Include="..\Source\Core\ShaderInterface.cpp" />
     <ClInclude Include="..\Source\Header\Core\DescriptorSet.h" />
     <ClInclude Include="..\Source\Header\Core\MeshBuffer.h" />
     <ClInclude Include="..\Source\Header\Core\QueueResolver.h" />
+    <ClInclude Include="..\Source\Header\Core\ShaderInterface.h" />
     <ClInclude Include="..\Source\Header\Core\SourceCommon.h" />
     <ClInclude Include="..\Source\Header\Core\ThreadPool.h" />
     <ClInclude Include="..\Source\Header\Core\ThreadPrivateResources.h" />
     <ClInclude Include="..\Source\Header\Core\VulkanMemoryManagement.h" />
+    <ClInclude Include="..\Source\Header\Impl\FontResourceImpl.h" />
     <ClInclude Include="..\Source\Header\Impl\RendererImpl.h" />
     <ClInclude Include="..\Source\Header\Impl\ResourceManagerImpl.h" />
     <ClInclude Include="..\Source\Header\Impl\SamplerImpl.h" />
     <ClInclude Include="..\Source\Header\Impl\TextureResourceImpl.h" />
     <ClInclude Include="..\Source\Header\Impl\WindowImpl.h" />
+    <ClCompile Include="..\Source\Core\SourceCommon.cpp" />
+    <ClCompile Include="..\Source\Impl\FontResourceImpl.cpp" />
     <ClCompile Include="..\Source\Impl\SamplerImpl.cpp" />
+    <ClCompile Include="..\Source\Interface\FontResource.cpp" />
     <ClCompile Include="..\Source\Interface\Sampler.cpp" />
-    <ClInclude Include="..\Source\Shaders\shader.frag.spv.h" />
-    <ClInclude Include="..\Source\Shaders\shader.vert.spv.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\Source\Core\DescriptorSet.cpp" />
@@ -154,6 +159,9 @@ glslangValidator -V -o "$(SolutionDir)Source\Shaders\shader.frag.spv.h" "$(Solut
     <ClCompile Include="..\Source\Interface\ResourceManager.cpp" />
     <ClCompile Include="..\Source\Interface\TextureResource.cpp" />
     <ClCompile Include="..\Source\Interface\Window.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="..\Source\Shaders\EntrypointNames.txt" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -21,10 +21,18 @@ public:
 	~SamplerImpl();
 
 	VkSampler									GetVulkanSampler();
-	VkDescriptorSet								GetVulkanDescriptorSet();
-	VkBuffer									GetVulkanBuffer();
+	VkBuffer									GetVulkanBufferForSamplerData();
+	vk2d::Vector2u								GetBorderColorEnable();
+	bool										IsAnyBorderColorEnabled();
 
 	bool										IsGood();
+
+
+
+	struct BufferData {
+		alignas( 16 )	vk2d::Colorf			borderColor			= {};	// Border color
+		alignas( 8 )	vk2d::Vector2u			borderColorEnable	= {};	// Border color enable
+	};
 
 private:
 	vk2d::Sampler							*	sampler_parent		= {};
@@ -32,9 +40,9 @@ private:
 	VkDevice									vk_device			= {};
 
 	VkSampler									sampler				= {};
-	vk2d::_internal::PoolDescriptorSet			descriptor_set		= {};
-
 	vk2d::_internal::CompleteBufferResource		sampler_data		= {};
+
+	vk2d::Vector2u								border_color_enable	= {};
 
 	bool										is_good				= {};
 };

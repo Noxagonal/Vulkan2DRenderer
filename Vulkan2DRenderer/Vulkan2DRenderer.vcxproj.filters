@@ -37,10 +37,16 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="cpp.hint" />
-    <None Include="..\Source\Shaders\shader.frag">
+    <None Include="..\Source\Shaders\TriangleMultitextured.frag">
       <Filter>Source\Shaders</Filter>
     </None>
-    <None Include="..\Source\Shaders\shader.vert">
+    <None Include="..\Source\Shaders\TriangleMultitextured.vert">
+      <Filter>Source\Shaders</Filter>
+    </None>
+    <None Include="..\Source\Shaders\SingleTextured.frag">
+      <Filter>Source\Shaders</Filter>
+    </None>
+    <None Include="..\Source\Shaders\SingleTextured.vert">
       <Filter>Source\Shaders</Filter>
     </None>
   </ItemGroup>
@@ -90,12 +96,6 @@
     <ClInclude Include="..\Source\Header\Impl\WindowImpl.h">
       <Filter>Source\Header\Impl</Filter>
     </ClInclude>
-    <ClInclude Include="..\Source\Shaders\shader.frag.spv.h">
-      <Filter>Source\Shaders</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Source\Shaders\shader.vert.spv.h">
-      <Filter>Source\Shaders</Filter>
-    </ClInclude>
     <ClInclude Include="..\Source\Header\Core\DescriptorSet.h">
       <Filter>Source\Header\Core</Filter>
     </ClInclude>
@@ -125,6 +125,18 @@
     </ClInclude>
     <ClInclude Include="..\Source\Header\Impl\SamplerImpl.h">
       <Filter>Source\Header\Impl</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Include\Interface\FontResource.h">
+      <Filter>Include\Interface</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Source\Header\Impl\FontResourceImpl.h">
+      <Filter>Source\Header\Impl</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Source\Core\ShaderInterface.cpp">
+      <Filter>Source\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Source\Header\Core\ShaderInterface.h">
+      <Filter>Source\Header\Core</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -185,5 +197,19 @@
     <ClCompile Include="..\Source\Impl\SamplerImpl.cpp">
       <Filter>Source\Impl</Filter>
     </ClCompile>
+    <ClCompile Include="..\Source\Interface\FontResource.cpp">
+      <Filter>Source\Interface</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\Impl\FontResourceImpl.cpp">
+      <Filter>Source\Impl</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\Core\SourceCommon.cpp">
+      <Filter>Source\Core</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="..\Source\Shaders\EntrypointNames.txt">
+      <Filter>Source\Shaders</Filter>
+    </Text>
   </ItemGroup>
 </Project>

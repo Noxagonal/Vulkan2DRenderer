@@ -19,10 +19,48 @@ vk2d::_internal::TextureResourceImpl::TextureResourceImpl(
 	vk2d::_internal::ResourceManagerImpl	*	resource_manager
 )
 {
-	this->texture				= texture_resource_parent;
+	this->texture_parent				= texture_resource_parent;
 	this->resource_manager		= resource_manager;
-	assert( this->texture );
+	assert( this->texture_parent );
 	assert( this->resource_manager );
+
+	is_good						= true;
+}
+
+vk2d::_internal::TextureResourceImpl::TextureResourceImpl(
+	vk2d::TextureResource					*	texture_resource_parent,
+	vk2d::_internal::ResourceManagerImpl	*	resource_manager,
+	vk2d::Vector2u								size,
+	const std::vector<vk2d::Color8>			&	texels )
+{
+	this->texture_parent				= texture_resource_parent;
+	this->resource_manager		= resource_manager;
+	assert( this->texture_parent );
+	assert( this->resource_manager );
+
+	this->extent				= { size.x, size.y };
+	this->texture_data.resize( 1 );
+	this->texture_data[ 0 ]		= texels;
+
+	is_good						= true;
+}
+
+vk2d::_internal::TextureResourceImpl::TextureResourceImpl(
+	vk2d::TextureResource							*	texture_resource_parent,
+	vk2d::_internal::ResourceManagerImpl			*	resource_manager,
+	vk2d::Vector2u										size,
+	const std::vector<std::vector<vk2d::Color8>*>	&	texels )
+{
+	this->texture_parent				= texture_resource_parent;
+	this->resource_manager		= resource_manager;
+	assert( this->texture_parent );
+	assert( this->resource_manager );
+
+	this->extent				= { size.x, size.y };
+	this->texture_data.resize( texels.size() );
+	for( size_t i = 0; i < texels.size(); ++i ) {
+		this->texture_data[ i ]	= *(texels[ i ]);
+	}
 
 	is_good						= true;
 }
@@ -53,9 +91,9 @@ bool vk2d::_internal::TextureResourceImpl::MTLoad(
 
 	// Get data into a staging buffer, and create staging buffer
 	struct {
-		uint32_t	x;
-		uint32_t	y;
-		uint32_t	channels;
+		uint32_t	x			= UINT32_MAX;
+		uint32_t	y			= UINT32_MAX;
+		uint32_t	channels	= 0;
 	} image_info;
 
 	auto renderer		= resource_manager->GetRenderer();
@@ -66,27 +104,44 @@ bool vk2d::_internal::TextureResourceImpl::MTLoad(
 
 	bool is_primary_render_needed				= secondary_render_queue_family_index != primary_render_queue_family_index;
 
-	{
-		// 1. Load and process image from file.
+	if( texture_parent->IsFromFile() ) {
+		// 1. Load and process images from files.
 
-		if( texture->IsFromFile() ) {
+		for( auto & path : texture_parent->GetFilePaths() ) {
 			// Create texture from a file
 			int image_size_x			= 0;
 			int image_size_y			= 0;
 			int image_channel_count		= 0;
 
 			auto image_data = stbi_load(
-				texture->GetFilePath().string().c_str(),
+				path.string().c_str(),
 				&image_size_x,
 				&image_size_y,
 				&image_channel_count,
 				4 );
-			if( !image_data ) return false;
+			if( !image_data ) {
+				renderer->Report( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Cannot create texture: Cannot load image file: " + path.string() );
+				return false;
+			}
 			assert( image_channel_count == 4 );
+
+			// Check that file images have the same dimensions if we're creating array textures.
+			if( image_info.x == UINT32_MAX ) {
+				// First image
+				image_info.x		= uint32_t( image_size_x );
+				image_info.y		= uint32_t( image_size_y );
+			} else {
+				if( image_info.x != image_size_x ||
+					image_info.y != image_size_y ) {
+					renderer->Report( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Cannot create array texture: File images are different dimensions!" );
+					stbi_image_free( image_data );
+					return false;
+				}
+			}
 
 			// 2. Create staging buffer, we'll also need memory pool for this.
 
-			staging_buffer = memory_pool->CreateCompleteHostBufferResourceWithData(
+			auto staging_buffer = memory_pool->CreateCompleteHostBufferResourceWithData(
 				image_data,
 				VkDeviceSize( image_size_x ) * VkDeviceSize( image_size_y ) * VkDeviceSize( image_channel_count ),
 				VK_BUFFER_USAGE_TRANSFER_SRC_BIT
@@ -98,6 +153,7 @@ bool vk2d::_internal::TextureResourceImpl::MTLoad(
 				renderer->Report( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot create texture resource staging buffer!" );
 				return false;
 			}
+			staging_buffers.push_back( std::move( staging_buffer ) );
 
 			// Set image extent so we'll know it later
 			extent				= { uint32_t( image_size_x ), uint32_t( image_size_y ) };
@@ -105,8 +161,9 @@ bool vk2d::_internal::TextureResourceImpl::MTLoad(
 			image_info.x		= uint32_t( image_size_x );
 			image_info.y		= uint32_t( image_size_y );
 			image_info.channels	= uint32_t( image_channel_count );
-
-		} else {
+		}
+	} else {
+		for( size_t i = 0; i < texture_data.size(); ++i ) {
 			// Create texture from data
 
 			// Image extent already set by resource manager, we can just use it.
@@ -114,9 +171,13 @@ bool vk2d::_internal::TextureResourceImpl::MTLoad(
 			image_info.y		= extent.height;
 			image_info.channels	= 4;
 
-			staging_buffer = memory_pool->CreateCompleteHostBufferResourceWithData(
-				texture_data.data(),
-				VkDeviceSize( image_info.x ) * VkDeviceSize( image_info.y ) * VkDeviceSize( image_info.channels ),
+			if( texture_data[ i ].size() < size_t( image_info.x ) * size_t( image_info.y ) ) {
+				renderer->Report( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Cannot create texture: Texture data too small for texture" );
+				return false;
+			}
+
+			auto staging_buffer = memory_pool->CreateCompleteHostBufferResourceWithData(
+				texture_data[ i ],
 				VK_BUFFER_USAGE_TRANSFER_SRC_BIT
 			);
 
@@ -124,7 +185,14 @@ bool vk2d::_internal::TextureResourceImpl::MTLoad(
 				renderer->Report( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot create texture resource staging buffer!" );
 				return false;
 			}
+			staging_buffers.push_back( std::move( staging_buffer ) );
 		}
+	}
+
+	image_layer_count		= uint32_t( staging_buffers.size() );
+	if( !image_layer_count ) {
+		renderer->Report( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot load texture, nothing to do!" );
+		return false;
 	}
 
 	// 3. Create image and image view Vulkan objects.
@@ -153,7 +221,7 @@ bool vk2d::_internal::TextureResourceImpl::MTLoad(
 		image_create_info.format					= VK_FORMAT_R8G8B8A8_UNORM;
 		image_create_info.extent					= { image_info.x, image_info.y, 1 };
 		image_create_info.mipLevels					= uint32_t( mipmap_levels.size() );
-		image_create_info.arrayLayers				= 1;
+		image_create_info.arrayLayers				= image_layer_count;
 		image_create_info.samples					= VK_SAMPLE_COUNT_1_BIT;
 		image_create_info.tiling					= VK_IMAGE_TILING_OPTIMAL;
 		image_create_info.usage						= VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT;
@@ -167,7 +235,7 @@ bool vk2d::_internal::TextureResourceImpl::MTLoad(
 		image_view_create_info.pNext				= nullptr;
 		image_view_create_info.flags				= 0;
 		image_view_create_info.image				= VK_NULL_HANDLE;	// CreateCompleteImageResource() will replace this with proper image handle
-		image_view_create_info.viewType				= VK_IMAGE_VIEW_TYPE_2D;
+		image_view_create_info.viewType				= VK_IMAGE_VIEW_TYPE_2D_ARRAY;
 		image_view_create_info.format				= VK_FORMAT_R8G8B8A8_UNORM;
 		image_view_create_info.components			= {
 			VK_COMPONENT_SWIZZLE_IDENTITY,
@@ -179,7 +247,7 @@ bool vk2d::_internal::TextureResourceImpl::MTLoad(
 		image_view_create_info.subresourceRange.baseMipLevel	= 0;
 		image_view_create_info.subresourceRange.levelCount		= image_create_info.mipLevels;
 		image_view_create_info.subresourceRange.baseArrayLayer	= 0;
-		image_view_create_info.subresourceRange.layerCount		= 1;
+		image_view_create_info.subresourceRange.layerCount		= image_layer_count;
 
 		image = memory_pool->CreateCompleteImageResource(
 			&image_create_info,
@@ -308,7 +376,7 @@ bool vk2d::_internal::TextureResourceImpl::MTLoad(
 				image_memory_barrier.subresourceRange.baseMipLevel		= 0;
 				image_memory_barrier.subresourceRange.levelCount		= uint32_t( mipmap_levels.size() );
 				image_memory_barrier.subresourceRange.baseArrayLayer	= 0;
-				image_memory_barrier.subresourceRange.layerCount		= 1;
+				image_memory_barrier.subresourceRange.layerCount		= image_layer_count;
 				vkCmdPipelineBarrier(
 					primary_transfer_command_buffer,
 					VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
@@ -320,25 +388,27 @@ bool vk2d::_internal::TextureResourceImpl::MTLoad(
 				);
 			}
 
-			// Copy to mip level 0
-			VkBufferImageCopy copy_region {};
-			copy_region.bufferOffset					= 0;
-			copy_region.bufferRowLength					= 0;
-			copy_region.bufferImageHeight				= 0;
-			copy_region.imageSubresource.aspectMask		= VK_IMAGE_ASPECT_COLOR_BIT;
-			copy_region.imageSubresource.mipLevel		= 0;
-			copy_region.imageSubresource.baseArrayLayer	= 0;
-			copy_region.imageSubresource.layerCount		= 1;
-			copy_region.imageOffset						= { 0, 0, 0 };
-			copy_region.imageExtent						= { image_info.x, image_info.y, 1 };
-			vkCmdCopyBufferToImage(
-				primary_transfer_command_buffer,
-				staging_buffer.buffer,
-				image.image,
-				VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-				1,
-				&copy_region
-			);
+			// Copy to mip level 0, all layers
+			for( uint32_t i = 0; i < image_layer_count; ++i ) {
+				VkBufferImageCopy copy_region {};
+				copy_region.bufferOffset					= 0;
+				copy_region.bufferRowLength					= 0;
+				copy_region.bufferImageHeight				= 0;
+				copy_region.imageSubresource.aspectMask		= VK_IMAGE_ASPECT_COLOR_BIT;
+				copy_region.imageSubresource.mipLevel		= 0;
+				copy_region.imageSubresource.baseArrayLayer	= i;
+				copy_region.imageSubresource.layerCount		= 1;
+				copy_region.imageOffset						= { 0, 0, 0 };
+				copy_region.imageExtent						= { image_info.x, image_info.y, 1 };
+				vkCmdCopyBufferToImage(
+					primary_transfer_command_buffer,
+					staging_buffers[ i ].buffer,
+					image.image,
+					VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+					1,
+					&copy_region
+				);
+			}
 		}
 
 		// We might need to change image queue family ownership
@@ -361,7 +431,7 @@ bool vk2d::_internal::TextureResourceImpl::MTLoad(
 				image_memory_barrier.subresourceRange.baseMipLevel		= 0;
 				image_memory_barrier.subresourceRange.levelCount		= uint32_t( mipmap_levels.size() );
 				image_memory_barrier.subresourceRange.baseArrayLayer	= 0;
-				image_memory_barrier.subresourceRange.layerCount		= 1;
+				image_memory_barrier.subresourceRange.layerCount		= image_layer_count;
 				vkCmdPipelineBarrier(
 					primary_transfer_command_buffer,
 					VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
@@ -387,7 +457,7 @@ bool vk2d::_internal::TextureResourceImpl::MTLoad(
 				image_memory_barrier.subresourceRange.baseMipLevel		= 0;
 				image_memory_barrier.subresourceRange.levelCount		= uint32_t( mipmap_levels.size() );
 				image_memory_barrier.subresourceRange.baseArrayLayer	= 0;
-				image_memory_barrier.subresourceRange.layerCount		= 1;
+				image_memory_barrier.subresourceRange.layerCount		= image_layer_count;
 				vkCmdPipelineBarrier(
 					secondary_render_command_buffer,
 					VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
@@ -424,7 +494,7 @@ bool vk2d::_internal::TextureResourceImpl::MTLoad(
 					image_memory_barrier.subresourceRange.baseMipLevel		= src_mip_level;
 					image_memory_barrier.subresourceRange.levelCount		= 1;
 					image_memory_barrier.subresourceRange.baseArrayLayer	= 0;
-					image_memory_barrier.subresourceRange.layerCount		= 1;
+					image_memory_barrier.subresourceRange.layerCount		= image_layer_count;
 					vkCmdPipelineBarrier(
 						secondary_render_command_buffer,
 						VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
@@ -442,13 +512,13 @@ bool vk2d::_internal::TextureResourceImpl::MTLoad(
 					blit_region.srcSubresource.aspectMask		= VK_IMAGE_ASPECT_COLOR_BIT;
 					blit_region.srcSubresource.mipLevel			= src_mip_level;
 					blit_region.srcSubresource.baseArrayLayer	= 0;
-					blit_region.srcSubresource.layerCount		= 1;
+					blit_region.srcSubresource.layerCount		= image_layer_count;
 					blit_region.srcOffsets[ 0 ]					= { 0, 0, 0 };
 					blit_region.srcOffsets[ 1 ]					= { int32_t( src_mipmap_extent.width ), int32_t(  src_mipmap_extent.height ), 1 };
 					blit_region.dstSubresource.aspectMask		= VK_IMAGE_ASPECT_COLOR_BIT;
 					blit_region.dstSubresource.mipLevel			= dst_mip_level;
 					blit_region.dstSubresource.baseArrayLayer	= 0;
-					blit_region.dstSubresource.layerCount		= 1;
+					blit_region.dstSubresource.layerCount		= image_layer_count;
 					blit_region.dstOffsets[ 0 ]					= { 0, 0, 0 };
 					blit_region.dstOffsets[ 1 ]					= { int32_t( dst_mipmap_extent.width ), int32_t( dst_mipmap_extent.height ), 1 };
 
@@ -480,7 +550,7 @@ bool vk2d::_internal::TextureResourceImpl::MTLoad(
 					image_memory_barrier.subresourceRange.baseMipLevel		= src_mip_level;
 					image_memory_barrier.subresourceRange.levelCount		= 1;
 					image_memory_barrier.subresourceRange.baseArrayLayer	= 0;
-					image_memory_barrier.subresourceRange.layerCount		= 1;
+					image_memory_barrier.subresourceRange.layerCount		= image_layer_count;
 					vkCmdPipelineBarrier(
 						secondary_render_command_buffer,
 						VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
@@ -509,7 +579,7 @@ bool vk2d::_internal::TextureResourceImpl::MTLoad(
 			image_memory_barrier.subresourceRange.baseMipLevel		= uint32_t( mipmap_levels.size() - 1 );
 			image_memory_barrier.subresourceRange.levelCount		= 1;
 			image_memory_barrier.subresourceRange.baseArrayLayer	= 0;
-			image_memory_barrier.subresourceRange.layerCount		= 1;
+			image_memory_barrier.subresourceRange.layerCount		= image_layer_count;
 			vkCmdPipelineBarrier(
 				secondary_render_command_buffer,
 				VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
@@ -542,7 +612,7 @@ bool vk2d::_internal::TextureResourceImpl::MTLoad(
 				image_memory_barrier.subresourceRange.baseMipLevel		= 0;
 				image_memory_barrier.subresourceRange.levelCount		= uint32_t( mipmap_levels.size() );
 				image_memory_barrier.subresourceRange.baseArrayLayer	= 0;
-				image_memory_barrier.subresourceRange.layerCount		= 1;
+				image_memory_barrier.subresourceRange.layerCount		= image_layer_count;
 				vkCmdPipelineBarrier(
 					secondary_render_command_buffer,
 					VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
@@ -568,7 +638,7 @@ bool vk2d::_internal::TextureResourceImpl::MTLoad(
 				image_memory_barrier.subresourceRange.baseMipLevel		= 0;
 				image_memory_barrier.subresourceRange.levelCount		= uint32_t( mipmap_levels.size() );
 				image_memory_barrier.subresourceRange.baseArrayLayer	= 0;
-				image_memory_barrier.subresourceRange.layerCount		= 1;
+				image_memory_barrier.subresourceRange.layerCount		= image_layer_count;
 				vkCmdPipelineBarrier(
 					primary_render_command_buffer,
 					VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
@@ -712,35 +782,38 @@ bool vk2d::_internal::TextureResourceImpl::MTLoad(
 	}
 
 	// 9. Allocate and update descriptor set that points to the image.
-	{
-		descriptor_set = loader_thread_resource->GetDescriptorAutoPool()->AllocateDescriptorSet(
-			resource_manager->GetRenderer()->GetTextureDescriptorSetLayout()
-		);
-		if( descriptor_set != VK_SUCCESS ) {
-			return false;
-		}
+	// Not used anymore because array textures require combined texture samplers.
+//	{
+//		descriptor_set = loader_thread_resource->GetDescriptorAutoPool()->AllocateDescriptorSet(
+//			resource_manager->GetRenderer()->GetTextureDescriptorSetLayout()
+//		);
+//		if( descriptor_set != VK_SUCCESS ) {
+//			return false;
+//		}
+//
+//		VkDescriptorImageInfo descriptor_image_info {};
+//		descriptor_image_info.sampler		= VK_NULL_HANDLE;
+//		descriptor_image_info.imageView		= image.view;
+//		descriptor_image_info.imageLayout	= VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+//		VkWriteDescriptorSet descriptor_write {};
+//		descriptor_write.sType				= VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+//		descriptor_write.pNext				= nullptr;
+//		descriptor_write.dstSet				= descriptor_set.descriptorSet;
+//		descriptor_write.dstBinding			= 0;
+//		descriptor_write.dstArrayElement	= 0;
+//		descriptor_write.descriptorCount	= 1;
+//		descriptor_write.descriptorType		= VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
+//		descriptor_write.pImageInfo			= &descriptor_image_info;
+//		descriptor_write.pBufferInfo		= nullptr;
+//		descriptor_write.pTexelBufferView	= nullptr;
+//		vkUpdateDescriptorSets(
+//			resource_manager->GetVulkanDevice(),
+//			1, &descriptor_write,
+//			0, nullptr
+//		);
+//	}
 
-		VkDescriptorImageInfo descriptor_image_info {};
-		descriptor_image_info.sampler		= VK_NULL_HANDLE;
-		descriptor_image_info.imageView		= image.view;
-		descriptor_image_info.imageLayout	= VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-		VkWriteDescriptorSet descriptor_write {};
-		descriptor_write.sType				= VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-		descriptor_write.pNext				= nullptr;
-		descriptor_write.dstSet				= descriptor_set.descriptorSet;
-		descriptor_write.dstBinding			= 0;
-		descriptor_write.dstArrayElement	= 0;
-		descriptor_write.descriptorCount	= 1;
-		descriptor_write.descriptorType		= VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
-		descriptor_write.pImageInfo			= &descriptor_image_info;
-		descriptor_write.pBufferInfo		= nullptr;
-		descriptor_write.pTexelBufferView	= nullptr;
-		vkUpdateDescriptorSets(
-			resource_manager->GetVulkanDevice(),
-			1, &descriptor_write,
-			0, nullptr
-		);
-	}
+	image_layout	= VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 
 	return true;
 }
@@ -759,11 +832,11 @@ void vk2d::_internal::TextureResourceImpl::MTUnload(
 	// Check if loaded successfully, no need to check for failure as this thread was
 	// responsible for loading it, it's either loaded or failed to load but it'll
 	// definitely be either or. MTUnload() does not ever get called before MTLoad().
-	texture->WaitUntilLoaded();
+	texture_parent->WaitUntilLoaded();
 
-	loader_thread_resource->GetDescriptorAutoPool()->FreeDescriptorSet(
-		descriptor_set
-	);
+//	loader_thread_resource->GetDescriptorAutoPool()->FreeDescriptorSet(
+//		descriptor_set
+//	);
 
 	vkDestroyFence(
 		loader_thread_resource->GetVulkanDevice(),
@@ -799,7 +872,10 @@ void vk2d::_internal::TextureResourceImpl::MTUnload(
 	);
 
 	memory_pool->FreeCompleteResource( image );
-	memory_pool->FreeCompleteResource( staging_buffer );
+	for( auto & sb : staging_buffers ) {
+		memory_pool->FreeCompleteResource( sb );
+	}
+	staging_buffers.clear();
 }
 
 bool vk2d::_internal::TextureResourceImpl::IsLoaded()
@@ -809,10 +885,10 @@ bool vk2d::_internal::TextureResourceImpl::IsLoaded()
 		return false;
 	}
 
-	if( is_loaded )						return true;
-	if( !is_good )						return false;
-	if( !texture->load_function_ran )	return false;
-	if( texture->FailedToLoad() )		return false;
+	if( is_loaded )								return true;
+	if( !is_good )								return false;
+	if( !texture_parent->load_function_ran )	return false;
+	if( texture_parent->FailedToLoad() )		return false;
 
 	// We can check the status of the fence in any thread,
 	// it will not be removed until the resource is removed.
@@ -831,7 +907,7 @@ bool vk2d::_internal::TextureResourceImpl::IsLoaded()
 		return false;
 
 	} else {
-		texture->failed_to_load	= true;
+		texture_parent->failed_to_load	= true;
 		return false;
 	};
 
@@ -844,12 +920,12 @@ bool vk2d::_internal::TextureResourceImpl::WaitUntilLoaded()
 
 	if( is_loaded )						return true;
 	if( !is_good )						return false;
-	while( !texture->load_function_ran ) {
+	while( !texture_parent->load_function_ran ) {
 		// TODO: use more sophisticated synchronization.
 		// Semi busy loop for now.
 		std::this_thread::sleep_for( std::chrono::microseconds( 10 ) );
 	}
-	if( texture->FailedToLoad() )		return false;
+	if( texture_parent->FailedToLoad() )		return false;
 
 	// We can check the status of the fence in any thread,
 	// it will not be removed until the resource is removed.
@@ -867,7 +943,7 @@ bool vk2d::_internal::TextureResourceImpl::WaitUntilLoaded()
 		return true;
 
 	} else {
-		texture->failed_to_load	= true;
+		texture_parent->failed_to_load	= true;
 		resource_manager->GetRenderer()->Report( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Resource failed to load properly while waiting for it in 'WaitUntilLoaded()'!" );
 		return false;
 	};
@@ -875,9 +951,29 @@ bool vk2d::_internal::TextureResourceImpl::WaitUntilLoaded()
 	return false;
 }
 
-VkDescriptorSet vk2d::_internal::TextureResourceImpl::GetDescriptorSet() const
+//VkDescriptorSet vk2d::_internal::TextureResourceImpl::GetDescriptorSet() const
+//{
+//	return descriptor_set.descriptorSet;
+//}
+
+VkImage vk2d::_internal::TextureResourceImpl::GetVulkanImage() const
 {
-	return descriptor_set.descriptorSet;
+	return image.image;
+}
+
+VkImageView vk2d::_internal::TextureResourceImpl::GetVulkanImageView() const
+{
+	return image.view;
+}
+
+VkImageLayout vk2d::_internal::TextureResourceImpl::GetVulkanImageLayout() const
+{
+	return image_layout;
+}
+
+uint32_t vk2d::_internal::TextureResourceImpl::GetLayerCount() const
+{
+	return image_layer_count;
 }
 
 bool vk2d::_internal::TextureResourceImpl::IsGood() const
@@ -937,9 +1033,11 @@ public:
 			1, &texture->primary_transfer_command_buffer
 		);
 
-		texture->resource_manager->GetRenderer()->GetDeviceMemoryPool()->FreeCompleteResource(
-			texture->staging_buffer
-		);
+		for( auto & sb : texture->staging_buffers ) {
+			texture->resource_manager->GetRenderer()->GetDeviceMemoryPool()->FreeCompleteResource(
+				sb
+			);
+		}
 
 		texture->texture_complete_fence				= VK_NULL_HANDLE;
 		texture->transfer_semaphore					= VK_NULL_HANDLE;
@@ -947,7 +1045,7 @@ public:
 		texture->primary_render_command_buffer		= VK_NULL_HANDLE;
 		texture->secondary_render_command_buffer	= VK_NULL_HANDLE;
 		texture->primary_transfer_command_buffer	= VK_NULL_HANDLE;
-		texture->staging_buffer						= {};
+		texture->staging_buffers.clear();
 	}
 
 private:
@@ -961,6 +1059,6 @@ void vk2d::_internal::TextureResourceImpl::ScheduleTextureLoadResourceDestructio
 {
 	resource_manager->GetThreadPool()->ScheduleTask(
 		std::make_unique<vk2d::_internal::DestroyTextureLoadResources>( this ),
-		{ texture->GetLoaderThread() }
+		{ texture_parent->GetLoaderThread() }
 	);
 }

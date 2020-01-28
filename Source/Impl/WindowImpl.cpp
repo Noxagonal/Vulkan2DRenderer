@@ -291,7 +291,6 @@ vk2d::_internal::WindowImpl::WindowImpl(
 	if( !CreateGLFWWindow() ) return;
 	if( !CreateSurface() ) return;
 	if( !CreateRenderPass() ) return;
-	if( !CreateGraphicsPipelines() ) return;
 	if( !ReCreateSwapchain() ) return;
 	ReCreateScreenshotResources();
 	if( !CreateFramebuffers() ) return;
@@ -299,6 +298,7 @@ vk2d::_internal::WindowImpl::WindowImpl(
 	if( !AllocateCommandBuffers() ) return;
 	if( !CreateWindowSynchronizationPrimitives() ) return;
 	if( !CreateFrameSynchronizationPrimitives() ) return;
+	if( !CreateWindowFrameDataBuffer() ) return;
 
 	mesh_buffer		= std::make_unique<vk2d::_internal::MeshBuffer>(
 		renderer_parent,
@@ -367,6 +367,10 @@ vk2d::_internal::WindowImpl::~WindowImpl()
 
 	mesh_buffer		= nullptr;
 
+	renderer_parent->GetDescriptorPool()->FreeDescriptorSet( frame_data_descriptor_set );
+	renderer_parent->GetDeviceMemoryPool()->FreeCompleteResource( frame_data_device_buffer );
+	renderer_parent->GetDeviceMemoryPool()->FreeCompleteResource( frame_data_staging_buffer );
+
 	for( auto f : gpu_to_cpu_frame_fences ) {
 		vkDestroyFence(
 			device,
@@ -426,14 +430,6 @@ vk2d::_internal::WindowImpl::~WindowImpl()
 		swapchain,
 		nullptr
 	);
-
-	for( auto p : pipelines ) {
-		vkDestroyPipeline(
-			device,
-			p,
-			nullptr
-		);
-	}
 
 	vkDestroyRenderPass(
 		device,
@@ -595,6 +591,11 @@ bool vk2d::_internal::WindowImpl::BeginRender()
 			renderer_parent->Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot record primary render command buffer!" );
 			return false;
 		}
+		vk2d::_internal::CmdInsertCommandBufferCheckpoint(
+			command_buffer,
+			"WindowImpl",
+			vk2d::_internal::CommandBufferCheckpointType::BEGIN_COMMAND_BUFFER
+		);
 
 		// Set viewport, scissor and initial line width
 		{
@@ -625,63 +626,15 @@ bool vk2d::_internal::WindowImpl::BeginRender()
 			);
 			previous_line_width		= 1.0f;
 
-			// Push constants: window coordinate system scaling
-			{
-				vk2d::_internal::WindowCoordinateScaling window_coordinate_scaling {};
-
-				switch( create_info_copy.coordinate_space ) {
-				case vk2d::WindowCoordinateSpace::TEXEL_SPACE:
-					window_coordinate_scaling.multiplier	= { 1.0f / ( extent.width / 2.0f ), 1.0f / ( extent.height / 2.0f ) };
-					window_coordinate_scaling.offset		= { -1.0f, -1.0f };
-					break;
-				case vk2d::WindowCoordinateSpace::TEXEL_SPACE_CENTERED:
-					window_coordinate_scaling.multiplier	= { 1.0f / ( extent.width / 2.0f ), 1.0f / ( extent.height / 2.0f ) };
-					window_coordinate_scaling.offset		= { 0.0f, 0.0f };
-					break;
-				case vk2d::WindowCoordinateSpace::NORMALIZED_SPACE:
-				{
-					float contained_minimum_dimension		= float( std::min( extent.width, extent.height ) );
-					window_coordinate_scaling.multiplier	= { contained_minimum_dimension / ( extent.width / 2.0f ), contained_minimum_dimension / ( extent.height / 2.0f ) };
-					window_coordinate_scaling.offset		= { -1.0f, -1.0f };
-				}
-					break;
-				case vk2d::WindowCoordinateSpace::NORMALIZED_SPACE_CENTERED:
-				{
-					float contained_minimum_dimension		= float( std::min( extent.width, extent.height ) );
-					window_coordinate_scaling.multiplier	= { contained_minimum_dimension / extent.width, contained_minimum_dimension / extent.height };
-					window_coordinate_scaling.offset		= { 0.0f, 0.0f };
-				}
-					break;
-				case vk2d::WindowCoordinateSpace::NORMALIZED_VULKAN:
-					window_coordinate_scaling.multiplier	= { 1.0f, 1.0f };
-					window_coordinate_scaling.offset		= { 0.0f, 0.0f };
-					break;
-				default:
-					window_coordinate_scaling.multiplier	= { 1.0f, 1.0f };
-					window_coordinate_scaling.offset		= { 0.0f, 0.0f };
-					break;
-				}
-
-				vkCmdPushConstants(
-					command_buffer,
-					renderer_parent->GetPipelineLayout(),
-					VK_SHADER_STAGE_VERTEX_BIT,
-					0,
-					uint32_t( sizeof( vk2d::_internal::WindowCoordinateScaling ) ),
-					&window_coordinate_scaling
-				);
-			}
-
-			auto sampler_descriptor_set = renderer_parent->GetDefaultSampler()->impl->GetVulkanDescriptorSet();
+			// Window frame data.
 			vkCmdBindDescriptorSets(
 				command_buffer,
 				VK_PIPELINE_BIND_POINT_GRAPHICS,
 				renderer_parent->GetPipelineLayout(),
-				0, 1, &sampler_descriptor_set,
+				DESCRIPTOR_SET_ALLOCATION_WINDOW_FRAME_DATA,
+				1, &frame_data_descriptor_set.descriptorSet,
 				0, nullptr
 			);
-
-			previous_sampler_descriptor_set		= sampler_descriptor_set;
 		}
 
 		// Begin render pass
@@ -701,6 +654,11 @@ bool vk2d::_internal::WindowImpl::BeginRender()
 			render_pass_begin_info.clearValueCount	= 1;
 			render_pass_begin_info.pClearValues		= &clear_value;
 
+			vk2d::_internal::CmdInsertCommandBufferCheckpoint(
+				command_buffer,
+				"WindowImpl",
+				vk2d::_internal::CommandBufferCheckpointType::BEGIN_RENDER_PASS
+			);
 			vkCmdBeginRenderPass(
 				command_buffer,
 				&render_pass_begin_info,
@@ -734,6 +692,11 @@ bool vk2d::_internal::WindowImpl::EndRender()
 
 	// End render pass
 	{
+		vk2d::_internal::CmdInsertCommandBufferCheckpoint(
+			render_command_buffer,
+			"WindowImpl",
+			vk2d::_internal::CommandBufferCheckpointType::END_RENDER_PASS
+		);
 		vkCmdEndRenderPass( render_command_buffer );
 	}
 
@@ -887,6 +850,11 @@ bool vk2d::_internal::WindowImpl::EndRender()
 		}
 	}
 	// End command buffer
+	vk2d::_internal::CmdInsertCommandBufferCheckpoint(
+		render_command_buffer,
+		"WindowImpl",
+		vk2d::_internal::CommandBufferCheckpointType::END_COMMAND_BUFFER
+	);
 	if( vkEndCommandBuffer( render_command_buffer ) != VK_SUCCESS ) {
 		renderer_parent->Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot compile primary render command buffer!" );
 		return false;
@@ -898,7 +866,7 @@ bool vk2d::_internal::WindowImpl::EndRender()
 		renderer_parent->Report( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot synchronize frame, cannot output to window!" );
 		return false;
 	}
-	// Record command buffer to upload mesh data to GPU
+	// Record command buffer to upload complementary data to GPU
 	{
 		// Begin command buffer
 		{
@@ -908,10 +876,8 @@ bool vk2d::_internal::WindowImpl::EndRender()
 			transfer_command_buffer_begin_info.flags			= VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
 			transfer_command_buffer_begin_info.pInheritanceInfo	= nullptr;
 
-			// SynchronizeFrame() above will guarantee that the transfer command buffer is not
-			// still being processed so we can begin re-recording the transfer command buffer here.
 			if( vkBeginCommandBuffer(
-				mesh_transfer_command_buffer,
+				complementary_transfer_command_buffer,
 				&transfer_command_buffer_begin_info
 			) != VK_SUCCESS ) {
 				renderer_parent->Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot record mesh to GPU transfer command buffer!" );
@@ -919,12 +885,22 @@ bool vk2d::_internal::WindowImpl::EndRender()
 			}
 		}
 
-		// Record commands
+		// Record commands to upload frame data to gpu
+		{
+			if( !CmdUpdateFrameData(
+				complementary_transfer_command_buffer
+			) ) {
+				renderer_parent->Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot record commands to transfer WindowFrameData to GPU!" );
+				return false;
+			}
+		}
+
+		// Record commands to upload mesh data to gpu
 		{
 			if( !mesh_buffer->CmdUploadMeshDataToGPU(
-				mesh_transfer_command_buffer
+				complementary_transfer_command_buffer
 			) ) {
-				renderer_parent->Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot record commands to mesh to GPU transfer command buffer!" );
+				renderer_parent->Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot record commands to transfer mesh data to GPU!" );
 				return false;
 			}
 		}
@@ -932,7 +908,7 @@ bool vk2d::_internal::WindowImpl::EndRender()
 		// End command buffer
 		{
 			if( vkEndCommandBuffer(
-				mesh_transfer_command_buffer
+				complementary_transfer_command_buffer
 			) != VK_SUCCESS ) {
 				renderer_parent->Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot compile mesh to GPU transfer command buffer!" );
 				return false;
@@ -950,7 +926,7 @@ bool vk2d::_internal::WindowImpl::EndRender()
 		submit_infos[ 0 ].pWaitSemaphores			= nullptr;
 		submit_infos[ 0 ].pWaitDstStageMask			= nullptr;
 		submit_infos[ 0 ].commandBufferCount		= 1;
-		submit_infos[ 0 ].pCommandBuffers			= &mesh_transfer_command_buffer;
+		submit_infos[ 0 ].pCommandBuffers			= &complementary_transfer_command_buffer;
 		submit_infos[ 0 ].signalSemaphoreCount		= 1;
 		submit_infos[ 0 ].pSignalSemaphores			= &mesh_transfer_semaphore;
 
@@ -965,14 +941,28 @@ bool vk2d::_internal::WindowImpl::EndRender()
 		submit_infos[ 1 ].signalSemaphoreCount		= 1;
 		submit_infos[ 1 ].pSignalSemaphores			= &submit_to_present_semaphores[ next_image ];
 
-		if( primary_render_queue.Submit(
+		auto result = primary_render_queue.Submit(
 			submit_infos,
 			gpu_to_cpu_frame_fences[ next_image ]
-		) != VK_SUCCESS ) {
-			renderer_parent->Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot submit frame end command buffers!" );
+		);
+		if( result != VK_SUCCESS ) {
+			renderer_parent->Report(
+				vk2d::ReportSeverity::CRITICAL_ERROR,
+				"Internal error: Cannot submit frame end command buffers! " +
+				vk2d::_internal::VkResultToString( result )
+			);
 			return false;
 		}
 	}
+
+	// DEBUGGING ONLY:
+//	{
+//		auto result = vkDeviceWaitIdle( device );
+//		if( result != VK_SUCCESS ) {
+//			renderer_parent->Report( vk2d::ReportSeverity::CRITICAL_ERROR, vk2d::_internal::VkResultToString( result ) );
+//			return false;
+//		}
+//	}
 
 	// Present swapchain image
 	{
@@ -1002,8 +992,9 @@ bool vk2d::_internal::WindowImpl::EndRender()
 
 	previous_image						= next_image;
 	previous_frame_need_synchronization	= true;
-	previous_pipeline_type				= vk2d::_internal::PipelineType::NONE;
-	previous_texture_descriptor_set		= VK_NULL_HANDLE;
+	previous_pipeline_settings			= {};
+	previous_sampler					= nullptr;
+	previous_texture					= nullptr;
 
 	glfwPollEvents();
 
@@ -1296,8 +1287,9 @@ vk2d::CursorState vk2d::_internal::WindowImpl::GetCursorState()
 // 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void vk2d::_internal::WindowImpl::DrawTriangleList(
-	const std::vector<vk2d::Vertex>			&	vertices,
 	const std::vector<vk2d::VertexIndex_3>	&	indices,
+	const std::vector<vk2d::Vertex>			&	vertices,
+	const std::vector<float>				&	texture_channels,
 	bool										filled,
 	vk2d::TextureResource					*	texture,
 	vk2d::Sampler							*	sampler
@@ -1313,8 +1305,9 @@ void vk2d::_internal::WindowImpl::DrawTriangleList(
 	}
 
 	DrawTriangleList(
-		vertices,
 		raw_indices,
+		vertices,
+		texture_channels,
 		filled,
 		texture,
 		sampler
@@ -1322,8 +1315,9 @@ void vk2d::_internal::WindowImpl::DrawTriangleList(
 }
 
 void vk2d::_internal::WindowImpl::DrawTriangleList(
-	const std::vector<vk2d::Vertex>			&	vertices,
 	const std::vector<uint32_t>				&	raw_indices,
+	const std::vector<vk2d::Vertex>			&	vertices,
+	const std::vector<float>				&	texture_channel_weights,
 	bool										filled,
 	vk2d::TextureResource					*	texture,
 	vk2d::Sampler							*	sampler
@@ -1334,41 +1328,83 @@ void vk2d::_internal::WindowImpl::DrawTriangleList(
 	auto vertex_count	= uint32_t( vertices.size() );
 	auto index_count	= uint32_t( raw_indices.size() );
 
-	if( filled ) {
-		CmdBindPipelineIfDifferent(
-			command_buffer,
-			vk2d::_internal::PipelineType::FILLED_POLYGON_LIST
+	if( !texture ) {
+		texture = renderer_parent->GetDefaultTexture();
+	}
+	if( !sampler ) {
+		sampler = renderer_parent->GetDefaultSampler();
+	}
+
+	{
+		bool multitextured = texture->GetLayerCount() > 1 &&
+			texture_channel_weights.size() >= texture->GetLayerCount() * vertices.size();
+
+		auto shader_programs = renderer_parent->GetCompatibleShaderModules(
+			multitextured,
+			sampler->impl->IsAnyBorderColorEnabled(),
+			3
 		);
-	} else {
+
+		vk2d::_internal::PipelineSettings pipeline_settings {};
+		pipeline_settings.render_pass			= render_pass;
+		pipeline_settings.primitive_topology	= VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+		pipeline_settings.polygon_mode			= filled ? VK_POLYGON_MODE_FILL : VK_POLYGON_MODE_LINE;
+		pipeline_settings.shader_programs		= shader_programs;
+		pipeline_settings.samples				= VkSampleCountFlags( create_info_copy.samples );
+
 		CmdBindPipelineIfDifferent(
 			command_buffer,
-			vk2d::_internal::PipelineType::WIREFRAME_POLYGON_LIST
+			pipeline_settings
 		);
 	}
 
-	CmdBindTextureIfDifferent(
+	CmdBindTextureSamplerIfDifferent(
 		command_buffer,
+		sampler,
 		texture
 	);
 
-	CmdBindSamplerIfDifferent(
+	auto push_result = mesh_buffer->CmdPushMesh(
 		command_buffer,
-		sampler
-	);
-
-	auto result = mesh_buffer->CmdPushMesh(
-		command_buffer,
+		raw_indices,
 		vertices,
-		raw_indices );
+		texture_channel_weights );
 
-	if( result.success ) {
+	{
+		PushConstants pc {};
+		pc.index_offset				= push_result.location_info.index_offset;
+		pc.index_count				= 3;
+		pc.vertex_offset			= push_result.location_info.vertex_offset;
+		pc.texture_channel_offset	= push_result.location_info.texture_channel_offset;
+		pc.texture_channel_count	= texture->impl->GetLayerCount();
+
+		vkCmdPushConstants(
+			command_buffer,
+			renderer_parent->GetPipelineLayout(),
+			VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
+			0, sizeof( pc ),
+			&pc
+		);
+	}
+
+	if( push_result.success ) {
+		vk2d::_internal::CmdInsertCommandBufferCheckpoint(
+			command_buffer,
+			"MeshBuffer",
+			vk2d::_internal::CommandBufferCheckpointType::BEGIN_DRAW
+		);
 		vkCmdDrawIndexed(
 			command_buffer,
 			index_count,
 			1,
-			result.offsets.first_index,
-			int32_t( result.offsets.vertex_offset ),
+			push_result.location_info.index_offset,
+			int32_t( push_result.location_info.vertex_offset ),
 			0
+		);
+		vk2d::_internal::CmdInsertCommandBufferCheckpoint(
+			command_buffer,
+			"MeshBuffer",
+			vk2d::_internal::CommandBufferCheckpointType::END_DRAW
 		);
 	} else {
 		renderer_parent->Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot push mesh into mesh render queue!" );
@@ -1376,8 +1412,9 @@ void vk2d::_internal::WindowImpl::DrawTriangleList(
 }
 
 void vk2d::_internal::WindowImpl::DrawLineList(
+	const std::vector<vk2d::VertexIndex_2>	&	indices,
 	const std::vector<vk2d::Vertex>			&	vertices,
-	const std::vector<VertexIndex_2>		&	indices,
+	const std::vector<float>				&	texture_channels,
 	vk2d::TextureResource					*	texture,
 	vk2d::Sampler							*	sampler,
 	float										line_width
@@ -1392,8 +1429,9 @@ void vk2d::_internal::WindowImpl::DrawLineList(
 	}
 
 	DrawLineList(
-		vertices,
 		raw_indices,
+		vertices,
+		texture_channels,
 		texture,
 		sampler,
 		line_width
@@ -1401,13 +1439,15 @@ void vk2d::_internal::WindowImpl::DrawLineList(
 }
 
 void vk2d::_internal::WindowImpl::DrawLineList(
-	const std::vector<vk2d::Vertex>			&	vertices,
 	const std::vector<uint32_t>				&	raw_indices,
+	const std::vector<vk2d::Vertex>			&	vertices,
+	const std::vector<float>				&	texture_channels,
 	vk2d::TextureResource					*	texture,
 	vk2d::Sampler							*	sampler,
 	float										line_width
 )
 {
+	/*
 	auto command_buffer					= render_command_buffers[ next_image ];
 
 	auto vertex_count	= uint32_t( vertices.size() );
@@ -1430,8 +1470,9 @@ void vk2d::_internal::WindowImpl::DrawLineList(
 
 	auto result = mesh_buffer->CmdPushMesh(
 		command_buffer,
+		raw_indices,
 		vertices,
-		raw_indices );
+		{} );
 
 	CmdSetLineWidthIfDifferent(
 		command_buffer,
@@ -1450,14 +1491,17 @@ void vk2d::_internal::WindowImpl::DrawLineList(
 	} else {
 		renderer_parent->Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot push mesh into mesh render queue!" );
 	}
+	*/
 }
 
 void vk2d::_internal::WindowImpl::DrawPointList(
 	const std::vector<vk2d::Vertex>			&	vertices,
+	const std::vector<float>				&	texture_channels,
 	vk2d::TextureResource					*	texture,
 	vk2d::Sampler							*	sampler
 )
 {
+	/*
 	auto command_buffer					= render_command_buffers[ next_image ];
 
 	auto vertex_count	= uint32_t( vertices.size() );
@@ -1493,6 +1537,7 @@ void vk2d::_internal::WindowImpl::DrawPointList(
 	} else {
 		renderer_parent->Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot push mesh into mesh render queue!" );
 	}
+	*/
 }
 
 void vk2d::_internal::WindowImpl::DrawLine(
@@ -1500,6 +1545,7 @@ void vk2d::_internal::WindowImpl::DrawLine(
 	vk2d::Vector2f					point_2,
 	vk2d::Colorf					color )
 {
+	/*
 	std::vector<vk2d::Vertex>		vertices( 2 );
 	std::vector<VertexIndex_2>		indices( 1 );
 
@@ -1517,6 +1563,7 @@ void vk2d::_internal::WindowImpl::DrawLine(
 		vertices,
 		indices
 	);
+	*/
 }
 
 void vk2d::_internal::WindowImpl::DrawBox(
@@ -1618,8 +1665,9 @@ void vk2d::_internal::WindowImpl::DrawMesh(
 	switch( mesh.mesh_type ) {
 	case vk2d::MeshType::TRIANGLE_FILLED:
 		DrawTriangleList(
-			mesh.vertices,
 			mesh.indices,
+			mesh.vertices,
+			mesh.texture_channel_weights,
 			true,
 			mesh.texture,
 			mesh.sampler
@@ -1627,8 +1675,9 @@ void vk2d::_internal::WindowImpl::DrawMesh(
 		break;
 	case vk2d::MeshType::TRIANGLE_WIREFRAME:
 		DrawTriangleList(
-			mesh.vertices,
 			mesh.indices,
+			mesh.vertices,
+			mesh.texture_channel_weights,
 			false,
 			mesh.texture,
 			mesh.sampler
@@ -1636,8 +1685,9 @@ void vk2d::_internal::WindowImpl::DrawMesh(
 		break;
 	case vk2d::MeshType::LINE:
 		DrawLineList(
-			mesh.vertices,
 			mesh.indices,
+			mesh.vertices,
+			mesh.texture_channel_weights,
 			mesh.texture,
 			mesh.sampler,
 			mesh.line_width
@@ -1646,6 +1696,7 @@ void vk2d::_internal::WindowImpl::DrawMesh(
 	case vk2d::MeshType::POINT:
 		DrawPointList(
 			mesh.vertices,
+			mesh.texture_channel_weights,
 			mesh.texture,
 			mesh.sampler
 		);
@@ -2167,338 +2218,6 @@ bool vk2d::_internal::WindowImpl::CreateRenderPass()
 
 
 
-bool vk2d::_internal::WindowImpl::CreateGraphicsPipelines()
-{
-
-	pipelines.resize( size_t( vk2d::_internal::PipelineType::PIPELINE_TYPE_COUNT ) );
-
-	std::array<VkPipelineShaderStageCreateInfo, 2> shader_stages {};
-	shader_stages[ 0 ].sType					= VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-	shader_stages[ 0 ].pNext					= nullptr;
-	shader_stages[ 0 ].flags					= 0;
-	shader_stages[ 0 ].stage					= VK_SHADER_STAGE_VERTEX_BIT;
-	shader_stages[ 0 ].module					= renderer_parent->GetVertexShaderModule();
-	shader_stages[ 0 ].pName					= "main";
-	shader_stages[ 0 ].pSpecializationInfo		= nullptr;
-
-	shader_stages[ 1 ].sType					= VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-	shader_stages[ 1 ].pNext					= nullptr;
-	shader_stages[ 1 ].flags					= 0;
-	shader_stages[ 1 ].stage					= VK_SHADER_STAGE_FRAGMENT_BIT;
-	shader_stages[ 1 ].module					= renderer_parent->GetFragmentShaderModule();
-	shader_stages[ 1 ].pName					= "main";
-	shader_stages[ 1 ].pSpecializationInfo		= nullptr;
-
-	// Make sure this matches Vertex in RenderPrimitives.h
-	std::array<VkVertexInputBindingDescription, 1> vertex_input_binding_descriptions {};
-	vertex_input_binding_descriptions[ 0 ].binding		= 0;
-	vertex_input_binding_descriptions[ 0 ].stride		= sizeof( vk2d::Vertex );
-	vertex_input_binding_descriptions[ 0 ].inputRate	= VK_VERTEX_INPUT_RATE_VERTEX;
-
-	std::array<VkVertexInputAttributeDescription, 4> vertex_input_attribute_descriptions {};
-	vertex_input_attribute_descriptions[ 0 ].location	= 0;
-	vertex_input_attribute_descriptions[ 0 ].binding	= 0;
-	vertex_input_attribute_descriptions[ 0 ].format		= VK_FORMAT_R32G32_SFLOAT;
-	vertex_input_attribute_descriptions[ 0 ].offset		= offsetof( vk2d::Vertex, vertex_coords );
-
-	vertex_input_attribute_descriptions[ 1 ].location	= 1;
-	vertex_input_attribute_descriptions[ 1 ].binding	= 0;
-	vertex_input_attribute_descriptions[ 1 ].format		= VK_FORMAT_R32G32_SFLOAT;
-	vertex_input_attribute_descriptions[ 1 ].offset		= offsetof( vk2d::Vertex, uv_coords );
-
-	vertex_input_attribute_descriptions[ 2 ].location	= 2;
-	vertex_input_attribute_descriptions[ 2 ].binding	= 0;
-	vertex_input_attribute_descriptions[ 2 ].format		= VK_FORMAT_R32G32B32A32_SFLOAT;
-	vertex_input_attribute_descriptions[ 2 ].offset		= offsetof( vk2d::Vertex, color );
-
-	vertex_input_attribute_descriptions[ 3 ].location	= 3;
-	vertex_input_attribute_descriptions[ 3 ].binding	= 0;
-	vertex_input_attribute_descriptions[ 3 ].format		= VK_FORMAT_R32_SFLOAT;
-	vertex_input_attribute_descriptions[ 3 ].offset		= offsetof( vk2d::Vertex, point_size );
-
-	VkPipelineVertexInputStateCreateInfo vertex_input_state_create_info {};
-	vertex_input_state_create_info.sType							= VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-	vertex_input_state_create_info.pNext							= nullptr;
-	vertex_input_state_create_info.flags							= 0;
-	vertex_input_state_create_info.vertexBindingDescriptionCount	= uint32_t( vertex_input_binding_descriptions.size() );
-	vertex_input_state_create_info.pVertexBindingDescriptions		= vertex_input_binding_descriptions.data();
-	vertex_input_state_create_info.vertexAttributeDescriptionCount	= uint32_t( vertex_input_attribute_descriptions.size() );
-	vertex_input_state_create_info.pVertexAttributeDescriptions		= vertex_input_attribute_descriptions.data();
-
-	VkPipelineInputAssemblyStateCreateInfo input_assembly_state_create_info {};
-	input_assembly_state_create_info.sType						= VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
-	input_assembly_state_create_info.pNext						= nullptr;
-	input_assembly_state_create_info.flags						= 0;
-	input_assembly_state_create_info.topology					= VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
-	input_assembly_state_create_info.primitiveRestartEnable		= VK_FALSE;
-
-	VkViewport viewport {};
-	viewport.x			= 0;
-	viewport.y			= 0;
-	viewport.width		= 800;
-	viewport.height		= 600;
-	viewport.minDepth	= 0.0f;
-	viewport.maxDepth	= 1.0f;
-
-	VkRect2D scissor {
-		{ 0, 0 },
-		{ 800, 600 }
-	};
-
-	VkPipelineViewportStateCreateInfo viewport_state_create_info {};
-	viewport_state_create_info.sType			= VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
-	viewport_state_create_info.pNext			= nullptr;
-	viewport_state_create_info.flags			= 0;
-	viewport_state_create_info.viewportCount	= 1;
-	viewport_state_create_info.pViewports		= &viewport;
-	viewport_state_create_info.scissorCount		= 1;
-	viewport_state_create_info.pScissors		= &scissor;
-
-	VkPipelineRasterizationStateCreateInfo rasterization_state_create_info {};
-	rasterization_state_create_info.sType						= VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
-	rasterization_state_create_info.pNext						= nullptr;
-	rasterization_state_create_info.flags						= 0;
-	rasterization_state_create_info.depthClampEnable			= VK_FALSE;
-	rasterization_state_create_info.rasterizerDiscardEnable		= VK_FALSE;
-	rasterization_state_create_info.polygonMode					= VK_POLYGON_MODE_FILL;
-	rasterization_state_create_info.cullMode					= VK_CULL_MODE_NONE;
-	rasterization_state_create_info.frontFace					= VK_FRONT_FACE_COUNTER_CLOCKWISE;
-	rasterization_state_create_info.depthBiasEnable				= VK_FALSE;
-	rasterization_state_create_info.depthBiasConstantFactor		= 0.0f;
-	rasterization_state_create_info.depthBiasClamp				= 0.0f;
-	rasterization_state_create_info.depthBiasSlopeFactor		= 0.0f;
-	rasterization_state_create_info.lineWidth					= 1.0f;
-
-	VkPipelineMultisampleStateCreateInfo multisample_state_create_info {};
-	multisample_state_create_info.sType						= VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
-	multisample_state_create_info.pNext						= nullptr;
-	multisample_state_create_info.flags						= 0;
-	multisample_state_create_info.rasterizationSamples		= VkSampleCountFlagBits( samples );
-	multisample_state_create_info.sampleShadingEnable		= VK_FALSE;
-	multisample_state_create_info.minSampleShading			= 1.0f;
-	multisample_state_create_info.pSampleMask				= nullptr;
-	multisample_state_create_info.alphaToCoverageEnable		= VK_FALSE;
-	multisample_state_create_info.alphaToOneEnable			= VK_FALSE;
-
-	VkPipelineDepthStencilStateCreateInfo depth_stencil_state_create_info {};
-	depth_stencil_state_create_info.sType					= VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
-	depth_stencil_state_create_info.pNext					= nullptr;
-	depth_stencil_state_create_info.flags					= 0;
-	depth_stencil_state_create_info.depthTestEnable			= VK_FALSE;
-	depth_stencil_state_create_info.depthWriteEnable		= VK_FALSE;
-	depth_stencil_state_create_info.depthCompareOp			= VK_COMPARE_OP_NEVER;
-	depth_stencil_state_create_info.depthBoundsTestEnable	= VK_FALSE;
-	depth_stencil_state_create_info.stencilTestEnable		= VK_FALSE;
-	depth_stencil_state_create_info.front.failOp			= VK_STENCIL_OP_KEEP;
-	depth_stencil_state_create_info.front.passOp			= VK_STENCIL_OP_KEEP;
-	depth_stencil_state_create_info.front.depthFailOp		= VK_STENCIL_OP_KEEP;
-	depth_stencil_state_create_info.front.compareOp			= VK_COMPARE_OP_NEVER;
-	depth_stencil_state_create_info.front.compareMask		= 0;
-	depth_stencil_state_create_info.front.writeMask			= 0;
-	depth_stencil_state_create_info.front.reference			= 0;
-	depth_stencil_state_create_info.back					= depth_stencil_state_create_info.front;
-	depth_stencil_state_create_info.minDepthBounds			= 0.0f;
-	depth_stencil_state_create_info.maxDepthBounds			= 1.0f;
-
-	std::array<VkPipelineColorBlendAttachmentState, 1> color_blend_attachment_states {};
-	color_blend_attachment_states[ 0 ].blendEnable			= VK_TRUE;
-	color_blend_attachment_states[ 0 ].srcColorBlendFactor	= VK_BLEND_FACTOR_SRC_ALPHA;
-	color_blend_attachment_states[ 0 ].dstColorBlendFactor	= VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
-	color_blend_attachment_states[ 0 ].colorBlendOp			= VK_BLEND_OP_ADD;
-	color_blend_attachment_states[ 0 ].srcAlphaBlendFactor	= VK_BLEND_FACTOR_SRC_ALPHA;
-	color_blend_attachment_states[ 0 ].dstAlphaBlendFactor	= VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
-	color_blend_attachment_states[ 0 ].alphaBlendOp			= VK_BLEND_OP_ADD;
-	color_blend_attachment_states[ 0 ].colorWriteMask		=
-		VK_COLOR_COMPONENT_R_BIT |
-		VK_COLOR_COMPONENT_G_BIT |
-		VK_COLOR_COMPONENT_B_BIT |
-		VK_COLOR_COMPONENT_A_BIT;
-
-	VkPipelineColorBlendStateCreateInfo color_blend_state_create_info {};
-	color_blend_state_create_info.sType					= VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
-	color_blend_state_create_info.pNext					= nullptr;
-	color_blend_state_create_info.flags					= 0;
-	color_blend_state_create_info.logicOpEnable			= VK_FALSE;
-	color_blend_state_create_info.logicOp				= VK_LOGIC_OP_CLEAR;
-	color_blend_state_create_info.attachmentCount		= uint32_t( color_blend_attachment_states.size() );
-	color_blend_state_create_info.pAttachments			= color_blend_attachment_states.data();
-	color_blend_state_create_info.blendConstants[ 0 ]	= 0.0f;
-	color_blend_state_create_info.blendConstants[ 1 ]	= 0.0f;
-	color_blend_state_create_info.blendConstants[ 2 ]	= 0.0f;
-	color_blend_state_create_info.blendConstants[ 3 ]	= 0.0f;
-
-	std::vector<VkDynamicState> dynamic_states {
-		VK_DYNAMIC_STATE_VIEWPORT,
-		VK_DYNAMIC_STATE_SCISSOR,
-		VK_DYNAMIC_STATE_LINE_WIDTH
-	};
-
-	VkPipelineDynamicStateCreateInfo dynamic_state_create_info {};
-	dynamic_state_create_info.sType				= VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
-	dynamic_state_create_info.pNext				= nullptr;
-	dynamic_state_create_info.flags				= 0;
-	dynamic_state_create_info.dynamicStateCount	= uint32_t( dynamic_states.size() );
-	dynamic_state_create_info.pDynamicStates	= dynamic_states.data();
-
-	VkGraphicsPipelineCreateInfo pipeline_create_info {};
-	pipeline_create_info.sType					= VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
-	pipeline_create_info.pNext					= nullptr;
-	pipeline_create_info.flags					= 0;
-	pipeline_create_info.stageCount				= uint32_t( shader_stages.size() );
-	pipeline_create_info.pStages				= shader_stages.data();
-	pipeline_create_info.pVertexInputState		= &vertex_input_state_create_info;
-	pipeline_create_info.pInputAssemblyState	= &input_assembly_state_create_info;
-	pipeline_create_info.pTessellationState		= nullptr;
-	pipeline_create_info.pViewportState			= &viewport_state_create_info;
-	pipeline_create_info.pRasterizationState	= &rasterization_state_create_info;
-	pipeline_create_info.pMultisampleState		= &multisample_state_create_info;
-	pipeline_create_info.pDepthStencilState		= &depth_stencil_state_create_info;
-	pipeline_create_info.pColorBlendState		= &color_blend_state_create_info;
-	pipeline_create_info.pDynamicState			= &dynamic_state_create_info;
-	pipeline_create_info.layout					= renderer_parent->GetPipelineLayout();
-	pipeline_create_info.renderPass				= render_pass;
-	pipeline_create_info.subpass				= 0;
-	pipeline_create_info.basePipelineHandle		= VK_NULL_HANDLE;
-	pipeline_create_info.basePipelineIndex		= 0;
-
-	// Create filled polygon pipeline
-	{
-		if( vkCreateGraphicsPipelines(
-			device,
-			renderer_parent->GetPipelineCache(),
-			1,
-			&pipeline_create_info,
-			nullptr,
-			&pipelines[ size_t( vk2d::_internal::PipelineType::FILLED_POLYGON_LIST ) ]
-		) != VK_SUCCESS ) {
-			renderer_parent->Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot create Vulkan graphics pipeline!" );
-			return false;
-		}
-	}
-
-	// Create wireframe polygon pipeline
-	{
-		VkPipelineRasterizationStateCreateInfo rasterization_state_create_info_wireframe {};
-		rasterization_state_create_info_wireframe.sType						= VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
-		rasterization_state_create_info_wireframe.pNext						= nullptr;
-		rasterization_state_create_info_wireframe.flags						= 0;
-		rasterization_state_create_info_wireframe.depthClampEnable			= VK_FALSE;
-		rasterization_state_create_info_wireframe.rasterizerDiscardEnable	= VK_FALSE;
-		rasterization_state_create_info_wireframe.polygonMode				= VK_POLYGON_MODE_LINE;
-		rasterization_state_create_info_wireframe.cullMode					= VK_CULL_MODE_NONE;
-		rasterization_state_create_info_wireframe.frontFace					= VK_FRONT_FACE_COUNTER_CLOCKWISE;
-		rasterization_state_create_info_wireframe.depthBiasEnable			= VK_FALSE;
-		rasterization_state_create_info_wireframe.depthBiasConstantFactor	= 0.0f;
-		rasterization_state_create_info_wireframe.depthBiasClamp			= 0.0f;
-		rasterization_state_create_info_wireframe.depthBiasSlopeFactor		= 0.0f;
-		rasterization_state_create_info_wireframe.lineWidth					= 1.0f;
-
-		pipeline_create_info.pRasterizationState		= &rasterization_state_create_info_wireframe;
-
-		if( vkCreateGraphicsPipelines(
-			device,
-			renderer_parent->GetPipelineCache(),
-			1,
-			&pipeline_create_info,
-			nullptr,
-			&pipelines[ size_t( vk2d::_internal::PipelineType::WIREFRAME_POLYGON_LIST ) ]
-		) != VK_SUCCESS ) {
-			renderer_parent->Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot create Vulkan graphics pipeline!" );
-			return false;
-		}
-	}
-
-	// Create line pipeline
-	{
-		VkPipelineInputAssemblyStateCreateInfo input_assembly_state_create_info_line {};
-		input_assembly_state_create_info_line.sType						= VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
-		input_assembly_state_create_info_line.pNext						= nullptr;
-		input_assembly_state_create_info_line.flags						= 0;
-		input_assembly_state_create_info_line.topology					= VK_PRIMITIVE_TOPOLOGY_LINE_LIST;
-		input_assembly_state_create_info_line.primitiveRestartEnable	= VK_FALSE;
-
-		VkPipelineRasterizationStateCreateInfo rasterization_state_create_info_line {};
-		rasterization_state_create_info_line.sType						= VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
-		rasterization_state_create_info_line.pNext						= nullptr;
-		rasterization_state_create_info_line.flags						= 0;
-		rasterization_state_create_info_line.depthClampEnable			= VK_FALSE;
-		rasterization_state_create_info_line.rasterizerDiscardEnable	= VK_FALSE;
-		rasterization_state_create_info_line.polygonMode				= VK_POLYGON_MODE_LINE;
-		rasterization_state_create_info_line.cullMode					= VK_CULL_MODE_NONE;
-		rasterization_state_create_info_line.frontFace					= VK_FRONT_FACE_COUNTER_CLOCKWISE;
-		rasterization_state_create_info_line.depthBiasEnable			= VK_FALSE;
-		rasterization_state_create_info_line.depthBiasConstantFactor	= 0.0f;
-		rasterization_state_create_info_line.depthBiasClamp				= 0.0f;
-		rasterization_state_create_info_line.depthBiasSlopeFactor		= 0.0f;
-		rasterization_state_create_info_line.lineWidth					= 1.0f;
-
-		pipeline_create_info.pInputAssemblyState		= &input_assembly_state_create_info_line;
-		pipeline_create_info.pRasterizationState		= &rasterization_state_create_info_line;
-
-		if( vkCreateGraphicsPipelines(
-			device,
-			renderer_parent->GetPipelineCache(),
-			1,
-			&pipeline_create_info,
-			nullptr,
-			&pipelines[ size_t( vk2d::_internal::PipelineType::LINE_LIST ) ]
-		) != VK_SUCCESS ) {
-			renderer_parent->Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot create Vulkan graphics pipeline!" );
-			return false;
-		}
-	}
-
-	// Create point pipeline
-	{
-		VkPipelineInputAssemblyStateCreateInfo input_assembly_state_create_info_point {};
-		input_assembly_state_create_info_point.sType					= VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
-		input_assembly_state_create_info_point.pNext					= nullptr;
-		input_assembly_state_create_info_point.flags					= 0;
-		input_assembly_state_create_info_point.topology					= VK_PRIMITIVE_TOPOLOGY_POINT_LIST;
-		input_assembly_state_create_info_point.primitiveRestartEnable	= VK_FALSE;
-
-		VkPipelineRasterizationStateCreateInfo rasterization_state_create_info_point {};
-		rasterization_state_create_info_point.sType						= VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
-		rasterization_state_create_info_point.pNext						= nullptr;
-		rasterization_state_create_info_point.flags						= 0;
-		rasterization_state_create_info_point.depthClampEnable			= VK_FALSE;
-		rasterization_state_create_info_point.rasterizerDiscardEnable	= VK_FALSE;
-		rasterization_state_create_info_point.polygonMode				= VK_POLYGON_MODE_POINT;
-		rasterization_state_create_info_point.cullMode					= VK_CULL_MODE_NONE;
-		rasterization_state_create_info_point.frontFace					= VK_FRONT_FACE_COUNTER_CLOCKWISE;
-		rasterization_state_create_info_point.depthBiasEnable			= VK_FALSE;
-		rasterization_state_create_info_point.depthBiasConstantFactor	= 0.0f;
-		rasterization_state_create_info_point.depthBiasClamp			= 0.0f;
-		rasterization_state_create_info_point.depthBiasSlopeFactor		= 0.0f;
-		rasterization_state_create_info_point.lineWidth					= 1.0f;
-
-		pipeline_create_info.pInputAssemblyState		= &input_assembly_state_create_info_point;
-		pipeline_create_info.pRasterizationState		= &rasterization_state_create_info_point;
-
-		if( vkCreateGraphicsPipelines(
-			device,
-			renderer_parent->GetPipelineCache(),
-			1,
-			&pipeline_create_info,
-			nullptr,
-			&pipelines[ size_t( vk2d::_internal::PipelineType::POINT_LIST ) ]
-		) != VK_SUCCESS ) {
-			renderer_parent->Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot create Vulkan graphics pipeline!" );
-			return false;
-		}
-	}
-
-	return true;
-}
-
-
-
-
-
-
-
-
-
 bool vk2d::_internal::WindowImpl::CreateCommandPool()
 {
 
@@ -2553,7 +2272,7 @@ bool vk2d::_internal::WindowImpl::AllocateCommandBuffers()
 	for( size_t i = 0; i < swapchain_image_count; ++i ) {
 		render_command_buffers[ i ]		= temp[ i ];
 	}
-	mesh_transfer_command_buffer		= temp[ swapchain_image_count ];
+	complementary_transfer_command_buffer		= temp[ swapchain_image_count ];
 
 	return true;
 }
@@ -3039,6 +2758,81 @@ bool vk2d::_internal::WindowImpl::CreateFrameSynchronizationPrimitives()
 	return true;
 }
 
+bool vk2d::_internal::WindowImpl::CreateWindowFrameDataBuffer()
+{
+	// Create staging and device buffers
+	{
+		VkBufferCreateInfo staging_buffer_create_info {};
+		staging_buffer_create_info.sType					= VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+		staging_buffer_create_info.pNext					= nullptr;
+		staging_buffer_create_info.flags					= 0;
+		staging_buffer_create_info.size						= sizeof( vk2d::_internal::WindowFrameData );
+		staging_buffer_create_info.usage					= VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
+		staging_buffer_create_info.sharingMode				= VK_SHARING_MODE_EXCLUSIVE;
+		staging_buffer_create_info.queueFamilyIndexCount	= 0;
+		staging_buffer_create_info.pQueueFamilyIndices		= nullptr;
+		frame_data_staging_buffer = renderer_parent->GetDeviceMemoryPool()->CreateCompleteBufferResource(
+			&staging_buffer_create_info,
+			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT
+		);
+		if( frame_data_staging_buffer != VK_SUCCESS ) {
+			renderer_parent->Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error. Cannot create staging buffer for WindowFrameData!" );
+			return false;
+		}
+
+		VkBufferCreateInfo device_buffer_create_info {};
+		device_buffer_create_info.sType						= VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+		device_buffer_create_info.pNext						= nullptr;
+		device_buffer_create_info.flags						= 0;
+		device_buffer_create_info.size						= sizeof( vk2d::_internal::WindowFrameData );
+		device_buffer_create_info.usage						= VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
+		device_buffer_create_info.sharingMode				= VK_SHARING_MODE_EXCLUSIVE;
+		device_buffer_create_info.queueFamilyIndexCount		= 0;
+		device_buffer_create_info.pQueueFamilyIndices		= nullptr;
+		frame_data_device_buffer = renderer_parent->GetDeviceMemoryPool()->CreateCompleteBufferResource(
+			&device_buffer_create_info,
+			VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT
+		);
+		if( frame_data_device_buffer != VK_SUCCESS ) {
+			renderer_parent->Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error. Cannot create device local buffer for WindowFrameData!" );
+			return false;
+		}
+	}
+
+	// Create descriptor set
+	{
+		frame_data_descriptor_set	= renderer_parent->GetDescriptorPool()->AllocateDescriptorSet(
+			renderer_parent->GetUniformBufferDescriptorSetLayout()
+		);
+		if( frame_data_descriptor_set != VK_SUCCESS ) {
+			renderer_parent->Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot allocate descriptor set for WindowFrameData device buffer!" );
+			return false;
+		}
+		VkDescriptorBufferInfo descriptor_write_buffer_info {};
+		descriptor_write_buffer_info.buffer	= frame_data_device_buffer.buffer;
+		descriptor_write_buffer_info.offset	= 0;
+		descriptor_write_buffer_info.range	= sizeof( vk2d::_internal::WindowFrameData );
+		VkWriteDescriptorSet descriptor_write {};
+		descriptor_write.sType				= VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+		descriptor_write.pNext				= nullptr;
+		descriptor_write.dstSet				= frame_data_descriptor_set.descriptorSet;
+		descriptor_write.dstBinding			= 0;
+		descriptor_write.dstArrayElement	= 0;
+		descriptor_write.descriptorCount	= 1;
+		descriptor_write.descriptorType		= VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+		descriptor_write.pImageInfo			= nullptr;
+		descriptor_write.pBufferInfo		= &descriptor_write_buffer_info;
+		descriptor_write.pTexelBufferView	= nullptr;
+		vkUpdateDescriptorSets(
+			device,
+			1, &descriptor_write,
+			0, nullptr
+		);
+	}
+
+	return true;
+}
+
 void vk2d::_internal::WindowImpl::HandleScreenshotEvent()
 {
 	assert( screenshot_state == vk2d::_internal::WindowImpl::ScreenshotState::WAITING_EVENT_REPORT );
@@ -3059,71 +2853,99 @@ void vk2d::_internal::WindowImpl::HandleScreenshotEvent()
 }
 
 void vk2d::_internal::WindowImpl::CmdBindPipelineIfDifferent(
-	VkCommandBuffer						command_buffer,
-	vk2d::_internal::PipelineType		pipeline_type
+	VkCommandBuffer									command_buffer,
+	const vk2d::_internal::PipelineSettings		&	pipeline_settings
 )
 {
-	assert( uint32_t( pipeline_type ) < uint32_t( vk2d::_internal::PipelineType::PIPELINE_TYPE_COUNT ) );
+	if( previous_pipeline_settings != pipeline_settings ) {
+		auto pipeline = renderer_parent->GetPipeline( pipeline_settings );
 
-	if( previous_pipeline_type != pipeline_type ) {
 		vkCmdBindPipeline(
 			command_buffer,
 			VK_PIPELINE_BIND_POINT_GRAPHICS,
-			pipelines[ uint32_t( pipeline_type ) ]
+			pipeline
 		);
-		previous_pipeline_type = pipeline_type;
+		previous_pipeline_settings	= pipeline_settings;
 	}
 }
 
-void vk2d::_internal::WindowImpl::CmdBindTextureIfDifferent(
+void vk2d::_internal::WindowImpl::CmdBindTextureSamplerIfDifferent(
 	VkCommandBuffer						command_buffer,
-	vk2d::TextureResource			*	texture
-)
+	vk2d::Sampler					*	sampler,
+	vk2d::TextureResource			*	texture )
 {
-	auto texture_descriptor_set	= renderer_parent->GetDefaultTextureDescriptorSet();
-	if( texture ) {
-		if( texture->WaitUntilLoaded() ) {
-			texture_descriptor_set	= texture->impl->GetDescriptorSet();
+	// If sampler and texture did not change since last call, do nothing.
+	if( !sampler ) {
+		sampler		= renderer_parent->GetDefaultSampler();
+	}
+	if( !texture ) {
+		texture		= renderer_parent->GetDefaultTexture();
+	}
+
+	// if sampler or texture changed since previous call, bind a different descriptor set.
+	if( sampler != previous_sampler || texture != previous_texture ) {
+		auto & set = sampler_texture_descriptor_sets[ sampler ][ texture ];
+
+		// If this descriptor set doesn't exist yet for this
+		// sampler texture combo, create one and update it.
+		if( set.descriptor_set.descriptorSet == VK_NULL_HANDLE ) {
+			set.descriptor_set = renderer_parent->GetDescriptorPool()->AllocateDescriptorSet(
+				renderer_parent->GetSamplerTextureDescriptorSetLayout()
+			);
+
+			texture->WaitUntilLoaded();
+
+			VkDescriptorImageInfo image_info {};
+			image_info.sampler						= sampler->impl->GetVulkanSampler();
+			image_info.imageView					= texture->impl->GetVulkanImageView();
+			image_info.imageLayout					= texture->impl->GetVulkanImageLayout();
+
+			VkDescriptorBufferInfo buffer_info {};
+			buffer_info.buffer						= sampler->impl->GetVulkanBufferForSamplerData();
+			buffer_info.offset						= 0;
+			buffer_info.range						= sizeof( vk2d::_internal::SamplerImpl::BufferData );
+
+			std::array<VkWriteDescriptorSet, 2> descriptor_write {};
+			descriptor_write[ 0 ].sType				= VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+			descriptor_write[ 0 ].pNext				= nullptr;
+			descriptor_write[ 0 ].dstSet			= set.descriptor_set.descriptorSet;
+			descriptor_write[ 0 ].dstBinding		= 0;
+			descriptor_write[ 0 ].dstArrayElement	= 0;
+			descriptor_write[ 0 ].descriptorCount	= 1;
+			descriptor_write[ 0 ].descriptorType	= VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+			descriptor_write[ 0 ].pImageInfo		= &image_info;
+			descriptor_write[ 0 ].pBufferInfo		= nullptr;
+			descriptor_write[ 0 ].pTexelBufferView	= nullptr;
+
+			descriptor_write[ 1 ].sType				= VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+			descriptor_write[ 1 ].pNext				= nullptr;
+			descriptor_write[ 1 ].dstSet			= set.descriptor_set.descriptorSet;
+			descriptor_write[ 1 ].dstBinding		= 1;
+			descriptor_write[ 1 ].dstArrayElement	= 0;
+			descriptor_write[ 1 ].descriptorCount	= 1;
+			descriptor_write[ 1 ].descriptorType	= VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+			descriptor_write[ 1 ].pImageInfo		= nullptr;
+			descriptor_write[ 1 ].pBufferInfo		= &buffer_info;
+			descriptor_write[ 1 ].pTexelBufferView	= nullptr;
+
+			vkUpdateDescriptorSets(
+				device,
+				uint32_t( descriptor_write.size() ), descriptor_write.data(),
+				0, nullptr );
 		}
-	}
-
-	assert( texture_descriptor_set );
-
-	if( previous_texture_descriptor_set != texture_descriptor_set ) {
+		set.previous_access_time = std::chrono::steady_clock::now();
 
 		vkCmdBindDescriptorSets(
 			command_buffer,
 			VK_PIPELINE_BIND_POINT_GRAPHICS,
 			renderer_parent->GetPipelineLayout(),
-			1, 1, &texture_descriptor_set,
+			DESCRIPTOR_SET_ALLOCATION_TEXTURE_AND_SAMPLER,
+			1, &set.descriptor_set.descriptorSet,
 			0, nullptr
 		);
 
-		previous_texture_descriptor_set	= texture_descriptor_set;
-	}
-}
-
-void vk2d::_internal::WindowImpl::CmdBindSamplerIfDifferent(
-	VkCommandBuffer						command_buffer,
-	vk2d::Sampler					*	sampler )
-{
-	auto sampler_descriptor_set = renderer_parent->GetDefaultSampler()->impl->GetVulkanDescriptorSet();
-	if( sampler ) {
-		sampler_descriptor_set	= sampler->impl->GetVulkanDescriptorSet();
-	}
-
-	assert( sampler_descriptor_set );
-
-	if( previous_sampler_descriptor_set != sampler_descriptor_set ) {
-		vkCmdBindDescriptorSets(
-			command_buffer,
-			VK_PIPELINE_BIND_POINT_GRAPHICS,
-			renderer_parent->GetPipelineLayout(),
-			0, 1, &sampler_descriptor_set,
-			0, nullptr
-		);
-
-		previous_sampler_descriptor_set	= sampler_descriptor_set;
+		previous_sampler		= sampler;
+		previous_texture		= texture;
 	}
 }
 
@@ -3141,6 +2963,73 @@ void vk2d::_internal::WindowImpl::CmdSetLineWidthIfDifferent(
 
 		previous_line_width	= line_width;
 	}
+}
+
+bool vk2d::_internal::WindowImpl::CmdUpdateFrameData(
+	VkCommandBuffer			command_buffer
+)
+{
+	// Window coordinate system scaling
+	vk2d::_internal::WindowCoordinateScaling window_coordinate_scaling {};
+
+	switch( create_info_copy.coordinate_space ) {
+	case vk2d::WindowCoordinateSpace::TEXEL_SPACE:
+		window_coordinate_scaling.multiplier	= { 1.0f / ( extent.width / 2.0f ), 1.0f / ( extent.height / 2.0f ) };
+		window_coordinate_scaling.offset		= { -1.0f, -1.0f };
+		break;
+	case vk2d::WindowCoordinateSpace::TEXEL_SPACE_CENTERED:
+		window_coordinate_scaling.multiplier	= { 1.0f / ( extent.width / 2.0f ), 1.0f / ( extent.height / 2.0f ) };
+		window_coordinate_scaling.offset		= { 0.0f, 0.0f };
+		break;
+	case vk2d::WindowCoordinateSpace::NORMALIZED_SPACE:
+	{
+		float contained_minimum_dimension		= float( std::min( extent.width, extent.height ) );
+		window_coordinate_scaling.multiplier	= { contained_minimum_dimension / ( extent.width / 2.0f ), contained_minimum_dimension / ( extent.height / 2.0f ) };
+		window_coordinate_scaling.offset		= { -1.0f, -1.0f };
+	}
+	break;
+	case vk2d::WindowCoordinateSpace::NORMALIZED_SPACE_CENTERED:
+	{
+		float contained_minimum_dimension		= float( std::min( extent.width, extent.height ) );
+		window_coordinate_scaling.multiplier	= { contained_minimum_dimension / extent.width, contained_minimum_dimension / extent.height };
+		window_coordinate_scaling.offset		= { 0.0f, 0.0f };
+	}
+	break;
+	case vk2d::WindowCoordinateSpace::NORMALIZED_VULKAN:
+		window_coordinate_scaling.multiplier	= { 1.0f, 1.0f };
+		window_coordinate_scaling.offset		= { 0.0f, 0.0f };
+		break;
+	default:
+		window_coordinate_scaling.multiplier	= { 1.0f, 1.0f };
+		window_coordinate_scaling.offset		= { 0.0f, 0.0f };
+		break;
+	}
+
+	// Copy data to staging buffer.
+	{
+		auto frame_data = frame_data_staging_buffer.memory.Map<vk2d::_internal::WindowFrameData>();
+		if( !frame_data ) {
+			renderer_parent->Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot map WindowFrameData staging buffer memory!" );
+			return false;
+		}
+		frame_data->coordinate_scaling		= window_coordinate_scaling;
+		frame_data_staging_buffer.memory.Unmap();
+	}
+	// Record transfer commands from staging buffer to device local buffer.
+	{
+		VkBufferCopy copy_region {};
+		copy_region.srcOffset	= 0;
+		copy_region.dstOffset	= 0;
+		copy_region.size		= sizeof( vk2d::_internal::WindowFrameData );
+		vkCmdCopyBuffer(
+			command_buffer,
+			frame_data_staging_buffer.buffer,
+			frame_data_device_buffer.buffer,
+			1, &copy_region
+		);
+	}
+
+	return true;
 }
 
 

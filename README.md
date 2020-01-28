@@ -42,6 +42,7 @@ Internally workloads are automatically grouped to create more efficient submissi
 
 | Library | License | Github page |
 | --- | --- | --- |
+| Freetype 2.10.1 | [FTL](ExternalLibraries/freetype-2.10.1/docs/FTL.TXT) | https://www.freetype.org |
 | GLFW 3.3 | [zlib/libpng](ExternalLibraries/glfw-3.3/LICENSE.md) | https://github.com/glfw/glfw |
 | STB | [MIT](ExternalLibraries/stb/LICENSE.md) | https://github.com/nothings/stb |
 

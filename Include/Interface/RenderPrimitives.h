@@ -2,12 +2,15 @@
 
 #include "../Core/Common.h"
 
+#include <initializer_list>
+#include <cmath>
 #include <array>
 #include <assert.h>
 
 
 
 namespace vk2d {
+
 
 
 template<typename T>
@@ -27,7 +30,7 @@ struct Vector2Base {
 		if( e ) y = *e++;
 	}
 
-	vk2d::Vector2Base<T> & operator=( const vk2d::Vector2Base<T> & other )	= default;
+	vk2d::Vector2Base<T> & operator=( const vk2d::Vector2Base<T> & other )		= default;
 	vk2d::Vector2Base<T> & operator=( vk2d::Vector2Base<T> && other )			= default;
 
 	vk2d::Vector2Base<T> operator+( vk2d::Vector2Base<T> other ) const
@@ -208,8 +211,17 @@ struct AABB2Base {
 	{
 		assert( elements.size() <= 2 );
 		auto e = elements.begin();
-		if( e ) top_left = *e++;
-		if( e ) bottom_right = *e++;
+		if( e ) top_left		= *e++;
+		if( e ) bottom_right	= *e++;
+	}
+	AABB2Base( const std::initializer_list<T> & elements )
+	{
+		assert( elements.size() <= 4 );
+		auto e = elements.begin();
+		if( e ) top_left.x		= *e++;
+		if( e ) top_left.y		= *e++;
+		if( e ) bottom_right.x	= *e++;
+		if( e ) bottom_right.y	= *e++;
 	}
 
 	vk2d::AABB2Base<T> & operator=( const vk2d::AABB2Base<T> & other )	= default;
@@ -282,21 +294,32 @@ using Color32			= vk2d::ColorBase<uint32_t>;
 
 
 
+// Mesh type is used in multiple places to indicate what kind of data structure the mesh has.
+enum class MeshType : uint32_t {
+	TRIANGLE_FILLED,	// 3 indices form a triangle from a list of vertices.
+	TRIANGLE_WIREFRAME,	// 3 indices form a triangle from a list of vertices, only edges are rendered.
+	LINE,				// 2 indices form a line from a list of vertices.
+	POINT,				// a list of vertices is used to render individual points, no indices are used.
+};
+
+
+
+// Vertex is a single point of which polygons or lines can be formed between.
+// Or you could just render the points on their own.
 struct Vertex {
-	vk2d::Vector2f				vertex_coords;			// 2 x 32 bits
-	vk2d::Vector2f				uv_coords;				// 2 x 32 bits
-	vk2d::Colorf				color;					// 4 x 32 bits
-	float						point_size;				// 1 x 32 bits
-private:
-	float						padding[ 3 ];			// Reserved, padding Vertex struct to 128 bit boundaries
+	alignas( 8 )	vk2d::Vector2f			vertex_coords			= {};	// Coordinates.
+	alignas( 8 )	vk2d::Vector2f			uv_coords				= {};	// UV coordinates to texture.
+	alignas( 16 )	vk2d::Colorf			color					= {};	// Texture color is multiplied by this.
+	alignas( 4 )	float					point_size				= {};	// If rendering points, this is the width of the point.
+	alignas( 4 )	uint32_t				single_texture_channel	= {};	// If not rendering multitextured, this is the texture layer to use with this vertex.
 };
 
 struct VertexIndex_2 {
-	std::array<uint32_t, 2>		indices;
+	std::array<uint32_t, 2>		indices		= {};
 };
 
 struct VertexIndex_3 {
-	std::array<uint32_t, 3>		indices;
+	std::array<uint32_t, 3>		indices		= {};
 };
 
 

@@ -1,18 +1,21 @@
 #pragma once
 
-#include "../Header/Core/SourceCommon.h"
+#include "../Core/SourceCommon.h"
 #include "../../../Include/Interface/Renderer.h"
 
 #include "../../Header/Core/VulkanMemoryManagement.h"
 #include "../Core/QueueResolver.h"
 
-#include "../Impl/WindowImpl.h"
 #include "../Core/DescriptorSet.h"
+#include "../Core/ShaderInterface.h"
+
+#include "WindowImpl.h"
 
 #include <list>
 #include <vector>
 #include <array>
 #include <memory>
+#include <map>
 
 #define GLFW_INCLUDE_NONE
 #include <GLFW/glfw3.h>
@@ -24,22 +27,20 @@ namespace vk2d {
 
 class Window;
 class Monitor;
+class Cursor;
 class Renderer;
 class ResourceManager;
-class Cursor;
+class TextureResource;
 
 namespace _internal {
 
 class ThreadPool;
 class DescriptorSetLayout;
+class WindowImpl;
 class MonitorImpl;
+class CursorImpl;
 
 
-
-struct WindowCoordinateScaling {
-	alignas( 8 )	vk2d::Vector2f		multiplier		= {};
-	alignas( 8 )	vk2d::Vector2f		offset			= {};
-};
 
 
 
@@ -128,15 +129,29 @@ public:
 	const VkPhysicalDeviceMemoryProperties				&	GetPhysicalDeviceMemoryProperties() const;
 	const VkPhysicalDeviceFeatures						&	GetPhysicalDeviceFeatures() const;
 
-	VkShaderModule											GetVertexShaderModule() const;
-	VkShaderModule											GetFragmentShaderModule() const;
+	vk2d::_internal::ShaderProgram							GetShaderModules(
+		vk2d::_internal::ShaderProgramID						id ) const;
+
+	vk2d::_internal::ShaderProgram							GetCompatibleShaderModules(
+		bool												multitextured,
+		bool												custom_uv_border_color,
+		uint32_t											vertices_per_primitive );
+
+	VkPipeline												GetPipeline(
+		const vk2d::_internal::PipelineSettings			&	settings );
+
+	VkPipeline												CreatePipeline(
+		const vk2d::_internal::PipelineSettings			&	settings );
 
 	VkPipelineCache											GetPipelineCache() const;
 	VkPipelineLayout										GetPipelineLayout() const;
-	const vk2d::_internal::DescriptorSetLayout			&	GetSamplerDescriptorSetLayout() const;
-	const vk2d::_internal::DescriptorSetLayout			&	GetTextureDescriptorSetLayout() const;
 
-	VkDescriptorSet											GetDefaultTextureDescriptorSet() const;
+	const vk2d::_internal::DescriptorSetLayout			&	GetSamplerTextureDescriptorSetLayout() const;
+	const vk2d::_internal::DescriptorSetLayout			&	GetUniformBufferDescriptorSetLayout() const;
+	const vk2d::_internal::DescriptorSetLayout			&	GetStorageBufferDescriptorSetLayout() const;
+
+//	VkDescriptorSet											GetDefaultTextureDescriptorSet() const;
+	vk2d::TextureResource								*	GetDefaultTexture() const;
 	vk2d::Sampler										*	GetDefaultSampler() const;
 
 	vk2d::_internal::DeviceMemoryPool					*	GetDeviceMemoryPool() const;
@@ -163,6 +178,7 @@ public:
 	void													DestroyDescriptorPool();
 	void													DestroyDefaultSampler();
 	void													DestroyPipelineCache();
+	void													DestroyPipelines();
 	void													DestroyShaderModules();
 	void													DestroyDescriptorSetLayouts();
 	void													DestroyPipelineLayout();
@@ -174,65 +190,69 @@ public:
 	std::vector<VkPhysicalDevice>							EnumeratePhysicalDevices();
 	VkPhysicalDevice										PickBestPhysicalDevice();
 
-	vk2d::MonitorUpdateCallbackFun							monitor_update_callback				= nullptr;
+	vk2d::MonitorUpdateCallbackFun							monitor_update_callback					= nullptr;
 
 private:
 	static uint64_t											renderer_count;		// used to keep track of Renderer instances
 
-	vk2d::RendererCreateInfo								create_info_copy					= {};
+	vk2d::RendererCreateInfo								create_info_copy						= {};
 
-	std::vector<const char*>								instance_layers						= {};
-	std::vector<const char*>								instance_extensions					= {};
-	std::vector<const char*>								device_extensions					= {};
+	std::vector<const char*>								instance_layers							= {};
+	std::vector<const char*>								instance_extensions						= {};
+	std::vector<const char*>								device_extensions						= {};
 
-	vk2d::PFN_VK2D_ReportFunction							report_function						= {};
+	vk2d::PFN_VK2D_ReportFunction							report_function							= {};
 	std::mutex												report_mutex;
 
-	std::unique_ptr<vk2d::ResourceManager>					resource_manager					= {};
-	std::unique_ptr<vk2d::_internal::ThreadPool>			thread_pool							= {};
-	std::vector<uint32_t>									loader_threads						= {};
-	std::vector<uint32_t>									general_threads						= {};
+	std::unique_ptr<vk2d::ResourceManager>					resource_manager						= {};
+	std::unique_ptr<vk2d::_internal::ThreadPool>			thread_pool								= {};
+	std::vector<uint32_t>									loader_threads							= {};
+	std::vector<uint32_t>									general_threads							= {};
 
-	VkDebugUtilsMessengerEXT								debug_utils_messenger				= {};
+	VkDebugUtilsMessengerEXT								debug_utils_messenger					= {};
 
-	VkInstance												instance							= {};
-	VkPhysicalDevice										physical_device						= {};
-	VkDevice												device								= {};
+	VkInstance												instance								= {};
+	VkPhysicalDevice										physical_device							= {};
+	VkDevice												device									= {};
 
-	VkPhysicalDeviceProperties								physical_device_properties			= {};
-	VkPhysicalDeviceMemoryProperties						physical_device_memory_properties	= {};
-	VkPhysicalDeviceFeatures								physical_device_features			= {};
+	VkPhysicalDeviceProperties								physical_device_properties				= {};
+	VkPhysicalDeviceMemoryProperties						physical_device_memory_properties		= {};
+	VkPhysicalDeviceFeatures								physical_device_features				= {};
 
-	VkShaderModule											vertex_shader_module				= {};
-	VkShaderModule											fragment_shader_module				= {};
-	VkPipelineCache											pipeline_cache						= {};
-	VkPipelineLayout										pipeline_layout						= {};
+	std::vector<VkShaderModule>								shader_modules							= {};
 
-	std::unique_ptr<vk2d::_internal::DescriptorSetLayout>	sampler_descriptor_set_layout		= {};
-	std::unique_ptr<vk2d::_internal::DescriptorSetLayout>	sampler_data_descriptor_set_layout	= {};
-	std::unique_ptr<vk2d::_internal::DescriptorSetLayout>	texture_descriptor_set_layout		= {};
+	std::map<vk2d::_internal::ShaderProgramID, vk2d::_internal::ShaderProgram>	shader_programs		= {};
+	std::map<vk2d::_internal::PipelineSettings, VkPipeline>						pipelines			= {};
 
-	vk2d::_internal::ResolvedQueue							primary_render_queue				= {};
-	vk2d::_internal::ResolvedQueue							secondary_render_queue				= {};
-	vk2d::_internal::ResolvedQueue							primary_compute_queue				= {};
-	vk2d::_internal::ResolvedQueue							primary_transfer_queue				= {};
+	VkPipelineCache											pipeline_cache							= {};
+	VkPipelineLayout										pipeline_layout							= {};
 
-	std::unique_ptr<vk2d::_internal::DeviceMemoryPool>		device_memory_pool					= {};
+	std::unique_ptr<vk2d::_internal::DescriptorSetLayout>	sampler_texture_descriptor_set_layout	= {};
+	std::unique_ptr<vk2d::_internal::DescriptorSetLayout>	uniform_buffer_descriptor_set_layout	= {};
+	std::unique_ptr<vk2d::_internal::DescriptorSetLayout>	storage_buffer_descriptor_set_layout	= {};
 
-	std::unique_ptr<vk2d::_internal::DescriptorAutoPool>	descriptor_pool						= {};
+	vk2d::_internal::ResolvedQueue							primary_render_queue					= {};
+	vk2d::_internal::ResolvedQueue							secondary_render_queue					= {};
+	vk2d::_internal::ResolvedQueue							primary_compute_queue					= {};
+	vk2d::_internal::ResolvedQueue							primary_transfer_queue					= {};
 
-	std::unique_ptr<vk2d::Sampler>							default_sampler						= {};
+	std::unique_ptr<vk2d::_internal::DeviceMemoryPool>		device_memory_pool						= {};
 
-	vk2d::_internal::CompleteImageResource					default_texture						= {};
-	vk2d::_internal::PoolDescriptorSet						default_texture_descriptor_set		= {};
+	std::unique_ptr<vk2d::_internal::DescriptorAutoPool>	descriptor_pool							= {};
 
-	std::vector<std::unique_ptr<vk2d::Window>>				windows								= {};
-	std::vector<std::unique_ptr<vk2d::Cursor>>				cursors								= {};
-	std::vector<std::unique_ptr<vk2d::Sampler>>				samplers							= {};
+	std::unique_ptr<vk2d::Sampler>							default_sampler							= {};
 
-	vk2d::GamepadEventCallbackFun							joystick_event_callback				= {};
+//	vk2d::_internal::CompleteImageResource					default_texture							= {};
+//	vk2d::_internal::PoolDescriptorSet						default_texture_descriptor_set			= {};
+	vk2d::TextureResource								*	default_texture							= {};
 
-	bool													is_good								= {};
+	std::vector<std::unique_ptr<vk2d::Window>>				windows									= {};
+	std::vector<std::unique_ptr<vk2d::Cursor>>				cursors									= {};
+	std::vector<std::unique_ptr<vk2d::Sampler>>				samplers								= {};
+
+	vk2d::GamepadEventCallbackFun							joystick_event_callback					= {};
+
+	bool													is_good									= {};
 };
 
 

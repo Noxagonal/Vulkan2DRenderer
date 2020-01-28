@@ -21,8 +21,14 @@ VkDeviceSize								CalculateAlignmentForBuffer(
 	const VkPhysicalDeviceLimits		&	physical_device_limits
 )
 {
-	VkDeviceSize		buffer_alignment	= std::max( physical_device_limits.minUniformBufferOffsetAlignment, physical_device_limits.minStorageBufferOffsetAlignment );
-	buffer_alignment	= std::max( buffer_alignment, VkDeviceSize( physical_device_limits.minMemoryMapAlignment ) );
+	VkDeviceSize		buffer_alignment	= std::max(
+		physical_device_limits.minUniformBufferOffsetAlignment,
+		physical_device_limits.minStorageBufferOffsetAlignment
+	);
+	buffer_alignment	= std::max(
+		buffer_alignment,
+		VkDeviceSize( physical_device_limits.minMemoryMapAlignment )
+	);
 
 	return VkDeviceSize( ( ( ( int64_t( unaligned_size ) - 1 ) / buffer_alignment ) + 1 ) * buffer_alignment );
 }
