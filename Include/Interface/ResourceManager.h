@@ -43,7 +43,10 @@ public:
 		const std::vector<std::filesystem::path>			&	file_path_listing );
 
 	VK2D_API vk2d::FontResource								*	VK2D_APIENTRY				LoadFontResource(
-		const std::filesystem::path							&	file_path );
+		const std::filesystem::path							&	file_path,
+		uint32_t												glyph_texel_size			= 64,
+		bool													use_alpha					= true,
+		uint32_t												glyph_atlas_padding			= 8 );
 
 	VK2D_API void												VK2D_APIENTRY				DestroyResource(
 		vk2d::Resource																	*	resource );

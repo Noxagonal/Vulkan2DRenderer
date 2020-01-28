@@ -49,7 +49,10 @@ public:
 
 	vk2d::FontResource									*	LoadFontResource(
 		const std::filesystem::path						&	file_path,
-		vk2d::Resource									*	parent_resource );
+		vk2d::Resource									*	parent_resource,
+		uint32_t											glyph_texel_size,
+		bool												use_alpha,
+		uint32_t											glyph_atlas_padding );
 
 	void													DestroyResource(
 		vk2d::Resource									*	resource );

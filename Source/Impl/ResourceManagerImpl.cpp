@@ -221,7 +221,11 @@ vk2d::TextureResource * vk2d::_internal::ResourceManagerImpl::CreateArrayTexture
 
 vk2d::FontResource * vk2d::_internal::ResourceManagerImpl::LoadFontResource(
 	const std::filesystem::path			&	file_path,
-	vk2d::Resource						*	parent_resource )
+	vk2d::Resource						*	parent_resource,
+	uint32_t								glyph_texel_size,
+	bool									use_alpha,
+	uint32_t								glyph_atlas_padding
+)
 {
 	std::lock_guard<std::recursive_mutex>		resources_lock( resources_mutex );
 
@@ -231,7 +235,10 @@ vk2d::FontResource * vk2d::_internal::ResourceManagerImpl::LoadFontResource(
 				parent_resource,
 				this,
 				SelectLoaderThread(),
-				file_path
+				file_path,
+				glyph_texel_size,
+				use_alpha,
+				glyph_atlas_padding
 			)
 		);
 	if( !resource || !resource->IsGood() ) {

@@ -29,7 +29,10 @@ public:
 		vk2d::Resource									*	parent_resource,
 		vk2d::_internal::ResourceManagerImpl			*	resource_manager,
 		uint32_t											loader_thread,
-		std::filesystem::path								file_path );
+		std::filesystem::path								file_path,
+		uint32_t											glyph_texel_size,
+		bool												use_alpha,
+		uint32_t											glyph_atlas_padding );
 
 	VK2D_API																					~FontResource();
 

@@ -10,8 +10,12 @@ VK2D_API vk2d::FontResource::FontResource(
 	vk2d::Resource							*	parent_resource,
 	vk2d::_internal::ResourceManagerImpl	*	resource_manager,
 	uint32_t									loader_thread,
-	std::filesystem::path						file_path
-) : vk2d::Resource(
+	std::filesystem::path						file_path,
+	uint32_t									glyph_texel_size,
+	bool										use_alpha,
+	uint32_t									glyph_atlas_padding
+) :
+	vk2d::Resource(
 	loader_thread,
 	resource_manager,
 	parent_resource,
@@ -20,7 +24,10 @@ VK2D_API vk2d::FontResource::FontResource(
 {
 	impl		= std::make_unique<vk2d::_internal::FontResourceImpl>(
 		this,
-		resource_manager
+		resource_manager,
+		glyph_texel_size,
+		use_alpha,
+		glyph_atlas_padding
 	);
 	if( impl && impl->IsGood() ) {
 		is_good		= true;

@@ -21,7 +21,10 @@ class FontResourceImpl {
 public:
 	FontResourceImpl(
 		vk2d::FontResource							*	font_resource,
-		vk2d::_internal::ResourceManagerImpl		*	resource_manager );
+		vk2d::_internal::ResourceManagerImpl		*	resource_manager,
+		uint32_t										glyph_texel_size,
+		bool											use_alpha,
+		uint32_t										glyph_atlas_padding );
 
 	~FontResourceImpl();
 
@@ -80,6 +83,10 @@ private:
 
 	vk2d::FontResource								*	font_resource_parent				= {};
 	vk2d::_internal::ResourceManagerImpl			*	resource_manager_parent				= {};
+
+	bool												use_alpha							= {};
+	uint32_t											glyph_texel_size					= {};
+	uint32_t											glyph_atlas_padding					= {};
 
 	uint32_t											atlas_size							= {};
 
