@@ -37,7 +37,7 @@ struct PushConstants {
 
 
 
-enum class ShaderStagesID {
+enum class ShaderProgramID {
 	SINGLE_TEXTURED,
 	SINGLE_TEXTURED_UV_BORDER_COLOR,
 
@@ -53,14 +53,14 @@ enum class ShaderStagesID {
 
 
 
-class ShaderStages {
+class ShaderProgram {
 public:
-	ShaderStages()											= default;
-	ShaderStages( const vk2d::_internal::ShaderStages & other )				= default;
-	ShaderStages( vk2d::_internal::ShaderStages && other )					= default;
+	ShaderProgram()											= default;
+	ShaderProgram( const vk2d::_internal::ShaderProgram & other )				= default;
+	ShaderProgram( vk2d::_internal::ShaderProgram && other )					= default;
 	template<typename T>
-	ShaderStages( std::initializer_list<T> )								= delete;
-	inline ShaderStages(
+	ShaderProgram( std::initializer_list<T> )								= delete;
+	inline ShaderProgram(
 		VkShaderModule										vertex,
 		VkShaderModule										fragment
 	) :
@@ -68,13 +68,13 @@ public:
 		fragment( fragment )
 	{}
 
-	vk2d::_internal::ShaderStages & operator=( const vk2d::_internal::ShaderStages & other )	= default;
-	vk2d::_internal::ShaderStages & operator=( vk2d::_internal::ShaderStages && other )			= default;
+	vk2d::_internal::ShaderProgram & operator=( const vk2d::_internal::ShaderProgram & other )	= default;
+	vk2d::_internal::ShaderProgram & operator=( vk2d::_internal::ShaderProgram && other )			= default;
 
-	bool operator<( const vk2d::_internal::ShaderStages & other ) const;
-	bool operator>( const vk2d::_internal::ShaderStages & other ) const;
-	bool operator==( const vk2d::_internal::ShaderStages & other ) const;
-	bool operator!=( const vk2d::_internal::ShaderStages & other ) const;
+	bool operator<( const vk2d::_internal::ShaderProgram & other ) const;
+	bool operator>( const vk2d::_internal::ShaderProgram & other ) const;
+	bool operator==( const vk2d::_internal::ShaderProgram & other ) const;
+	bool operator!=( const vk2d::_internal::ShaderProgram & other ) const;
 
 	VkShaderModule						vertex				= {};
 	VkShaderModule						fragment			= {};
@@ -88,19 +88,20 @@ public:
 	PipelineSettings( const vk2d::_internal::PipelineSettings & other )				= default;
 	PipelineSettings( vk2d::_internal::PipelineSettings && other )					= default;
 	template<typename T>
-	PipelineSettings( std::initializer_list<T> )					= delete;
+	PipelineSettings( std::initializer_list<T> )									= delete;
 
 	vk2d::_internal::PipelineSettings & operator=( const vk2d::_internal::PipelineSettings & other )	= default;
-	vk2d::_internal::PipelineSettings & operator=( vk2d::_internal::PipelineSettings && other )		= default;
+	vk2d::_internal::PipelineSettings & operator=( vk2d::_internal::PipelineSettings && other )			= default;
 
 	bool operator<( const vk2d::_internal::PipelineSettings & other ) const;
 	bool operator>( const vk2d::_internal::PipelineSettings & other ) const;
 	bool operator==( const vk2d::_internal::PipelineSettings & other ) const;
 	bool operator!=( const vk2d::_internal::PipelineSettings & other ) const;
 
+	VkRenderPass						render_pass					= {};
 	VkPrimitiveTopology					primitive_topology			= {};
 	VkPolygonMode						polygon_mode				= {};
-	vk2d::_internal::ShaderStages		shader_stages				= {};
+	vk2d::_internal::ShaderProgram		shader_programs				= {};
 	VkSampleCountFlags					samples						= {};
 };
 

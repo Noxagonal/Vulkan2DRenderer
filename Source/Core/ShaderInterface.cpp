@@ -10,8 +10,8 @@
 
 
 
-bool vk2d::_internal::ShaderStages::operator<(
-	const vk2d::_internal::ShaderStages		&	other
+bool vk2d::_internal::ShaderProgram::operator<(
+	const vk2d::_internal::ShaderProgram		&	other
 ) const
 {
 	if( vertex < other.vertex ) {
@@ -23,8 +23,8 @@ bool vk2d::_internal::ShaderStages::operator<(
 	return false;
 }
 
-bool vk2d::_internal::ShaderStages::operator>(
-	const vk2d::_internal::ShaderStages		&	other
+bool vk2d::_internal::ShaderProgram::operator>(
+	const vk2d::_internal::ShaderProgram		&	other
 ) const
 {
 	if( vertex > other.vertex ) {
@@ -36,8 +36,8 @@ bool vk2d::_internal::ShaderStages::operator>(
 	return false;
 }
 
-bool vk2d::_internal::ShaderStages::operator==(
-	const vk2d::_internal::ShaderStages		&	other
+bool vk2d::_internal::ShaderProgram::operator==(
+	const vk2d::_internal::ShaderProgram		&	other
 ) const
 {
 	if( vertex != other.vertex ) {
@@ -49,8 +49,8 @@ bool vk2d::_internal::ShaderStages::operator==(
 	return true;
 }
 
-bool vk2d::_internal::ShaderStages::operator!=(
-	const vk2d::_internal::ShaderStages		&	other
+bool vk2d::_internal::ShaderProgram::operator!=(
+	const vk2d::_internal::ShaderProgram		&	other
 ) const
 {
 	return !operator==( other );
@@ -66,13 +66,16 @@ bool vk2d::_internal::PipelineSettings::operator<(
 	const vk2d::_internal::PipelineSettings		&	other
 ) const
 {
+	if( render_pass < other.render_pass ) {
+		return true;
+	}
 	if( primitive_topology < other.primitive_topology ) {
 		return true;
 	}
 	if( polygon_mode < other.polygon_mode ) {
 		return true;
 	}
-	if( shader_stages < other.shader_stages ) {
+	if( shader_programs < other.shader_programs ) {
 		return true;
 	}
 	if( samples < other.samples ) {
@@ -85,13 +88,16 @@ bool vk2d::_internal::PipelineSettings::operator>(
 	const vk2d::_internal::PipelineSettings		&	other
 ) const
 {
+	if( render_pass > other.render_pass ) {
+		return true;
+	}
 	if( primitive_topology > other.primitive_topology ) {
 		return true;
 	}
 	if( polygon_mode > other.polygon_mode ) {
 		return true;
 	}
-	if( shader_stages > other.shader_stages ) {
+	if( shader_programs > other.shader_programs ) {
 		return true;
 	}
 	if( samples > other.samples ) {
@@ -104,13 +110,16 @@ bool vk2d::_internal::PipelineSettings::operator==(
 	const vk2d::_internal::PipelineSettings		&	other
 ) const
 {
+	if( render_pass != other.render_pass ) {
+		return false;
+	}
 	if( primitive_topology != other.primitive_topology ) {
 		return false;
 	}
 	if( polygon_mode != other.polygon_mode ) {
 		return false;
 	}
-	if( shader_stages != other.shader_stages ) {
+	if( shader_programs != other.shader_programs ) {
 		return false;
 	}
 	if( samples != other.samples ) {

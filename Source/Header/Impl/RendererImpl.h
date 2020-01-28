@@ -129,14 +129,19 @@ public:
 	const VkPhysicalDeviceMemoryProperties				&	GetPhysicalDeviceMemoryProperties() const;
 	const VkPhysicalDeviceFeatures						&	GetPhysicalDeviceFeatures() const;
 
-	vk2d::_internal::ShaderStages							GetShaderStages(
-		vk2d::_internal::ShaderStagesID						id ) const;
+	vk2d::_internal::ShaderProgram							GetShaderModules(
+		vk2d::_internal::ShaderProgramID						id ) const;
 
-	vk2d::_internal::ShaderStages							GetCompatibleShaderStages(
+	vk2d::_internal::ShaderProgram							GetCompatibleShaderModules(
 		bool												multitextured,
 		bool												custom_uv_border_color,
-		uint32_t											vertices_per_primitive
-	);
+		uint32_t											vertices_per_primitive );
+
+	VkPipeline												GetPipeline(
+		const vk2d::_internal::PipelineSettings			&	settings );
+
+	VkPipeline												CreatePipeline(
+		const vk2d::_internal::PipelineSettings			&	settings );
 
 	VkPipelineCache											GetPipelineCache() const;
 	VkPipelineLayout										GetPipelineLayout() const;
@@ -173,6 +178,7 @@ public:
 	void													DestroyDescriptorPool();
 	void													DestroyDefaultSampler();
 	void													DestroyPipelineCache();
+	void													DestroyPipelines();
 	void													DestroyShaderModules();
 	void													DestroyDescriptorSetLayouts();
 	void													DestroyPipelineLayout();
@@ -214,7 +220,9 @@ private:
 	VkPhysicalDeviceFeatures								physical_device_features				= {};
 
 	std::vector<VkShaderModule>								shader_modules							= {};
-	std::map<vk2d::_internal::ShaderStagesID, vk2d::_internal::ShaderStages>	shader_stages		= {};
+
+	std::map<vk2d::_internal::ShaderProgramID, vk2d::_internal::ShaderProgram>	shader_programs		= {};
+	std::map<vk2d::_internal::PipelineSettings, VkPipeline>						pipelines			= {};
 
 	VkPipelineCache											pipeline_cache							= {};
 	VkPipelineLayout										pipeline_layout							= {};

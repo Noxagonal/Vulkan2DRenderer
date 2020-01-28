@@ -36,7 +36,7 @@ class CursorImpl;
 class MeshBuffer;
 class TextureResourceImpl;
 class ScreenshotSaverTask;
-class ShaderStages;
+class ShaderProgram;
 
 enum class NextRenderCallFunction : uint32_t {
 	BEGIN		= 0,
@@ -262,15 +262,9 @@ private:
 
 	void														HandleScreenshotEvent();
 
-	VkPipeline													GetPipeline(
-		const vk2d::_internal::PipelineSettings				&	settings );
-
-	VkPipeline													CreatePipeline(
-		const vk2d::_internal::PipelineSettings				&	settings );
-
 	void														CmdBindPipelineIfDifferent(
 		VkCommandBuffer											command_buffer,
-		vk2d::_internal::PipelineSettings						pipeline_settings );
+		const vk2d::_internal::PipelineSettings				&	pipeline_settings );
 
 	void														CmdBindTextureSamplerIfDifferent(
 		VkCommandBuffer											command_buffer,
@@ -351,8 +345,6 @@ private:
 	vk2d::_internal::CompleteBufferResource						frame_data_device_buffer					= {};
 	vk2d::_internal::PoolDescriptorSet							frame_data_descriptor_set					= {};
 
-	std::map<PipelineSettings, VkPipeline>						pipelines									= {};
-
 	vk2d::_internal::NextRenderCallFunction						next_render_call_function					= vk2d::_internal::NextRenderCallFunction::BEGIN;
 	bool														should_reconstruct							= {};
 	bool														should_close								= {};
@@ -380,7 +372,7 @@ private:
 	uint32_t													screenshot_swapchain_id					= {};
 	std::atomic_bool											screenshot_being_saved					= {};
 	bool														screenshot_event_error					= {};
-	std::string													screenshot_event_message			= {};
+	std::string													screenshot_event_message				= {};
 
 	bool														is_good									= {};
 };
