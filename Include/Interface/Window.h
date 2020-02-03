@@ -343,7 +343,7 @@ struct WindowCreateInfo {
 	bool								maximized					= false;		// Is the window maximized to fill the screen when created.
 	bool								transparent_framebuffer		= false;		// Is the alpha value of the render interpreted as a transparent window background.
 	vk2d::WindowCoordinateSpace			coordinate_space			= vk2d::WindowCoordinateSpace::TEXEL_SPACE; // Window coordinate system to be used, see WindowCoordinateSpace.
-	vk2d::Vector2u						size						= { 0, 0 };		// Window framebuffer initial size
+	vk2d::Vector2u						size						= { 800, 600 };	// Window framebuffer initial size
 	vk2d::Vector2u						min_size					= { 32, 32 };	// Minimum size of the window, will be adjusted to suit the hardware.
 	vk2d::Vector2u						max_size					= { UINT32_MAX, UINT32_MAX };	// Maximum size of the window, will be adjusted to suit the hardware.
 	vk2d::Monitor					*	fullscreen_monitor			= {};			// Fullscreen monitor pointer, nullptr is windowed, use Renderer::GetPrimaryMonitor() to use primary monitor for fullscreen.

@@ -1163,12 +1163,12 @@ VK2D_API vk2d::Mesh VK2D_APIENTRY vk2d::GenerateTextMesh(
 		mesh.vertices[ vertex_offset + 3 ].single_texture_channel	= texture_channel;
 
 		mesh.indices.resize( index_offset + 6 );
-		mesh.indices[ index_offset + 0 ]	= vertex_offset + 0;
-		mesh.indices[ index_offset + 1 ]	= vertex_offset + 2;
-		mesh.indices[ index_offset + 2 ]	= vertex_offset + 1;
-		mesh.indices[ index_offset + 3 ]	= vertex_offset + 1;
-		mesh.indices[ index_offset + 4 ]	= vertex_offset + 2;
-		mesh.indices[ index_offset + 5 ]	= vertex_offset + 3;
+		mesh.indices[ index_offset + 0 ]	= uint32_t( vertex_offset + 0 );
+		mesh.indices[ index_offset + 1 ]	= uint32_t( vertex_offset + 2 );
+		mesh.indices[ index_offset + 2 ]	= uint32_t( vertex_offset + 1 );
+		mesh.indices[ index_offset + 3 ]	= uint32_t( vertex_offset + 1 );
+		mesh.indices[ index_offset + 4 ]	= uint32_t( vertex_offset + 2 );
+		mesh.indices[ index_offset + 5 ]	= uint32_t( vertex_offset + 3 );
 	};
 
 	auto location	= origin;

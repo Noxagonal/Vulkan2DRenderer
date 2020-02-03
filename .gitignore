@@ -9,7 +9,7 @@
 *.user
 *.userosscache
 *.sln.docstates
-ExternalLibraries/VisualStudio2019/
+Build
 
 # User-specific files (MonoDevelop/Xamarin Studio)
 *.userprefs
