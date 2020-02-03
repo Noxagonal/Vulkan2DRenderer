@@ -10,6 +10,19 @@ Internally workloads are automatically grouped to create more efficient submissi
 
 ------
 
+### Building
+
+Currently only Visual Studio 2019 is supported, this includes the community edition. Just run "Build_VisualStudio2019.bat" file and follow the instructions.
+
+Prior to building this library you will need:
+- CMake 3.8 or newer
+- Visual Studio 2019
+- Vulkan SDK, any version
+
+Building manually is not yet supported, it will be once I figure out some dependencies and merge different projects together under single CMake build.
+
+------
+
 ### Motivation
 
 - This project is primarily a passion project.

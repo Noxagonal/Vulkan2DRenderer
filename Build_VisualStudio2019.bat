@@ -74,14 +74,18 @@ call :GetAsOnOffString build_examples_str, %~4
 
 cls
 echo:
-echo ***************************************
-echo * [ 1 ] Build static library: %build_static_str%
+echo ************************************************************
+echo *
+echo * Choose from the following list and press enter to select.
+echo *
+echo * [ 1 ] Build static library (EXPERIMENTAL): %build_static_str%
 echo * [ 2 ] Build tests: %build_tests_str%
 echo * [ 3 ] Build examples: %build_examples_str%
 echo *
 echo * [ 4 ] Build with current settings
 echo * [ 5 ] Exit
-echo ***************************************
+echo *
+echo ************************************************************
 echo:
 
 set /p "%~1=Selection: "
