@@ -12,7 +12,8 @@ Internally workloads are automatically grouped to create more efficient submissi
 
 ### Building
 
-Currently only Visual Studio 2019 is supported, this includes the community edition. Just run "Build_VisualStudio2019.bat" file and follow the instructions.
+Currently only Visual Studio 2019 is supported, this includes the community edition. Just run "Build_VisualStudio2019.bat" file and follow the instructions. The batch file will create the project solution file in "./Build/VisualStudio2019/VK2D/VK2D.sln".
+To get started see the example projects.
 
 Prior to building this library you will need:
 - CMake 3.8 or newer
