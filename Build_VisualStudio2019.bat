@@ -40,22 +40,22 @@ mkdir %build_name%
 cd %build_name%
 cd ..\..
 
-cd ExternalLibraries
-call Build_VisualStudio2019.bat
+REM cd ExternalLibraries
+REM call Build_VisualStudio2019.bat
+REM cd ..
 
-cd ..\Tools
-call Build_VisualStudio2019.bat
-
-cd ..
+REM cd Tools
+REM call Build_VisualStudio2019.bat
+REM cd ..
 
 cd Build
 cd %build_name%
 
 mkdir %project%
 cd %project%
-cmake -G %generator% -A %architecture% -D CMAKE_BUILD_TYPE=Release -D BUILD_STATIC_LIBRARY=%build_static_str% -D BUILD_TESTS=%build_tests_str% -D BUILD_EXAMPLES=%build_examples_str% "%source_dir%"
+cmake -G %generator% -A %architecture% -D CMAKE_BUILD_TYPE=Release -D VK2D_BUILD_STATIC_LIBRARY=%build_static_str% -D VK2D_BUILD_TESTS=%build_tests_str% -D VK2D_BUILD_EXAMPLES=%build_examples_str% "%source_dir%"
 
-"C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\MSBuild\Current\Bin\MSBuild.exe" %project%.sln /property:Configuration=Release -m
+REM "C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\MSBuild\Current\Bin\MSBuild.exe" %project%.sln /property:Configuration=Release -m
 cd ..
 
 cd ..\..
@@ -109,4 +109,5 @@ exit /B 0
 
 
 :End
+pause
 exit /B %ERRORLEVEL%

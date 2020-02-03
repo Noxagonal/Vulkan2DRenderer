@@ -1,19 +1,9 @@
 
 # VK2D library root
 
-cmake_minimum_required(VERSION 3.8)
+cmake_minimum_required(VERSION 3.15)
 
-project("VK2D")
-
-option(BUILD_STATIC_LIBRARY
-	"Build static library instead of shared."
-)
-option(BUILD_TESTS
-	"Build test programs and test targets"
-)
-option(BUILD_EXAMPLES
-	"Build example programs which will help in learning VK2D"
-)
+project(VK2D CXX)
 
 if(MSVC)
 	add_compile_options(
@@ -22,6 +12,24 @@ if(MSVC)
 endif()
 
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
+
+
+
+add_subdirectory("ExternalLibraries")
+
+
+
+option(VK2D_BUILD_STATIC_LIBRARY
+	"Build static library instead of shared."
+)
+option(VK2D_BUILD_TESTS
+	"Build test programs and test targets"
+)
+option(VK2D_BUILD_EXAMPLES
+	"Build example programs which will help in learning VK2D"
+)
+
+add_subdirectory("Tools")
 
 set(FILES_INCLUDE
 	"Include/Vulkan2DRenderer.h"
@@ -136,7 +144,7 @@ source_group(TREE "${CMAKE_SOURCE_DIR}"
 
 
 
-if(BUILD_STATIC_LIBRARY)
+if(VK2D_BUILD_STATIC_LIBRARY)
 	add_library("${PROJECT_NAME}"
 		STATIC
 			${SRC_FILES}
@@ -220,10 +228,10 @@ endif()
 
 
 
-if(BUILD_TESTS)
+if(VK2D_BUILD_TESTS)
 	add_subdirectory("Tests")
 endif()
 
-if(BUILD_EXAMPLES)
+if(VK2D_BUILD_EXAMPLES)
 	add_subdirectory("Examples")
 endif()
