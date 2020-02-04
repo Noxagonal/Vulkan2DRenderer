@@ -6,18 +6,14 @@
 cmake_minimum_required(VERSION 3.15)
 
 set(GLSLANG_PATH
-	"$ENV{VK_SDK_PATH}/glslang"
+	"${CMAKE_SOURCE_DIR}/ExternalLibraries/glslang"
 )
 
-set(GLSLANG_LIBRARY_PATH
-	"${CMAKE_CURRENT_BINARY_DIR}/../../ExternalLibraries/glslang"
-)
-
-add_executable(CompleGLSLShadersToSpirV
+add_executable(CompileGLSLShadersToSpirV
 	"Main.cpp"
 )
 
-set_target_properties(CompleGLSLShadersToSpirV
+set_target_properties(CompileGLSLShadersToSpirV
 	PROPERTIES
 		FOLDER						"Tools"
 		CXX_STANDARD				17
@@ -26,24 +22,30 @@ set_target_properties(CompleGLSLShadersToSpirV
 		RUNTIME_OUTPUT_DIRECTORY	"${CMAKE_BINARY_DIR}/Bin"
 )
 
-target_include_directories(CompleGLSLShadersToSpirV
+target_include_directories(CompileGLSLShadersToSpirV
 	PUBLIC
 		"${GLSLANG_PATH}"
 )
 
-target_link_directories(CompleGLSLShadersToSpirV
-	PUBLIC
-		"${GLSLANG_LIBRARY_PATH}"
+target_link_libraries(CompileGLSLShadersToSpirV
+	glslang
+	glslang-default-resource-limits
+	OGLCompiler
+	OSDependent
+	SPIRV
+	SPVRemapper
+#	HLSL
 )
 
-target_link_libraries(CompleGLSLShadersToSpirV
-	"${GLSLANG_LIBRARY_PATH}/glslang/Release/glslang.lib"
-	"${GLSLANG_LIBRARY_PATH}/glslang/OSDependent/Windows/Release/OSDependent.lib"
-	"${GLSLANG_LIBRARY_PATH}/hlsl/Release/HLSL.lib"
-	"${GLSLANG_LIBRARY_PATH}/OGLCompilersDLL/Release/OGLCompiler.lib"
-	"${GLSLANG_LIBRARY_PATH}/SPIRV/Release/SPIRV.lib"
-	"${GLSLANG_LIBRARY_PATH}/SPIRV/Release/SPVRemapper.lib"
-	"${GLSLANG_LIBRARY_PATH}/StandAlone/Release/glslang-default-resource-limits.lib"
-	"${GLSLANG_LIBRARY_PATH}/External/spirv-tools/source/Release/SPIRV-Tools.lib"
-	"${GLSLANG_LIBRARY_PATH}/External/spirv-tools/source/opt/Release/SPIRV-Tools-opt.lib"
+add_dependencies(CompileGLSLShadersToSpirV
+	glslang
+	glslang-default-resource-limits
+	OGLCompiler
+	OSDependent
+	SPIRV
+	SPVRemapper
+#	HLSL
+	glslangValidator
+	spirv-remap
 )
+

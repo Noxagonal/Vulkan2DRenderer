@@ -7,3 +7,6 @@
 [submodule "ExternalLibraries/freetype2"]
 	path = ExternalLibraries/freetype2
 	url = https://git.savannah.nongnu.org/git/freetype/freetype2.git
+[submodule "ExternalLibraries/glslang"]
+	path = ExternalLibraries/glslang
+	url = https://github.com/KhronosGroup/glslang

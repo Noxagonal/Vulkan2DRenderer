@@ -1,4 +1,9 @@
 
+// This program serves as a hello world of sorts to VK2D
+
+
+
+
 #include <Vulkan2DRenderer.h>
 
 constexpr double PI				= 3.14159265358979323846;
@@ -26,10 +31,13 @@ int main()
 	if( !window ) return -1;
 
 	// Initialize some counters and run the program for 5 seconds before shutting down.
-	auto steady_clock = std::chrono::steady_clock();
-	auto start_time = steady_clock.now();
-	while( steady_clock.now() - start_time < std::chrono::seconds( 5 ) ) {
+	auto start_time = std::chrono::steady_clock::now();
+	while( std::chrono::steady_clock::now() - start_time < std::chrono::seconds( 5 ) ) {
 
+		// General structure of the program is 
+		// This area is where you should put your game logic code.
+
+		// Call Window::BeginRender() before drawing anything on screen.
 		if( !window->BeginRender() ) return -1;
 
 		window->DrawBox(
@@ -41,7 +49,7 @@ int main()
 			vk2d::Vector2f( 750, 500 ),
 			true,
 			64.0f,
-			vk2d::Colorf( 0.2f, 0.5f, 0.8f, 0.6f )
+			vk2d::Colorf( 0.2f, 0.5f, 0.8f, 0.2f )
 		);
 		window->DrawPie(
 			vk2d::Vector2f( 50, 50 ),

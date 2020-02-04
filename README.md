@@ -12,15 +12,32 @@ Internally workloads are automatically grouped to create more efficient submissi
 
 ### Building
 
-Currently only Visual Studio 2019 is supported, this includes the community edition. Just run "Build_VisualStudio2019.bat" file and follow the instructions. The batch file will create the project solution file in "./Build/VisualStudio2019/VK2D/VK2D.sln".
+Currently only Visual Studio 2019 is supported, this includes the community edition. Just run "Build_VisualStudio2019.bat" file and follow the instructions. This batch file will create the project solution file in "./Build/VisualStudio2019/VK2D.sln".
 To get started see the example projects.
 
 Prior to building this library you will need:
-- CMake 3.8 or newer
+- CMake 3.15 or newer
 - Visual Studio 2019
 - Vulkan SDK, any version
 
-Building manually is not yet supported, it will be once I figure out some dependencies and merge different projects together under single CMake build.
+You can also build project files manually using regular CMake.
+
+###### Windows Visual Studio 2019
+```
+cmake -G "Visual Studio 16 2019" -A "x64" <SOURCE DIRECTORY>
+```
+
+To build tests
+```
+cmake -G "Visual Studio 16 2019" -A "x64" -D VK2D_BUILD_TESTS=ON <SOURCE DIRECTORY>
+```
+
+Available CMake options:
+```
+VK2D_BUILD_STATIC_LIBRARY   = default OFF   -> Build the library as static. EXPERIMENTAL!
+VK2D_BUILD_TESTS            = default OFF   -> Build tests.
+VK2D_BUILD_EXAMPLES         = default ON    -> Build and include examples on how to use this library.
+```
 
 ------
 

@@ -5,12 +5,42 @@ cmake_minimum_required(VERSION 3.15)
 
 project(VK2D CXX)
 
+if(POLICY CMP0077)
+	cmake_policy(SET CMP0077 NEW)
+endif()
+
+find_package(Git QUIET)
+if(GIT_FOUND AND EXISTS "${PROJECT_SOURCE_DIR}/.git")
+# Update submodules as needed
+	option(GIT_SUBMODULE "Check submodules during build" ON)
+	if(GIT_SUBMODULE)
+		message(STATUS "Submodule update")
+		execute_process(COMMAND ${GIT_EXECUTABLE} submodule update --init --recursive
+			WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+			RESULT_VARIABLE GIT_SUBMOD_RESULT)
+		if(NOT GIT_SUBMOD_RESULT EQUAL "0")
+			message(FATAL_ERROR "git submodule update --init failed with ${GIT_SUBMOD_RESULT}, please checkout submodules")
+		endif()
+	endif()
+endif()
+
+if(NOT EXISTS "${PROJECT_SOURCE_DIR}/ExternalLibraries/freetype2/CMakeLists.txt")
+    message(FATAL_ERROR "The submodules were not downloaded! GIT_SUBMODULE was turned off or failed. Please update submodules and try again.")
+endif()
+if(NOT EXISTS "${PROJECT_SOURCE_DIR}/ExternalLibraries/glfw/CMakeLists.txt")
+    message(FATAL_ERROR "The submodules were not downloaded! GIT_SUBMODULE was turned off or failed. Please update submodules and try again.")
+endif()
+if(NOT EXISTS "${PROJECT_SOURCE_DIR}/ExternalLibraries/glslang/CMakeLists.txt")
+    message(FATAL_ERROR "The submodules were not downloaded! GIT_SUBMODULE was turned off or failed. Please update submodules and try again.")
+endif()
+
 if(MSVC)
 	add_compile_options(
 		"/MP"
 	)
 endif()
 
+set(CMAKE_DISABLE_IN_SOURCE_BUILD ON)
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
 
@@ -21,12 +51,15 @@ add_subdirectory("ExternalLibraries")
 
 option(VK2D_BUILD_STATIC_LIBRARY
 	"Build static library instead of shared."
+	OFF
 )
 option(VK2D_BUILD_TESTS
 	"Build test programs and test targets"
+	OFF
 )
 option(VK2D_BUILD_EXAMPLES
 	"Build example programs which will help in learning VK2D"
+	ON
 )
 
 add_subdirectory("Tools")
@@ -145,14 +178,14 @@ source_group(TREE "${CMAKE_SOURCE_DIR}"
 
 
 if(VK2D_BUILD_STATIC_LIBRARY)
-	add_library("${PROJECT_NAME}"
+	add_library(VK2D
 		STATIC
 			${SRC_FILES}
 			${SRC_INC_FILES}
 			${INC_FILES}
 	)
 else()
-	add_library("${PROJECT_NAME}"
+	add_library(VK2D
 		SHARED
 			${SRC_FILES}
 			${SRC_INC_FILES}
@@ -160,7 +193,7 @@ else()
 	)
 endif()
 
-set_target_properties("${PROJECT_NAME}"
+set_target_properties(VK2D
 	PROPERTIES
 		CXX_STANDARD				17
 		ARCHIVE_OUTPUT_DIRECTORY	"${CMAKE_BINARY_DIR}/Lib"
@@ -172,59 +205,61 @@ set(EXTERNAL_INCLUDES_PATH
 	"${CMAKE_SOURCE_DIR}/ExternalLibraries"
 )
 set(EXTERNAL_LIBRARY_PATH
-	"${CMAKE_BINARY_DIR}/../ExternalLibraries"
+	"${CMAKE_BINARY_DIR}/ExternalLibraries"
 )
 
 set(EXTERNAL_INCLUDES
-	"${EXTERNAL_INCLUDES_PATH}/freetype-2.10.1/include"
-	"${EXTERNAL_INCLUDES_PATH}/glfw-3.3/include"
+	"${EXTERNAL_INCLUDES_PATH}/freetype2/include"
+	"${EXTERNAL_INCLUDES_PATH}/glfw/include"
 	"${EXTERNAL_INCLUDES_PATH}/stb"
 )
 set(EXTERNAL_LIBRARIES
-	"${EXTERNAL_LIBRARY_PATH}/freetype-2.10.1"
-	"${EXTERNAL_LIBRARY_PATH}/freetype-2.10.1/Release"
-	"${EXTERNAL_LIBRARY_PATH}/glfw-3.3/src"
-	"${EXTERNAL_LIBRARY_PATH}/glfw-3.3/src/Release"
+	"${EXTERNAL_LIBRARY_PATH}/freetype2"
+	"${EXTERNAL_LIBRARY_PATH}/glfw/src"
 )
 
-target_include_directories("${PROJECT_NAME}"
+target_include_directories(VK2D
 	PUBLIC
 		"$ENV{VK_SDK_PATH}/Include"
 		"${EXTERNAL_INCLUDES}"
 )
 
-target_link_directories("${PROJECT_NAME}"
+target_link_directories(VK2D
 	PUBLIC
 		"$ENV{VK_SDK_PATH}/Lib"
 		"${EXTERNAL_LIBRARIES}"
 )
 
-target_link_libraries("${PROJECT_NAME}"
-	"vulkan-1.lib"
-	"freetype.lib"
-	"glfw3.lib"
+target_link_libraries(VK2D
+	"vulkan-1"
+	freetype
+	glfw
 )
 
-if(MSVC)
+#target_link_libraries(VK2D
+#	"vulkan-1.lib"
+#	"freetype.lib"
+#	"glfw3.lib"
+#)
+
 add_custom_target(RunTool_CompileGLSLShaderToSpirV
 	COMMAND
-		"${CMAKE_BINARY_DIR}/../Tools/CompileGLSLShadersToSpir-V/Bin/Release/CompileGLSLShadersToSpir-V.exe"
+		CompileGLSLShadersToSpirV
 		"-shaderpath" "${CMAKE_SOURCE_DIR}/Source/Shaders"
 )
-add_dependencies(
-	"${PROJECT_NAME}"
-	RunTool_CompileGLSLShaderToSpirV
+add_dependencies(RunTool_CompileGLSLShaderToSpirV
+	CompileGLSLShadersToSpirV
 )
 set_target_properties(RunTool_CompileGLSLShaderToSpirV
 	PROPERTIES
 		FOLDER						"Utilities"
 )
 
-else()
-message(FATAL_ERROR
-	"Please add platform support here!"
+add_dependencies(VK2D
+	freetype
+	glfw
+	RunTool_CompileGLSLShaderToSpirV
 )
-endif()
 
 
 
