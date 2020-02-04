@@ -69,13 +69,14 @@ VK2D_BUILD_EXAMPLES         = default ON    -> Build and include examples on how
 
 ------
 
-### Included libraries
+### External libraries
 
-| Library | License | Github page |
+| Library | License | Web page |
 | --- | --- | --- |
-| Freetype 2.10.1 | [FTL](ExternalLibraries/freetype-2.10.1/docs/FTL.TXT) | https://www.freetype.org |
-| GLFW 3.3 | [zlib/libpng](ExternalLibraries/glfw-3.3/LICENSE.md) | https://github.com/glfw/glfw |
-| STB | [MIT](ExternalLibraries/stb/LICENSE.md) | https://github.com/nothings/stb |
+| Freetype 2 | [FTL](https://git.savannah.gnu.org/cgit/freetype/freetype2.git/tree/docs/FTL.TXT) | https://www.freetype.org |
+| GLFW 3 | [zlib/libpng](https://github.com/glfw/glfw/blob/master/LICENSE.md) | https://github.com/glfw/glfw |
+| STB | [MIT](https://github.com/nothings/stb/blob/master/LICENSE) | https://github.com/nothings/stb |
+| glslang | ['*Custom*'](https://github.com/KhronosGroup/glslang/blob/master/LICENSE.txt) | https://github.com/KhronosGroup/glslang |
 
 ------
 
