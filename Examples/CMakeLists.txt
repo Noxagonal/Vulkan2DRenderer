@@ -1,9 +1,10 @@
 
 #Examples root
 
-cmake_minimum_required(VERSION 3.8)
+cmake_minimum_required(VERSION 3.15)
 
 function(BuildExample EXECUTABLE_NAME)
+
 	add_executable("${EXECUTABLE_NAME}"
 		"${EXECUTABLE_NAME}.cpp"
 	)
@@ -13,7 +14,7 @@ function(BuildExample EXECUTABLE_NAME)
 	)
 	target_link_libraries("${EXECUTABLE_NAME}"
 		PUBLIC
-			"${PROJECT_NAME}"
+			VK2D
 	)
 	set_target_properties("${EXECUTABLE_NAME}"
 		PROPERTIES
@@ -23,6 +24,10 @@ function(BuildExample EXECUTABLE_NAME)
 			LIBRARY_OUTPUT_DIRECTORY	"${CMAKE_BINARY_DIR}/Lib"
 			RUNTIME_OUTPUT_DIRECTORY	"${CMAKE_BINARY_DIR}/Bin"
 	)
+	add_dependencies("${EXECUTABLE_NAME}"
+		VK2D
+	)
+
 endfunction()
 
 BuildExample("DrawSimpleShapes")

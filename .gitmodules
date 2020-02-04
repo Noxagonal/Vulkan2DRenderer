@@ -1,0 +1,12 @@
+[submodule "ExternalLibraries/glfw"]
+	path = ExternalLibraries/glfw
+	url = https://github.com/glfw/glfw
+[submodule "ExternalLibraries/stb"]
+	path = ExternalLibraries/stb
+	url = https://github.com/nothings/stb
+[submodule "ExternalLibraries/freetype2"]
+	path = ExternalLibraries/freetype2
+	url = https://git.savannah.nongnu.org/git/freetype/freetype2.git
+[submodule "ExternalLibraries/glslang"]
+	path = ExternalLibraries/glslang
+	url = https://github.com/KhronosGroup/glslang
