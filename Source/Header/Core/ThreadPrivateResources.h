@@ -13,7 +13,7 @@ namespace vk2d {
 
 namespace _internal {
 
-class RendererImpl;
+class InstanceImpl;
 class DescriptorAutoPool;
 class DeviceMemoryPool;
 
@@ -22,12 +22,12 @@ class DeviceMemoryPool;
 class ThreadLoaderResource : public vk2d::_internal::ThreadPrivateResource {
 public:
 	ThreadLoaderResource(
-		vk2d::_internal::RendererImpl						*	renderer );
+		vk2d::_internal::InstanceImpl						*	instance );
 
 	~ThreadLoaderResource()
 	{}
 
-	vk2d::_internal::RendererImpl							*	GetRenderer() const;
+	vk2d::_internal::InstanceImpl							*	GetInstance() const;
 	VkDevice													GetVulkanDevice() const;
 	vk2d::_internal::DeviceMemoryPool						*	GetDeviceMemoryPool() const;
 	vk2d::_internal::DescriptorAutoPool						*	GetDescriptorAutoPool() const;
@@ -41,7 +41,7 @@ protected:
 	void														ThreadEnd();
 
 private:
-	vk2d::_internal::RendererImpl							*	renderer_parent						= {};
+	vk2d::_internal::InstanceImpl							*	instance_parent						= {};
 	VkDevice													device								= {};
 	std::unique_ptr<vk2d::_internal::DescriptorAutoPool>		descriptor_auto_pool				= {};
 	std::unique_ptr<vk2d::_internal::DeviceMemoryPool>			device_memory_pool					= {};

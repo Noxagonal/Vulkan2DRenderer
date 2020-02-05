@@ -15,7 +15,7 @@ class SamplerImpl {
 public:
 	SamplerImpl(
 		vk2d::Sampler						*	sampler,
-		vk2d::_internal::RendererImpl		*	renderer,
+		vk2d::_internal::InstanceImpl		*	instance,
 		const vk2d::SamplerCreateInfo		&	create_info );
 
 	~SamplerImpl();
@@ -36,10 +36,10 @@ public:
 
 private:
 	vk2d::Sampler							*	sampler_parent		= {};
-	vk2d::_internal::RendererImpl			*	renderer_parent		= {};
+	vk2d::_internal::InstanceImpl			*	instance_parent		= {};
 	VkDevice									vk_device			= {};
 
-	VkSampler									sampler				= {};
+	VkSampler									vk_sampler			= {};
 	vk2d::_internal::CompleteBufferResource		sampler_data		= {};
 
 	vk2d::Vector2u								border_color_enable	= {};

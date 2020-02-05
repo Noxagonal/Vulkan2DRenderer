@@ -3,8 +3,8 @@
 
 #include "../../Include/Interface/Window.h"
 #include "../Header/Impl/WindowImpl.h"
-#include "../../Include/Interface/Renderer.h"
-#include "../Header/Impl/RendererImpl.h"
+#include "../../Include/Interface/Instance.h"
+#include "../Header/Impl/InstanceImpl.h"
 #include "../Header/Core/MeshBuffer.h"
 
 #define GLFW_INCLUDE_NONE
@@ -16,19 +16,19 @@
 
 
 VK2D_API					vk2d::Window::Window(
-	vk2d::_internal::RendererImpl	*	renderer_parent,
+	vk2d::_internal::InstanceImpl	*	instance_parent,
 	vk2d::WindowCreateInfo			&	window_create_info
 )
 {
 	impl	= std::make_unique<vk2d::_internal::WindowImpl>(
 		this,
-		renderer_parent,
+		instance_parent,
 		window_create_info
 		);
 	if( impl && impl->IsGood() ) {
 		is_good			= true;
 	} else {
-		renderer_parent->Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot create window implementation!" );
+		instance_parent->Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot create window implementation!" );
 		is_good			= false;
 	}
 }
@@ -408,34 +408,34 @@ VK2D_API void VK2D_APIENTRY vk2d::Window::DrawMesh(
 
 
 VK2D_API vk2d::Cursor::Cursor(
-	vk2d::_internal::RendererImpl		*	renderer,
+	vk2d::_internal::InstanceImpl		*	instance,
 	const std::filesystem::path			&	image_path,
 	vk2d::Vector2i							hot_spot
 )
 {
 	impl		= std::make_unique<vk2d::_internal::CursorImpl>(
-		renderer,
+		instance,
 		image_path,
 		hot_spot
 	);
 	if( impl && impl->IsGood() ) {
 		is_good			= true;
 	} else {
-		renderer->Report( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot create cursor implementation!" );
+		instance->Report( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot create cursor implementation!" );
 		is_good			= false;
 		impl			= nullptr;
 	}
 }
 
 VK2D_API vk2d::Cursor::Cursor(
-	vk2d::_internal::RendererImpl		*	renderer,
+	vk2d::_internal::InstanceImpl		*	instance,
 	vk2d::Vector2u							image_size,
 	const std::vector<vk2d::Color8>		&	image_data,
 	vk2d::Vector2i							hot_spot
 )
 {
 	impl		= std::make_unique<vk2d::_internal::CursorImpl>(
-		renderer,
+		instance,
 		image_size,
 		image_data,
 		hot_spot
@@ -443,7 +443,7 @@ VK2D_API vk2d::Cursor::Cursor(
 	if( impl && impl->IsGood() ) {
 		is_good			= true;
 	} else {
-		renderer->Report( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot create cursor implementation!" );
+		instance->Report( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot create cursor implementation!" );
 		is_good			= false;
 		impl			= nullptr;
 	}
@@ -454,7 +454,7 @@ VK2D_API vk2d::Cursor::Cursor(
 )
 {
 	impl		= std::make_unique<vk2d::_internal::CursorImpl>(
-		other.impl->GetRenderer(),
+		other.impl->GetInstance(),
 		other.impl->GetSize(),
 		other.impl->GetPixelData(),
 		other.impl->GetHotSpot()
@@ -462,7 +462,7 @@ VK2D_API vk2d::Cursor::Cursor(
 	if( impl && impl->IsGood() ) {
 		is_good			= true;
 	} else {
-		other.impl->GetRenderer()->Report( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot create cursor implementation!" );
+		other.impl->GetInstance()->Report( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot create cursor implementation!" );
 		is_good			= false;
 		impl			= nullptr;
 	}
@@ -475,7 +475,7 @@ VK2D_API vk2d::Cursor & VK2D_APIENTRY vk2d::Cursor::operator=(
 	vk2d::Cursor	&	other )
 {
 	impl		= std::make_unique<vk2d::_internal::CursorImpl>(
-		other.impl->GetRenderer(),
+		other.impl->GetInstance(),
 		other.impl->GetSize(),
 		other.impl->GetPixelData(),
 		other.impl->GetHotSpot()
@@ -483,7 +483,7 @@ VK2D_API vk2d::Cursor & VK2D_APIENTRY vk2d::Cursor::operator=(
 	if( impl && impl->IsGood() ) {
 		is_good			= true;
 	} else {
-		other.impl->GetRenderer()->Report( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot create cursor implementation!" );
+		other.impl->GetInstance()->Report( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot create cursor implementation!" );
 		is_good			= false;
 		impl			= nullptr;
 	}

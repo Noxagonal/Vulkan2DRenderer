@@ -1,7 +1,7 @@
 #pragma once
 
 #include "../Core/SourceCommon.h"
-#include "../../../Include/Interface/Renderer.h"
+#include "../../../Include/Interface/Instance.h"
 
 #include "../../Header/Core/VulkanMemoryManagement.h"
 #include "../Core/QueueResolver.h"
@@ -28,7 +28,7 @@ namespace vk2d {
 class Window;
 class Monitor;
 class Cursor;
-class Renderer;
+class Instance;
 class ResourceManager;
 class TextureResource;
 
@@ -44,14 +44,14 @@ class CursorImpl;
 
 
 
-class RendererImpl {
-	friend class vk2d::Renderer;
+class InstanceImpl {
+	friend class vk2d::Instance;
 
 public:
-	RendererImpl(
-		const vk2d::RendererCreateInfo					&	renderer_create_info );
+	InstanceImpl(
+		const vk2d::InstanceCreateInfo					&	instance_create_info );
 
-	~RendererImpl();
+	~InstanceImpl();
 
 	std::vector<vk2d::Monitor*>								GetMonitors();
 
@@ -125,9 +125,9 @@ public:
 	vk2d::_internal::ResolvedQueue							GetPrimaryComputeQueue() const;
 	vk2d::_internal::ResolvedQueue							GetPrimaryTransferQueue() const;
 
-	const VkPhysicalDeviceProperties					&	GetPhysicalDeviceProperties() const;
-	const VkPhysicalDeviceMemoryProperties				&	GetPhysicalDeviceMemoryProperties() const;
-	const VkPhysicalDeviceFeatures						&	GetPhysicalDeviceFeatures() const;
+	const VkPhysicalDeviceProperties					&	GetVulkanPhysicalDeviceProperties() const;
+	const VkPhysicalDeviceMemoryProperties				&	GetVulkanPhysicalDeviceMemoryProperties() const;
+	const VkPhysicalDeviceFeatures						&	GetVulkanPhysicalDeviceFeatures() const;
 
 	vk2d::_internal::ShaderProgram							GetShaderModules(
 		vk2d::_internal::ShaderProgramID						id ) const;
@@ -137,14 +137,14 @@ public:
 		bool												custom_uv_border_color,
 		uint32_t											vertices_per_primitive );
 
-	VkPipeline												GetPipeline(
+	VkPipeline												GetVulkanPipeline(
 		const vk2d::_internal::PipelineSettings			&	settings );
 
-	VkPipeline												CreatePipeline(
+	VkPipeline												CreateVulkanPipeline(
 		const vk2d::_internal::PipelineSettings			&	settings );
 
-	VkPipelineCache											GetPipelineCache() const;
-	VkPipelineLayout										GetPipelineLayout() const;
+	VkPipelineCache											GetVulkanPipelineCache() const;
+	VkPipelineLayout										GetVulkanPipelineLayout() const;
 
 	const vk2d::_internal::DescriptorSetLayout			&	GetSamplerTextureDescriptorSetLayout() const;
 	const vk2d::_internal::DescriptorSetLayout			&	GetUniformBufferDescriptorSetLayout() const;
@@ -188,14 +188,14 @@ public:
 	void													DestroyDefaultTexture();
 
 	std::vector<VkPhysicalDevice>							EnumeratePhysicalDevices();
-	VkPhysicalDevice										PickBestPhysicalDevice();
+	VkPhysicalDevice										PickBestVulkanPhysicalDevice();
 
 	vk2d::MonitorUpdateCallbackFun							monitor_update_callback					= nullptr;
 
 private:
-	static uint64_t											renderer_count;		// used to keep track of Renderer instances
+	static uint64_t											instance_count;		// used to keep track of Instance instances
 
-	vk2d::RendererCreateInfo								create_info_copy						= {};
+	vk2d::InstanceCreateInfo								create_info_copy						= {};
 
 	std::vector<const char*>								instance_layers							= {};
 	std::vector<const char*>								instance_extensions						= {};
@@ -209,23 +209,23 @@ private:
 	std::vector<uint32_t>									loader_threads							= {};
 	std::vector<uint32_t>									general_threads							= {};
 
-	VkDebugUtilsMessengerEXT								debug_utils_messenger					= {};
+	VkDebugUtilsMessengerEXT								vk_debug_utils_messenger				= {};
 
-	VkInstance												instance								= {};
-	VkPhysicalDevice										physical_device							= {};
-	VkDevice												device									= {};
+	VkInstance												vk_instance								= {};
+	VkPhysicalDevice										vk_physical_device						= {};
+	VkDevice												vk_device								= {};
 
-	VkPhysicalDeviceProperties								physical_device_properties				= {};
-	VkPhysicalDeviceMemoryProperties						physical_device_memory_properties		= {};
-	VkPhysicalDeviceFeatures								physical_device_features				= {};
+	VkPhysicalDeviceProperties								vk_physical_device_properties			= {};
+	VkPhysicalDeviceMemoryProperties						vk_physical_device_memory_properties	= {};
+	VkPhysicalDeviceFeatures								vk_physical_device_features				= {};
 
-	std::vector<VkShaderModule>								shader_modules							= {};
+	std::vector<VkShaderModule>								vk_shader_modules						= {};
 
 	std::map<vk2d::_internal::ShaderProgramID, vk2d::_internal::ShaderProgram>	shader_programs		= {};
-	std::map<vk2d::_internal::PipelineSettings, VkPipeline>						pipelines			= {};
+	std::map<vk2d::_internal::PipelineSettings, VkPipeline>						vk_pipelines		= {};
 
-	VkPipelineCache											pipeline_cache							= {};
-	VkPipelineLayout										pipeline_layout							= {};
+	VkPipelineCache											vk_pipeline_cache						= {};
+	VkPipelineLayout										vk_pipeline_layout						= {};
 
 	std::unique_ptr<vk2d::_internal::DescriptorSetLayout>	sampler_texture_descriptor_set_layout	= {};
 	std::unique_ptr<vk2d::_internal::DescriptorSetLayout>	uniform_buffer_descriptor_set_layout	= {};

@@ -14,7 +14,7 @@
 namespace vk2d {
 
 namespace _internal {
-class RendererImpl;
+class InstanceImpl;
 class WindowImpl;
 class CursorImpl;
 class MonitorImpl;
@@ -24,9 +24,10 @@ void UpdateMonitorLists();
 
 
 
-class Renderer;
+class Instance;
 class TextureResource;
 class Mesh;
+class WindowEventHandler;
 class Window;
 class Cursor;
 class Monitor;
@@ -230,111 +231,6 @@ enum class KeyboardButton : int32_t {
 	KEY_LAST			= KEY_MENU,
 };
 
-// Window event handler
-// Responsible in signalling back events from the window object
-class WindowEventHandler {
-public:
-	// Window position changed.
-	virtual void								VK2D_APIENTRY		EventWindowPosition(
-		vk2d::Window						*	window,
-		vk2d::Vector2i							position )
-	{};
-
-	// Window size changed.
-	virtual void								VK2D_APIENTRY		EventWindowSize(
-		vk2d::Window						*	window,
-		vk2d::Vector2u							size )
-	{};
-
-	// Window wants to close, either the window "X" was pressed or system wants to close the window.
-	// This function will not be called when the window will actually close, only when window wants to be closed.
-	// Window::CloseWindow() does not call this event.
-	virtual void								VK2D_APIENTRY		EventWindowClose(
-		vk2d::Window						*	window )
-	{};
-
-	// Window refreshed itself, not as useful nowadays.
-	virtual void								VK2D_APIENTRY		EventWindowRefresh(
-		vk2d::Window						*	window )
-	{};
-
-	// Window gained or lost focus.
-	virtual void								VK2D_APIENTRY		EventWindowFocus(
-		vk2d::Window						*	window,
-		bool									focused )
-	{};
-
-	// Window was iconified or recovered from iconified state.
-	virtual void								VK2D_APIENTRY		EventWindowIconify(
-		vk2d::Window						*	window,
-		bool									iconified )
-	{};
-
-	// Window was maximized or recovered from maximized state.
-	virtual void								VK2D_APIENTRY		EventWindowMaximize(
-		vk2d::Window						*	window,
-		bool									maximized )
-	{};
-
-
-	// Mouse button pressed or released.
-	virtual void								VK2D_APIENTRY		EventMouseButton(
-		vk2d::Window						*	window,
-		vk2d::MouseButton						button,
-		vk2d::ButtonAction						action,
-		vk2d::ModifierKeyFlags					modifierKeys )
-	{};
-
-	// Cursor position on window changed.
-	virtual void								VK2D_APIENTRY		EventCursorPosition(
-		vk2d::Window						*	window,
-		vk2d::Vector2d							position )
-	{};
-
-	// Cursor entered or left window client area.
-	virtual void								VK2D_APIENTRY		EventCursorEnter(
-		vk2d::Window						*	window,
-		bool									entered )
-	{};
-
-	// Scrolling happened, y for vertical scrolling, x for horisontal.
-	virtual void								VK2D_APIENTRY		EventScroll(
-		vk2d::Window						*	window,
-		vk2d::Vector2d							scroll )
-	{};
-
-	// Keyboard button was pressed, released or kept down ( repeating ).
-	virtual void								VK2D_APIENTRY		EventKeyboard(
-		vk2d::Window						*	window,
-		vk2d::KeyboardButton					button,
-		int32_t									scancode,
-		vk2d::ButtonAction						action,
-		vk2d::ModifierKeyFlags					modifierKeys )
-	{};
-
-	// Character input, use this if you want to know the character that was received from combination of keyboard presses, character is in UTF-32 format.
-	virtual void								VK2D_APIENTRY		EventCharacter(
-		vk2d::Window						*	window,
-		uint32_t								character,
-		vk2d::ModifierKeyFlags					modifierKeys )
-	{};
-
-
-	// File or files were dropped on window.
-	virtual void								VK2D_APIENTRY		EventFileDrop(
-		vk2d::Window						*	window,
-		std::vector<std::filesystem::path>		files )
-	{};
-
-	// Screenshot events, called when screenshot save was successfully saved on disk or if there was an error, if error, error message is also given.
-	virtual void								VK2D_APIENTRY		EventScreenshot(
-		vk2d::Window						*	window,
-		const std::filesystem::path			&	path,
-		bool									success,
-		const std::string					&	errorMessage )
-	{};
-};
-
 struct WindowCreateInfo {
 	bool								resizeable					= true;			// Can we use the cursor to resize the window.
 	bool								visible						= true;			// Is the window visible when created.
@@ -346,7 +242,7 @@ struct WindowCreateInfo {
 	vk2d::Vector2u						size						= { 800, 600 };	// Window framebuffer initial size
 	vk2d::Vector2u						min_size					= { 32, 32 };	// Minimum size of the window, will be adjusted to suit the hardware.
 	vk2d::Vector2u						max_size					= { UINT32_MAX, UINT32_MAX };	// Maximum size of the window, will be adjusted to suit the hardware.
-	vk2d::Monitor					*	fullscreen_monitor			= {};			// Fullscreen monitor pointer, nullptr is windowed, use Renderer::GetPrimaryMonitor() to use primary monitor for fullscreen.
+	vk2d::Monitor					*	fullscreen_monitor			= {};			// Fullscreen monitor pointer, nullptr is windowed, use Instance::GetPrimaryMonitor() to use primary monitor for fullscreen.
 	uint32_t							fullscreen_refresh_rate		= UINT32_MAX;	// Refresh rate in fullscreen mode, UINT32_MAX uses maximum refresh rate available.
 	bool								vsync						= true;			// Vertical synchronization, works in both windowed and fullscreen modes, usually best left on for 2d graphics.
 	vk2d::Multisamples					samples						= vk2d::Multisamples::SAMPLE_COUNT_1;	// Multisampling, must be a single value in vk2d::Multisamples enum.
@@ -397,6 +293,10 @@ private:
 	std::vector<uint16_t>		blue;
 	uint32_t					count;
 };
+
+
+
+
 
 
 
@@ -480,27 +380,27 @@ private:
 
 // Cursor objects hold a cursor image and the cursor image hot spot.
 class Cursor {
-	friend class vk2d::_internal::RendererImpl;
+	friend class vk2d::_internal::InstanceImpl;
 	friend class vk2d::Window;
 	friend class vk2d::_internal::WindowImpl;
 
 	// Create cursor from image file.
-	// [in] renderer: renderer parent.
+	// [in] instance: instance parent.
 	// [in] imagePath: path to an image.
 	// [in] hot_spot_x: where the active location of the cursor is.
 	VK2D_API																		Cursor(
-		vk2d::_internal::RendererImpl		*	renderer,
+		vk2d::_internal::InstanceImpl		*	instance,
 		const std::filesystem::path			&	image_path,
 		vk2d::Vector2i							hot_spot );
 
 	// Create cursor from raw texel data.
 	// Texel order is left to right, top to bottom.
-	// [in] renderer: renderer parent.
+	// [in] instance: instance parent.
 	// [in] image_size: size of the image in pixels.
 	// [in] image_data: raw image data.
 	// [in] hot_spot: where the active location of the cursor is.
 	VK2D_API																		Cursor(
-		vk2d::_internal::RendererImpl		*	renderer,
+		vk2d::_internal::InstanceImpl		*	instance,
 		vk2d::Vector2u							image_size,
 		const std::vector<vk2d::Color8>		&	image_data,
 		vk2d::Vector2i							hot_spot );
@@ -544,12 +444,12 @@ private:
 
 
 class Window {
-	friend class vk2d::_internal::RendererImpl;
+	friend class vk2d::_internal::InstanceImpl;
 
 private:
-	// Only accessible through Renderer::CreateOutputWindow();
+	// Only accessible through Instance::CreateOutputWindow();
 	VK2D_API																		Window(
-		vk2d::_internal::RendererImpl				*	renderer_parent,
+		vk2d::_internal::InstanceImpl				*	instance_parent,
 		vk2d::WindowCreateInfo						&	window_create_info );
 
 public:
@@ -557,7 +457,7 @@ public:
 
 	// Signal that the window should now close. This function does not actually close the window
 	// but rather just sets a flag that it should close, the main program will have to manually
-	// remove the window from Renderer, this function will however hide the window.
+	// remove the window from Instance, this function will however hide the window.
 	VK2D_API void										VK2D_APIENTRY				CloseWindow();
 
 	// Checks if the window wants to close.
@@ -614,7 +514,7 @@ public:
 
 	// Sets window to fullscreen to a specific window.
 	// Parameters:
-	// [in] monitor: pointer to monitor object. ( See Renderer::GetMonitors() and Renderer::GetPrimaryMonitor() )
+	// [in] monitor: pointer to monitor object. ( See Instance::GetMonitors() and Instance::GetPrimaryMonitor() )
 	// [in] frequency: new refresh rate.
 	VK2D_API void										VK2D_APIENTRY				SetFullscreen(
 		vk2d::Monitor								*	monitor,
@@ -806,6 +706,119 @@ private:
 	std::unique_ptr<vk2d::_internal::WindowImpl>		impl				= {};
 
 	bool												is_good				= {};
+};
+
+
+
+
+
+
+
+// Window event handler
+// Responsible in signalling back events from the window object
+class WindowEventHandler {
+public:
+	// Window position changed.
+	virtual void								VK2D_APIENTRY		EventWindowPosition(
+		vk2d::Window						*	window,
+		vk2d::Vector2i							position )
+	{};
+
+	// Window size changed.
+	virtual void								VK2D_APIENTRY		EventWindowSize(
+		vk2d::Window						*	window,
+		vk2d::Vector2u							size )
+	{};
+
+	// Window wants to close, either the window "X" was pressed or system wants to close the window.
+	// This function will not be called when the window will actually close, only when window wants to be closed.
+	// Window::CloseWindow() does not call this event.
+	virtual void								VK2D_APIENTRY		EventWindowClose(
+		vk2d::Window						*	window )
+	{
+		window->CloseWindow();
+	};
+
+	// Window refreshed itself, not as useful nowadays.
+	virtual void								VK2D_APIENTRY		EventWindowRefresh(
+		vk2d::Window						*	window )
+	{};
+
+	// Window gained or lost focus.
+	virtual void								VK2D_APIENTRY		EventWindowFocus(
+		vk2d::Window						*	window,
+		bool									focused )
+	{};
+
+	// Window was iconified or recovered from iconified state.
+	virtual void								VK2D_APIENTRY		EventWindowIconify(
+		vk2d::Window						*	window,
+		bool									iconified )
+	{};
+
+	// Window was maximized or recovered from maximized state.
+	virtual void								VK2D_APIENTRY		EventWindowMaximize(
+		vk2d::Window						*	window,
+		bool									maximized )
+	{};
+
+
+	// Mouse button pressed or released.
+	virtual void								VK2D_APIENTRY		EventMouseButton(
+		vk2d::Window						*	window,
+		vk2d::MouseButton						button,
+		vk2d::ButtonAction						action,
+		vk2d::ModifierKeyFlags					modifierKeys )
+	{};
+
+	// Cursor position on window changed.
+	virtual void								VK2D_APIENTRY		EventCursorPosition(
+		vk2d::Window						*	window,
+		vk2d::Vector2d							position )
+	{};
+
+	// Cursor entered or left window client area.
+	virtual void								VK2D_APIENTRY		EventCursorEnter(
+		vk2d::Window						*	window,
+		bool									entered )
+	{};
+
+	// Scrolling happened, y for vertical scrolling, x for horisontal.
+	virtual void								VK2D_APIENTRY		EventScroll(
+		vk2d::Window						*	window,
+		vk2d::Vector2d							scroll )
+	{};
+
+	// Keyboard button was pressed, released or kept down ( repeating ).
+	virtual void								VK2D_APIENTRY		EventKeyboard(
+		vk2d::Window						*	window,
+		vk2d::KeyboardButton					button,
+		int32_t									scancode,
+		vk2d::ButtonAction						action,
+		vk2d::ModifierKeyFlags					modifierKeys )
+	{};
+
+	// Character input, use this if you want to know the character that was received from combination of keyboard presses, character is in UTF-32 format.
+	virtual void								VK2D_APIENTRY		EventCharacter(
+		vk2d::Window						*	window,
+		uint32_t								character,
+		vk2d::ModifierKeyFlags					modifierKeys )
+	{};
+
+
+	// File or files were dropped on window.
+	virtual void								VK2D_APIENTRY		EventFileDrop(
+		vk2d::Window						*	window,
+		std::vector<std::filesystem::path>		files )
+	{};
+
+	// Screenshot events, called when screenshot save was successfully saved on disk or if there was an error, if error, error message is also given.
+	virtual void								VK2D_APIENTRY		EventScreenshot(
+		vk2d::Window						*	window,
+		const std::filesystem::path			&	path,
+		bool									success,
+		const std::string					&	errorMessage )
+	{};
 };
 
 

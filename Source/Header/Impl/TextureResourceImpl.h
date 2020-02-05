@@ -67,7 +67,7 @@ private:
 
 	std::vector<vk2d::_internal::CompleteBufferResource>	staging_buffers								= {};
 	vk2d::_internal::CompleteImageResource					image										= {};
-	VkImageLayout											image_layout								= {};
+	VkImageLayout											vk_image_layout								= {};
 
 	uint32_t												image_layer_count							= {};
 	VkExtent2D												extent										= {};
@@ -75,13 +75,13 @@ private:
 
 //	vk2d::_internal::PoolDescriptorSet						descriptor_set								= {};
 
-	VkCommandBuffer											primary_render_command_buffer				= {};
-	VkCommandBuffer											secondary_render_command_buffer				= {};
-	VkCommandBuffer											primary_transfer_command_buffer				= {};
+	VkCommandBuffer											vk_primary_render_command_buffer			= {};
+	VkCommandBuffer											vk_secondary_render_command_buffer			= {};
+	VkCommandBuffer											vk_primary_transfer_command_buffer			= {};
 
-	VkSemaphore												transfer_semaphore							= {};
-	VkSemaphore												blit_semaphore								= {};
-	VkFence													texture_complete_fence						= {};
+	VkSemaphore												vk_transfer_semaphore						= {};
+	VkSemaphore												vk_blit_semaphore							= {};
+	VkFence													vk_texture_complete_fence					= {};
 
 	std::mutex												is_loaded_mutex								= {};
 	bool													is_loaded									= {};

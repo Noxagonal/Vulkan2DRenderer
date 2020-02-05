@@ -28,7 +28,7 @@ VK2D_API vk2d::TextureResource::TextureResource(
 	} else {
 		is_good	= false;
 		impl	= nullptr;
-		resource_manager_parent->GetRenderer()->Report( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot create texture resource implementation!" );
+		resource_manager_parent->GetInstance()->Report( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot create texture resource implementation!" );
 		return;
 	}
 }
@@ -54,7 +54,7 @@ VK2D_API vk2d::TextureResource::TextureResource(
 	} else {
 		is_good	= false;
 		impl	= nullptr;
-		resource_manager_parent->GetRenderer()->Report( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot create texture resource implementation!" );
+		resource_manager_parent->GetInstance()->Report( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot create texture resource implementation!" );
 		return;
 	}
 }
@@ -82,7 +82,7 @@ VK2D_API vk2d::TextureResource::TextureResource(
 	} else {
 		is_good	= false;
 		impl	= nullptr;
-		resource_manager_parent->GetRenderer()->Report( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot create texture resource implementation!" );
+		resource_manager_parent->GetInstance()->Report( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot create texture resource implementation!" );
 		return;
 	}
 }
@@ -110,7 +110,7 @@ VK2D_API vk2d::TextureResource::TextureResource(
 	} else {
 		is_good	= false;
 		impl	= nullptr;
-		resource_manager_parent->GetRenderer()->Report( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot create texture resource implementation!" );
+		resource_manager_parent->GetInstance()->Report( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot create texture resource implementation!" );
 		return;
 	}
 }

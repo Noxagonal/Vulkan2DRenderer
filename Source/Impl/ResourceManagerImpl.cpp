@@ -28,7 +28,7 @@ public:
 	{
 		if( !resource->MTLoad( thread_resource ) ) {
 			resource->failed_to_load	= true;
-			resource_manager->GetRenderer()->Report( vk2d::ReportSeverity::WARNING, "Resource loading failed!" );
+			resource_manager->GetInstance()->Report( vk2d::ReportSeverity::WARNING, "Resource loading failed!" );
 		}
 		resource->load_function_ran		= true;
 	}
@@ -63,19 +63,19 @@ public:
 
 
 vk2d::_internal::ResourceManagerImpl::ResourceManagerImpl(
-	vk2d::_internal::RendererImpl	*	parent_renderer
+	vk2d::_internal::InstanceImpl	*	parent_instance
 )
 {
-	renderer_parent			= parent_renderer;
-	assert( renderer_parent );
+	instance_parent			= parent_instance;
+	assert( instance_parent );
 
-	device			= renderer_parent->GetVulkanDevice();
-	assert( device );
+	vk_device		= instance_parent->GetVulkanDevice();
+	assert( vk_device );
 
-	thread_pool		= renderer_parent->GetThreadPool();
+	thread_pool		= instance_parent->GetThreadPool();
 	assert( thread_pool );
 
-	loader_threads	= renderer_parent->GetLoaderThreads();
+	loader_threads	= instance_parent->GetLoaderThreads();
 
 	is_good		= true;
 }
@@ -141,7 +141,7 @@ vk2d::TextureResource * vk2d::_internal::ResourceManagerImpl::LoadTextureResourc
 		);
 	if( !resource || !resource->IsGood() ) {
 		// Could not create resource.
-		GetRenderer()->Report( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot create texture resource handle!" );
+		GetInstance()->Report( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot create texture resource handle!" );
 		return nullptr;
 	}
 
@@ -166,7 +166,7 @@ vk2d::TextureResource * vk2d::_internal::ResourceManagerImpl::CreateTextureResou
 	);
 	if( !resource || !resource->IsGood() ) {
 		// Could not create resource.
-		GetRenderer()->Report( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot create texture resource handle!" );
+		GetInstance()->Report( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot create texture resource handle!" );
 		return nullptr;
 	}
 
@@ -188,7 +188,7 @@ vk2d::TextureResource * vk2d::_internal::ResourceManagerImpl::LoadArrayTextureRe
 		);
 	if( !resource || !resource->IsGood() ) {
 		// Could not create resource.
-		GetRenderer()->Report( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot create texture resource handle!" );
+		GetInstance()->Report( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot create texture resource handle!" );
 		return nullptr;
 	}
 
@@ -214,7 +214,7 @@ vk2d::TextureResource * vk2d::_internal::ResourceManagerImpl::CreateArrayTexture
 		);
 	if( !resource || !resource->IsGood() ) {
 		// Could not create resource.
-		GetRenderer()->Report( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot create texture resource handle!" );
+		GetInstance()->Report( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot create texture resource handle!" );
 		return nullptr;
 	}
 
@@ -247,7 +247,7 @@ vk2d::FontResource * vk2d::_internal::ResourceManagerImpl::LoadFontResource(
 		);
 	if( !resource || !resource->IsGood() ) {
 		// Could not create resource.
-		GetRenderer()->Report( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot create font resource handle!" );
+		GetInstance()->Report( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot create font resource handle!" );
 		return nullptr;
 	}
 
@@ -280,9 +280,9 @@ void vk2d::_internal::ResourceManagerImpl::DestroyResource(
 	}
 }
 
-vk2d::_internal::RendererImpl * vk2d::_internal::ResourceManagerImpl::GetRenderer() const
+vk2d::_internal::InstanceImpl * vk2d::_internal::ResourceManagerImpl::GetInstance() const
 {
-	return renderer_parent;
+	return instance_parent;
 }
 
 vk2d::_internal::ThreadPool * vk2d::_internal::ResourceManagerImpl::GetThreadPool() const
@@ -302,7 +302,7 @@ const std::vector<uint32_t> & vk2d::_internal::ResourceManagerImpl::GetGeneralTh
 
 VkDevice vk2d::_internal::ResourceManagerImpl::GetVulkanDevice() const
 {
-	return device;
+	return vk_device;
 }
 
 bool vk2d::_internal::ResourceManagerImpl::IsGood() const

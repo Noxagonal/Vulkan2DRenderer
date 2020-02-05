@@ -11,16 +11,16 @@
 
 
 VK2D_API vk2d::ResourceManager::ResourceManager(
-	vk2d::_internal::RendererImpl		*	parent_renderer
+	vk2d::_internal::InstanceImpl		*	parent_instance
 )
 {
-	impl = std::make_unique<vk2d::_internal::ResourceManagerImpl>( parent_renderer );
+	impl = std::make_unique<vk2d::_internal::ResourceManagerImpl>( parent_instance );
 	if( impl && impl->IsGood() ) {
 		is_good	= true;
 	} else {
 		is_good	= false;
 		impl	= nullptr;
-		parent_renderer->Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot create resource manager implementation!" );
+		parent_instance->Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot create resource manager implementation!" );
 		return;
 	}
 }

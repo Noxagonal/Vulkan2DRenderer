@@ -4,7 +4,7 @@
 
 #include "../../../Include/Interface/RenderPrimitives.h"
 #include "../Impl/WindowImpl.h"
-#include "../Impl/RendererImpl.h"
+#include "../Impl/InstanceImpl.h"
 #include "../Core/VulkanMemoryManagement.h"
 #include "DescriptorSet.h"
 
@@ -18,7 +18,7 @@ namespace vk2d {
 
 namespace _internal {
 
-class RendererImpl;
+class InstanceImpl;
 class MeshBuffer;
 
 template<typename T>
@@ -73,7 +73,7 @@ public:
 	};
 
 	MeshBuffer(
-		vk2d::_internal::RendererImpl					*	renderer,
+		vk2d::_internal::InstanceImpl					*	instance,
 		VkDevice											device,
 		const VkPhysicalDeviceLimits					&	physicald_device_limits,
 		vk2d::_internal::WindowImpl						*	window_data,
@@ -158,7 +158,7 @@ private:
 	void													FreeBufferBlockFromStorage(
 		vk2d::_internal::MeshBufferBlock<float>			*	buffer_block );
 
-	vk2d::_internal::RendererImpl						*	renderer_parent							= {};
+	vk2d::_internal::InstanceImpl						*	instance_parent							= {};
 	VkDevice												device									= {};
 	VkPhysicalDeviceLimits									physicald_device_limits					= {};
 	vk2d::_internal::WindowImpl							*	window_data								= {};
@@ -206,12 +206,12 @@ public:
 		assert( buffer_usage_flags );
 
 		mesh_buffer_parent			= mesh_buffer;
-		auto renderer				= mesh_buffer_parent->renderer_parent;
-		auto memory_pool			= renderer->GetDeviceMemoryPool();
+		auto instance				= mesh_buffer_parent->instance_parent;
+		auto memory_pool			= instance->GetDeviceMemoryPool();
 
 		total_byte_size				= vk2d::_internal::CalculateAlignmentForBuffer(
 			buffer_byte_size,
-			renderer->GetPhysicalDeviceProperties().limits
+			instance->GetVulkanPhysicalDeviceProperties().limits
 		);
 
 		host_data.reserve( total_byte_size / sizeof( T ) + 1 );
@@ -232,7 +232,7 @@ public:
 				VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT
 			);
 			if( staging_buffer != VK_SUCCESS ) {
-				renderer->Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot create MeshBufferBlock, cannot create staging buffer!" );
+				instance->Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot create MeshBufferBlock, cannot create staging buffer!" );
 				return;
 			}
 		}
@@ -253,21 +253,21 @@ public:
 				VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT
 			);
 			if( device_buffer != VK_SUCCESS ) {
-				renderer->Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot create MeshBufferBlock, cannot create device buffer!" );
+				instance->Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot create MeshBufferBlock, cannot create device buffer!" );
 				return;
 			}
 		}
 
 		// Create descriptor set
 		{
-			auto descriptor_pool	= renderer->GetDescriptorPool();
+			auto descriptor_pool	= instance->GetDescriptorPool();
 
 			switch( descriptor_set_type ) {
 			case vk2d::_internal::MeshBufferDescriptorSetType::NONE:
 				break;
 			case vk2d::_internal::MeshBufferDescriptorSetType::UNIFORM:
 			{
-				descriptor_set			= descriptor_pool->AllocateDescriptorSet( renderer->GetUniformBufferDescriptorSetLayout() );
+				descriptor_set			= descriptor_pool->AllocateDescriptorSet( instance->GetUniformBufferDescriptorSetLayout() );
 
 				VkDescriptorBufferInfo descriptor_write_buffer_info {};
 				descriptor_write_buffer_info.buffer		= device_buffer.buffer;
@@ -293,7 +293,7 @@ public:
 				break;
 			case vk2d::_internal::MeshBufferDescriptorSetType::STORAGE:
 			{
-				descriptor_set			= descriptor_pool->AllocateDescriptorSet( renderer->GetStorageBufferDescriptorSetLayout() );
+				descriptor_set			= descriptor_pool->AllocateDescriptorSet( instance->GetStorageBufferDescriptorSetLayout() );
 
 				VkDescriptorBufferInfo descriptor_write_buffer_info {};
 				descriptor_write_buffer_info.buffer		= device_buffer.buffer;
@@ -327,8 +327,8 @@ public:
 
 	~MeshBufferBlock()
 	{
-		auto descriptor_pool	= mesh_buffer_parent->renderer_parent->GetDescriptorPool();
-		auto memory_pool		= mesh_buffer_parent->renderer_parent->GetDeviceMemoryPool();
+		auto descriptor_pool	= mesh_buffer_parent->instance_parent->GetDescriptorPool();
+		auto memory_pool		= mesh_buffer_parent->instance_parent->GetDeviceMemoryPool();
 
 		descriptor_pool->FreeDescriptorSet( descriptor_set );
 		memory_pool->FreeCompleteResource( device_buffer );
@@ -339,7 +339,7 @@ public:
 	{
 		auto mapped_memory	= staging_buffer.memory.Map<T>();
 		if( !mapped_memory ) {
-			mesh_buffer_parent->renderer_parent->Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot copy mesh buffer block to  map staging buffer memory" );
+			mesh_buffer_parent->instance_parent->Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot copy mesh buffer block to  map staging buffer memory" );
 			return false;
 		} else {
 			std::memcpy( mapped_memory, host_data.data(), used_byte_size );

@@ -14,16 +14,16 @@ class TextureResource;
 class FontResource;
 
 namespace _internal {
-class RendererImpl;
+class InstanceImpl;
 class ResourceManagerImpl;
 }
 
 class ResourceManager {
-	friend class vk2d::_internal::RendererImpl;
+	friend class vk2d::_internal::InstanceImpl;
 
 public:
 	VK2D_API																				ResourceManager(
-		vk2d::_internal::RendererImpl													*	parent_renderer
+		vk2d::_internal::InstanceImpl													*	parent_instance
 	);
 
 	VK2D_API																				~ResourceManager();

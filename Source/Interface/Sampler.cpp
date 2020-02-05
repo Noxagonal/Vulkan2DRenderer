@@ -3,16 +3,16 @@
 
 #include "../../Include/Interface/Sampler.h"
 #include "../Header/Impl/SamplerImpl.h"
-#include "../Header/Impl/RendererImpl.h"
+#include "../Header/Impl/InstanceImpl.h"
 
 VK2D_API vk2d::Sampler::Sampler(
-	vk2d::_internal::RendererImpl			*	renderer_parent,
+	vk2d::_internal::InstanceImpl			*	instance_parent,
 	const vk2d::SamplerCreateInfo			&	create_info
 )
 {
 	impl			= std::make_unique<vk2d::_internal::SamplerImpl>(
 		this,
-		renderer_parent,
+		instance_parent,
 		create_info
 	);
 
@@ -21,7 +21,7 @@ VK2D_API vk2d::Sampler::Sampler(
 	} else {
 		impl		= nullptr;
 		is_good		= false;
-		renderer_parent->Report( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot create sampler implementation!" );
+		instance_parent->Report( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot create sampler implementation!" );
 	}
 }
 

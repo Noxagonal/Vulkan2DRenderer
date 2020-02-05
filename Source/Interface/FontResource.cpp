@@ -38,7 +38,7 @@ VK2D_API vk2d::FontResource::FontResource(
 	} else {
 		is_good		= false;
 		impl		= nullptr;
-		resource_manager->GetRenderer()->Report( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot create font resource implementation!" );
+		resource_manager->GetInstance()->Report( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot create font resource implementation!" );
 		return;
 	}
 }

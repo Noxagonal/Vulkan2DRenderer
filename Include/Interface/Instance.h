@@ -13,7 +13,7 @@
 namespace vk2d {
 
 namespace _internal {
-class RendererImpl;
+class InstanceImpl;
 class MonitorImpl;
 } // _internal
 
@@ -143,7 +143,7 @@ typedef void ( VK2D_APIENTRY *GamepadEventCallbackFun )(
 	const std::string			&	joystickName );
 
 
-struct RendererCreateInfo {
+struct InstanceCreateInfo {
 	std::string						application_name				= {};
 	vk2d::Version					application_version				= {};
 	std::string						engine_name						= {};
@@ -153,22 +153,22 @@ struct RendererCreateInfo {
 };
 
 
-class Renderer {
-	friend VK2D_API std::unique_ptr<vk2d::Renderer> VK2D_APIENTRY CreateRenderer(
-		const vk2d::RendererCreateInfo		&	renderer_create_info
+class Instance {
+	friend VK2D_API std::unique_ptr<vk2d::Instance> VK2D_APIENTRY CreateInstance(
+		const vk2d::InstanceCreateInfo		&	instance_create_info
 	);
 	friend class vk2d::Window;
 	 
 private:
-	// Do not use directly, instead use vk2d::CreateRender() to get a renderer.
-	VK2D_API																			Renderer(
-		const vk2d::RendererCreateInfo												&	renderer_create_info );
+	// Do not use directly, instead use vk2d::CreateRender() to get a instance.
+	VK2D_API																			Instance(
+		const vk2d::InstanceCreateInfo												&	instance_create_info );
 
 public:
-	VK2D_API																			~Renderer();
+	VK2D_API																			~Instance();
 
 	// Get all monitors currently attached to the system.
-	// Also see vk2d::Renderer::SetMonitorUpdateCallback().
+	// Also see vk2d::Instance::SetMonitorUpdateCallback().
 	// Returns:
 	// Vector of pointers to Monitor objects.
 	VK2D_API std::vector<vk2d::Monitor*>			VK2D_APIENTRY						GetMonitors();
@@ -262,14 +262,14 @@ public:
 	VK2D_API vk2d::ResourceManager				*	VK2D_APIENTRY						GetResourceManager();
 
 private:
-	std::unique_ptr<vk2d::_internal::RendererImpl>	impl;
+	std::unique_ptr<vk2d::_internal::InstanceImpl>	impl;
 
 	bool											is_good					= {};
 };
 
 
-VK2D_API std::unique_ptr<Renderer>					VK2D_APIENTRY						CreateRenderer(
-	const RendererCreateInfo					&	renderer_create_info );
+VK2D_API std::unique_ptr<Instance>					VK2D_APIENTRY						CreateInstance(
+	const InstanceCreateInfo					&	instance_create_info );
 
 
 }
