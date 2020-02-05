@@ -86,7 +86,7 @@ VK2D_BUILD_EXAMPLES         = default ON    -> Build and include examples on how
 
 ### License
 
-Copyright (c) 2019 Niko Kauppi Niko40@gmail.com
+Copyright (c) 2020 Niko Kauppi Niko40@gmail.com
 
 This software is released under [MIT license](LICENSE.md)
 
