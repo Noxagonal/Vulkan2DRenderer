@@ -30,9 +30,15 @@ int main()
 	auto window = renderer->CreateOutputWindow( window_create_info );
 	if( !window ) return -1;
 
-	// Initialize some counters and run the program for 5 seconds before shutting down.
-	auto start_time = std::chrono::steady_clock::now();
-	while( std::chrono::steady_clock::now() - start_time < std::chrono::seconds( 5 ) ) {
+	// Run the window until the user closes it.
+	// Windows do not just close on their own when the close button is pressed,
+	// instead they will keep operating normally until the window is destroyed by
+	// the application. It's up to the programmer to manually check if the window
+	// should be closed and then close it. vk2d::Window::ShouldClose will return
+	// true if the window should be closed.
+	// In this case we can just exit the loop and once renderer goes out of scope
+	// it'll destroy the window for us.
+	while( !window->ShouldClose() ) {
 
 		// General structure of the program is 
 		// This area is where you should put your game logic code.

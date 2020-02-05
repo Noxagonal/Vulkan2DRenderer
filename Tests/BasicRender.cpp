@@ -23,6 +23,7 @@ int main()
 
 	size_t frame_counter = 10;
 	while( frame_counter ) {
+
 		if( !window->BeginRender() ) return -1;
 
 		if( !window->EndRender() ) return -1;
