@@ -1,6 +1,7 @@
 
-// This program serves as a hello world of sorts to VK2D
-
+// This program serves as a hello world of sorts to VK2D.
+// It creates a renderer, a window and renders 3 basic
+// shapes to that window.
 
 
 
@@ -34,7 +35,7 @@ int main()
 	// Windows do not just close on their own when the close button is pressed,
 	// instead they will keep operating normally until the window is destroyed by
 	// the application. It's up to the programmer to manually check if the window
-	// should be closed and then close it. vk2d::Window::ShouldClose will return
+	// should be closed and then close it. vk2d::Window::ShouldClose() will return
 	// true if the window should be closed.
 	// In this case we can just exit the loop and once renderer goes out of scope
 	// it'll destroy the window for us.
@@ -54,7 +55,7 @@ int main()
 			vk2d::Vector2f( 450, 200 ),
 			vk2d::Vector2f( 750, 500 ),
 			true,
-			64.0f,
+			12.0f,
 			vk2d::Colorf( 0.2f, 0.5f, 0.8f, 0.2f )
 		);
 		window->DrawPie(
