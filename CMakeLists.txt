@@ -9,6 +9,9 @@ if(POLICY CMP0077)
 	cmake_policy(SET CMP0077 NEW)
 endif()
 
+
+
+# Update library submodules with git.
 find_package(Git QUIET)
 if(GIT_FOUND AND EXISTS "${PROJECT_SOURCE_DIR}/.git")
 # Update submodules as needed
@@ -34,13 +37,19 @@ if(NOT EXISTS "${PROJECT_SOURCE_DIR}/ExternalLibraries/glslang/CMakeLists.txt")
     message(FATAL_ERROR "The submodules were not downloaded! GIT_SUBMODULE was turned off or failed. Please update submodules and try again.")
 endif()
 
+
+
+# No reason not to compile using multiple cores.
 if(MSVC)
 	add_compile_options(
 		"/MP"
 	)
 endif()
 
+# Disable in source build.
 set(CMAKE_DISABLE_IN_SOURCE_BUILD ON)
+
+# Enable folder separators for targets.
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
 
@@ -168,11 +177,17 @@ set(SRC_FILES
 	${FILES_SOURCE_INTERFACE}
 )
 
+set(SHADER_FILES
+	${FILES_SOURCE_SHADERS}
+	${FILES_SOURCE_SHADERS_SPIRV}
+)
+
 source_group(TREE "${CMAKE_SOURCE_DIR}"
 	FILES
 		${INC_FILES}
 		${SRC_INC_FILES}
 		${SRC_FILES}
+		${SHADER_FILES}
 )
 
 
@@ -183,6 +198,7 @@ if(VK2D_BUILD_STATIC_LIBRARY)
 			${SRC_FILES}
 			${SRC_INC_FILES}
 			${INC_FILES}
+			${SHADER_FILES}
 	)
 else()
 	add_library(VK2D
@@ -190,6 +206,7 @@ else()
 			${SRC_FILES}
 			${SRC_INC_FILES}
 			${INC_FILES}
+			${SHADER_FILES}
 	)
 endif()
 
