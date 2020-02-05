@@ -10,37 +10,6 @@ Internally workloads are automatically grouped to create more efficient submissi
 
 ------
 
-### Building
-
-Currently only Visual Studio 2019 is supported, this includes the community edition. Just run "Build_VisualStudio2019.bat" file and follow the instructions. This batch file will create the project solution file in "./Build/VisualStudio2019/VK2D.sln".
-To get started see the example projects.
-
-Prior to building this library you will need:
-- CMake 3.15 or newer
-- Visual Studio 2019
-- Vulkan SDK, any version
-
-You can also build project files manually using regular CMake.
-
-###### Windows Visual Studio 2019
-```
-cmake -G "Visual Studio 16 2019" -A "x64" <SOURCE DIRECTORY>
-```
-
-To build tests
-```
-cmake -G "Visual Studio 16 2019" -A "x64" -D VK2D_BUILD_TESTS=ON <SOURCE DIRECTORY>
-```
-
-Available CMake options:
-```
-VK2D_BUILD_STATIC_LIBRARY   = default OFF   -> Build the library as static. EXPERIMENTAL!
-VK2D_BUILD_TESTS            = default OFF   -> Build tests.
-VK2D_BUILD_EXAMPLES         = default ON    -> Build and include examples on how to use this library.
-```
-
-------
-
 ### Motivation
 
 - This project is primarily a passion project.
@@ -66,6 +35,41 @@ VK2D_BUILD_EXAMPLES         = default ON    -> Build and include examples on how
 - Does not draw 3D, this is meant to be a simple library to use.
 - Work in progress. We'll know more about limitations later.
 - Crashes will likely happen frequently.
+
+------
+
+### Building
+
+:exclamation: You will need to use Git, downloading plain Zip file from GitHub will not work because of dependencies. :exclamation:
+
+Currently only Visual Studio 2019 is supported, this includes the community edition.
+
+Prior to building this library you will need:
+- Git
+- CMake 3.15 or newer
+- Visual Studio 2019
+- Vulkan SDK, any version
+
+
+###### Windows Visual Studio 2019
+1. Open the folder where you would like the VK2D library to be installed.
+2. Hold shift key and right click on the file explorer, click "Open PowerShell window here".
+3. copy and paste the following commands to the PowerShell window and press enter (Don't close PowerShell even if it appears stuck, this can take a few minutes).
+```
+git clone https://github.com/Niko40/Vulkan2DRenderer
+cd Vulkan2DRenderer
+mkdir Build
+cd Build
+cmake -G "Visual Studio 16 2019" -A "x64" ..
+```
+4. Generated solution is in `Build/VK2D.sln`
+
+Available CMake options:
+```
+VK2D_BUILD_STATIC_LIBRARY   = default OFF   -> Build the library as static. EXPERIMENTAL!
+VK2D_BUILD_TESTS            = default OFF   -> Build tests.
+VK2D_BUILD_EXAMPLES         = default ON    -> Build and include examples on how to use this library.
+```
 
 ------
 
