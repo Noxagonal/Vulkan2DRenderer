@@ -9,7 +9,7 @@
 namespace vk2d {
 
 namespace _internal {
-class RendererImpl;
+class InstanceImpl;
 class WindowImpl;
 class TextureResourceImpl;
 class LoadTask;

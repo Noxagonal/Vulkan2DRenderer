@@ -1,6 +1,6 @@
 
 # CompileGLSLShaderToSpir-V is a tool to convert GLSL shaders into Spir-V header files.
-# The Vulkan 2D renderer library uses this to automatically convert GLSL shaders into Spir-V
+# The Vulkan 2D instance library uses this to automatically convert GLSL shaders into Spir-V
 # when compiling the library.
 
 cmake_minimum_required(VERSION 3.15)

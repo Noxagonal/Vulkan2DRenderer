@@ -1,5 +1,5 @@
 
-#include <Vulkan2DRenderer.h>
+#include <VK2D.h>
 
 #include <chrono>
 
@@ -32,9 +32,9 @@ public:
 
 int main()
 {
-	vk2d::RendererCreateInfo renderer_create_info {};
-	auto renderer = vk2d::CreateRenderer( renderer_create_info );
-	if( !renderer ) return -1;
+	vk2d::InstanceCreateInfo instance_create_info {};
+	auto instance = vk2d::CreateInstance( instance_create_info );
+	if( !instance ) return -1;
 
 	EventHandler event_handler;
 	vk2d::WindowCreateInfo					window_create_info {};
@@ -43,7 +43,7 @@ int main()
 	window_create_info.samples				= vk2d::Multisamples::SAMPLE_COUNT_8;
 	window_create_info.coordinate_space		= vk2d::WindowCoordinateSpace::TEXEL_SPACE_CENTERED;
 	window_create_info.event_handler		= &event_handler;
-	auto window = renderer->CreateOutputWindow( window_create_info );
+	auto window = instance->CreateOutputWindow( window_create_info );
 	if( !window ) return -1;
 
 	float counter = 0.0f;

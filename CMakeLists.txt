@@ -74,7 +74,7 @@ option(VK2D_BUILD_EXAMPLES
 add_subdirectory("Tools")
 
 set(FILES_INCLUDE
-	"Include/Vulkan2DRenderer.h"
+	"Include/VK2D.h"
 )
 
 set(FILES_INCLUDE_CORE
@@ -87,7 +87,7 @@ set(FILES_INCLUDE_CORE
 set(FILES_INCLUDE_INTERFACE
 	"Include/Interface/FontResource.h"
 	"Include/Interface/Mesh.h"
-	"Include/Interface/Renderer.h"
+	"Include/Interface/Instance.h"
 	"Include/Interface/RenderPrimitives.h"
 	"Include/Interface/Resource.h"
 	"Include/Interface/ResourceManager.h"
@@ -121,7 +121,7 @@ set(FILES_SOURCE_HEADER_CORE
 
 set(FILES_SOURCE_HEADER_IMPL
 	"Source/Header/Impl/FontResourceImpl.h"
-	"Source/Header/Impl/RendererImpl.h"
+	"Source/Header/Impl/InstanceImpl.h"
 	"Source/Header/Impl/ResourceManagerImpl.h"
 	"Source/Header/Impl/SamplerImpl.h"
 	"Source/Header/Impl/TextureResourceImpl.h"
@@ -130,7 +130,7 @@ set(FILES_SOURCE_HEADER_IMPL
 
 set(FILES_SOURCE_IMPL
 	"Source/Impl/FontResourceImpl.cpp"
-	"Source/Impl/RendererImpl.cpp"
+	"Source/Impl/InstanceImpl.cpp"
 	"Source/Impl/ResourceManagerImpl.cpp"
 	"Source/Impl/SamplerImpl.cpp"
 	"Source/Impl/TextureResourceImpl.cpp"
@@ -140,7 +140,7 @@ set(FILES_SOURCE_IMPL
 set(FILES_SOURCE_INTERFACE
 	"Source/Interface/FontResource.cpp"
 	"Source/Interface/Mesh.cpp"
-	"Source/Interface/Renderer.cpp"
+	"Source/Interface/Instance.cpp"
 	"Source/Interface/Resource.cpp"
 	"Source/Interface/ResourceManager.cpp"
 	"Source/Interface/Sampler.cpp"

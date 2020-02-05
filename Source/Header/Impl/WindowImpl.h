@@ -2,13 +2,13 @@
 
 #include "../Core/SourceCommon.h"
 
-#include "../../../Include/Interface/Renderer.h"
+#include "../../../Include/Interface/Instance.h"
 
 #include "../../Header/Core/MeshBuffer.h"
 #include "../Core/QueueResolver.h"
 #include "../Core/VulkanMemoryManagement.h"
 #include "../Core/DescriptorSet.h"
-#include "../Impl/RendererImpl.h"
+#include "../Impl/InstanceImpl.h"
 #include "../Core/ShaderInterface.h"
 
 #define GLFW_INCLUDE_NONE
@@ -29,7 +29,7 @@ class Mesh;
 
 namespace _internal {
 
-class RendererImpl;
+class InstanceImpl;
 class WindowImpl;
 class MonitorImpl;
 class CursorImpl;
@@ -71,7 +71,7 @@ class WindowImpl {
 public:
 	WindowImpl(
 		vk2d::Window										*	window,
-		vk2d::_internal::RendererImpl						*	renderer,
+		vk2d::_internal::InstanceImpl						*	instance,
 		const vk2d::WindowCreateInfo						&	window_create_info
 	);
 	~WindowImpl();
@@ -287,7 +287,7 @@ private:
 		VkCommandBuffer											command_buffer );
 
 	vk2d::Window											*	window_parent								= {};
-	vk2d::_internal::RendererImpl							*	renderer_parent								= {};
+	vk2d::_internal::InstanceImpl							*	instance_parent								= {};
 	vk2d::WindowCreateInfo										create_info_copy							= {};
 
 	vk2d::WindowEventHandler								*	event_handler								= {};
@@ -300,9 +300,9 @@ private:
 	};
 	std::vector<vk2d::_internal::WindowImpl::IconData>			icon_data									= {};
 
-	VkInstance													instance									= {};
-	VkPhysicalDevice											physical_device								= {};
-	VkDevice													device										= {};
+	VkInstance													vk_instance									= {};
+	VkPhysicalDevice											vk_physical_device							= {};
+	VkDevice													vk_device									= {};
 
 	vk2d::_internal::ResolvedQueue								primary_render_queue						= {};
 
@@ -313,17 +313,17 @@ private:
 
 	vk2d::Multisamples											samples										= {};
 
-	VkSurfaceKHR												surface										= {};
-	VkSwapchainKHR												swapchain									= {};
-	std::vector<VkImage>										swapchain_images							= {};
-	std::vector<VkImageView>									swapchain_image_views						= {};
-	VkRenderPass												render_pass									= {};
+	VkSurfaceKHR												vk_surface									= {};
+	VkSwapchainKHR												vk_swapchain								= {};
+	std::vector<VkImage>										vk_swapchain_images							= {};
+	std::vector<VkImageView>									vk_swapchain_image_views					= {};
+	VkRenderPass												vk_render_pass								= {};
 	std::vector<vk2d::_internal::CompleteImageResource>			multisample_render_targets					= {};
 
-	VkCommandPool												command_pool								= {};
-	std::vector<VkCommandBuffer>								render_command_buffers						= {};	// For more overlapped execution multiple command buffers are needed.
-	VkCommandBuffer												complementary_transfer_command_buffer				= {};	// For data transfer each frame, this is small command buffer and can be re-recorded just before submitting the work.
-	VkSemaphore													mesh_transfer_semaphore						= {};
+	VkCommandPool												vk_command_pool								= {};
+	std::vector<VkCommandBuffer>								vk_render_command_buffers					= {};	// For more overlapped execution multiple command buffers are needed.
+	VkCommandBuffer												vk_complementary_transfer_command_buffer	= {};	// For data transfer each frame, this is small command buffer and can be re-recorded just before submitting the work.
+	VkSemaphore													vk_mesh_transfer_semaphore					= {};
 
 	VkExtent2D													min_extent									= {};
 	VkExtent2D													max_extent									= {};
@@ -332,13 +332,13 @@ private:
 	VkSurfaceFormatKHR											surface_format								= {};
 	VkPresentModeKHR											present_mode								= {};
 	VkSurfaceCapabilitiesKHR									surface_capabilities						= {};
-	std::vector<VkFramebuffer>									framebuffers								= {};
+	std::vector<VkFramebuffer>									vk_framebuffers								= {};
 
 	uint32_t													next_image									= {};
 	uint32_t													previous_image								= {};
-	VkFence														aquire_image_fence							= {};
-	std::vector<VkSemaphore>									submit_to_present_semaphores				= {};
-	std::vector<VkFence>										gpu_to_cpu_frame_fences						= {};
+	VkFence														vk_aquire_image_fence						= {};
+	std::vector<VkSemaphore>									vk_submit_to_present_semaphores				= {};
+	std::vector<VkFence>										vk_gpu_to_cpu_frame_fences					= {};
 	bool														previous_frame_need_synchronization			= {};
 
 	vk2d::_internal::CompleteBufferResource						frame_data_staging_buffer					= {};
@@ -388,7 +388,7 @@ class CursorImpl {
 
 public:
 												CursorImpl(
-		vk2d::_internal::RendererImpl		*	renderer,
+		vk2d::_internal::InstanceImpl		*	instance,
 		const std::filesystem::path			&	image_path,
 		vk2d::Vector2i							hot_spot );
 
@@ -401,7 +401,7 @@ public:
 	// [in] hot_spot_x: where the active location of the cursor is, x location.
 	// [in] hot_spot_y: where the active location of the cursor is, y location.
 												CursorImpl(
-		vk2d::_internal::RendererImpl		*	renderer,
+		vk2d::_internal::InstanceImpl		*	instance,
 		vk2d::Vector2u							image_size,
 		const std::vector<vk2d::Color8>		&	image_data,
 		vk2d::Vector2i							hot_spot );
@@ -427,14 +427,14 @@ public:
 
 	bool										IsGood();
 
-	vk2d::_internal::RendererImpl			*	GetRenderer();
+	vk2d::_internal::InstanceImpl			*	GetInstance();
 	const std::vector<vk2d::Color8>			&	GetPixelData();
 	GLFWcursor								*	GetGLFWcursor();
 	vk2d::Vector2u								GetSize();
 	vk2d::Vector2i								GetHotSpot();
 
 private:
-	vk2d::_internal::RendererImpl			*	renderer_parent					= {};
+	vk2d::_internal::InstanceImpl			*	instance_parent					= {};
 	std::vector<vk2d::Color8>					pixel_data						= {};
 	GLFWcursor								*	cursor							= nullptr;
 	VkExtent2D									extent							= {};

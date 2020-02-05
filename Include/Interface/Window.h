@@ -14,7 +14,7 @@
 namespace vk2d {
 
 namespace _internal {
-class RendererImpl;
+class InstanceImpl;
 class WindowImpl;
 class CursorImpl;
 class MonitorImpl;
@@ -24,7 +24,7 @@ void UpdateMonitorLists();
 
 
 
-class Renderer;
+class Instance;
 class TextureResource;
 class Mesh;
 class WindowEventHandler;
@@ -242,7 +242,7 @@ struct WindowCreateInfo {
 	vk2d::Vector2u						size						= { 800, 600 };	// Window framebuffer initial size
 	vk2d::Vector2u						min_size					= { 32, 32 };	// Minimum size of the window, will be adjusted to suit the hardware.
 	vk2d::Vector2u						max_size					= { UINT32_MAX, UINT32_MAX };	// Maximum size of the window, will be adjusted to suit the hardware.
-	vk2d::Monitor					*	fullscreen_monitor			= {};			// Fullscreen monitor pointer, nullptr is windowed, use Renderer::GetPrimaryMonitor() to use primary monitor for fullscreen.
+	vk2d::Monitor					*	fullscreen_monitor			= {};			// Fullscreen monitor pointer, nullptr is windowed, use Instance::GetPrimaryMonitor() to use primary monitor for fullscreen.
 	uint32_t							fullscreen_refresh_rate		= UINT32_MAX;	// Refresh rate in fullscreen mode, UINT32_MAX uses maximum refresh rate available.
 	bool								vsync						= true;			// Vertical synchronization, works in both windowed and fullscreen modes, usually best left on for 2d graphics.
 	vk2d::Multisamples					samples						= vk2d::Multisamples::SAMPLE_COUNT_1;	// Multisampling, must be a single value in vk2d::Multisamples enum.
@@ -380,27 +380,27 @@ private:
 
 // Cursor objects hold a cursor image and the cursor image hot spot.
 class Cursor {
-	friend class vk2d::_internal::RendererImpl;
+	friend class vk2d::_internal::InstanceImpl;
 	friend class vk2d::Window;
 	friend class vk2d::_internal::WindowImpl;
 
 	// Create cursor from image file.
-	// [in] renderer: renderer parent.
+	// [in] instance: instance parent.
 	// [in] imagePath: path to an image.
 	// [in] hot_spot_x: where the active location of the cursor is.
 	VK2D_API																		Cursor(
-		vk2d::_internal::RendererImpl		*	renderer,
+		vk2d::_internal::InstanceImpl		*	instance,
 		const std::filesystem::path			&	image_path,
 		vk2d::Vector2i							hot_spot );
 
 	// Create cursor from raw texel data.
 	// Texel order is left to right, top to bottom.
-	// [in] renderer: renderer parent.
+	// [in] instance: instance parent.
 	// [in] image_size: size of the image in pixels.
 	// [in] image_data: raw image data.
 	// [in] hot_spot: where the active location of the cursor is.
 	VK2D_API																		Cursor(
-		vk2d::_internal::RendererImpl		*	renderer,
+		vk2d::_internal::InstanceImpl		*	instance,
 		vk2d::Vector2u							image_size,
 		const std::vector<vk2d::Color8>		&	image_data,
 		vk2d::Vector2i							hot_spot );
@@ -444,12 +444,12 @@ private:
 
 
 class Window {
-	friend class vk2d::_internal::RendererImpl;
+	friend class vk2d::_internal::InstanceImpl;
 
 private:
-	// Only accessible through Renderer::CreateOutputWindow();
+	// Only accessible through Instance::CreateOutputWindow();
 	VK2D_API																		Window(
-		vk2d::_internal::RendererImpl				*	renderer_parent,
+		vk2d::_internal::InstanceImpl				*	instance_parent,
 		vk2d::WindowCreateInfo						&	window_create_info );
 
 public:
@@ -457,7 +457,7 @@ public:
 
 	// Signal that the window should now close. This function does not actually close the window
 	// but rather just sets a flag that it should close, the main program will have to manually
-	// remove the window from Renderer, this function will however hide the window.
+	// remove the window from Instance, this function will however hide the window.
 	VK2D_API void										VK2D_APIENTRY				CloseWindow();
 
 	// Checks if the window wants to close.
@@ -514,7 +514,7 @@ public:
 
 	// Sets window to fullscreen to a specific window.
 	// Parameters:
-	// [in] monitor: pointer to monitor object. ( See Renderer::GetMonitors() and Renderer::GetPrimaryMonitor() )
+	// [in] monitor: pointer to monitor object. ( See Instance::GetMonitors() and Instance::GetPrimaryMonitor() )
 	// [in] frequency: new refresh rate.
 	VK2D_API void										VK2D_APIENTRY				SetFullscreen(
 		vk2d::Monitor								*	monitor,

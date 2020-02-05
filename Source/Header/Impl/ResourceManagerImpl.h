@@ -1,7 +1,7 @@
 #pragma once
 
 #include "../Header/Core/SourceCommon.h"
-#include "RendererImpl.h"
+#include "InstanceImpl.h"
 
 #include "../Core/ThreadPool.h"
 
@@ -25,7 +25,7 @@ class ResourceImpl;
 class ResourceManagerImpl {
 public:
 	ResourceManagerImpl(
-		vk2d::_internal::RendererImpl					*	parent_renderer
+		vk2d::_internal::InstanceImpl					*	parent_instance
 	);
 	~ResourceManagerImpl();
 
@@ -58,7 +58,7 @@ public:
 	void													DestroyResource(
 		vk2d::Resource									*	resource );
 
-	vk2d::_internal::RendererImpl						*	GetRenderer() const;
+	vk2d::_internal::InstanceImpl						*	GetInstance() const;
 	vk2d::_internal::ThreadPool							*	GetThreadPool() const;
 	const std::vector<uint32_t>							&	GetLoaderThreads() const;
 	const std::vector<uint32_t>							&	GetGeneralThreads() const;
@@ -92,8 +92,8 @@ private:
 		return resource_ptr;
 	}
 
-	vk2d::_internal::RendererImpl						*	renderer_parent						= {};
-	VkDevice												device								= {};
+	vk2d::_internal::InstanceImpl						*	instance_parent						= {};
+	VkDevice												vk_device							= {};
 
 	vk2d::_internal::ThreadPool							*	thread_pool							= {};
 	std::vector<uint32_t>									loader_threads						= {};

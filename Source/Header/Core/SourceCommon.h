@@ -14,7 +14,7 @@ namespace vk2d {
 
 namespace _internal {
 
-class RendererImpl;
+class InstanceImpl;
 
 
 
@@ -51,7 +51,7 @@ struct CommandBufferCheckpointData {
 #if VK2D_BUILD_OPTION_VULKAN_COMMAND_BUFFER_CHECKMARKS
 
 void									SetCommandBufferCheckpointHost(
-	vk2d::_internal::RendererImpl	*	renderer );
+	vk2d::_internal::InstanceImpl	*	instance );
 
 void									CmdInsertCommandBufferCheckpoint(
 	VkCommandBuffer						command_buffer,

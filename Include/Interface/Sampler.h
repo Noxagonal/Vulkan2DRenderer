@@ -9,12 +9,12 @@
 namespace vk2d {
 
 namespace _internal {
-class RendererImpl;
+class InstanceImpl;
 class WindowImpl;
 class SamplerImpl;
 } // _internal
 
-class Renderer;
+class Instance;
 
 
 
@@ -54,11 +54,11 @@ struct SamplerCreateInfo {
 
 
 class Sampler {
-	friend class vk2d::_internal::RendererImpl;
+	friend class vk2d::_internal::InstanceImpl;
 	friend class vk2d::_internal::WindowImpl;
 
 	VK2D_API																			Sampler(
-		vk2d::_internal::RendererImpl				*	renderer_parent,
+		vk2d::_internal::InstanceImpl				*	instance_parent,
 		const vk2d::SamplerCreateInfo				&	create_info );
 
 public:

@@ -1,11 +1,11 @@
 
 // This program serves as a hello world of sorts to VK2D.
-// It creates a renderer, a window and renders 3 basic
+// It creates a instance, a window and renders 3 basic
 // shapes to that window.
 
 
 
-#include <Vulkan2DRenderer.h>
+#include <VK2D.h>
 
 constexpr double PI				= 3.14159265358979323846;
 constexpr double RAD			= PI * 2.0;
@@ -18,17 +18,17 @@ constexpr double RAD			= PI * 2.0;
 
 int main()
 {
-	// Create renderer, this is the root node of everything else.
-	// Return type is std::unique_ptr, this will properly destroy the renderer
+	// Create instance, this is the root node of everything else.
+	// Return type is std::unique_ptr, this will properly destroy the instance
 	// as soon as it goes out of scope and it will clean everything up for us.
-	vk2d::RendererCreateInfo renderer_create_info {};
-	auto renderer = vk2d::CreateRenderer( renderer_create_info );
-	if( !renderer ) return -1;
+	vk2d::InstanceCreateInfo instance_create_info {};
+	auto instance = vk2d::CreateInstance( instance_create_info );
+	if( !instance ) return -1;
 
 	// Create window with size of 800, 600 pixels.
 	vk2d::WindowCreateInfo					window_create_info {};
 	window_create_info.size					= { 800, 600 };
-	auto window = renderer->CreateOutputWindow( window_create_info );
+	auto window = instance->CreateOutputWindow( window_create_info );
 	if( !window ) return -1;
 
 	// Run the window until the user closes it.
@@ -37,7 +37,7 @@ int main()
 	// the application. It's up to the programmer to manually check if the window
 	// should be closed and then close it. vk2d::Window::ShouldClose() will return
 	// true if the window should be closed.
-	// In this case we can just exit the loop and once renderer goes out of scope
+	// In this case we can just exit the loop and once instance goes out of scope
 	// it'll destroy the window for us.
 	while( !window->ShouldClose() ) {
 

@@ -1,7 +1,7 @@
 
 #include "../Header/Core/SourceCommon.h"
 
-#include "../Header/Impl/RendererImpl.h"
+#include "../Header/Impl/InstanceImpl.h"
 
 
 
@@ -12,25 +12,25 @@
 PFN_vkCmdSetCheckpointNV							fp_vkCmdSetCheckpointNV						= nullptr;
 PFN_vkGetQueueCheckpointDataNV						fp_vkGetQueueCheckpointDataNV				= nullptr;
 
-vk2d::_internal::RendererImpl					*	command_buffer_checkpoint_host				= nullptr;
+vk2d::_internal::InstanceImpl					*	command_buffer_checkpoint_host				= nullptr;
 vk2d::_internal::CommandBufferCheckpointData	*	previous_command_buffer_checkpoint_data		= nullptr;
 
 
 
 void vk2d::_internal::SetCommandBufferCheckpointHost(
-	vk2d::_internal::RendererImpl	*	renderer
+	vk2d::_internal::InstanceImpl	*	instance
 )
 {
-	command_buffer_checkpoint_host		= renderer;
+	command_buffer_checkpoint_host		= instance;
 
 	fp_vkCmdSetCheckpointNV = (PFN_vkCmdSetCheckpointNV)vkGetDeviceProcAddr(
-		renderer->GetVulkanDevice(),
+		instance->GetVulkanDevice(),
 		"vkCmdSetCheckpointNV"
 	);
 	assert( fp_vkCmdSetCheckpointNV );
 
 	fp_vkGetQueueCheckpointDataNV = (PFN_vkGetQueueCheckpointDataNV)vkGetDeviceProcAddr(
-		renderer->GetVulkanDevice(),
+		instance->GetVulkanDevice(),
 		"vkGetQueueCheckpointDataNV"
 	);
 	assert( fp_vkGetQueueCheckpointDataNV );

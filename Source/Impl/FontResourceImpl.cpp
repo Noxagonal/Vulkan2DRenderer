@@ -103,9 +103,9 @@ bool vk2d::_internal::FontResourceImpl::MTLoad(
 	// From raw file.
 
 	auto loader_thread_resource		= static_cast<vk2d::_internal::ThreadLoaderResource*>( thread_resource );
-	auto renderer					= loader_thread_resource->GetRenderer();
+	auto instance					= loader_thread_resource->GetInstance();
 	auto path_str					= font_resource_parent->GetFilePaths()[ 0 ].string();
-	auto max_texture_size			= renderer->GetPhysicalDeviceProperties().limits.maxImageDimension2D;
+	auto max_texture_size			= instance->GetVulkanPhysicalDeviceProperties().limits.maxImageDimension2D;
 	auto min_texture_size			= std::min( uint32_t( 128 ), max_texture_size );
 
 	// Average to max weight is used to estimate glyph space requirements on atlas textures.
@@ -140,21 +140,21 @@ bool vk2d::_internal::FontResourceImpl::MTLoad(
 				break;
 			case FT_Err_Cannot_Open_Resource:
 				// Cannot open file error
-				renderer->Report(
+				instance->Report(
 					vk2d::ReportSeverity::NON_CRITICAL_ERROR,
 					std::string( "Cannot load font: File not found: " ) + path_str
 				);
 				return false;
 			case FT_Err_Unknown_File_Format:
 				// Unknown file format error
-				renderer->Report(
+				instance->Report(
 					vk2d::ReportSeverity::NON_CRITICAL_ERROR,
 					std::string( "Cannot load font: Unknown file format: " ) + path_str
 				);
 				return false;
 			default:
 				// Other errors
-				renderer->Report(
+				instance->Report(
 					vk2d::ReportSeverity::NON_CRITICAL_ERROR,
 					std::string( "Cannot load font: " ) + path_str
 				);
@@ -175,7 +175,7 @@ bool vk2d::_internal::FontResourceImpl::MTLoad(
 					&face
 				);
 				if( ft_error ) {
-					renderer->Report(
+					instance->Report(
 						vk2d::ReportSeverity::NON_CRITICAL_ERROR,
 						std::string( "Cannot load font: " ) + path_str
 					);
@@ -189,7 +189,7 @@ bool vk2d::_internal::FontResourceImpl::MTLoad(
 					glyph_texel_size
 				);
 				if( ft_error ) {
-					renderer->Report(
+					instance->Report(
 						vk2d::ReportSeverity::NON_CRITICAL_ERROR,
 						std::string( "Cannot load font: " ) + path_str
 					);
@@ -203,7 +203,7 @@ bool vk2d::_internal::FontResourceImpl::MTLoad(
 
 				auto ft_load_error = FT_Load_Glyph( face, FT_UInt( i ), FT_LOAD_DEFAULT );
 				if( ft_load_error ) {
-					renderer->Report( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot load font, cannot load glyph for bitmap metrics!" );
+					instance->Report( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot load font, cannot load glyph for bitmap metrics!" );
 					return false;
 				}
 
@@ -247,7 +247,7 @@ bool vk2d::_internal::FontResourceImpl::MTLoad(
 	}
 
 	if( !total_glyph_count ) {
-		renderer->Report( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Cannot load font: Font contains no glyphs!" );
+		instance->Report( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Cannot load font: Font contains no glyphs!" );
 		return false;
 	}
 
@@ -277,7 +277,7 @@ bool vk2d::_internal::FontResourceImpl::MTLoad(
 
 	// Stop if we don't have any font's to work with.
 	if( !face_infos.size() ) {
-		renderer->Report(
+		instance->Report(
 			vk2d::ReportSeverity::NON_CRITICAL_ERROR,
 			std::string( "Internal error: Cannot load font: " ) + path_str
 		);
@@ -298,14 +298,14 @@ bool vk2d::_internal::FontResourceImpl::MTLoad(
 			{
 				auto ft_load_error = FT_Load_Glyph( face.face, glyph_index, FT_LOAD_DEFAULT );
 				if( ft_load_error ) {
-					renderer->Report( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot load font, cannot load glyph!" );
+					instance->Report( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot load font, cannot load glyph!" );
 					return false;
 				}
 			}
 			{
 				auto ft_render_error = FT_Render_Glyph( face.face->glyph, use_alpha ? FT_RENDER_MODE_NORMAL : FT_RENDER_MODE_MONO );
 				if( ft_render_error ) {
-					renderer->Report( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot load font, cannot render glyph!" );
+					instance->Report( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot load font, cannot render glyph!" );
 					return false;
 				}
 			}
@@ -369,7 +369,7 @@ bool vk2d::_internal::FontResourceImpl::MTLoad(
 
 			default:
 				// Unsupported
-				renderer->Report( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot load font, Unsupported pixel format!" );
+				instance->Report( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot load font, Unsupported pixel format!" );
 				return false;
 				break;
 			}
@@ -381,7 +381,7 @@ bool vk2d::_internal::FontResourceImpl::MTLoad(
 				final_glyph_pixels
 			);
 			if( !atlas_location.atlas_ptr ) {
-				renderer->Report(
+				instance->Report(
 					vk2d::ReportSeverity::NON_CRITICAL_ERROR,
 					"Internal error: Cannot create font, cannot copy glyph image to font texture atlas!"
 				);
@@ -464,7 +464,7 @@ bool vk2d::_internal::FontResourceImpl::MTLoad(
 			font_resource_parent
 		);
 		if( !texture_resource ) {
-			renderer->Report( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot create font, cannot create texture resource for font!" );
+			instance->Report( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot create font, cannot create texture resource for font!" );
 			return false;
 		}
 	}
@@ -635,7 +635,7 @@ vk2d::_internal::FontResourceImpl::AtlasLocation vk2d::_internal::FontResourceIm
 		current_atlas_texture = CreateNewAtlasTexture();
 		if( !current_atlas_texture ) {
 			// Failed to create new atlas texture.
-			resource_manager_parent->GetRenderer()->Report( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot create font, cannot create new atlas texture for font!" );
+			resource_manager_parent->GetInstance()->Report( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot create font, cannot create new atlas texture for font!" );
 			return {};
 		}
 
@@ -649,7 +649,7 @@ vk2d::_internal::FontResourceImpl::AtlasLocation vk2d::_internal::FontResourceIm
 		if( !new_location.atlas_ptr ) {
 			// Still could not find enough space, a single font face glyph is too large
 			// to fit entire atlas, this should not happen so we raise an error.
-			resource_manager_parent->GetRenderer()->Report( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot create font, a single glyph wont fit into a new atlas." );
+			resource_manager_parent->GetInstance()->Report( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot create font, a single glyph wont fit into a new atlas." );
 			return {};
 		}
 
@@ -693,7 +693,7 @@ vk2d::_internal::FontResourceImpl::AtlasLocation vk2d::_internal::FontResourceIm
 		);
 		return atlas_location;
 	} else {
-		resource_manager_parent->GetRenderer()->Report( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot create font, cannot attach glyph to atlas texture!" );
+		resource_manager_parent->GetInstance()->Report( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot create font, cannot attach glyph to atlas texture!" );
 		return {};
 	}
 }
