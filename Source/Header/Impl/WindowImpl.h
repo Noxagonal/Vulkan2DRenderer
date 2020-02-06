@@ -160,7 +160,7 @@ public:
 	void														DrawTriangleList(
 		const std::vector<vk2d::VertexIndex_3>				&	indices,
 		const std::vector<vk2d::Vertex>						&	vertices,
-		const std::vector<float>							&	texture_channels,
+		const std::vector<float>							&	texture_channel_weights,
 		bool													filled						= true,
 		vk2d::TextureResource								*	texture						= nullptr,
 		vk2d::Sampler										*	sampler						= nullptr );
@@ -168,7 +168,7 @@ public:
 	void														DrawTriangleList(
 		const std::vector<uint32_t>							&	raw_indices,
 		const std::vector<vk2d::Vertex>						&	vertices,
-		const std::vector<float>							&	texture_channels,
+		const std::vector<float>							&	texture_channel_weights,
 		bool													filled						= true,
 		vk2d::TextureResource								*	texture						= nullptr,
 		vk2d::Sampler										*	sampler						= nullptr );
@@ -176,7 +176,7 @@ public:
 	void														DrawLineList(
 		const std::vector<vk2d::VertexIndex_2>				&	indices,
 		const std::vector<vk2d::Vertex>						&	vertices,
-		const std::vector<float>							&	texture_channels,
+		const std::vector<float>							&	texture_channel_weights,
 		vk2d::TextureResource								*	texture						= nullptr,
 		vk2d::Sampler										*	sampler						= nullptr,
 		float													line_width					= 1.0f );
@@ -184,16 +184,21 @@ public:
 	void														DrawLineList(
 		const std::vector<uint32_t>							&	raw_indices,
 		const std::vector<vk2d::Vertex>						&	vertices,
-		const std::vector<float>							&	texture_channels,
+		const std::vector<float>							&	texture_channel_weights,
 		vk2d::TextureResource								*	texture						= nullptr,
 		vk2d::Sampler										*	sampler						= nullptr,
 		float													line_width					= 1.0f );
 
 	void														DrawPointList(
 		const std::vector<vk2d::Vertex>						&	vertices,
-		const std::vector<float>							&	texture_channels,
+		const std::vector<float>							&	texture_channel_weights,
 		vk2d::TextureResource								*	texture						= nullptr,
 		vk2d::Sampler										*	sampler						= nullptr );
+
+	void														DrawPoint(
+		vk2d::Vector2f											location,
+		vk2d::Colorf											color						= { 1.0f, 1.0f, 1.0f, 1.0f },
+		float													size						= 1.0f );
 
 	void														DrawLine(
 		vk2d::Vector2f											point_1,

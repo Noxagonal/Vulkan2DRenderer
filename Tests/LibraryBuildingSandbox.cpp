@@ -51,9 +51,33 @@ int main()
 
 		if( !window->BeginRender() ) return -1;
 
-		window->DrawCircle(
+		window->DrawLine(
 			vk2d::Vector2f( -200, -200 ),
 			vk2d::Vector2f( 200, 200 )
+		);
+
+		window->DrawCircle(
+			vk2d::Vector2f( -300, -200 ),
+			vk2d::Vector2f( 300, 200 ),
+			true,
+			64,
+			vk2d::Colorf( 1, 1, 1, 0.2f )
+		);
+
+		window->DrawPoint(
+			vk2d::Vector2f( -120, 0 ),
+			vk2d::Colorf( 1, 0, 0, 1 ),
+			10
+		);
+		window->DrawPoint(
+			vk2d::Vector2f( -110, 0 ),
+			vk2d::Colorf( 0, 1, 0, 1 ),
+			10
+		);
+		window->DrawPoint(
+			vk2d::Vector2f( -100, 0 ),
+			vk2d::Colorf( 0, 0, 1, 1 ),
+			10
 		);
 
 		if( !window->EndRender() ) return -1;

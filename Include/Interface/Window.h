@@ -657,6 +657,11 @@ public:
 		vk2d::TextureResource						*	texture						= nullptr,
 		vk2d::Sampler								*	sampler						= nullptr );
 
+	VK2D_API void										VK2D_APIENTRY				DrawPoint(
+		vk2d::Vector2f									location,
+		vk2d::Colorf									color						= { 1.0f, 1.0f, 1.0f, 1.0f },
+		float											size						= 1.0f );
+
 	VK2D_API void										VK2D_APIENTRY				DrawLine(
 		vk2d::Vector2f									point_1,
 		vk2d::Vector2f									point_2,
