@@ -1414,7 +1414,7 @@ void vk2d::_internal::WindowImpl::DrawTriangleList(
 void vk2d::_internal::WindowImpl::DrawLineList(
 	const std::vector<vk2d::VertexIndex_2>	&	indices,
 	const std::vector<vk2d::Vertex>			&	vertices,
-	const std::vector<float>				&	texture_channels,
+	const std::vector<float>				&	texture_channel_weights,
 	vk2d::TextureResource					*	texture,
 	vk2d::Sampler							*	sampler,
 	float										line_width
@@ -1431,7 +1431,7 @@ void vk2d::_internal::WindowImpl::DrawLineList(
 	DrawLineList(
 		raw_indices,
 		vertices,
-		texture_channels,
+		texture_channel_weights,
 		texture,
 		sampler,
 		line_width
@@ -1441,103 +1441,210 @@ void vk2d::_internal::WindowImpl::DrawLineList(
 void vk2d::_internal::WindowImpl::DrawLineList(
 	const std::vector<uint32_t>				&	raw_indices,
 	const std::vector<vk2d::Vertex>			&	vertices,
-	const std::vector<float>				&	texture_channels,
+	const std::vector<float>				&	texture_channel_weights,
 	vk2d::TextureResource					*	texture,
 	vk2d::Sampler							*	sampler,
 	float										line_width
 )
 {
-	/*
-	auto command_buffer					= render_command_buffers[ next_image ];
+	auto command_buffer					= vk_render_command_buffers[ next_image ];
 
 	auto vertex_count	= uint32_t( vertices.size() );
 	auto index_count	= uint32_t( raw_indices.size() );
 
-	CmdBindPipelineIfDifferent(
-		command_buffer,
-		_internal::PipelineType::LINE_LIST
-	);
+	if( !texture ) {
+		texture = instance_parent->GetDefaultTexture();
+	}
+	if( !sampler ) {
+		sampler = instance_parent->GetDefaultSampler();
+	}
 
-	CmdBindTextureIfDifferent(
+	{
+		bool multitextured = texture->GetLayerCount() > 1 &&
+			texture_channel_weights.size() >= texture->GetLayerCount() * vertices.size();
+
+		auto shader_programs = instance_parent->GetCompatibleShaderModules(
+			multitextured,
+			sampler->impl->IsAnyBorderColorEnabled(),
+			2
+		);
+
+		vk2d::_internal::PipelineSettings pipeline_settings {};
+		pipeline_settings.render_pass			= vk_render_pass;
+		pipeline_settings.primitive_topology	= VK_PRIMITIVE_TOPOLOGY_LINE_LIST;
+		pipeline_settings.polygon_mode			= VK_POLYGON_MODE_LINE;
+		pipeline_settings.shader_programs		= shader_programs;
+		pipeline_settings.samples				= VkSampleCountFlags( create_info_copy.samples );
+
+		CmdBindPipelineIfDifferent(
+			command_buffer,
+			pipeline_settings
+		);
+	}
+
+	CmdBindTextureSamplerIfDifferent(
 		command_buffer,
+		sampler,
 		texture
 	);
 
-	CmdBindSamplerIfDifferent(
-		command_buffer,
-		sampler
-	);
-
-	auto result = mesh_buffer->CmdPushMesh(
+	auto push_result = mesh_buffer->CmdPushMesh(
 		command_buffer,
 		raw_indices,
 		vertices,
-		{} );
+		texture_channel_weights );
 
-	CmdSetLineWidthIfDifferent(
-		command_buffer,
-		line_width
-	);
+	{
+		PushConstants pc {};
+		pc.index_offset				= push_result.location_info.index_offset;
+		pc.index_count				= 2;
+		pc.vertex_offset			= push_result.location_info.vertex_offset;
+		pc.texture_channel_offset	= push_result.location_info.texture_channel_offset;
+		pc.texture_channel_count	= texture->impl->GetLayerCount();
 
-	if( result.success ) {
+		vkCmdPushConstants(
+			command_buffer,
+			instance_parent->GetVulkanPipelineLayout(),
+			VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
+			0, sizeof( pc ),
+			&pc
+		);
+	}
+
+	if( push_result.success ) {
+		vk2d::_internal::CmdInsertCommandBufferCheckpoint(
+			command_buffer,
+			"MeshBuffer",
+			vk2d::_internal::CommandBufferCheckpointType::BEGIN_DRAW
+		);
 		vkCmdDrawIndexed(
 			command_buffer,
 			index_count,
 			1,
-			result.offsets.first_index,
-			int32_t( result.offsets.vertex_offset ),
+			push_result.location_info.index_offset,
+			int32_t( push_result.location_info.vertex_offset ),
 			0
+		);
+		vk2d::_internal::CmdInsertCommandBufferCheckpoint(
+			command_buffer,
+			"MeshBuffer",
+			vk2d::_internal::CommandBufferCheckpointType::END_DRAW
 		);
 	} else {
 		instance_parent->Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot push mesh into mesh render queue!" );
 	}
-	*/
 }
 
 void vk2d::_internal::WindowImpl::DrawPointList(
 	const std::vector<vk2d::Vertex>			&	vertices,
-	const std::vector<float>				&	texture_channels,
+	const std::vector<float>				&	texture_channel_weights,
 	vk2d::TextureResource					*	texture,
 	vk2d::Sampler							*	sampler
 )
 {
-	/*
-	auto command_buffer					= render_command_buffers[ next_image ];
+	auto command_buffer					= vk_render_command_buffers[ next_image ];
 
 	auto vertex_count	= uint32_t( vertices.size() );
 
-	CmdBindPipelineIfDifferent(
-		command_buffer,
-		_internal::PipelineType::POINT_LIST
-	);
+	if( !texture ) {
+		texture = instance_parent->GetDefaultTexture();
+	}
+	if( !sampler ) {
+		sampler = instance_parent->GetDefaultSampler();
+	}
 
-	CmdBindTextureIfDifferent(
+	{
+		bool multitextured = texture->GetLayerCount() > 1 &&
+			texture_channel_weights.size() >= texture->GetLayerCount() * vertices.size();
+
+		auto shader_programs = instance_parent->GetCompatibleShaderModules(
+			multitextured,
+			sampler->impl->IsAnyBorderColorEnabled(),
+			1
+		);
+
+		vk2d::_internal::PipelineSettings pipeline_settings {};
+		pipeline_settings.render_pass			= vk_render_pass;
+		pipeline_settings.primitive_topology	= VK_PRIMITIVE_TOPOLOGY_POINT_LIST;
+		pipeline_settings.polygon_mode			= VK_POLYGON_MODE_POINT;
+		pipeline_settings.shader_programs		= shader_programs;
+		pipeline_settings.samples				= VkSampleCountFlags( create_info_copy.samples );
+
+		CmdBindPipelineIfDifferent(
+			command_buffer,
+			pipeline_settings
+		);
+	}
+
+	CmdBindTextureSamplerIfDifferent(
 		command_buffer,
+		sampler,
 		texture
 	);
 
-	CmdBindSamplerIfDifferent(
+	auto push_result = mesh_buffer->CmdPushMesh(
 		command_buffer,
-		sampler
-	);
-
-	auto result = mesh_buffer->CmdPushMesh(
-		command_buffer,
+		{},
 		vertices,
-		{} );
+		texture_channel_weights );
 
-	if( result.success ) {
+	{
+		PushConstants pc {};
+		pc.index_offset				= push_result.location_info.index_offset;
+		pc.index_count				= 1;
+		pc.vertex_offset			= push_result.location_info.vertex_offset;
+		pc.texture_channel_offset	= push_result.location_info.texture_channel_offset;
+		pc.texture_channel_count	= texture->impl->GetLayerCount();
+
+		vkCmdPushConstants(
+			command_buffer,
+			instance_parent->GetVulkanPipelineLayout(),
+			VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
+			0, sizeof( pc ),
+			&pc
+		);
+	}
+
+	if( push_result.success ) {
+		vk2d::_internal::CmdInsertCommandBufferCheckpoint(
+			command_buffer,
+			"MeshBuffer",
+			vk2d::_internal::CommandBufferCheckpointType::BEGIN_DRAW
+		);
 		vkCmdDraw(
 			command_buffer,
 			vertex_count,
 			1,
-			result.offsets.vertex_offset,
+			push_result.location_info.vertex_offset,
 			0
+		);
+		vk2d::_internal::CmdInsertCommandBufferCheckpoint(
+			command_buffer,
+			"MeshBuffer",
+			vk2d::_internal::CommandBufferCheckpointType::END_DRAW
 		);
 	} else {
 		instance_parent->Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot push mesh into mesh render queue!" );
 	}
-	*/
+}
+
+void vk2d::_internal::WindowImpl::DrawPoint(
+	vk2d::Vector2f			location,
+	vk2d::Colorf			color,
+	float					size
+)
+{
+	Vertex vertex;
+	vertex.vertex_coords			= location;
+	vertex.uv_coords				= {};
+	vertex.color					= color;
+	vertex.point_size				= size;
+	vertex.single_texture_channel	= 0;
+
+	DrawPointList(
+		{ vertex },
+		{}
+	);
 }
 
 void vk2d::_internal::WindowImpl::DrawLine(
@@ -1545,25 +1652,29 @@ void vk2d::_internal::WindowImpl::DrawLine(
 	vk2d::Vector2f					point_2,
 	vk2d::Colorf					color )
 {
-	/*
 	std::vector<vk2d::Vertex>		vertices( 2 );
-	std::vector<VertexIndex_2>		indices( 1 );
+	std::vector<uint32_t>			indices( 2 );
 
-	vertices[ 0 ].vertex_coords		= point_1;
-	vertices[ 0 ].uv_coords			= {};
-	vertices[ 0 ].color				= color;
+	vertices[ 0 ].vertex_coords				= point_1;
+	vertices[ 0 ].uv_coords					= {};
+	vertices[ 0 ].color						= color;
+	vertices[ 0 ].point_size				= 1.0f;
+	vertices[ 0 ].single_texture_channel	= 0;
 
-	vertices[ 1 ].vertex_coords		= point_2;
-	vertices[ 1 ].uv_coords			= {};
-	vertices[ 1 ].color				= color;
+	vertices[ 1 ].vertex_coords				= point_2;
+	vertices[ 1 ].uv_coords					= {};
+	vertices[ 1 ].color						= color;
+	vertices[ 1 ].point_size				= 1.0f;
+	vertices[ 1 ].single_texture_channel	= 0;
 
-	indices[ 0 ].indices			= { 0, 1 };
+	indices[ 0 ]							= 0;
+	indices[ 1 ]							= 1;
 
 	DrawLineList(
+		indices,
 		vertices,
-		indices
+		{}
 	);
-	*/
 }
 
 void vk2d::_internal::WindowImpl::DrawBox(

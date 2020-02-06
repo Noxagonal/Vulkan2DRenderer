@@ -55,11 +55,11 @@ enum class ShaderProgramID {
 
 class ShaderProgram {
 public:
-	ShaderProgram()											= default;
-	ShaderProgram( const vk2d::_internal::ShaderProgram & other )				= default;
-	ShaderProgram( vk2d::_internal::ShaderProgram && other )					= default;
+	ShaderProgram()														= default;
+	ShaderProgram( const vk2d::_internal::ShaderProgram & other )		= default;
+	ShaderProgram( vk2d::_internal::ShaderProgram && other )			= default;
 	template<typename T>
-	ShaderProgram( std::initializer_list<T> )								= delete;
+	ShaderProgram( std::initializer_list<T> )							= delete;
 	inline ShaderProgram(
 		VkShaderModule										vertex,
 		VkShaderModule										fragment
@@ -68,11 +68,13 @@ public:
 		fragment( fragment )
 	{}
 
-	vk2d::_internal::ShaderProgram & operator=( const vk2d::_internal::ShaderProgram & other )	= default;
+	vk2d::_internal::ShaderProgram & operator=( const vk2d::_internal::ShaderProgram & other )		= default;
 	vk2d::_internal::ShaderProgram & operator=( vk2d::_internal::ShaderProgram && other )			= default;
 
 	bool operator<( const vk2d::_internal::ShaderProgram & other ) const;
 	bool operator>( const vk2d::_internal::ShaderProgram & other ) const;
+	bool operator<=( const vk2d::_internal::ShaderProgram & other ) const;
+	bool operator>=( const vk2d::_internal::ShaderProgram & other ) const;
 	bool operator==( const vk2d::_internal::ShaderProgram & other ) const;
 	bool operator!=( const vk2d::_internal::ShaderProgram & other ) const;
 
@@ -95,6 +97,8 @@ public:
 
 	bool operator<( const vk2d::_internal::PipelineSettings & other ) const;
 	bool operator>( const vk2d::_internal::PipelineSettings & other ) const;
+	bool operator<=( const vk2d::_internal::PipelineSettings & other ) const;
+	bool operator>=( const vk2d::_internal::PipelineSettings & other ) const;
 	bool operator==( const vk2d::_internal::PipelineSettings & other ) const;
 	bool operator!=( const vk2d::_internal::PipelineSettings & other ) const;
 

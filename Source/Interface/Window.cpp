@@ -292,6 +292,19 @@ VK2D_API void VK2D_APIENTRY vk2d::Window::DrawPointList(
 	);
 }
 
+VK2D_API void VK2D_APIENTRY vk2d::Window::DrawPoint(
+	vk2d::Vector2f			location,
+	vk2d::Colorf			color,
+	float					size
+)
+{
+	impl->DrawPoint(
+		location,
+		color,
+		size
+	);
+}
+
 VK2D_API void VK2D_APIENTRY vk2d::Window::DrawLine(
 	vk2d::Vector2f					point_1,
 	vk2d::Vector2f					point_2,
