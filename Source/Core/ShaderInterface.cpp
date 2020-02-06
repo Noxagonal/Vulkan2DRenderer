@@ -1,4 +1,3 @@
-#pragma once
 
 #include "../Header/Core/SourceCommon.h"
 
