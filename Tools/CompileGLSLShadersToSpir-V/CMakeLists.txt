@@ -3,7 +3,7 @@
 # The Vulkan 2D instance library uses this to automatically convert GLSL shaders into Spir-V
 # when compiling the library.
 
-cmake_minimum_required(VERSION 3.15)
+cmake_minimum_required(VERSION 3.13)
 
 set(GLSLANG_PATH
 	"${CMAKE_SOURCE_DIR}/ExternalLibraries/glslang"
