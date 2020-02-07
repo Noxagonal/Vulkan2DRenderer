@@ -9,7 +9,7 @@
 *.user
 *.userosscache
 *.sln.docstates
-.vscode
+./.vscode
 Build
 build
 
