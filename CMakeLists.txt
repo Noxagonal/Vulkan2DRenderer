@@ -11,6 +11,10 @@ endif()
 
 
 
+find_package(Vulkan REQUIRED)
+
+
+
 # Update library submodules with git.
 find_package(Git QUIET)
 if(GIT_FOUND AND EXISTS "${PROJECT_SOURCE_DIR}/.git")
@@ -238,18 +242,12 @@ set(EXTERNAL_LIBRARIES
 
 target_include_directories(VK2D
 	PUBLIC
-		"$ENV{VK_SDK_PATH}/Include"
+		Vulkan::Vulkan
 		"${EXTERNAL_INCLUDES}"
 )
 
-target_link_directories(VK2D
-	PUBLIC
-		"$ENV{VK_SDK_PATH}/Lib"
-		"${EXTERNAL_LIBRARIES}"
-)
-
 target_link_libraries(VK2D
-	"vulkan-1"
+	Vulkan::Vulkan
 	freetype
 	glfw
 )
