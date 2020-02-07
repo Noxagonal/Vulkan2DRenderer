@@ -20,6 +20,7 @@ set_target_properties(freetype
 	PROPERTIES
 		FOLDER						"ExternalLibraries"
 		CXX_STANDARD				17
+		POSITION_INDEPENDENT_CODE	ON
 		ARCHIVE_OUTPUT_DIRECTORY	"${CMAKE_BINARY_DIR}/Lib"
 		LIBRARY_OUTPUT_DIRECTORY	"${CMAKE_BINARY_DIR}/Lib"
 		RUNTIME_OUTPUT_DIRECTORY	"${CMAKE_BINARY_DIR}/Bin"
@@ -32,7 +33,7 @@ set(BUILD_SHARED_LIBS		OFF	CACHE BOOL	"We need static library so we can include 
 set(GLFW_BUILD_EXAMPLES		OFF	CACHE BOOL	"No need for examples.")
 set(GLFW_BUILD_TESTS		OFF	CACHE BOOL	"No need for tests.")
 set(GLFW_BUILD_DOCS			OFF	CACHE BOOL	"No need for docs.")
-set(GLFW_VULKAN_STATIC		ON	CACHE BOOL	"We plan to link with static vulkan library.")
+set(GLFW_VULKAN_STATIC		OFF	CACHE BOOL	"We plan to link with static vulkan library.")
 add_subdirectory("glfw")
 
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
@@ -41,6 +42,7 @@ set_target_properties(glfw
 	PROPERTIES
 		FOLDER						"ExternalLibraries/GLFW"
 		CXX_STANDARD				17
+		POSITION_INDEPENDENT_CODE	ON
 		ARCHIVE_OUTPUT_DIRECTORY	"${CMAKE_BINARY_DIR}/Lib"
 		LIBRARY_OUTPUT_DIRECTORY	"${CMAKE_BINARY_DIR}/Lib"
 		RUNTIME_OUTPUT_DIRECTORY	"${CMAKE_BINARY_DIR}/Bin"
@@ -50,6 +52,7 @@ set_target_properties(uninstall
 	PROPERTIES
 		FOLDER						"ExternalLibraries/GLFW"
 		CXX_STANDARD				17
+		POSITION_INDEPENDENT_CODE	ON
 		ARCHIVE_OUTPUT_DIRECTORY	"${CMAKE_BINARY_DIR}/Lib"
 		LIBRARY_OUTPUT_DIRECTORY	"${CMAKE_BINARY_DIR}/Lib"
 		RUNTIME_OUTPUT_DIRECTORY	"${CMAKE_BINARY_DIR}/Bin"
