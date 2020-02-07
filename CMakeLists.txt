@@ -97,6 +97,7 @@ set(FILES_INCLUDE_INTERFACE
 )
 
 set(FILES_SOURCE_CORE
+	"Source/Core/Common.cpp"
 	"Source/Core/DescriptorSet.cpp"
 	"Source/Core/MeshBuffer.cpp"
 	"Source/Core/Platform.cpp"

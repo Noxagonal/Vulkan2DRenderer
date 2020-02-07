@@ -367,7 +367,7 @@ public:
 	VK2D_API bool											VK2D_APIENTRY					IsGood();
 
 private:
-	std::unique_ptr<vk2d::_internal::MonitorImpl>			impl							= nullptr;
+	std::unique_ptr<vk2d::_internal::MonitorImpl>			impl;
 
 	bool													is_good							= {};
 };
@@ -432,7 +432,7 @@ public:
 	VK2D_API bool								VK2D_APIENTRY						IsGood();
 
 private:
-	std::unique_ptr<vk2d::_internal::CursorImpl>	impl							= {};
+	std::unique_ptr<vk2d::_internal::CursorImpl>	impl;
 
 	bool										is_good								= {};
 };
@@ -708,7 +708,7 @@ public:
 
 
 private:
-	std::unique_ptr<vk2d::_internal::WindowImpl>		impl				= {};
+	std::unique_ptr<vk2d::_internal::WindowImpl>		impl;
 
 	bool												is_good				= {};
 };

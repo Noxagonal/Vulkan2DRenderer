@@ -5,7 +5,9 @@
 #include <vector>
 #include <thread>
 #include <mutex>
+#include <condition_variable>
 #include <atomic>
+#include <deque>
 #include <assert.h>
 
 namespace vk2d {
@@ -15,10 +17,35 @@ namespace _internal {
 
 
 class ThreadPool;
-class ThreadSharedResource;
 class ThreadPrivateResource;
+class Task;
 struct ThreadSignal;
 
+
+// Make sure all accesses are either atomic or inside a critical sector.
+// This is the main method of inter-thread communication.
+class ThreadSharedResource {
+public:
+
+	vk2d::_internal::Task * FindWork(
+		vk2d::_internal::ThreadPrivateResource	*	thread_private_resource );
+
+	void TaskComplete(
+		vk2d::_internal::Task					*	task );
+
+	bool IsTaskListEmpty();
+
+	void AddTask(
+		std::unique_ptr<vk2d::_internal::Task> new_task );
+
+	std::mutex											thread_wakeup_mutex;
+	std::condition_variable								thread_wakeup;
+
+	std::atomic_bool									threads_should_exit;
+
+	std::mutex											task_list_mutex;
+	std::deque<std::unique_ptr<vk2d::_internal::Task>>	task_list;
+};
 
 
 class Task {

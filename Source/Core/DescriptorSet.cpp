@@ -4,6 +4,7 @@
 #include "../Header/Core/DescriptorSet.h"
 #include "../Header/Impl/InstanceImpl.h"
 
+#include <algorithm>
 #include <memory>
 #include <vector>
 #include <bitset>

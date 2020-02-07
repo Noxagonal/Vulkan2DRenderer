@@ -3,109 +3,17 @@
 
 #include "../Header/Core/ThreadPool.h"
 
+#include <condition_variable>
+#include <mutex>
 #include <atomic>
-#include <deque>
 #include <numeric>
 #include <algorithm>
+
+
 
 namespace vk2d {
 
 namespace _internal {
-
-
-
-// Make sure all accesses are either atomic or inside a critical sector.
-// This is the main method of inter-thread communication.
-class ThreadSharedResource {
-public:
-
-	Task * FindWork(
-		vk2d::_internal::ThreadPrivateResource * thread_private_resource
-	)
-	{
-		std::lock_guard<std::mutex> lock_guard( task_list_mutex );
-
-		auto it = task_list.begin();
-		while( it != task_list.end() ) {
-			auto task = it->get();
-
-			// If task is already running, skip it
-			if( !task->IsRunning() ) {
-
-				// Check if this thread is allowed to run this code
-				if( !task->IsThreadLocked() ||
-					std::any_of( task->GetThreadLocks().begin(), task->GetThreadLocks().end(),
-						[ thread_private_resource, &task ]( uint32_t tl )
-						{
-							return thread_private_resource->GetThreadIndex() == tl;
-						} ) ) {
-
-					// Look for dependencies, if task is depending on another
-					// task that isn't yet finished we should not execute it.
-					// Finished tasks are removed from task_list.
-					const auto & dependencies = task->GetDependencies();
-					if( std::any_of( task_list.begin(), task_list.end(), [ &dependencies ](
-						std::unique_ptr<vk2d::_internal::Task> & t )
-						{
-							return std::any_of( dependencies.begin(), dependencies.end(), [ &t ]( uint64_t d )
-								{
-									return t->GetTaskIndex() == d;
-								} );
-						} ) ) {
-						// Task is depending on some other previous task in the queue
-						++it;
-					} else {
-							// Task not depending on any other active task and is not already running, run it
-							task->is_running		= true;
-							return task;
-						}
-				} else {
-							// This thread is not allowed to run this code
-							++it;
-						}
-			} else {
-				// Task already running, move on to check the next one
-				++it;
-			}
-		}
-		// No work available
-		return nullptr;
-	}
-
-	void TaskComplete( vk2d::_internal::Task * task )
-	{
-		std::lock_guard<std::mutex> lock_guard( task_list_mutex );
-		auto it = task_list.begin();
-		while( it != task_list.end() ) {
-			if( it->get() == task ) {
-				task_list.erase( it );
-				return;
-			}
-			++it;
-		}
-	}
-
-	bool IsTaskListEmpty()
-	{
-		std::lock_guard<std::mutex> lock_guard( task_list_mutex );
-		return !task_list.size();
-	}
-
-	void AddTask(
-		std::unique_ptr<vk2d::_internal::Task> new_task )
-	{
-		std::lock_guard<std::mutex> lock_guard( task_list_mutex );
-		task_list.emplace_back( std::move( new_task ) );
-	}
-
-	std::mutex											thread_wakeup_mutex;
-	std::condition_variable								thread_wakeup;
-
-	std::atomic_bool									threads_should_exit;
-
-	std::mutex											task_list_mutex;
-	std::deque<std::unique_ptr<vk2d::_internal::Task>>	task_list;
-};
 
 
 
@@ -150,6 +58,89 @@ void ThreadPoolWorkerThread(
 } // _internal
 
 } // vk2d
+
+
+
+vk2d::_internal::Task * vk2d::_internal::ThreadSharedResource::FindWork(
+	vk2d::_internal::ThreadPrivateResource 	*	thread_private_resource
+)
+{
+	std::lock_guard<std::mutex> lock_guard( task_list_mutex );
+
+	auto it = task_list.begin();
+	while( it != task_list.end() ) {
+		auto task = it->get();
+
+		// If task is already running, skip it
+		if( !task->IsRunning() ) {
+
+			// Check if this thread is allowed to run this code
+			if( !task->IsThreadLocked() ||
+				std::any_of( task->GetThreadLocks().begin(), task->GetThreadLocks().end(),
+					[ thread_private_resource, &task ]( uint32_t tl )
+					{
+						return thread_private_resource->GetThreadIndex() == tl;
+					} ) ) {
+
+				// Look for dependencies, if task is depending on another
+				// task that isn't yet finished we should not execute it.
+				// Finished tasks are removed from task_list.
+				const auto & dependencies = task->GetDependencies();
+				if( std::any_of( task_list.begin(), task_list.end(), [ &dependencies ](
+					std::unique_ptr<vk2d::_internal::Task> & t )
+					{
+						return std::any_of( dependencies.begin(), dependencies.end(), [ &t ]( uint64_t d )
+							{
+								return t->GetTaskIndex() == d;
+							} );
+					} ) ) {
+					// Task is depending on some other previous task in the queue
+					++it;
+				} else {
+						// Task not depending on any other active task and is not already running, run it
+						task->is_running		= true;
+						return task;
+					}
+			} else {
+						// This thread is not allowed to run this code
+						++it;
+					}
+		} else {
+			// Task already running, move on to check the next one
+			++it;
+		}
+	}
+	// No work available
+	return nullptr;
+}
+
+void vk2d::_internal::ThreadSharedResource::TaskComplete(
+	vk2d::_internal::Task	*	task
+)
+{
+	std::lock_guard<std::mutex> lock_guard( task_list_mutex );
+	auto it = task_list.begin();
+	while( it != task_list.end() ) {
+		if( it->get() == task ) {
+			task_list.erase( it );
+			return;
+		}
+		++it;
+	}
+}
+
+bool vk2d::_internal::ThreadSharedResource::IsTaskListEmpty()
+{
+	std::lock_guard<std::mutex> lock_guard( task_list_mutex );
+	return !task_list.size();
+}
+
+void vk2d::_internal::ThreadSharedResource::AddTask(
+	std::unique_ptr<vk2d::_internal::Task> new_task )
+{
+	std::lock_guard<std::mutex> lock_guard( task_list_mutex );
+	task_list.emplace_back( std::move( new_task ) );
+}
 
 
 

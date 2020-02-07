@@ -73,7 +73,7 @@ protected:
 		vk2d::_internal::ThreadPrivateResource				*	thread_resource );
 
 private:
-	std::unique_ptr<vk2d::_internal::TextureResourceImpl>		impl						= {};
+	std::unique_ptr<vk2d::_internal::TextureResourceImpl>		impl;
 };
 
 
