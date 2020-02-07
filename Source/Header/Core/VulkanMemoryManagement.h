@@ -2,6 +2,7 @@
 
 #include "SourceCommon.h"
 
+#include <cstring>
 #include <list>
 #include <memory>
 #include <utility>
@@ -195,8 +196,8 @@ private:
 																							DeviceMemoryPool(
 		VkPhysicalDevice								physicalDevice,
 		VkDevice										device,
-		VkDeviceSize									linearAllocationChunkSize			= 1024Ui64 * 1024 * 64,
-		VkDeviceSize									nonLinearAllocationChunkSize		= 1024Ui64 * 1024 * 256 );
+		VkDeviceSize									linearAllocationChunkSize			= uint64_t( 1024 ) * 1024 * 64,
+		VkDeviceSize									nonLinearAllocationChunkSize		= uint64_t( 1024 ) * 1024 * 256 );
 
 public:
 																							~DeviceMemoryPool();
@@ -361,8 +362,8 @@ private:
 std::unique_ptr<vk2d::_internal::DeviceMemoryPool>		MakeDeviceMemoryPool(
 	VkPhysicalDevice									physicalDevice,
 	VkDevice											device,
-	VkDeviceSize										linearAllocationChunkSize			= 1024Ui64 * 1024 * 64,
-	VkDeviceSize										nonLinearAllocationChunkSize		= 1024Ui64 * 1024 * 256
+	VkDeviceSize										linearAllocationChunkSize			= VkDeviceSize( 1024 ) * 1024 * 64,
+	VkDeviceSize										nonLinearAllocationChunkSize		= VkDeviceSize( 1024 ) * 1024 * 256
 );
 
 

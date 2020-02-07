@@ -16,51 +16,100 @@ constexpr double RAD			= PI * 2.0;
 
 
 
-#if defined( VK_USE_PLATFORM_WIN32_KHR )
+#if defined( VK2D_PLATFORM_WINDOWS )
 
-// define dynamic library export/import
-#if defined( VK2D_LIBRARY_STATIC )
-#define VK2D_API
+	#if defined( _MSV_VER )
+		#if ( _MSV_VER < 1910 )
+			#error "Need at least visual studio 2017"
+		#endif
+
+		// define dynamic library export/import
+		#if defined( VK2D_LIBRARY_STATIC )
+			#define VK2D_API
+		#else
+			#if defined( VK2D_LIBRARY_EXPORT )
+				#define VK2D_API			__declspec(dllexport)
+			#else
+				#define VK2D_API			__declspec(dllimport)
+			#endif
+		#endif
+
+		// Calling convension
+		#define VK2D_APIENTRY				__stdcall
+
+
+
+		// Debug enable or disable
+		#if defined( _DEBUG )
+			#define VK2D_DEBUG				1
+		#else
+			#define VK2D_DEBUG 				0
+		#endif
+
+	#else
+		#error "Please add compiler support here!"
+	#endif
+
+	// Warning helper for visual studio, other compilers can use #warning
+	#define _VK2D_WARNING_STRINGIFY_SUB(x) #x
+	#define _VK2D_WARNING_STRINGIFY(x) _VK2D_WARNING_STRINGIFY_SUB(x)
+	// Usage: #pragma VK2D_WARNING( "message" )
+	#define VK2D_WARNING( txt ) message( __FILE__"(" _VK2D_WARNING_STRINGIFY(__LINE__) ") : warning: " txt )
+
+
+
+#elif defined( VK2D_PLATFORM_LINUX )
+
+
+	#if defined(__GNUC__)
+		#if ( __GNUC__ < 8 )
+			#error "Need at least GCC 8"
+		#endif
+		// define dynamic library export/import
+		#if defined( VK2D_LIBRARY_STATIC )
+			#define VK2D_API
+		#else
+			#if defined( VK2D_LIBRARY_EXPORT )
+				#define VK2D_API			__attribute__((visibility("default")))
+			#else
+				#define VK2D_API
+			#endif
+		#endif
+
+		// Calling convension
+		#define VK2D_APIENTRY				// Default, change in the future if needed.
+
+
+
+		// Debug enable or disable
+		#if !defined( NDEBUG )
+			#define VK2D_DEBUG				1
+		#else
+			#define VK2D_DEBUG 				0
+		#endif
+
+	#else
+		#error "Please add compiler support here!"
+	#endif
+
+
+
 #else
-#if defined( VK2D_LIBRARY_EXPORT )
-#define VK2D_API			__declspec(dllexport)
-#else
-#define VK2D_API			__declspec(dllimport)
-#endif
-#endif
-
-// Calling convension
-#define VK2D_APIENTRY		__stdcall
-
-
-
-// Debug enable or disable
-#if defined( _DEBUG )
-#define VK2D_DEBUG			1
+	#error "Please add platform support here!"
 #endif
 
 
 
-// Warning helper for visual studio, other compilers can use #warning
-#define _VK2D_WARNING_STRINGIFY_SUB(x) #x
-#define _VK2D_WARNING_STRINGIFY(x) _VK2D_WARNING_STRINGIFY_SUB(x)
-// Usage: #pragma VK2D_WARNING( "message" )
-#define VK2D_WARNING( txt ) message( __FILE__"(" _VK2D_WARNING_STRINGIFY(__LINE__) ") : warning: " txt )
-
-#else
-
-#error "Please add platform support here!"
-
+#if !defined( VK2D_DEBUG )
+	#error "VK2D_DEBUG not defined!"
 #endif
-
-
 
 #if !defined( VK2D_API )
-#error "VK2D_API not defined!"
+	#error "VK2D_API not defined!"
 #endif
 
 #if !defined( VK2D_APIENTRY )
-#error "VK2D_APIENTRY not defined!"
+	#error "VK2D_APIENTRY not defined!"
 #endif
 
 
@@ -69,8 +118,6 @@ constexpr double RAD			= PI * 2.0;
 
 
 namespace vk2d {
-
-#ifdef VK_USE_PLATFORM_WIN32_KHR
 
 enum class ConsoleColor : uint8_t {
 	BLACK			= 0,
@@ -88,31 +135,12 @@ enum class ConsoleColor : uint8_t {
 	RED				= 12,
 	MAGENTA			= 13,
 	YELLOW			= 14,
-	WHITE			= 15
+	WHITE			= 15,
+	DEFAULT			= 255
 };
 
-inline void SetConsoleColor(
-	vk2d::ConsoleColor		text_color				= vk2d::ConsoleColor::GRAY,
-	vk2d::ConsoleColor		background_color		= vk2d::ConsoleColor::BLACK
-)
-{
-	auto tc		= uint8_t( text_color );
-	auto bc		= uint8_t( background_color );
-	unsigned short attributes = ( (unsigned)bc << 4 ) | (unsigned)tc;
-	HANDLE std_out_handle = GetStdHandle( STD_OUTPUT_HANDLE );
-	SetConsoleTextAttribute( std_out_handle, attributes );
-}
-
-#else
-
-#error "Please add platform support!"
-
-inline void SetConsoleColor(
-	ConsoleColor		text_color				= ConsoleColor::WHITE,
-	ConsoleColor		background_color		= ConsoleColor::BLACK
-)
-{}
-
-#endif
+void SetConsoleColor(
+	vk2d::ConsoleColor		text_color				= vk2d::ConsoleColor::DEFAULT,
+	vk2d::ConsoleColor		background_color		= vk2d::ConsoleColor::DEFAULT );
 
 } // vk2d

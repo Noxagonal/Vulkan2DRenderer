@@ -1,7 +1,7 @@
 
 # VK2D library root
 
-cmake_minimum_required(VERSION 3.15)
+cmake_minimum_required(VERSION 3.13)
 
 project(VK2D CXX)
 
@@ -97,6 +97,7 @@ set(FILES_INCLUDE_INTERFACE
 )
 
 set(FILES_SOURCE_CORE
+	"Source/Core/Common.cpp"
 	"Source/Core/DescriptorSet.cpp"
 	"Source/Core/MeshBuffer.cpp"
 	"Source/Core/Platform.cpp"

@@ -67,7 +67,7 @@ public:
 	VK2D_API bool										VK2D_APIENTRY					IsGood();
 
 private:
-	std::unique_ptr<vk2d::_internal::SamplerImpl>		impl							= {};
+	std::unique_ptr<vk2d::_internal::SamplerImpl>		impl;
 	bool												is_good							= {};
 };
 

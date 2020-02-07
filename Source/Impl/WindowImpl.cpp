@@ -465,7 +465,6 @@ bool vk2d::_internal::WindowImpl::ShouldClose()
 }
 
 
-
 bool vk2d::_internal::AquireImage(
 	vk2d::_internal::WindowImpl		*	impl,
 	VkPhysicalDevice					physical_device,

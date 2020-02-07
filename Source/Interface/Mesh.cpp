@@ -7,6 +7,7 @@
 #include "../Header/Impl/FontResourceImpl.h"
 
 #include <float.h>
+#include <algorithm>
 
 
 

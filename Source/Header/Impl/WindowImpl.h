@@ -38,6 +38,13 @@ class TextureResourceImpl;
 class ScreenshotSaverTask;
 class ShaderProgram;
 
+bool											AquireImage(
+	vk2d::_internal::WindowImpl				*	data,
+	VkPhysicalDevice							physical_device,
+	VkDevice									device,
+	vk2d::_internal::ResolvedQueue			&	primary_render_queue,
+	uint32_t									nested_counter );
+
 enum class NextRenderCallFunction : uint32_t {
 	BEGIN		= 0,
 	END			= 1,
@@ -46,7 +53,7 @@ enum class NextRenderCallFunction : uint32_t {
 class WindowImpl {
 	friend class vk2d::Window;
 	friend class vk2d::_internal::ScreenshotSaverTask;
-	friend bool										AquireImage(
+	friend bool										vk2d::_internal::AquireImage(
 		vk2d::_internal::WindowImpl				*	data,
 		VkPhysicalDevice							physical_device,
 		VkDevice									device,
