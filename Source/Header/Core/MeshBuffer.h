@@ -8,6 +8,7 @@
 #include "../Core/VulkanMemoryManagement.h"
 #include "DescriptorSet.h"
 
+#include <cstring>
 #include <vector>
 #include <stdint.h>
 #include <memory>
@@ -18,7 +19,6 @@ namespace vk2d {
 
 namespace _internal {
 
-class InstanceImpl;
 class MeshBuffer;
 
 template<typename T>

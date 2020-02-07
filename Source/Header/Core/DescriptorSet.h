@@ -58,7 +58,7 @@ struct PoolCategory {
 	uint64_t						counter							= {};
 };
 
-class vk2d::_internal::DescriptorSetLayout {
+class DescriptorSetLayout {
 	friend std::unique_ptr<vk2d::_internal::DescriptorSetLayout>	CreateDescriptorSetLayout(
 		vk2d::_internal::InstanceImpl							*	instance,
 		VkDevice													device,

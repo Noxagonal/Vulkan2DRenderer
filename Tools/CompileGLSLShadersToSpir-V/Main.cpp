@@ -146,7 +146,7 @@ void GetEntrypointNames()
 			}
 		}
 		// Remove whitespace.
-		line.erase( remove_if( line.begin(), line.end(), isspace ), line.end() );
+		line.erase( std::remove_if( line.begin(), line.end(), ::isspace ), line.end() );
 
 		// Get entrypoint names if any left from comment and whitespace removal.
 		if( line.size() ) {

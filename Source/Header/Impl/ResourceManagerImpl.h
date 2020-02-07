@@ -1,7 +1,8 @@
 #pragma once
 
-#include "../Header/Core/SourceCommon.h"
+#include "../../Header/Core/SourceCommon.h"
 #include "InstanceImpl.h"
+#include "../../../Include/Interface/Resource.h"
 
 #include "../Core/ThreadPool.h"
 

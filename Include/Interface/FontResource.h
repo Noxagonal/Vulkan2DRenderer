@@ -75,7 +75,7 @@ protected:
 
 private:
 
-	std::unique_ptr<vk2d::_internal::FontResourceImpl>		impl								= {};
+	std::unique_ptr<vk2d::_internal::FontResourceImpl>		impl;
 };
 
 
