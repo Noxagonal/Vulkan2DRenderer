@@ -18,8 +18,8 @@ constexpr double RAD			= PI * 2.0;
 
 #if defined( VK2D_PLATFORM_WINDOWS )
 
-	#if defined( _MSV_VER )
-		#if ( _MSV_VER < 1910 )
+	#if defined( _MSC_VER )
+		#if ( _MSC_VER < 1910 )
 			#error "Need at least visual studio 2017"
 		#endif
 
