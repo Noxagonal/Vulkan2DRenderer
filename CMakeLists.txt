@@ -85,6 +85,7 @@ set(FILES_INCLUDE_CORE
 	"Include/Core/BuildOptions.h"
 	"Include/Core/Common.h"
 	"Include/Core/Platform.h"
+	"Include/Core/SynchronizedObject.hpp"
 	"Include/Core/Version.hpp"
 )
 

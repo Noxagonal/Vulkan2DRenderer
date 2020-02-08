@@ -25,7 +25,21 @@ public:
 			if( button == vk2d::KeyboardButton::KEY_ESCAPE ) {
 				window->CloseWindow();
 			}
+			if( button == vk2d::KeyboardButton::KEY_F1 ) {
+				window->TakeScreenshotToData( true );
+			}
 		}
+	};
+
+	// Screenshot events, called when screenshot save was successfully saved on disk or if there was an error, if error, error message is also given.
+	virtual void								VK2D_APIENTRY		EventScreenshotToData(
+		vk2d::Window						*	window,
+		const vk2d::ImageData				&	image_data,
+		bool									success,
+		const std::string					&	errorMessage
+	)
+	{
+		std::cout << "Screenshot to data:\nSize: " << image_data.data.size() << "\n";
 	};
 };
 
