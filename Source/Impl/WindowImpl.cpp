@@ -2971,15 +2971,17 @@ void vk2d::_internal::WindowImpl::HandleScreenshotEvent()
 
 	if( event_handler ) {
 		if( !screenshot_save_path.empty() ) {
-			event_handler->EventScreenshotToFile(
+			event_handler->EventScreenshot(
 				window_parent,
 				screenshot_save_path,
+				{},
 				!screenshot_event_error,
 				screenshot_event_message
 			);
 		} else {
-			event_handler->EventScreenshotToData(
+			event_handler->EventScreenshot(
 				window_parent,
+				{},
 				screenshot_save_data,
 				!screenshot_event_error,
 				screenshot_event_message

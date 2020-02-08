@@ -821,17 +821,10 @@ public:
 	{};
 	
 	// Screenshot events, called when screenshot save was successfully saved on disk or if there was an error, if error, error message is also given.
-	virtual void								VK2D_APIENTRY		EventScreenshotToFile(
+	virtual void								VK2D_APIENTRY		EventScreenshot(
 		vk2d::Window						*	window,
-		const std::filesystem::path			&	path,
-		bool									success,
-		const std::string					&	errorMessage )
-	{};
-	
-	// Screenshot events, called when screenshot save was successfully saved on disk or if there was an error, if error, error message is also given.
-	virtual void								VK2D_APIENTRY		EventScreenshotToData(
-		vk2d::Window						*	window,
-		const vk2d::ImageData				&	image_data,
+		const std::filesystem::path			&	screenshot_path,
+		const vk2d::ImageData				&	screenshot_data,
 		bool									success,
 		const std::string					&	errorMessage )
 	{};
