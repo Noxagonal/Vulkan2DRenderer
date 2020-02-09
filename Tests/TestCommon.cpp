@@ -69,3 +69,32 @@ void SaveSamplesToHeaderFile(
 	file <<
 		"}\n";
 }
+
+bool CheckSamplesWithImage(
+	const std::vector<ColorPoint>	&	samples,
+	const vk2d::ImageData			&	image_data,
+	uint8_t								tolerance
+)
+{
+	for( auto & s : samples ) {
+		if( s.position.x >= image_data.size.x ||
+			s.position.y >= image_data.size.y ) {
+			return false;
+		}
+		auto ic					= image_data.data[ size_t( image_data.size.x ) * s.position.x + s.position.y ];
+		auto ec					= s.color;
+		auto diff_r				= float( ic.r ) - float( ec.r );
+		auto diff_g				= float( ic.g ) - float( ec.g );
+		auto diff_b				= float( ic.b ) - float( ec.b );
+		auto diff_a				= float( ic.a ) - float( ec.a );
+
+		if( std::abs( diff_r ) > float( tolerance ) ||
+			std::abs( diff_g ) > float( tolerance ) ||
+			std::abs( diff_b ) > float( tolerance ) ||
+			std::abs( diff_a ) > float( tolerance ) ) {
+			return false;
+		}
+	}
+
+	return true;
+}

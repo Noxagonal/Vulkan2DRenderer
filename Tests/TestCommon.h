@@ -8,8 +8,10 @@ namespace fs = std::filesystem;
 
 enum class ExitCodes : int
 {
-	SUCCESS								= 0,
+	SUCCESS													= 0,
 	CANNOT_WRITE_FILE,
+	CANNOT_READ_FILE,
+	RENDER_DOES_NOT_MATCH_EXPECTED_RESULT,
 };
 
 struct ColorPoint {
