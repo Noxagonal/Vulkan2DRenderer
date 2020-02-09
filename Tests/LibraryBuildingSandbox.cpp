@@ -1,5 +1,6 @@
 
 #include <VK2D.h>
+#include "TestCommon.h"
 
 #include <chrono>
 

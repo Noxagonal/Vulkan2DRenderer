@@ -9,6 +9,8 @@ function(BuildTestcase EXECUTABLE_NAME)
 
 	add_executable("${EXECUTABLE_NAME}"
 		"${EXECUTABLE_NAME}.cpp"
+		"TestCommon.cpp"
+		"TestCommon.h"
 	)
 	target_include_directories("${EXECUTABLE_NAME}"
 		PUBLIC
