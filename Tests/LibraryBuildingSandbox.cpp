@@ -42,7 +42,15 @@ public:
 	)
 	{
 		if( screenshot_data.data.size() ) {
-			std::cout << "Screenshot to data:\nSize: " << screenshot_data.data.size() << "\n";
+			auto samples = GenerateSamples(
+				screenshot_data,
+				1000
+			);
+			SaveSamplesToHeaderFile(
+				samples,
+				"TestSamples.h",
+				"TestSamples"
+			);
 		}
 	};
 };
@@ -79,7 +87,7 @@ int main()
 			vk2d::Vector2f( 300, 200 ),
 			true,
 			64,
-			vk2d::Colorf( 1, 1, 1, 0.2f )
+			vk2d::Colorf( 0.7, 0.8, 1, 0.2f )
 		);
 
 		window->DrawPoint(

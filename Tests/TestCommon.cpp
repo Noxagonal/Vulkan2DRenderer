@@ -51,21 +51,21 @@ void SaveSamplesToHeaderFile(
 	if( !file.is_open() ) ExitWithCode( ExitCodes::CANNOT_WRITE_FILE );
 
 	file <<
+		"#pragma once\n"
 		"\n"
-		"#include <TestCommon.h>\n"
+		"#include \"TestCommon.h\"\n"
 		"\n"
 		"#include <stdint.h>\n"
 		"#include <array>\n"
 		"\n"
-		"array<ColorPoint, " << samples.size() << "> " << sample_array_name << " {\n";
+		"std::array<ColorPoint, " << samples.size() << "> " << sample_array_name << " {\n";
 
 	for( auto & s : samples ) {
 		file <<
 			"\t{ { " << s.position.x << ", " << s.position.y << " },"
-			" { " << s.color.r << ", " << s.color.g << ", " << s.color.b << ", " << s.color.r << " } } ),";
+			" { " << (uint32_t)s.color.r << ", " << (uint32_t)s.color.g << ", " << (uint32_t)s.color.b << ", " << (uint32_t)s.color.r << " } },\n";
 	}
 
 	file <<
-		"\n"
 		"}\n";
 }
