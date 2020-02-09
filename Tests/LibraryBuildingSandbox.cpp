@@ -15,7 +15,7 @@ constexpr double RAD			= PI * 2.0;
 class EventHandler : public vk2d::WindowEventHandler {
 public:
 	// Keyboard button was pressed, released or kept down ( repeating ).
-	virtual void								VK2D_APIENTRY		EventKeyboard(
+	void										VK2D_APIENTRY		EventKeyboard(
 		vk2d::Window						*	window,
 		vk2d::KeyboardButton					button,
 		int32_t									scancode,
@@ -33,14 +33,17 @@ public:
 	};
 
 	// Screenshot events, called when screenshot save was successfully saved on disk or if there was an error, if error, error message is also given.
-	virtual void								VK2D_APIENTRY		EventScreenshotToData(
+	void										VK2D_APIENTRY		EventScreenshot(
 		vk2d::Window						*	window,
-		const vk2d::ImageData				&	image_data,
+		const std::filesystem::path			&	screenshot_path,
+		const vk2d::ImageData				&	screenshot_data,
 		bool									success,
 		const std::string					&	errorMessage
 	)
 	{
-		std::cout << "Screenshot to data:\nSize: " << image_data.data.size() << "\n";
+		if( screenshot_data.data.size() ) {
+			std::cout << "Screenshot to data:\nSize: " << screenshot_data.data.size() << "\n";
+		}
 	};
 };
 
