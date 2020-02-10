@@ -42,29 +42,39 @@ Internally workloads are automatically grouped to create more efficient submissi
 
 :exclamation: You will need to use Git, downloading plain Zip file from GitHub will not work because of dependencies. :exclamation:
 
-Currently only Visual Studio 2019 is supported, this includes the community edition.
-
-Prior to building this library you will need:
+Prior to building this library on any platform you will need:
 - Git
-- CMake 3.15 or newer
-- Visual Studio 2019
+- CMake 3.10 or newer
 - Vulkan SDK, any version
 
-
-###### Windows Visual Studio 2019
+##### Windows Visual Studio 2019
 1. Open the folder where you would like the VK2D library to be installed.
 2. Hold shift key and right click on the file explorer, click "Open PowerShell window here".
-3. copy and paste the following commands to the PowerShell window and press enter (Don't close PowerShell even if it appears stuck, this can take a few minutes).
+3. copy and paste the following commands to the PowerShell window and press enter, this will also download everything for you (Don't close PowerShell even if it appears stuck, this can take a few minutes).
 ```
 git clone https://github.com/Niko40/Vulkan2DRenderer
 cd Vulkan2DRenderer
-mkdir Build
-cd Build
+mkdir build
+cd build
 cmake -G "Visual Studio 16 2019" -A "x64" ..
 ```
-4. Generated solution is in `Build/VK2D.sln`
+4. Generated solution file is in `build/VK2D.sln`
 
-Available CMake options:
+##### Microsoft Visual Studio 2017
+1. Open the folder where you would like the VK2D library to be installed.
+2. Hold shift key and right click on the file explorer, click "Open PowerShell window here".
+3. copy and paste the following commands to the PowerShell window and press enter, this will also download everything for you (Don't close PowerShell even if it appears stuck, this can take a few minutes).
+```
+git clone https://github.com/Niko40/Vulkan2DRenderer
+cd Vulkan2DRenderer
+mkdir build
+cd build
+cmake -G "Visual Studio 15 2017 Win64" ..
+```
+4. Generated solution file is in `build/VK2D.sln`
+
+
+#### Available CMake options:
 ```
 VK2D_BUILD_STATIC_LIBRARY   = default OFF   -> Build the library as static. EXPERIMENTAL!
 VK2D_BUILD_TESTS            = default OFF   -> Build tests.

@@ -1,7 +1,7 @@
 
 # VK2D library root
 
-cmake_minimum_required(VERSION 3.13)
+cmake_minimum_required(VERSION 3.10)
 
 project(VK2D CXX)
 
