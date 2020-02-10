@@ -14,7 +14,7 @@ constexpr double RAD			= PI * 2.0;
 class EventHandler : public vk2d::WindowEventHandler {
 public:
 	// Keyboard button was pressed, released or kept down ( repeating ).
-	virtual void								VK2D_APIENTRY		EventKeyboard(
+	void										VK2D_APIENTRY		EventKeyboard(
 		vk2d::Window						*	window,
 		vk2d::KeyboardButton					button,
 		int32_t									scancode,
@@ -24,6 +24,9 @@ public:
 		if( action == vk2d::ButtonAction::PRESS ) {
 			if( button == vk2d::KeyboardButton::KEY_ESCAPE ) {
 				window->CloseWindow();
+			}
+			if( button == vk2d::KeyboardButton::KEY_F1 ) {
+				window->TakeScreenshotToData( true );
 			}
 		}
 	};
@@ -61,7 +64,7 @@ int main()
 			vk2d::Vector2f( 300, 200 ),
 			true,
 			64,
-			vk2d::Colorf( 1, 1, 1, 0.2f )
+			vk2d::Colorf( 0.7, 0.8, 1, 0.2f )
 		);
 
 		window->DrawPoint(

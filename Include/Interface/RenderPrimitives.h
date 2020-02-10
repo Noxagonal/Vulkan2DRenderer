@@ -2,6 +2,7 @@
 
 #include "../Core/Common.h"
 
+#include <vector>
 #include <initializer_list>
 #include <cmath>
 #include <array>
@@ -320,6 +321,11 @@ struct VertexIndex_2 {
 
 struct VertexIndex_3 {
 	std::array<uint32_t, 3>		indices		= {};
+};
+
+struct ImageData {
+	vk2d::Vector2u				size		= {};
+	std::vector<vk2d::Color8>	data;
 };
 
 

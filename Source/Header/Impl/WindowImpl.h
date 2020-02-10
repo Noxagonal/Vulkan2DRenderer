@@ -10,6 +10,7 @@
 #include "../Core/DescriptorSet.h"
 #include "../Impl/InstanceImpl.h"
 #include "../Core/ShaderInterface.h"
+#include "../../../Include/Core/SynchronizedObject.hpp"
 
 #define GLFW_INCLUDE_NONE
 #include <GLFW/glfw3.h>
@@ -91,9 +92,12 @@ public:
 
 	void														UpdateEvents();
 
-	void														TakeScreenshot(
+	void														TakeScreenshotToFile(
 		const std::filesystem::path							&	save_path,
 		bool													include_alpha );
+
+	void														TakeScreenshotToData(
+		bool													include_alpha);
 
 	void														Focus();
 
@@ -377,7 +381,8 @@ private:
 		IDLE_ERROR				= UINT32_MAX,	// error state, screenshots disabled
 	};
 	std::atomic<vk2d::_internal::WindowImpl::ScreenshotState>	screenshot_state						= {};
-	std::filesystem::path										screenshot_path							= {};
+	std::filesystem::path										screenshot_save_path					= {};
+	vk2d::ImageData												screenshot_save_data					= {};
 	bool														screenshot_alpha						= {};
 	vk2d::_internal::CompleteImageResource						screenshot_image						= {};
 	vk2d::_internal::CompleteBufferResource						screenshot_buffer						= {};

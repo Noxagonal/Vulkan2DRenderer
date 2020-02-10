@@ -31,6 +31,8 @@ int main()
 	auto window = instance->CreateOutputWindow( window_create_info );
 	if( !window ) return -1;
 
+	auto texture = instance->GetResourceManager()->LoadTextureResource("../../../Data/GrafGear_128.png");
+
 	// Run the window until the user closes it.
 	// Windows do not just close on their own when the close button is pressed,
 	// instead they will keep operating normally until the window is destroyed by
@@ -39,8 +41,10 @@ int main()
 	// true if the window should be closed.
 	// In this case we can just exit the loop and once instance goes out of scope
 	// it'll destroy the window for us.
-	while( !window->ShouldClose() ) {
+	float frame_counter = 0.0f;
 
+	while( !window->ShouldClose() ) {
+		frame_counter += 0.03f;
 		// General structure of the program is 
 		// This area is where you should put your game logic code.
 

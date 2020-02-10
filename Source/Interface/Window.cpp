@@ -55,15 +55,22 @@ VK2D_API void VK2D_APIENTRY vk2d::Window::UpdateEvents()
 	impl->UpdateEvents();
 }
 
-VK2D_API void VK2D_APIENTRY vk2d::Window::TakeScreenshot(
+VK2D_API void VK2D_APIENTRY vk2d::Window::TakeScreenshotToFile(
 	const std::filesystem::path		&	save_path,
 	bool								include_alpha
 )
 {
-	impl->TakeScreenshot(
+	impl->TakeScreenshotToFile(
 		save_path,
 		include_alpha
 	);
+}
+
+VK2D_API void VK2D_APIENTRY vk2d::Window::TakeScreenshotToData(
+	bool		include_alpha
+)
+{
+	impl->TakeScreenshotToData( include_alpha );
 }
 
 VK2D_API void VK2D_APIENTRY vk2d::Window::Focus()

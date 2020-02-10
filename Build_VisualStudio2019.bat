@@ -28,20 +28,17 @@ call :GetAsOnOffString build_tests_str, %build_tests%
 call :GetAsOnOffString build_examples_str, %build_examples%
 
 
-set build_name=VisualStudio2019
 set project="VK2D"
 set generator="Visual Studio 16 2019"
 set architecture="x64"
-set source_dir=..\..
+set source_dir=..
 
-mkdir Build
-cd Build
-mkdir %build_name%
-cd %build_name%
+mkdir build
+cd build
 
 cmake -G %generator% -A %architecture% -D CMAKE_BUILD_TYPE=Release -D VK2D_BUILD_STATIC_LIBRARY=%build_static_str% -D VK2D_BUILD_TESTS=%build_tests_str% -D VK2D_BUILD_EXAMPLES=%build_examples_str% "%source_dir%"
 
-cd ..\..
+cd ..
 
 goto End
 
