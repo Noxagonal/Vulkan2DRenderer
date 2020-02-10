@@ -1,8 +1,10 @@
 
 #include <VK2D.h>
 
-constexpr double PI				= 3.14159265358979323846;
-constexpr double RAD			= PI * 2.0;
+#include "TestCommon.h"
+
+constexpr double PI = 3.14159265358979323846;
+constexpr double RAD = PI * 2.0;
 
 
 #include <string>
@@ -11,25 +13,25 @@ constexpr double RAD			= PI * 2.0;
 
 int main()
 {
-	vk2d::InstanceCreateInfo instance_create_info {};
-	auto instance = vk2d::CreateInstance( instance_create_info );
-	if( !instance ) return -1;
+	vk2d::InstanceCreateInfo instance_create_info{};
+	auto instance = vk2d::CreateInstance(instance_create_info);
+	if (!instance) ExitWithCode(ExitCodes::CANNOT_CREATE_INSTANCE);
 
-	vk2d::WindowCreateInfo					window_create_info {};
-	window_create_info.size					= { 800, 600 };
-	window_create_info.coordinate_space		= vk2d::WindowCoordinateSpace::TEXEL_SPACE_CENTERED;
-	auto window = instance->CreateOutputWindow( window_create_info );
-	if( !window ) return -1;
+	vk2d::WindowCreateInfo					window_create_info{};
+	window_create_info.size = { 512, 512 };
+	window_create_info.coordinate_space = vk2d::WindowCoordinateSpace::TEXEL_SPACE_CENTERED;
+	auto window = instance->CreateOutputWindow(window_create_info);
+	if (!window) ExitWithCode(ExitCodes::CANNOT_CREATE_WINDOW);
 
-	size_t frame_counter = 10;
-	while( frame_counter ) {
+	size_t frame_counter = 3;
+	while (frame_counter) {
 
-		if( !window->BeginRender() ) return -1;
+		if (!window->BeginRender()) ExitWithCode(ExitCodes::CANNOT_BEGIN_RENDER);
 
-		if( !window->EndRender() ) return -1;
+		if (!window->EndRender()) ExitWithCode(ExitCodes::CANNOT_END_RENDER);
 
 		--frame_counter;
 	}
 
-	return 0;
+	ExitWithCode( ExitCodes::SUCCESS );
 }

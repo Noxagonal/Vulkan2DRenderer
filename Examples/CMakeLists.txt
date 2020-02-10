@@ -31,3 +31,4 @@ function(BuildExample EXECUTABLE_NAME)
 endfunction()
 
 BuildExample("DrawSimpleShapes")
+BuildExample("LibraryBuildingSandbox")

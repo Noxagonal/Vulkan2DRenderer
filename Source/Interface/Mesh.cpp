@@ -338,7 +338,7 @@ VK2D_API void VK2D_APIENTRY vk2d::Mesh::SetMeshType(
 	vk2d::MeshType				type
 )
 {
-	if( !generated ) {
+	if( generated ) {
 		mesh_type	= type;
 		return;
 	}

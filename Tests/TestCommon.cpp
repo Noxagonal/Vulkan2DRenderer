@@ -6,8 +6,8 @@
 #include <fstream>
 
 
-auto RandomEngine = std::default_random_engine();
-using RandomDistribution = std::uniform_int_distribution<uint32_t>;
+using RandomEngine			= std::default_random_engine;
+using RandomDistribution	= std::uniform_int_distribution<uint32_t>;
 
 void ExitWithCode(
 	ExitCodes		code
@@ -21,15 +21,15 @@ std::vector<ColorPoint> GenerateSamples(
 	uint32_t						sample_count
 )
 {
-	auto rand_dis_x = RandomDistribution( 0, image_data.size.x );
-	auto rand_dis_y = RandomDistribution( 0, image_data.size.y );
-	auto RandPixelX = std::bind( rand_dis_x, RandomEngine );
-	auto RandPixelY = std::bind( rand_dis_y, RandomEngine );
+	auto rnde = RandomEngine();
+
+	auto rand_dis_x = RandomDistribution( 0, image_data.size.x - 1 );
+	auto rand_dis_y = RandomDistribution( 0, image_data.size.y - 1 );
 
 	std::vector<ColorPoint> ret; ret.reserve( sample_count );
 	for( uint32_t i = 0; i < sample_count; ++i ) {
-		auto x = RandPixelX();
-		auto y = RandPixelY();
+		auto x = rand_dis_x( rnde );
+		auto y = rand_dis_y( rnde );
 		ColorPoint cp;
 		cp.position = { x, y };
 		cp.color = image_data.data[ size_t( image_data.size.x ) * y + x ];
@@ -58,43 +58,116 @@ void SaveSamplesToHeaderFile(
 		"#include <stdint.h>\n"
 		"#include <array>\n"
 		"\n"
-		"std::array<ColorPoint, " << samples.size() << "> " << sample_array_name << " {\n";
+		"std::array<ColorPoint, " << samples.size() << "> " << sample_array_name << " { {\n";
 
 	for( auto & s : samples ) {
 		file <<
 			"\t{ { " << s.position.x << ", " << s.position.y << " },"
-			" { " << (uint32_t)s.color.r << ", " << (uint32_t)s.color.g << ", " << (uint32_t)s.color.b << ", " << (uint32_t)s.color.r << " } },\n";
+			" { " << (uint32_t)s.color.r << ", " << (uint32_t)s.color.g << ", " << (uint32_t)s.color.b << ", " << (uint32_t)s.color.a << " } },\n";
 	}
 
 	file <<
-		"}\n";
+		"} };\n";
 }
 
-bool CheckSamplesWithImage(
-	const std::vector<ColorPoint>	&	samples,
+bool VerifyImageWithSingleSample(
+	const ColorPoint				&	sample,
 	const vk2d::ImageData			&	image_data,
-	uint8_t								tolerance
+	uint8_t								tolerance,
+	float								minimum_pass
 )
 {
-	for( auto & s : samples ) {
-		if( s.position.x >= image_data.size.x ||
-			s.position.y >= image_data.size.y ) {
-			return false;
-		}
-		auto ic					= image_data.data[ size_t( image_data.size.x ) * s.position.x + s.position.y ];
-		auto ec					= s.color;
-		auto diff_r				= float( ic.r ) - float( ec.r );
-		auto diff_g				= float( ic.g ) - float( ec.g );
-		auto diff_b				= float( ic.b ) - float( ec.b );
-		auto diff_a				= float( ic.a ) - float( ec.a );
+	if( sample.position.x >= image_data.size.x ||
+		sample.position.y >= image_data.size.y ) {
+		ExitWithCode( ExitCodes::RENDER_SAMPLE_OUT_OF_BOUNDS );
+	}
+	auto ic					= image_data.data[ size_t( image_data.size.x ) * sample.position.y + sample.position.x ];
+	auto ec					= sample.color;
+	auto diff_r				= float( ic.r ) - float( ec.r );
+	auto diff_g				= float( ic.g ) - float( ec.g );
+	auto diff_b				= float( ic.b ) - float( ec.b );
+	auto diff_a				= float( ic.a ) - float( ec.a );
 
-		if( std::abs( diff_r ) > float( tolerance ) ||
-			std::abs( diff_g ) > float( tolerance ) ||
-			std::abs( diff_b ) > float( tolerance ) ||
-			std::abs( diff_a ) > float( tolerance ) ) {
-			return false;
+	if( std::abs( diff_r ) > float( tolerance ) ||
+		std::abs( diff_g ) > float( tolerance ) ||
+		std::abs( diff_b ) > float( tolerance ) ||
+		std::abs( diff_a ) > float( tolerance ) ) {
+		return false;
+	} else {
+		return true;
+	}
+}
+
+bool VerifyImageWithSamples(
+	const std::vector<ColorPoint>	&	samples,
+	const vk2d::ImageData			&	image_data,
+	uint8_t								tolerance,
+	float								minimum_pass
+)
+{
+	uint32_t passed			= 0;
+	uint32_t missed			= 0;
+
+	for( auto & s : samples ) {
+		if( VerifyImageWithSingleSample(
+			s,
+			image_data,
+			tolerance,
+			minimum_pass
+		) ) {
+			++passed;
+		} else {
+			++missed;
 		}
 	}
 
-	return true;
+	if( ( float( passed ) / samples.size() ) < minimum_pass ) {
+		return false;
+	} else {
+		return true;
+	}
+}
+
+CoordGrid::CoordGrid(
+	vk2d::Vector2f		draw_area,
+	vk2d::Vector2f		spacing )
+{
+	this->draw_area		= draw_area;
+	this->spacing		= spacing;
+	this->location		= {};
+}
+
+CoordGrid::CoordGrid( vk2d::Vector2u draw_area, vk2d::Vector2f spacing )
+{
+	this->draw_area		= vk2d::Vector2f( float( draw_area.x ), float( draw_area.y ) );
+	this->spacing		= spacing;
+	this->location		= {};
+}
+
+vk2d::Vector2f CoordGrid::InsertTopLeft()
+{
+	vk2d::Vector2f coords {};
+	coords.x		= location.x * spacing.x;
+	coords.y		= location.y * spacing.y;
+
+	++location.x;
+	if( coords.x + spacing.x + spacing.x > draw_area.x ) {
+		location.x = 0;
+		++location.y;
+	}
+
+	return coords;
+}
+
+vk2d::Vector2f CoordGrid::InsertBottomRight()
+{
+	vk2d::Vector2f coords {};
+	coords.x		= location.x * spacing.x + spacing.x;
+	coords.y		= location.y * spacing.y + spacing.y;
+	return coords;
+}
+
+void CoordGrid::Reset()
+{
+	location	= {};
 }

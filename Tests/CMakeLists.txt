@@ -38,4 +38,4 @@ function(BuildTestcase EXECUTABLE_NAME)
 endfunction()
 
 BuildTestcase("BasicRender")
-BuildTestcase("LibraryBuildingSandbox")
+BuildTestcase("DrawShapes")

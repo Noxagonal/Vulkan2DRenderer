@@ -1,6 +1,5 @@
 
 #include <VK2D.h>
-#include "TestCommon.h"
 
 #include <chrono>
 
@@ -29,28 +28,6 @@ public:
 			if( button == vk2d::KeyboardButton::KEY_F1 ) {
 				window->TakeScreenshotToData( true );
 			}
-		}
-	};
-
-	// Screenshot events, called when screenshot save was successfully saved on disk or if there was an error, if error, error message is also given.
-	void										VK2D_APIENTRY		EventScreenshot(
-		vk2d::Window						*	window,
-		const std::filesystem::path			&	screenshot_path,
-		const vk2d::ImageData				&	screenshot_data,
-		bool									success,
-		const std::string					&	errorMessage
-	)
-	{
-		if( screenshot_data.data.size() ) {
-			auto samples = GenerateSamples(
-				screenshot_data,
-				1000
-			);
-			SaveSamplesToHeaderFile(
-				samples,
-				"TestSamples.h",
-				"TestSamples"
-			);
 		}
 	};
 };
