@@ -76,6 +76,7 @@ cmake -G "Visual Studio 15 2017 Win64" ..
 
 #### Available CMake options:
 ```
+VK2D_DEBUG                  = default OFF   -> Enable or disable library debug features, used only for the library development.
 VK2D_BUILD_STATIC_LIBRARY   = default OFF   -> Build the library as static. EXPERIMENTAL!
 VK2D_BUILD_TESTS            = default OFF   -> Build tests.
 VK2D_BUILD_EXAMPLES         = default ON    -> Build and include examples on how to use this library.

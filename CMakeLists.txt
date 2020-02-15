@@ -62,6 +62,10 @@ add_subdirectory("ExternalLibraries")
 
 
 
+option(VK2D_DEBUG
+	"This enables debug printing, Vulkan validation and extra checks to make sure VK2D is performing correctly, this does not help with library usage debugging."
+	OFF
+)
 option(VK2D_BUILD_STATIC_LIBRARY
 	"Build static library instead of shared."
 	OFF
@@ -82,7 +86,6 @@ set(FILES_INCLUDE
 )
 
 set(FILES_INCLUDE_CORE
-	"Include/Core/BuildOptions.h"
 	"Include/Core/Common.h"
 	"Include/Core/Platform.h"
 	"Include/Core/SynchronizedObject.hpp"
@@ -99,6 +102,10 @@ set(FILES_INCLUDE_INTERFACE
 	"Include/Interface/Sampler.h"
 	"Include/Interface/TextureResource.h"
 	"Include/Interface/Window.h"
+)
+
+set(FILES_SOURCE
+	"Source/BuildOptions.h"
 )
 
 set(FILES_SOURCE_CORE
@@ -173,6 +180,7 @@ set(INC_FILES
 )
 
 set(SRC_INC_FILES
+	${FILES_SOURCE}
 	${FILES_SOURCE_HEADER_CORE}
 	${FILES_SOURCE_HEADER_IMPL}
 )
@@ -252,6 +260,16 @@ target_link_libraries(VK2D
 	freetype
 	glfw
 )
+
+if(${VK2D_DEBUG})
+	target_compile_definitions(VK2D
+		PRIVATE
+			VK2D_DEBUG_ENABLE=1)
+else()
+	target_compile_definitions(VK2D
+		PRIVATE
+			VK2D_DEBUG_ENABLE=0)
+endif()
 
 #target_link_libraries(VK2D
 #	"vulkan-1.lib"

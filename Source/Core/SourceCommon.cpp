@@ -5,32 +5,38 @@
 
 
 
-#if VK2D_BUILD_OPTION_VULKAN_COMMAND_BUFFER_CHECKMARKS
+#if VK2D_BUILD_OPTION_VULKAN_COMMAND_BUFFER_CHECKMARKS && VK2D_BUILD_OPTION_VULKAN_VALIDATION && VK2D_DEBUG_ENABLE
 
 
 
 PFN_vkCmdSetCheckpointNV							fp_vkCmdSetCheckpointNV						= nullptr;
 PFN_vkGetQueueCheckpointDataNV						fp_vkGetQueueCheckpointDataNV				= nullptr;
 
-vk2d::_internal::InstanceImpl					*	command_buffer_checkpoint_host				= nullptr;
+VkQueue												checkpoint_queue							= VK_NULL_HANDLE;
+std::mutex										*	checkpoint_queue_mutex						= nullptr;
 vk2d::_internal::CommandBufferCheckpointData	*	previous_command_buffer_checkpoint_data		= nullptr;
 
 
 
-void vk2d::_internal::SetCommandBufferCheckpointHost(
-	vk2d::_internal::InstanceImpl	*	instance
+void vk2d::_internal::SetCommandBufferCheckpointQueue(
+	VkDevice							device,
+	VkQueue								queue,
+	std::mutex						*	queue_mutex
 )
 {
-	command_buffer_checkpoint_host		= instance;
+	checkpoint_queue		= queue;
+	checkpoint_queue_mutex	= queue_mutex;
+	assert( checkpoint_queue );
+	assert( checkpoint_queue_mutex );
 
 	fp_vkCmdSetCheckpointNV = (PFN_vkCmdSetCheckpointNV)vkGetDeviceProcAddr(
-		instance->GetVulkanDevice(),
+		device,
 		"vkCmdSetCheckpointNV"
 	);
 	assert( fp_vkCmdSetCheckpointNV );
 
 	fp_vkGetQueueCheckpointDataNV = (PFN_vkGetQueueCheckpointDataNV)vkGetDeviceProcAddr(
-		instance->GetVulkanDevice(),
+		device,
 		"vkGetQueueCheckpointDataNV"
 	);
 	assert( fp_vkGetQueueCheckpointDataNV );
@@ -58,14 +64,14 @@ void vk2d::_internal::CmdInsertCommandBufferCheckpoint(
 
 std::vector<VkCheckpointDataNV> vk2d::_internal::GetCommandBufferCheckpoints()
 {
-	assert( command_buffer_checkpoint_host );
+	assert( checkpoint_queue_mutex );
 
 	std::lock_guard<std::mutex> queue_lock(
-		*command_buffer_checkpoint_host->GetPrimaryRenderQueue().GetQueueMutex() );
+		*checkpoint_queue_mutex );
 
 	uint32_t checkpoint_count = 0;
 	fp_vkGetQueueCheckpointDataNV(
-		command_buffer_checkpoint_host->GetPrimaryRenderQueue().GetQueue(),
+		checkpoint_queue,
 		&checkpoint_count,
 		nullptr
 	);
@@ -77,7 +83,7 @@ std::vector<VkCheckpointDataNV> vk2d::_internal::GetCommandBufferCheckpoints()
 		c.pCheckpointMarker	= 0;
 	}
 	fp_vkGetQueueCheckpointDataNV(
-		command_buffer_checkpoint_host->GetPrimaryRenderQueue().GetQueue(),
+		checkpoint_queue,
 		&checkpoint_count,
 		checkpoint_data.data()
 	);

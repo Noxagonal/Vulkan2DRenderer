@@ -67,7 +67,7 @@ void VK2D_APIENTRY VK2D_default_ReportFunction(
 
 	if( severity == vk2d::ReportSeverity::CRITICAL_ERROR ) {
 
-#if VK2D_BUILD_OPTION_VULKAN_COMMAND_BUFFER_CHECKMARKS
+#if VK2D_BUILD_OPTION_VULKAN_COMMAND_BUFFER_CHECKMARKS && VK2D_BUILD_OPTION_VULKAN_VALIDATION && VK2D_DEBUG_ENABLE
 		auto checkpoints = vk2d::_internal::GetCommandBufferCheckpoints();
 		if( checkpoints.size() ) {
 			std::cout << "\n\nLatest command buffer checkpoint marker stages: " << checkpoints.size() << "\n";
@@ -261,7 +261,7 @@ vk2d::_internal::InstanceImpl::InstanceImpl( const InstanceCreateInfo & instance
 	create_info_copy	= instance_create_info;
 	report_function		= create_info_copy.report_function;
 
-#if VK2D_BUILD_OPTION_DEBUG_ENABLE
+#if VK2D_DEBUG
 	if( report_function == nullptr ) {
 		report_function = VK2D_default_ReportFunction;
 	}
@@ -284,7 +284,7 @@ vk2d::_internal::InstanceImpl::InstanceImpl( const InstanceCreateInfo & instance
 	device_extensions.push_back( VK_KHR_SWAPCHAIN_EXTENSION_NAME );
 	device_extensions.push_back( VK_KHR_SAMPLER_MIRROR_CLAMP_TO_EDGE_EXTENSION_NAME );
 
-#if VK2D_BUILD_OPTION_VULKAN_COMMAND_BUFFER_CHECKMARKS
+#if VK2D_BUILD_OPTION_VULKAN_COMMAND_BUFFER_CHECKMARKS && VK2D_BUILD_OPTION_VULKAN_VALIDATION && VK2D_DEBUG_ENABLE
 	device_extensions.push_back( VK_NV_DEVICE_DIAGNOSTIC_CHECKPOINTS_EXTENSION_NAME );
 #endif
 
@@ -292,9 +292,13 @@ vk2d::_internal::InstanceImpl::InstanceImpl( const InstanceCreateInfo & instance
 	if( !PickPhysicalDevice() ) return;
 	if( !CreateDeviceAndQueues() ) return;
 
-#if VK2D_BUILD_OPTION_VULKAN_COMMAND_BUFFER_CHECKMARKS
+#if VK2D_BUILD_OPTION_VULKAN_COMMAND_BUFFER_CHECKMARKS && VK2D_BUILD_OPTION_VULKAN_VALIDATION && VK2D_DEBUG_ENABLE
 	if( instance_count == 1 ) {
-		vk2d::_internal::SetCommandBufferCheckpointHost( this );
+		vk2d::_internal::SetCommandBufferCheckpointQueue(
+			vk_device,
+			primary_render_queue.GetQueue(),
+			primary_render_queue.GetQueueMutex()
+		);
 	}
 #endif
 
@@ -990,7 +994,7 @@ bool vk2d::_internal::InstanceImpl::IsGood() const
 
 
 
-#if VK2D_BUILD_OPTION_VULKAN_VALIDATION
+#if VK2D_BUILD_OPTION_VULKAN_VALIDATION && VK2D_DEBUG_ENABLE
 
 namespace vk2d {
 
@@ -1077,7 +1081,7 @@ VkBool32 VKAPI_PTR DebugMessenger(
 bool vk2d::_internal::InstanceImpl::CreateInstance()
 {
 
-#if VK2D_BUILD_OPTION_VULKAN_VALIDATION
+#if VK2D_BUILD_OPTION_VULKAN_VALIDATION && VK2D_DEBUG_ENABLE
 	instance_layers.push_back( "VK_LAYER_LUNARG_standard_validation" );
 	instance_extensions.push_back( VK_EXT_DEBUG_UTILS_EXTENSION_NAME );
 
@@ -1096,7 +1100,7 @@ bool vk2d::_internal::InstanceImpl::CreateInstance()
 #endif
 
 	std::vector<VkValidationFeatureEnableEXT> enabled_validation_features {
-#if VK2D_BUILD_OPTION_VULKAN_GPU_ASSISTED_VALIDATION
+#if VK2D_BUILD_OPTION_VULKAN_GPU_ASSISTED_VALIDATION && VK2D_BUILD_OPTION_VULKAN_VALIDATION && VK2D_DEBUG_ENABLE
 		VK_VALIDATION_FEATURE_ENABLE_GPU_ASSISTED_EXT,
 		VK_VALIDATION_FEATURE_ENABLE_GPU_ASSISTED_RESERVE_BINDING_SLOT_EXT,
 #endif
@@ -1140,7 +1144,7 @@ bool vk2d::_internal::InstanceImpl::CreateInstance()
 
 		VkInstanceCreateInfo instance_create_info {};
 		instance_create_info.sType						= VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
-#if VK2D_BUILD_OPTION_VULKAN_VALIDATION
+#if VK2D_BUILD_OPTION_VULKAN_VALIDATION && VK2D_DEBUG_ENABLE
 		instance_create_info.pNext						= &debug_utils_create_info;
 #else
 		instance_create_info.pNext						= nullptr;
@@ -1163,7 +1167,7 @@ bool vk2d::_internal::InstanceImpl::CreateInstance()
 		}
 	}
 
-#if VK2D_BUILD_OPTION_VULKAN_VALIDATION
+#if VK2D_BUILD_OPTION_VULKAN_VALIDATION && VK2D_DEBUG_ENABLE
 	{
 		auto createDebugUtilsMessenger = (PFN_vkCreateDebugUtilsMessengerEXT)vkGetInstanceProcAddr( vk_instance, "vkCreateDebugUtilsMessengerEXT" );
 		if( !createDebugUtilsMessenger ) {

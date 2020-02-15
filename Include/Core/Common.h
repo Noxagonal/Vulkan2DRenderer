@@ -1,6 +1,5 @@
 #pragma once
 
-#include "BuildOptions.h"
 #include "Platform.h"
 
 #include <stdint.h>
@@ -37,15 +36,6 @@ constexpr double RAD			= PI * 2.0;
 		// Calling convension
 		#define VK2D_APIENTRY				__stdcall
 
-
-
-		// Debug enable or disable
-		#if defined( _DEBUG )
-			#define VK2D_DEBUG				1
-		#else
-			#define VK2D_DEBUG 				0
-		#endif
-
 	#else
 		#error "Please add compiler support here!"
 	#endif
@@ -79,15 +69,6 @@ constexpr double RAD			= PI * 2.0;
 		// Calling convension
 		#define VK2D_APIENTRY				// Default, change in the future if needed.
 
-
-
-		// Debug enable or disable
-		#if !defined( NDEBUG )
-			#define VK2D_DEBUG				1
-		#else
-			#define VK2D_DEBUG 				0
-		#endif
-
 	#else
 		#error "Please add compiler support here!"
 	#endif
@@ -99,10 +80,6 @@ constexpr double RAD			= PI * 2.0;
 #endif
 
 
-
-#if !defined( VK2D_DEBUG )
-	#error "VK2D_DEBUG not defined!"
-#endif
 
 #if !defined( VK2D_API )
 	#error "VK2D_API not defined!"

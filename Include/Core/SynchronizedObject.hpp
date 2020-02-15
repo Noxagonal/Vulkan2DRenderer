@@ -8,56 +8,19 @@ namespace vk2d {
 
 
 
-template<typename T>
-class SynchronizedObject
+class Fence
 {
-public:
-	SynchronizedObject() {
+	Fence()									= default;
+	Fence( const vk2d::Fence & other )		= delete;
+	Fence( vk2d::Fence && other )			= default;
+	~Fence()								= default;
 
-	}
-	~SynchronizedObject() {
-
-	}
-
-	void							Set(
-		T						&&	object )
-	{
-		obj = std::move( object );
-		Enable();
-	}
-
-	void							Set(
-		const T					&	object )
-	{
-		obj = object;
-		Enable();
-	}
-
-	const T						&	Get()
-	{
-		WaitTillEnabled();
-		return obj;
-	}
-
-	const T						&	operator->()
-	{
-		WaitTillEnabled();
-		return obj;
-	}
-
-	const T						&	operator*()
-	{
-		WaitTillEnabled();
-		return obj;
-	}
-
-private:
-	void							Enable()
+	inline void						Set()
 	{
 		is_set						= true;
 		condition.notify_all();
 	}
-	void							WaitTillEnabled()
+	inline void						Wait()
 	{
 		while( !is_set.load() ) {
 			std::unique_lock<std::mutex> unique_lock( mutex );
@@ -65,9 +28,59 @@ private:
 		}
 	}
 
+private:
 	std::mutex						mutex;
 	std::condition_variable			condition;
 	std::atomic_bool				is_set					= {};
+};
+
+
+
+template<typename T>
+class FencedObject
+{
+public:
+	FencedObject() {
+
+	}
+	~FencedObject() {
+
+	}
+
+	void							Set(
+		T						&&	object )
+	{
+		obj = std::move( object );
+		fence.Set();
+	}
+
+	void							Set(
+		const T					&	object )
+	{
+		obj = object;
+		fence.Set();
+	}
+
+	const T						&	Get()
+	{
+		fence.Wait();
+		return obj;
+	}
+
+	const T						&	operator->()
+	{
+		fence.Wait();
+		return obj;
+	}
+
+	const T						&	operator*()
+	{
+		fence.Wait();
+		return obj;
+	}
+
+private:
+	Fence							fence					= {};
 	T								obj;
 };
 
