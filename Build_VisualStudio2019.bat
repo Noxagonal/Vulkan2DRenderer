@@ -2,17 +2,19 @@
 
 
 
+set /A build_debug=0
 set /A build_static=0
 set /A build_tests=0
 set /A build_examples=1
 
 :OptionsLoop
-call :PrintOptionsMenu ret, %build_static%, %build_tests%, %build_examples%
-if %ret%==1 call :ToggleValue build_static, %build_static%
-if %ret%==2 call :ToggleValue build_tests, %build_tests%
-if %ret%==3 call :ToggleValue build_examples, %build_examples%
-if %ret%==4 goto Build
-if %ret%==5 goto End
+call :PrintOptionsMenu ret, %build_debug%, %build_static%, %build_tests%, %build_examples%
+if %ret%==1 call :ToggleValue build_debug, %build_debug%
+if %ret%==2 call :ToggleValue build_static, %build_static%
+if %ret%==3 call :ToggleValue build_tests, %build_tests%
+if %ret%==4 call :ToggleValue build_examples, %build_examples%
+if %ret%==5 goto Build
+if %ret%==6 goto End
 goto OptionsLoop
 
 
@@ -23,6 +25,7 @@ goto OptionsLoop
 
 :Build
 
+call :GetAsOnOffString build_debug_str, %build_debug%
 call :GetAsOnOffString build_static_str, %build_static%
 call :GetAsOnOffString build_tests_str, %build_tests%
 call :GetAsOnOffString build_examples_str, %build_examples%
@@ -36,9 +39,9 @@ set source_dir=..
 mkdir build
 cd build
 
-cmake -G %generator% -A %architecture% -D CMAKE_BUILD_TYPE=Release -D VK2D_BUILD_STATIC_LIBRARY=%build_static_str% -D VK2D_BUILD_TESTS=%build_tests_str% -D VK2D_BUILD_EXAMPLES=%build_examples_str% "%source_dir%"
+cmake -G %generator% -A %architecture% -D CMAKE_BUILD_TYPE=Release -D VK2D_DEBUG=%build_debug_str% -D VK2D_BUILD_STATIC_LIBRARY=%build_static_str% -D VK2D_BUILD_TESTS=%build_tests_str% -D VK2D_BUILD_EXAMPLES=%build_examples_str% "%source_dir%"
 
-cd ..
+cd %source_dir%
 
 goto End
 
@@ -48,9 +51,10 @@ goto End
 
 
 :PrintOptionsMenu
-call :GetAsOnOffString build_static_str, %~2
-call :GetAsOnOffString build_tests_str, %~3
-call :GetAsOnOffString build_examples_str, %~4
+call :GetAsOnOffString build_debug_str, %~2
+call :GetAsOnOffString build_static_str, %~3
+call :GetAsOnOffString build_tests_str, %~4
+call :GetAsOnOffString build_examples_str, %~5
 
 cls
 echo:
@@ -58,12 +62,13 @@ echo ************************************************************
 echo *
 echo * Choose from the following list and press enter to select.
 echo *
-echo * [ 1 ] Build static library (EXPERIMENTAL): %build_static_str%
-echo * [ 2 ] Build tests: %build_tests_str%
-echo * [ 3 ] Build examples: %build_examples_str%
+echo * [ 1 ] Enable library debugging options: %build_debug_str%
+echo * [ 2 ] Build static library (EXPERIMENTAL): %build_static_str%
+echo * [ 3 ] Build tests: %build_tests_str%
+echo * [ 4 ] Build examples: %build_examples_str%
 echo *
-echo * [ 4 ] Build with current settings
-echo * [ 5 ] Exit
+echo * [ 5 ] Build with current settings
+echo * [ 6 ] Exit
 echo *
 echo ************************************************************
 echo:

@@ -3,13 +3,8 @@
 // It creates a instance, a window and renders 3 basic
 // shapes to that window.
 
-
-
+// Include VK2D.h header to the project, this will include everything.
 #include <VK2D.h>
-
-constexpr double PI				= 3.14159265358979323846;
-constexpr double RAD			= PI * 2.0;
-
 
 #include <string>
 #include <iostream>
@@ -30,8 +25,6 @@ int main()
 	window_create_info.size					= { 800, 600 };
 	auto window = instance->CreateOutputWindow( window_create_info );
 	if( !window ) return -1;
-
-	auto texture = instance->GetResourceManager()->LoadTextureResource("../../../Data/GrafGear_128.png");
 
 	// Run the window until the user closes it.
 	// Windows do not just close on their own when the close button is pressed,

@@ -19,7 +19,8 @@ public:
 		vk2d::KeyboardButton					button,
 		int32_t									scancode,
 		vk2d::ButtonAction						action,
-		vk2d::ModifierKeyFlags					modifierKeys )
+		vk2d::ModifierKeyFlags					modifierKeys
+	)
 	{
 		if( action == vk2d::ButtonAction::PRESS ) {
 			if( button == vk2d::KeyboardButton::KEY_ESCAPE ) {
@@ -44,7 +45,6 @@ int main()
 	window_create_info.size					= { 800, 600 };
 	window_create_info.coordinate_space		= vk2d::WindowCoordinateSpace::TEXEL_SPACE_CENTERED;
 	window_create_info.samples				= vk2d::Multisamples::SAMPLE_COUNT_8;
-	window_create_info.coordinate_space		= vk2d::WindowCoordinateSpace::TEXEL_SPACE_CENTERED;
 	window_create_info.event_handler		= &event_handler;
 	auto window = instance->CreateOutputWindow( window_create_info );
 	if( !window ) return -1;

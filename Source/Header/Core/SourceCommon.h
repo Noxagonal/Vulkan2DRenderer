@@ -2,19 +2,19 @@
 
 #define VK2D_LIBRARY_EXPORT				1
 
+#include "../../BuildOptions.h"
 #include "../../../Include/Core/Common.h"
 
 #include <stdint.h>
 #include <string>
 #include <vector>
+#include <mutex>
 
 #include <vulkan/vulkan.h>
 
 namespace vk2d {
 
 namespace _internal {
-
-class InstanceImpl;
 
 
 
@@ -48,10 +48,12 @@ struct CommandBufferCheckpointData {
 	CommandBufferCheckpointData		*	previous		= {};
 };
 
-#if VK2D_BUILD_OPTION_VULKAN_COMMAND_BUFFER_CHECKMARKS
+#if VK2D_BUILD_OPTION_VULKAN_COMMAND_BUFFER_CHECKMARKS && VK2D_BUILD_OPTION_VULKAN_VALIDATION && VK2D_DEBUG_ENABLE
 
-void									SetCommandBufferCheckpointHost(
-	vk2d::_internal::InstanceImpl	*	instance );
+void									SetCommandBufferCheckpointQueue(
+	VkDevice							device,
+	VkQueue								queue,
+	std::mutex						*	queue_mutex );
 
 void									CmdInsertCommandBufferCheckpoint(
 	VkCommandBuffer						command_buffer,
