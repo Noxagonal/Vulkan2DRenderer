@@ -19,7 +19,7 @@ int main()
 
 	vk2d::WindowCreateInfo					window_create_info{};
 	window_create_info.size = { 512, 512 };
-	window_create_info.coordinate_space = vk2d::WindowCoordinateSpace::TEXEL_SPACE_CENTERED;
+	window_create_info.coordinate_space = vk2d::RenderCoordinateSpace::TEXEL_SPACE_CENTERED;
 	auto window = instance->CreateOutputWindow(window_create_info);
 	if (!window) ExitWithCode(ExitCodes::CANNOT_CREATE_WINDOW);
 

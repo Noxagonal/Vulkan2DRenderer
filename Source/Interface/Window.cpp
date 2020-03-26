@@ -17,7 +17,7 @@
 
 VK2D_API					vk2d::Window::Window(
 	vk2d::_internal::InstanceImpl	*	instance_parent,
-	vk2d::WindowCreateInfo			&	window_create_info
+	const vk2d::WindowCreateInfo	&	window_create_info
 )
 {
 	impl	= std::make_unique<vk2d::_internal::WindowImpl>(

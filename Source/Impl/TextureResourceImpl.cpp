@@ -5,6 +5,7 @@
 #include "../Header/Impl/ResourceManagerImpl.h"
 #include "../Header/Core/ThreadPrivateResources.h"
 #include "../Header/Core/DescriptorSet.h"
+#include "../Header/Core/CommonTools.h"
 
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
@@ -196,23 +197,10 @@ bool vk2d::_internal::TextureResourceImpl::MTLoad(
 	}
 
 	// 3. Create image and image view Vulkan objects.
-	std::vector<VkExtent2D> mipmap_levels;
+	auto mipmap_levels = vk2d::_internal::GenerateMipSizes(
+		vk2d::Vector2u( image_info.x, image_info.y )
+	);
 	{
-		// generate mipmap levels
-		mipmap_levels.reserve( 32 );
-		{
-			VkExtent2D last { image_info.x, image_info.y };
-			mipmap_levels.push_back( last );
-
-			while( last.width != 1 && last.height != 1 ) {
-				VkExtent2D current_dim_size	= { last.width / 2, last.height / 2 };
-				if( current_dim_size.width < 1 )	current_dim_size.width = 1;
-				if( current_dim_size.height < 1 )	current_dim_size.height = 1;
-				last	= current_dim_size;
-				mipmap_levels.push_back( current_dim_size );
-			}
-		}
-
 		VkImageCreateInfo image_create_info {};
 		image_create_info.sType						= VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
 		image_create_info.pNext						= nullptr;

@@ -321,6 +321,7 @@ vk2d::_internal::InstanceImpl::~InstanceImpl()
 	vkDeviceWaitIdle( vk_device );
 
 	windows.clear();
+	render_target_textures.clear();
 	cursors.clear();
 	samplers.clear();
 
@@ -484,7 +485,7 @@ vk2d::GamepadState vk2d::_internal::InstanceImpl::QueryGamepadState(
 
 
 vk2d::Window * vk2d::_internal::InstanceImpl::CreateOutputWindow(
-	vk2d::WindowCreateInfo	&	window_create_info
+	const vk2d::WindowCreateInfo	&	window_create_info
 )
 {
 	auto new_window = std::unique_ptr<vk2d::Window>( new vk2d::Window( this, window_create_info ) );
@@ -496,7 +497,7 @@ vk2d::Window * vk2d::_internal::InstanceImpl::CreateOutputWindow(
 	return {};
 }
 
-void vk2d::_internal::InstanceImpl::CloseOutputWindow(
+void vk2d::_internal::InstanceImpl::DestroyOutputWindow(
 	vk2d::Window				*	window
 )
 {
@@ -506,6 +507,42 @@ void vk2d::_internal::InstanceImpl::CloseOutputWindow(
 	while( it != windows.end() ) {
 		if( it->get() == window ) {
 			it = windows.erase( it );
+			break;
+		} else {
+			++it;
+		}
+	}
+}
+
+vk2d::RenderTargetTexture * vk2d::_internal::InstanceImpl::CreateRenderTargetTexture(
+	const vk2d::RenderTargetTextureCreateInfo		&	render_target_texture_create_info
+)
+{
+	auto render_target_texture	= std::unique_ptr<vk2d::RenderTargetTexture>(
+		new vk2d::RenderTargetTexture( this, render_target_texture_create_info )
+	);
+
+	if( render_target_texture && render_target_texture->IsGood() ) {
+		auto ret	= render_target_texture.get();
+		render_target_textures.push_back( std::move( render_target_texture ) );
+		return ret;
+	} else {
+		return nullptr;
+	}
+}
+
+void vk2d::_internal::InstanceImpl::DestroyRenderTargetTexture(
+	vk2d::RenderTargetTexture						*	render_target_texture
+)
+{
+	if( vkDeviceWaitIdle( vk_device ) != VK_SUCCESS ) {
+		Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Device lost!" );
+	}
+
+	auto it = render_target_textures.begin();
+	while( it != render_target_textures.end() ) {
+		if( it->get() == render_target_texture ) {
+			it = render_target_textures.erase( it );
 			break;
 		} else {
 			++it;
@@ -526,7 +563,9 @@ vk2d::Sampler * vk2d::_internal::InstanceImpl::CreateSampler(
 	const vk2d::SamplerCreateInfo	&	sampler_create_info
 )
 {
-	auto sampler	= std::unique_ptr<vk2d::Sampler>( new vk2d::Sampler( this, sampler_create_info ) );
+	auto sampler	= std::unique_ptr<vk2d::Sampler>(
+		new vk2d::Sampler( this, sampler_create_info )
+	);
 
 	if( sampler && sampler->IsGood() ) {
 		auto ret	= sampler.get();
@@ -919,7 +958,7 @@ VkPipeline vk2d::_internal::InstanceImpl::CreateVulkanPipeline(
 	pipeline_create_info.pColorBlendState		= &color_blend_state_create_info;
 	pipeline_create_info.pDynamicState			= &dynamic_state_create_info;
 	pipeline_create_info.layout					= GetVulkanPipelineLayout();
-	pipeline_create_info.renderPass				= settings.render_pass;
+	pipeline_create_info.renderPass				= settings.vk_render_pass;
 	pipeline_create_info.subpass				= 0;
 	pipeline_create_info.basePipelineHandle		= VK_NULL_HANDLE;
 	pipeline_create_info.basePipelineIndex		= 0;
@@ -1596,7 +1635,7 @@ bool vk2d::_internal::InstanceImpl::CreatePipelineLayout()
 	// This must match shader layout.
 
 	std::vector<VkDescriptorSetLayout> set_layouts {
-		uniform_buffer_descriptor_set_layout->GetVulkanDescriptorSetLayout(),	// Pipeline set 0 is WindowFrameData.
+		uniform_buffer_descriptor_set_layout->GetVulkanDescriptorSetLayout(),	// Pipeline set 0 is FrameData.
 		storage_buffer_descriptor_set_layout->GetVulkanDescriptorSetLayout(),	// Pipeline set 1 is vertex index buffer as storage buffer.
 		storage_buffer_descriptor_set_layout->GetVulkanDescriptorSetLayout(),	// Pipeline set 2 is vertex buffer as storage buffer.
 		sampler_texture_descriptor_set_layout->GetVulkanDescriptorSetLayout(),	// Pipeline set 3 is combined sampler texture and it's data uniform.

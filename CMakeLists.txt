@@ -97,6 +97,8 @@ set(FILES_INCLUDE_INTERFACE
 	"Include/Interface/Mesh.h"
 	"Include/Interface/Instance.h"
 	"Include/Interface/RenderPrimitives.h"
+	"Include/Interface/RenderTargetCommon.hpp"
+	"Include/Interface/RenderTargetTexture.h"
 	"Include/Interface/Resource.h"
 	"Include/Interface/ResourceManager.h"
 	"Include/Interface/Sampler.h"
@@ -110,6 +112,7 @@ set(FILES_SOURCE
 
 set(FILES_SOURCE_CORE
 	"Source/Core/Common.cpp"
+	"Source/Core/CommonTools.cpp"
 	"Source/Core/DescriptorSet.cpp"
 	"Source/Core/MeshBuffer.cpp"
 	"Source/Core/Platform.cpp"
@@ -122,6 +125,7 @@ set(FILES_SOURCE_CORE
 )
 
 set(FILES_SOURCE_HEADER_CORE
+	"Source/Header/Core/CommonTools.h"
 	"Source/Header/Core/DescriptorSet.h"
 	"Source/Header/Core/MeshBuffer.h"
 	"Source/Header/Core/QueueResolver.h"
@@ -135,6 +139,8 @@ set(FILES_SOURCE_HEADER_CORE
 set(FILES_SOURCE_HEADER_IMPL
 	"Source/Header/Impl/FontResourceImpl.h"
 	"Source/Header/Impl/InstanceImpl.h"
+	"Source/Header/Impl/RenderTargetCommonImpl.hpp"
+	"Source/Header/Impl/RenderTargetTextureImpl.h"
 	"Source/Header/Impl/ResourceManagerImpl.h"
 	"Source/Header/Impl/SamplerImpl.h"
 	"Source/Header/Impl/TextureResourceImpl.h"
@@ -144,6 +150,7 @@ set(FILES_SOURCE_HEADER_IMPL
 set(FILES_SOURCE_IMPL
 	"Source/Impl/FontResourceImpl.cpp"
 	"Source/Impl/InstanceImpl.cpp"
+	"Source/Impl/RenderTargetTextureImpl.cpp"
 	"Source/Impl/ResourceManagerImpl.cpp"
 	"Source/Impl/SamplerImpl.cpp"
 	"Source/Impl/TextureResourceImpl.cpp"
@@ -154,6 +161,7 @@ set(FILES_SOURCE_INTERFACE
 	"Source/Interface/FontResource.cpp"
 	"Source/Interface/Mesh.cpp"
 	"Source/Interface/Instance.cpp"
+	"Source/Interface/RenderTargetTexture.cpp"
 	"Source/Interface/Resource.cpp"
 	"Source/Interface/ResourceManager.cpp"
 	"Source/Interface/Sampler.cpp"

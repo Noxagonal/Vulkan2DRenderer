@@ -889,7 +889,7 @@ bool vk2d::_internal::WindowImpl::EndRender()
 			if( !CmdUpdateFrameData(
 				vk_complementary_transfer_command_buffer
 			) ) {
-				instance_parent->Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot record commands to transfer WindowFrameData to GPU!" );
+				instance_parent->Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot record commands to transfer FrameData to GPU!" );
 				return false;
 			}
 		}
@@ -1355,7 +1355,7 @@ void vk2d::_internal::WindowImpl::DrawTriangleList(
 		);
 
 		vk2d::_internal::PipelineSettings pipeline_settings {};
-		pipeline_settings.render_pass			= vk_render_pass;
+		pipeline_settings.vk_render_pass			= vk_render_pass;
 		pipeline_settings.primitive_topology	= VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
 		pipeline_settings.polygon_mode			= filled ? VK_POLYGON_MODE_FILL : VK_POLYGON_MODE_LINE;
 		pipeline_settings.shader_programs		= shader_programs;
@@ -1479,7 +1479,7 @@ void vk2d::_internal::WindowImpl::DrawLineList(
 		);
 
 		vk2d::_internal::PipelineSettings pipeline_settings {};
-		pipeline_settings.render_pass			= vk_render_pass;
+		pipeline_settings.vk_render_pass			= vk_render_pass;
 		pipeline_settings.primitive_topology	= VK_PRIMITIVE_TOPOLOGY_LINE_LIST;
 		pipeline_settings.polygon_mode			= VK_POLYGON_MODE_LINE;
 		pipeline_settings.shader_programs		= shader_programs;
@@ -1573,7 +1573,7 @@ void vk2d::_internal::WindowImpl::DrawPointList(
 		);
 
 		vk2d::_internal::PipelineSettings pipeline_settings {};
-		pipeline_settings.render_pass			= vk_render_pass;
+		pipeline_settings.vk_render_pass			= vk_render_pass;
 		pipeline_settings.primitive_topology	= VK_PRIMITIVE_TOPOLOGY_POINT_LIST;
 		pipeline_settings.polygon_mode			= VK_POLYGON_MODE_POINT;
 		pipeline_settings.shader_programs		= shader_programs;
@@ -2295,7 +2295,7 @@ bool vk2d::_internal::WindowImpl::CreateRenderPass()
 	subpasses[ 0 ].pInputAttachments			= input_attachment_references.data();
 	subpasses[ 0 ].colorAttachmentCount			= uint32_t( color_attachment_references.size() );
 	subpasses[ 0 ].pColorAttachments			= color_attachment_references.data();
-	subpasses[ 0 ].pResolveAttachments			= samples == vk2d::Multisamples::SAMPLE_COUNT_1 ? nullptr : resolve_attachment_references.data();
+	subpasses[ 0 ].pResolveAttachments			= use_multisampling ? resolve_attachment_references.data() : nullptr;
 	subpasses[ 0 ].pDepthStencilAttachment		= &depth_stencil_attachment;
 	subpasses[ 0 ].preserveAttachmentCount		= uint32_t( preserve_attachments.size() );
 	subpasses[ 0 ].pPreserveAttachments			= preserve_attachments.data();
@@ -2898,7 +2898,7 @@ bool vk2d::_internal::WindowImpl::CreateWindowFrameDataBuffer()
 		staging_buffer_create_info.sType					= VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
 		staging_buffer_create_info.pNext					= nullptr;
 		staging_buffer_create_info.flags					= 0;
-		staging_buffer_create_info.size						= sizeof( vk2d::_internal::WindowFrameData );
+		staging_buffer_create_info.size						= sizeof( vk2d::_internal::FrameData );
 		staging_buffer_create_info.usage					= VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
 		staging_buffer_create_info.sharingMode				= VK_SHARING_MODE_EXCLUSIVE;
 		staging_buffer_create_info.queueFamilyIndexCount	= 0;
@@ -2908,7 +2908,7 @@ bool vk2d::_internal::WindowImpl::CreateWindowFrameDataBuffer()
 			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT
 		);
 		if( frame_data_staging_buffer != VK_SUCCESS ) {
-			instance_parent->Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error. Cannot create staging buffer for WindowFrameData!" );
+			instance_parent->Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error. Cannot create staging buffer for FrameData!" );
 			return false;
 		}
 
@@ -2916,7 +2916,7 @@ bool vk2d::_internal::WindowImpl::CreateWindowFrameDataBuffer()
 		device_buffer_create_info.sType						= VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
 		device_buffer_create_info.pNext						= nullptr;
 		device_buffer_create_info.flags						= 0;
-		device_buffer_create_info.size						= sizeof( vk2d::_internal::WindowFrameData );
+		device_buffer_create_info.size						= sizeof( vk2d::_internal::FrameData );
 		device_buffer_create_info.usage						= VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
 		device_buffer_create_info.sharingMode				= VK_SHARING_MODE_EXCLUSIVE;
 		device_buffer_create_info.queueFamilyIndexCount		= 0;
@@ -2926,7 +2926,7 @@ bool vk2d::_internal::WindowImpl::CreateWindowFrameDataBuffer()
 			VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT
 		);
 		if( frame_data_device_buffer != VK_SUCCESS ) {
-			instance_parent->Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error. Cannot create device local buffer for WindowFrameData!" );
+			instance_parent->Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error. Cannot create device local buffer for FrameData!" );
 			return false;
 		}
 	}
@@ -2937,13 +2937,13 @@ bool vk2d::_internal::WindowImpl::CreateWindowFrameDataBuffer()
 			instance_parent->GetUniformBufferDescriptorSetLayout()
 		);
 		if( frame_data_descriptor_set != VK_SUCCESS ) {
-			instance_parent->Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot allocate descriptor set for WindowFrameData device buffer!" );
+			instance_parent->Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot allocate descriptor set for FrameData device buffer!" );
 			return false;
 		}
 		VkDescriptorBufferInfo descriptor_write_buffer_info {};
 		descriptor_write_buffer_info.buffer	= frame_data_device_buffer.buffer;
 		descriptor_write_buffer_info.offset	= 0;
-		descriptor_write_buffer_info.range	= sizeof( vk2d::_internal::WindowFrameData );
+		descriptor_write_buffer_info.range	= sizeof( vk2d::_internal::FrameData );
 		VkWriteDescriptorSet descriptor_write {};
 		descriptor_write.sType				= VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 		descriptor_write.pNext				= nullptr;
@@ -3117,29 +3117,29 @@ bool vk2d::_internal::WindowImpl::CmdUpdateFrameData(
 	vk2d::_internal::WindowCoordinateScaling window_coordinate_scaling {};
 
 	switch( create_info_copy.coordinate_space ) {
-	case vk2d::WindowCoordinateSpace::TEXEL_SPACE:
+	case vk2d::RenderCoordinateSpace::TEXEL_SPACE:
 		window_coordinate_scaling.multiplier	= { 1.0f / ( extent.width / 2.0f ), 1.0f / ( extent.height / 2.0f ) };
 		window_coordinate_scaling.offset		= { -1.0f, -1.0f };
 		break;
-	case vk2d::WindowCoordinateSpace::TEXEL_SPACE_CENTERED:
+	case vk2d::RenderCoordinateSpace::TEXEL_SPACE_CENTERED:
 		window_coordinate_scaling.multiplier	= { 1.0f / ( extent.width / 2.0f ), 1.0f / ( extent.height / 2.0f ) };
 		window_coordinate_scaling.offset		= { 0.0f, 0.0f };
 		break;
-	case vk2d::WindowCoordinateSpace::NORMALIZED_SPACE:
+	case vk2d::RenderCoordinateSpace::NORMALIZED_SPACE:
 	{
 		float contained_minimum_dimension		= float( std::min( extent.width, extent.height ) );
 		window_coordinate_scaling.multiplier	= { contained_minimum_dimension / ( extent.width / 2.0f ), contained_minimum_dimension / ( extent.height / 2.0f ) };
 		window_coordinate_scaling.offset		= { -1.0f, -1.0f };
 	}
 	break;
-	case vk2d::WindowCoordinateSpace::NORMALIZED_SPACE_CENTERED:
+	case vk2d::RenderCoordinateSpace::NORMALIZED_SPACE_CENTERED:
 	{
 		float contained_minimum_dimension		= float( std::min( extent.width, extent.height ) );
 		window_coordinate_scaling.multiplier	= { contained_minimum_dimension / extent.width, contained_minimum_dimension / extent.height };
 		window_coordinate_scaling.offset		= { 0.0f, 0.0f };
 	}
 	break;
-	case vk2d::WindowCoordinateSpace::NORMALIZED_VULKAN:
+	case vk2d::RenderCoordinateSpace::NORMALIZED_VULKAN:
 		window_coordinate_scaling.multiplier	= { 1.0f, 1.0f };
 		window_coordinate_scaling.offset		= { 0.0f, 0.0f };
 		break;
@@ -3151,9 +3151,9 @@ bool vk2d::_internal::WindowImpl::CmdUpdateFrameData(
 
 	// Copy data to staging buffer.
 	{
-		auto frame_data = frame_data_staging_buffer.memory.Map<vk2d::_internal::WindowFrameData>();
+		auto frame_data = frame_data_staging_buffer.memory.Map<vk2d::_internal::FrameData>();
 		if( !frame_data ) {
-			instance_parent->Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot map WindowFrameData staging buffer memory!" );
+			instance_parent->Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot map FrameData staging buffer memory!" );
 			return false;
 		}
 		frame_data->coordinate_scaling		= window_coordinate_scaling;
@@ -3164,7 +3164,7 @@ bool vk2d::_internal::WindowImpl::CmdUpdateFrameData(
 		VkBufferCopy copy_region {};
 		copy_region.srcOffset	= 0;
 		copy_region.dstOffset	= 0;
-		copy_region.size		= sizeof( vk2d::_internal::WindowFrameData );
+		copy_region.size		= sizeof( vk2d::_internal::FrameData );
 		vkCmdCopyBuffer(
 			command_buffer,
 			frame_data_staging_buffer.buffer,

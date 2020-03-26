@@ -10,6 +10,7 @@
 #include "../Core/ShaderInterface.h"
 
 #include "WindowImpl.h"
+#include "RenderTargetTextureImpl.h"
 
 #include "../../Include/Interface/Window.h"
 #include "../../Include/Interface/Sampler.h"
@@ -49,6 +50,7 @@ class CursorImpl;
 
 class InstanceImpl {
 	friend class vk2d::Instance;
+	friend void UpdateMonitorLists();
 
 public:
 	InstanceImpl(
@@ -93,9 +95,14 @@ public:
 	void													SetGamepadMapping();
 
 	vk2d::Window										*	CreateOutputWindow(
-		vk2d::WindowCreateInfo							&	window_create_info );
-	void													CloseOutputWindow(
+		const vk2d::WindowCreateInfo					&	window_create_info );
+	void													DestroyOutputWindow(
 		vk2d::Window									*	window );
+
+	vk2d::RenderTargetTexture							*	CreateRenderTargetTexture(
+		const vk2d::RenderTargetTextureCreateInfo		&	render_target_texture_create_info );
+	void													DestroyRenderTargetTexture(
+		vk2d::RenderTargetTexture						*	render_target_texture );
 
 	vk2d::_internal::DescriptorAutoPool					*	GetDescriptorPool();
 
@@ -161,7 +168,7 @@ public:
 
 	bool													IsGood() const;
 
-
+private:
 	bool													CreateInstance();
 	bool													PickPhysicalDevice();
 	bool													CreateDeviceAndQueues();
@@ -195,7 +202,6 @@ public:
 
 	vk2d::MonitorUpdateCallbackFun							monitor_update_callback					= nullptr;
 
-private:
 	static uint64_t											instance_count;		// used to keep track of Instance instances
 
 	vk2d::InstanceCreateInfo								create_info_copy						= {};
@@ -248,8 +254,9 @@ private:
 	vk2d::TextureResource								*	default_texture							= {};
 
 	std::vector<std::unique_ptr<vk2d::Window>>				windows;
-	std::vector<std::unique_ptr<vk2d::Cursor>>				cursors;
+	std::vector<std::unique_ptr<vk2d::RenderTargetTexture>>	render_target_textures;
 	std::vector<std::unique_ptr<vk2d::Sampler>>				samplers;
+	std::vector<std::unique_ptr<vk2d::Cursor>>				cursors;
 
 	vk2d::GamepadEventCallbackFun							joystick_event_callback					= {};
 

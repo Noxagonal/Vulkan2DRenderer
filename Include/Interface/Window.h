@@ -3,6 +3,7 @@
 #include "../Core/Common.h"
 
 #include "RenderPrimitives.h"
+#include "RenderTargetCommon.hpp"
 
 #include <memory>
 #include <string>
@@ -34,32 +35,6 @@ class Monitor;
 class Sampler;
 
 
-
-enum class Multisamples : uint32_t {
-	SAMPLE_COUNT_1		= 1,
-	SAMPLE_COUNT_2		= 2,
-	SAMPLE_COUNT_4		= 4,
-	SAMPLE_COUNT_8		= 8,
-	SAMPLE_COUNT_16		= 16,
-	SAMPLE_COUNT_32		= 32,
-	SAMPLE_COUNT_64		= 64
-};
-inline vk2d::Multisamples operator&( vk2d::Multisamples m1, vk2d::Multisamples m2 )
-{
-	return vk2d::Multisamples( uint32_t( m1 ) & uint32_t( m2 ) );
-}
-inline vk2d::Multisamples operator|( vk2d::Multisamples m1, vk2d::Multisamples m2 )
-{
-	return vk2d::Multisamples( uint32_t( m1 ) | uint32_t( m2 ) );
-}
-
-enum class WindowCoordinateSpace : uint32_t {
-	TEXEL_SPACE,					// Default, ( 0, 0 ) at top left corner of the screen, bottom right is window extent.
-	TEXEL_SPACE_CENTERED,			// Same as TEXEL_SPACE but ( 0, 0 ) coordinates are at screen center.
-	NORMALIZED_SPACE,				// Window always contains 1x1 coordinate space, larger side is extended to keep window contents from stretching.
-	NORMALIZED_SPACE_CENTERED,		// Same as NORMALIZED SPACE but window always contains 2x2 coordinate space, ( 0, 0 ) is window center
-	NORMALIZED_VULKAN,				// ( -1, -1 ) top left, ( 1, 1 ) bottom right.
-};
 
 enum class ButtonAction : int32_t {
 	RELEASE				= 0,
@@ -238,7 +213,7 @@ struct WindowCreateInfo {
 	bool								focused						= true;			// Is the window focused and brought forth when created.
 	bool								maximized					= false;		// Is the window maximized to fill the screen when created.
 	bool								transparent_framebuffer		= false;		// Is the alpha value of the render interpreted as a transparent window background.
-	vk2d::WindowCoordinateSpace			coordinate_space			= vk2d::WindowCoordinateSpace::TEXEL_SPACE; // Window coordinate system to be used, see WindowCoordinateSpace.
+	vk2d::RenderCoordinateSpace			coordinate_space			= vk2d::RenderCoordinateSpace::TEXEL_SPACE; // Window coordinate system to be used, see RenderCoordinateSpace.
 	vk2d::Vector2u						size						= { 800, 600 };	// Window framebuffer initial size
 	vk2d::Vector2u						min_size					= { 32, 32 };	// Minimum size of the window, will be adjusted to suit the hardware.
 	vk2d::Vector2u						max_size					= { UINT32_MAX, UINT32_MAX };	// Maximum size of the window, will be adjusted to suit the hardware.
@@ -450,7 +425,7 @@ private:
 	// Only accessible through Instance::CreateOutputWindow();
 	VK2D_API																		Window(
 		vk2d::_internal::InstanceImpl				*	instance_parent,
-		vk2d::WindowCreateInfo						&	window_create_info );
+		const vk2d::WindowCreateInfo				&	window_create_info );
 
 public:
 	VK2D_API																		~Window();

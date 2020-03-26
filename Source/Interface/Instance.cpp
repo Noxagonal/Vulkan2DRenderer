@@ -127,7 +127,7 @@ VK2D_API vk2d::GamepadState VK2D_APIENTRY vk2d::Instance::QueryGamepadState(
 }
 
 VK2D_API vk2d::Window * VK2D_APIENTRY vk2d::Instance::CreateOutputWindow(
-	WindowCreateInfo		&	window_create_info
+	const WindowCreateInfo		&	window_create_info
 )
 {
 	return impl->CreateOutputWindow( window_create_info );
@@ -135,11 +135,25 @@ VK2D_API vk2d::Window * VK2D_APIENTRY vk2d::Instance::CreateOutputWindow(
 
 
 
-VK2D_API void VK2D_APIENTRY vk2d::Instance::CloseOutputWindow(
-	vk2d::Window		*	window
+VK2D_API void VK2D_APIENTRY vk2d::Instance::DestroyOutputWindow(
+	vk2d::Window				*	window
 )
 {
-	impl->CloseOutputWindow( window );
+	impl->DestroyOutputWindow( window );
+}
+
+VK2D_API vk2d::RenderTargetTexture * VK2D_APIENTRY vk2d::Instance::CreateRenderTargetTexture(
+	const vk2d::RenderTargetTextureCreateInfo	&	render_target_texture_create_info
+)
+{
+	return impl->CreateRenderTargetTexture( render_target_texture_create_info );
+}
+
+VK2D_API void VK2D_APIENTRY vk2d::Instance::DestroyRenderTargetTexture(
+	vk2d::RenderTargetTexture					*	render_target_texture
+)
+{
+	impl->DestroyRenderTargetTexture( render_target_texture );
 }
 
 VK2D_API vk2d::Sampler * VK2D_APIENTRY vk2d::Instance::CreateSampler(

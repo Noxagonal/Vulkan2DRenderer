@@ -11,6 +11,7 @@
 #include "../Impl/InstanceImpl.h"
 #include "../Core/ShaderInterface.h"
 #include "../../../Include/Core/SynchronizedObject.hpp"
+#include "RenderTargetCommonImpl.hpp"
 
 #define GLFW_INCLUDE_NONE
 #include <GLFW/glfw3.h>
@@ -287,14 +288,6 @@ private:
 		vk2d::Sampler										*	sampler,
 		vk2d::TextureResource								*	texture );
 
-	struct SamplerTextureDescriptorPoolData {
-		vk2d::_internal::PoolDescriptorSet						descriptor_set								= {};
-		std::chrono::time_point<std::chrono::steady_clock>		previous_access_time						= {};	// For cleanup
-	};
-
-	std::map<vk2d::Sampler*, std::map<vk2d::TextureResource*, vk2d::_internal::WindowImpl::SamplerTextureDescriptorPoolData>>
-		sampler_texture_descriptor_sets							= {};
-
 	void														CmdSetLineWidthIfDifferent(
 		VkCommandBuffer											command_buffer,
 		float													line_width );
@@ -369,6 +362,9 @@ private:
 	vk2d::TextureResource									*	previous_texture							= {};
 	vk2d::Sampler											*	previous_sampler							= {};
 	float														previous_line_width							= {};
+
+	std::map<vk2d::Sampler*, std::map<vk2d::TextureResource*, vk2d::_internal::SamplerTextureDescriptorPoolData>>
+		sampler_texture_descriptor_sets																		= {};
 
 	std::unique_ptr<vk2d::_internal::MeshBuffer>				mesh_buffer									= {};
 

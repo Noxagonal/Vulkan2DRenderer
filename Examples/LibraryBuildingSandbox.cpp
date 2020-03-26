@@ -26,9 +26,6 @@ public:
 			if( button == vk2d::KeyboardButton::KEY_ESCAPE ) {
 				window->CloseWindow();
 			}
-			if( button == vk2d::KeyboardButton::KEY_F1 ) {
-				window->TakeScreenshotToData( true );
-			}
 		}
 	};
 };
@@ -43,45 +40,23 @@ int main()
 	EventHandler event_handler;
 	vk2d::WindowCreateInfo					window_create_info {};
 	window_create_info.size					= { 800, 600 };
-	window_create_info.coordinate_space		= vk2d::WindowCoordinateSpace::TEXEL_SPACE_CENTERED;
+	window_create_info.coordinate_space		= vk2d::RenderCoordinateSpace::TEXEL_SPACE_CENTERED;
 	window_create_info.samples				= vk2d::Multisamples::SAMPLE_COUNT_8;
 	window_create_info.event_handler		= &event_handler;
 	auto window = instance->CreateOutputWindow( window_create_info );
 	if( !window ) return -1;
 
+	vk2d::RenderTargetTextureCreateInfo render_target_texture_create_info {};
+	render_target_texture_create_info.coordinate_space	= vk2d::RenderCoordinateSpace::TEXEL_SPACE;
+	render_target_texture_create_info.size				= vk2d::Vector2u( 512, 512 );
+	auto render_target_texture = instance->CreateRenderTargetTexture(
+		render_target_texture_create_info
+	);
+
 	float counter = 0.0f;
 	while( !window->ShouldClose() ) {
 
 		if( !window->BeginRender() ) return -1;
-
-		window->DrawLine(
-			vk2d::Vector2f( -200, -200 ),
-			vk2d::Vector2f( 200, 200 )
-		);
-
-		window->DrawCircle(
-			vk2d::Vector2f( -300, -200 ),
-			vk2d::Vector2f( 300, 200 ),
-			true,
-			64,
-			vk2d::Colorf( 0.7, 0.8, 1, 0.2f )
-		);
-
-		window->DrawPoint(
-			vk2d::Vector2f( -120, 0 ),
-			vk2d::Colorf( 1, 0, 0, 1 ),
-			10
-		);
-		window->DrawPoint(
-			vk2d::Vector2f( -110, 0 ),
-			vk2d::Colorf( 0, 1, 0, 1 ),
-			10
-		);
-		window->DrawPoint(
-			vk2d::Vector2f( -100, 0 ),
-			vk2d::Colorf( 0, 0, 1, 1 ),
-			10
-		);
 
 		if( !window->EndRender() ) return -1;
 

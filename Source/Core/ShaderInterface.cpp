@@ -115,14 +115,14 @@ bool vk2d::_internal::PipelineSettings::operator<(
 
 	return
 		std::tie(
-			render_pass,
+			vk_render_pass,
 			primitive_topology,
 			polygon_mode,
 			shader_programs,
 			samples
 		) <
 		std::tie(
-			other.render_pass,
+			other.vk_render_pass,
 			other.primitive_topology,
 			other.polygon_mode,
 			other.shader_programs,
@@ -136,14 +136,14 @@ bool vk2d::_internal::PipelineSettings::operator>(
 {
 	return
 		std::tie(
-			render_pass,
+			vk_render_pass,
 			primitive_topology,
 			polygon_mode,
 			shader_programs,
 			samples
 		) >
 		std::tie(
-			other.render_pass,
+			other.vk_render_pass,
 			other.primitive_topology,
 			other.polygon_mode,
 			other.shader_programs,
@@ -157,14 +157,14 @@ bool vk2d::_internal::PipelineSettings::operator<=(
 {
 	return
 		std::tie(
-			render_pass,
+			vk_render_pass,
 			primitive_topology,
 			polygon_mode,
 			shader_programs,
 			samples
 		) <=
 		std::tie(
-			other.render_pass,
+			other.vk_render_pass,
 			other.primitive_topology,
 			other.polygon_mode,
 			other.shader_programs,
@@ -178,14 +178,14 @@ bool vk2d::_internal::PipelineSettings::operator>=(
 {
 	return
 		std::tie(
-			render_pass,
+			vk_render_pass,
 			primitive_topology,
 			polygon_mode,
 			shader_programs,
 			samples
 		) >=
 		std::tie(
-			other.render_pass,
+			other.vk_render_pass,
 			other.primitive_topology,
 			other.polygon_mode,
 			other.shader_programs,
@@ -199,14 +199,14 @@ bool vk2d::_internal::PipelineSettings::operator==(
 {
 	return
 		std::tie(
-			render_pass,
+			vk_render_pass,
 			primitive_topology,
 			polygon_mode,
 			shader_programs,
 			samples
 		) ==
 		std::tie(
-			other.render_pass,
+			other.vk_render_pass,
 			other.primitive_topology,
 			other.polygon_mode,
 			other.shader_programs,
@@ -220,14 +220,14 @@ bool vk2d::_internal::PipelineSettings::operator!=(
 {
 	return
 		std::tie(
-			render_pass,
+			vk_render_pass,
 			primitive_topology,
 			polygon_mode,
 			shader_programs,
 			samples
 		) !=
 		std::tie(
-			other.render_pass,
+			other.vk_render_pass,
 			other.primitive_topology,
 			other.polygon_mode,
 			other.shader_programs,

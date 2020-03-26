@@ -3,6 +3,7 @@
 #include "../Core/Common.h"
 
 #include "Window.h"
+#include "RenderTargetTexture.h"
 #include "../Core/Version.hpp"
 #include "Sampler.h"
 
@@ -19,6 +20,7 @@ class MonitorImpl;
 
 
 class Window;
+class RenderTargetTexture;
 class Monitor;
 class ResourceManager;
 
@@ -154,30 +156,30 @@ struct InstanceCreateInfo {
 
 
 class Instance {
-	friend VK2D_API std::unique_ptr<vk2d::Instance> VK2D_APIENTRY CreateInstance(
-		const vk2d::InstanceCreateInfo		&	instance_create_info
+	friend VK2D_API std::unique_ptr<vk2d::Instance> VK2D_APIENTRY							CreateInstance(
+		const vk2d::InstanceCreateInfo				&	instance_create_info
 	);
 	friend class vk2d::Window;
 	 
 private:
 	// Do not use directly, instead use vk2d::CreateRender() to get a instance.
-	VK2D_API																			Instance(
-		const vk2d::InstanceCreateInfo												&	instance_create_info );
+	VK2D_API																				Instance(
+		const vk2d::InstanceCreateInfo													&	instance_create_info );
 
 public:
-	VK2D_API																			~Instance();
+	VK2D_API																				~Instance();
 
 	// Get all monitors currently attached to the system.
 	// Also see vk2d::Instance::SetMonitorUpdateCallback().
 	// Returns:
 	// Vector of pointers to Monitor objects.
-	VK2D_API std::vector<vk2d::Monitor*>			VK2D_APIENTRY						GetMonitors();
+	VK2D_API std::vector<vk2d::Monitor*>				VK2D_APIENTRY						GetMonitors();
 
 	// Get the primary monitor of the system.
 	// Also see SetMonitorUpdateCallback().
 	// Returns:
 	// Pointer to Monitor object.
-	VK2D_API vk2d::Monitor						*	VK2D_APIENTRY						GetPrimaryMonitor();
+	VK2D_API vk2d::Monitor							*	VK2D_APIENTRY						GetPrimaryMonitor();
 
 	// Set monitor update callback, this is to notify your application that some of the
 	// monitors got removed or new monitors were plugged into the system. If you use
@@ -185,91 +187,96 @@ public:
 	// immediately to get the updated monitors and to avoid possible crashes.
 	// Parameters:
 	// [in] monitor_update_callback_function: Function that gets called if monitor was removed or added to the system.
-	VK2D_API void									VK2D_APIENTRY						SetMonitorUpdateCallback(
-		vk2d::MonitorUpdateCallbackFun				monitor_update_callback_funtion );
+	VK2D_API void										VK2D_APIENTRY						SetMonitorUpdateCallback(
+		vk2d::MonitorUpdateCallbackFun					monitor_update_callback_funtion );
 
 	// Create cursor from image file.
 	// [in] imagePath: path to an image.
 	// [in] hot_spot_x: where the active location of the cursor is.
-	VK2D_API vk2d::Cursor						*	VK2D_APIENTRY						CreateCursor(
-		const std::filesystem::path				&	image_path,
-		vk2d::Vector2i								hot_spot );
+	VK2D_API vk2d::Cursor							*	VK2D_APIENTRY						CreateCursor(
+		const std::filesystem::path					&	image_path,
+		vk2d::Vector2i									hot_spot );
 
 	// Create cursor from raw texel data.
 	// Texel order is left to right, top to bottom.
 	// [in] image_size: size of the image in pixels.
 	// [in] image_data: raw image data.
 	// [in] hot_spot: where the active location of the cursor is.
-	VK2D_API vk2d::Cursor						*	VK2D_APIENTRY						CreateCursor(
-		vk2d::Vector2u								image_size,
-		const std::vector<vk2d::Color8>			&	image_data,
-		vk2d::Vector2i								hot_spot );
+	VK2D_API vk2d::Cursor							*	VK2D_APIENTRY						CreateCursor(
+		vk2d::Vector2u									image_size,
+		const std::vector<vk2d::Color8>				&	image_data,
+		vk2d::Vector2i									hot_spot );
 
 	// Destroy cursor.
 	// [in] cursor: cursor to be destroyed.
-	VK2D_API void									VK2D_APIENTRY						DestroyCursor(
-		vk2d::Cursor							*	cursor );
+	VK2D_API void										VK2D_APIENTRY						DestroyCursor(
+		vk2d::Cursor								*	cursor );
 
 	// Set gamepad event callback function, the callback function gets
 	// called if a gamepad gets added or removed from the system.
 	// Parameters:
 	// [in] gamepad_event_callback_function: Function that gets called if a gamepad was removed or added to the system.
-	VK2D_API void									VK2D_APIENTRY						SetGamepadEventCallback(
-		vk2d::GamepadEventCallbackFun				gamepad_event_callback_function );
+	VK2D_API void										VK2D_APIENTRY						SetGamepadEventCallback(
+		vk2d::GamepadEventCallbackFun					gamepad_event_callback_function );
 
 	// Checks if a specific gamepad is currently attached to the system.
 	// Parameters:
 	// [in] gamepad: Specific gamepad to check if it's present.
 	// Returns:
 	// true if gamepad is connected to the system, false if not.
-	VK2D_API bool									VK2D_APIENTRY						IsGamepadPresent(
-		vk2d::Gamepad								gamepad );
+	VK2D_API bool										VK2D_APIENTRY						IsGamepadPresent(
+		vk2d::Gamepad									gamepad );
 
 	// Checks a name of a gamepad if it's attached to the system.
 	// Parameters:
 	// [in] gamepad: Specific gamepad to check the name for.
 	// Returns:
 	// Name of the specific gamepad. Name might not be unique.
-	VK2D_API std::string							VK2D_APIENTRY						GetGamepadName(
-		vk2d::Gamepad								gamepad );
+	VK2D_API std::string								VK2D_APIENTRY						GetGamepadName(
+		vk2d::Gamepad									gamepad );
 
 	// Gets the button presses and axis of the gamepad.
 	// Parameters:
 	// [in] gamepad: Specific gamepad to check the state for.
 	// Returns:
 	// GamepadState object which tells which buttons were pressed and state of the axis.
-	VK2D_API vk2d::GamepadState						VK2D_APIENTRY						QueryGamepadState(
-		vk2d::Gamepad								gamepad );
+	VK2D_API vk2d::GamepadState							VK2D_APIENTRY						QueryGamepadState(
+		vk2d::Gamepad									gamepad );
 	 
 	// TODO: gamepad mapping
-//	VK2D_API void									VK2D_APIENTRY						SetGamepadMapping();
+//	VK2D_API void										VK2D_APIENTRY						SetGamepadMapping();
 
 
-	VK2D_API vk2d::Window						*	VK2D_APIENTRY						CreateOutputWindow(
-		vk2d::WindowCreateInfo														&	window_create_info );
-	VK2D_API void									VK2D_APIENTRY						CloseOutputWindow(
-		vk2d::Window																*	window );
+	VK2D_API vk2d::Window							*	VK2D_APIENTRY						CreateOutputWindow(
+		const vk2d::WindowCreateInfo				&	window_create_info );
+	VK2D_API void										VK2D_APIENTRY						DestroyOutputWindow(
+		vk2d::Window								*	window );
 
-	VK2D_API vk2d::Sampler						*	VK2D_APIENTRY						CreateSampler(
-		const vk2d::SamplerCreateInfo			&	sampler_create_info );
+	VK2D_API vk2d::RenderTargetTexture				*	VK2D_APIENTRY						CreateRenderTargetTexture(
+		const vk2d::RenderTargetTextureCreateInfo	&	render_target_texture_create_info );
+	VK2D_API void										VK2D_APIENTRY						DestroyRenderTargetTexture(
+		vk2d::RenderTargetTexture					*	render_target_texture );
 
-	VK2D_API void									VK2D_APIENTRY						DestroySampler(
-		vk2d::Sampler							*	sampler );
+	VK2D_API vk2d::Sampler							*	VK2D_APIENTRY						CreateSampler(
+		const vk2d::SamplerCreateInfo				&	sampler_create_info );
 
-	VK2D_API vk2d::Multisamples						VK2D_APIENTRY						GetMaximumSupportedMultisampling();
-	VK2D_API vk2d::Multisamples						VK2D_APIENTRY						GetAllSupportedMultisampling();
+	VK2D_API void										VK2D_APIENTRY						DestroySampler(
+		vk2d::Sampler								*	sampler );
 
-	VK2D_API vk2d::ResourceManager				*	VK2D_APIENTRY						GetResourceManager();
+	VK2D_API vk2d::Multisamples							VK2D_APIENTRY						GetMaximumSupportedMultisampling();
+	VK2D_API vk2d::Multisamples							VK2D_APIENTRY						GetAllSupportedMultisampling();
+
+	VK2D_API vk2d::ResourceManager					*	VK2D_APIENTRY						GetResourceManager();
 
 private:
-	std::unique_ptr<vk2d::_internal::InstanceImpl>	impl;
+	std::unique_ptr<vk2d::_internal::InstanceImpl>		impl;
 
-	bool											is_good					= {};
+	bool												is_good					= {};
 };
 
 
-VK2D_API std::unique_ptr<Instance>					VK2D_APIENTRY						CreateInstance(
-	const InstanceCreateInfo					&	instance_create_info );
+VK2D_API std::unique_ptr<Instance>						VK2D_APIENTRY						CreateInstance(
+	const InstanceCreateInfo						&	instance_create_info );
 
 
 }

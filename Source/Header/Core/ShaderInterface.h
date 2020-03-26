@@ -23,7 +23,7 @@ struct WindowCoordinateScaling {
 	alignas( 8 )	vk2d::Vector2f				offset					= {};
 };
 
-struct WindowFrameData {
+struct FrameData {
 	alignas( 8 )	WindowCoordinateScaling		coordinate_scaling		= {};
 };
 
@@ -102,7 +102,7 @@ public:
 	bool operator==( const vk2d::_internal::PipelineSettings & other ) const;
 	bool operator!=( const vk2d::_internal::PipelineSettings & other ) const;
 
-	VkRenderPass						render_pass					= {};
+	VkRenderPass						vk_render_pass				= {};
 	VkPrimitiveTopology					primitive_topology			= {};
 	VkPolygonMode						polygon_mode				= {};
 	vk2d::_internal::ShaderProgram		shader_programs				= {};
