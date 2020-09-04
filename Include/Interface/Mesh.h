@@ -5,6 +5,7 @@
 #include "RenderPrimitives.h"
 
 #include <vector>
+#include <string>
 
 namespace vk2d {
 namespace _internal {

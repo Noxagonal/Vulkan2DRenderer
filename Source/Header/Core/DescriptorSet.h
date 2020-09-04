@@ -37,7 +37,8 @@ class DescriptorPoolRequirements {
 	friend class vk2d::_internal::DescriptorSetLayout;
 
 public:
-	inline const std::array<uint32_t, VK_DESCRIPTOR_TYPE_RANGE_SIZE>	&	GetBindingAmounts() const
+	inline const std::array<uint32_t, VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT + 1>
+																&	GetBindingAmounts() const
 	{
 		return bindingAmounts;
 	};
@@ -47,7 +48,7 @@ public:
 		const DescriptorPoolRequirements						&	other ) const;
 
 private:
-	std::array<uint32_t, VK_DESCRIPTOR_TYPE_RANGE_SIZE>				bindingAmounts					= {};
+	std::array<uint32_t, VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT + 1>	bindingAmounts					= {};
 	uint64_t														typeBits						= {};
 };
 
