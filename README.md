@@ -40,38 +40,20 @@ Internally workloads are automatically grouped to create more efficient submissi
 
 ### Building
 
-:exclamation: You will need to use Git, downloading plain Zip file from GitHub will not work because of dependencies. :exclamation:
-
 Prior to building this library on any platform you will need:
 - Git
 - CMake 3.10 or newer
-- Vulkan SDK, any version
+- Vulkan SDK, Version 1.2
 
-##### Windows Visual Studio 2019
-1. Open the folder where you would like the VK2D library to be installed.
-2. Hold shift key and right click on the file explorer, click "Open PowerShell window here".
-3. copy and paste the following commands to the PowerShell window and press enter, this will also download everything for you (Don't close PowerShell even if it appears stuck, this can take a few minutes).
-```
-git clone https://github.com/Niko40/Vulkan2DRenderer
-cd Vulkan2DRenderer
-mkdir build
-cd build
-cmake -G "Visual Studio 16 2019" -A "x64" ..
-```
-4. Generated solution file is in `build/VK2D.sln`
+##### Microsoft Visual Studio 2019
+1. Download project directly or via git. ( You will need Git installed for direct download )
+2. Run Build_VisualStudio2019.bat
+3. Generated solution file is in `build/VK2D.sln`
 
 ##### Microsoft Visual Studio 2017
-1. Open the folder where you would like the VK2D library to be installed.
-2. Hold shift key and right click on the file explorer, click "Open PowerShell window here".
-3. copy and paste the following commands to the PowerShell window and press enter, this will also download everything for you (Don't close PowerShell even if it appears stuck, this can take a few minutes).
-```
-git clone https://github.com/Niko40/Vulkan2DRenderer
-cd Vulkan2DRenderer
-mkdir build
-cd build
-cmake -G "Visual Studio 15 2017 Win64" ..
-```
-4. Generated solution file is in `build/VK2D.sln`
+1. Download project directly or via git. ( You will need Git installed for direct download )
+2. Run Build_VisualStudio2017.bat
+3. Generated solution file is in `build/VK2D.sln`
 
 
 #### Available CMake options:
@@ -97,7 +79,7 @@ VK2D_BUILD_EXAMPLES         = default ON    -> Build and include examples on how
 
 ### License
 
-Copyright (c) 2020 Niko Kauppi Niko40@gmail.com
+Copyright (c) 2020 Niko Kauppi Noxagonal@gmail.com
 
 This software is released under [MIT license](LICENSE.md)
 
