@@ -90,6 +90,9 @@ private:
 
 	void												DestroySurfaces();
 
+	bool												CreateSynchronizationPrimitives();
+	void												DestroySynchronizationPrimitives();
+
 	void												CmdBindPipelineIfDifferent(
 		VkCommandBuffer									command_buffer,
 		const vk2d::_internal::PipelineSettings		&	pipeline_settings );
@@ -113,6 +116,14 @@ private:
 		vk2d::_internal::CompleteImageResource			blur_buffer_image					= {};
 		VkFramebuffer									vk_framebuffer						= {};
 	};
+	struct SwapBuffer
+	{
+		vk2d::_internal::RenderTargetTextureImpl::Surface
+														surface								= {};
+		VkCommandBuffer									vk_render_command_buffer			= {};
+		VkCommandBuffer									vk_transfer_command_buffer			= {};
+		VkSemaphore										vk_semaphore						= {};	// Using timeline semaphore, cleared when pending render, set when rendered.
+	};
 
 	vk2d::_internal::InstanceImpl					*	instance							= {};
 	vk2d::RenderTargetTextureCreateInfo					create_info_copy					= {};
@@ -124,15 +135,14 @@ private:
 	vk2d::_internal::CompleteBufferResource				frame_data_device_buffer			= {};
 	vk2d::_internal::PoolDescriptorSet					frame_data_descriptor_set			= {};
 
-	std::unique_ptr<vk2d::_internal::MeshBuffer>		mesh_buffer;
-
 	VkCommandPool										vk_command_pool						= {};
-	std::vector<VkCommandBuffer>						vk_render_command_buffers			= {};
-	std::vector<VkCommandBuffer>						vk_transfer_command_buffers			= {};
 	VkRenderPass										vk_render_pass						= {};
 
-	uint32_t											current_surface						= {};
-	std::vector<vk2d::_internal::RenderTargetTextureImpl::Surface>							surfaces;
+	std::unique_ptr<vk2d::_internal::MeshBuffer>		mesh_buffer;
+
+	uint32_t											current_swap_buffer					= {};
+	std::array<vk2d::_internal::RenderTargetTextureImpl::SwapBuffer, 2>
+														swap_buffers						= {};
 
 	vk2d::_internal::PipelineSettings					previous_pipeline_settings			= {};
 	vk2d::TextureResource							*	previous_texture					= {};
@@ -140,7 +150,7 @@ private:
 	float												previous_line_width					= {};
 
 	std::map<vk2d::Sampler*, std::map<vk2d::TextureResource*, vk2d::_internal::SamplerTextureDescriptorPoolData>>
-		sampler_texture_descriptor_sets														= {};
+														sampler_texture_descriptor_sets		= {};
 
 	bool												is_good								= {};
 };

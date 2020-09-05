@@ -76,7 +76,6 @@ public:
 		vk2d::_internal::InstanceImpl					*	instance,
 		VkDevice											device,
 		const VkPhysicalDeviceLimits					&	physicald_device_limits,
-		vk2d::_internal::WindowImpl						*	window_data,
 		vk2d::_internal::DeviceMemoryPool				*	device_memory_pool );
 
 	~MeshBuffer();
@@ -161,7 +160,6 @@ private:
 	vk2d::_internal::InstanceImpl						*	instance_parent							= {};
 	VkDevice												device									= {};
 	VkPhysicalDeviceLimits									physicald_device_limits					= {};
-	vk2d::_internal::WindowImpl							*	window_data								= {};
 	vk2d::_internal::DeviceMemoryPool					*	device_memory_pool						= {};
 
 	bool													first_draw								= {};

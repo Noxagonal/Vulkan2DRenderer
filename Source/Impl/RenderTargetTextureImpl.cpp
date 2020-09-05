@@ -7,6 +7,9 @@
 #include "../Header/Core/ShaderInterface.h"
 #include "../Header/Core/MeshBuffer.h"
 
+#include <iostream>
+#include <memory>
+
 
 vk2d::_internal::RenderTargetTextureImpl::RenderTargetTextureImpl(
 	vk2d::_internal::InstanceImpl				*	instance,
@@ -21,6 +24,14 @@ vk2d::_internal::RenderTargetTextureImpl::RenderTargetTextureImpl(
 	if( !CreateCommandBuffers() ) return;
 	if( !CreateFrameDataBuffers() ) return;
 	if( !CreateSurfaces( create_info.size ) ) return;
+	if( !CreateSynchronizationPrimitives() ) return;
+
+	mesh_buffer		= std::make_unique<vk2d::_internal::MeshBuffer>(
+		instance,
+		instance->GetVulkanDevice(),
+		instance->GetVulkanPhysicalDeviceProperties().limits,
+		instance->GetDeviceMemoryPool()
+	);
 
 	is_good					= true;
 }
@@ -28,6 +39,7 @@ vk2d::_internal::RenderTargetTextureImpl::RenderTargetTextureImpl(
 
 vk2d::_internal::RenderTargetTextureImpl::~RenderTargetTextureImpl()
 {
+	DestroySynchronizationPrimitives();
 	DestroySurfaces();
 	DestroyFrameDataBuffers();
 	DestroyCommandBuffers();
@@ -38,16 +50,32 @@ void vk2d::_internal::RenderTargetTextureImpl::SetSize(
 )
 {
 	if( size != new_size ) {
-		// TODO: Consider a better synchronization.
+		// TODO: Consider a better synchronization for RenderTargetTextureImpl::SetSize().
 		// Consider making surfaces their own unit and when changing size, next render would
-		// immediately use the new size but the old surfaces would be kept around until the
-		// new surface has been fetched at least 32 times, after which the old surfaces are
-		// removed without any synchronization as they're very unlikely to be used anywhere
-		// anymore.
-		// Personally I'm not a fan of using propability like this, I'd prefer guarantees.
-		vkDeviceWaitIdle(
-			instance->GetVulkanDevice()
-		);
+		// immediately use the new size but the old surfaces would be kept around until all
+		// rendering operations have finished on them.
+		{
+			std::array<VkSemaphore, std::tuple_size_v<decltype( swap_buffers )>> semaphores;
+			std::array<uint64_t, std::tuple_size_v<decltype( swap_buffers )>> semaphore_values;
+			for( size_t i = 0; i < std::size( swap_buffers ); ++i ) {
+				semaphores[ i ]			= swap_buffers[ i ].vk_semaphore;
+				semaphore_values[ i ]	= 1;
+			}
+			VkSemaphoreWaitInfo wait_info {};
+			wait_info.sType				= VK_STRUCTURE_TYPE_SEMAPHORE_WAIT_INFO;
+			wait_info.pNext				= nullptr;
+			wait_info.flags				= 0;
+			wait_info.semaphoreCount	= uint32_t( std::size( semaphores ) );
+			wait_info.pSemaphores		= semaphores.data();
+			wait_info.pValues			= semaphore_values.data();
+			if( vkWaitSemaphores(
+				instance->GetVulkanDevice(),
+				&wait_info,
+				5 * 1000 * 1000 * uint64_t( 1000 )	// wait for 5 seconds
+			) != VK_SUCCESS ) {
+				instance->Report( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Error destroying RenderTargetTexture, timeout while waiting for render to finish!" );
+			}
+		}
 
 		DestroySurfaces();
 		CreateSurfaces(
@@ -63,13 +91,77 @@ vk2d::Vector2u vk2d::_internal::RenderTargetTextureImpl::GetSize()
 
 bool vk2d::_internal::RenderTargetTextureImpl::BeginRender()
 {
-	++current_surface;
-	if( current_surface >= uint32_t( surfaces.size() ) ) current_surface = 0;
+	++current_swap_buffer;
+	if( current_swap_buffer >= uint32_t( std::size( swap_buffers ) ) ) current_swap_buffer = 0;
+
+	{
+		using namespace std::chrono;
+		using namespace std::chrono_literals;
+
+		#if 0
+		// Debugging code
+		{
+			uint64_t semaphore_value = 0;
+			vkGetSemaphoreCounterValue(
+				instance->GetVulkanDevice(),
+				swap_buffers[ current_swap_buffer ].vk_semaphore,
+				&semaphore_value
+			);
+			std::cout << "Semaphore value: " << semaphore_value << "\n";
+		}
+		#endif
+
+		// Wait here for the semaphore to signal, this takes care of synchronization
+		// just in case buffer we're trying to modify hasn't finished rendering.
+		uint64_t semaphore_wait_value = 1;
+		VkSemaphoreWaitInfo semaphore_wait_info {};
+		semaphore_wait_info.sType				= VK_STRUCTURE_TYPE_SEMAPHORE_WAIT_INFO;
+		semaphore_wait_info.pNext				= nullptr;
+		semaphore_wait_info.flags				= 0;
+		semaphore_wait_info.semaphoreCount		= 1;
+		semaphore_wait_info.pSemaphores			= &swap_buffers[ current_swap_buffer ].vk_semaphore;
+		semaphore_wait_info.pValues				= &semaphore_wait_value;
+		if( vkWaitSemaphores(
+			instance->GetVulkanDevice(),
+			&semaphore_wait_info,
+			duration_cast<nanoseconds>( 5s ).count()
+		) != VK_SUCCESS ) {
+			instance->Report( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot render to RenderTargetTexture, Semaphore wait timeout!" );
+			return false;
+		}
+
+		// Clear semaphore to indicate it's pending execution.
+		VkSemaphoreSignalInfo semaphore_signal_info {};
+		semaphore_signal_info.sType			= VK_STRUCTURE_TYPE_SEMAPHORE_SIGNAL_INFO;
+		semaphore_signal_info.pNext			= nullptr;
+		semaphore_signal_info.semaphore		= swap_buffers[ current_swap_buffer ].vk_semaphore;
+		semaphore_signal_info.value			= 0;
+		if( vkSignalSemaphore(
+			instance->GetVulkanDevice(),
+			&semaphore_signal_info
+		) != VK_SUCCESS ) {
+			instance->Report( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot render to RenderTargetTexture, Cannot signal semaphore at begin render." );
+			return false;
+		}
+
+		#if 0
+		// Debugging code
+		{
+			uint64_t semaphore_value = 0;
+			vkGetSemaphoreCounterValue(
+				instance->GetVulkanDevice(),
+				swap_buffers[ current_swap_buffer ].vk_semaphore,
+				&semaphore_value
+			);
+			std::cout << "Semaphore value: " << semaphore_value << "\n";
+		}
+		#endif
+	}
 
 	// Begin command buffer
 	{
-		VkCommandBuffer		command_buffer			= vk_render_command_buffers[ current_surface ];
-		auto			&	surface					= surfaces[ current_surface ];
+		VkCommandBuffer		command_buffer			= swap_buffers[ current_swap_buffer ].vk_render_command_buffer;
+		auto			&	surface					= swap_buffers[ current_swap_buffer ].surface;
 
 		VkCommandBufferBeginInfo command_buffer_begin_info {};
 		command_buffer_begin_info.sType				= VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
@@ -165,8 +257,8 @@ bool vk2d::_internal::RenderTargetTextureImpl::BeginRender()
 
 bool vk2d::_internal::RenderTargetTextureImpl::EndRender()
 {
-	VkCommandBuffer		render_command_buffer	= vk_render_command_buffers[ current_surface ];
-	VkCommandBuffer		transfer_command_buffer	= vk_transfer_command_buffers[ current_surface ];
+	VkCommandBuffer		render_command_buffer	= swap_buffers[ current_swap_buffer ].vk_render_command_buffer;
+	VkCommandBuffer		transfer_command_buffer	= swap_buffers[ current_swap_buffer ].vk_transfer_command_buffer;
 
 	// End render pass.
 	{
@@ -180,7 +272,7 @@ bool vk2d::_internal::RenderTargetTextureImpl::EndRender()
 
 	// Record commands to blur the image if blurring was activated.
 	{
-		// TODO;
+		// TODO Record commands to blur the image if blurring was activated.
 	}
 
 	// End command buffer
@@ -278,41 +370,41 @@ bool vk2d::_internal::RenderTargetTextureImpl::CreateCommandBuffers()
 		return false;
 	}
 
-	std::vector<VkCommandBuffer> allocated_command_buffers( 4 );
 	{
-		VkCommandBufferAllocateInfo command_buffer_allocate_info {};
-		command_buffer_allocate_info.sType				= VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-		command_buffer_allocate_info.pNext				= nullptr;
-		command_buffer_allocate_info.commandPool		= vk_command_pool;
-		command_buffer_allocate_info.level				= VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-		command_buffer_allocate_info.commandBufferCount	= uint32_t( allocated_command_buffers.size() );
-		if( vkAllocateCommandBuffers(
-			instance->GetVulkanDevice(),
-			&command_buffer_allocate_info,
-			allocated_command_buffers.data()
-		) != VK_SUCCESS ) {
-			instance->Report( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot create RenderTargetTexture, cannot create command pool!" );
-			return false;
+		std::vector<VkCommandBuffer> allocated_command_buffers( swap_buffers.size() * 2 );
+		{
+			VkCommandBufferAllocateInfo command_buffer_allocate_info {};
+			command_buffer_allocate_info.sType				= VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+			command_buffer_allocate_info.pNext				= nullptr;
+			command_buffer_allocate_info.commandPool		= vk_command_pool;
+			command_buffer_allocate_info.level				= VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+			command_buffer_allocate_info.commandBufferCount	= uint32_t( allocated_command_buffers.size() );
+			if( vkAllocateCommandBuffers(
+				instance->GetVulkanDevice(),
+				&command_buffer_allocate_info,
+				allocated_command_buffers.data()
+			) != VK_SUCCESS ) {
+				instance->Report( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot create RenderTargetTexture, cannot create command pool!" );
+				return false;
+			}
+		}
+
+		{
+			uint32_t cb_counter = 0;
+			for( auto & s : swap_buffers ) {
+				s.vk_render_command_buffer		= allocated_command_buffers[ cb_counter++ ];
+			}
+
+			for( auto & s : swap_buffers ) {
+				s.vk_transfer_command_buffer	= allocated_command_buffers[ cb_counter++ ];
+			}
 		}
 	}
-
-	vk_render_command_buffers.resize( 2 );
-	vk_transfer_command_buffers.resize( 2 );
-
-	vk_render_command_buffers[ 0 ]		= allocated_command_buffers[ 0 ];
-	vk_render_command_buffers[ 1 ]		= allocated_command_buffers[ 1 ];
-
-	vk_transfer_command_buffers[ 0 ]	= allocated_command_buffers[ 2 ];
-	vk_transfer_command_buffers[ 1 ]	= allocated_command_buffers[ 3 ];
-
 	return true;
 }
 
 void vk2d::_internal::RenderTargetTextureImpl::DestroyCommandBuffers()
 {
-	vk_render_command_buffers.clear();
-	vk_transfer_command_buffers.clear();
-
 	vkDestroyCommandPool(
 		instance->GetVulkanDevice(),
 		vk_command_pool,
@@ -500,8 +592,7 @@ bool vk2d::_internal::RenderTargetTextureImpl::CreateSurfaces(
 
 	// TODO: Add blur render passes.
 
-	surfaces.resize( vk_render_command_buffers.size() );
-	for( auto & s : surfaces ) {
+	for( auto & s : swap_buffers ) {
 		VkImageCreateInfo image_create_info {};
 		image_create_info.sType						= VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
 		image_create_info.pNext						= nullptr;
@@ -542,12 +633,12 @@ bool vk2d::_internal::RenderTargetTextureImpl::CreateSurfaces(
 		image_view_create_info.subresourceRange.baseArrayLayer	= 0;
 		image_view_create_info.subresourceRange.layerCount		= 1;
 
-		s.render_image	= instance->GetDeviceMemoryPool()->CreateCompleteImageResource(
+		s.surface.render_image	= instance->GetDeviceMemoryPool()->CreateCompleteImageResource(
 			&image_create_info,
 			VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
 			&image_view_create_info
 		);
-		if( s.render_image != VK_SUCCESS ) {
+		if( s.surface.render_image != VK_SUCCESS ) {
 			instance->Report( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot create RenderTargetTexture, cannot create render image!" );
 			return false;
 		}
@@ -561,12 +652,12 @@ bool vk2d::_internal::RenderTargetTextureImpl::CreateSurfaces(
 				VK_IMAGE_USAGE_TRANSFER_SRC_BIT |
 				VK_IMAGE_USAGE_TRANSFER_DST_BIT;
 
-			s.resolve_image					= instance->GetDeviceMemoryPool()->CreateCompleteImageResource(
+			s.surface.resolve_image					= instance->GetDeviceMemoryPool()->CreateCompleteImageResource(
 				&image_create_info,
 				VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
 				&image_view_create_info
 			);
-			if( s.resolve_image != VK_SUCCESS ) {
+			if( s.surface.resolve_image != VK_SUCCESS ) {
 				instance->Report( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot create RenderTargetTexture, cannot create multisample resolve image!" );
 				return false;
 			}
@@ -581,19 +672,19 @@ bool vk2d::_internal::RenderTargetTextureImpl::CreateSurfaces(
 				VK_IMAGE_USAGE_TRANSFER_SRC_BIT |
 				VK_IMAGE_USAGE_TRANSFER_DST_BIT;
 
-			s.blur_buffer_image				= instance->GetDeviceMemoryPool()->CreateCompleteImageResource(
+			s.surface.blur_buffer_image				= instance->GetDeviceMemoryPool()->CreateCompleteImageResource(
 				&image_create_info,
 				VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
 				&image_view_create_info
 			);
-			if( s.blur_buffer_image != VK_SUCCESS ) {
+			if( s.surface.blur_buffer_image != VK_SUCCESS ) {
 				instance->Report( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot create RenderTargetTexture, cannot create multisample resolve image!" );
 				return false;
 			}
 		}
 
 
-		VkImageView attachment					= s.render_image.view;
+		VkImageView attachment					= s.surface.render_image.view;
 		VkFramebufferCreateInfo framebuffer_create_info {};
 		framebuffer_create_info.sType			= VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
 		framebuffer_create_info.pNext			= nullptr;
@@ -609,7 +700,7 @@ bool vk2d::_internal::RenderTargetTextureImpl::CreateSurfaces(
 			instance->GetVulkanDevice(),
 			&framebuffer_create_info,
 			nullptr,
-			&s.vk_framebuffer
+			&s.surface.vk_framebuffer
 		) != VK_SUCCESS ) {
 			instance->Report( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot create RenderTargetTexture, cannot create framebuffer!" );
 			return false;
@@ -621,24 +712,91 @@ bool vk2d::_internal::RenderTargetTextureImpl::CreateSurfaces(
 
 void vk2d::_internal::RenderTargetTextureImpl::DestroySurfaces()
 {
-	for( auto & s : surfaces ) {
+	for( auto & s : swap_buffers ) {
 		vkDestroyFramebuffer(
 			instance->GetVulkanDevice(),
-			s.vk_framebuffer,
+			s.surface.vk_framebuffer,
 			nullptr
 		);
 
-		instance->GetDeviceMemoryPool()->FreeCompleteResource( s.render_image );
-		instance->GetDeviceMemoryPool()->FreeCompleteResource( s.resolve_image );
-		instance->GetDeviceMemoryPool()->FreeCompleteResource( s.blur_buffer_image );
+		instance->GetDeviceMemoryPool()->FreeCompleteResource( s.surface.render_image );
+		instance->GetDeviceMemoryPool()->FreeCompleteResource( s.surface.resolve_image );
+		instance->GetDeviceMemoryPool()->FreeCompleteResource( s.surface.blur_buffer_image );
 	}
-	surfaces.clear();
 
 	vkDestroyRenderPass(
 		instance->GetVulkanDevice(),
 		vk_render_pass,
 		nullptr
 	);
+}
+
+bool vk2d::_internal::RenderTargetTextureImpl::CreateSynchronizationPrimitives()
+{
+	// We need timeline semaphores, even if we don't really use the timeline feature,
+	// the primary difference is that timeline semaphores can be waited on without
+	// automatically resetting their value. We can manually reset the value when we
+	// begin recording the render target command buffer and count on the GPU / driver
+	// to set it once finished and then use the same semaphore to indicate the render
+	// target texture is ready to be used. As a bonus we can also wait on the timeline
+	// semaphore on CPU, making host synchronization a bit easier to implement.
+	VkSemaphoreTypeCreateInfo semaphore_type_create_info {};
+	semaphore_type_create_info.sType			= VK_STRUCTURE_TYPE_SEMAPHORE_TYPE_CREATE_INFO;
+	semaphore_type_create_info.pNext			= nullptr;
+	semaphore_type_create_info.semaphoreType	= VK_SEMAPHORE_TYPE_TIMELINE;
+	semaphore_type_create_info.initialValue		= 1;
+
+	VkSemaphoreCreateInfo semaphore_create_info {};
+	semaphore_create_info.sType		= VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
+	semaphore_create_info.pNext		= &semaphore_type_create_info;
+	semaphore_create_info.flags		= 0;
+
+	for( auto & s : swap_buffers ) {
+		if( vkCreateSemaphore(
+			instance->GetVulkanDevice(),
+			&semaphore_create_info,
+			nullptr,
+			&s.vk_semaphore
+		) != VK_SUCCESS ) {
+			instance->Report( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot create RenderTargetTexture, cannot create synchronization primitives!" );
+			return false;
+		}
+	}
+	return true;
+}
+
+void vk2d::_internal::RenderTargetTextureImpl::DestroySynchronizationPrimitives()
+{
+	{
+		std::array<VkSemaphore,	std::tuple_size_v<decltype( swap_buffers )>> semaphores;
+		std::array<uint64_t,	std::tuple_size_v<decltype( swap_buffers )>> semaphore_values;
+		for( size_t i = 0; i < std::size( swap_buffers ); ++i ) {
+			semaphores[ i ]			= swap_buffers[ i ].vk_semaphore;
+			semaphore_values[ i ]	= 1;
+		}
+		VkSemaphoreWaitInfo wait_info {};
+		wait_info.sType				= VK_STRUCTURE_TYPE_SEMAPHORE_WAIT_INFO;
+		wait_info.pNext				= nullptr;
+		wait_info.flags				= 0;
+		wait_info.semaphoreCount	= uint32_t( std::size( semaphores ) );
+		wait_info.pSemaphores		= semaphores.data();
+		wait_info.pValues			= semaphore_values.data();
+		if( vkWaitSemaphores(
+			instance->GetVulkanDevice(),
+			&wait_info,
+			5 * 1000 * 1000 * uint64_t( 1000 )	// wait for 5 seconds
+		) != VK_SUCCESS ) {
+			instance->Report( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Error destroying RenderTargetTexture, timeout while waiting for render to finish!" );
+		}
+	}
+
+	for( auto & s : swap_buffers ) {
+		vkDestroySemaphore(
+			instance->GetVulkanDevice(),
+			s.vk_semaphore,
+			nullptr
+		);
+	}
 }
 
 bool vk2d::_internal::RenderTargetTextureImpl::CmdUpdateFrameData( VkCommandBuffer command_buffer )

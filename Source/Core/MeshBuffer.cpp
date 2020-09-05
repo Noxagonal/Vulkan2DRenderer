@@ -17,18 +17,15 @@ vk2d::_internal::MeshBuffer::MeshBuffer(
 	vk2d::_internal::InstanceImpl	*	instance,
 	VkDevice							device,
 	const VkPhysicalDeviceLimits	&	physicald_device_limits,
-	vk2d::_internal::WindowImpl		*	window_data,
 	DeviceMemoryPool				*	device_memory_pool )
 {
 	assert( instance );
 	assert( device );
-	assert( window_data );
 	assert( device_memory_pool );
 
 	this->instance_parent				= instance;
 	this->device						= device;
 	this->physicald_device_limits		= physicald_device_limits;
-	this->window_data					= window_data;
 	this->device_memory_pool			= device_memory_pool;
 
 	first_draw							= true;

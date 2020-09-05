@@ -304,8 +304,8 @@ vk2d::_internal::WindowImpl::WindowImpl(
 		instance_parent,
 		vk_device,
 		instance->GetVulkanPhysicalDeviceProperties().limits,
-		this,
-		instance->GetDeviceMemoryPool() );
+		instance->GetDeviceMemoryPool()
+	);
 
 	if( !mesh_buffer ) {
 		instance_parent->Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot create MeshBuffer object!" );
