@@ -4,6 +4,7 @@
 
 #include "RenderPrimitives.h"
 #include "RenderTargetCommon.hpp"
+#include "Texture.h"
 
 #include <memory>
 #include <string>
@@ -619,20 +620,20 @@ public:
 		const std::vector<vk2d::Vertex>				&	vertices,
 		const std::vector<float>					&	texture_channels,
 		bool											filled						= true,
-		vk2d::TextureResource						*	texture						= nullptr,
+		vk2d::Texture								*	texture						= nullptr,
 		vk2d::Sampler								*	sampler						= nullptr );
 
 	VK2D_API void										VK2D_APIENTRY				DrawLineList(
 		const std::vector<vk2d::VertexIndex_2>		&	indices,
 		const std::vector<vk2d::Vertex>				&	vertices,
 		const std::vector<float>					&	texture_channels,
-		vk2d::TextureResource						*	texture						= nullptr,
+		vk2d::Texture								*	texture						= nullptr,
 		vk2d::Sampler								*	sampler						= nullptr );
 
 	VK2D_API void										VK2D_APIENTRY				DrawPointList(
 		const std::vector<vk2d::Vertex>				&	vertices,
 		const std::vector<float>					&	texture_channels,
-		vk2d::TextureResource						*	texture						= nullptr,
+		vk2d::Texture								*	texture						= nullptr,
 		vk2d::Sampler								*	sampler						= nullptr );
 
 	VK2D_API void										VK2D_APIENTRY				DrawPoint(
@@ -678,7 +679,7 @@ public:
 	VK2D_API void										VK2D_APIENTRY				DrawTexture(
 		vk2d::Vector2f									top_left,
 		vk2d::Vector2f									bottom_right,
-		vk2d::TextureResource						*	texture,
+		vk2d::Texture								*	texture,
 		vk2d::Colorf									color						= { 1.0f, 1.0f, 1.0f, 1.0f } );
 
 	VK2D_API void										VK2D_APIENTRY				DrawMesh(

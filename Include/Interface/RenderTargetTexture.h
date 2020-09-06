@@ -49,7 +49,10 @@ public:
 	VK2D_API void												VK2D_APIENTRY				SetSize(
 		vk2d::Vector2u											new_size );
 
-	VK2D_API vk2d::Vector2u										VK2D_APIENTRY				GetSize();
+	VK2D_API vk2d::Vector2u										VK2D_APIENTRY				GetSize() const;
+	VK2D_API uint32_t											VK2D_APIENTRY				GetLayerCount() const;
+
+	VK2D_API bool												VK2D_APIENTRY				WaitUntilLoaded();
 
 	// Begins the render operations. You must call this before using any drawing commands.
 	// For best performance you should calculate game logic first, when you're ready to draw
@@ -91,7 +94,7 @@ public:
 		const vk2d::Mesh									&	mesh );
 		*/
 
-	VK2D_API bool												VK2D_APIENTRY				IsGood();
+	VK2D_API bool												VK2D_APIENTRY				IsGood() const;
 
 private:
 	std::unique_ptr<vk2d::_internal::RenderTargetTextureImpl>	impl;

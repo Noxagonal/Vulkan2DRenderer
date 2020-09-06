@@ -140,9 +140,9 @@ int main()
 		// EDIT: Use timeline semaphores instead of events, waiting on a timeline semaphore does not
 		// reset it.
 
-		render_target_texture->BeginRender();
+//		render_target_texture->BeginRender();
 
-		render_target_texture->EndRender();
+//		render_target_texture->EndRender();
 
 		if( !window->BeginRender() ) return -1;
 

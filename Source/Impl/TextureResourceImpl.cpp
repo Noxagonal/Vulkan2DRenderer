@@ -18,7 +18,10 @@
 vk2d::_internal::TextureResourceImpl::TextureResourceImpl(
 	vk2d::TextureResource					*	texture_resource_parent,
 	vk2d::_internal::ResourceManagerImpl	*	resource_manager
-)
+) :
+	vk2d::_internal::TextureImpl(
+		resource_manager->GetInstance()
+	)
 {
 	this->texture_parent				= texture_resource_parent;
 	this->resource_manager		= resource_manager;
@@ -32,7 +35,11 @@ vk2d::_internal::TextureResourceImpl::TextureResourceImpl(
 	vk2d::TextureResource					*	texture_resource_parent,
 	vk2d::_internal::ResourceManagerImpl	*	resource_manager,
 	vk2d::Vector2u								size,
-	const std::vector<vk2d::Color8>			&	texels )
+	const std::vector<vk2d::Color8>			&	texels
+) :
+	vk2d::_internal::TextureImpl(
+		resource_manager->GetInstance()
+	)
 {
 	this->texture_parent				= texture_resource_parent;
 	this->resource_manager		= resource_manager;
@@ -50,7 +57,11 @@ vk2d::_internal::TextureResourceImpl::TextureResourceImpl(
 	vk2d::TextureResource							*	texture_resource_parent,
 	vk2d::_internal::ResourceManagerImpl			*	resource_manager,
 	vk2d::Vector2u										size,
-	const std::vector<std::vector<vk2d::Color8>*>	&	texels )
+	const std::vector<std::vector<vk2d::Color8>*>	&	texels
+) :
+	vk2d::_internal::TextureImpl(
+		resource_manager->GetInstance()
+	)
 {
 	this->texture_parent				= texture_resource_parent;
 	this->resource_manager		= resource_manager;
@@ -957,6 +968,11 @@ VkImageView vk2d::_internal::TextureResourceImpl::GetVulkanImageView() const
 VkImageLayout vk2d::_internal::TextureResourceImpl::GetVulkanImageLayout() const
 {
 	return vk_image_layout;
+}
+
+vk2d::Vector2u vk2d::_internal::TextureResourceImpl::GetSize() const
+{
+	return vk2d::Vector2u( extent.width, extent.height );
 }
 
 uint32_t vk2d::_internal::TextureResourceImpl::GetLayerCount() const

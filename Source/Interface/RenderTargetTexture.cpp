@@ -37,9 +37,19 @@ VK2D_API void VK2D_APIENTRY vk2d::RenderTargetTexture::SetSize(
 	);
 }
 
-VK2D_API vk2d::Vector2u VK2D_APIENTRY vk2d::RenderTargetTexture::GetSize()
+VK2D_API vk2d::Vector2u VK2D_APIENTRY vk2d::RenderTargetTexture::GetSize() const
 {
 	return impl->GetSize();
+}
+
+VK2D_API uint32_t VK2D_APIENTRY vk2d::RenderTargetTexture::GetLayerCount() const
+{
+	return impl->GetLayerCount();
+}
+
+VK2D_API bool VK2D_APIENTRY vk2d::RenderTargetTexture::WaitUntilLoaded()
+{
+	return impl->WaitUntilLoaded();
 }
 
 VK2D_API bool VK2D_APIENTRY vk2d::RenderTargetTexture::BeginRender()
@@ -129,7 +139,7 @@ VK2D_API void VK2D_APIENTRY vk2d::RenderTargetTexture::DrawMesh(
 }
 */
 
-VK2D_API bool VK2D_APIENTRY vk2d::RenderTargetTexture::IsGood()
+VK2D_API bool VK2D_APIENTRY vk2d::RenderTargetTexture::IsGood() const
 {
 	return is_good;
 }

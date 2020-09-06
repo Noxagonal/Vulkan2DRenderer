@@ -1,8 +1,8 @@
 #pragma once
 
 #include "../Core/Common.h"
-
 #include "RenderPrimitives.h"
+#include "Texture.h"
 
 #include <vector>
 #include <string>
@@ -130,7 +130,7 @@ public:
 	VK2D_API void									VK2D_APIENTRY					ConfineUVToBoundingBox();
 
 	VK2D_API void									VK2D_APIENTRY					SetTexture(
-		vk2d::TextureResource					*	texture_resource_pointer );
+		vk2d::Texture							*	texture_resource_pointer );
 
 	VK2D_API void									VK2D_APIENTRY					SetSampler(
 		vk2d::Sampler							*	sampler_pointer );
@@ -167,7 +167,7 @@ private:
 	vk2d::MeshType									generated_mesh_type				= vk2d::MeshType::TRIANGLE_FILLED;
 	vk2d::MeshType									mesh_type						= vk2d::MeshType::TRIANGLE_FILLED;
 	float											line_width						= 1.0f;		// Only considered when rendering lines
-	vk2d::TextureResource						*	texture							= nullptr;	// Texture resource to be used when rendering, can be used in all modes
+	vk2d::Texture								*	texture							= nullptr;	// Texture resource to be used when rendering, can be used in all modes
 	vk2d::Sampler								*	sampler							= nullptr;
 };
 

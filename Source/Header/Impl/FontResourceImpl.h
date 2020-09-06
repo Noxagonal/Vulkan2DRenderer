@@ -4,6 +4,7 @@
 
 #include "../Core/ThreadPrivateResources.h"
 #include "../../../Include/Interface/RenderPrimitives.h"
+#include "../../Include/Interface/TextureResource.h"
 
 #include <map>
 

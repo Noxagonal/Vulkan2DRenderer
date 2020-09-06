@@ -14,6 +14,9 @@
 vk2d::_internal::RenderTargetTextureImpl::RenderTargetTextureImpl(
 	vk2d::_internal::InstanceImpl				*	instance,
 	const vk2d::RenderTargetTextureCreateInfo	&	create_info
+) :
+vk2d::_internal::TextureImpl(
+	instance
 )
 {
 	this->instance			= instance;
@@ -84,9 +87,44 @@ void vk2d::_internal::RenderTargetTextureImpl::SetSize(
 	}
 }
 
-vk2d::Vector2u vk2d::_internal::RenderTargetTextureImpl::GetSize()
+vk2d::Vector2u vk2d::_internal::RenderTargetTextureImpl::GetSize() const
 {
 	return size;
+}
+
+uint32_t vk2d::_internal::RenderTargetTextureImpl::GetLayerCount() const
+{
+	return 1;
+}
+
+uint32_t vk2d::_internal::RenderTargetTextureImpl::GetCurrentSwapBuffer() const
+{
+	return current_swap_buffer;
+}
+
+VkImage vk2d::_internal::RenderTargetTextureImpl::GetVulkanImage() const
+{
+	return swap_buffers[ current_swap_buffer ].surface.render_image.image;
+}
+
+VkImageView vk2d::_internal::RenderTargetTextureImpl::GetVulkanImageView() const
+{
+	return swap_buffers[ current_swap_buffer ].surface.render_image.view;
+}
+
+VkImageLayout vk2d::_internal::RenderTargetTextureImpl::GetVulkanImageLayout() const
+{
+	return swap_buffers[ current_swap_buffer ].surface.vk_render_image_layout;
+}
+
+VkFramebuffer vk2d::_internal::RenderTargetTextureImpl::GetFramebuffer() const
+{
+	return swap_buffers[ current_swap_buffer ].surface.vk_framebuffer;
+}
+
+bool vk2d::_internal::RenderTargetTextureImpl::WaitUntilLoaded()
+{
+	return true;
 }
 
 bool vk2d::_internal::RenderTargetTextureImpl::BeginRender()
@@ -348,7 +386,7 @@ bool vk2d::_internal::RenderTargetTextureImpl::EndRender()
 	return true;
 }
 
-bool vk2d::_internal::RenderTargetTextureImpl::IsGood()
+bool vk2d::_internal::RenderTargetTextureImpl::IsGood() const
 {
 	return is_good;
 }
@@ -705,6 +743,8 @@ bool vk2d::_internal::RenderTargetTextureImpl::CreateSurfaces(
 			instance->Report( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot create RenderTargetTexture, cannot create framebuffer!" );
 			return false;
 		}
+
+		s.surface.vk_render_image_layout		= VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 	}
 
 	return true;

@@ -1300,7 +1300,7 @@ void vk2d::_internal::WindowImpl::DrawTriangleList(
 	const std::vector<vk2d::Vertex>			&	vertices,
 	const std::vector<float>				&	texture_channels,
 	bool										filled,
-	vk2d::TextureResource					*	texture,
+	vk2d::Texture							*	texture,
 	vk2d::Sampler							*	sampler
 )
 {
@@ -1328,7 +1328,7 @@ void vk2d::_internal::WindowImpl::DrawTriangleList(
 	const std::vector<vk2d::Vertex>			&	vertices,
 	const std::vector<float>				&	texture_channel_weights,
 	bool										filled,
-	vk2d::TextureResource					*	texture,
+	vk2d::Texture							*	texture,
 	vk2d::Sampler							*	sampler
 )
 {
@@ -1385,7 +1385,7 @@ void vk2d::_internal::WindowImpl::DrawTriangleList(
 		pc.index_count				= 3;
 		pc.vertex_offset			= push_result.location_info.vertex_offset;
 		pc.texture_channel_offset	= push_result.location_info.texture_channel_offset;
-		pc.texture_channel_count	= texture->impl->GetLayerCount();
+		pc.texture_channel_count	= texture->GetLayerCount();
 
 		vkCmdPushConstants(
 			command_buffer,
@@ -1424,7 +1424,7 @@ void vk2d::_internal::WindowImpl::DrawLineList(
 	const std::vector<vk2d::VertexIndex_2>	&	indices,
 	const std::vector<vk2d::Vertex>			&	vertices,
 	const std::vector<float>				&	texture_channel_weights,
-	vk2d::TextureResource					*	texture,
+	vk2d::Texture							*	texture,
 	vk2d::Sampler							*	sampler,
 	float										line_width
 )
@@ -1451,7 +1451,7 @@ void vk2d::_internal::WindowImpl::DrawLineList(
 	const std::vector<uint32_t>				&	raw_indices,
 	const std::vector<vk2d::Vertex>			&	vertices,
 	const std::vector<float>				&	texture_channel_weights,
-	vk2d::TextureResource					*	texture,
+	vk2d::Texture							*	texture,
 	vk2d::Sampler							*	sampler,
 	float										line_width
 )
@@ -1479,7 +1479,7 @@ void vk2d::_internal::WindowImpl::DrawLineList(
 		);
 
 		vk2d::_internal::PipelineSettings pipeline_settings {};
-		pipeline_settings.vk_render_pass			= vk_render_pass;
+		pipeline_settings.vk_render_pass		= vk_render_pass;
 		pipeline_settings.primitive_topology	= VK_PRIMITIVE_TOPOLOGY_LINE_LIST;
 		pipeline_settings.polygon_mode			= VK_POLYGON_MODE_LINE;
 		pipeline_settings.shader_programs		= shader_programs;
@@ -1509,7 +1509,7 @@ void vk2d::_internal::WindowImpl::DrawLineList(
 		pc.index_count				= 2;
 		pc.vertex_offset			= push_result.location_info.vertex_offset;
 		pc.texture_channel_offset	= push_result.location_info.texture_channel_offset;
-		pc.texture_channel_count	= texture->impl->GetLayerCount();
+		pc.texture_channel_count	= texture->GetLayerCount();
 
 		vkCmdPushConstants(
 			command_buffer,
@@ -1547,7 +1547,7 @@ void vk2d::_internal::WindowImpl::DrawLineList(
 void vk2d::_internal::WindowImpl::DrawPointList(
 	const std::vector<vk2d::Vertex>			&	vertices,
 	const std::vector<float>				&	texture_channel_weights,
-	vk2d::TextureResource					*	texture,
+	vk2d::Texture							*	texture,
 	vk2d::Sampler							*	sampler
 )
 {
@@ -1603,7 +1603,7 @@ void vk2d::_internal::WindowImpl::DrawPointList(
 		pc.index_count				= 1;
 		pc.vertex_offset			= push_result.location_info.vertex_offset;
 		pc.texture_channel_offset	= push_result.location_info.texture_channel_offset;
-		pc.texture_channel_count	= texture->impl->GetLayerCount();
+		pc.texture_channel_count	= texture->GetLayerCount();
 
 		vkCmdPushConstants(
 			command_buffer,
@@ -1635,146 +1635,6 @@ void vk2d::_internal::WindowImpl::DrawPointList(
 	} else {
 		instance_parent->Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot push mesh into mesh render queue!" );
 	}
-}
-
-void vk2d::_internal::WindowImpl::DrawPoint(
-	vk2d::Vector2f			location,
-	vk2d::Colorf			color,
-	float					size
-)
-{
-	Vertex vertex;
-	vertex.vertex_coords			= location;
-	vertex.uv_coords				= {};
-	vertex.color					= color;
-	vertex.point_size				= size;
-	vertex.single_texture_channel	= 0;
-
-	DrawPointList(
-		{ vertex },
-		{}
-	);
-}
-
-void vk2d::_internal::WindowImpl::DrawLine(
-	vk2d::Vector2f					point_1,
-	vk2d::Vector2f					point_2,
-	vk2d::Colorf					color )
-{
-	std::vector<vk2d::Vertex>		vertices( 2 );
-	std::vector<uint32_t>			indices( 2 );
-
-	vertices[ 0 ].vertex_coords				= point_1;
-	vertices[ 0 ].uv_coords					= {};
-	vertices[ 0 ].color						= color;
-	vertices[ 0 ].point_size				= 1.0f;
-	vertices[ 0 ].single_texture_channel	= 0;
-
-	vertices[ 1 ].vertex_coords				= point_2;
-	vertices[ 1 ].uv_coords					= {};
-	vertices[ 1 ].color						= color;
-	vertices[ 1 ].point_size				= 1.0f;
-	vertices[ 1 ].single_texture_channel	= 0;
-
-	indices[ 0 ]							= 0;
-	indices[ 1 ]							= 1;
-
-	DrawLineList(
-		indices,
-		vertices,
-		{}
-	);
-}
-
-void vk2d::_internal::WindowImpl::DrawBox(
-	vk2d::Vector2f					top_left,
-	vk2d::Vector2f					bottom_right,
-	bool							filled,
-	vk2d::Colorf					color )
-{
-	auto mesh = vk2d::GenerateBoxMesh(
-		top_left,
-		bottom_right,
-		filled );
-	mesh.SetVertexColor( color );
-	DrawMesh( mesh );
-}
-
-void vk2d::_internal::WindowImpl::DrawCircle(
-	vk2d::Vector2f					top_left,
-	vk2d::Vector2f					bottom_right,
-	bool							filled,
-	float							edge_count,
-	vk2d::Colorf					color
-)
-{
-	auto mesh = vk2d::GenerateCircleMesh(
-		top_left,
-		bottom_right,
-		filled,
-		edge_count
-	);
-	mesh.SetVertexColor( color );
-	DrawMesh( mesh );
-}
-
-void vk2d::_internal::WindowImpl::DrawPie(
-	vk2d::Vector2f					top_left,
-	vk2d::Vector2f					bottom_right,
-	float							begin_angle_radians,
-	float							coverage,
-	bool							filled,
-	float							edge_count,
-	vk2d::Colorf					color
-)
-{
-	auto mesh = vk2d::GeneratePieMesh(
-		top_left,
-		bottom_right,
-		begin_angle_radians,
-		coverage,
-		filled,
-		edge_count
-	);
-	mesh.SetVertexColor( color );
-	DrawMesh( mesh );
-}
-
-void vk2d::_internal::WindowImpl::DrawPieBox(
-	vk2d::Vector2f					top_left,
-	vk2d::Vector2f					bottom_right,
-	float							begin_angle_radians,
-	float							coverage,
-	bool							filled,
-	vk2d::Colorf					color
-)
-{
-	auto mesh = vk2d::GeneratePieBoxMesh(
-		top_left,
-		bottom_right,
-		begin_angle_radians,
-		coverage,
-		filled
-	);
-	mesh.SetVertexColor( color );
-	DrawMesh( mesh );
-}
-
-void vk2d::_internal::WindowImpl::DrawTexture(
-	vk2d::Vector2f					top_left,
-	vk2d::Vector2f					bottom_right,
-	vk2d::TextureResource		*	texture,
-	vk2d::Colorf					color
-)
-{
-	auto mesh = vk2d::GenerateBoxMesh(
-		top_left,
-		bottom_right,
-		true
-	);
-	mesh.SetTexture( texture );
-	mesh.SetVertexColor( color );
-	DrawMesh( mesh );
 }
 
 void vk2d::_internal::WindowImpl::DrawMesh(
@@ -3016,7 +2876,7 @@ void vk2d::_internal::WindowImpl::CmdBindPipelineIfDifferent(
 void vk2d::_internal::WindowImpl::CmdBindTextureSamplerIfDifferent(
 	VkCommandBuffer						command_buffer,
 	vk2d::Sampler					*	sampler,
-	vk2d::TextureResource			*	texture )
+	vk2d::Texture					*	texture )
 {
 	// If sampler and texture did not change since last call, do nothing.
 	if( !sampler ) {
@@ -3041,8 +2901,8 @@ void vk2d::_internal::WindowImpl::CmdBindTextureSamplerIfDifferent(
 
 			VkDescriptorImageInfo image_info {};
 			image_info.sampler						= sampler->impl->GetVulkanSampler();
-			image_info.imageView					= texture->impl->GetVulkanImageView();
-			image_info.imageLayout					= texture->impl->GetVulkanImageLayout();
+			image_info.imageView					= texture->texture_impl->GetVulkanImageView();
+			image_info.imageLayout					= texture->texture_impl->GetVulkanImageLayout();
 
 			VkDescriptorBufferInfo buffer_info {};
 			buffer_info.buffer						= sampler->impl->GetVulkanBufferForSamplerData();

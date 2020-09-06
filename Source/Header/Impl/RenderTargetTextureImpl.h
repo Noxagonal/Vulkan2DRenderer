@@ -8,6 +8,8 @@
 #include "../Core/DescriptorSet.h"
 #include "../Core/MeshBuffer.h"
 #include "RenderTargetCommonImpl.hpp"
+#include "../../Include/Interface/Texture.h"
+#include "TextureImpl.h"
 
 #include <vector>
 #include <memory>
@@ -23,7 +25,9 @@ class MeshBuffer;
 
 
 
-class RenderTargetTextureImpl
+// Render target implementation
+class RenderTargetTextureImpl :
+	public vk2d::_internal::TextureImpl
 {
 public:
 	RenderTargetTextureImpl(
@@ -34,8 +38,16 @@ public:
 
 	void												SetSize(
 		vk2d::Vector2u									new_size );
+	vk2d::Vector2u										GetSize() const;
+	uint32_t											GetLayerCount() const;
 
-	vk2d::Vector2u										GetSize();
+	uint32_t											GetCurrentSwapBuffer() const;
+	VkImage												GetVulkanImage() const;
+	VkImageView											GetVulkanImageView() const;
+	VkImageLayout										GetVulkanImageLayout() const;
+	VkFramebuffer										GetFramebuffer() const;
+
+	bool												WaitUntilLoaded();
 
 	// Begins the render operations. You must call this before using any drawing commands.
 	// For best performance you should calculate game logic first, when you're ready to draw
@@ -51,32 +63,26 @@ public:
 		const std::vector<vk2d::Vertex>				&	vertices,
 		const std::vector<float>					&	texture_channels,
 		bool											filled						= true,
-		vk2d::TextureResource						*	texture						= nullptr,
+		vk2d::Texture								*	texture						= nullptr,
 		vk2d::Sampler								*	sampler						= nullptr );
 
 	void												DrawLineList(
 		const std::vector<vk2d::VertexIndex_2>		&	indices,
 		const std::vector<vk2d::Vertex>				&	vertices,
 		const std::vector<float>					&	texture_channels,
-		vk2d::TextureResource						*	texture						= nullptr,
+		vk2d::Texture								*	texture						= nullptr,
 		vk2d::Sampler								*	sampler						= nullptr );
 
 	void												DrawPointList(
 		const std::vector<vk2d::Vertex>				&	vertices,
 		const std::vector<float>					&	texture_channels,
-		vk2d::TextureResource						*	texture						= nullptr,
+		vk2d::Texture								*	texture						= nullptr,
 		vk2d::Sampler								*	sampler						= nullptr );
-
-	void												DrawTexture(
-		vk2d::Vector2f									top_left,
-		vk2d::Vector2f									bottom_right,
-		vk2d::TextureResource						*	texture,
-		vk2d::Colorf									color						= { 1.0f, 1.0f, 1.0f, 1.0f } );
 
 	void												DrawMesh(
 		const vk2d::Mesh							&	mesh );
 
-	bool												IsGood();
+	bool												IsGood() const;
 
 private:
 	bool												CreateCommandBuffers();
@@ -100,7 +106,7 @@ private:
 	void												CmdBindTextureSamplerIfDifferent(
 		VkCommandBuffer									command_buffer,
 		vk2d::Sampler								*	sampler,
-		vk2d::TextureResource						*	texture );
+		vk2d::Texture								*	texture );
 
 	void												CmdSetLineWidthIfDifferent(
 		VkCommandBuffer									command_buffer,
@@ -115,6 +121,7 @@ private:
 		vk2d::_internal::CompleteImageResource			resolve_image						= {};
 		vk2d::_internal::CompleteImageResource			blur_buffer_image					= {};
 		VkFramebuffer									vk_framebuffer						= {};
+		VkImageLayout									vk_render_image_layout				= {};
 	};
 	struct SwapBuffer
 	{
@@ -145,11 +152,11 @@ private:
 														swap_buffers						= {};
 
 	vk2d::_internal::PipelineSettings					previous_pipeline_settings			= {};
-	vk2d::TextureResource							*	previous_texture					= {};
+	vk2d::Texture									*	previous_texture					= {};
 	vk2d::Sampler									*	previous_sampler					= {};
 	float												previous_line_width					= {};
 
-	std::map<vk2d::Sampler*, std::map<vk2d::TextureResource*, vk2d::_internal::SamplerTextureDescriptorPoolData>>
+	std::map<vk2d::Sampler*, std::map<vk2d::Texture*, vk2d::_internal::SamplerTextureDescriptorPoolData>>
 														sampler_texture_descriptor_sets		= {};
 
 	bool												is_good								= {};

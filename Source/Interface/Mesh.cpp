@@ -5,6 +5,7 @@
 
 #include "../../Include/Interface/FontResource.h"
 #include "../Header/Impl/FontResourceImpl.h"
+#include "../../Include/Interface/Texture.h"
 
 #include <float.h>
 #include <algorithm>
@@ -305,7 +306,7 @@ VK2D_API void VK2D_APIENTRY vk2d::Mesh::ConfineUVToBoundingBox()
 }
 
 VK2D_API void VK2D_APIENTRY vk2d::Mesh::SetTexture(
-	vk2d::TextureResource	*	texture_resource_pointer
+	vk2d::Texture			*	texture_resource_pointer
 )
 {
 	texture		= texture_resource_pointer;

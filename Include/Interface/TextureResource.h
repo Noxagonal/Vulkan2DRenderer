@@ -65,7 +65,8 @@ public:
 	VK2D_API bool												VK2D_APIENTRY				IsLoaded();
 	VK2D_API bool												VK2D_APIENTRY				WaitUntilLoaded();
 
-	VK2D_API uint32_t											VK2D_APIENTRY				GetLayerCount();
+	VK2D_API vk2d::Vector2u										VK2D_APIENTRY				GetSize() const;
+	VK2D_API uint32_t											VK2D_APIENTRY				GetLayerCount() const;
 
 protected:
 	VK2D_API virtual bool										VK2D_APIENTRY				MTLoad(
@@ -74,8 +75,13 @@ protected:
 	VK2D_API virtual void										VK2D_APIENTRY				MTUnload(
 		vk2d::_internal::ThreadPrivateResource				*	thread_resource );
 
+public:
+	VK2D_API bool												VK2D_APIENTRY				IsGood() const;
+
 private:
 	std::unique_ptr<vk2d::_internal::TextureResourceImpl>		impl;
+
+	bool														is_good						= {};
 };
 
 
