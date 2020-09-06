@@ -61,7 +61,7 @@ void vk2d::_internal::RenderTargetTextureImpl::SetSize(
 			std::array<VkSemaphore, std::tuple_size_v<decltype( swap_buffers )>> semaphores;
 			std::array<uint64_t, std::tuple_size_v<decltype( swap_buffers )>> semaphore_values;
 			for( size_t i = 0; i < std::size( swap_buffers ); ++i ) {
-				semaphores[ i ]			= swap_buffers[ i ].vk_semaphore;
+				semaphores[ i ]			= swap_buffers[ i ].vk_render_complete_semaphore;
 				semaphore_values[ i ]	= 1;
 			}
 			VkSemaphoreWaitInfo wait_info {};
@@ -142,7 +142,7 @@ bool vk2d::_internal::RenderTargetTextureImpl::BeginRender()
 			uint64_t semaphore_value = 0;
 			vkGetSemaphoreCounterValue(
 				instance->GetVulkanDevice(),
-				swap_buffers[ current_swap_buffer ].vk_semaphore,
+				swap_buffers[ current_swap_buffer ].vk_render_complete_semaphore,
 				&semaphore_value
 			);
 			std::cout << "Semaphore value: " << semaphore_value << "\n";
@@ -157,7 +157,7 @@ bool vk2d::_internal::RenderTargetTextureImpl::BeginRender()
 		semaphore_wait_info.pNext				= nullptr;
 		semaphore_wait_info.flags				= 0;
 		semaphore_wait_info.semaphoreCount		= 1;
-		semaphore_wait_info.pSemaphores			= &swap_buffers[ current_swap_buffer ].vk_semaphore;
+		semaphore_wait_info.pSemaphores			= &swap_buffers[ current_swap_buffer ].vk_render_complete_semaphore;
 		semaphore_wait_info.pValues				= &semaphore_wait_value;
 		if( vkWaitSemaphores(
 			instance->GetVulkanDevice(),
@@ -172,7 +172,7 @@ bool vk2d::_internal::RenderTargetTextureImpl::BeginRender()
 		VkSemaphoreSignalInfo semaphore_signal_info {};
 		semaphore_signal_info.sType			= VK_STRUCTURE_TYPE_SEMAPHORE_SIGNAL_INFO;
 		semaphore_signal_info.pNext			= nullptr;
-		semaphore_signal_info.semaphore		= swap_buffers[ current_swap_buffer ].vk_semaphore;
+		semaphore_signal_info.semaphore		= swap_buffers[ current_swap_buffer ].vk_render_complete_semaphore;
 		semaphore_signal_info.value			= 0;
 		if( vkSignalSemaphore(
 			instance->GetVulkanDevice(),
@@ -188,7 +188,7 @@ bool vk2d::_internal::RenderTargetTextureImpl::BeginRender()
 			uint64_t semaphore_value = 0;
 			vkGetSemaphoreCounterValue(
 				instance->GetVulkanDevice(),
-				swap_buffers[ current_swap_buffer ].vk_semaphore,
+				swap_buffers[ current_swap_buffer ].vk_render_complete_semaphore,
 				&semaphore_value
 			);
 			std::cout << "Semaphore value: " << semaphore_value << "\n";
@@ -796,7 +796,7 @@ bool vk2d::_internal::RenderTargetTextureImpl::CreateSynchronizationPrimitives()
 			instance->GetVulkanDevice(),
 			&semaphore_create_info,
 			nullptr,
-			&s.vk_semaphore
+			&s.vk_render_complete_semaphore
 		) != VK_SUCCESS ) {
 			instance->Report( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot create RenderTargetTexture, cannot create synchronization primitives!" );
 			return false;
@@ -811,7 +811,7 @@ void vk2d::_internal::RenderTargetTextureImpl::DestroySynchronizationPrimitives(
 		std::array<VkSemaphore,	std::tuple_size_v<decltype( swap_buffers )>> semaphores;
 		std::array<uint64_t,	std::tuple_size_v<decltype( swap_buffers )>> semaphore_values;
 		for( size_t i = 0; i < std::size( swap_buffers ); ++i ) {
-			semaphores[ i ]			= swap_buffers[ i ].vk_semaphore;
+			semaphores[ i ]			= swap_buffers[ i ].vk_render_complete_semaphore;
 			semaphore_values[ i ]	= 1;
 		}
 		VkSemaphoreWaitInfo wait_info {};
@@ -833,7 +833,7 @@ void vk2d::_internal::RenderTargetTextureImpl::DestroySynchronizationPrimitives(
 	for( auto & s : swap_buffers ) {
 		vkDestroySemaphore(
 			instance->GetVulkanDevice(),
-			s.vk_semaphore,
+			s.vk_render_complete_semaphore,
 			nullptr
 		);
 	}

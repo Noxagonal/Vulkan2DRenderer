@@ -129,7 +129,7 @@ private:
 														surface								= {};
 		VkCommandBuffer									vk_render_command_buffer			= {};
 		VkCommandBuffer									vk_transfer_command_buffer			= {};
-		VkSemaphore										vk_semaphore						= {};	// Using timeline semaphore, cleared when pending render, set when rendered.
+		VkSemaphore										vk_render_complete_semaphore		= {};	// Using timeline semaphore, cleared when pending render, set when rendered.
 	};
 
 	vk2d::_internal::InstanceImpl					*	instance							= {};
