@@ -11,9 +11,6 @@
 #include "../../Include/Interface/Texture.h"
 #include "TextureImpl.h"
 
-#include <vector>
-#include <memory>
-#include <map>
 
 
 namespace vk2d {

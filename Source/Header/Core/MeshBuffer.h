@@ -8,11 +8,6 @@
 #include "../Core/VulkanMemoryManagement.h"
 #include "DescriptorSet.h"
 
-#include <cstring>
-#include <vector>
-#include <stdint.h>
-#include <memory>
-
 
 
 namespace vk2d {

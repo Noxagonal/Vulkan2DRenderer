@@ -6,10 +6,6 @@
 
 #include "../Core/ThreadPool.h"
 
-#include <list>
-#include <filesystem>
-#include <mutex>
-
 namespace vk2d {
 
 class Resource;

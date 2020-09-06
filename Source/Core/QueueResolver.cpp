@@ -6,9 +6,6 @@
 #define GLFW_INCLUDE_NONE
 #include <GLFW/glfw3.h>
 
-#include <vector>
-#include <assert.h>
-
 
 
 VkResult vk2d::_internal::ResolvedQueue::Submit(

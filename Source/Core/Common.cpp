@@ -1,8 +1,7 @@
 
-#include "../../Include/Core/Common.h"
+#include "../Header/Core/SourceCommon.h"
 
-#include <iostream>
-#include <map>
+#include "../../Include/Core/Common.h"
 
 namespace vk2d{
 

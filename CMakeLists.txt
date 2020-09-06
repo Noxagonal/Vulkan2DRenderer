@@ -1,7 +1,7 @@
 
 # VK2D library root
 
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.16)
 
 project(VK2D CXX)
 
@@ -129,6 +129,11 @@ set_target_properties(VK2D
 		ARCHIVE_OUTPUT_DIRECTORY	"${CMAKE_BINARY_DIR}/Lib"
 		LIBRARY_OUTPUT_DIRECTORY	"${CMAKE_BINARY_DIR}/Lib"
 		RUNTIME_OUTPUT_DIRECTORY	"${CMAKE_BINARY_DIR}/Bin"
+)
+
+target_precompile_headers(VK2D
+	PRIVATE
+		"${CMAKE_SOURCE_DIR}/Source/Header/Core/PreCompiledHeader.h"
 )
 
 set(EXTERNAL_INCLUDES_PATH

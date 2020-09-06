@@ -9,10 +9,6 @@
 #include "../../Include/Interface/Mesh.h"
 #include "../Header/Impl/SamplerImpl.h"
 
-#include <memory>
-#include <algorithm>
-#include <set>
-#include <sstream>
 #include <stb_image.h>
 
 #define STB_IMAGE_WRITE_IMPLEMENTATION

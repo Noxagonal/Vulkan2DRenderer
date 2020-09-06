@@ -4,9 +4,6 @@
 #include "../../Include/Interface/Resource.h"
 #include "../Header/Impl/ResourceManagerImpl.h"
 
-#include <thread>
-#include <assert.h>
-
 
 
 VK2D_API vk2d::Resource::Resource(

@@ -4,11 +4,6 @@
 #include "../Header/Core/VulkanMemoryManagement.h"
 
 
-#include <algorithm>
-#include <vector>
-#include <memory>
-#include <assert.h>
-
 
 namespace vk2d {
 

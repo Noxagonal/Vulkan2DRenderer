@@ -4,8 +4,6 @@
 
 #include "../../Include/Interface/RenderPrimitives.h"
 
-#include <vector>
-
 namespace vk2d {
 
 namespace _internal {

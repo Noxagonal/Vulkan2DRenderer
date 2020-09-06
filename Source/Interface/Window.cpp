@@ -10,9 +10,6 @@
 #define GLFW_INCLUDE_NONE
 #include <GLFW/glfw3.h>
 
-#include <vector>
-#include <array>
-
 
 
 VK2D_API					vk2d::Window::Window(

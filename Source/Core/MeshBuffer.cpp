@@ -9,8 +9,6 @@
 
 #include "../Header/Core/VulkanMemoryManagement.h"
 
-#include <algorithm>
-
 
 
 vk2d::_internal::MeshBuffer::MeshBuffer(

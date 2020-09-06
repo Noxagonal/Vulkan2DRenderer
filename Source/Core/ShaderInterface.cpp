@@ -3,8 +3,6 @@
 
 #include "../Header/Core/ShaderInterface.h"
 
-#include <tuple>
-
 
 
 

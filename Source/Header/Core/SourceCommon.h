@@ -4,11 +4,7 @@
 
 #include "../../BuildOptions.h"
 #include "../../../Include/Core/Common.h"
-
-#include <stdint.h>
-#include <string>
-#include <vector>
-#include <mutex>
+#include "PreCompiledHeader.h"
 
 #include <vulkan/vulkan.h>
 

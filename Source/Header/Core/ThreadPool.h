@@ -2,13 +2,7 @@
 
 #include "SourceCommon.h"
 
-#include <vector>
-#include <thread>
-#include <mutex>
-#include <condition_variable>
-#include <atomic>
-#include <deque>
-#include <assert.h>
+
 
 namespace vk2d {
 

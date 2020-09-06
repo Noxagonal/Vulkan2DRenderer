@@ -7,9 +7,6 @@
 #include "../Header/Impl/FontResourceImpl.h"
 #include "../../Include/Interface/Texture.h"
 
-#include <float.h>
-#include <algorithm>
-
 
 
 namespace vk2d {

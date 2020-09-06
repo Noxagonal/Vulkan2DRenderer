@@ -11,11 +11,6 @@
 
 
 
-#include <stdint.h>
-#include <sstream>
-#include <iostream>
-#include <vector>
-
 #if VK_USE_PLATFORM_WIN32_KHR
 #define NOMINMAX
 #include <Windows.h>

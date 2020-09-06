@@ -10,9 +10,6 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
 
-#include <assert.h>
-#include <thread>
-
 
 
 vk2d::_internal::TextureResourceImpl::TextureResourceImpl(

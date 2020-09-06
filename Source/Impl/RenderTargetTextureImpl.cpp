@@ -7,8 +7,6 @@
 #include "../Header/Core/ShaderInterface.h"
 #include "../Header/Core/MeshBuffer.h"
 
-#include <iostream>
-#include <memory>
 
 
 vk2d::_internal::RenderTargetTextureImpl::RenderTargetTextureImpl(

@@ -18,11 +18,6 @@
 #include <GLFW/glfw3.h>
 
 
-#include <sstream>
-#include <iostream>
-#include <vector>
-#include <list>
-
 
 namespace vk2d {
 

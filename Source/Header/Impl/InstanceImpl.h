@@ -15,12 +15,6 @@
 #include "../../Include/Interface/Window.h"
 #include "../../Include/Interface/Sampler.h"
 
-#include <list>
-#include <vector>
-#include <array>
-#include <memory>
-#include <map>
-
 #define GLFW_INCLUDE_NONE
 #include <GLFW/glfw3.h>
 

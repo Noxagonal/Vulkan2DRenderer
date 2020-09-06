@@ -3,12 +3,6 @@
 
 #include "../Header/Core/ThreadPool.h"
 
-#include <condition_variable>
-#include <mutex>
-#include <atomic>
-#include <numeric>
-#include <algorithm>
-
 
 
 namespace vk2d {

@@ -6,8 +6,6 @@
 #include "../../../Include/Interface/RenderPrimitives.h"
 #include "../../Include/Interface/TextureResource.h"
 
-#include <map>
-
 #include <ft2build.h>
 #include FT_FREETYPE_H
 

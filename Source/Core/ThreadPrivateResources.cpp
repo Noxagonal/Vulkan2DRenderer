@@ -6,8 +6,6 @@
 #include "../Header/Core/DescriptorSet.h"
 #include "../Header/Core/VulkanMemoryManagement.h"
 
-#include <sstream>
-
 
 
 vk2d::_internal::ThreadLoaderResource::ThreadLoaderResource( InstanceImpl * instance )
