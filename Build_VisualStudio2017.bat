@@ -39,9 +39,8 @@ set source_dir=..
 mkdir build
 cd build
 
-cmake -G %generator% -D CMAKE_BUILD_TYPE=Release -D VK2D_DEBUG=%build_debug_str% -D VK2D_BUILD_STATIC_LIBRARY=%build_static_str% -D VK2D_BUILD_TESTS=%build_tests_str% -D VK2D_BUILD_EXAMPLES=%build_examples_str% "%source_dir%"
+cmake -G %generator% -Wno-dev -D CMAKE_BUILD_TYPE=Release -D VK2D_DEBUG=%build_debug_str% -D VK2D_BUILD_STATIC_LIBRARY=%build_static_str% -D VK2D_BUILD_TESTS=%build_tests_str% -D VK2D_BUILD_EXAMPLES=%build_examples_str% "%source_dir%"
 echo Done
-timeout 10
 
 cd %source_dir%
 
@@ -96,4 +95,5 @@ exit /B 0
 
 
 :End
+pause
 exit /B %ERRORLEVEL%

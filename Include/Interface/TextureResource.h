@@ -2,7 +2,8 @@
 
 #include "../Core/Common.h"
 #include "Resource.h"
-#include "../../Include/Interface/RenderPrimitives.h"
+#include "RenderPrimitives.h"
+#include "Texture.h"
 
 #include <memory>
 
@@ -19,7 +20,8 @@ class UnloadTask;
 
 
 class TextureResource :
-	public Resource
+	public vk2d::Texture,
+	public vk2d::Resource
 {
 	friend class vk2d::_internal::TextureResourceImpl;
 	friend class vk2d::_internal::ResourceManagerImpl;

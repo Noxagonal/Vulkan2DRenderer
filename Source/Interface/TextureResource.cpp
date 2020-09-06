@@ -29,7 +29,6 @@ VK2D_API vk2d::TextureResource::TextureResource(
 		is_good	= false;
 		impl	= nullptr;
 		resource_manager_parent->GetInstance()->Report( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot create texture resource implementation!" );
-		return;
 	}
 }
 

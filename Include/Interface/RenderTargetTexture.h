@@ -2,10 +2,10 @@
 
 #include "../Core/Common.h"
 
-#include "../../Include/Interface/RenderPrimitives.h"
-
-#include "../../Include/Interface/RenderTargetCommon.hpp"
-#include "../../Include/Interface/Mesh.h"
+#include "RenderPrimitives.h"
+#include "RenderTargetCommon.hpp"
+#include "Mesh.h"
+#include "Texture.h"
 
 #include <memory>
 
@@ -34,7 +34,8 @@ struct RenderTargetTextureCreateInfo
 
 
 
-class RenderTargetTexture
+class RenderTargetTexture :
+	public vk2d::Texture
 {
 	friend class vk2d::_internal::InstanceImpl;
 
