@@ -21,11 +21,11 @@ public:
 
 	VkResult								Submit(
 		const VkSubmitInfo				&	submit_info,
-		VkFence								fence );
+		VkFence								fence						= VK_NULL_HANDLE );
 
 	VkResult								Submit(
 		const std::vector<VkSubmitInfo>		submit_infos,
-		VkFence								fence );
+		VkFence								fence						= VK_NULL_HANDLE );
 
 	VkResult								Present(
 		const VkPresentInfoKHR			&	present_info );

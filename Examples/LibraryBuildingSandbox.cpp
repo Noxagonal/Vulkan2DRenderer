@@ -11,6 +11,17 @@ constexpr double RAD			= PI * 2.0;
 #include <iostream>
 
 
+
+void VK2D_APIENTRY VK2D_ReportFunction(
+	vk2d::ReportSeverity			severity,
+	std::string						message
+)
+{
+
+}
+
+
+
 class EventHandler : public vk2d::WindowEventHandler {
 public:
 	// Keyboard button was pressed, released or kept down ( repeating ).
@@ -34,6 +45,7 @@ public:
 int main()
 {
 	vk2d::InstanceCreateInfo instance_create_info {};
+	instance_create_info.report_function	= VK2D_ReportFunction;
 	auto instance = vk2d::CreateInstance( instance_create_info );
 	if( !instance ) return -1;
 
@@ -140,9 +152,9 @@ int main()
 		// EDIT: Use timeline semaphores instead of events, waiting on a timeline semaphore does not
 		// reset it.
 
-//		render_target_texture->BeginRender();
+		// render_target_texture->BeginRender();
 
-//		render_target_texture->EndRender();
+		// render_target_texture->EndRender();
 
 		if( !window->BeginRender() ) return -1;
 

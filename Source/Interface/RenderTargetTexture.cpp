@@ -17,10 +17,11 @@ VK2D_API vk2d::RenderTargetTexture::RenderTargetTexture(
 	);
 
 	if( impl && impl->IsGood() ) {
-		is_good	= true;
+		texture_impl	= &*impl;
+		is_good			= true;
 	} else {
-		is_good	= false;
-		impl	= nullptr;
+		is_good			= false;
+		impl			= nullptr;
 	}
 }
 

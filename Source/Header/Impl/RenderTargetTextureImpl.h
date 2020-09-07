@@ -112,51 +112,56 @@ private:
 	bool												CmdUpdateFrameData(
 		VkCommandBuffer									command_buffer );
 
-	struct Surface
-	{
-		vk2d::_internal::CompleteImageResource			render_image						= {};
-		vk2d::_internal::CompleteImageResource			resolve_image						= {};
-		vk2d::_internal::CompleteImageResource			blur_buffer_image					= {};
-		VkFramebuffer									vk_framebuffer						= {};
-		VkImageLayout									vk_render_image_layout				= {};
-	};
 	struct SwapBuffer
 	{
-		vk2d::_internal::RenderTargetTextureImpl::Surface
-														surface								= {};
-		VkCommandBuffer									vk_render_command_buffer			= {};
-		VkCommandBuffer									vk_transfer_command_buffer			= {};
-		VkSemaphore										vk_render_complete_semaphore		= {};	// Using timeline semaphore, cleared when pending render, set when rendered.
+		vk2d::_internal::CompleteImageResource			attachment_image							= {};	// Render attachment, Multisampled, 1 mip level
+		vk2d::_internal::CompleteImageResource			buffer_1_image								= {};	// Buffer image, used as multisample resolve and blur buffer
+		vk2d::_internal::CompleteImageResource			buffer_2_image								= {};	// Buffer image, used as second blur buffer
+		vk2d::_internal::CompleteImageResource			sampled_image								= {};	// Output, sampled image with mip mapping
+		VkFramebuffer									vk_framebuffer								= {};
+		VkImageLayout									vk_render_image_layout						= {};
+
+		VkCommandBuffer									vk_transfer_command_buffer					= {};
+		VkCommandBuffer									vk_render_command_buffer					= {};
+		VkSubmitInfo									vk_transfer_submit_info						= {};
+		VkSubmitInfo									vk_render_submit_info						= {};
+		VkTimelineSemaphoreSubmitInfo					vk_transfer_timeline_semaphore_submit_info	= {};
+		VkTimelineSemaphoreSubmitInfo					vk_render_timeline_semaphore_submit_info	= {};
+
+		VkSemaphore										vk_transfer_to_render_semaphore				= {};	// Using regular semaphore.
+		VkSemaphore										vk_render_complete_semaphore				= {};	// Using timeline semaphore, 0 when pending render, 1 when rendered.
+		uint64_t										signal_render_complete_semaphore_value		= {};
+		VkPipelineStageFlags							transfer_to_render_wait_dst_stage_mask		= {};
 	};
 
-	vk2d::_internal::InstanceImpl					*	instance							= {};
-	vk2d::RenderTargetTextureCreateInfo					create_info_copy					= {};
+	vk2d::_internal::InstanceImpl					*	instance									= {};
+	vk2d::RenderTargetTextureCreateInfo					create_info_copy							= {};
 
-	vk2d::Vector2u										size								= {};
-	std::vector<VkExtent2D>								mipmap_levels						= {};
+	vk2d::Vector2u										size										= {};
+	std::vector<VkExtent2D>								mipmap_levels								= {};
 
-	vk2d::_internal::CompleteBufferResource				frame_data_staging_buffer			= {};
-	vk2d::_internal::CompleteBufferResource				frame_data_device_buffer			= {};
-	vk2d::_internal::PoolDescriptorSet					frame_data_descriptor_set			= {};
+	vk2d::_internal::CompleteBufferResource				frame_data_staging_buffer					= {};
+	vk2d::_internal::CompleteBufferResource				frame_data_device_buffer					= {};
+	vk2d::_internal::PoolDescriptorSet					frame_data_descriptor_set					= {};
 
-	VkCommandPool										vk_command_pool						= {};
-	VkRenderPass										vk_render_pass						= {};
+	VkCommandPool										vk_command_pool								= {};
+	VkRenderPass										vk_render_pass								= {};
 
 	std::unique_ptr<vk2d::_internal::MeshBuffer>		mesh_buffer;
 
-	uint32_t											current_swap_buffer					= {};
+	uint32_t											current_swap_buffer							= {};
 	std::array<vk2d::_internal::RenderTargetTextureImpl::SwapBuffer, 2>
-														swap_buffers						= {};
+														swap_buffers								= {};
 
-	vk2d::_internal::PipelineSettings					previous_pipeline_settings			= {};
-	vk2d::Texture									*	previous_texture					= {};
-	vk2d::Sampler									*	previous_sampler					= {};
-	float												previous_line_width					= {};
+	vk2d::_internal::PipelineSettings					previous_pipeline_settings					= {};
+	vk2d::Texture									*	previous_texture							= {};
+	vk2d::Sampler									*	previous_sampler							= {};
+	float												previous_line_width							= {};
 
 	std::map<vk2d::Sampler*, std::map<vk2d::Texture*, vk2d::_internal::SamplerTextureDescriptorPoolData>>
-														sampler_texture_descriptor_sets		= {};
+														sampler_texture_descriptor_sets				= {};
 
-	bool												is_good								= {};
+	bool												is_good										= {};
 };
 
 

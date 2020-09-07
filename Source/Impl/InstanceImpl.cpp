@@ -256,7 +256,7 @@ vk2d::_internal::InstanceImpl::InstanceImpl( const InstanceCreateInfo & instance
 	create_info_copy	= instance_create_info;
 	report_function		= create_info_copy.report_function;
 
-#if VK2D_DEBUG
+#if VK2D_DEBUG_ENABLE
 	if( report_function == nullptr ) {
 		report_function = VK2D_default_ReportFunction;
 	}
@@ -1084,16 +1084,19 @@ VkBool32 VKAPI_PTR DebugMessenger(
 	}
 
 	std::stringstream ss_title;
-	ss_title << "Vulkan Validation: " << str_type << " " << str_severity;
+	ss_title << "Vulkan Validation: " << str_severity << " | " << str_type;
 
 	std::stringstream ss_message;
-	ss_message << ss_title.str() << ":\n - " << pCallbackData->pMessage << "\n";
+	ss_message << "\n" << ss_title.str() << ":\n\n - " << pCallbackData->pMessage << "\n\n";
 	// TODO: labels, object, message id name / number;
 
 	auto instance = reinterpret_cast<vk2d::_internal::InstanceImpl*>( pUserData );
 	assert( instance );
 
-	instance->Report( vk2d_severity, ss_message.str() );
+	std::cout << ss_message.str();
+	#if _WIN32
+	MessageBox( NULL, ss_message.str().c_str(), ss_title.str().c_str(), MB_OK | MB_ICONERROR );
+	#endif
 
 	return VK_FALSE;
 }
@@ -1116,7 +1119,8 @@ bool vk2d::_internal::InstanceImpl::CreateInstance()
 {
 
 #if VK2D_BUILD_OPTION_VULKAN_VALIDATION && VK2D_DEBUG_ENABLE
-	instance_layers.push_back( "VK_LAYER_LUNARG_standard_validation" );
+	instance_layers.push_back( "VK_LAYER_KHRONOS_validation" );
+	// instance_layers.push_back( "VK_LAYER_LUNARG_device_simulation" );
 	instance_extensions.push_back( VK_EXT_DEBUG_UTILS_EXTENSION_NAME );
 
 	VkDebugUtilsMessageSeverityFlagsEXT severity_flags {};
@@ -1288,9 +1292,15 @@ bool vk2d::_internal::InstanceImpl::CreateDeviceAndQueues()
 	features.geometryShader						= VK_TRUE;
 //	features.fragmentStoresAndAtomics			= VK_TRUE;
 
+	VkPhysicalDeviceVulkan12Features features_1_2 {};
+	features_1_2.sType							= VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_FEATURES;
+	features_1_2.pNext							= nullptr;
+	features_1_2.samplerMirrorClampToEdge		= VK_TRUE;
+	features_1_2.timelineSemaphore				= VK_TRUE;
+
 	VkDeviceCreateInfo device_create_info {};
 	device_create_info.sType					= VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
-	device_create_info.pNext					= nullptr;
+	device_create_info.pNext					= &features_1_2;
 	device_create_info.flags					= 0;
 	device_create_info.queueCreateInfoCount		= uint32_t( queue_create_infos.size() );
 	device_create_info.pQueueCreateInfos		= queue_create_infos.data();

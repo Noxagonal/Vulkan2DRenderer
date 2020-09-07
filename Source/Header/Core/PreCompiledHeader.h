@@ -2,6 +2,7 @@
 
 #include <stdlib.h>
 #include <stdint.h>
+#include <inttypes.h>
 #include <float.h>
 
 #include <numeric>
@@ -30,5 +31,7 @@
 #include <atomic>
 
 #include <filesystem>
+
+#include <chrono>
 
 #include <assert.h>

@@ -1351,7 +1351,7 @@ void vk2d::_internal::WindowImpl::DrawTriangleList(
 		);
 
 		vk2d::_internal::PipelineSettings pipeline_settings {};
-		pipeline_settings.vk_render_pass			= vk_render_pass;
+		pipeline_settings.vk_render_pass		= vk_render_pass;
 		pipeline_settings.primitive_topology	= VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
 		pipeline_settings.polygon_mode			= filled ? VK_POLYGON_MODE_FILL : VK_POLYGON_MODE_LINE;
 		pipeline_settings.shader_programs		= shader_programs;

@@ -140,61 +140,64 @@ bool vk2d::_internal::MeshBuffer::CmdUploadMeshDataToGPU(
 	// Index buffer
 	for( auto & b : index_buffer_blocks ) {
 		auto bb = b.get();
+		if( bb->used_byte_size ) {
+			bb->CopyVectorsToStagingBuffers();
 
-		bb->CopyVectorsToStagingBuffers();
-
-		std::array<VkBufferCopy, 1> copy_regions {};
-		copy_regions[ 0 ].srcOffset		= 0;
-		copy_regions[ 0 ].dstOffset		= 0;
-		copy_regions[ 0 ].size			= bb->used_byte_size;
-		vkCmdCopyBuffer(
-			command_buffer,
-			bb->staging_buffer.buffer,
-			bb->device_buffer.buffer,
-			uint32_t( copy_regions.size() ),
-			copy_regions.data()
-		);
-		bb->used_byte_size				= 0;
+			std::array<VkBufferCopy, 1> copy_regions {};
+			copy_regions[ 0 ].srcOffset		= 0;
+			copy_regions[ 0 ].dstOffset		= 0;
+			copy_regions[ 0 ].size			= bb->used_byte_size;
+			vkCmdCopyBuffer(
+				command_buffer,
+				bb->staging_buffer.buffer,
+				bb->device_buffer.buffer,
+				uint32_t( copy_regions.size() ),
+				copy_regions.data()
+			);
+			bb->used_byte_size				= 0;
+		}
 	}
 
 	// Vertex buffer
 	for( auto & b : vertex_buffer_blocks ) {
 		auto bb = b.get();
+		if( bb->used_byte_size ) {
+			bb->CopyVectorsToStagingBuffers();
 
-		bb->CopyVectorsToStagingBuffers();
-
-		std::array<VkBufferCopy, 1> copy_regions {};
-		copy_regions[ 0 ].srcOffset		= 0;
-		copy_regions[ 0 ].dstOffset		= 0;
-		copy_regions[ 0 ].size			= bb->used_byte_size;
-		vkCmdCopyBuffer(
-			command_buffer,
-			bb->staging_buffer.buffer,
-			bb->device_buffer.buffer,
-			uint32_t( copy_regions.size() ),
-			copy_regions.data()
-		);
-		bb->used_byte_size				= 0;
+			std::array<VkBufferCopy, 1> copy_regions {};
+			copy_regions[ 0 ].srcOffset		= 0;
+			copy_regions[ 0 ].dstOffset		= 0;
+			copy_regions[ 0 ].size			= bb->used_byte_size;
+			vkCmdCopyBuffer(
+				command_buffer,
+				bb->staging_buffer.buffer,
+				bb->device_buffer.buffer,
+				uint32_t( copy_regions.size() ),
+				copy_regions.data()
+			);
+			bb->used_byte_size				= 0;
+		}
 	}
 
 	// Texture channel buffer
 	for( auto & b : texture_channel_buffer_blocks ) {
 		auto bb = b.get();
+		if( bb->used_byte_size ) {
+			bb->CopyVectorsToStagingBuffers();
 
-		bb->CopyVectorsToStagingBuffers();
-
-		std::array<VkBufferCopy, 1> copy_regions {};
-		copy_regions[ 0 ].srcOffset		= 0;
-		copy_regions[ 0 ].dstOffset		= 0;
-		copy_regions[ 0 ].size			= bb->used_byte_size;
-		vkCmdCopyBuffer(
-			command_buffer,
-			bb->staging_buffer.buffer,
-			bb->device_buffer.buffer,
-			uint32_t( copy_regions.size() ),
-			copy_regions.data()
-		);
-		bb->used_byte_size				= 0;
+			std::array<VkBufferCopy, 1> copy_regions {};
+			copy_regions[ 0 ].srcOffset		= 0;
+			copy_regions[ 0 ].dstOffset		= 0;
+			copy_regions[ 0 ].size			= bb->used_byte_size;
+			vkCmdCopyBuffer(
+				command_buffer,
+				bb->staging_buffer.buffer,
+				bb->device_buffer.buffer,
+				uint32_t( copy_regions.size() ),
+				copy_regions.data()
+			);
+			bb->used_byte_size				= 0;
+		}
 	}
 
 	pushed_mesh_count					= 0;
