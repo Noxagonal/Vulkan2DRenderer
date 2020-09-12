@@ -1,10 +1,13 @@
 #pragma once
 
+// Required Vulkan API version.
+#define VK2D_BUILD_OPTION_VULKAN_MINIMUM_REQUIRED_VERSION				VK_MAKE_VERSION( 1, 2, 0 )
+
 // Enable general debugging.
 // Setting this to 0 will disable all
 // debugging, including Vulkan validation.
 // THIS IS SET BY CMake
-// #define VK2D_DEBUG_ENABLE												1
+// #define VK2D_DEBUG_ENABLE											1
 
 // Use Vulkan validation.
 // Used only if VK2D_DEBUG_ENABLE == 1
@@ -34,7 +37,7 @@
 
 // If using Vulkan validation, show info messages
 // Used only if VK2D_BUILD_OPTION_VULKAN_VALIDATION == 1
-#define VK2D_BUILD_OPTION_VULKAN_VALIDATION_SEVERITY_INFO				0
+#define VK2D_BUILD_OPTION_VULKAN_VALIDATION_SEVERITY_INFO				1
 
 // If using Vulkan validation, show warning messages
 // Used only if VK2D_BUILD_OPTION_VULKAN_VALIDATION == 1

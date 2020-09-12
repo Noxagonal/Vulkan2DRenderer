@@ -179,13 +179,14 @@ vk2d::_internal::SamplerImpl::SamplerImpl(
 	sampler_create_info.maxLod						= create_info.mipmap_max_level_of_detail;
 	sampler_create_info.borderColor					= VkBorderColor::VK_BORDER_COLOR_FLOAT_OPAQUE_BLACK; // CHECK THIS WORKS!
 	sampler_create_info.unnormalizedCoordinates		= VK_FALSE;
-	if( vkCreateSampler(
+	auto result = vkCreateSampler(
 		vk_device,
 		&sampler_create_info,
 		nullptr,
 		&vk_sampler
-	) != VK_SUCCESS ) {
-		instance_parent->Report( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot create Vulkan sampler!" );
+	);
+	if( result != VK_SUCCESS ) {
+		instance_parent->Report( result, "Internal error: Cannot create Vulkan sampler!" );
 		return;
 	}
 
@@ -203,7 +204,7 @@ vk2d::_internal::SamplerImpl::SamplerImpl(
 		VkMemoryPropertyFlagBits::VK_MEMORY_PROPERTY_HOST_CACHED_BIT
 	);
 	if( sampler_data != VK_SUCCESS ) {
-		instance_parent->Report( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot create sampler data!" );
+		instance_parent->Report( sampler_data.result, "Internal error: Cannot create sampler data!" );
 		return;
 	}
 	{

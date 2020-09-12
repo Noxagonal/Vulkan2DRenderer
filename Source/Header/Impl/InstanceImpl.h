@@ -112,6 +112,15 @@ public:
 	vk2d::PFN_VK2D_ReportFunction							GetReportFunction() const;
 
 	void													Report(
+		VkResult											vk_result,
+		vk2d::ReportSeverity								severity,
+		const std::string								&	message );
+
+	void													Report(
+		VkResult											vk_result,
+		const std::string								&	message );
+
+	void													Report(
 		vk2d::ReportSeverity								severity,
 		const std::string								&	message );
 

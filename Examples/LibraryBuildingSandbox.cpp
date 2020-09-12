@@ -12,16 +12,6 @@ constexpr double RAD			= PI * 2.0;
 
 
 
-void VK2D_APIENTRY VK2D_ReportFunction(
-	vk2d::ReportSeverity			severity,
-	std::string						message
-)
-{
-
-}
-
-
-
 class EventHandler : public vk2d::WindowEventHandler {
 public:
 	// Keyboard button was pressed, released or kept down ( repeating ).
@@ -45,7 +35,6 @@ public:
 int main()
 {
 	vk2d::InstanceCreateInfo instance_create_info {};
-	instance_create_info.report_function	= VK2D_ReportFunction;
 	auto instance = vk2d::CreateInstance( instance_create_info );
 	if( !instance ) return -1;
 

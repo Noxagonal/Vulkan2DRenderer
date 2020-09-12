@@ -33,13 +33,14 @@ class ResourceManager;
 
 
 enum class ReportSeverity : uint32_t {
-	NONE					= 0,	// Not valid severity value
-	VERBOSE,						// Reports everything, usually tmi.
-	INFO,							// Useful to know what the application is doing
-	PERFORMANCE_WARNING,			// Serious bottlenecks in performance somewhere, you should check it out
-	WARNING,						// Failed to load a resource so something might be missing but can still continue with visual defects
-	NON_CRITICAL_ERROR,				// Error that still allows the application to continue running, might not get a picture though
-	CRITICAL_ERROR,					// Critical error, abandon ship, application has no option but to terminate... Immediately
+	NONE					= 0,	// Not valid severity value, used to detect invalid severity values.
+	VERBOSE,						// Reports everything, usually too much information.
+	INFO,							// Useful to know what the application is doing.
+	PERFORMANCE_WARNING,			// Serious bottlenecks in performance somewhere, you should check it out.
+	WARNING,						// Failed to load a resource so something might be missing but can still continue with visual defects.
+	NON_CRITICAL_ERROR,				// Error that still allows the application to continue running, might not get a picture though.
+	CRITICAL_ERROR,					// Critical error, application has no option but to terminate immediately.
+	DEVICE_LOST,					// Similar to critical error, this means the GPU crashed and we need to terminate immediately.
 };
 
 

@@ -50,6 +50,7 @@ void VK2D_APIENTRY VK2D_default_ReportFunction(
 		vk2d::SetConsoleColor( vk2d::ConsoleColor::RED );
 		break;
 	case vk2d::ReportSeverity::CRITICAL_ERROR:
+	case vk2d::ReportSeverity::DEVICE_LOST:
 		vk2d::SetConsoleColor( vk2d::ConsoleColor::WHITE, vk2d::ConsoleColor::DARK_RED );
 		break;
 	default:
@@ -60,9 +61,9 @@ void VK2D_APIENTRY VK2D_default_ReportFunction(
 	std::cout << message << "\n";
 	vk2d::SetConsoleColor();
 
-	if( severity == vk2d::ReportSeverity::CRITICAL_ERROR ) {
-
 #if VK2D_BUILD_OPTION_VULKAN_COMMAND_BUFFER_CHECKMARKS && VK2D_BUILD_OPTION_VULKAN_VALIDATION && VK2D_DEBUG_ENABLE
+	if( severity == vk2d::ReportSeverity::DEVICE_LOST ) {
+
 		auto checkpoints = vk2d::_internal::GetCommandBufferCheckpoints();
 		if( checkpoints.size() ) {
 			std::cout << "\n\nLatest command buffer checkpoint marker stages: " << checkpoints.size() << "\n";
@@ -90,13 +91,16 @@ void VK2D_APIENTRY VK2D_default_ReportFunction(
 			}
 			delete reinterpret_cast<CommandBufferCheckpointData*>( checkpoints[ 0 ].pCheckpointMarker );
 		}
+	}
 #endif
 
+	if( severity >= vk2d::ReportSeverity::NON_CRITICAL_ERROR ) {
 #ifdef _WIN32
 		MessageBox( NULL, message.c_str(), "Critical error!", MB_OK | MB_ICONERROR );
 #endif
-
-		std::exit( -1 );
+		if( severity >= vk2d::ReportSeverity::CRITICAL_ERROR ) {
+			std::exit( -1 );
+		}
 	}
 }
 
@@ -287,7 +291,7 @@ vk2d::_internal::InstanceImpl::InstanceImpl( const InstanceCreateInfo & instance
 	if( !PickPhysicalDevice() ) return;
 	if( !CreateDeviceAndQueues() ) return;
 
-#if VK2D_BUILD_OPTION_VULKAN_COMMAND_BUFFER_CHECKMARKS && VK2D_BUILD_OPTION_VULKAN_VALIDATION && VK2D_DEBUG_ENABLE
+	#if VK2D_BUILD_OPTION_VULKAN_COMMAND_BUFFER_CHECKMARKS && VK2D_BUILD_OPTION_VULKAN_VALIDATION && VK2D_DEBUG_ENABLE
 	if( instance_count == 1 ) {
 		vk2d::_internal::SetCommandBufferCheckpointQueue(
 			vk_device,
@@ -295,7 +299,7 @@ vk2d::_internal::InstanceImpl::InstanceImpl( const InstanceCreateInfo & instance
 			primary_render_queue.GetQueueMutex()
 		);
 	}
-#endif
+	#endif
 
 	if( !CreateDescriptorSetLayouts() ) return;
 	if( !CreateDescriptorPool() ) return;
@@ -530,8 +534,11 @@ void vk2d::_internal::InstanceImpl::DestroyRenderTargetTexture(
 	vk2d::RenderTargetTexture						*	render_target_texture
 )
 {
-	if( vkDeviceWaitIdle( vk_device ) != VK_SUCCESS ) {
-		Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Device lost!" );
+	auto result = vkDeviceWaitIdle(
+		vk_device
+	);
+	if( result != VK_SUCCESS ) {
+		Report( result, "Cannot destroy render target, error waiting device!" );
 	}
 
 	auto it = render_target_textures.begin();
@@ -575,8 +582,11 @@ void vk2d::_internal::InstanceImpl::DestroySampler(
 	vk2d::Sampler					*	sampler
 )
 {
-	if( vkDeviceWaitIdle( vk_device ) != VK_SUCCESS ) {
-		Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Device lost!" );
+	auto result = vkDeviceWaitIdle(
+		vk_device
+	);
+	if( result != VK_SUCCESS ) {
+		Report( result, "Cannot destroy sampler, error waiting device!" );
 	}
 
 	auto it = samplers.begin();
@@ -622,12 +632,107 @@ vk2d::PFN_VK2D_ReportFunction vk2d::_internal::InstanceImpl::GetReportFunction()
 }
 
 void vk2d::_internal::InstanceImpl::Report(
+	VkResult					vk_result,
 	vk2d::ReportSeverity		severity,
 	const std::string		&	message
 )
 {
 	if( report_function ) {
 		std::lock_guard<std::mutex> report_lock( report_mutex );
+
+		if( vk_result == VK_ERROR_DEVICE_LOST ) severity = vk2d::ReportSeverity::DEVICE_LOST;
+
+		report_function(
+			severity,
+			message
+		);
+	}
+}
+
+void vk2d::_internal::InstanceImpl::Report(
+	VkResult					vk_result,
+	const std::string		&	message )
+{
+	if( report_function ) {
+		std::lock_guard<std::mutex> report_lock( report_mutex );
+
+		auto severity = vk2d::ReportSeverity::NONE;
+
+		switch( vk_result ) {
+			case VK_SUCCESS:
+			case VK_THREAD_IDLE_KHR:
+			case VK_THREAD_DONE_KHR:
+			case VK_OPERATION_DEFERRED_KHR:
+			case VK_OPERATION_NOT_DEFERRED_KHR:
+				severity = vk2d::ReportSeverity::VERBOSE;
+				break;
+
+			case VK_PIPELINE_COMPILE_REQUIRED_EXT:
+				severity = vk2d::ReportSeverity::INFO;
+				break;
+
+			case VK_NOT_READY:
+			case VK_TIMEOUT:
+			case VK_EVENT_SET:
+			case VK_EVENT_RESET:
+			case VK_INCOMPLETE:
+			case VK_SUBOPTIMAL_KHR:
+				severity = vk2d::ReportSeverity::WARNING;
+				break;
+
+			case VK_ERROR_OUT_OF_HOST_MEMORY:
+			case VK_ERROR_OUT_OF_DEVICE_MEMORY:
+			case VK_ERROR_MEMORY_MAP_FAILED:
+			case VK_ERROR_TOO_MANY_OBJECTS:
+			case VK_ERROR_FORMAT_NOT_SUPPORTED:
+			case VK_ERROR_FRAGMENTED_POOL:
+			case VK_ERROR_OUT_OF_POOL_MEMORY:
+			case VK_ERROR_FRAGMENTATION:
+			case VK_ERROR_OUT_OF_DATE_KHR:
+				severity = vk2d::ReportSeverity::NON_CRITICAL_ERROR;
+				break;
+
+			case VK_ERROR_INITIALIZATION_FAILED:
+			case VK_ERROR_LAYER_NOT_PRESENT:
+			case VK_ERROR_EXTENSION_NOT_PRESENT:
+			case VK_ERROR_FEATURE_NOT_PRESENT:
+			case VK_ERROR_INCOMPATIBLE_DRIVER:
+			case VK_ERROR_UNKNOWN:
+			case VK_ERROR_INVALID_EXTERNAL_HANDLE:
+			case VK_ERROR_INVALID_OPAQUE_CAPTURE_ADDRESS:
+			case VK_ERROR_SURFACE_LOST_KHR:
+			case VK_ERROR_NATIVE_WINDOW_IN_USE_KHR:
+			case VK_ERROR_INCOMPATIBLE_DISPLAY_KHR:
+			case VK_ERROR_VALIDATION_FAILED_EXT:
+			case VK_ERROR_INVALID_SHADER_NV:
+			case VK_ERROR_INCOMPATIBLE_VERSION_KHR:
+			case VK_ERROR_INVALID_DRM_FORMAT_MODIFIER_PLANE_LAYOUT_EXT:
+			case VK_ERROR_NOT_PERMITTED_EXT:
+			case VK_ERROR_FULL_SCREEN_EXCLUSIVE_MODE_LOST_EXT:
+				severity = vk2d::ReportSeverity::CRITICAL_ERROR;
+				break;
+
+			case VK_ERROR_DEVICE_LOST:
+				severity = vk2d::ReportSeverity::DEVICE_LOST;
+				break;
+
+			default:
+				severity = vk2d::ReportSeverity::CRITICAL_ERROR;
+				break;
+		}
+
+		report_function(
+			severity,
+			message
+		);
+	}
+}
+
+void vk2d::_internal::InstanceImpl::Report( vk2d::ReportSeverity severity, const std::string & message )
+{
+	if( report_function ) {
+		std::lock_guard<std::mutex> report_lock( report_mutex );
+
 		report_function(
 			severity,
 			message
@@ -959,15 +1064,16 @@ VkPipeline vk2d::_internal::InstanceImpl::CreateVulkanPipeline(
 	pipeline_create_info.basePipelineIndex		= 0;
 
 	VkPipeline pipeline {};
-	if( vkCreateGraphicsPipelines(
+	auto result = vkCreateGraphicsPipelines(
 		vk_device,
 		GetVulkanPipelineCache(),
 		1,
 		&pipeline_create_info,
 		nullptr,
 		&pipeline
-	) != VK_SUCCESS ) {
-		Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot create Vulkan graphics pipeline!" );
+	);
+	if( result != VK_SUCCESS ) {
+		Report( result, "Internal error: Cannot create Vulkan graphics pipeline!" );
 		return {};
 	}
 
@@ -1093,10 +1199,14 @@ VkBool32 VKAPI_PTR DebugMessenger(
 	auto instance = reinterpret_cast<vk2d::_internal::InstanceImpl*>( pUserData );
 	assert( instance );
 
-	std::cout << ss_message.str();
-	#if _WIN32
-	MessageBox( NULL, ss_message.str().c_str(), ss_title.str().c_str(), MB_OK | MB_ICONERROR );
-	#endif
+	instance->GetReportFunction()( vk2d_severity, ss_message.str() );
+
+	//std::cout << ss_message.str();
+	//#if _WIN32
+	//if( messageSeverity >= VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT ) {
+	//	MessageBox( NULL, ss_message.str().c_str(), ss_title.str().c_str(), MB_OK | MB_ICONERROR );
+	//}
+	//#endif
 
 	return VK_FALSE;
 }
@@ -1171,6 +1281,8 @@ bool vk2d::_internal::InstanceImpl::CreateInstance()
 #endif
 
 	{
+		assert( VK_HEADER_VERSION_COMPLETE >= VK2D_BUILD_OPTION_VULKAN_MINIMUM_REQUIRED_VERSION );
+
 		VkApplicationInfo application_info {};
 		application_info.sType				= VK_STRUCTURE_TYPE_APPLICATION_INFO;
 		application_info.pNext				= nullptr;
@@ -1178,7 +1290,7 @@ bool vk2d::_internal::InstanceImpl::CreateInstance()
 		application_info.applicationVersion	= create_info_copy.application_version.ToVulkanVersion();
 		application_info.pEngineName		= create_info_copy.engine_name.c_str();
 		application_info.engineVersion		= create_info_copy.engine_version.ToVulkanVersion();
-		application_info.apiVersion			= VK_API_VERSION_1_0;
+		application_info.apiVersion			= VK2D_BUILD_OPTION_VULKAN_MINIMUM_REQUIRED_VERSION;
 
 		VkInstanceCreateInfo instance_create_info {};
 		instance_create_info.sType						= VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
@@ -1194,13 +1306,13 @@ bool vk2d::_internal::InstanceImpl::CreateInstance()
 		instance_create_info.enabledExtensionCount		= uint32_t( instance_extensions.size() );
 		instance_create_info.ppEnabledExtensionNames	= instance_extensions.data();
 
-		VkResult result = vkCreateInstance(
+		auto result = vkCreateInstance(
 			&instance_create_info,
 			nullptr,
 			&vk_instance
 		);
 		if( result != VK_SUCCESS ) {
-			Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot create vulkan instance!" );
+			Report( result, "Internal error: Cannot create vulkan instance!" );
 			return false;
 		}
 	}
@@ -1209,7 +1321,7 @@ bool vk2d::_internal::InstanceImpl::CreateInstance()
 	{
 		auto createDebugUtilsMessenger = (PFN_vkCreateDebugUtilsMessengerEXT)vkGetInstanceProcAddr( vk_instance, "vkCreateDebugUtilsMessengerEXT" );
 		if( !createDebugUtilsMessenger ) {
-			Report( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot create vulkan debug object!" );
+			Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot create vulkan debug object!" );
 			return false;
 		}
 		auto result = createDebugUtilsMessenger(
@@ -1219,7 +1331,7 @@ bool vk2d::_internal::InstanceImpl::CreateInstance()
 			&vk_debug_utils_messenger
 		);
 		if( result != VK_SUCCESS ) {
-			Report( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot create vulkan debug object!" );
+			Report( result, "Internal error: Cannot create vulkan debug object!" );
 			return false;
 		}
 	}
@@ -1317,7 +1429,7 @@ bool vk2d::_internal::InstanceImpl::CreateDeviceAndQueues()
 		&vk_device
 	);
 	if( result != VK_SUCCESS ) {
-		Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot create Vulkan device!" );
+		Report( result, "Internal error: Cannot create Vulkan device!" );
 		return false;
 	}
 
@@ -1396,13 +1508,14 @@ bool vk2d::_internal::InstanceImpl::CreatePipelineCache()
 	pipeline_cache_create_info.initialDataSize		= 0;
 	pipeline_cache_create_info.pInitialData			= nullptr;
 
-	if( vkCreatePipelineCache(
+	auto result = vkCreatePipelineCache(
 		vk_device,
 		&pipeline_cache_create_info,
 		nullptr,
 		&vk_pipeline_cache
-	) != VK_SUCCESS ) {
-		Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot create Vulkan pipeline cache!" );
+	);
+	if( result != VK_SUCCESS ) {
+		Report( result, "Internal error: Cannot create Vulkan pipeline cache!" );
 		return false;
 	}
 
@@ -1432,13 +1545,14 @@ bool vk2d::_internal::InstanceImpl::CreateShaderModules()
 		shader_create_info.pCode		= code;
 
 		VkShaderModule shader_module {};
-		if( vkCreateShaderModule(
+		auto result = vkCreateShaderModule(
 			vk_device,
 			&shader_create_info,
 			nullptr,
 			&shader_module
-		) != VK_SUCCESS ) {
-			Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot create Vulkan shader module!" );
+		);
+		if( result != VK_SUCCESS ) {
+			Report( result, "Internal error: Cannot create Vulkan shader module!" );
 			return {};
 		}
 		return shader_module;
@@ -1661,13 +1775,14 @@ bool vk2d::_internal::InstanceImpl::CreatePipelineLayout()
 	pipeline_layout_create_info.pushConstantRangeCount	= uint32_t( push_constant_ranges.size() );
 	pipeline_layout_create_info.pPushConstantRanges		= push_constant_ranges.data();
 
-	if( vkCreatePipelineLayout(
+	auto result = vkCreatePipelineLayout(
 		vk_device,
 		&pipeline_layout_create_info,
 		nullptr,
 		&vk_pipeline_layout
-	) != VK_SUCCESS ) {
-		Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot create Vulkan pipeline layout!" );
+	);
+	if( result != VK_SUCCESS ) {
+		Report( result, "Internal error: Cannot create Vulkan pipeline layout!" );
 		return false;
 	}
 
@@ -1885,15 +2000,31 @@ void vk2d::_internal::InstanceImpl::DestroyDefaultTexture()
 
 std::vector<VkPhysicalDevice> vk2d::_internal::InstanceImpl::EnumeratePhysicalDevices()
 {
+	auto result = VK_SUCCESS;
+
 	uint32_t physical_device_count		= UINT32_MAX;
-	if( vkEnumeratePhysicalDevices( vk_instance, &physical_device_count, nullptr ) == VK_SUCCESS ) {
-		std::vector<VkPhysicalDevice> physical_devices( physical_device_count );
-		if( vkEnumeratePhysicalDevices( vk_instance, &physical_device_count, physical_devices.data() ) == VK_SUCCESS ) {
-			return physical_devices;
-		}
+	result = vkEnumeratePhysicalDevices(
+		vk_instance,
+		&physical_device_count,
+		nullptr
+	);
+	if( result != VK_SUCCESS ) {
+		Report( result, "Internal error: Cannot enumerate physical devices!" );
+		return {};
 	}
-	Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot enumerate physical devices!" );
-	return {};
+
+	std::vector<VkPhysicalDevice> physical_devices( physical_device_count );
+	result = vkEnumeratePhysicalDevices(
+		vk_instance,
+		&physical_device_count,
+		physical_devices.data()
+	);
+	if( result != VK_SUCCESS ) {
+		Report( result, "Internal error: Cannot enumerate physical devices!" );
+		return {};
+	}
+
+	return physical_devices;
 }
 
 

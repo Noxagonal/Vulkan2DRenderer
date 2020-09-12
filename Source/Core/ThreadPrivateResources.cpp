@@ -71,46 +71,49 @@ bool vk2d::_internal::ThreadLoaderResource::ThreadBegin()
 
 		{
 			command_pool_create_info.queueFamilyIndex	= primary_render_queue_family_index;
-			if( vkCreateCommandPool(
+			auto result = vkCreateCommandPool(
 				device,
 				&command_pool_create_info,
 				nullptr,
 				&primary_render_command_pool
-			) != VK_SUCCESS ) {
+			);
+			if( result != VK_SUCCESS ) {
 				std::stringstream ss;
 				ss << "Internal error: Cannot create Vulkan command pool for primary render queue in thread: "
 					<< std::this_thread::get_id();
-				instance_parent->Report( vk2d::ReportSeverity::CRITICAL_ERROR, ss.str() );
+				instance_parent->Report( result, ss.str() );
 				return false;
 			}
 		}
 		{
 			command_pool_create_info.queueFamilyIndex	= secondary_render_queue_family_index;
-			if( vkCreateCommandPool(
+			auto result = vkCreateCommandPool(
 				device,
 				&command_pool_create_info,
 				nullptr,
 				&secondary_render_command_pool
-			) != VK_SUCCESS ) {
+			);
+			if( result != VK_SUCCESS ) {
 				std::stringstream ss;
 				ss << "Internal error: Cannot create Vulkan command pool for secondary render queue in thread: "
 					<< std::this_thread::get_id();
-				instance_parent->Report( vk2d::ReportSeverity::CRITICAL_ERROR, ss.str() );
+				instance_parent->Report( result, ss.str() );
 				return false;
 			}
 		}
 		{
 			command_pool_create_info.queueFamilyIndex	= primary_transfer_queue_family_index;
-			if( vkCreateCommandPool(
+			auto result = vkCreateCommandPool(
 				device,
 				&command_pool_create_info,
 				nullptr,
 				&primary_transfer_command_pool
-			) != VK_SUCCESS ) {
+			);
+			if( result != VK_SUCCESS ) {
 				std::stringstream ss;
 				ss << "Internal error: Cannot create Vulkan command pool for primary transfer queue in thread: "
 					<< std::this_thread::get_id();
-				instance_parent->Report( vk2d::ReportSeverity::CRITICAL_ERROR, ss.str() );
+				instance_parent->Report( result, ss.str() );
 				return false;
 			}
 		}
