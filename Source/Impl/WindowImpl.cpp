@@ -363,7 +363,7 @@ vk2d::_internal::WindowImpl::~WindowImpl()
 
 	mesh_buffer		= nullptr;
 
-	instance_parent->GetDescriptorPool()->FreeDescriptorSet( frame_data_descriptor_set );
+	instance_parent->FreeDescriptorSet( frame_data_descriptor_set );
 	instance_parent->GetDeviceMemoryPool()->FreeCompleteResource( frame_data_device_buffer );
 	instance_parent->GetDeviceMemoryPool()->FreeCompleteResource( frame_data_staging_buffer );
 
@@ -2832,7 +2832,7 @@ bool vk2d::_internal::WindowImpl::CreateWindowFrameDataBuffer()
 
 	// Create descriptor set
 	{
-		frame_data_descriptor_set	= instance_parent->GetDescriptorPool()->AllocateDescriptorSet(
+		frame_data_descriptor_set	= instance_parent->AllocateDescriptorSet(
 			instance_parent->GetUniformBufferDescriptorSetLayout()
 		);
 		if( frame_data_descriptor_set != VK_SUCCESS ) {
@@ -2977,7 +2977,7 @@ void vk2d::_internal::WindowImpl::CmdBindTextureSamplerIfDifferent(
 		// If this descriptor set doesn't exist yet for this
 		// sampler texture combo, create one and update it.
 		if( set.descriptor_set.descriptorSet == VK_NULL_HANDLE ) {
-			set.descriptor_set = instance_parent->GetDescriptorPool()->AllocateDescriptorSet(
+			set.descriptor_set = instance_parent->AllocateDescriptorSet(
 				instance_parent->GetSamplerTextureDescriptorSetLayout()
 			);
 

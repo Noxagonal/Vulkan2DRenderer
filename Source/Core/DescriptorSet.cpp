@@ -166,10 +166,13 @@ vk2d::_internal::DescriptorAutoPool::~DescriptorAutoPool()
 vk2d::_internal::PoolDescriptorSet vk2d::_internal::DescriptorAutoPool::AllocateDescriptorSet(
 	const DescriptorSetLayout		&	rForDescriptorSetLayout )
 {
-	TODO;
+	VK2D_ASSERT_SINGLE_THREAD_ACCESS_SCOPE();
+
+	// FIXME: multiple thread access conflict.
 	// This function will be called from multiple threads, possibly often.
 	// Need a mutex or per thread descriptor auto pool.
-	// Alternatively force access to single thread only.
+	// Alternatively force access to single thread only
+	// and require descriptor set allocation via instance.
 
 	const auto & setPoolRequirements	= rForDescriptorSetLayout.GetDescriptorPoolRequirements();
 	PoolDescriptorSet ret				= {};
@@ -309,6 +312,8 @@ void vk2d::_internal::DescriptorAutoPool::FreeDescriptorSet(
 	vk2d::_internal::PoolDescriptorSet		&	rDescriptorSet
 )
 {
+	VK2D_ASSERT_SINGLE_THREAD_ACCESS_SCOPE();
+
 	if( rDescriptorSet.allocated ) {
 		assert( rDescriptorSet.parentPool );
 		auto it = poolCategories.begin();

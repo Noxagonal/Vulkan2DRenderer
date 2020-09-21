@@ -21,7 +21,7 @@ class WindowImpl;
 class CursorImpl;
 class MonitorImpl;
 
-void UpdateMonitorLists();
+void UpdateMonitorLists( bool globals_locked );
 } // _internal
 
 
@@ -280,7 +280,7 @@ private:
 class Monitor {
 	friend class vk2d::Window;
 	friend class vk2d::_internal::WindowImpl;
-	friend void vk2d::_internal::UpdateMonitorLists();
+	friend void vk2d::_internal::UpdateMonitorLists( bool globals_locked );
 
 	// Monitor constructor from implementation directly, used internally.
 	VK2D_API																				Monitor(

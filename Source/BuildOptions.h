@@ -37,7 +37,7 @@
 
 // If using Vulkan validation, show info messages
 // Used only if VK2D_BUILD_OPTION_VULKAN_VALIDATION == 1
-#define VK2D_BUILD_OPTION_VULKAN_VALIDATION_SEVERITY_INFO				1
+#define VK2D_BUILD_OPTION_VULKAN_VALIDATION_SEVERITY_INFO				0
 
 // If using Vulkan validation, show warning messages
 // Used only if VK2D_BUILD_OPTION_VULKAN_VALIDATION == 1

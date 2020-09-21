@@ -18,6 +18,8 @@ vk2d::_internal::TextureImpl(
 	instance
 )
 {
+	// TODO: Enforce that the same thread that created instance, also creates RenderTargetTextureImpl.
+
 	this->instance			= instance;
 	assert( this->instance );
 
@@ -1168,7 +1170,7 @@ bool vk2d::_internal::RenderTargetTextureImpl::CreateFrameDataBuffers()
 
 	// Create descriptor set
 	{
-		frame_data_descriptor_set	= instance->GetDescriptorPool()->AllocateDescriptorSet(
+		frame_data_descriptor_set	= instance->AllocateDescriptorSet(
 			instance->GetUniformBufferDescriptorSetLayout()
 		);
 		if( frame_data_descriptor_set != VK_SUCCESS ) {
@@ -1202,7 +1204,7 @@ bool vk2d::_internal::RenderTargetTextureImpl::CreateFrameDataBuffers()
 
 void vk2d::_internal::RenderTargetTextureImpl::DestroyFrameDataBuffers()
 {
-	instance->GetDescriptorPool()->FreeDescriptorSet(
+	instance->FreeDescriptorSet(
 		frame_data_descriptor_set
 	);
 	instance->GetDeviceMemoryPool()->FreeCompleteResource(
@@ -1921,7 +1923,7 @@ void vk2d::_internal::RenderTargetTextureImpl::CmdBindTextureSamplerIfDifferent(
 		// If this descriptor set doesn't exist yet for this
 		// sampler texture combo, create one and update it.
 		if( set.descriptor_set.descriptorSet == VK_NULL_HANDLE ) {
-			set.descriptor_set = instance->GetDescriptorPool()->AllocateDescriptorSet(
+			set.descriptor_set = instance->AllocateDescriptorSet(
 				instance->GetSamplerTextureDescriptorSetLayout()
 			);
 

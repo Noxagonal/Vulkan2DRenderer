@@ -14,6 +14,11 @@ namespace _internal {
 
 
 
+std::string				VkResultToString( VkResult result );
+std::string				VkPipelineStageFlagBitsToString( VkPipelineStageFlagBits flags );
+
+
+
 enum class CommandBufferCheckpointType : uint32_t {
 	BEGIN_COMMAND_BUFFER,
 	END_COMMAND_BUFFER,
@@ -71,9 +76,26 @@ inline void								CmdInsertCommandBufferCheckpoint(
 
 
 
-std::string				VkResultToString( VkResult result );
-std::string				VkPipelineStageFlagBitsToString( VkPipelineStageFlagBits flags );
+#ifdef VK2D_DEBUG_ENABLE
 
+#define VK2D_ASSERT_MAIN_THREAD( m_p_instance ) assert( m_p_instance->IsThisThreadCreatorThread() );
+
+
+
+class ThreadAccessScopeTracker
+{
+public:
+	ThreadAccessScopeTracker( std::string file, std::string function_name, size_t line );
+	~ThreadAccessScopeTracker();
+
+	std::string		key;
+	std::thread::id	thread_id;
+};
+#define VK2D_ASSERT_SINGLE_THREAD_ACCESS_SCOPE() ThreadAccessScopeTracker m_thread_scope_access_tracker_##__LINE__( __FILE__, __FUNCTION__, __LINE__ )
+
+#else
+
+#endif
 
 
 } // _internal

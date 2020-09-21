@@ -90,6 +90,7 @@ private:
 	bool															is_good									= {};
 };
 
+// TODO: Remove CreateDescriptorSetLayout() function, we don't really need a factory function here.
 std::unique_ptr<vk2d::_internal::DescriptorSetLayout>				CreateDescriptorSetLayout(
 	vk2d::_internal::InstanceImpl								*	instance,
 	VkDevice														device,
@@ -124,7 +125,7 @@ public:
 																	~DescriptorAutoPool();
 
 	vk2d::_internal::PoolDescriptorSet								AllocateDescriptorSet(
-		const vk2d::_internal::DescriptorSetLayout				&	rForDescriptorSetLaout);
+		const vk2d::_internal::DescriptorSetLayout				&	rForDescriptorSetLayout );
 
 	 void															FreeDescriptorSet(
 		 vk2d::_internal::PoolDescriptorSet						&	pDescriptorSet );
@@ -138,6 +139,7 @@ private:
 	bool															is_good					= {};
 };
 
+// TODO: Remove CreateDescriptorAutoPool() function, we don't really need a factory function here.
 std::unique_ptr<vk2d::_internal::DescriptorAutoPool>				CreateDescriptorAutoPool(
 	vk2d::_internal::InstanceImpl								*	instance,
 	VkDevice														device );

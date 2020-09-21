@@ -253,14 +253,13 @@ public:
 
 		// Create descriptor set
 		{
-			auto descriptor_pool	= instance->GetDescriptorPool();
-
 			switch( descriptor_set_type ) {
 			case vk2d::_internal::MeshBufferDescriptorSetType::NONE:
 				break;
 			case vk2d::_internal::MeshBufferDescriptorSetType::UNIFORM:
 			{
-				descriptor_set			= descriptor_pool->AllocateDescriptorSet( instance->GetUniformBufferDescriptorSetLayout() );
+				// TODO: MeshBufferBlock::descriptor_set allocation and freeing needs to be thread specific instead of allocating from the instance.
+				descriptor_set			= instance->AllocateDescriptorSet( instance->GetUniformBufferDescriptorSetLayout() );
 
 				VkDescriptorBufferInfo descriptor_write_buffer_info {};
 				descriptor_write_buffer_info.buffer		= device_buffer.buffer;
@@ -286,7 +285,8 @@ public:
 				break;
 			case vk2d::_internal::MeshBufferDescriptorSetType::STORAGE:
 			{
-				descriptor_set			= descriptor_pool->AllocateDescriptorSet( instance->GetStorageBufferDescriptorSetLayout() );
+				// TODO: MeshBufferBlock::descriptor_set allocation and freeing needs to be thread specific instead of allocating from the instance.
+				descriptor_set			= instance->AllocateDescriptorSet( instance->GetStorageBufferDescriptorSetLayout() );
 
 				VkDescriptorBufferInfo descriptor_write_buffer_info {};
 				descriptor_write_buffer_info.buffer		= device_buffer.buffer;
@@ -320,10 +320,10 @@ public:
 
 	~MeshBufferBlock()
 	{
-		auto descriptor_pool	= mesh_buffer_parent->instance_parent->GetDescriptorPool();
 		auto memory_pool		= mesh_buffer_parent->instance_parent->GetDeviceMemoryPool();
 
-		descriptor_pool->FreeDescriptorSet( descriptor_set );
+		// TODO: MeshBufferBlock::descriptor_set allocation and freeing needs to be thread specific instead of allocating from the instance.
+		mesh_buffer_parent->instance_parent->FreeDescriptorSet( descriptor_set );
 		memory_pool->FreeCompleteResource( device_buffer );
 		memory_pool->FreeCompleteResource( staging_buffer );
 	}
