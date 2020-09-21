@@ -858,7 +858,7 @@ bool vk2d::_internal::WindowImpl::EndRender()
 		return false;
 	}
 
-	// Synchronize the previous frame here, this waits for the previous
+	// SynchronizeFrame the previous frame here, this waits for the previous
 	// frame to finish fully rendering before continuing execution.
 	if( !SynchronizeFrame() ) {
 		instance_parent->Report( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot synchronize frame, cannot output to window!" );
@@ -918,7 +918,18 @@ bool vk2d::_internal::WindowImpl::EndRender()
 
 	// Submit swapchain image
 	{
+		if( !CommitRenderTargetTextureRender() ) {
+			CancelRenderTargetTextureRender();
+			instance_parent->Report(
+				vk2d::ReportSeverity::NON_CRITICAL_ERROR,
+				"Internal error: Cannot commit render target textures for rendering!"
+			);
+			return false;
+		}
+
 		std::vector<VkSubmitInfo> submit_infos( 2 );
+
+		// TODO: Collect render target dependencies for semaphore wait.
 
 		submit_infos[ 0 ].sType						= VK_STRUCTURE_TYPE_SUBMIT_INFO;
 		submit_infos[ 0 ].pNext						= nullptr;
@@ -946,6 +957,7 @@ bool vk2d::_internal::WindowImpl::EndRender()
 			vk_gpu_to_cpu_frame_fences[ next_image ]
 		);
 		if( result != VK_SUCCESS ) {
+			CancelRenderTargetTextureRender();
 			instance_parent->Report(
 				result,
 				"Internal error: Cannot submit frame end command buffers!"
@@ -990,6 +1002,8 @@ bool vk2d::_internal::WindowImpl::EndRender()
 			}
 		}
 	}
+
+	//ClearRenderTargetTextureDepencies();
 
 	previous_image						= next_image;
 	previous_frame_need_synchronization	= true;
@@ -1300,7 +1314,7 @@ vk2d::CursorState vk2d::_internal::WindowImpl::GetCursorState()
 void vk2d::_internal::WindowImpl::DrawTriangleList(
 	const std::vector<vk2d::VertexIndex_3>	&	indices,
 	const std::vector<vk2d::Vertex>			&	vertices,
-	const std::vector<float>				&	texture_channels,
+	const std::vector<float>				&	texture_channel_weights,
 	bool										filled,
 	vk2d::Texture							*	texture,
 	vk2d::Sampler							*	sampler
@@ -1318,7 +1332,7 @@ void vk2d::_internal::WindowImpl::DrawTriangleList(
 	DrawTriangleList(
 		raw_indices,
 		vertices,
-		texture_channels,
+		texture_channel_weights,
 		filled,
 		texture,
 		sampler
@@ -1345,6 +1359,8 @@ void vk2d::_internal::WindowImpl::DrawTriangleList(
 	if( !sampler ) {
 		sampler = instance_parent->GetDefaultSampler();
 	}
+
+	CheckAndAddRenderTargetTextureDependency( texture );
 
 	{
 		bool multitextured = texture->GetLayerCount() > 1 &&
@@ -1381,28 +1397,28 @@ void vk2d::_internal::WindowImpl::DrawTriangleList(
 		vertices,
 		texture_channel_weights );
 
-	{
-		PushConstants pc {};
-		pc.index_offset				= push_result.location_info.index_offset;
-		pc.index_count				= 3;
-		pc.vertex_offset			= push_result.location_info.vertex_offset;
-		pc.texture_channel_offset	= push_result.location_info.texture_channel_offset;
-		pc.texture_channel_count	= texture->GetLayerCount();
-
-		vkCmdPushConstants(
-			command_buffer,
-			instance_parent->GetVulkanPipelineLayout(),
-			VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
-			0, sizeof( pc ),
-			&pc
-		);
-	}
-
 	if( push_result.success ) {
+		{
+			PushConstants pc {};
+			pc.index_offset				= push_result.location_info.index_offset;
+			pc.index_count				= 3;
+			pc.vertex_offset			= push_result.location_info.vertex_offset;
+			pc.texture_channel_offset	= push_result.location_info.texture_channel_offset;
+			pc.texture_channel_count	= texture->GetLayerCount();
+
+			vkCmdPushConstants(
+				command_buffer,
+				instance_parent->GetVulkanPipelineLayout(),
+				VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
+				0, sizeof( pc ),
+				&pc
+			);
+		}
+
 		vk2d::_internal::CmdInsertCommandBufferCheckpoint(
 			command_buffer,
 			"MeshBuffer",
-			vk2d::_internal::CommandBufferCheckpointType::BEGIN_DRAW
+			vk2d::_internal::CommandBufferCheckpointType::DRAW
 		);
 		vkCmdDrawIndexed(
 			command_buffer,
@@ -1411,11 +1427,6 @@ void vk2d::_internal::WindowImpl::DrawTriangleList(
 			push_result.location_info.index_offset,
 			int32_t( push_result.location_info.vertex_offset ),
 			0
-		);
-		vk2d::_internal::CmdInsertCommandBufferCheckpoint(
-			command_buffer,
-			"MeshBuffer",
-			vk2d::_internal::CommandBufferCheckpointType::END_DRAW
 		);
 	} else {
 		instance_parent->Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot push mesh into mesh render queue!" );
@@ -1470,6 +1481,8 @@ void vk2d::_internal::WindowImpl::DrawLineList(
 		sampler = instance_parent->GetDefaultSampler();
 	}
 
+	CheckAndAddRenderTargetTextureDependency( texture );
+
 	{
 		bool multitextured = texture->GetLayerCount() > 1 &&
 			texture_channel_weights.size() >= texture->GetLayerCount() * vertices.size();
@@ -1505,28 +1518,28 @@ void vk2d::_internal::WindowImpl::DrawLineList(
 		vertices,
 		texture_channel_weights );
 
-	{
-		PushConstants pc {};
-		pc.index_offset				= push_result.location_info.index_offset;
-		pc.index_count				= 2;
-		pc.vertex_offset			= push_result.location_info.vertex_offset;
-		pc.texture_channel_offset	= push_result.location_info.texture_channel_offset;
-		pc.texture_channel_count	= texture->GetLayerCount();
-
-		vkCmdPushConstants(
-			command_buffer,
-			instance_parent->GetVulkanPipelineLayout(),
-			VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
-			0, sizeof( pc ),
-			&pc
-		);
-	}
-
 	if( push_result.success ) {
+		{
+			PushConstants pc {};
+			pc.index_offset				= push_result.location_info.index_offset;
+			pc.index_count				= 2;
+			pc.vertex_offset			= push_result.location_info.vertex_offset;
+			pc.texture_channel_offset	= push_result.location_info.texture_channel_offset;
+			pc.texture_channel_count	= texture->GetLayerCount();
+
+			vkCmdPushConstants(
+				command_buffer,
+				instance_parent->GetVulkanPipelineLayout(),
+				VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
+				0, sizeof( pc ),
+				&pc
+			);
+		}
+
 		vk2d::_internal::CmdInsertCommandBufferCheckpoint(
 			command_buffer,
 			"MeshBuffer",
-			vk2d::_internal::CommandBufferCheckpointType::BEGIN_DRAW
+			vk2d::_internal::CommandBufferCheckpointType::DRAW
 		);
 		vkCmdDrawIndexed(
 			command_buffer,
@@ -1535,11 +1548,6 @@ void vk2d::_internal::WindowImpl::DrawLineList(
 			push_result.location_info.index_offset,
 			int32_t( push_result.location_info.vertex_offset ),
 			0
-		);
-		vk2d::_internal::CmdInsertCommandBufferCheckpoint(
-			command_buffer,
-			"MeshBuffer",
-			vk2d::_internal::CommandBufferCheckpointType::END_DRAW
 		);
 	} else {
 		instance_parent->Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot push mesh into mesh render queue!" );
@@ -1563,6 +1571,8 @@ void vk2d::_internal::WindowImpl::DrawPointList(
 	if( !sampler ) {
 		sampler = instance_parent->GetDefaultSampler();
 	}
+
+	CheckAndAddRenderTargetTextureDependency( texture );
 
 	{
 		bool multitextured = texture->GetLayerCount() > 1 &&
@@ -1599,28 +1609,28 @@ void vk2d::_internal::WindowImpl::DrawPointList(
 		vertices,
 		texture_channel_weights );
 
-	{
-		PushConstants pc {};
-		pc.index_offset				= push_result.location_info.index_offset;
-		pc.index_count				= 1;
-		pc.vertex_offset			= push_result.location_info.vertex_offset;
-		pc.texture_channel_offset	= push_result.location_info.texture_channel_offset;
-		pc.texture_channel_count	= texture->GetLayerCount();
-
-		vkCmdPushConstants(
-			command_buffer,
-			instance_parent->GetVulkanPipelineLayout(),
-			VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
-			0, sizeof( pc ),
-			&pc
-		);
-	}
-
 	if( push_result.success ) {
+		{
+			PushConstants pc {};
+			pc.index_offset				= push_result.location_info.index_offset;
+			pc.index_count				= 1;
+			pc.vertex_offset			= push_result.location_info.vertex_offset;
+			pc.texture_channel_offset	= push_result.location_info.texture_channel_offset;
+			pc.texture_channel_count	= texture->GetLayerCount();
+
+			vkCmdPushConstants(
+				command_buffer,
+				instance_parent->GetVulkanPipelineLayout(),
+				VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
+				0, sizeof( pc ),
+				&pc
+			);
+		}
+
 		vk2d::_internal::CmdInsertCommandBufferCheckpoint(
 			command_buffer,
 			"MeshBuffer",
-			vk2d::_internal::CommandBufferCheckpointType::BEGIN_DRAW
+			vk2d::_internal::CommandBufferCheckpointType::DRAW
 		);
 		vkCmdDraw(
 			command_buffer,
@@ -1628,11 +1638,6 @@ void vk2d::_internal::WindowImpl::DrawPointList(
 			1,
 			push_result.location_info.vertex_offset,
 			0
-		);
-		vk2d::_internal::CmdInsertCommandBufferCheckpoint(
-			command_buffer,
-			"MeshBuffer",
-			vk2d::_internal::CommandBufferCheckpointType::END_DRAW
 		);
 	} else {
 		instance_parent->Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot push mesh into mesh render queue!" );
@@ -2859,6 +2864,50 @@ bool vk2d::_internal::WindowImpl::CreateWindowFrameDataBuffer()
 	return true;
 }
 
+bool vk2d::_internal::WindowImpl::CommitRenderTargetTextureRender()
+{
+	for( auto & d : render_target_texture_dependencies ) {
+		if( d.render_target->CommitRenderTargetTextureRender( d ) ) {
+			return false;
+		}
+	}
+	return true;
+}
+
+void vk2d::_internal::WindowImpl::CancelRenderTargetTextureRender()
+{
+	for( auto & d : render_target_texture_dependencies ) {
+		d.render_target->CancelRenderTargetTextureRender( d );
+	}
+}
+//
+//void vk2d::_internal::WindowImpl::ClearRenderTargetTextureDepencies()
+//{
+//	for( auto & d : render_target_texture_dependencies ) {
+//		d.render_target->ClearRenderTargetTextureDepencies( d );
+//	}
+//	render_target_texture_dependencies.clear();
+//}
+
+void vk2d::_internal::WindowImpl::CheckAndAddRenderTargetTextureDependency(
+	vk2d::Texture		*	texture
+)
+{
+	auto render_target = dynamic_cast<vk2d::_internal::RenderTargetTextureImpl*>( texture->texture_impl );
+	if( render_target ) {
+		if( std::none_of(
+			render_target_texture_dependencies.begin(),
+			render_target_texture_dependencies.end(),
+			[ render_target ]( vk2d::_internal::RenderTargetTextureDependencyInfo & rt ) {
+				if( render_target == rt.render_target ) return true;
+				return false;
+			} ) )
+		{
+			render_target_texture_dependencies.push_back( render_target->GetDependencyInfo() );
+		}
+	}
+}
+
 void vk2d::_internal::WindowImpl::HandleScreenshotEvent()
 {
 	assert( screenshot_state == vk2d::_internal::WindowImpl::ScreenshotState::WAITING_EVENT_REPORT );
@@ -2910,7 +2959,8 @@ void vk2d::_internal::WindowImpl::CmdBindPipelineIfDifferent(
 void vk2d::_internal::WindowImpl::CmdBindTextureSamplerIfDifferent(
 	VkCommandBuffer						command_buffer,
 	vk2d::Sampler					*	sampler,
-	vk2d::Texture					*	texture )
+	vk2d::Texture					*	texture
+)
 {
 	// If sampler and texture did not change since last call, do nothing.
 	if( !sampler ) {

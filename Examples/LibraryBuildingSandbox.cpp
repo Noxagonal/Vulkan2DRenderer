@@ -2,13 +2,13 @@
 #include <VK2D.h>
 
 #include <chrono>
+#include <string>
+#include <iostream>
+
+
 
 constexpr double PI				= 3.14159265358979323846;
 constexpr double RAD			= PI * 2.0;
-
-
-#include <string>
-#include <iostream>
 
 
 
@@ -56,6 +56,12 @@ int main()
 
 	auto resource_manager = instance->GetResourceManager();
 	auto texture_resource = resource_manager->LoadTextureResource( "../../Data/GrafGear_128.png" );
+
+	// TODO: Add single thread assert macro to the library, stop if more than a single thread tries to access a scope where this macro is used.
+	// A global std::map with a std::mutex should do the trick.
+
+	// TODO: Similar to single thread assert macro, create macro to assert function was called from main thread.
+	// Should be possible if we store creator thread id into the instance.
 
 	float counter = 0.0f;
 	while( !window->ShouldClose() ) {
@@ -141,16 +147,22 @@ int main()
 		// EDIT: Use timeline semaphores instead of events, waiting on a timeline semaphore does not
 		// reset it.
 
-		// render_target_texture->BeginRender();
+		render_target_texture->BeginRender();
 
-		// render_target_texture->EndRender();
+		render_target_texture->DrawTexture(
+			vk2d::Vector2f( -100, -100 ),
+			vk2d::Vector2f( 100, 100 ),
+			texture_resource
+		);
+
+		render_target_texture->EndRender();
 
 		if( !window->BeginRender() ) return -1;
 
 		window->DrawTexture(
 			vk2d::Vector2f( -100, -100 ),
 			vk2d::Vector2f( 100, 100 ),
-			texture_resource
+			render_target_texture
 		);
 
 		if( !window->EndRender() ) return -1;

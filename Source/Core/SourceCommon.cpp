@@ -109,10 +109,8 @@ std::string vk2d::_internal::CommandBufferCheckpointTypeToString( CommandBufferC
 		return "BIND_INDEX_BUFFER";
 	case vk2d::_internal::CommandBufferCheckpointType::BIND_VERTEX_BUFFER:
 		return "BIND_VERTEX_BUFFER";
-	case vk2d::_internal::CommandBufferCheckpointType::BEGIN_DRAW:
-		return "BEGIN_DRAW";
-	case vk2d::_internal::CommandBufferCheckpointType::END_DRAW:
-		return "END_DRAW";
+	case vk2d::_internal::CommandBufferCheckpointType::DRAW:
+		return "DRAW";
 	case vk2d::_internal::CommandBufferCheckpointType::GENERIC:
 		return "GENERIC";
 	default:

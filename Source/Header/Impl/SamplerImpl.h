@@ -20,12 +20,12 @@ public:
 
 	~SamplerImpl();
 
-	VkSampler									GetVulkanSampler();
-	VkBuffer									GetVulkanBufferForSamplerData();
-	vk2d::Vector2u								GetBorderColorEnable();
-	bool										IsAnyBorderColorEnabled();
+	VkSampler									GetVulkanSampler() const;
+	VkBuffer									GetVulkanBufferForSamplerData() const;
+	vk2d::Vector2u								GetBorderColorEnable() const;
+	bool										IsAnyBorderColorEnabled() const;
 
-	bool										IsGood();
+	bool										IsGood() const;
 
 
 

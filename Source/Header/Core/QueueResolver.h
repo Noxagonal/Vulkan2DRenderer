@@ -30,18 +30,20 @@ public:
 	VkResult								Present(
 		const VkPresentInfoKHR			&	present_info );
 
-	VkQueue									GetQueue();
-	uint32_t								GetQueueFamilyIndex();
-	VkBool32								IsPresentationSupported();
-	std::mutex							*	GetQueueMutex();
-	uint32_t								GetBasedOn();
+	VkQueue									GetQueue() const;
+	uint32_t								GetQueueFamilyIndex() const;
+	VkBool32								IsPresentationSupported() const;
+	const VkQueueFamilyProperties		&	GetQueueFamilyProperties() const;
+	std::mutex							*	GetQueueMutex() const;
+	uint32_t								GetBasedOn() const;
 
 private:
 	VkQueue									queue						= {};	// VkQueue handle.
-	uint32_t								queueFamilyIndex			= {};	// Typical queueFamilyIndex.
-	VkBool32								supportsPresentation		= {};	// VK_TRUE if you can present using this queue, VK_FALSE if you can not.
-	std::shared_ptr<std::mutex>				queueMutex					= {};	// Mutex for queue submissions, only one thread must submit work at a time for single queue.
-	uint32_t								basedOn						= {};	// Which other queue this one is based off.
+	uint32_t								queue_family_index			= {};	// Index of the queue family.
+	VkBool32								supports_presentation		= {};	// VK_TRUE if you can present using this queue, VK_FALSE if you can not.
+	VkQueueFamilyProperties					queue_family_properties		= {};	// Typical VkQueueFamilyProperties.
+	std::shared_ptr<std::mutex>				queue_mutex					= {};	// Mutex for queue submissions, only one thread must submit work at a time for single queue.
+	uint32_t								based_on					= {};	// Which other queue this one is based off.
 };
 
 
@@ -65,7 +67,7 @@ private:
 	struct QueueGetInfo {
 		uint32_t							queueIndex;
 		uint32_t							queueFamilyIndex;
-		uint32_t							basedOn;
+		uint32_t							based_on;
 	};
 	std::vector<VkDeviceQueueCreateInfo>	queueCreateInfos;
 	std::vector<QueueGetInfo>				queueGetInfo;
@@ -73,6 +75,8 @@ private:
 
 	VkInstance								refInstance					= VK_NULL_HANDLE;
 	VkPhysicalDevice						refPhysicalDevice			= VK_NULL_HANDLE;
+
+	std::vector<VkQueueFamilyProperties>	family_properties;
 
 	bool									is_good						= {};
 };

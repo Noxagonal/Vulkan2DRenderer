@@ -63,13 +63,12 @@ VK2D_API bool VK2D_APIENTRY vk2d::RenderTargetTexture::EndRender()
 	return impl->EndRender();
 }
 
-/*
 VK2D_API void VK2D_APIENTRY vk2d::RenderTargetTexture::DrawTriangleList(
 	const std::vector<vk2d::VertexIndex_3>	&	indices,
 	const std::vector<vk2d::Vertex>			&	vertices,
 	const std::vector<float>				&	texture_channels,
 	bool										filled,
-	vk2d::TextureResource					*	texture,
+	vk2d::Texture							*	texture,
 	vk2d::Sampler							*	sampler
 )
 {
@@ -78,8 +77,7 @@ VK2D_API void VK2D_APIENTRY vk2d::RenderTargetTexture::DrawTriangleList(
 		vertices,
 		texture_channels,
 		filled,
-		texture,
-		sampler
+		texture
 	);
 }
 
@@ -87,7 +85,7 @@ VK2D_API void VK2D_APIENTRY vk2d::RenderTargetTexture::DrawLineList(
 	const std::vector<vk2d::VertexIndex_2>	&	indices,
 	const std::vector<vk2d::Vertex>			&	vertices,
 	const std::vector<float>				&	texture_channels,
-	vk2d::TextureResource					*	texture,
+	vk2d::Texture							*	texture,
 	vk2d::Sampler							*	sampler
 )
 {
@@ -95,50 +93,152 @@ VK2D_API void VK2D_APIENTRY vk2d::RenderTargetTexture::DrawLineList(
 		indices,
 		vertices,
 		texture_channels,
-		texture,
-		sampler
+		texture
 	);
 }
 
 VK2D_API void VK2D_APIENTRY vk2d::RenderTargetTexture::DrawPointList(
-	const std::vector<vk2d::Vertex>		&	vertices,
-	const std::vector<float>			&	texture_channels,
-	vk2d::TextureResource				*	texture,
-	vk2d::Sampler						*	sampler
+	const std::vector<vk2d::Vertex>			&	vertices,
+	const std::vector<float>				&	texture_channels,
+	vk2d::Texture							*	texture,
+	vk2d::Sampler							*	sampler
 )
 {
 	impl->DrawPointList(
 		vertices,
 		texture_channels,
-		texture,
-		sampler
+		texture
 	);
+}
+
+VK2D_API void VK2D_APIENTRY vk2d::RenderTargetTexture::DrawPoint(
+	vk2d::Vector2f			location,
+	vk2d::Colorf			color,
+	float					size
+)
+{
+	auto mesh = vk2d::GeneratePointMeshFromList(
+		{ location }
+	);
+	mesh.SetVertexColor( color );
+	mesh.SetPointSize( size );
+	impl->DrawMesh( mesh );
+}
+
+VK2D_API void VK2D_APIENTRY vk2d::RenderTargetTexture::DrawLine(
+	vk2d::Vector2f					point_1,
+	vk2d::Vector2f					point_2,
+	vk2d::Colorf					color
+)
+{
+	auto mesh = vk2d::GenerateLineMeshFromList(
+		{ point_1, point_2 },
+		{ { 0, 1 } }
+	);
+	mesh.SetVertexColor( color );
+	impl->DrawMesh( mesh );
+}
+
+VK2D_API void VK2D_APIENTRY vk2d::RenderTargetTexture::DrawBox(
+	vk2d::Vector2f					top_left,
+	vk2d::Vector2f					bottom_right,
+	bool							filled,
+	vk2d::Colorf					color
+)
+{
+	auto mesh = vk2d::GenerateBoxMesh(
+		top_left,
+		bottom_right,
+		filled
+	);
+	mesh.SetVertexColor( color );
+	impl->DrawMesh( mesh );
+}
+
+VK2D_API void VK2D_APIENTRY vk2d::RenderTargetTexture::DrawCircle(
+	vk2d::Vector2f					top_left,
+	vk2d::Vector2f					bottom_right,
+	bool							filled,
+	float							edge_count,
+	vk2d::Colorf					color
+)
+{
+	auto mesh = vk2d::GenerateCircleMesh(
+		top_left,
+		bottom_right,
+		filled,
+		edge_count
+	);
+	mesh.SetVertexColor( color );
+	impl->DrawMesh( mesh );
+}
+
+VK2D_API void VK2D_APIENTRY vk2d::RenderTargetTexture::DrawPie(
+	vk2d::Vector2f					top_left,
+	vk2d::Vector2f					bottom_right,
+	float							begin_angle_radians,
+	float							coverage,
+	bool							filled,
+	float							edge_count,
+	vk2d::Colorf					color
+)
+{
+	auto mesh = vk2d::GeneratePieMesh(
+		top_left,
+		bottom_right,
+		begin_angle_radians,
+		coverage,
+		filled,
+		edge_count
+	);
+	mesh.SetVertexColor( color );
+	impl->DrawMesh( mesh );
+}
+
+VK2D_API void VK2D_APIENTRY vk2d::RenderTargetTexture::DrawPieBox(
+	vk2d::Vector2f					top_left,
+	vk2d::Vector2f					bottom_right,
+	float							begin_angle_radians,
+	float							coverage,
+	bool							filled,
+	vk2d::Colorf					color
+)
+{
+	auto mesh = vk2d::GeneratePieBoxMesh(
+		top_left,
+		bottom_right,
+		begin_angle_radians,
+		coverage,
+		filled
+	);
+	mesh.SetVertexColor( color );
+	impl->DrawMesh( mesh );
 }
 
 VK2D_API void VK2D_APIENTRY vk2d::RenderTargetTexture::DrawTexture(
 	vk2d::Vector2f				top_left,
 	vk2d::Vector2f				bottom_right,
-	vk2d::TextureResource	*	texture,
+	vk2d::Texture			*	texture,
 	vk2d::Colorf				color
 )
 {
-	impl->DrawTexture(
+	auto mesh = vk2d::GenerateBoxMesh(
 		top_left,
-		bottom_right,
-		texture,
-		color
+		bottom_right
 	);
+	mesh.SetTexture( texture );
+	mesh.SetVertexColor( color );
+	impl->DrawMesh( mesh );
 }
 
 VK2D_API void VK2D_APIENTRY vk2d::RenderTargetTexture::DrawMesh(
-	const vk2d::Mesh		&	mesh
+	const vk2d::Mesh	&	mesh
 )
 {
 	impl->DrawMesh(
 		mesh
 	);
 }
-*/
 
 VK2D_API bool VK2D_APIENTRY vk2d::RenderTargetTexture::IsGood() const
 {

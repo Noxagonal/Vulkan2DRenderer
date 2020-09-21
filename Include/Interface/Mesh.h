@@ -20,6 +20,7 @@ class Sampler;
 
 class Mesh {
 	friend class vk2d::_internal::WindowImpl;
+	friend class vk2d::_internal::RenderTargetTextureImpl;
 
 	friend VK2D_API vk2d::Mesh						VK2D_APIENTRY					GeneratePointMeshFromList(
 		const std::vector<vk2d::Vector2f>		&	points );

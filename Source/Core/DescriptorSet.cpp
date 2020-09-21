@@ -166,6 +166,11 @@ vk2d::_internal::DescriptorAutoPool::~DescriptorAutoPool()
 vk2d::_internal::PoolDescriptorSet vk2d::_internal::DescriptorAutoPool::AllocateDescriptorSet(
 	const DescriptorSetLayout		&	rForDescriptorSetLayout )
 {
+	TODO;
+	// This function will be called from multiple threads, possibly often.
+	// Need a mutex or per thread descriptor auto pool.
+	// Alternatively force access to single thread only.
+
 	const auto & setPoolRequirements	= rForDescriptorSetLayout.GetDescriptorPoolRequirements();
 	PoolDescriptorSet ret				= {};
 

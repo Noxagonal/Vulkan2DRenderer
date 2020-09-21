@@ -148,7 +148,7 @@ public:
 	vk2d::_internal::ShaderProgram							GetCompatibleShaderModules(
 		bool												multitextured,
 		bool												custom_uv_border_color,
-		uint32_t											vertices_per_primitive );
+		uint32_t											vertices_per_primitive ) const;
 
 	VkPipeline												GetVulkanPipeline(
 		const vk2d::_internal::PipelineSettings			&	settings );
@@ -164,7 +164,7 @@ public:
 	const vk2d::_internal::DescriptorSetLayout			&	GetStorageBufferDescriptorSetLayout() const;
 
 //	VkDescriptorSet											GetDefaultTextureDescriptorSet() const;
-	vk2d::TextureResource								*	GetDefaultTexture() const;
+	vk2d::Texture										*	GetDefaultTexture() const;
 	vk2d::Sampler										*	GetDefaultSampler() const;
 
 	vk2d::_internal::DeviceMemoryPool					*	GetDeviceMemoryPool() const;

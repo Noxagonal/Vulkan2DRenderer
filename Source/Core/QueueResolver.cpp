@@ -13,7 +13,7 @@ VkResult vk2d::_internal::ResolvedQueue::Submit(
 	VkFence						fence
 )
 {
-	std::lock_guard<std::mutex> lock_guard( *queueMutex );
+	std::lock_guard<std::mutex> lock_guard( *queue_mutex );
 
 	return vkQueueSubmit(
 		queue,
@@ -27,7 +27,7 @@ VkResult vk2d::_internal::ResolvedQueue::Submit(
 	const std::vector<VkSubmitInfo>		submit_infos,
 	VkFence								fence )
 {
-	std::lock_guard<std::mutex> lock_guard( *queueMutex );
+	std::lock_guard<std::mutex> lock_guard( *queue_mutex );
 
 	return vkQueueSubmit(
 		queue,
@@ -41,7 +41,7 @@ VkResult vk2d::_internal::ResolvedQueue::Present(
 	const VkPresentInfoKHR		&	present_info
 )
 {
-	std::lock_guard<std::mutex> lock_guard( *queueMutex );
+	std::lock_guard<std::mutex> lock_guard( *queue_mutex );
 
 	return vkQueuePresentKHR(
 		queue,
@@ -49,29 +49,34 @@ VkResult vk2d::_internal::ResolvedQueue::Present(
 	);
 }
 
-VkQueue vk2d::_internal::ResolvedQueue::GetQueue()
+VkQueue vk2d::_internal::ResolvedQueue::GetQueue() const
 {
 	return queue;
 }
 
-uint32_t vk2d::_internal::ResolvedQueue::GetQueueFamilyIndex()
+uint32_t vk2d::_internal::ResolvedQueue::GetQueueFamilyIndex() const
 {
-	return queueFamilyIndex;
+	return queue_family_index;
 }
 
-VkBool32 vk2d::_internal::ResolvedQueue::IsPresentationSupported()
+VkBool32 vk2d::_internal::ResolvedQueue::IsPresentationSupported() const
 {
-	return supportsPresentation;
+	return supports_presentation;
 }
 
-std::mutex * vk2d::_internal::ResolvedQueue::GetQueueMutex()
+const VkQueueFamilyProperties & vk2d::_internal::ResolvedQueue::GetQueueFamilyProperties() const
 {
-	return &*queueMutex;
+	return queue_family_properties;
 }
 
-uint32_t vk2d::_internal::ResolvedQueue::GetBasedOn()
+std::mutex * vk2d::_internal::ResolvedQueue::GetQueueMutex() const
 {
-	return basedOn;
+	return &*queue_mutex;
+}
+
+uint32_t vk2d::_internal::ResolvedQueue::GetBasedOn() const
+{
+	return based_on;
 }
 
 
@@ -87,7 +92,6 @@ VK2D_API vk2d::_internal::DeviceQueueResolver::DeviceQueueResolver(
 	refInstance			= instance;
 	refPhysicalDevice	= physicalDevice;
 
-	std::vector<VkQueueFamilyProperties> family_properties;
 	{
 		uint32_t count = 0;
 		vkGetPhysicalDeviceQueueFamilyProperties( physicalDevice, &count, nullptr );
@@ -111,7 +115,7 @@ VK2D_API vk2d::_internal::DeviceQueueResolver::DeviceQueueResolver(
 	for( auto & i : queueGetInfo ) {
 		i.queueIndex			= UINT32_MAX;
 		i.queueFamilyIndex		= UINT32_MAX;
-		i.basedOn				= UINT32_MAX;
+		i.based_on				= UINT32_MAX;
 	}
 
 	// find queue families for queue types and also check for available queue count in that family
@@ -180,7 +184,7 @@ VK2D_API vk2d::_internal::DeviceQueueResolver::DeviceQueueResolver(
 				}
 			}
 			if( candidate != UINT32_MAX ) {
-				queueGetInfo[ a ].basedOn = candidate;
+				queueGetInfo[ a ].based_on = candidate;
 				++queue_dependants[ candidate ];
 			}
 		}
@@ -227,32 +231,37 @@ std::vector<vk2d::_internal::ResolvedQueue> vk2d::_internal::DeviceQueueResolver
 {
 	std::vector<ResolvedQueue> ret( queueGetInfo.size() );
 	for( uint32_t i=0; i < ret.size(); ++i ) {
-		ret[ i ].queue					= VK_NULL_HANDLE;
-		ret[ i ].queueFamilyIndex		= UINT32_MAX;
-		ret[ i ].supportsPresentation	= VK_FALSE;
-		ret[ i ].queueMutex				= nullptr;
-		ret[ i ].basedOn				= UINT32_MAX;
+		ret[ i ].queue						= VK_NULL_HANDLE;
+		ret[ i ].queue_family_index			= UINT32_MAX;
+		ret[ i ].supports_presentation		= VK_FALSE;
+		ret[ i ].queue_family_properties	= {};
+		ret[ i ].queue_mutex				= nullptr;
+		ret[ i ].based_on					= UINT32_MAX;
 	}
 
 	// get the original queues first
 	for( size_t i=0; i < queueGetInfo.size(); ++i ) {
-		if( queueGetInfo[ i ].basedOn == UINT32_MAX ) {
+		if( queueGetInfo[ i ].based_on == UINT32_MAX ) {
 			if( queueGetInfo[ i ].queueFamilyIndex != UINT32_MAX ) {
 				vkGetDeviceQueue( device, queueGetInfo[ i ].queueFamilyIndex, queueGetInfo[ i ].queueIndex, &ret[ i ].queue );
-				ret[ i ].queueFamilyIndex		= queueGetInfo[ i ].queueFamilyIndex;
-				ret[ i ].supportsPresentation	= glfwGetPhysicalDevicePresentationSupport( refInstance, refPhysicalDevice, ret[ i ].queueFamilyIndex );
-				ret[ i ].queueMutex				= std::make_shared<std::mutex>();
+				ret[ i ].queue_family_index			= queueGetInfo[ i ].queueFamilyIndex;
+				ret[ i ].supports_presentation		= glfwGetPhysicalDevicePresentationSupport( refInstance, refPhysicalDevice, ret[ i ].queue_family_index );
+				ret[ i ].queue_family_properties	= family_properties[ queueGetInfo[ i ].queueFamilyIndex ];
+				ret[ i ].queue_mutex				= std::make_shared<std::mutex>();
 			}
 		}
 	}
 
 	// get the information for the shared queue after we know the originals
 	for( size_t i=0; i < queueGetInfo.size(); ++i ) {
-		if( queueGetInfo[ i ].basedOn != UINT32_MAX ) {
-			ret[ i ].queue				= ret[ queueGetInfo[ i ].basedOn ].queue;
-			ret[ i ].queueFamilyIndex	= ret[ queueGetInfo[ i ].basedOn ].queueFamilyIndex;
-			ret[ i ].queueMutex			= ret[ queueGetInfo[ i ].basedOn ].queueMutex;
-			ret[ i ].basedOn			= queueGetInfo[ i ].basedOn;
+		if( queueGetInfo[ i ].based_on != UINT32_MAX ) {
+			auto based_on						= queueGetInfo[ i ].based_on;
+			ret[ i ].queue						= ret[ based_on ].queue;
+			ret[ i ].queue_family_index			= ret[ based_on ].queue_family_index;
+			ret[ i ].supports_presentation		= ret[ based_on ].supports_presentation;
+			ret[ i ].queue_family_properties	= ret[ based_on ].queue_family_properties;
+			ret[ i ].queue_mutex				= ret[ based_on ].queue_mutex;
+			ret[ i ].based_on					= based_on;
 		}
 	}
 

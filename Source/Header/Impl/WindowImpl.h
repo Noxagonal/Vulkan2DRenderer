@@ -3,7 +3,6 @@
 #include "../Core/SourceCommon.h"
 
 #include "../../../Include/Interface/Instance.h"
-
 #include "../../Header/Core/MeshBuffer.h"
 #include "../Core/QueueResolver.h"
 #include "../Core/VulkanMemoryManagement.h"
@@ -231,6 +230,20 @@ private:
 	bool														CreateFrameSynchronizationPrimitives();
 	bool														CreateWindowFrameDataBuffer();
 
+	// Should be called once render is definitely going to happen. When this is called,
+	// SynchronizeFrame() will start blocking until the the contents of the
+	// RenderTargerTexture have been fully rendered. BeginRender() can be called however,
+	// it will swap the buffers so 2 renders can be queued, however third call to
+	// BeginRender() will be blocked until the first BeginRender() call has been rendered.
+	bool														CommitRenderTargetTextureRender();
+
+	// In case something goes wrong, allows cancelling render commission.
+	void														CancelRenderTargetTextureRender();
+
+//	void														ClearRenderTargetTextureDepencies();
+	void														CheckAndAddRenderTargetTextureDependency(
+		vk2d::Texture										*	texture );
+
 	void														HandleScreenshotEvent();
 
 	void														CmdBindPipelineIfDifferent(
@@ -321,6 +334,9 @@ private:
 		sampler_texture_descriptor_sets																		= {};
 
 	std::unique_ptr<vk2d::_internal::MeshBuffer>				mesh_buffer									= {};
+
+	std::vector<vk2d::_internal::RenderTargetTextureDependencyInfo>
+																render_target_texture_dependencies			= {};
 
 	enum class ScreenshotState : uint32_t {
 		IDLE					= 0,	// doing nothing

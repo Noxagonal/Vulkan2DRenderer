@@ -231,7 +231,7 @@ vk2d::_internal::SamplerImpl::~SamplerImpl()
 //	instance_parent->GetDescriptorPool()->FreeDescriptorSet( descriptor_set );
 }
 
-VkSampler vk2d::_internal::SamplerImpl::GetVulkanSampler()
+VkSampler vk2d::_internal::SamplerImpl::GetVulkanSampler() const
 {
 	return vk_sampler;
 }
@@ -241,22 +241,22 @@ VkSampler vk2d::_internal::SamplerImpl::GetVulkanSampler()
 //	return descriptor_set.descriptorSet;
 //}
 
-VkBuffer vk2d::_internal::SamplerImpl::GetVulkanBufferForSamplerData()
+VkBuffer vk2d::_internal::SamplerImpl::GetVulkanBufferForSamplerData() const
 {
 	return sampler_data.buffer;
 }
 
-vk2d::Vector2u vk2d::_internal::SamplerImpl::GetBorderColorEnable()
+vk2d::Vector2u vk2d::_internal::SamplerImpl::GetBorderColorEnable() const
 {
 	return border_color_enable;
 }
 
-bool vk2d::_internal::SamplerImpl::IsAnyBorderColorEnabled()
+bool vk2d::_internal::SamplerImpl::IsAnyBorderColorEnabled() const
 {
 	return bool( border_color_enable.x || border_color_enable.y );
 }
 
-bool vk2d::_internal::SamplerImpl::IsGood()
+bool vk2d::_internal::SamplerImpl::IsGood() const
 {
 	return is_good;
 }

@@ -11,6 +11,7 @@ namespace vk2d {
 namespace _internal {
 class InstanceImpl;
 class WindowImpl;
+class RenderTargetTextureImpl;
 class SamplerImpl;
 } // _internal
 
@@ -56,6 +57,7 @@ struct SamplerCreateInfo {
 class Sampler {
 	friend class vk2d::_internal::InstanceImpl;
 	friend class vk2d::_internal::WindowImpl;
+	friend class vk2d::_internal::RenderTargetTextureImpl;
 
 	VK2D_API																			Sampler(
 		vk2d::_internal::InstanceImpl				*	instance_parent,

@@ -824,7 +824,7 @@ vk2d::_internal::ShaderProgram vk2d::_internal::InstanceImpl::GetCompatibleShade
 	bool				multitextured,
 	bool				custom_uv_border_color,
 	uint32_t			vertices_per_primitive
-)
+) const
 {
 	if( multitextured ) {
 		if( custom_uv_border_color ) {
@@ -863,6 +863,16 @@ VkPipeline vk2d::_internal::InstanceImpl::GetVulkanPipeline(
 	const vk2d::_internal::PipelineSettings		&	settings
 )
 {
+	TODO;
+	// Need mutex here as this function can be called from multiple threads.
+	// Alternatively we could create vulkan pipelines per window and render
+	// target texture, but that would probably be wasteful. Regardless this
+	// function will be called very often so we'll need a way of caching
+	// these pipelines within the windows and render target textures.
+	// Since the pipelines won't change throughout the execution a simple
+	// std::map per window and render target with a pipeline pointer
+	// would probably work well, if the pipeline is not found in the local
+	// cache, use this function to get it / create it.
 	auto p_it = vk_pipelines.find( settings );
 	if( p_it != vk_pipelines.end() ) {
 		return p_it->second;
@@ -1106,7 +1116,7 @@ const vk2d::_internal::DescriptorSetLayout & vk2d::_internal::InstanceImpl::GetS
 	return *storage_buffer_descriptor_set_layout;
 }
 
-vk2d::TextureResource * vk2d::_internal::InstanceImpl::GetDefaultTexture() const
+vk2d::Texture * vk2d::_internal::InstanceImpl::GetDefaultTexture() const
 {
 	return default_texture;
 }

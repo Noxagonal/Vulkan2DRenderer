@@ -23,8 +23,7 @@ enum class CommandBufferCheckpointType : uint32_t {
 	BIND_DESCRIPTOR_SET,
 	BIND_INDEX_BUFFER,
 	BIND_VERTEX_BUFFER,
-	BEGIN_DRAW,
-	END_DRAW,
+	DRAW,
 	GENERIC,
 };
 
