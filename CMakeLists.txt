@@ -87,6 +87,10 @@ option(VK2D_BUILD_EXAMPLES
 	"Build example programs which will help in learning VK2D"
 	ON
 )
+option(VK2D_BUILD_DOCS
+	"Build documentation"
+	OFF
+)
 
 add_subdirectory("Tools")
 
@@ -202,4 +206,8 @@ endif()
 
 if(VK2D_BUILD_EXAMPLES)
 	add_subdirectory("Examples")
+endif()
+
+if(VK2D_BUILD_DOCS)
+	add_subdirectory("DocsSource")
 endif()
