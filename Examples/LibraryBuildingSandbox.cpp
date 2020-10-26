@@ -153,7 +153,6 @@ int main()
 		render_target_texture->EndRender();
 		*/
 
-
 		if( !window->BeginRender() ) return -1;
 
 		window->DrawTexture(

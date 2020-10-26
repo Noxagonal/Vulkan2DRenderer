@@ -1,8 +1,9 @@
 
-============
-VK2D classes
-============
+=======
+Classes
+=======
 
 .. toctree::
 
-   InstanceImpl
+	Instance
+	InstanceImpl

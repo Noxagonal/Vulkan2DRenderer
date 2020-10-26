@@ -6,6 +6,25 @@
 
 
 
+// For documentation only
+#ifdef DOXYGEN
+
+/// This tells the compiler how the access to the vk2d functions are handled.
+/// For example, when the vk2d library is compiled this macro evaluates
+/// to __declspec(dllexport) and when the vk2d API is used from outside
+/// this macro evaluates to __declspec(dllimport), this allows using the
+/// same header files for both the library and the API.
+#define VK2D_API
+
+/// This is basically the calling convention to the library.
+/// To make sure the program calls the vk2d library functions correctly
+/// this macro enforces a specific calling convention.
+#define VK2D_APIENTRY
+
+#endif
+
+
+
 namespace vk2d {
 
 constexpr double PI				= 3.14159265358979323846;
@@ -15,68 +34,70 @@ constexpr double RAD			= PI * 2.0;
 
 
 
-#if defined( VK2D_PLATFORM_WINDOWS )
-
-	#if defined( _MSC_VER )
-		#if ( _MSC_VER < 1910 )
-			#error "Need at least visual studio 2017"
-		#endif
-
-		// define dynamic library export/import
-		#if defined( VK2D_LIBRARY_STATIC )
-			#define VK2D_API
-		#else
-			#if defined( VK2D_LIBRARY_EXPORT )
-				#define VK2D_API			__declspec(dllexport)
-			#else
-				#define VK2D_API			__declspec(dllimport)
+#if !defined( DOXYGEN )
+	#if defined( VK2D_PLATFORM_WINDOWS )
+	
+		#if defined( _MSC_VER )
+			#if ( _MSC_VER < 1910 )
+				#error "Need at least visual studio 2017"
 			#endif
-		#endif
-
-		// Calling convension
-		#define VK2D_APIENTRY				__stdcall
-
-	#else
-		#error "Please add compiler support here!"
-	#endif
-
-	// Warning helper for visual studio, other compilers can use #warning
-	#define _VK2D_WARNING_STRINGIFY_SUB(x) #x
-	#define _VK2D_WARNING_STRINGIFY(x) _VK2D_WARNING_STRINGIFY_SUB(x)
-	// Usage: #pragma VK2D_WARNING( "message" )
-	#define VK2D_WARNING( txt ) message( __FILE__"(" _VK2D_WARNING_STRINGIFY(__LINE__) ") : warning: " txt )
-
-
-
-#elif defined( VK2D_PLATFORM_LINUX )
-
-
-	#if defined(__GNUC__)
-		#if ( __GNUC__ < 8 )
-			#error "Need at least GCC 8"
-		#endif
-		// define dynamic library export/import
-		#if defined( VK2D_LIBRARY_STATIC )
-			#define VK2D_API
-		#else
-			#if defined( VK2D_LIBRARY_EXPORT )
-				#define VK2D_API			__attribute__((visibility("default")))
-			#else
+	
+			// define dynamic library export/import
+			#if defined( VK2D_LIBRARY_STATIC )
 				#define VK2D_API
+			#else
+				#if defined( VK2D_LIBRARY_EXPORT )
+					#define VK2D_API			__declspec(dllexport)
+				#else
+					#define VK2D_API			__declspec(dllimport)
+				#endif
 			#endif
+	
+			// Calling convension
+			#define VK2D_APIENTRY				__stdcall
+	
+		#else
+			#error "Please add compiler support here!"
 		#endif
-
-		// Calling convension
-		#define VK2D_APIENTRY				// Default, change in the future if needed.
-
+	
+		// Warning helper for visual studio, other compilers can use #warning
+		#define _VK2D_WARNING_STRINGIFY_SUB(x) #x
+		#define _VK2D_WARNING_STRINGIFY(x) _VK2D_WARNING_STRINGIFY_SUB(x)
+		// Usage: #pragma VK2D_WARNING( "message" )
+		#define VK2D_WARNING( txt ) message( __FILE__"(" _VK2D_WARNING_STRINGIFY(__LINE__) ") : warning: " txt )
+	
+	
+	
+	#elif defined( VK2D_PLATFORM_LINUX )
+	
+	
+		#if defined(__GNUC__)
+			#if ( __GNUC__ < 8 )
+				#error "Need at least GCC 8"
+			#endif
+			// define dynamic library export/import
+			#if defined( VK2D_LIBRARY_STATIC )
+				#define VK2D_API
+			#else
+				#if defined( VK2D_LIBRARY_EXPORT )
+					#define VK2D_API			__attribute__((visibility("default")))
+				#else
+					#define VK2D_API
+				#endif
+			#endif
+	
+			// Calling convension
+			#define VK2D_APIENTRY				// Default, change in the future if needed.
+	
+		#else
+			#error "Please add compiler support here!"
+		#endif
+	
+	
+	
 	#else
-		#error "Please add compiler support here!"
+		#error "Please add platform support here!"
 	#endif
-
-
-
-#else
-	#error "Please add platform support here!"
 #endif
 
 
