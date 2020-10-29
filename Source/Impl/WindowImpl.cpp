@@ -385,7 +385,7 @@ vk2d::_internal::WindowImpl::~WindowImpl()
 
 	vkDestroySemaphore(
 		vk_device,
-		vk_mesh_transfer_semaphore,
+		vk_transfer_semaphore,
 		nullptr
 	);
 
@@ -544,9 +544,10 @@ bool vk2d::_internal::WindowImpl::BeginRender()
 		}
 	}
 
-	// Make sure we can write to the next command buffer by
-	// aquiring a new image from the presentation engine,
-	// this will tell which command buffer is ready to be reused
+	// Aquire a new image from the presentation engine. This
+	// determines which "swap" we're going to write to.
+	// Everything is double or multi-buffered, eg. command buffers,
+	// framebuffers...
 	{
 		if( !AquireImage(
 			this,
@@ -562,7 +563,7 @@ bool vk2d::_internal::WindowImpl::BeginRender()
 	// If next image index happens to same as the previous, presentation has propably already succeeded but
 	// since we're using the image index as an index to our command buffers and framebuffers we'll have to
 	// make sure that we don't start overwriting a command buffer until it's execution has completely
-	// finished, so we'll have to synchronize the frame early in here.
+	// finished, so we'll have to count for that and synchronize the frame early in here.
 	if( next_image == previous_image ) {
 		if( !SynchronizeFrame() ) {
 			instance_parent->Report( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot synchronize frame, cannot output to window!" );
@@ -875,7 +876,7 @@ bool vk2d::_internal::WindowImpl::EndRender()
 			transfer_command_buffer_begin_info.pInheritanceInfo	= nullptr;
 
 			auto result = vkBeginCommandBuffer(
-				vk_complementary_transfer_command_buffer,
+				vk_transfer_command_buffer,
 				&transfer_command_buffer_begin_info
 			);
 			if( result != VK_SUCCESS ) {
@@ -887,7 +888,7 @@ bool vk2d::_internal::WindowImpl::EndRender()
 		// Record commands to upload frame data to gpu
 		{
 			if( !CmdUpdateFrameData(
-				vk_complementary_transfer_command_buffer
+				vk_transfer_command_buffer
 			) ) {
 				instance_parent->Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot record commands to transfer FrameData to GPU!" );
 				return false;
@@ -897,7 +898,7 @@ bool vk2d::_internal::WindowImpl::EndRender()
 		// Record commands to upload mesh data to gpu
 		{
 			if( !mesh_buffer->CmdUploadMeshDataToGPU(
-				vk_complementary_transfer_command_buffer
+				vk_transfer_command_buffer
 			) ) {
 				instance_parent->Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot record commands to transfer mesh data to GPU!" );
 				return false;
@@ -907,7 +908,7 @@ bool vk2d::_internal::WindowImpl::EndRender()
 		// End command buffer
 		{
 			auto result = vkEndCommandBuffer(
-				vk_complementary_transfer_command_buffer
+				vk_transfer_command_buffer
 			);
 			if( result != VK_SUCCESS ) {
 				instance_parent->Report( result, "Internal error: Cannot compile mesh to GPU transfer command buffer!" );
@@ -916,10 +917,13 @@ bool vk2d::_internal::WindowImpl::EndRender()
 		}
 	}
 
-	// Submit swapchain image
+	// Submit renders
 	{
-		if( !CommitRenderTargetTextureRender() ) {
-			CancelRenderTargetTextureRender();
+		vk2d::_internal::RenderTargetTextureRenderCollector collector;
+
+		// Collect render target texture render submissions.
+		if( !CommitRenderTargetTextureRender( collector ) ) {
+			AbortRenderTargetTextureRender();
 			instance_parent->Report(
 				vk2d::ReportSeverity::NON_CRITICAL_ERROR,
 				"Internal error: Cannot commit render target textures for rendering!"
@@ -927,37 +931,89 @@ bool vk2d::_internal::WindowImpl::EndRender()
 			return false;
 		}
 
-		std::vector<VkSubmitInfo> submit_infos( 2 );
+		std::vector<VkSubmitInfo> submit_infos;
+		submit_infos.reserve( collector.size() * 2 + 2 );
 
-		// TODO: Collect render target dependencies for semaphore wait.
+		// Get all the submit infos from all render targets into one list.
+		for( auto & c : collector ) {
+			submit_infos.push_back( c.vk_transfer_submit_info );
+			submit_infos.push_back( c.vk_render_submit_info );
+		}
 
-		submit_infos[ 0 ].sType						= VK_STRUCTURE_TYPE_SUBMIT_INFO;
-		submit_infos[ 0 ].pNext						= nullptr;
-		submit_infos[ 0 ].waitSemaphoreCount		= 0;
-		submit_infos[ 0 ].pWaitSemaphores			= nullptr;
-		submit_infos[ 0 ].pWaitDstStageMask			= nullptr;
-		submit_infos[ 0 ].commandBufferCount		= 1;
-		submit_infos[ 0 ].pCommandBuffers			= &vk_complementary_transfer_command_buffer;
-		submit_infos[ 0 ].signalSemaphoreCount		= 1;
-		submit_infos[ 0 ].pSignalSemaphores			= &vk_mesh_transfer_semaphore;
+		// Collection of semaphores that the main window render needs to wait for, this considers timeline semaphores.
+		std::vector<VkSemaphore>			render_wait_for_semaphores;
+		std::vector<uint64_t>				render_wait_for_semaphore_timeline_values;
+		std::vector<VkPipelineStageFlags>	render_wait_for_pipeline_stages;
+		render_wait_for_semaphores.reserve( std::size( render_target_texture_dependencies ) + 1 );
+		render_wait_for_semaphore_timeline_values.reserve( std::size( render_target_texture_dependencies ) + 1 );
+		render_wait_for_pipeline_stages.reserve( std::size( render_target_texture_dependencies ) + 1 );
 
-		VkPipelineStageFlags wait_dst_stage_mask	= VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT | VK_PIPELINE_STAGE_VERTEX_INPUT_BIT | VK_PIPELINE_STAGE_VERTEX_SHADER_BIT;
-		submit_infos[ 1 ].sType						= VK_STRUCTURE_TYPE_SUBMIT_INFO;
-		submit_infos[ 1 ].pNext						= nullptr;
-		submit_infos[ 1 ].waitSemaphoreCount		= 1;
-		submit_infos[ 1 ].pWaitSemaphores			= &vk_mesh_transfer_semaphore;
-		submit_infos[ 1 ].pWaitDstStageMask			= &wait_dst_stage_mask;
-		submit_infos[ 1 ].commandBufferCount		= 1;
-		submit_infos[ 1 ].pCommandBuffers			= &render_command_buffer;
-		submit_infos[ 1 ].signalSemaphoreCount		= 1;
-		submit_infos[ 1 ].pSignalSemaphores			= &vk_submit_to_present_semaphores[ next_image ];
+		// First entry is the regular transfer semaphore which is a binary semaphore.
+		render_wait_for_semaphores.push_back( vk_transfer_semaphore );
+		render_wait_for_semaphore_timeline_values.push_back( 1 );
+		render_wait_for_pipeline_stages.push_back( VK_PIPELINE_STAGE_VERTEX_INPUT_BIT | VK_PIPELINE_STAGE_VERTEX_SHADER_BIT );
+
+		// Resolve immediate dependencies we need to wait for before the main render.
+		for( auto & d : render_target_texture_dependencies ) {
+			render_wait_for_semaphores.push_back( d.render_target->GetCurrentSwapRenderCompleteSemaphore() );
+			render_wait_for_semaphore_timeline_values.push_back( 1 );
+			render_wait_for_pipeline_stages.push_back( VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT );
+		}
+
+		assert( std::size( render_wait_for_semaphores ) == std::size( render_wait_for_semaphore_timeline_values ) &&
+				std::size( render_wait_for_semaphores ) == std::size( render_wait_for_pipeline_stages ) );
+
+		// Get window specific submit infos.
+		VkSubmitInfo window_transfer_submit_info {};
+		window_transfer_submit_info.sType					= VK_STRUCTURE_TYPE_SUBMIT_INFO;
+		window_transfer_submit_info.pNext					= nullptr;
+		window_transfer_submit_info.waitSemaphoreCount		= 0;
+		window_transfer_submit_info.pWaitSemaphores			= nullptr;
+		window_transfer_submit_info.pWaitDstStageMask		= nullptr;
+		window_transfer_submit_info.commandBufferCount		= 1;
+		window_transfer_submit_info.pCommandBuffers			= &vk_transfer_command_buffer;
+		window_transfer_submit_info.signalSemaphoreCount	= 1;
+		window_transfer_submit_info.pSignalSemaphores		= &vk_transfer_semaphore;
+		submit_infos.push_back( window_transfer_submit_info );
+
+		uint64_t signal_timeline_semaphore_value = 1;
+		VkTimelineSemaphoreSubmitInfo window_render_timeline_submit_info {};
+		window_render_timeline_submit_info.sType						= VK_STRUCTURE_TYPE_TIMELINE_SEMAPHORE_SUBMIT_INFO;
+		window_render_timeline_submit_info.pNext						= nullptr;
+		window_render_timeline_submit_info.waitSemaphoreValueCount		= uint32_t( std::size( render_wait_for_semaphore_timeline_values ) );
+		window_render_timeline_submit_info.pWaitSemaphoreValues			= render_wait_for_semaphore_timeline_values.data();
+		window_render_timeline_submit_info.signalSemaphoreValueCount	= 1;
+		window_render_timeline_submit_info.pSignalSemaphoreValues		= &signal_timeline_semaphore_value;
+
+		VkSubmitInfo window_render_submit_info {};
+		window_render_submit_info.sType						= VK_STRUCTURE_TYPE_SUBMIT_INFO;
+		window_render_submit_info.pNext						= &window_render_timeline_submit_info;
+		window_render_submit_info.waitSemaphoreCount		= uint32_t( std::size( render_wait_for_semaphores ) );
+		window_render_submit_info.pWaitSemaphores			= render_wait_for_semaphores.data();
+		window_render_submit_info.pWaitDstStageMask			= render_wait_for_pipeline_stages.data();
+		window_render_submit_info.commandBufferCount		= 1;
+		window_render_submit_info.pCommandBuffers			= &render_command_buffer;
+		window_render_submit_info.signalSemaphoreCount		= 1;
+		window_render_submit_info.pSignalSemaphores			= &vk_submit_to_present_semaphores[ next_image ];
+		submit_infos.push_back( window_render_submit_info );
+
+		#if 1
+		// Debugging...
+		uint64_t value = 10;
+		auto semaphore = render_wait_for_semaphores[ 1 ];
+		vkGetSemaphoreCounterValue(
+			instance_parent->GetVulkanDevice(),
+			semaphore,
+			&value
+		);
+		#endif
 
 		auto result = primary_render_queue.Submit(
 			submit_infos,
 			vk_gpu_to_cpu_frame_fences[ next_image ]
 		);
 		if( result != VK_SUCCESS ) {
-			CancelRenderTargetTextureRender();
+			AbortRenderTargetTextureRender();
 			instance_parent->Report(
 				result,
 				"Internal error: Cannot submit frame end command buffers!"
@@ -1008,8 +1064,10 @@ bool vk2d::_internal::WindowImpl::EndRender()
 	previous_image						= next_image;
 	previous_frame_need_synchronization	= true;
 	previous_pipeline_settings			= {};
-	previous_sampler					= nullptr;
-	previous_texture					= nullptr;
+	previous_sampler					= {};
+	previous_texture					= {};
+	previous_line_width					= {};
+	render_target_texture_dependencies.clear();
 
 	glfwPollEvents();
 
@@ -1315,7 +1373,7 @@ void vk2d::_internal::WindowImpl::DrawTriangleList(
 	const std::vector<vk2d::VertexIndex_3>	&	indices,
 	const std::vector<vk2d::Vertex>			&	vertices,
 	const std::vector<float>				&	texture_channel_weights,
-	bool										filled,
+	bool										solid,
 	vk2d::Texture							*	texture,
 	vk2d::Sampler							*	sampler
 )
@@ -1333,7 +1391,7 @@ void vk2d::_internal::WindowImpl::DrawTriangleList(
 		raw_indices,
 		vertices,
 		texture_channel_weights,
-		filled,
+		solid,
 		texture,
 		sampler
 	);
@@ -1343,7 +1401,7 @@ void vk2d::_internal::WindowImpl::DrawTriangleList(
 	const std::vector<uint32_t>				&	raw_indices,
 	const std::vector<vk2d::Vertex>			&	vertices,
 	const std::vector<float>				&	texture_channel_weights,
-	bool										filled,
+	bool										solid,
 	vk2d::Texture							*	texture,
 	vk2d::Sampler							*	sampler
 )
@@ -1375,7 +1433,7 @@ void vk2d::_internal::WindowImpl::DrawTriangleList(
 		vk2d::_internal::PipelineSettings pipeline_settings {};
 		pipeline_settings.vk_render_pass		= vk_render_pass;
 		pipeline_settings.primitive_topology	= VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
-		pipeline_settings.polygon_mode			= filled ? VK_POLYGON_MODE_FILL : VK_POLYGON_MODE_LINE;
+		pipeline_settings.polygon_mode			= solid ? VK_POLYGON_MODE_FILL : VK_POLYGON_MODE_LINE;
 		pipeline_settings.shader_programs		= shader_programs;
 		pipeline_settings.samples				= VkSampleCountFlags( create_info_copy.samples );
 
@@ -2288,7 +2346,7 @@ bool vk2d::_internal::WindowImpl::AllocateCommandBuffers()
 	for( size_t i = 0; i < swapchain_image_count; ++i ) {
 		vk_render_command_buffers[ i ]		= temp[ i ];
 	}
-	vk_complementary_transfer_command_buffer		= temp[ swapchain_image_count ];
+	vk_transfer_command_buffer		= temp[ swapchain_image_count ];
 
 	return true;
 }
@@ -2726,7 +2784,7 @@ bool vk2d::_internal::WindowImpl::CreateWindowSynchronizationPrimitives()
 		vk_device,
 		&mesh_transfer_semaphore_create_info,
 		nullptr,
-		&vk_mesh_transfer_semaphore
+		&vk_transfer_semaphore
 	);
 	if( result != VK_SUCCESS ) {
 		instance_parent->Report( result, "Internal error: Cannot create mesh transfer semaphore!" );
@@ -2864,20 +2922,22 @@ bool vk2d::_internal::WindowImpl::CreateWindowFrameDataBuffer()
 	return true;
 }
 
-bool vk2d::_internal::WindowImpl::CommitRenderTargetTextureRender()
+bool vk2d::_internal::WindowImpl::CommitRenderTargetTextureRender(
+	vk2d::_internal::RenderTargetTextureRenderCollector		&	collector
+)
 {
 	for( auto & d : render_target_texture_dependencies ) {
-		if( d.render_target->CommitRenderTargetTextureRender( d ) ) {
+		if( !d.render_target->CommitRenderTargetTextureRender( d, collector ) ) {
 			return false;
 		}
 	}
 	return true;
 }
 
-void vk2d::_internal::WindowImpl::CancelRenderTargetTextureRender()
+void vk2d::_internal::WindowImpl::AbortRenderTargetTextureRender()
 {
 	for( auto & d : render_target_texture_dependencies ) {
-		d.render_target->CancelRenderTargetTextureRender( d );
+		d.render_target->AbortRenderTargetTextureRender( d );
 	}
 }
 //

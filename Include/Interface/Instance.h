@@ -31,16 +31,17 @@ class ResourceManager;
 
 
 
-
+/// @brief		Nature and severity of the reported action.
+/// @see		vk2d::PFN_VK2D_ReportFunction()
 enum class ReportSeverity : uint32_t {
-	NONE					= 0,	/// Not valid severity value, used to detect invalid severity values.
-	VERBOSE,						/// Reports everything, usually too much information.
-	INFO,							/// Useful to know what the application is doing.
-	PERFORMANCE_WARNING,			/// Serious bottlenecks in performance somewhere, you should check it out.
-	WARNING,						/// Failed to load a resource so something might be missing but can still continue with visual defects.
-	NON_CRITICAL_ERROR,				/// Error that still allows the application to continue running, might not get a picture though.
-	CRITICAL_ERROR,					/// Critical error, application has no option but to terminate immediately.
-	DEVICE_LOST,					/// Similar to critical error, this means the GPU crashed and we need to terminate immediately.
+	NONE					= 0,	///< Not valid severity value, used to detect invalid severity values.
+	VERBOSE,						///< Reports everything, usually too much information.
+	INFO,							///< Useful to know what the application is doing.
+	PERFORMANCE_WARNING,			///< Serious bottlenecks in performance somewhere, you should check it out.
+	WARNING,						///< Failed to load a resource so something might be missing but can still continue with visual defects.
+	NON_CRITICAL_ERROR,				///< Error that still allows the application to continue running, might not get a picture though.
+	CRITICAL_ERROR,					///< Critical error, application has no option but to terminate immediately.
+	DEVICE_LOST,					///< Similar to critical error, this means the GPU crashed and we need to terminate immediately.
 };
 
 
@@ -133,14 +134,13 @@ public:
 
 
 
-typedef void ( VK2D_APIENTRY *PFN_VK2D_ReportFunction )(
+using PFN_VK2D_ReportFunction		= void( VK2D_APIENTRY* )(
 	vk2d::ReportSeverity			severity,
 	std::string						message );
 
-typedef void ( VK2D_APIENTRY *MonitorUpdateCallbackFun )(
-	void );
+using MonitorUpdateCallbackFun		= void ( VK2D_APIENTRY* )( void );
 
-typedef void ( VK2D_APIENTRY *GamepadEventCallbackFun )(
+using GamepadEventCallbackFun		= void ( VK2D_APIENTRY* )(
 	vk2d::Gamepad					joystick,
 	vk2d::GamepadEvent				event,
 	const std::string			&	joystickName );

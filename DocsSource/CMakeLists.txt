@@ -63,7 +63,6 @@ file(MAKE_DIRECTORY
 )
 
 message(DEBUG ${FILES_INCLUDE})
-message(DEBUG ${FILES_INCLUDE})
 
 add_custom_command(
 	OUTPUT

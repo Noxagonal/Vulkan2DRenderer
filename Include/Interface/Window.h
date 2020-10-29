@@ -606,33 +606,59 @@ public:
 	// current state of the cursor. See vk2d::CursorState for more information.
 	VK2D_API vk2d::CursorState							VK2D_APIENTRY				GetCursorState();
 
-	// Begins the render operations. You must call this before using any drawing commands.
-	// For best performance you should calculate game logic first, when you're ready to draw
-	// call this function just before your first draw command.
+	/// @brief		Begins the render operations. You must call this before using any drawing commands.
+	///				For best performance you should calculate game logic first, when you're ready to draw
+	///				call this function just before your first draw command. Every draw call must be
+	///				between this and vk2d::Window::EndRender().
+	/// @see		vk2d::Window::EndRender()
+	/// @note		Multithreading: Main thread only.
+	/// @return		true if operation was successful, false on error and if you should quit.
 	VK2D_API bool										VK2D_APIENTRY				BeginRender();
 
-	// Ends the rendering operations. You must call this after you're done drawing.
-	// This will display the results on screen.
+	/// @brief		Ends the rendering operations. You must call this after you're done drawing
+	///				everything in order to display the results on the window surface.
+	/// @see		vk2d::Window::BeginRender()
+	/// @note		Multithreading: Main thread only.
+	/// @return		true if operation was successful, false on error and if you should quit.
 	VK2D_API bool										VK2D_APIENTRY				EndRender();
 
+	/// @brief		Draw triangle list directly.
+	///				Best used if you want to manipulate and draw vertices directly.
+	/// @note		Multithreading: Main thread only.
+	/// @param[in]	indices
+	///				List of indices telling how to form triangles between vertices.
+	/// @param[in]	vertices
+	///				List of vertices that define the shape.
+	/// @param[in]	texture_channels
+	///				Only has effect if provided texture has more than 1 layer.
+	///				This tell how much weight each texture layer has on each vertex.
+	///				TODO: Need to check formatting... Yank Niko, he forgot...
+	/// @param[in]	solid
+	///				If true, renders solid polygons, if false renders as wireframe.
+	/// @param[in]	texture
+	///				Pointer to texture, see vk2d::Vertex for UV mapping details.
+	///				Can be nullptr in which case a white texture is used (vertex colors only).
+	/// @param[in]	sampler
+	///				Pointer to sampler which determines how the texture is drawn.
+	///				Can be nullptr in which case the default sampler is used.
 	VK2D_API void										VK2D_APIENTRY				DrawTriangleList(
 		const std::vector<vk2d::VertexIndex_3>		&	indices,
 		const std::vector<vk2d::Vertex>				&	vertices,
-		const std::vector<float>					&	texture_channels,
-		bool											filled						= true,
+		const std::vector<float>					&	texture_channel_weights,
+		bool											solid						= true,
 		vk2d::Texture								*	texture						= nullptr,
 		vk2d::Sampler								*	sampler						= nullptr );
 
 	VK2D_API void										VK2D_APIENTRY				DrawLineList(
 		const std::vector<vk2d::VertexIndex_2>		&	indices,
 		const std::vector<vk2d::Vertex>				&	vertices,
-		const std::vector<float>					&	texture_channels,
+		const std::vector<float>					&	texture_channel_weights,
 		vk2d::Texture								*	texture						= nullptr,
 		vk2d::Sampler								*	sampler						= nullptr );
 
 	VK2D_API void										VK2D_APIENTRY				DrawPointList(
 		const std::vector<vk2d::Vertex>				&	vertices,
-		const std::vector<float>					&	texture_channels,
+		const std::vector<float>					&	texture_channel_weights,
 		vk2d::Texture								*	texture						= nullptr,
 		vk2d::Sampler								*	sampler						= nullptr );
 

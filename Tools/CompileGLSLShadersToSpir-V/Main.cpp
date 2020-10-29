@@ -225,7 +225,7 @@ void ExecuteGlslang( FileEntry file_entry )
 		auto name			= name_str.c_str();
 		shader.setStringsWithLengthsAndNames( &text, &text_lenght, &name, 1 );
 		shader.setEnvInput( glslang::EShSource::EShSourceGlsl, file_entry.stage, glslang::EShClient::EShClientVulkan, 450 );
-		shader.setEnvClient( glslang::EShClient::EShClientVulkan, glslang::EShTargetClientVersion::EShTargetVulkan_1_0 );
+		shader.setEnvClient( glslang::EShClient::EShClientVulkan, glslang::EShTargetClientVersion::EShTargetVulkan_1_2 );
 		shader.setEnvTarget( glslang::EShTargetLanguage::EShTargetSpv, glslang::EShTargetLanguageVersion::EShTargetSpv_1_0 );
 
 		bool compile_failed		= false;

@@ -172,7 +172,7 @@ public:
 		const std::vector<vk2d::VertexIndex_3>				&	indices,
 		const std::vector<vk2d::Vertex>						&	vertices,
 		const std::vector<float>							&	texture_channel_weights,
-		bool													filled						= true,
+		bool													solid						= true,
 		vk2d::Texture										*	texture						= nullptr,
 		vk2d::Sampler										*	sampler						= nullptr );
 
@@ -180,7 +180,7 @@ public:
 		const std::vector<uint32_t>							&	raw_indices,
 		const std::vector<vk2d::Vertex>						&	vertices,
 		const std::vector<float>							&	texture_channel_weights,
-		bool													filled						= true,
+		bool													solid						= true,
 		vk2d::Texture										*	texture						= nullptr,
 		vk2d::Sampler										*	sampler						= nullptr );
 
@@ -235,10 +235,11 @@ private:
 	// RenderTargerTexture have been fully rendered. BeginRender() can be called however,
 	// it will swap the buffers so 2 renders can be queued, however third call to
 	// BeginRender() will be blocked until the first BeginRender() call has been rendered.
-	bool														CommitRenderTargetTextureRender();
+	bool														CommitRenderTargetTextureRender(
+		vk2d::_internal::RenderTargetTextureRenderCollector	&	collector );
 
-	// In case something goes wrong, allows cancelling render commission.
-	void														CancelRenderTargetTextureRender();
+	// In case something goes wrong, allows cancelling render commitment.
+	void														AbortRenderTargetTextureRender();
 
 //	void														ClearRenderTargetTextureDepencies();
 	void														CheckAndAddRenderTargetTextureDependency(
@@ -298,8 +299,8 @@ private:
 
 	VkCommandPool												vk_command_pool								= {};
 	std::vector<VkCommandBuffer>								vk_render_command_buffers					= {};	// For more overlapped execution multiple command buffers are needed.
-	VkCommandBuffer												vk_complementary_transfer_command_buffer	= {};	// For data transfer each frame, this is small command buffer and can be re-recorded just before submitting the work.
-	VkSemaphore													vk_mesh_transfer_semaphore					= {};
+	VkCommandBuffer												vk_transfer_command_buffer					= {};	// For data transfer each frame, this is small command buffer and can be re-recorded just before submitting the work.
+	VkSemaphore													vk_transfer_semaphore						= {};
 
 	VkExtent2D													min_extent									= {};
 	VkExtent2D													max_extent									= {};

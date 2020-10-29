@@ -183,6 +183,10 @@ add_custom_target(RunTool_CompileGLSLShaderToSpirV
 	COMMAND
 		CompileGLSLShadersToSpirV
 		"-shaderpath" "${CMAKE_SOURCE_DIR}/Source/Shaders"
+	DEPENDS
+		"${CMAKE_SOURCE_DIR}/Source/Shaders/*.txt"
+		"${CMAKE_SOURCE_DIR}/Source/Shaders/*.vert"
+		"${CMAKE_SOURCE_DIR}/Source/Shaders/*.frag"
 )
 add_dependencies(RunTool_CompileGLSLShaderToSpirV
 	CompileGLSLShadersToSpirV

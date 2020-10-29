@@ -251,8 +251,8 @@ VK2D_API bool VK2D_APIENTRY vk2d::Window::EndRender()
 VK2D_API void VK2D_APIENTRY vk2d::Window::DrawTriangleList(
 	const std::vector<vk2d::VertexIndex_3>	&	indices,
 	const std::vector<vk2d::Vertex>			&	vertices,
-	const std::vector<float>				&	texture_channels,
-	bool										filled,
+	const std::vector<float>				&	texture_channel_weights,
+	bool										solid,
 	vk2d::Texture							*	texture,
 	vk2d::Sampler							*	sampler
 )
@@ -260,8 +260,8 @@ VK2D_API void VK2D_APIENTRY vk2d::Window::DrawTriangleList(
 	impl->DrawTriangleList(
 		indices,
 		vertices,
-		texture_channels,
-		filled,
+		texture_channel_weights,
+		solid,
 		texture
 	);
 }
@@ -269,7 +269,7 @@ VK2D_API void VK2D_APIENTRY vk2d::Window::DrawTriangleList(
 VK2D_API void VK2D_APIENTRY vk2d::Window::DrawLineList(
 	const std::vector<vk2d::VertexIndex_2>	&	indices,
 	const std::vector<vk2d::Vertex>			&	vertices,
-	const std::vector<float>				&	texture_channels,
+	const std::vector<float>				&	texture_channel_weights,
 	vk2d::Texture							*	texture,
 	vk2d::Sampler							*	sampler
 )
@@ -277,21 +277,21 @@ VK2D_API void VK2D_APIENTRY vk2d::Window::DrawLineList(
 	impl->DrawLineList(
 		indices,
 		vertices,
-		texture_channels,
+		texture_channel_weights,
 		texture
 	);
 }
 
 VK2D_API void VK2D_APIENTRY vk2d::Window::DrawPointList(
 	const std::vector<vk2d::Vertex>			&	vertices,
-	const std::vector<float>				&	texture_channels,
+	const std::vector<float>				&	texture_channel_weights,
 	vk2d::Texture							*	texture,
 	vk2d::Sampler							*	sampler
 )
 {
 	impl->DrawPointList(
 		vertices,
-		texture_channels,
+		texture_channel_weights,
 		texture
 	);
 }

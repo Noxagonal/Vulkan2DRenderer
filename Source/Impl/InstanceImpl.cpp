@@ -1484,6 +1484,7 @@ bool vk2d::_internal::InstanceImpl::CreateInstance()
 bool vk2d::_internal::InstanceImpl::PickPhysicalDevice()
 {
 	vk_physical_device	= PickBestVulkanPhysicalDevice();
+
 	if( !vk_physical_device ) {
 		Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Cannot find physical device!" );
 	}

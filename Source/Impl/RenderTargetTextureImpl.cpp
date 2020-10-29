@@ -31,7 +31,9 @@ vk2d::_internal::TextureImpl(
 	if( !DetermineType() ) return;
 	if( !CreateCommandBuffers() ) return;
 	if( !CreateFrameDataBuffers() ) return;
-	if( !CreateSurfaces( create_info.size ) ) return;
+	if( !CreateRenderPass() ) return;
+	if( !CreateImages( create_info.size ) ) return;
+	if( !CreateFramebuffers() ) return;
 	if( !CreateSynchronizationPrimitives() ) return;
 
 	mesh_buffer		= std::make_unique<vk2d::_internal::MeshBuffer>(
@@ -40,6 +42,11 @@ vk2d::_internal::TextureImpl(
 		instance->GetVulkanPhysicalDeviceProperties().limits,
 		instance->GetDeviceMemoryPool()
 	);
+
+	// Initial final image layouts, change later if implementing mipmapless render target texture.
+	vk_attachment_image_final_layout	= VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
+	vk_sampled_image_final_layout		= VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+	vk_sampled_image_final_access_mask	= VK_ACCESS_SHADER_READ_BIT;
 
 	is_good					= true;
 }
@@ -50,7 +57,9 @@ vk2d::_internal::RenderTargetTextureImpl::~RenderTargetTextureImpl()
 	WaitIdle();
 
 	DestroySynchronizationPrimitives();
-	DestroySurfaces();
+	DestroyFramebuffers();
+	DestroyImages();
+	DestroyRenderPass();
 	DestroyFrameDataBuffers();
 	DestroyCommandBuffers();
 }
@@ -92,10 +101,13 @@ void vk2d::_internal::RenderTargetTextureImpl::SetSize(
 			}
 		}
 
-		DestroySurfaces();
-		CreateSurfaces(
+		DestroyImages();
+		DestroyFramebuffers();
+
+		CreateImages(
 			new_size
 		);
+		CreateFramebuffers();
 	}
 }
 
@@ -126,12 +138,17 @@ VkImageView vk2d::_internal::RenderTargetTextureImpl::GetVulkanImageView() const
 
 VkImageLayout vk2d::_internal::RenderTargetTextureImpl::GetVulkanImageLayout() const
 {
-	return swap_buffers[ current_swap_buffer ].vk_render_image_layout;
+	return vk_sampled_image_final_layout;
 }
 
 VkFramebuffer vk2d::_internal::RenderTargetTextureImpl::GetFramebuffer() const
 {
 	return swap_buffers[ current_swap_buffer ].vk_framebuffer;
+}
+
+VkSemaphore vk2d::_internal::RenderTargetTextureImpl::GetCurrentSwapRenderCompleteSemaphore() const
+{
+	return swap_buffers[ current_swap_buffer ].vk_render_complete_semaphore;
 }
 
 bool vk2d::_internal::RenderTargetTextureImpl::WaitUntilLoaded()
@@ -298,36 +315,7 @@ bool vk2d::_internal::RenderTargetTextureImpl::EndRender()
 		vkCmdEndRenderPass( render_command_buffer );
 	}
 
-	switch( type ) {
-		case vk2d::_internal::RenderTargetTextureType::DIRECT:
-		{
-			CmdBlitMipmapsToSampledImage(
-				render_command_buffer,
-				swap.attachment_image,
-				VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-				VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT
-			);
-			break;
-		}
-		case vk2d::_internal::RenderTargetTextureType::WITH_MULTISAMPLE:
-		{
-			// TODO: WITH_MULTISAMPLE type rendering.
-			break;
-		}
-		case vk2d::_internal::RenderTargetTextureType::WITH_BLUR:
-		{
-			// TODO: WITH_BLUR type rendering.
-			break;
-		}
-		case vk2d::_internal::RenderTargetTextureType::WITH_MULTISAMPLE_AND_BLUR:
-		{
-			// TODO: WITH_MULTISAMPLE_AND_BLUR type rendering.
-			break;
-		}
-		default:
-			instance->Report( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot render to RenderTargetTexture, unknown type!" );
-			return false;
-	}
+	CmdFinalizeRender( swap );
 
 	// End command buffer
 	vk2d::_internal::CmdInsertCommandBufferCheckpoint(
@@ -399,10 +387,6 @@ bool vk2d::_internal::RenderTargetTextureImpl::EndRender()
 	// store the command buffers until they're used in a render.
 	// Window will have to order the render target command buffers
 	// so that the deepest render target gets processed first.
-	// Render targets allow multi-core processing as well by using
-	// multiple CPU cores to render different render targets,
-	// Window object will combine everything for us and take care
-	// of render target dependency tree.
 
 	// Update submit infos to be used later when frame is being rendered.
 	{
@@ -416,37 +400,40 @@ bool vk2d::_internal::RenderTargetTextureImpl::EndRender()
 		swap.vk_transfer_submit_info.signalSemaphoreCount	= 1;
 		swap.vk_transfer_submit_info.pSignalSemaphores		= &swap.vk_transfer_to_render_semaphore;
 
-		swap.signal_render_complete_semaphore_value			= 1;
-		swap.transfer_to_render_wait_dst_stage_mask			= VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+		// render_wait_for_semaphores lists all semaphores the render must wait for.
+		// render_wait_for_semaphore_timeline_values lists values to wait for in the timeline semaphores.
+		// These lists need to be same size, each semaphore in render_wait_for_semaphores has a corresponding
+		// timeline value to wait for in render_wait_for_semaphore_timeline_values.
+		// First entry is a transfer semaphore (binary), rest will be from dependant render target render
+		// semaphores (timeline). We need a dummy value for every binary semaphore to keep the lists in sync.
+		swap.render_wait_for_semaphores.push_back( swap.vk_transfer_to_render_semaphore );
+		swap.render_wait_for_semaphore_timeline_values.push_back( 1 );
+		swap.render_wait_for_pipeline_stages.push_back( VK_PIPELINE_STAGE_VERTEX_INPUT_BIT | VK_PIPELINE_STAGE_VERTEX_SHADER_BIT );
+
+		swap.signal_render_complete_semaphore_value								= 1;
 
 		swap.vk_render_timeline_semaphore_submit_info.sType						= VK_STRUCTURE_TYPE_TIMELINE_SEMAPHORE_SUBMIT_INFO;
 		swap.vk_render_timeline_semaphore_submit_info.pNext						= nullptr;
-		swap.vk_render_timeline_semaphore_submit_info.waitSemaphoreValueCount	= 0;
-		swap.vk_render_timeline_semaphore_submit_info.pWaitSemaphoreValues		= nullptr;
+		swap.vk_render_timeline_semaphore_submit_info.waitSemaphoreValueCount	= uint32_t( std::size( swap.render_wait_for_semaphore_timeline_values ) );
+		swap.vk_render_timeline_semaphore_submit_info.pWaitSemaphoreValues		= swap.render_wait_for_semaphore_timeline_values.data();
 		swap.vk_render_timeline_semaphore_submit_info.signalSemaphoreValueCount	= 1;
 		swap.vk_render_timeline_semaphore_submit_info.pSignalSemaphoreValues	= &swap.signal_render_complete_semaphore_value;
 
 		swap.vk_render_submit_info.sType					= VK_STRUCTURE_TYPE_SUBMIT_INFO;
 		swap.vk_render_submit_info.pNext					= &swap.vk_render_timeline_semaphore_submit_info;
-		swap.vk_render_submit_info.waitSemaphoreCount		= 1;
-		swap.vk_render_submit_info.pWaitSemaphores			= &swap.vk_transfer_to_render_semaphore;
-		swap.vk_render_submit_info.pWaitDstStageMask		= &swap.transfer_to_render_wait_dst_stage_mask;
+		swap.vk_render_submit_info.waitSemaphoreCount		= uint32_t( std::size( swap.render_wait_for_semaphores ) );
+		swap.vk_render_submit_info.pWaitSemaphores			= swap.render_wait_for_semaphores.data();		// Updated later if this render target texture has child render targets.
+		swap.vk_render_submit_info.pWaitDstStageMask		= swap.render_wait_for_pipeline_stages.data();
 		swap.vk_render_submit_info.commandBufferCount		= 1;
 		swap.vk_render_submit_info.pCommandBuffers			= &swap.vk_render_command_buffer;
 		swap.vk_render_submit_info.signalSemaphoreCount		= 1;
 		swap.vk_render_submit_info.pSignalSemaphores		= &swap.vk_render_complete_semaphore;
 	}
 
-	#if 0
-	// Debugging code, draw immediately to render target texture
-	{
-		s.transfer_to_render_wait_dst_stage_mask		= VK_PIPELINE_STAGE_ALL_COMMANDS_BIT;
-
-		instance->GetPrimaryTransferQueue().Submit( s.vk_transfer_submit_info );
-		instance->GetPrimaryRenderQueue().Submit( s.vk_render_submit_info );
-		vkQueueWaitIdle( instance->GetPrimaryRenderQueue().GetQueue() );
-	}
-	#endif
+	previous_pipeline_settings		= {};
+	previous_texture				= {};
+	previous_sampler				= {};
+	previous_line_width				= 1.0f;
 
 	return true;
 }
@@ -510,13 +497,22 @@ bool vk2d::_internal::RenderTargetTextureImpl::WaitIdle()
 }
 
 bool vk2d::_internal::RenderTargetTextureImpl::CommitRenderTargetTextureRender(
-	vk2d::_internal::RenderTargetTextureDependencyInfo	&	dependency_info
+	vk2d::_internal::RenderTargetTextureDependencyInfo	&	dependency_info,
+	vk2d::_internal::RenderTargetTextureRenderCollector	&	collector
 )
 {
 	assert( dependency_info.render_target == this );
 
 	auto & swap = swap_buffers[ dependency_info.swap_buffer_index ];
 
+	for( auto & d : swap.render_target_texture_dependencies ) {
+		if( !d.render_target->CommitRenderTargetTextureRender( d, collector ) ) {
+			return false;
+		}
+	}
+
+	// Set semaphore value manually to 0, this primes the semaphore to block
+	// dependant renders until this render target completes it's own render.
 	{
 		std::lock_guard<std::mutex> lock_guard( swap.render_commitment_mutex );
 
@@ -535,20 +531,42 @@ bool vk2d::_internal::RenderTargetTextureImpl::CommitRenderTargetTextureRender(
 				instance->Report( result, "Internal error: Cannot commit render target texture render, cannot signal semaphore!" );
 				return false;
 			}
-		}
-		++swap.render_commitment_count;
-	}
 
-	for( auto & d : swap.render_target_texture_dependencies ) {
-		if( !d.render_target->CommitRenderTargetTextureRender( d ) ) {
-			return false;
+			// Give this render info to the collector if this render target texture data is out of date.
+			// Basically if render commitment count is 0 so far or render command buffer has not been re-recorded.
+			{
+				// Get immediate children render complete semaphores.
+				for( auto & d : swap.render_target_texture_dependencies ) {
+					swap.render_wait_for_semaphores.push_back( d.render_target->GetCurrentSwapRenderCompleteSemaphore() );
+					swap.render_wait_for_semaphore_timeline_values.push_back( 1 );
+					swap.render_wait_for_pipeline_stages.push_back( VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT );
+				}
+
+				assert( std::size( swap.render_wait_for_semaphores ) == std::size( swap.render_wait_for_semaphore_timeline_values ) &&
+						std::size( swap.render_wait_for_semaphores ) == std::size( swap.render_wait_for_pipeline_stages ) );
+
+				// Update submit info to account for render dependencies.
+				swap.vk_render_timeline_semaphore_submit_info.waitSemaphoreValueCount	= uint32_t( std::size( swap.render_wait_for_semaphore_timeline_values ) );
+				swap.vk_render_timeline_semaphore_submit_info.pWaitSemaphoreValues		= swap.render_wait_for_semaphore_timeline_values.data();
+				swap.vk_render_submit_info.waitSemaphoreCount							= uint32_t( std::size( swap.render_wait_for_semaphores ) );
+				swap.vk_render_submit_info.pWaitSemaphores								= swap.render_wait_for_semaphores.data();
+				swap.vk_render_submit_info.pWaitDstStageMask							= swap.render_wait_for_pipeline_stages.data();
+
+				// Append to render collector.
+				collector.Append(
+					swap.vk_transfer_submit_info,
+					swap.vk_render_submit_info
+				);
+			}
 		}
+
+		++swap.render_commitment_count;
 	}
 
 	return true;
 }
 
-void vk2d::_internal::RenderTargetTextureImpl::CancelRenderTargetTextureRender(
+void vk2d::_internal::RenderTargetTextureImpl::AbortRenderTargetTextureRender(
 	vk2d::_internal::RenderTargetTextureDependencyInfo	&	dependency_info
 )
 {
@@ -556,10 +574,8 @@ void vk2d::_internal::RenderTargetTextureImpl::CancelRenderTargetTextureRender(
 
 	auto & swap = swap_buffers[ dependency_info.swap_buffer_index ];
 
-	for( auto & d : swap.render_target_texture_dependencies ) {
-		d.render_target->CancelRenderTargetTextureRender( d );
-	}
-
+	// Set semaphore value to 1, this unprimes the semaphore from blocking dependant renders.
+	// Used only when aborting render, normally this is set by physical device when render finishes.
 	{
 		std::lock_guard<std::mutex> lock_guard( swap.render_commitment_mutex );
 
@@ -582,6 +598,10 @@ void vk2d::_internal::RenderTargetTextureImpl::CancelRenderTargetTextureRender(
 			}
 		}
 	}
+
+	for( auto & d : swap.render_target_texture_dependencies ) {
+		d.render_target->AbortRenderTargetTextureRender( d );
+	}
 }
 
 void vk2d::_internal::RenderTargetTextureImpl::ResetRenderTargetTextureRenderDependencies(
@@ -598,6 +618,9 @@ void vk2d::_internal::RenderTargetTextureImpl::ResetRenderTargetTextureRenderDep
 	//}
 	swap.render_commitment_count	= 0;
 	swap.render_target_texture_dependencies.clear();
+	swap.render_wait_for_semaphores.clear();
+	swap.render_wait_for_semaphore_timeline_values.clear();
+	swap.render_wait_for_pipeline_stages.clear();
 }
 
 void vk2d::_internal::RenderTargetTextureImpl::CheckAndAddRenderTargetTextureDependency(
@@ -608,8 +631,8 @@ void vk2d::_internal::RenderTargetTextureImpl::CheckAndAddRenderTargetTextureDep
 	auto & swap		= swap_buffers[ swap_buffer_index ];
 
 	// TODO: Investigate a need for reference count of some sort. Render target can have dependencies to multiple different parents.
-	auto render_target = dynamic_cast<vk2d::_internal::RenderTargetTextureImpl*>( texture->texture_impl );
-	if( render_target ) {
+	if( auto render_target = dynamic_cast<vk2d::_internal::RenderTargetTextureImpl*>( texture->texture_impl ) ) {
+
 		std::lock_guard<std::mutex> lock_guard( swap.render_commitment_mutex );
 
 		if( std::none_of(
@@ -1217,7 +1240,7 @@ void vk2d::_internal::RenderTargetTextureImpl::DestroyFrameDataBuffers()
 
 
 
-bool vk2d::_internal::RenderTargetTextureImpl::CreateSurfaces(
+bool vk2d::_internal::RenderTargetTextureImpl::CreateImages(
 	vk2d::Vector2u		new_size
 )
 {
@@ -1246,58 +1269,7 @@ bool vk2d::_internal::RenderTargetTextureImpl::CreateSurfaces(
 			// Render normally to attachment, using single sample.
 			// Use blit command to copy the attachment to sampled, including mipmaps.
 
-			std::vector<VkAttachmentDescription> attachments {};
-			attachments.resize( 1 );
-
-			attachments[ 0 ].flags				= 0;
-			attachments[ 0 ].format				= surface_format;
-			attachments[ 0 ].samples			= VkSampleCountFlagBits( create_info_copy.samples );
-			attachments[ 0 ].loadOp				= VK_ATTACHMENT_LOAD_OP_CLEAR;
-			attachments[ 0 ].storeOp			= VK_ATTACHMENT_STORE_OP_STORE;
-			attachments[ 0 ].stencilLoadOp		= VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-			attachments[ 0 ].stencilStoreOp		= VK_ATTACHMENT_STORE_OP_DONT_CARE;
-			attachments[ 0 ].initialLayout		= VK_IMAGE_LAYOUT_UNDEFINED;
-			attachments[ 0 ].finalLayout		= VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
-
-			std::array<VkAttachmentReference, 1> color_attachment_references {};
-			color_attachment_references[ 0 ].attachment		= 0;
-			color_attachment_references[ 0 ].layout			= VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-
-			std::array<VkSubpassDescription, 1> subpasses {};
-			subpasses[ 0 ].flags					= 0;
-			subpasses[ 0 ].pipelineBindPoint		= VK_PIPELINE_BIND_POINT_GRAPHICS;
-			subpasses[ 0 ].inputAttachmentCount		= 0;
-			subpasses[ 0 ].pInputAttachments		= nullptr;
-			subpasses[ 0 ].colorAttachmentCount		= uint32_t( color_attachment_references.size() );
-			subpasses[ 0 ].pColorAttachments		= color_attachment_references.data();
-			subpasses[ 0 ].pResolveAttachments		= nullptr;
-			subpasses[ 0 ].pDepthStencilAttachment	= nullptr;
-			subpasses[ 0 ].preserveAttachmentCount	= 0;
-			subpasses[ 0 ].pPreserveAttachments		= nullptr;
-
-			std::array<VkSubpassDependency, 0> dependencies {};
-
-			VkRenderPassCreateInfo render_pass_create_info {};
-			render_pass_create_info.sType				= VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
-			render_pass_create_info.pNext				= nullptr;
-			render_pass_create_info.flags				= 0;
-			render_pass_create_info.attachmentCount		= uint32_t( attachments.size() );
-			render_pass_create_info.pAttachments		= attachments.data();
-			render_pass_create_info.subpassCount		= uint32_t( subpasses.size() );
-			render_pass_create_info.pSubpasses			= subpasses.data();
-			render_pass_create_info.dependencyCount		= uint32_t( dependencies.size() );
-			render_pass_create_info.pDependencies		= dependencies.data();
-
-			auto result = vkCreateRenderPass(
-				instance->GetVulkanDevice(),
-				&render_pass_create_info,
-				nullptr,
-				&vk_attachment_render_pass
-			);
-			if( result != VK_SUCCESS ) {
-				instance->Report( result, "Internal error: Cannot create RenderTargetTexture, cannot create render pass!" );
-				return false;
-			}
+			assert( VkSampleCountFlagBits( create_info_copy.samples ) == VK_SAMPLE_COUNT_1_BIT );
 
 			for( auto & s : swap_buffers ) {
 				// Create attachment image.
@@ -1373,7 +1345,7 @@ bool vk2d::_internal::RenderTargetTextureImpl::CreateSurfaces(
 					image_view_create_info.pNext				= nullptr;
 					image_view_create_info.flags				= 0;
 					image_view_create_info.image				= VK_NULL_HANDLE;	// Automatically filled by CreateCompleteImageResource().
-					image_view_create_info.viewType				= VK_IMAGE_VIEW_TYPE_2D;
+					image_view_create_info.viewType				= VK_IMAGE_VIEW_TYPE_2D_ARRAY;
 					image_view_create_info.format				= surface_format;
 					image_view_create_info.components			= {
 						VK_COMPONENT_SWIZZLE_IDENTITY,
@@ -1397,33 +1369,6 @@ bool vk2d::_internal::RenderTargetTextureImpl::CreateSurfaces(
 						return false;
 					}
 				}
-
-				// Create framebuffer
-				{
-					VkImageView attachment					= s.attachment_image.view;
-					VkFramebufferCreateInfo framebuffer_create_info {};
-					framebuffer_create_info.sType			= VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-					framebuffer_create_info.pNext			= nullptr;
-					framebuffer_create_info.flags			= 0;
-					framebuffer_create_info.renderPass		= vk_attachment_render_pass;
-					framebuffer_create_info.attachmentCount	= 1;
-					framebuffer_create_info.pAttachments	= &attachment;
-					framebuffer_create_info.width			= size.x;
-					framebuffer_create_info.height			= size.y;
-					framebuffer_create_info.layers			= 1;
-
-					auto result = vkCreateFramebuffer(
-						instance->GetVulkanDevice(),
-						&framebuffer_create_info,
-						nullptr,
-						&s.vk_framebuffer
-					);
-					if( result != VK_SUCCESS ) {
-						instance->Report( result, "Internal error: Cannot create RenderTargetTexture, cannot create framebuffer!" );
-						return false;
-					}
-				}
-				s.vk_render_image_layout				= VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 			}
 
 			break;
@@ -1432,6 +1377,7 @@ bool vk2d::_internal::RenderTargetTextureImpl::CreateSurfaces(
 		{
 			// (Render) -> Attachment -> (Resolve) -> Buffer1 -> (Blit) -> Sampled.
 			// TODO: Multisampled RenderTargetTextureType
+			instance->Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Unsupported feature." );
 			return false;
 			break;
 		}
@@ -1439,6 +1385,7 @@ bool vk2d::_internal::RenderTargetTextureImpl::CreateSurfaces(
 		{
 			// (Render) -> Attachment -> (Render) -> Buffer1 -> (Render) -> Attachment -> (Blit) -> Sampled.
 			// TODO: Blurred RenderTargetTextureType
+			instance->Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Unsupported feature." );
 			return false;
 			break;
 		}
@@ -1446,6 +1393,7 @@ bool vk2d::_internal::RenderTargetTextureImpl::CreateSurfaces(
 		{
 			// (Render) -> Attachment -> (Resolve) -> Buffer1 -> (Render) -> Buffer2 -> (Render) -> Buffer1 -> (Blit) -> Sampled.
 			// TODO: Multisampled and Blurred RenderTargetTextureType
+			instance->Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Unsupported feature." );
 			return false;
 			break;
 		}
@@ -1460,16 +1408,9 @@ bool vk2d::_internal::RenderTargetTextureImpl::CreateSurfaces(
 	return true;
 }
 
-void vk2d::_internal::RenderTargetTextureImpl::DestroySurfaces()
+void vk2d::_internal::RenderTargetTextureImpl::DestroyImages()
 {
 	for( auto & s : swap_buffers ) {
-		vkDestroyFramebuffer(
-			instance->GetVulkanDevice(),
-			s.vk_framebuffer,
-			nullptr
-		);
-		s.vk_framebuffer	= VK_NULL_HANDLE;
-
 		instance->GetDeviceMemoryPool()->FreeCompleteResource( s.attachment_image );
 		instance->GetDeviceMemoryPool()->FreeCompleteResource( s.sampled_image );
 		instance->GetDeviceMemoryPool()->FreeCompleteResource( s.buffer_1_image );
@@ -1480,6 +1421,95 @@ void vk2d::_internal::RenderTargetTextureImpl::DestroySurfaces()
 		s.buffer_2_image	= {};
 	}
 
+}
+
+
+
+bool vk2d::_internal::RenderTargetTextureImpl::CreateRenderPass()
+{
+	bool use_multisampling =
+		type == vk2d::_internal::RenderTargetTextureType::WITH_MULTISAMPLE ||
+		type == vk2d::_internal::RenderTargetTextureType::WITH_MULTISAMPLE_AND_BLUR;
+
+	std::vector<VkAttachmentDescription> attachments {};
+	attachments.reserve( 2 );
+	{
+		// Render attachment
+		VkAttachmentDescription render_attachment {};
+		render_attachment.flags				= 0;
+		render_attachment.format			= surface_format;
+		render_attachment.samples			= VkSampleCountFlagBits( create_info_copy.samples );
+		render_attachment.loadOp			= VK_ATTACHMENT_LOAD_OP_CLEAR;
+		render_attachment.storeOp			= VK_ATTACHMENT_STORE_OP_STORE;
+		render_attachment.stencilLoadOp		= VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+		render_attachment.stencilStoreOp	= VK_ATTACHMENT_STORE_OP_DONT_CARE;
+		render_attachment.initialLayout		= VK_IMAGE_LAYOUT_UNDEFINED;
+		render_attachment.finalLayout		= VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
+		attachments.push_back( render_attachment );
+	}
+	if( use_multisampling ) {
+		// Resolve attachment
+		VkAttachmentDescription resolve_attachment {};
+		resolve_attachment.flags			= 0;
+		resolve_attachment.format			= surface_format;
+		resolve_attachment.samples			= VK_SAMPLE_COUNT_1_BIT;
+		resolve_attachment.loadOp			= VK_ATTACHMENT_LOAD_OP_CLEAR;
+		resolve_attachment.storeOp			= VK_ATTACHMENT_STORE_OP_STORE;
+		resolve_attachment.stencilLoadOp	= VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+		resolve_attachment.stencilStoreOp	= VK_ATTACHMENT_STORE_OP_DONT_CARE;
+		resolve_attachment.initialLayout	= VK_IMAGE_LAYOUT_UNDEFINED;
+		resolve_attachment.finalLayout		= VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
+		attachments.push_back( resolve_attachment );
+	}
+
+	std::array<VkAttachmentReference, 1> color_attachment_references {};
+	color_attachment_references[ 0 ].attachment		= 0;
+	color_attachment_references[ 0 ].layout			= VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+
+	std::array<VkAttachmentReference, std::size( color_attachment_references )> resolve_attachment_references {};
+	resolve_attachment_references[ 0 ].attachment	= 1;
+	resolve_attachment_references[ 0 ].layout		= VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+
+	std::array<VkSubpassDescription, 1> subpasses {};
+	subpasses[ 0 ].flags					= 0;
+	subpasses[ 0 ].pipelineBindPoint		= VK_PIPELINE_BIND_POINT_GRAPHICS;
+	subpasses[ 0 ].inputAttachmentCount		= 0;
+	subpasses[ 0 ].pInputAttachments		= nullptr;
+	subpasses[ 0 ].colorAttachmentCount		= uint32_t( color_attachment_references.size() );
+	subpasses[ 0 ].pColorAttachments		= color_attachment_references.data();
+	subpasses[ 0 ].pResolveAttachments		= use_multisampling ? resolve_attachment_references.data() : nullptr;
+	subpasses[ 0 ].pDepthStencilAttachment	= nullptr;
+	subpasses[ 0 ].preserveAttachmentCount	= 0;
+	subpasses[ 0 ].pPreserveAttachments		= nullptr;
+
+	std::array<VkSubpassDependency, 0> dependencies {};
+
+	VkRenderPassCreateInfo render_pass_create_info {};
+	render_pass_create_info.sType				= VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
+	render_pass_create_info.pNext				= nullptr;
+	render_pass_create_info.flags				= 0;
+	render_pass_create_info.attachmentCount		= uint32_t( attachments.size() );
+	render_pass_create_info.pAttachments		= attachments.data();
+	render_pass_create_info.subpassCount		= uint32_t( subpasses.size() );
+	render_pass_create_info.pSubpasses			= subpasses.data();
+	render_pass_create_info.dependencyCount		= uint32_t( dependencies.size() );
+	render_pass_create_info.pDependencies		= dependencies.data();
+
+	auto result = vkCreateRenderPass(
+		instance->GetVulkanDevice(),
+		&render_pass_create_info,
+		nullptr,
+		&vk_attachment_render_pass
+	);
+	if( result != VK_SUCCESS ) {
+		instance->Report( result, "Internal error: Cannot create RenderTargetTexture, cannot create render pass!" );
+		return false;
+	}
+	return true;
+}
+
+void vk2d::_internal::RenderTargetTextureImpl::DestroyRenderPass()
+{
 	vkDestroyRenderPass(
 		instance->GetVulkanDevice(),
 		vk_attachment_render_pass,
@@ -1487,6 +1517,49 @@ void vk2d::_internal::RenderTargetTextureImpl::DestroySurfaces()
 	);
 	vk_attachment_render_pass	= VK_NULL_HANDLE;
 }
+
+bool vk2d::_internal::RenderTargetTextureImpl::CreateFramebuffers()
+{
+	for( auto & s : swap_buffers ) {
+		VkImageView attachment					= s.attachment_image.view;
+		VkFramebufferCreateInfo framebuffer_create_info {};
+		framebuffer_create_info.sType			= VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+		framebuffer_create_info.pNext			= nullptr;
+		framebuffer_create_info.flags			= 0;
+		framebuffer_create_info.renderPass		= vk_attachment_render_pass;
+		framebuffer_create_info.attachmentCount	= 1;
+		framebuffer_create_info.pAttachments	= &attachment;
+		framebuffer_create_info.width			= size.x;
+		framebuffer_create_info.height			= size.y;
+		framebuffer_create_info.layers			= 1;
+
+		auto result = vkCreateFramebuffer(
+			instance->GetVulkanDevice(),
+			&framebuffer_create_info,
+			nullptr,
+			&s.vk_framebuffer
+		);
+		if( result != VK_SUCCESS ) {
+			instance->Report( result, "Internal error: Cannot create RenderTargetTexture, cannot create framebuffer!" );
+			return false;
+		}
+	}
+	return true;
+}
+
+void vk2d::_internal::RenderTargetTextureImpl::DestroyFramebuffers()
+{
+	for( auto & s : swap_buffers ) {
+		vkDestroyFramebuffer(
+			instance->GetVulkanDevice(),
+			s.vk_framebuffer,
+			nullptr
+		);
+		s.vk_framebuffer	= VK_NULL_HANDLE;
+	}
+}
+
+
 
 bool vk2d::_internal::RenderTargetTextureImpl::CreateSynchronizationPrimitives()
 {
@@ -1558,11 +1631,42 @@ void vk2d::_internal::RenderTargetTextureImpl::DestroySynchronizationPrimitives(
 	}
 }
 
+void vk2d::_internal::RenderTargetTextureImpl::CmdFinalizeRender(
+	vk2d::_internal::RenderTargetTextureImpl::SwapBuffer		&	swap
+)
+{
+	switch( type ) {
+		case vk2d::_internal::RenderTargetTextureType::DIRECT:
+			CmdBlitMipmapsToSampledImage(
+				swap,
+				swap.attachment_image,
+				VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,			// Coming from render pass, the image layout will be transfer source optimal.
+				VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT
+			);
+			break;
+		case vk2d::_internal::RenderTargetTextureType::WITH_MULTISAMPLE:
+			// TODO: Finalize render with multisample, might be able to automatically resolve multisample via render pass, check it.
+			instance->Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Unimplemented functionality... TODO." );
+			break;
+		case vk2d::_internal::RenderTargetTextureType::WITH_BLUR:
+			// TODO: Finalize render with blur.
+			instance->Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Unimplemented functionality... TODO." );
+			break;
+		case vk2d::_internal::RenderTargetTextureType::WITH_MULTISAMPLE_AND_BLUR:
+			// TODO: Finalize render with multisample and blur, might be able to automatically resolve multisample via render pass, check it.
+			instance->Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Unimplemented functionality... TODO." );
+			break;
+		default:
+			instance->Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot finalize render target texture rendering, Invalid RenderTargetTextureType!" );
+			break;
+	}
+}
+
 void vk2d::_internal::RenderTargetTextureImpl::CmdBlitMipmapsToSampledImage(
-	VkCommandBuffer								command_buffer,
-	vk2d::_internal::CompleteImageResource	&	source_image,
-	VkImageLayout								source_image_old_layout,
-	VkPipelineStageFlagBits						source_image_pipeline_barrier_src_stage
+	vk2d::_internal::RenderTargetTextureImpl::SwapBuffer	&	swap,
+	vk2d::_internal::CompleteImageResource					&	source_image,
+	VkImageLayout												source_image_layout,
+	VkPipelineStageFlagBits										source_image_pipeline_barrier_src_stage
 )
 {
 	// Source image only has 1 mip level as it's being rendered
@@ -1581,7 +1685,7 @@ void vk2d::_internal::RenderTargetTextureImpl::CmdBlitMipmapsToSampledImage(
 	assert( instance );
 	assert( std::size( mipmap_levels ) );
 
-	auto & swap = swap_buffers[ current_swap_buffer ];
+	auto command_buffer = swap.vk_render_command_buffer;
 
 	// TODO: Study different ways of blitting the mipmaps.
 	// It might be more efficient to copy the first mip level,
@@ -1614,7 +1718,7 @@ void vk2d::_internal::RenderTargetTextureImpl::CmdBlitMipmapsToSampledImage(
 		image_memory_barriers[ 0 ].pNext					= nullptr;
 		image_memory_barriers[ 0 ].srcAccessMask			= VK_ACCESS_MEMORY_WRITE_BIT;
 		image_memory_barriers[ 0 ].dstAccessMask			= VK_ACCESS_TRANSFER_READ_BIT;
-		image_memory_barriers[ 0 ].oldLayout				= source_image_old_layout;
+		image_memory_barriers[ 0 ].oldLayout				= source_image_layout;
 		image_memory_barriers[ 0 ].newLayout				= VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
 		image_memory_barriers[ 0 ].srcQueueFamilyIndex		= VK_QUEUE_FAMILY_IGNORED;
 		image_memory_barriers[ 0 ].dstQueueFamilyIndex		= VK_QUEUE_FAMILY_IGNORED;
@@ -1733,16 +1837,16 @@ void vk2d::_internal::RenderTargetTextureImpl::CmdBlitMipmapsToSampledImage(
 	// image layout transition to shader use.
 	// Since we're blitting the second mip level directly from the
 	// source image we can immediately set the mip level of sampled
-	// image to VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL.
+	// image to final layout.
 	{
 		std::array<VkImageMemoryBarrier, 1> image_memory_barriers;
 
 		image_memory_barriers[ 0 ].sType					= VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
 		image_memory_barriers[ 0 ].pNext					= nullptr;
 		image_memory_barriers[ 0 ].srcAccessMask			= VK_ACCESS_TRANSFER_WRITE_BIT;
-		image_memory_barriers[ 0 ].dstAccessMask			= VK_ACCESS_SHADER_READ_BIT;
+		image_memory_barriers[ 0 ].dstAccessMask			= vk_sampled_image_final_access_mask;
 		image_memory_barriers[ 0 ].oldLayout				= VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
-		image_memory_barriers[ 0 ].newLayout				= VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+		image_memory_barriers[ 0 ].newLayout				= vk_sampled_image_final_layout;
 		image_memory_barriers[ 0 ].srcQueueFamilyIndex		= VK_QUEUE_FAMILY_IGNORED;
 		image_memory_barriers[ 0 ].dstQueueFamilyIndex		= VK_QUEUE_FAMILY_IGNORED;
 		image_memory_barriers[ 0 ].image					= swap.sampled_image.image;
@@ -1810,7 +1914,7 @@ void vk2d::_internal::RenderTargetTextureImpl::CmdBlitMipmapsToSampledImage(
 			region.dstOffsets[ 1 ]					= { int32_t( mipmap_levels[ i ].width ), int32_t( mipmap_levels[ i ].height ), 1 };
 			vkCmdBlitImage(
 				command_buffer,
-				source_image.image,
+				swap.sampled_image.image,
 				VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
 				swap.sampled_image.image,
 				VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
@@ -1820,7 +1924,7 @@ void vk2d::_internal::RenderTargetTextureImpl::CmdBlitMipmapsToSampledImage(
 		}
 
 		// Memory barrier from previous mip level to current,
-		// Layout transition to shader read only.
+		// Layout transition to final layout.
 		{
 			std::array<VkImageMemoryBarrier, 1> image_memory_barriers;
 
@@ -1828,9 +1932,9 @@ void vk2d::_internal::RenderTargetTextureImpl::CmdBlitMipmapsToSampledImage(
 			image_memory_barriers[ 0 ].sType							= VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
 			image_memory_barriers[ 0 ].pNext							= nullptr;
 			image_memory_barriers[ 0 ].srcAccessMask					= VK_ACCESS_TRANSFER_READ_BIT;
-			image_memory_barriers[ 0 ].dstAccessMask					= VK_ACCESS_SHADER_READ_BIT;
+			image_memory_barriers[ 0 ].dstAccessMask					= vk_sampled_image_final_access_mask;
 			image_memory_barriers[ 0 ].oldLayout						= VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
-			image_memory_barriers[ 0 ].newLayout						= VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+			image_memory_barriers[ 0 ].newLayout						= vk_sampled_image_final_layout;
 			image_memory_barriers[ 0 ].srcQueueFamilyIndex				= VK_QUEUE_FAMILY_IGNORED;
 			image_memory_barriers[ 0 ].dstQueueFamilyIndex				= VK_QUEUE_FAMILY_IGNORED;
 			image_memory_barriers[ 0 ].image							= swap.sampled_image.image;
@@ -1852,8 +1956,8 @@ void vk2d::_internal::RenderTargetTextureImpl::CmdBlitMipmapsToSampledImage(
 		}
 	}
 
-	// Memory barrier to convert the last mip image layout to shader read only.
-	// After this the complete image is ready to be used as a sampled image.
+	// Memory barrier to convert the last mip image layout to vk_sampled_image_final_layout.
+	// After this the complete image is ready to be used.
 	if( std::size( mipmap_levels ) > 1 ) {
 		std::array<VkImageMemoryBarrier, 1> image_memory_barriers;
 
@@ -1861,9 +1965,9 @@ void vk2d::_internal::RenderTargetTextureImpl::CmdBlitMipmapsToSampledImage(
 		image_memory_barriers[ 0 ].sType							= VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
 		image_memory_barriers[ 0 ].pNext							= nullptr;
 		image_memory_barriers[ 0 ].srcAccessMask					= VK_ACCESS_TRANSFER_READ_BIT;
-		image_memory_barriers[ 0 ].dstAccessMask					= VK_ACCESS_SHADER_READ_BIT;
+		image_memory_barriers[ 0 ].dstAccessMask					= vk_sampled_image_final_access_mask;
 		image_memory_barriers[ 0 ].oldLayout						= VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
-		image_memory_barriers[ 0 ].newLayout						= VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+		image_memory_barriers[ 0 ].newLayout						= vk_sampled_image_final_layout;
 		image_memory_barriers[ 0 ].srcQueueFamilyIndex				= VK_QUEUE_FAMILY_IGNORED;
 		image_memory_barriers[ 0 ].dstQueueFamilyIndex				= VK_QUEUE_FAMILY_IGNORED;
 		image_memory_barriers[ 0 ].image							= swap.sampled_image.image;
@@ -1908,14 +2012,6 @@ void vk2d::_internal::RenderTargetTextureImpl::CmdBindTextureSamplerIfDifferent(
 	vk2d::Texture					*	texture
 )
 {
-	// If sampler and texture did not change since last call, do nothing.
-	if( !sampler ) {
-		sampler		= instance->GetDefaultSampler();
-	}
-	if( !texture ) {
-		texture		= instance->GetDefaultTexture();
-	}
-
 	// if sampler or texture changed since previous call, bind a different descriptor set.
 	if( sampler != previous_sampler || texture != previous_texture ) {
 		auto & set = sampler_texture_descriptor_sets[ sampler ][ texture ];

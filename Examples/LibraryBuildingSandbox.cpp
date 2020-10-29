@@ -128,20 +128,12 @@ int main()
 		//   we can submit all render target texture command buffers there, we can reuse the render target
 		//   until RenderTargetTexture::BeginRender() is called again, rinse and repeat.
 		//
-		// Plan:
-		// Build render command buffers, as usual when calling RenderTargetTexture::EndRender(),
-		// submit all recorded render target buffers ( either of the 2 buffers ) when Window::EndRender()
-		// is called the first time, submit all at once that is. If another Window instance
-		// Window::BeginRender() is called before RenderTargetTexture::BeginRender() is called,
-		// we will not resubmit the render target texture command buffers,
-		// just add dependency on the already submitted ones.
-		// Figure out how to implement per command buffer submission render status tests.
-		// Look into vulkan event and the new timeline semaphore. Event might work best in
-		// this situation but timeline semaphore might be worth a look.
-		// EDIT: Use timeline semaphores instead of events, waiting on a timeline semaphore does not
-		// reset it.
+		// TODO: Timeline semaphores per render target texture is fine, however it should not be reset,
+		// it's not allowed to roll backwards, increasing only. So we'll need a counter of how many times
+		// the render target texture has been recorded, then once render finishes on the render target
+		// we'll set the timeline semaphore to the number of times recorded. We'll also pass that value
+		// on to other parts as a value to wait for when depending on the render target to finish render.
 
-		/*
 		render_target_texture->BeginRender();
 
 		render_target_texture->DrawTexture(
@@ -151,14 +143,13 @@ int main()
 		);
 
 		render_target_texture->EndRender();
-		*/
 
 		if( !window->BeginRender() ) return -1;
 
 		window->DrawTexture(
 			vk2d::Vector2f( -100, -100 ),
 			vk2d::Vector2f( 100, 100 ),
-			texture_resource
+			render_target_texture
 		);
 
 		if( !window->EndRender() ) return -1;

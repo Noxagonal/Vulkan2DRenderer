@@ -8,7 +8,7 @@ std::vector<VkExtent2D> vk2d::_internal::GenerateMipSizes(
 )
 {
 	std::vector<VkExtent2D> mipmap_levels;
-	mipmap_levels.reserve( 32 );
+	mipmap_levels.reserve( 16 );
 
 	VkExtent2D last { full_size.x, full_size.y };
 	mipmap_levels.push_back( last );
