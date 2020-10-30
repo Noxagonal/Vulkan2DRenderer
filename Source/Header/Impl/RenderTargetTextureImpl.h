@@ -93,12 +93,14 @@ private:
 		VkSemaphore														vk_transfer_to_render_semaphore				= {};	// Using regular semaphore.
 		//VkSemaphore														vk_blit_complete_semaphore					= {};	// Using regular semaphore.
 		VkSemaphore														vk_render_complete_semaphore				= {};	// Using timeline semaphore, 0 when pending render, 1 when rendered.
-		uint64_t														signal_render_complete_semaphore_value		= {};
+		uint64_t														render_counter								= {};	// Used with the vk_render_complete_semaphore to determine value to wait for.
 
 		std::vector<vk2d::_internal::RenderTargetTextureDependencyInfo>	render_target_texture_dependencies			= {};
 
-		uint32_t														render_commitment_count						= {};
-		std::mutex														render_commitment_mutex						= {};
+		uint32_t														render_commitment_request_count				= {};
+		std::mutex														render_commitment_request_mutex				= {};
+
+		bool															has_been_submitted							= {};
 	};
 
 public:
@@ -119,6 +121,9 @@ public:
 	VkImageLayout														GetVulkanImageLayout() const;
 	VkFramebuffer														GetFramebuffer() const;
 	VkSemaphore															GetCurrentSwapRenderCompleteSemaphore() const;
+
+	// TODO: Rename GetCurrentSwapRenderCounter() to something more fitting to purpose, it's used to get a value for a timeline semaphore to wait for to make sure render has completed.
+	uint64_t															GetCurrentSwapRenderCounter() const;
 
 	bool																WaitUntilLoaded();
 
@@ -143,6 +148,10 @@ public:
 	bool																CommitRenderTargetTextureRender(
 		vk2d::_internal::RenderTargetTextureDependencyInfo			&	dependency_info,
 		vk2d::_internal::RenderTargetTextureRenderCollector			&	collector );
+
+	// This notifies that the render target texture has been submitted to rendering.
+	void																ConfirmRenderTargetTextureRenderSubmission(
+		vk2d::_internal::RenderTargetTextureDependencyInfo			&	dependency_info );
 
 	// In case something goes wrong, allows cancelling render commission.
 	void																AbortRenderTargetTextureRender(

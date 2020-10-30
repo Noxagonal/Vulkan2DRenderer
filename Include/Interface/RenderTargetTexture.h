@@ -126,7 +126,6 @@ public:
 
 	VK2D_API void												VK2D_APIENTRY				DrawTexture(
 		vk2d::Vector2f											top_left,
-		vk2d::Vector2f											bottom_right,
 		vk2d::Texture										*	texture,
 		vk2d::Colorf											color						= { 1.0f, 1.0f, 1.0f, 1.0f } );
 

@@ -151,6 +151,11 @@ VkSemaphore vk2d::_internal::RenderTargetTextureImpl::GetCurrentSwapRenderComple
 	return swap_buffers[ current_swap_buffer ].vk_render_complete_semaphore;
 }
 
+uint64_t vk2d::_internal::RenderTargetTextureImpl::GetCurrentSwapRenderCounter() const
+{
+	return swap_buffers[ current_swap_buffer ].render_counter;
+}
+
 bool vk2d::_internal::RenderTargetTextureImpl::WaitUntilLoaded()
 {
 	return true;
@@ -410,14 +415,14 @@ bool vk2d::_internal::RenderTargetTextureImpl::EndRender()
 		swap.render_wait_for_semaphore_timeline_values.push_back( 1 );
 		swap.render_wait_for_pipeline_stages.push_back( VK_PIPELINE_STAGE_VERTEX_INPUT_BIT | VK_PIPELINE_STAGE_VERTEX_SHADER_BIT );
 
-		swap.signal_render_complete_semaphore_value								= 1;
+		++swap.render_counter;
 
 		swap.vk_render_timeline_semaphore_submit_info.sType						= VK_STRUCTURE_TYPE_TIMELINE_SEMAPHORE_SUBMIT_INFO;
 		swap.vk_render_timeline_semaphore_submit_info.pNext						= nullptr;
 		swap.vk_render_timeline_semaphore_submit_info.waitSemaphoreValueCount	= uint32_t( std::size( swap.render_wait_for_semaphore_timeline_values ) );
 		swap.vk_render_timeline_semaphore_submit_info.pWaitSemaphoreValues		= swap.render_wait_for_semaphore_timeline_values.data();
 		swap.vk_render_timeline_semaphore_submit_info.signalSemaphoreValueCount	= 1;
-		swap.vk_render_timeline_semaphore_submit_info.pSignalSemaphoreValues	= &swap.signal_render_complete_semaphore_value;
+		swap.vk_render_timeline_semaphore_submit_info.pSignalSemaphoreValues	= &swap.render_counter;
 
 		swap.vk_render_submit_info.sType					= VK_STRUCTURE_TYPE_SUBMIT_INFO;
 		swap.vk_render_submit_info.pNext					= &swap.vk_render_timeline_semaphore_submit_info;
@@ -445,22 +450,26 @@ bool vk2d::_internal::RenderTargetTextureImpl::SynchronizeFrame()
 	using namespace std::chrono;
 	using namespace std::chrono_literals;
 
-	uint64_t semaphore_wait_value = 1;
-	VkSemaphoreWaitInfo semaphore_wait_info {};
-	semaphore_wait_info.sType				= VK_STRUCTURE_TYPE_SEMAPHORE_WAIT_INFO;
-	semaphore_wait_info.pNext				= nullptr;
-	semaphore_wait_info.flags				= 0;
-	semaphore_wait_info.semaphoreCount		= 1;
-	semaphore_wait_info.pSemaphores			= &swap_buffers[ current_swap_buffer ].vk_render_complete_semaphore;
-	semaphore_wait_info.pValues				= &semaphore_wait_value;
-	result = vkWaitSemaphores(
-		instance->GetVulkanDevice(),
-		&semaphore_wait_info,
-		duration_cast<nanoseconds>( 5s ).count()
-	);
-	if( result != VK_SUCCESS ) {
-		instance->Report( result, "Cannot synchronize RenderTargetTexture frame, Semaphore wait timeout!" );
-		return false;
+	if( swap_buffers[ current_swap_buffer ].has_been_submitted ) {
+		uint64_t semaphore_wait_value = 1;
+		VkSemaphoreWaitInfo semaphore_wait_info {};
+		semaphore_wait_info.sType				= VK_STRUCTURE_TYPE_SEMAPHORE_WAIT_INFO;
+		semaphore_wait_info.pNext				= nullptr;
+		semaphore_wait_info.flags				= 0;
+		semaphore_wait_info.semaphoreCount		= 1;
+		semaphore_wait_info.pSemaphores			= &swap_buffers[ current_swap_buffer ].vk_render_complete_semaphore;
+		semaphore_wait_info.pValues				= &semaphore_wait_value;
+		result = vkWaitSemaphores(
+			instance->GetVulkanDevice(),
+			&semaphore_wait_info,
+			duration_cast<nanoseconds>( 5s ).count()
+		);
+		if( result != VK_SUCCESS ) {
+			instance->Report( result, "Cannot synchronize RenderTargetTexture frame, Semaphore wait timeout!" );
+			return false;
+		}
+
+		swap_buffers[ current_swap_buffer ].has_been_submitted = false;
 	}
 	return true;
 }
@@ -514,23 +523,23 @@ bool vk2d::_internal::RenderTargetTextureImpl::CommitRenderTargetTextureRender(
 	// Set semaphore value manually to 0, this primes the semaphore to block
 	// dependant renders until this render target completes it's own render.
 	{
-		std::lock_guard<std::mutex> lock_guard( swap.render_commitment_mutex );
+		std::lock_guard<std::mutex> lock_guard( swap.render_commitment_request_mutex );
 
-		if( swap.render_commitment_count == 0 ) {
-			VkSemaphoreSignalInfo signal_info {};
-			signal_info.sType		= VK_STRUCTURE_TYPE_SEMAPHORE_SIGNAL_INFO;
-			signal_info.pNext		= nullptr;
-			signal_info.semaphore	= swap.vk_render_complete_semaphore;
-			signal_info.value		= 0;
+		if( swap.render_commitment_request_count == 0 ) {
 
-			auto result = vkSignalSemaphore(
-				instance->GetVulkanDevice(),
-				&signal_info
-			);
-			if( result != VK_SUCCESS ) {
-				instance->Report( result, "Internal error: Cannot commit render target texture render, cannot signal semaphore!" );
-				return false;
-			}
+			//VkSemaphoreSignalInfo signal_info {};
+			//signal_info.sType		= VK_STRUCTURE_TYPE_SEMAPHORE_SIGNAL_INFO;
+			//signal_info.pNext		= nullptr;
+			//signal_info.semaphore	= swap.vk_render_complete_semaphore;
+			//signal_info.value		= 0;
+			//auto result = vkSignalSemaphore(
+			//	instance->GetVulkanDevice(),
+			//	&signal_info
+			//);
+			//if( result != VK_SUCCESS ) {
+			//	instance->Report( result, "Internal error: Cannot commit render target texture render, cannot signal semaphore!" );
+			//	return false;
+			//}
 
 			// Give this render info to the collector if this render target texture data is out of date.
 			// Basically if render commitment count is 0 so far or render command buffer has not been re-recorded.
@@ -538,7 +547,7 @@ bool vk2d::_internal::RenderTargetTextureImpl::CommitRenderTargetTextureRender(
 				// Get immediate children render complete semaphores.
 				for( auto & d : swap.render_target_texture_dependencies ) {
 					swap.render_wait_for_semaphores.push_back( d.render_target->GetCurrentSwapRenderCompleteSemaphore() );
-					swap.render_wait_for_semaphore_timeline_values.push_back( 1 );
+					swap.render_wait_for_semaphore_timeline_values.push_back( d.render_target->GetCurrentSwapRenderCounter() );
 					swap.render_wait_for_pipeline_stages.push_back( VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT );
 				}
 
@@ -560,10 +569,24 @@ bool vk2d::_internal::RenderTargetTextureImpl::CommitRenderTargetTextureRender(
 			}
 		}
 
-		++swap.render_commitment_count;
+		++swap.render_commitment_request_count;
 	}
 
 	return true;
+}
+
+void vk2d::_internal::RenderTargetTextureImpl::ConfirmRenderTargetTextureRenderSubmission(
+	vk2d::_internal::RenderTargetTextureDependencyInfo	&	dependency_info
+)
+{
+	assert( dependency_info.render_target == this );
+
+	auto & swap = swap_buffers[ dependency_info.swap_buffer_index ];
+	swap.has_been_submitted = true;
+
+	for( auto & d : swap.render_target_texture_dependencies ) {
+		d.render_target->ConfirmRenderTargetTextureRenderSubmission( d );
+	}
 }
 
 void vk2d::_internal::RenderTargetTextureImpl::AbortRenderTargetTextureRender(
@@ -577,26 +600,26 @@ void vk2d::_internal::RenderTargetTextureImpl::AbortRenderTargetTextureRender(
 	// Set semaphore value to 1, this unprimes the semaphore from blocking dependant renders.
 	// Used only when aborting render, normally this is set by physical device when render finishes.
 	{
-		std::lock_guard<std::mutex> lock_guard( swap.render_commitment_mutex );
+		std::lock_guard<std::mutex> lock_guard( swap.render_commitment_request_mutex );
 
-		--swap.render_commitment_count;
-		assert( swap.render_commitment_count != UINT32_MAX );
+		--swap.render_commitment_request_count;
+		assert( swap.render_commitment_request_count != UINT32_MAX );
 
-		if( swap.render_commitment_count == 0 ) {
-			VkSemaphoreSignalInfo signal_info {};
-			signal_info.sType		= VK_STRUCTURE_TYPE_SEMAPHORE_SIGNAL_INFO;
-			signal_info.pNext		= nullptr;
-			signal_info.semaphore	= swap.vk_render_complete_semaphore;
-			signal_info.value		= 1;
+		//if( swap.render_commitment_request_count == 0 ) {
+		//	VkSemaphoreSignalInfo signal_info {};
+		//	signal_info.sType		= VK_STRUCTURE_TYPE_SEMAPHORE_SIGNAL_INFO;
+		//	signal_info.pNext		= nullptr;
+		//	signal_info.semaphore	= swap.vk_render_complete_semaphore;
+		//	signal_info.value		= 1;
 
-			auto result = vkSignalSemaphore(
-				instance->GetVulkanDevice(),
-				&signal_info
-			);
-			if( result != VK_SUCCESS ) {
-				instance->Report( result, "Internal error: Cannot cancel render target texture render commitment, cannot signal semaphore!" );
-			}
-		}
+		//	auto result = vkSignalSemaphore(
+		//		instance->GetVulkanDevice(),
+		//		&signal_info
+		//	);
+		//	if( result != VK_SUCCESS ) {
+		//		instance->Report( result, "Internal error: Cannot cancel render target texture render commitment, cannot signal semaphore!" );
+		//	}
+		//}
 	}
 
 	for( auto & d : swap.render_target_texture_dependencies ) {
@@ -610,13 +633,13 @@ void vk2d::_internal::RenderTargetTextureImpl::ResetRenderTargetTextureRenderDep
 {
 	auto & swap = swap_buffers[ swap_buffer_index ];
 
-	std::lock_guard<std::mutex> lock_guard( swap.render_commitment_mutex );
+	std::lock_guard<std::mutex> lock_guard( swap.render_commitment_request_mutex );
 
 	// TODO: Investigate a need for reference count of some sort. Render target can have dependencies to multiple different parents.
 	//for( auto & d : swap.render_target_texture_dependencies ) {
 	//	d.render_target->ClearRenderTargetTextureDepencies( swap_buffer_index );
 	//}
-	swap.render_commitment_count	= 0;
+	swap.render_commitment_request_count	= 0;
 	swap.render_target_texture_dependencies.clear();
 	swap.render_wait_for_semaphores.clear();
 	swap.render_wait_for_semaphore_timeline_values.clear();
@@ -633,7 +656,7 @@ void vk2d::_internal::RenderTargetTextureImpl::CheckAndAddRenderTargetTextureDep
 	// TODO: Investigate a need for reference count of some sort. Render target can have dependencies to multiple different parents.
 	if( auto render_target = dynamic_cast<vk2d::_internal::RenderTargetTextureImpl*>( texture->texture_impl ) ) {
 
-		std::lock_guard<std::mutex> lock_guard( swap.render_commitment_mutex );
+		std::lock_guard<std::mutex> lock_guard( swap.render_commitment_request_mutex );
 
 		if( std::none_of(
 			swap.render_target_texture_dependencies.begin(),
@@ -1581,7 +1604,7 @@ bool vk2d::_internal::RenderTargetTextureImpl::CreateSynchronizationPrimitives()
 	timeline_semaphore_type_create_info.sType			= VK_STRUCTURE_TYPE_SEMAPHORE_TYPE_CREATE_INFO;
 	timeline_semaphore_type_create_info.pNext			= nullptr;
 	timeline_semaphore_type_create_info.semaphoreType	= VK_SEMAPHORE_TYPE_TIMELINE;
-	timeline_semaphore_type_create_info.initialValue	= 1;
+	timeline_semaphore_type_create_info.initialValue	= 0;
 
 	VkSemaphoreCreateInfo timeline_semaphore_create_info {};
 	timeline_semaphore_create_info.sType		= VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;

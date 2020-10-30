@@ -238,6 +238,8 @@ private:
 	bool														CommitRenderTargetTextureRender(
 		vk2d::_internal::RenderTargetTextureRenderCollector	&	collector );
 
+	void														ConfirmRenderTargetTextureRenderSubmission();
+
 	// In case something goes wrong, allows cancelling render commitment.
 	void														AbortRenderTargetTextureRender();
 

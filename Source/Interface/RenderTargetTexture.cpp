@@ -217,18 +217,21 @@ VK2D_API void VK2D_APIENTRY vk2d::RenderTargetTexture::DrawPieBox(
 
 VK2D_API void VK2D_APIENTRY vk2d::RenderTargetTexture::DrawTexture(
 	vk2d::Vector2f				top_left,
-	vk2d::Vector2f				bottom_right,
 	vk2d::Texture			*	texture,
 	vk2d::Colorf				color
 )
 {
-	auto mesh = vk2d::GenerateBoxMesh(
-		top_left,
-		bottom_right
-	);
-	mesh.SetTexture( texture );
-	mesh.SetVertexColor( color );
-	impl->DrawMesh( mesh );
+	if( texture ) {
+		auto texture_size = texture->GetSize();
+		auto bottom_right = top_left + vk2d::Vector2f( float( texture_size.x ), float( texture_size.y ) );
+		auto mesh = vk2d::GenerateBoxMesh(
+			top_left,
+			bottom_right
+		);
+		mesh.SetTexture( texture );
+		mesh.SetVertexColor( color );
+		impl->DrawMesh( mesh );
+	}
 }
 
 VK2D_API void VK2D_APIENTRY vk2d::RenderTargetTexture::DrawMesh(

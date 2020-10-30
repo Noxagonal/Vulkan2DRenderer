@@ -956,7 +956,7 @@ bool vk2d::_internal::WindowImpl::EndRender()
 		// Resolve immediate dependencies we need to wait for before the main render.
 		for( auto & d : render_target_texture_dependencies ) {
 			render_wait_for_semaphores.push_back( d.render_target->GetCurrentSwapRenderCompleteSemaphore() );
-			render_wait_for_semaphore_timeline_values.push_back( 1 );
+			render_wait_for_semaphore_timeline_values.push_back( d.render_target->GetCurrentSwapRenderCounter() );
 			render_wait_for_pipeline_stages.push_back( VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT );
 		}
 
@@ -1020,6 +1020,9 @@ bool vk2d::_internal::WindowImpl::EndRender()
 			);
 			return false;
 		}
+
+		// Notify render targets about successful command buffer submission.
+		ConfirmRenderTargetTextureRenderSubmission();
 	}
 
 	// DEBUGGING ONLY:
@@ -2932,6 +2935,13 @@ bool vk2d::_internal::WindowImpl::CommitRenderTargetTextureRender(
 		}
 	}
 	return true;
+}
+
+void vk2d::_internal::WindowImpl::ConfirmRenderTargetTextureRenderSubmission()
+{
+	for( auto & d : render_target_texture_dependencies ) {
+		d.render_target->ConfirmRenderTargetTextureRenderSubmission( d );
+	}
 }
 
 void vk2d::_internal::WindowImpl::AbortRenderTargetTextureRender()

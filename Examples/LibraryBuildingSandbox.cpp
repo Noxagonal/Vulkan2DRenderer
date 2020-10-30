@@ -32,6 +32,7 @@ public:
 };
 
 
+
 int main()
 {
 	vk2d::InstanceCreateInfo instance_create_info {};
@@ -57,8 +58,13 @@ int main()
 	auto resource_manager = instance->GetResourceManager();
 	auto texture_resource = resource_manager->LoadTextureResource( "../../Data/GrafGear_128.png" );
 
-	float counter = 0.0f;
+	auto render_target_size_f = vk2d::Vector2f( render_target_texture->GetSize().x, render_target_texture->GetSize().y );
+	auto animation_delta = 0.01f;
+	auto animation_counter = 0.0f;
+
 	while( !window->ShouldClose() ) {
+
+		animation_counter += animation_delta;
 
 		// Using render target textures introduces a new dependency tree
 		// Example 1:
@@ -134,27 +140,88 @@ int main()
 		// we'll set the timeline semaphore to the number of times recorded. We'll also pass that value
 		// on to other parts as a value to wait for when depending on the render target to finish render.
 
-		render_target_texture->BeginRender();
+		{
+			render_target_texture->BeginRender();
 
-		render_target_texture->DrawTexture(
-			vk2d::Vector2f( -100, -100 ),
-			vk2d::Vector2f( 100, 100 ),
-			texture_resource
-		);
 
-		render_target_texture->EndRender();
+			auto textured_box = vk2d::GenerateBoxMesh(
+				vk2d::Vector2f( 0, 0 ),
+				render_target_size_f
+			);
+			textured_box.SetTexture( texture_resource );
+			textured_box.SetVertexColor( vk2d::Colorf( 1, 1, 1, 1 ) );
+			render_target_texture->DrawMesh( textured_box );
 
-		if( !window->BeginRender() ) return -1;
 
-		window->DrawTexture(
-			vk2d::Vector2f( -100, -100 ),
-			vk2d::Vector2f( 100, 100 ),
-			render_target_texture
-		);
+			render_target_texture->DrawPieBox(
+				vk2d::Vector2f( 0, 0 ),
+				render_target_size_f,
+				std::sin( animation_counter * 0.125f ) * PI * 2.0f,
+				std::sin( animation_counter * 0.237f ) * 0.5f + 0.5f,
+				true,
+				vk2d::Colorf( 1.0f, 1.0f, 1.0f, 0.6f )
+			);
+
+			render_target_texture->DrawPoint(
+				vk2d::Vector2f( 0, 0 ),
+				vk2d::Colorf( 1, 1, 1, 1 ),
+				10.0f
+			);
+
+			render_target_texture->DrawPoint(
+				vk2d::Vector2f( 512, 0 ),
+				vk2d::Colorf( 1, 1, 1, 1 ),
+				10.0f
+			);
+
+			render_target_texture->DrawPoint(
+				vk2d::Vector2f( 0, 512 ),
+				vk2d::Colorf( 1, 1, 1, 1 ),
+				10.0f
+			);
+
+			render_target_texture->DrawPoint(
+				vk2d::Vector2f( 512, 512 ),
+				vk2d::Colorf( 1, 1, 1, 1 ),
+				10.0f
+			);
+
+			render_target_texture->EndRender();
+		}
+
+		{
+			if( !window->BeginRender() ) return -1;
+
+			window->DrawTexture(
+				render_target_size_f * vk2d::Vector2f( -1, -0.5 ),
+				render_target_texture
+			);
+
+
+			auto grid = vk2d::GenerateLatticeMesh(
+				render_target_size_f * vk2d::Vector2f( -0, -0.5 ),
+				render_target_size_f * vk2d::Vector2f( 1, 0.5 ),
+				vk2d::Vector2f( 30, 30 ),
+				true
+			);
+			grid.SetTexture( render_target_texture );
+			grid.Wave(
+				2.36f,
+				1.4f,
+				animation_counter,
+				vk2d::Vector2f( 30, 30 )
+			);
+			grid.SetLineSize( 5 );
+
+			window->DrawMesh( grid );
+
+			grid.SetTexture( nullptr );
+			grid.SetMeshType( vk2d::MeshType::TRIANGLE_WIREFRAME );
+			grid.SetVertexColor( vk2d::Colorf( 0.1f, 1.0f, 0.3f, 0.2f ) );
+			window->DrawMesh( grid );
+		}
 
 		if( !window->EndRender() ) return -1;
-
-		counter += 0.01f;
 	}
 
 	return 0;

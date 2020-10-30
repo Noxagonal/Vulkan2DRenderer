@@ -327,23 +327,23 @@ VK2D_API void VK2D_APIENTRY vk2d::Window::DrawLine(
 VK2D_API void VK2D_APIENTRY vk2d::Window::DrawBox(
 	vk2d::Vector2f					top_left,
 	vk2d::Vector2f					bottom_right,
-	bool							filled,
+	bool							solid,
 	vk2d::Colorf					color
 )
 {
 	auto mesh = vk2d::GenerateBoxMesh(
 		top_left,
 		bottom_right,
-		filled
+		solid
 	);
 	mesh.SetVertexColor( color );
 	impl->DrawMesh( mesh );
 }
 
-VK2D_API void VK2D_APIENTRY vk2d::Window::DrawCircle(
+VK2D_API void VK2D_APIENTRY vk2d::Window::DrawEllipse(
 	vk2d::Vector2f					top_left,
 	vk2d::Vector2f					bottom_right,
-	bool							filled,
+	bool							solid,
 	float							edge_count,
 	vk2d::Colorf					color
 )
@@ -351,7 +351,7 @@ VK2D_API void VK2D_APIENTRY vk2d::Window::DrawCircle(
 	auto mesh = vk2d::GenerateCircleMesh(
 		top_left,
 		bottom_right,
-		filled,
+		solid,
 		edge_count
 	);
 	mesh.SetVertexColor( color );
@@ -363,7 +363,7 @@ VK2D_API void VK2D_APIENTRY vk2d::Window::DrawPie(
 	vk2d::Vector2f					bottom_right,
 	float							begin_angle_radians,
 	float							coverage,
-	bool							filled,
+	bool							solid,
 	float							edge_count,
 	vk2d::Colorf					color
 )
@@ -373,7 +373,7 @@ VK2D_API void VK2D_APIENTRY vk2d::Window::DrawPie(
 		bottom_right,
 		begin_angle_radians,
 		coverage,
-		filled,
+		solid,
 		edge_count
 	);
 	mesh.SetVertexColor( color );
@@ -385,7 +385,7 @@ VK2D_API void VK2D_APIENTRY vk2d::Window::DrawPieBox(
 	vk2d::Vector2f					bottom_right,
 	float							begin_angle_radians,
 	float							coverage,
-	bool							filled,
+	bool							solid,
 	vk2d::Colorf					color
 )
 {
@@ -394,7 +394,7 @@ VK2D_API void VK2D_APIENTRY vk2d::Window::DrawPieBox(
 		bottom_right,
 		begin_angle_radians,
 		coverage,
-		filled
+		solid
 	);
 	mesh.SetVertexColor( color );
 	impl->DrawMesh( mesh );
@@ -402,18 +402,22 @@ VK2D_API void VK2D_APIENTRY vk2d::Window::DrawPieBox(
 
 VK2D_API void VK2D_APIENTRY vk2d::Window::DrawTexture(
 	vk2d::Vector2f				top_left,
-	vk2d::Vector2f				bottom_right,
 	vk2d::Texture			*	texture,
 	vk2d::Colorf				color
 )
 {
-	auto mesh = vk2d::GenerateBoxMesh(
-		top_left,
-		bottom_right
-	);
-	mesh.SetTexture( texture );
-	mesh.SetVertexColor( color );
-	impl->DrawMesh( mesh );
+	if( texture ) {
+		auto texture_size	= texture->GetSize();
+		auto bottom_right	= top_left + vk2d::Vector2f( float( texture_size.x ), float( texture_size.y ) );
+		texture->GetSize();
+		auto mesh = vk2d::GenerateBoxMesh(
+			top_left,
+			bottom_right
+		);
+		mesh.SetTexture( texture );
+		mesh.SetVertexColor( color );
+		impl->DrawMesh( mesh );
+	}
 }
 
 VK2D_API void VK2D_APIENTRY vk2d::Window::DrawMesh(
