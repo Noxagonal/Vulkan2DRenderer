@@ -3,6 +3,7 @@
 #include "../Core/SourceCommon.h"
 
 #include "../Core/DescriptorSet.h"
+#include "../../Include/Interface/RenderTargetCommon.hpp"
 
 
 namespace vk2d {
@@ -10,6 +11,7 @@ namespace _internal {
 
 
 
+class InstanceImpl;
 class WindowImpl;
 class RenderTargetTextureImpl;
 
@@ -56,6 +58,13 @@ public:
 private:
 	std::vector<vk2d::_internal::RenderTargetTextureRenderCollector::Collection>	collection;
 };
+
+
+
+vk2d::Multisamples						CheckSupportedMultisampleCount(
+	vk2d::_internal::InstanceImpl	*	instance,
+	vk2d::Multisamples					samples
+);
 
 
 

@@ -253,36 +253,22 @@ vk2d::_internal::WindowImpl::WindowImpl(
 	const vk2d::WindowCreateInfo	&	window_create_info
 )
 {
-	this->create_info_copy				= window_create_info;
-	this->window_parent					= window;
-	this->instance						= instance;
-	this->report_function				= instance->GetReportFunction();
-	this->window_title					= create_info_copy.title;
-	this->event_handler					= create_info_copy.event_handler;
-
-	{
-		this->samples					= create_info_copy.samples;
-		vk2d::Multisamples max_samples	= instance->GetMaximumSupportedMultisampling();
-		if( uint32_t( this->samples ) > uint32_t( max_samples ) ) {
-			std::stringstream ss;
-			ss << "Window parameter: 'vk2d::WindowCreateInfo::samples' was larger than the system supports.\n"
-				<< "Maximum supported amount for this system is: '" << uint32_t( max_samples ) << "'.";
-			instance->Report(
-				vk2d::ReportSeverity::WARNING,
-				ss.str()
-			);
-			this->samples						= max_samples;
-		}
-		vk2d::Multisamples supported_samples	= vk2d::Multisamples( instance->GetVulkanPhysicalDeviceProperties().limits.framebufferColorSampleCounts );
-		if( !( uint32_t( this->samples ) & uint32_t( supported_samples ) ) ) {
-			this->samples						= vk2d::Multisamples::SAMPLE_COUNT_1;
-		}
-	}
+	assert( window );
+	assert( instance );
 
 	this->vk_instance				= instance->GetVulkanInstance();
 	this->vk_physical_device		= instance->GetVulkanPhysicalDevice();
 	this->vk_device					= instance->GetVulkanDevice();
 	this->primary_render_queue		= instance->GetPrimaryRenderQueue();
+
+	this->create_info_copy			= window_create_info;
+	this->window_parent				= window;
+	this->instance					= instance;
+	this->report_function			= instance->GetReportFunction();
+	this->window_title				= create_info_copy.title;
+	this->event_handler				= create_info_copy.event_handler;
+
+	this->samples					= CheckSupportedMultisampleCount( instance, create_info_copy.samples );
 
 	if( !CreateGLFWWindow() ) return;
 	if( !CreateSurface() ) return;

@@ -250,7 +250,6 @@ private:
 	void																CmdFinalizeRender(
 		vk2d::_internal::RenderTargetTextureImpl::SwapBuffer		&	swap );
 
-	// TODO:
 	void																CmdBlur(
 		vk2d::_internal::RenderTargetTextureImpl::SwapBuffer		&	swap,
 		vk2d::_internal::CompleteImageResource						&	source_image,
@@ -302,6 +301,7 @@ private:
 
 	VkFormat															surface_format								= {};
 	vk2d::Vector2u														size										= {};
+	vk2d::Multisamples													samples										= {};
 	std::vector<VkExtent2D>												mipmap_levels								= {};
 	bool																granularity_aligned							= {};
 

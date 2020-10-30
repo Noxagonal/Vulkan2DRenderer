@@ -62,7 +62,8 @@ int main()
 
 	vk2d::RenderTargetTextureCreateInfo render_target_texture_create_info {};
 	render_target_texture_create_info.coordinate_space	= vk2d::RenderCoordinateSpace::TEXEL_SPACE;
-	render_target_texture_create_info.size				= vk2d::Vector2u( 512, 512 );
+	render_target_texture_create_info.size				= vk2d::Vector2u( 256, 256 );
+	render_target_texture_create_info.samples			= vk2d::Multisamples::SAMPLE_COUNT_8;
 	auto render_target_texture1 = instance->CreateRenderTargetTexture(
 		render_target_texture_create_info
 	);

@@ -18,14 +18,17 @@ vk2d::_internal::TextureImpl(
 	instance
 )
 {
-	// TODO: Enforce that the same thread that created instance, also creates RenderTargetTextureImpl.
+	assert( instance );
+	if( !instance->IsThisThreadCreatorThread() ) {
+		instance->Report( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Cannot create render target texture, this needs to be created from the main thread." );
+		return;
+	}
 
 	this->instance			= instance;
-	assert( this->instance );
+	this->create_info_copy	= create_info;
+	this->surface_format	= VK_FORMAT_R8G8B8A8_UNORM;
 
-	create_info_copy		= create_info;
-
-	surface_format			= VK_FORMAT_R8G8B8A8_UNORM;
+	this->samples			= CheckSupportedMultisampleCount( instance, create_info_copy.samples );
 
 
 	if( !DetermineType() ) return;
@@ -281,11 +284,16 @@ bool vk2d::_internal::RenderTargetTextureImpl::BeginRender()
 
 		// Begin render pass
 		{
-			VkClearValue	clear_value {};
-			clear_value.color.float32[ 0 ]		= 0.0f;
-			clear_value.color.float32[ 1 ]		= 0.0f;
-			clear_value.color.float32[ 2 ]		= 0.0f;
-			clear_value.color.float32[ 3 ]		= 0.0f;
+			std::array<VkClearValue, 2> clear_values;
+			clear_values[ 0 ].color.float32[ 0 ]		= 0.0f;
+			clear_values[ 0 ].color.float32[ 1 ]		= 0.0f;
+			clear_values[ 0 ].color.float32[ 2 ]		= 0.0f;
+			clear_values[ 0 ].color.float32[ 3 ]		= 0.0f;
+
+			clear_values[ 1 ].color.float32[ 0 ]		= 0.0f;
+			clear_values[ 1 ].color.float32[ 1 ]		= 0.0f;
+			clear_values[ 1 ].color.float32[ 2 ]		= 0.0f;
+			clear_values[ 1 ].color.float32[ 3 ]		= 0.0f;
 
 			VkRenderPassBeginInfo render_pass_begin_info {};
 			render_pass_begin_info.sType			= VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
@@ -293,8 +301,8 @@ bool vk2d::_internal::RenderTargetTextureImpl::BeginRender()
 			render_pass_begin_info.renderPass		= vk_attachment_render_pass;
 			render_pass_begin_info.framebuffer		= swap.vk_framebuffer;
 			render_pass_begin_info.renderArea		= { { 0, 0 }, { size.x, size.y } };
-			render_pass_begin_info.clearValueCount	= 1;
-			render_pass_begin_info.pClearValues		= &clear_value;
+			render_pass_begin_info.clearValueCount	= uint32_t( std::size( clear_values ) );
+			render_pass_begin_info.pClearValues		= clear_values.data();
 
 			vk2d::_internal::CmdInsertCommandBufferCheckpoint(
 				command_buffer,
@@ -736,7 +744,7 @@ void vk2d::_internal::RenderTargetTextureImpl::DrawTriangleList(
 		pipeline_settings.primitive_topology	= VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
 		pipeline_settings.polygon_mode			= solid ? VK_POLYGON_MODE_FILL : VK_POLYGON_MODE_LINE;
 		pipeline_settings.shader_programs		= shader_programs;
-		pipeline_settings.samples				= VkSampleCountFlags( create_info_copy.samples );
+		pipeline_settings.samples				= VkSampleCountFlags( samples );
 
 		CmdBindPipelineIfDifferent(
 			command_buffer,
@@ -877,7 +885,7 @@ void vk2d::_internal::RenderTargetTextureImpl::DrawLineList(
 		pipeline_settings.primitive_topology	= VK_PRIMITIVE_TOPOLOGY_LINE_LIST;
 		pipeline_settings.polygon_mode			= VK_POLYGON_MODE_LINE;
 		pipeline_settings.shader_programs		= shader_programs;
-		pipeline_settings.samples				= VkSampleCountFlags( create_info_copy.samples );
+		pipeline_settings.samples				= VkSampleCountFlags( samples );
 
 		CmdBindPipelineIfDifferent(
 			command_buffer,
@@ -973,7 +981,7 @@ void vk2d::_internal::RenderTargetTextureImpl::DrawPointList(
 		pipeline_settings.primitive_topology	= VK_PRIMITIVE_TOPOLOGY_POINT_LIST;
 		pipeline_settings.polygon_mode			= VK_POLYGON_MODE_POINT;
 		pipeline_settings.shader_programs		= shader_programs;
-		pipeline_settings.samples				= VkSampleCountFlags( create_info_copy.samples );
+		pipeline_settings.samples				= VkSampleCountFlags( samples );
 
 		CmdBindPipelineIfDifferent(
 			command_buffer,
@@ -1087,12 +1095,12 @@ bool vk2d::_internal::RenderTargetTextureImpl::IsGood() const
 bool vk2d::_internal::RenderTargetTextureImpl::DetermineType()
 {
 	assert( instance );
-	if( create_info_copy.samples == vk2d::Multisamples( 0 ) ) {
+	if( samples == vk2d::Multisamples( 0 ) ) {
 		instance->Report( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Cannot create RenderTargetTexture, multisamples was set to 0, must be 1 or higher!" );
 		return false;
 	}
 
-	if( create_info_copy.samples == vk2d::Multisamples::SAMPLE_COUNT_1 ) {
+	if( samples == vk2d::Multisamples::SAMPLE_COUNT_1 ) {
 		// no multisamples
 		if( create_info_copy.enable_blur ) {
 			// with blur
@@ -1286,138 +1294,184 @@ bool vk2d::_internal::RenderTargetTextureImpl::CreateImages(
 		create_info_copy.size
 	);
 
+	// Create shared images here.
+	for( auto & s : swap_buffers ) {
+
+		// Create attachment images, these will always be the same, besides sample count.
+		{
+			VkImageCreateInfo image_create_info {};
+			image_create_info.sType						= VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
+			image_create_info.pNext						= nullptr;
+			image_create_info.flags						= 0;
+			image_create_info.imageType					= VK_IMAGE_TYPE_2D;
+			image_create_info.format					= surface_format;
+			image_create_info.extent					= { size.x, size.y, 1 };
+			image_create_info.mipLevels					= 1;
+			image_create_info.arrayLayers				= 1;
+			image_create_info.samples					= VkSampleCountFlagBits( samples );
+			image_create_info.tiling					= VK_IMAGE_TILING_OPTIMAL;
+			image_create_info.usage						= VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
+			image_create_info.sharingMode				= VK_SHARING_MODE_EXCLUSIVE;
+			image_create_info.queueFamilyIndexCount		= 0;
+			image_create_info.pQueueFamilyIndices		= nullptr;
+			image_create_info.initialLayout				= VK_IMAGE_LAYOUT_UNDEFINED;
+
+			VkImageViewCreateInfo image_view_create_info {};
+			image_view_create_info.sType				= VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+			image_view_create_info.pNext				= nullptr;
+			image_view_create_info.flags				= 0;
+			image_view_create_info.image				= VK_NULL_HANDLE;	// Automatically filled by CreateCompleteImageResource().
+			image_view_create_info.viewType				= VK_IMAGE_VIEW_TYPE_2D;
+			image_view_create_info.format				= surface_format;
+			image_view_create_info.components			= {
+				VK_COMPONENT_SWIZZLE_IDENTITY,
+				VK_COMPONENT_SWIZZLE_IDENTITY,
+				VK_COMPONENT_SWIZZLE_IDENTITY,
+				VK_COMPONENT_SWIZZLE_IDENTITY
+			};
+			image_view_create_info.subresourceRange.aspectMask		= VK_IMAGE_ASPECT_COLOR_BIT;
+			image_view_create_info.subresourceRange.baseMipLevel	= 0;
+			image_view_create_info.subresourceRange.levelCount		= 1;
+			image_view_create_info.subresourceRange.baseArrayLayer	= 0;
+			image_view_create_info.subresourceRange.layerCount		= 1;
+
+			s.attachment_image	= instance->GetDeviceMemoryPool()->CreateCompleteImageResource(
+				&image_create_info,
+				VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+				&image_view_create_info
+			);
+			if( s.attachment_image != VK_SUCCESS ) {
+				instance->Report( s.attachment_image.result, "Internal error: Cannot create RenderTargetTexture, cannot create attachment image!" );
+				return false;
+			}
+		}
+
+		// Create Sampled images, these will always be the same so we can just do it here.
+		{
+			VkImageCreateInfo image_create_info {};
+			image_create_info.sType						= VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
+			image_create_info.pNext						= nullptr;
+			image_create_info.flags						= 0;
+			image_create_info.imageType					= VK_IMAGE_TYPE_2D;
+			image_create_info.format					= surface_format;
+			image_create_info.extent					= { size.x, size.y, 1 };
+			image_create_info.mipLevels					= uint32_t( std::size( mipmap_levels ) );
+			image_create_info.arrayLayers				= 1;
+			image_create_info.samples					= VK_SAMPLE_COUNT_1_BIT;
+			image_create_info.tiling					= VK_IMAGE_TILING_OPTIMAL;
+			image_create_info.usage						= VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
+			image_create_info.sharingMode				= VK_SHARING_MODE_EXCLUSIVE;
+			image_create_info.queueFamilyIndexCount		= 0;
+			image_create_info.pQueueFamilyIndices		= nullptr;
+			image_create_info.initialLayout				= VK_IMAGE_LAYOUT_UNDEFINED;
+
+			VkImageViewCreateInfo image_view_create_info {};
+			image_view_create_info.sType				= VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+			image_view_create_info.pNext				= nullptr;
+			image_view_create_info.flags				= 0;
+			image_view_create_info.image				= VK_NULL_HANDLE;	// Automatically filled by CreateCompleteImageResource().
+			image_view_create_info.viewType				= VK_IMAGE_VIEW_TYPE_2D_ARRAY;
+			image_view_create_info.format				= surface_format;
+			image_view_create_info.components			= {
+				VK_COMPONENT_SWIZZLE_IDENTITY,
+				VK_COMPONENT_SWIZZLE_IDENTITY,
+				VK_COMPONENT_SWIZZLE_IDENTITY,
+				VK_COMPONENT_SWIZZLE_IDENTITY
+			};
+			image_view_create_info.subresourceRange.aspectMask		= VK_IMAGE_ASPECT_COLOR_BIT;
+			image_view_create_info.subresourceRange.baseMipLevel	= 0;
+			image_view_create_info.subresourceRange.levelCount		= uint32_t( std::size( mipmap_levels ) );
+			image_view_create_info.subresourceRange.baseArrayLayer	= 0;
+			image_view_create_info.subresourceRange.layerCount		= 1;
+
+			s.sampled_image	= instance->GetDeviceMemoryPool()->CreateCompleteImageResource(
+				&image_create_info,
+				VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+				&image_view_create_info
+			);
+			if( s.sampled_image != VK_SUCCESS ) {
+				instance->Report( s.sampled_image.result, "Internal error: Cannot create RenderTargetTexture, cannot create sampled image!" );
+				return false;
+			}
+		}
+	}
+
 	// Using switch to decouple different paths of what resources to create.
 	switch( type ) {
 		case vk2d::_internal::RenderTargetTextureType::DIRECT:
-		{
 			// ( Render ) -> Attachment -> ( Blit ) -> Sampled.
 			// Render normally to attachment, using single sample.
 			// Use blit command to copy the attachment to sampled, including mipmaps.
 
-			assert( VkSampleCountFlagBits( create_info_copy.samples ) == VK_SAMPLE_COUNT_1_BIT );
+			assert( VkSampleCountFlagBits( samples ) == VK_SAMPLE_COUNT_1_BIT );
+			break;
 
+		case vk2d::_internal::RenderTargetTextureType::WITH_MULTISAMPLE:
+			// (Render) -> Attachment -> (Resolve) -> Buffer1 -> (Blit) -> Sampled.
+		{
 			for( auto & s : swap_buffers ) {
-				// Create attachment image.
-				{
-					VkImageCreateInfo image_create_info {};
-					image_create_info.sType						= VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
-					image_create_info.pNext						= nullptr;
-					image_create_info.flags						= 0;
-					image_create_info.imageType					= VK_IMAGE_TYPE_2D;
-					image_create_info.format					= surface_format;
-					image_create_info.extent					= { size.x, size.y, 1 };
-					image_create_info.mipLevels					= 1;
-					image_create_info.arrayLayers				= 1;
-					image_create_info.samples					= VkSampleCountFlagBits( create_info_copy.samples );
-					image_create_info.tiling					= VK_IMAGE_TILING_OPTIMAL;
-					image_create_info.usage						= VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
-					image_create_info.sharingMode				= VK_SHARING_MODE_EXCLUSIVE;
-					image_create_info.queueFamilyIndexCount		= 0;
-					image_create_info.pQueueFamilyIndices		= nullptr;
-					image_create_info.initialLayout				= VK_IMAGE_LAYOUT_UNDEFINED;
+				VkImageCreateInfo image_create_info {};
+				image_create_info.sType						= VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
+				image_create_info.pNext						= nullptr;
+				image_create_info.flags						= 0;
+				image_create_info.imageType					= VK_IMAGE_TYPE_2D;
+				image_create_info.format					= surface_format;
+				image_create_info.extent					= { size.x, size.y, 1 };
+				image_create_info.mipLevels					= 1;
+				image_create_info.arrayLayers				= 1;
+				image_create_info.samples					= VK_SAMPLE_COUNT_1_BIT;
+				image_create_info.tiling					= VK_IMAGE_TILING_OPTIMAL;
+				image_create_info.usage						= VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+				image_create_info.sharingMode				= VK_SHARING_MODE_EXCLUSIVE;
+				image_create_info.queueFamilyIndexCount		= 0;
+				image_create_info.pQueueFamilyIndices		= nullptr;
+				image_create_info.initialLayout				= VK_IMAGE_LAYOUT_UNDEFINED;
 
-					VkImageViewCreateInfo image_view_create_info {};
-					image_view_create_info.sType				= VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-					image_view_create_info.pNext				= nullptr;
-					image_view_create_info.flags				= 0;
-					image_view_create_info.image				= VK_NULL_HANDLE;	// Automatically filled by CreateCompleteImageResource().
-					image_view_create_info.viewType				= VK_IMAGE_VIEW_TYPE_2D;
-					image_view_create_info.format				= surface_format;
-					image_view_create_info.components			= {
-						VK_COMPONENT_SWIZZLE_IDENTITY,
-						VK_COMPONENT_SWIZZLE_IDENTITY,
-						VK_COMPONENT_SWIZZLE_IDENTITY,
-						VK_COMPONENT_SWIZZLE_IDENTITY
-					};
-					image_view_create_info.subresourceRange.aspectMask		= VK_IMAGE_ASPECT_COLOR_BIT;
-					image_view_create_info.subresourceRange.baseMipLevel	= 0;
-					image_view_create_info.subresourceRange.levelCount		= 1;
-					image_view_create_info.subresourceRange.baseArrayLayer	= 0;
-					image_view_create_info.subresourceRange.layerCount		= 1;
+				VkImageViewCreateInfo image_view_create_info {};
+				image_view_create_info.sType				= VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+				image_view_create_info.pNext				= nullptr;
+				image_view_create_info.flags				= 0;
+				image_view_create_info.image				= VK_NULL_HANDLE;	// Automatically filled by CreateCompleteImageResource().
+				image_view_create_info.viewType				= VK_IMAGE_VIEW_TYPE_2D;
+				image_view_create_info.format				= surface_format;
+				image_view_create_info.components			= {
+					VK_COMPONENT_SWIZZLE_IDENTITY,
+					VK_COMPONENT_SWIZZLE_IDENTITY,
+					VK_COMPONENT_SWIZZLE_IDENTITY,
+					VK_COMPONENT_SWIZZLE_IDENTITY
+				};
+				image_view_create_info.subresourceRange.aspectMask		= VK_IMAGE_ASPECT_COLOR_BIT;
+				image_view_create_info.subresourceRange.baseMipLevel	= 0;
+				image_view_create_info.subresourceRange.levelCount		= 1;
+				image_view_create_info.subresourceRange.baseArrayLayer	= 0;
+				image_view_create_info.subresourceRange.layerCount		= 1;
 
-					s.attachment_image	= instance->GetDeviceMemoryPool()->CreateCompleteImageResource(
-						&image_create_info,
-						VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-						&image_view_create_info
-					);
-					if( s.attachment_image != VK_SUCCESS ) {
-						instance->Report( s.attachment_image.result, "Internal error: Cannot create RenderTargetTexture, cannot create render image!" );
-						return false;
-					}
-				}
-
-				// Create Sampled image.
-				{
-					VkImageCreateInfo image_create_info {};
-					image_create_info.sType						= VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
-					image_create_info.pNext						= nullptr;
-					image_create_info.flags						= 0;
-					image_create_info.imageType					= VK_IMAGE_TYPE_2D;
-					image_create_info.format					= surface_format;
-					image_create_info.extent					= { size.x, size.y, 1 };
-					image_create_info.mipLevels					= uint32_t( std::size( mipmap_levels ) );
-					image_create_info.arrayLayers				= 1;
-					image_create_info.samples					= VK_SAMPLE_COUNT_1_BIT;
-					image_create_info.tiling					= VK_IMAGE_TILING_OPTIMAL;
-					image_create_info.usage						= VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
-					image_create_info.sharingMode				= VK_SHARING_MODE_EXCLUSIVE;
-					image_create_info.queueFamilyIndexCount		= 0;
-					image_create_info.pQueueFamilyIndices		= nullptr;
-					image_create_info.initialLayout				= VK_IMAGE_LAYOUT_UNDEFINED;
-
-					VkImageViewCreateInfo image_view_create_info {};
-					image_view_create_info.sType				= VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-					image_view_create_info.pNext				= nullptr;
-					image_view_create_info.flags				= 0;
-					image_view_create_info.image				= VK_NULL_HANDLE;	// Automatically filled by CreateCompleteImageResource().
-					image_view_create_info.viewType				= VK_IMAGE_VIEW_TYPE_2D_ARRAY;
-					image_view_create_info.format				= surface_format;
-					image_view_create_info.components			= {
-						VK_COMPONENT_SWIZZLE_IDENTITY,
-						VK_COMPONENT_SWIZZLE_IDENTITY,
-						VK_COMPONENT_SWIZZLE_IDENTITY,
-						VK_COMPONENT_SWIZZLE_IDENTITY
-					};
-					image_view_create_info.subresourceRange.aspectMask		= VK_IMAGE_ASPECT_COLOR_BIT;
-					image_view_create_info.subresourceRange.baseMipLevel	= 0;
-					image_view_create_info.subresourceRange.levelCount		= uint32_t( std::size( mipmap_levels ) );
-					image_view_create_info.subresourceRange.baseArrayLayer	= 0;
-					image_view_create_info.subresourceRange.layerCount		= 1;
-
-					s.sampled_image	= instance->GetDeviceMemoryPool()->CreateCompleteImageResource(
-						&image_create_info,
-						VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-						&image_view_create_info
-					);
-					if( s.sampled_image != VK_SUCCESS ) {
-						instance->Report( s.sampled_image.result, "Internal error: Cannot create RenderTargetTexture, cannot create render image!" );
-						return false;
-					}
+				s.buffer_1_image = instance->GetDeviceMemoryPool()->CreateCompleteImageResource(
+					&image_create_info,
+					VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+					&image_view_create_info
+				);
+				if( s.buffer_1_image != VK_SUCCESS ) {
+					instance->Report( s.buffer_1_image.result, "Internal error: Cannot create RenderTargetTexture, cannot create buffer 1 image!" );
+					return false;
 				}
 			}
 
 			break;
 		}
-		case vk2d::_internal::RenderTargetTextureType::WITH_MULTISAMPLE:
-		{
-			// (Render) -> Attachment -> (Resolve) -> Buffer1 -> (Blit) -> Sampled.
-			// TODO: Multisampled RenderTargetTextureType
-			instance->Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Unsupported feature." );
-			return false;
-			break;
-		}
+
 		case vk2d::_internal::RenderTargetTextureType::WITH_BLUR:
-		{
 			// (Render) -> Attachment -> (Render) -> Buffer1 -> (Render) -> Attachment -> (Blit) -> Sampled.
 			// TODO: Blurred RenderTargetTextureType
+		{
 			instance->Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Unsupported feature." );
 			return false;
 			break;
 		}
 		case vk2d::_internal::RenderTargetTextureType::WITH_MULTISAMPLE_AND_BLUR:
-		{
 			// (Render) -> Attachment -> (Resolve) -> Buffer1 -> (Render) -> Buffer2 -> (Render) -> Buffer1 -> (Blit) -> Sampled.
 			// TODO: Multisampled and Blurred RenderTargetTextureType
+		{
 			instance->Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Unsupported feature." );
 			return false;
 			break;
@@ -1452,9 +1506,7 @@ void vk2d::_internal::RenderTargetTextureImpl::DestroyImages()
 
 bool vk2d::_internal::RenderTargetTextureImpl::CreateRenderPass()
 {
-	bool use_multisampling =
-		type == vk2d::_internal::RenderTargetTextureType::WITH_MULTISAMPLE ||
-		type == vk2d::_internal::RenderTargetTextureType::WITH_MULTISAMPLE_AND_BLUR;
+	bool use_multisampling = samples != vk2d::Multisamples::SAMPLE_COUNT_1;
 
 	std::vector<VkAttachmentDescription> attachments {};
 	attachments.reserve( 2 );
@@ -1463,7 +1515,7 @@ bool vk2d::_internal::RenderTargetTextureImpl::CreateRenderPass()
 		VkAttachmentDescription render_attachment {};
 		render_attachment.flags				= 0;
 		render_attachment.format			= surface_format;
-		render_attachment.samples			= VkSampleCountFlagBits( create_info_copy.samples );
+		render_attachment.samples			= VkSampleCountFlagBits( samples );
 		render_attachment.loadOp			= VK_ATTACHMENT_LOAD_OP_CLEAR;
 		render_attachment.storeOp			= VK_ATTACHMENT_STORE_OP_STORE;
 		render_attachment.stencilLoadOp		= VK_ATTACHMENT_LOAD_OP_DONT_CARE;
@@ -1545,15 +1597,23 @@ void vk2d::_internal::RenderTargetTextureImpl::DestroyRenderPass()
 
 bool vk2d::_internal::RenderTargetTextureImpl::CreateFramebuffers()
 {
+	bool use_multisampling = samples != vk2d::Multisamples::SAMPLE_COUNT_1;
+
 	for( auto & s : swap_buffers ) {
-		VkImageView attachment					= s.attachment_image.view;
+		std::vector<VkImageView> attachments;
+		attachments.reserve( 2 );
+		attachments.push_back( s.attachment_image.view );
+		if( use_multisampling ) {
+			attachments.push_back( s.buffer_1_image.view );
+		}
+
 		VkFramebufferCreateInfo framebuffer_create_info {};
 		framebuffer_create_info.sType			= VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
 		framebuffer_create_info.pNext			= nullptr;
 		framebuffer_create_info.flags			= 0;
 		framebuffer_create_info.renderPass		= vk_attachment_render_pass;
-		framebuffer_create_info.attachmentCount	= 1;
-		framebuffer_create_info.pAttachments	= &attachment;
+		framebuffer_create_info.attachmentCount	= uint32_t( std::size( attachments ) );
+		framebuffer_create_info.pAttachments	= attachments.data();
 		framebuffer_create_info.width			= size.x;
 		framebuffer_create_info.height			= size.y;
 		framebuffer_create_info.layers			= 1;
@@ -1662,6 +1722,8 @@ void vk2d::_internal::RenderTargetTextureImpl::CmdFinalizeRender(
 {
 	switch( type ) {
 		case vk2d::_internal::RenderTargetTextureType::DIRECT:
+			// ( Render ) -> Attachment -> ( Blit ) -> Sampled.
+
 			CmdBlitMipmapsToSampledImage(
 				swap,
 				swap.attachment_image,
@@ -1670,14 +1732,24 @@ void vk2d::_internal::RenderTargetTextureImpl::CmdFinalizeRender(
 			);
 			break;
 		case vk2d::_internal::RenderTargetTextureType::WITH_MULTISAMPLE:
-			// TODO: Finalize render with multisample, might be able to automatically resolve multisample via render pass, check it.
-			instance->Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Unimplemented functionality... TODO." );
+			// (Render) -> Attachment -> (Resolve) -> Buffer1 -> (Blit) -> Sampled.
+
+			CmdBlitMipmapsToSampledImage(
+				swap,
+				swap.buffer_1_image,
+				VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,			// Coming from render pass, the image layout will be transfer source optimal.
+				VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT
+			);
 			break;
 		case vk2d::_internal::RenderTargetTextureType::WITH_BLUR:
+			// (Render) -> Attachment -> (Render) -> Buffer1 -> (Render) -> Attachment -> (Blit) -> Sampled.
+
 			// TODO: Finalize render with blur.
 			instance->Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Unimplemented functionality... TODO." );
 			break;
 		case vk2d::_internal::RenderTargetTextureType::WITH_MULTISAMPLE_AND_BLUR:
+			// (Render) -> Attachment -> (Resolve) -> Buffer1 -> (Render) -> Buffer2 -> (Render) -> Buffer1 -> (Blit) -> Sampled.
+
 			// TODO: Finalize render with multisample and blur, might be able to automatically resolve multisample via render pass, check it.
 			instance->Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Unimplemented functionality... TODO." );
 			break;
@@ -1685,6 +1757,18 @@ void vk2d::_internal::RenderTargetTextureImpl::CmdFinalizeRender(
 			instance->Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot finalize render target texture rendering, Invalid RenderTargetTextureType!" );
 			break;
 	}
+}
+
+void vk2d::_internal::RenderTargetTextureImpl::CmdBlur(
+	vk2d::_internal::RenderTargetTextureImpl::SwapBuffer	&	swap,
+	vk2d::_internal::CompleteImageResource					&	source_image,
+	VkImageLayout												source_image_layout,
+	VkPipelineStageFlagBits										source_image_pipeline_barrier_src_stage,
+	vk2d::_internal::CompleteImageResource					&	intermediate_image,
+	vk2d::_internal::CompleteImageResource					&	final_image
+)
+{
+	// TODO: Render target texture blur.
 }
 
 void vk2d::_internal::RenderTargetTextureImpl::CmdBlitMipmapsToSampledImage(
