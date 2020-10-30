@@ -29,6 +29,7 @@ public:
 	VK2D_API																		~Texture();
 
 	VK2D_API virtual bool								VK2D_APIENTRY				WaitUntilLoaded()				= 0;
+	VK2D_API virtual bool								VK2D_APIENTRY				IsLoaded()						= 0;
 
 	VK2D_API virtual vk2d::Vector2u						VK2D_APIENTRY				GetSize() const					= 0;
 	VK2D_API virtual uint32_t							VK2D_APIENTRY				GetLayerCount() const			= 0;

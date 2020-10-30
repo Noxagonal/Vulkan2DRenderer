@@ -80,7 +80,7 @@ public:
 																	operator VkDescriptorSetLayout() const;
 
 private:
-	vk2d::_internal::InstanceImpl								*	instance_parent							= {};
+	vk2d::_internal::InstanceImpl								*	instance							= {};
 
 	VkDescriptorSetLayoutCreateInfo									createInfo								= {};
 	VkDevice														refDevice								= {};
@@ -131,7 +131,7 @@ public:
 		 vk2d::_internal::PoolDescriptorSet						&	pDescriptorSet );
 
 private:
-	vk2d::_internal::InstanceImpl								*	instance_parent			= {};
+	vk2d::_internal::InstanceImpl								*	instance			= {};
 
 	VkDevice														refDevice				= {};
 	std::vector<vk2d::_internal::PoolCategory>						poolCategories			= {};

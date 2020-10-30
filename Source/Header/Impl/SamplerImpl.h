@@ -36,7 +36,7 @@ public:
 
 private:
 	vk2d::Sampler							*	sampler_parent		= {};
-	vk2d::_internal::InstanceImpl			*	instance_parent		= {};
+	vk2d::_internal::InstanceImpl			*	instance		= {};
 	VkDevice									vk_device			= {};
 
 	VkSampler									vk_sampler			= {};

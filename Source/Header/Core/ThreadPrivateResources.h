@@ -41,7 +41,7 @@ protected:
 	void														ThreadEnd();
 
 private:
-	vk2d::_internal::InstanceImpl							*	instance_parent						= {};
+	vk2d::_internal::InstanceImpl							*	instance						= {};
 	VkDevice													device								= {};
 	std::unique_ptr<vk2d::_internal::DescriptorAutoPool>		descriptor_auto_pool				= {};
 	std::unique_ptr<vk2d::_internal::DeviceMemoryPool>			device_memory_pool					= {};

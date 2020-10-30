@@ -126,6 +126,7 @@ public:
 	uint64_t															GetCurrentSwapRenderCounter() const;
 
 	bool																WaitUntilLoaded();
+	bool																IsLoaded();
 
 	// Begins the render operations. You must call this before using any drawing commands.
 	// For best performance you should calculate game logic first, when you're ready to draw

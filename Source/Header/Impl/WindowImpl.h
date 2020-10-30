@@ -266,7 +266,7 @@ private:
 		VkCommandBuffer											command_buffer );
 
 	vk2d::Window											*	window_parent								= {};
-	vk2d::_internal::InstanceImpl							*	instance_parent								= {};
+	vk2d::_internal::InstanceImpl							*	instance								= {};
 	vk2d::WindowCreateInfo										create_info_copy							= {};
 
 	vk2d::WindowEventHandler								*	event_handler								= {};
@@ -420,7 +420,7 @@ public:
 	vk2d::Vector2i								GetHotSpot();
 
 private:
-	vk2d::_internal::InstanceImpl			*	instance_parent					= {};
+	vk2d::_internal::InstanceImpl			*	instance					= {};
 	std::vector<vk2d::Color8>					pixel_data						= {};
 	GLFWcursor								*	cursor							= nullptr;
 	VkExtent2D									extent							= {};

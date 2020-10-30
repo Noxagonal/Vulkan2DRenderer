@@ -53,6 +53,11 @@ VK2D_API bool VK2D_APIENTRY vk2d::RenderTargetTexture::WaitUntilLoaded()
 	return impl->WaitUntilLoaded();
 }
 
+VK2D_API bool VK2D_APIENTRY vk2d::RenderTargetTexture::IsLoaded()
+{
+	return impl->IsLoaded();
+}
+
 VK2D_API bool VK2D_APIENTRY vk2d::RenderTargetTexture::BeginRender()
 {
 	return impl->BeginRender();

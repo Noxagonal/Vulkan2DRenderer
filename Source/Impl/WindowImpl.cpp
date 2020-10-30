@@ -253,36 +253,36 @@ vk2d::_internal::WindowImpl::WindowImpl(
 	const vk2d::WindowCreateInfo	&	window_create_info
 )
 {
-	create_info_copy				= window_create_info;
-	window_parent					= window;
-	instance_parent					= instance;
-	report_function					= instance_parent->GetReportFunction();
-	window_title					= create_info_copy.title;
-	event_handler					= create_info_copy.event_handler;
+	this->create_info_copy				= window_create_info;
+	this->window_parent					= window;
+	this->instance						= instance;
+	this->report_function				= instance->GetReportFunction();
+	this->window_title					= create_info_copy.title;
+	this->event_handler					= create_info_copy.event_handler;
 
 	{
-		samples							= create_info_copy.samples;
-		vk2d::Multisamples max_samples	= instance_parent->GetMaximumSupportedMultisampling();
-		if( uint32_t( samples ) > uint32_t( max_samples ) ) {
+		this->samples					= create_info_copy.samples;
+		vk2d::Multisamples max_samples	= instance->GetMaximumSupportedMultisampling();
+		if( uint32_t( this->samples ) > uint32_t( max_samples ) ) {
 			std::stringstream ss;
 			ss << "Window parameter: 'vk2d::WindowCreateInfo::samples' was larger than the system supports.\n"
 				<< "Maximum supported amount for this system is: '" << uint32_t( max_samples ) << "'.";
-			instance_parent->Report(
+			instance->Report(
 				vk2d::ReportSeverity::WARNING,
 				ss.str()
 			);
-			samples						= max_samples;
+			this->samples						= max_samples;
 		}
-		vk2d::Multisamples supported_samples	= vk2d::Multisamples( instance_parent->GetVulkanPhysicalDeviceProperties().limits.framebufferColorSampleCounts );
-		if( !( uint32_t( samples ) & uint32_t( supported_samples ) ) ) {
-			samples								= vk2d::Multisamples::SAMPLE_COUNT_1;
+		vk2d::Multisamples supported_samples	= vk2d::Multisamples( instance->GetVulkanPhysicalDeviceProperties().limits.framebufferColorSampleCounts );
+		if( !( uint32_t( this->samples ) & uint32_t( supported_samples ) ) ) {
+			this->samples						= vk2d::Multisamples::SAMPLE_COUNT_1;
 		}
 	}
 
-	vk_instance						= instance_parent->GetVulkanInstance();
-	vk_physical_device				= instance_parent->GetVulkanPhysicalDevice();
-	vk_device						= instance_parent->GetVulkanDevice();
-	primary_render_queue			= instance_parent->GetPrimaryRenderQueue();
+	this->vk_instance				= instance->GetVulkanInstance();
+	this->vk_physical_device		= instance->GetVulkanPhysicalDevice();
+	this->vk_device					= instance->GetVulkanDevice();
+	this->primary_render_queue		= instance->GetPrimaryRenderQueue();
 
 	if( !CreateGLFWWindow() ) return;
 	if( !CreateSurface() ) return;
@@ -296,25 +296,25 @@ vk2d::_internal::WindowImpl::WindowImpl(
 	if( !CreateFrameSynchronizationPrimitives() ) return;
 	if( !CreateWindowFrameDataBuffer() ) return;
 
-	mesh_buffer		= std::make_unique<vk2d::_internal::MeshBuffer>(
-		instance_parent,
+	this->mesh_buffer		= std::make_unique<vk2d::_internal::MeshBuffer>(
+		instance,
 		vk_device,
 		instance->GetVulkanPhysicalDeviceProperties().limits,
 		instance->GetDeviceMemoryPool()
 	);
 
-	if( !mesh_buffer ) {
-		instance_parent->Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot create MeshBuffer object!" );
+	if( !this->mesh_buffer ) {
+		instance->Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot create MeshBuffer object!" );
 		return;
 	}
 
 	{
 		int32_t x = 0, y = 0;
 		glfwGetWindowPos( glfw_window, &x, &y );
-		position	= { x, y };
+		this->position	= { x, y };
 
 		glfwGetWindowSize( glfw_window, &x, &y );
-		extent		= { uint32_t( x ), uint32_t( y ) };
+		this->extent	= { uint32_t( x ), uint32_t( y ) };
 	}
 	{
 		glfwSetWindowUserPointer( glfw_window, this );
@@ -336,7 +336,7 @@ vk2d::_internal::WindowImpl::WindowImpl(
 		glfwSetDropCallback( glfw_window, vk2d::_internal::glfwFileDropCallback );
 	}
 
-	is_good		= true;
+	this->is_good		= true;
 }
 
 
@@ -358,14 +358,14 @@ vk2d::_internal::WindowImpl::~WindowImpl()
 		HandleScreenshotEvent();
 	}
 
-	instance_parent->GetDeviceMemoryPool()->FreeCompleteResource( screenshot_image );
-	instance_parent->GetDeviceMemoryPool()->FreeCompleteResource( screenshot_buffer );
+	instance->GetDeviceMemoryPool()->FreeCompleteResource( screenshot_image );
+	instance->GetDeviceMemoryPool()->FreeCompleteResource( screenshot_buffer );
 
 	mesh_buffer		= nullptr;
 
-	instance_parent->FreeDescriptorSet( frame_data_descriptor_set );
-	instance_parent->GetDeviceMemoryPool()->FreeCompleteResource( frame_data_device_buffer );
-	instance_parent->GetDeviceMemoryPool()->FreeCompleteResource( frame_data_staging_buffer );
+	instance->FreeDescriptorSet( frame_data_descriptor_set );
+	instance->GetDeviceMemoryPool()->FreeCompleteResource( frame_data_device_buffer );
+	instance->GetDeviceMemoryPool()->FreeCompleteResource( frame_data_staging_buffer );
 
 	for( auto f : vk_gpu_to_cpu_frame_fences ) {
 		vkDestroyFence(
@@ -410,7 +410,7 @@ vk2d::_internal::WindowImpl::~WindowImpl()
 	}
 
 	for( auto m : multisample_render_targets ) {
-		instance_parent->GetDeviceMemoryPool()->FreeCompleteResource( m );
+		instance->GetDeviceMemoryPool()->FreeCompleteResource( m );
 	}
 
 	for( auto v : vk_swapchain_image_views ) {
@@ -479,20 +479,20 @@ bool vk2d::_internal::AquireImage(
 	if( result != VK_SUCCESS ) {
 		if( result == VK_SUBOPTIMAL_KHR ) {
 			// Image aquired but is not optimal, continue but recreate swapchain next time we begin the render again.
-			impl->instance_parent->Report( result, "Aquired suboptimal image, continue but recreate swapchain next frame." );
+			impl->instance->Report( result, "Aquired suboptimal image, continue but recreate swapchain next frame." );
 			impl->should_reconstruct		= true;
 		} else if( result == VK_ERROR_OUT_OF_DATE_KHR ) {
 			// Image was not aquired so we cannot present anything until we recreate the swapchain.
-			impl->instance_parent->Report( result, "Could not aquire image, out of date swapchain, recreate swapchain now." );
+			impl->instance->Report( result, "Could not aquire image, out of date swapchain, recreate swapchain now." );
 			if( nested_counter ) {
 				// Breaking out of nested call here, we tried aquiring an image twice before
 				// now and it didn't work so we can assume it will not work and we can give up here.
-				impl->instance_parent->Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Could not aquire image after retry, out of date swapchain, Cannot recreate swapchain!" );
+				impl->instance->Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Could not aquire image after retry, out of date swapchain, Cannot recreate swapchain!" );
 				return false;
 			}
 			// Cannot continue before we recreate the swapchain
 			if( !impl->RecreateWindowSizeDependantResources() ) {
-				impl->instance_parent->Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot recreate window resources after resizing window!" );
+				impl->instance->Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot recreate window resources after resizing window!" );
 				return false;
 			}
 			// After recreating the swapchain and resources, try to aquire
@@ -504,11 +504,11 @@ bool vk2d::_internal::AquireImage(
 				primary_render_queue,
 				++nested_counter
 			) ) {
-				impl->instance_parent->Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot aquire next image for window!" );
+				impl->instance->Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot aquire next image for window!" );
 				return false;
 			}
 		} else {
-			impl->instance_parent->Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot aquire next swapchain image!" );
+			impl->instance->Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot aquire next swapchain image!" );
 
 			return false;
 		}
@@ -531,7 +531,7 @@ bool vk2d::_internal::WindowImpl::BeginRender()
 {
 	// Calls to BeginRender() and EndRender() should alternate, check it's our turn
 	if( next_render_call_function != vk2d::_internal::NextRenderCallFunction::BEGIN ) {
-		instance_parent->Report( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "'Window::BeginRender()' Called twice in a row!" );
+		instance->Report( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "'Window::BeginRender()' Called twice in a row!" );
 		return false;
 	} else {
 		next_render_call_function = vk2d::_internal::NextRenderCallFunction::END;
@@ -539,7 +539,7 @@ bool vk2d::_internal::WindowImpl::BeginRender()
 
 	if( should_reconstruct ) {
 		if( !RecreateWindowSizeDependantResources() ) {
-			instance_parent->Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot recreate window resources after resizing window!" );
+			instance->Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot recreate window resources after resizing window!" );
 			return false;
 		}
 	}
@@ -555,7 +555,7 @@ bool vk2d::_internal::WindowImpl::BeginRender()
 			vk_device,
 			primary_render_queue
 		) ) {
-			instance_parent->Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot aquire next swapchain image!" );
+			instance->Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot aquire next swapchain image!" );
 			return false;
 		}
 	}
@@ -566,7 +566,7 @@ bool vk2d::_internal::WindowImpl::BeginRender()
 	// finished, so we'll have to count for that and synchronize the frame early in here.
 	if( next_image == previous_image ) {
 		if( !SynchronizeFrame() ) {
-			instance_parent->Report( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot synchronize frame, cannot output to window!" );
+			instance->Report( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot synchronize frame, cannot output to window!" );
 			return false;
 		}
 	}
@@ -585,7 +585,7 @@ bool vk2d::_internal::WindowImpl::BeginRender()
 			command_buffer,
 			&command_buffer_begin_info
 		) != VK_SUCCESS ) {
-			instance_parent->Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot record primary render command buffer!" );
+			instance->Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot record primary render command buffer!" );
 			return false;
 		}
 		vk2d::_internal::CmdInsertCommandBufferCheckpoint(
@@ -627,7 +627,7 @@ bool vk2d::_internal::WindowImpl::BeginRender()
 			vkCmdBindDescriptorSets(
 				command_buffer,
 				VK_PIPELINE_BIND_POINT_GRAPHICS,
-				instance_parent->GetVulkanPipelineLayout(),
+				instance->GetVulkanPipelineLayout(),
 				DESCRIPTOR_SET_ALLOCATION_WINDOW_FRAME_DATA,
 				1, &frame_data_descriptor_set.descriptorSet,
 				0, nullptr
@@ -679,7 +679,7 @@ bool vk2d::_internal::WindowImpl::EndRender()
 {
 	// Calls to BeginRender() and EndRender() should alternate, check it's our turn
 	if( next_render_call_function != vk2d::_internal::NextRenderCallFunction::END ) {
-		instance_parent->Report( vk2d::ReportSeverity::WARNING, "'Window::EndRender()' Called twice in a row!" );
+		instance->Report( vk2d::ReportSeverity::WARNING, "'Window::EndRender()' Called twice in a row!" );
 		return false;
 	} else {
 		next_render_call_function = vk2d::_internal::NextRenderCallFunction::BEGIN;
@@ -855,14 +855,14 @@ bool vk2d::_internal::WindowImpl::EndRender()
 
 	auto result = vkEndCommandBuffer( render_command_buffer );
 	if( result != VK_SUCCESS ) {
-		instance_parent->Report( result, "Internal error: Cannot compile primary render command buffer!" );
+		instance->Report( result, "Internal error: Cannot compile primary render command buffer!" );
 		return false;
 	}
 
 	// SynchronizeFrame the previous frame here, this waits for the previous
 	// frame to finish fully rendering before continuing execution.
 	if( !SynchronizeFrame() ) {
-		instance_parent->Report( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot synchronize frame, cannot output to window!" );
+		instance->Report( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot synchronize frame, cannot output to window!" );
 		return false;
 	}
 	// Record command buffer to upload complementary data to GPU
@@ -880,7 +880,7 @@ bool vk2d::_internal::WindowImpl::EndRender()
 				&transfer_command_buffer_begin_info
 			);
 			if( result != VK_SUCCESS ) {
-				instance_parent->Report( result, "Internal error: Cannot record mesh to GPU transfer command buffer!" );
+				instance->Report( result, "Internal error: Cannot record mesh to GPU transfer command buffer!" );
 				return false;
 			}
 		}
@@ -890,7 +890,7 @@ bool vk2d::_internal::WindowImpl::EndRender()
 			if( !CmdUpdateFrameData(
 				vk_transfer_command_buffer
 			) ) {
-				instance_parent->Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot record commands to transfer FrameData to GPU!" );
+				instance->Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot record commands to transfer FrameData to GPU!" );
 				return false;
 			}
 		}
@@ -900,7 +900,7 @@ bool vk2d::_internal::WindowImpl::EndRender()
 			if( !mesh_buffer->CmdUploadMeshDataToGPU(
 				vk_transfer_command_buffer
 			) ) {
-				instance_parent->Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot record commands to transfer mesh data to GPU!" );
+				instance->Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot record commands to transfer mesh data to GPU!" );
 				return false;
 			}
 		}
@@ -911,7 +911,7 @@ bool vk2d::_internal::WindowImpl::EndRender()
 				vk_transfer_command_buffer
 			);
 			if( result != VK_SUCCESS ) {
-				instance_parent->Report( result, "Internal error: Cannot compile mesh to GPU transfer command buffer!" );
+				instance->Report( result, "Internal error: Cannot compile mesh to GPU transfer command buffer!" );
 				return false;
 			}
 		}
@@ -924,7 +924,7 @@ bool vk2d::_internal::WindowImpl::EndRender()
 		// Collect render target texture render submissions.
 		if( !CommitRenderTargetTextureRender( collector ) ) {
 			AbortRenderTargetTextureRender();
-			instance_parent->Report(
+			instance->Report(
 				vk2d::ReportSeverity::NON_CRITICAL_ERROR,
 				"Internal error: Cannot commit render target textures for rendering!"
 			);
@@ -1002,7 +1002,7 @@ bool vk2d::_internal::WindowImpl::EndRender()
 		uint64_t value = 10;
 		auto semaphore = render_wait_for_semaphores[ 1 ];
 		vkGetSemaphoreCounterValue(
-			instance_parent->GetVulkanDevice(),
+			instance->GetVulkanDevice(),
 			semaphore,
 			&value
 		);
@@ -1014,7 +1014,7 @@ bool vk2d::_internal::WindowImpl::EndRender()
 		);
 		if( result != VK_SUCCESS ) {
 			AbortRenderTargetTextureRender();
-			instance_parent->Report(
+			instance->Report(
 				result,
 				"Internal error: Cannot submit frame end command buffers!"
 			);
@@ -1028,9 +1028,9 @@ bool vk2d::_internal::WindowImpl::EndRender()
 	// DEBUGGING ONLY:
 	#if 0
 	{
-		auto result = vkDeviceWaitIdle( instance_parent->GetVulkanDevice() );
+		auto result = vkDeviceWaitIdle( instance->GetVulkanDevice() );
 		if( result != VK_SUCCESS ) {
-			instance_parent->Report( result, vk2d::_internal::VkResultToString( result ) );
+			instance->Report( result, vk2d::_internal::VkResultToString( result ) );
 			return false;
 		}
 	}
@@ -1056,7 +1056,7 @@ bool vk2d::_internal::WindowImpl::EndRender()
 				result == VK_SUBOPTIMAL_KHR || present_result == VK_SUBOPTIMAL_KHR ) {
 				should_reconstruct	= true;
 			} else {
-				instance_parent->Report( result, "Internal error: Cannot present render results to window!" );
+				instance->Report( result, "Internal error: Cannot present render results to window!" );
 				return false;
 			}
 		}
@@ -1322,7 +1322,7 @@ void vk2d::_internal::WindowImpl::SetCursorState(
 		glfwSetInputMode( glfw_window, GLFW_CURSOR, GLFW_CURSOR_DISABLED );
 		break;
 	default:
-		instance_parent->Report(
+		instance->Report(
 			vk2d::ReportSeverity::WARNING,
 			"Parameter error: 'Window::SetCursorState()' -> parameter: 'new_state' was not any value in\n"
 			"'vk2d::CursorState', defaulting to 'vk2d::CursorState::NORMAL'"
@@ -1415,10 +1415,10 @@ void vk2d::_internal::WindowImpl::DrawTriangleList(
 	auto index_count	= uint32_t( raw_indices.size() );
 
 	if( !texture ) {
-		texture = instance_parent->GetDefaultTexture();
+		texture = instance->GetDefaultTexture();
 	}
 	if( !sampler ) {
-		sampler = instance_parent->GetDefaultSampler();
+		sampler = instance->GetDefaultSampler();
 	}
 
 	CheckAndAddRenderTargetTextureDependency( texture );
@@ -1427,7 +1427,7 @@ void vk2d::_internal::WindowImpl::DrawTriangleList(
 		bool multitextured = texture->GetLayerCount() > 1 &&
 			texture_channel_weights.size() >= texture->GetLayerCount() * vertices.size();
 
-		auto shader_programs = instance_parent->GetCompatibleShaderModules(
+		auto shader_programs = instance->GetCompatibleShaderModules(
 			multitextured,
 			sampler->impl->IsAnyBorderColorEnabled(),
 			3
@@ -1469,7 +1469,7 @@ void vk2d::_internal::WindowImpl::DrawTriangleList(
 
 			vkCmdPushConstants(
 				command_buffer,
-				instance_parent->GetVulkanPipelineLayout(),
+				instance->GetVulkanPipelineLayout(),
 				VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
 				0, sizeof( pc ),
 				&pc
@@ -1490,7 +1490,7 @@ void vk2d::_internal::WindowImpl::DrawTriangleList(
 			0
 		);
 	} else {
-		instance_parent->Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot push mesh into mesh render queue!" );
+		instance->Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot push mesh into mesh render queue!" );
 	}
 }
 
@@ -1536,10 +1536,10 @@ void vk2d::_internal::WindowImpl::DrawLineList(
 	auto index_count	= uint32_t( raw_indices.size() );
 
 	if( !texture ) {
-		texture = instance_parent->GetDefaultTexture();
+		texture = instance->GetDefaultTexture();
 	}
 	if( !sampler ) {
-		sampler = instance_parent->GetDefaultSampler();
+		sampler = instance->GetDefaultSampler();
 	}
 
 	CheckAndAddRenderTargetTextureDependency( texture );
@@ -1548,7 +1548,7 @@ void vk2d::_internal::WindowImpl::DrawLineList(
 		bool multitextured = texture->GetLayerCount() > 1 &&
 			texture_channel_weights.size() >= texture->GetLayerCount() * vertices.size();
 
-		auto shader_programs = instance_parent->GetCompatibleShaderModules(
+		auto shader_programs = instance->GetCompatibleShaderModules(
 			multitextured,
 			sampler->impl->IsAnyBorderColorEnabled(),
 			2
@@ -1590,7 +1590,7 @@ void vk2d::_internal::WindowImpl::DrawLineList(
 
 			vkCmdPushConstants(
 				command_buffer,
-				instance_parent->GetVulkanPipelineLayout(),
+				instance->GetVulkanPipelineLayout(),
 				VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
 				0, sizeof( pc ),
 				&pc
@@ -1611,7 +1611,7 @@ void vk2d::_internal::WindowImpl::DrawLineList(
 			0
 		);
 	} else {
-		instance_parent->Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot push mesh into mesh render queue!" );
+		instance->Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot push mesh into mesh render queue!" );
 	}
 }
 
@@ -1627,10 +1627,10 @@ void vk2d::_internal::WindowImpl::DrawPointList(
 	auto vertex_count	= uint32_t( vertices.size() );
 
 	if( !texture ) {
-		texture = instance_parent->GetDefaultTexture();
+		texture = instance->GetDefaultTexture();
 	}
 	if( !sampler ) {
-		sampler = instance_parent->GetDefaultSampler();
+		sampler = instance->GetDefaultSampler();
 	}
 
 	CheckAndAddRenderTargetTextureDependency( texture );
@@ -1639,7 +1639,7 @@ void vk2d::_internal::WindowImpl::DrawPointList(
 		bool multitextured = texture->GetLayerCount() > 1 &&
 			texture_channel_weights.size() >= texture->GetLayerCount() * vertices.size();
 
-		auto shader_programs = instance_parent->GetCompatibleShaderModules(
+		auto shader_programs = instance->GetCompatibleShaderModules(
 			multitextured,
 			sampler->impl->IsAnyBorderColorEnabled(),
 			1
@@ -1681,7 +1681,7 @@ void vk2d::_internal::WindowImpl::DrawPointList(
 
 			vkCmdPushConstants(
 				command_buffer,
-				instance_parent->GetVulkanPipelineLayout(),
+				instance->GetVulkanPipelineLayout(),
 				VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
 				0, sizeof( pc ),
 				&pc
@@ -1701,7 +1701,7 @@ void vk2d::_internal::WindowImpl::DrawPointList(
 			0
 		);
 	} else {
-		instance_parent->Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot push mesh into mesh render queue!" );
+		instance->Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot push mesh into mesh render queue!" );
 	}
 }
 
@@ -1781,7 +1781,7 @@ public:
 		// Try to map the memory for screenshot buffer data.
 		auto pixel_rgba_data = window->screenshot_buffer.memory.Map<uint8_t>();
 		if( !pixel_rgba_data ) {
-			window->instance_parent->Report( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot save screenshot, cannot map screenshot buffer memory!" );
+			window->instance->Report( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot save screenshot, cannot map screenshot buffer memory!" );
 			window->screenshot_event_error			= true;
 			window->screenshot_event_message		= "Internal error: Cannot map buffer data.";
 			window->screenshot_state				= vk2d::_internal::WindowImpl::ScreenshotState::WAITING_EVENT_REPORT;
@@ -1858,7 +1858,7 @@ public:
 				);
 			}
 			else {
-				window->instance_parent->Report(vk2d::ReportSeverity::INFO, "Screenshot extension was not known, saving screenshot as .png");
+				window->instance->Report(vk2d::ReportSeverity::INFO, "Screenshot extension was not known, saving screenshot as .png");
 				path += ".png";
 				stbi_write_success = stbi_write_png(
 					path.string().c_str(),
@@ -1875,7 +1875,7 @@ public:
 				window->screenshot_event_message = std::string("Screenshot successfully saved at: ") + path.string();
 			}
 			else {
-				window->instance_parent->Report(vk2d::ReportSeverity::WARNING, std::string("Cannot save screenshot: '") + path.string() + "'");
+				window->instance->Report(vk2d::ReportSeverity::WARNING, std::string("Cannot save screenshot: '") + path.string() + "'");
 				window->screenshot_event_error = true;
 				window->screenshot_event_message = std::string("Cannot save screenshot '") + path.string() + "'";
 			}
@@ -1911,7 +1911,7 @@ bool vk2d::_internal::WindowImpl::SynchronizeFrame()
 			UINT64_MAX
 		);
 		if( result != VK_SUCCESS ) {
-			instance_parent->Report( result, "Internal error: Cannot properly synchronize frame." );
+			instance->Report( result, "Internal error: Cannot properly synchronize frame." );
 			return false;
 		}
 		result = vkResetFences(
@@ -1919,7 +1919,7 @@ bool vk2d::_internal::WindowImpl::SynchronizeFrame()
 			1, &vk_gpu_to_cpu_frame_fences[ previous_image ]
 		);
 		if( result != VK_SUCCESS ) {
-			instance_parent->Report( result, "Internal error: Cannot properly synchronize frame." );
+			instance->Report( result, "Internal error: Cannot properly synchronize frame." );
 			return false;
 		}
 
@@ -1930,9 +1930,9 @@ bool vk2d::_internal::WindowImpl::SynchronizeFrame()
 				screenshot_state			= vk2d::_internal::WindowImpl::ScreenshotState::WAITING_FILE_WRITE;
 				screenshot_being_saved		= true;
 
-				instance_parent->GetThreadPool()->ScheduleTask(
+				instance->GetThreadPool()->ScheduleTask(
 					std::make_unique<vk2d::_internal::ScreenshotSaverTask>( this ),
-					instance_parent->GetGeneralThreads() );
+					instance->GetGeneralThreads() );
 			}
 
 			if( screenshot_state == vk2d::_internal::WindowImpl::ScreenshotState::WAITING_EVENT_REPORT ) {
@@ -1962,7 +1962,7 @@ bool vk2d::_internal::WindowImpl::IsGood()
 
 bool vk2d::_internal::WindowImpl::RecreateWindowSizeDependantResources( )
 {
-	instance_parent->Report( vk2d::ReportSeverity::VERBOSE, "Begin recreating window resources." );
+	instance->Report( vk2d::ReportSeverity::VERBOSE, "Begin recreating window resources." );
 
 	if( !ReCreateSwapchain() ) return false;
 	ReCreateScreenshotResources();
@@ -1971,7 +1971,7 @@ bool vk2d::_internal::WindowImpl::RecreateWindowSizeDependantResources( )
 	{
 		if( vk_framebuffers.size() ) {
 			for( auto m : multisample_render_targets ) {
-				instance_parent->GetDeviceMemoryPool()->FreeCompleteResource( m );
+				instance->GetDeviceMemoryPool()->FreeCompleteResource( m );
 			}
 			for( auto fb : vk_framebuffers ) {
 				vkDestroyFramebuffer(
@@ -2028,7 +2028,7 @@ bool vk2d::_internal::WindowImpl::RecreateWindowSizeDependantResources( )
 
 	should_reconstruct		= false;
 
-	instance_parent->Report( vk2d::ReportSeverity::VERBOSE, "Done recreating window resources." );
+	instance->Report( vk2d::ReportSeverity::VERBOSE, "Done recreating window resources." );
 
 	return true;
 }
@@ -2068,7 +2068,7 @@ bool vk2d::_internal::WindowImpl::CreateGLFWWindow()
 		monitor,
 		nullptr );
 	if( !glfw_window ) {
-		instance_parent->Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot create glfw window!" );
+		instance->Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot create glfw window!" );
 		return false;
 	}
 
@@ -2095,7 +2095,7 @@ bool vk2d::_internal::WindowImpl::CreateSurface()
 			&vk_surface
 		);
 		if( result != VK_SUCCESS ) {
-			instance_parent->Report( result, "Internal error: Cannot create Vulkan surface!" );
+			instance->Report( result, "Internal error: Cannot create Vulkan surface!" );
 			return false;
 		}
 
@@ -2107,11 +2107,11 @@ bool vk2d::_internal::WindowImpl::CreateSurface()
 			&surface_supported
 		);
 		if( result != VK_SUCCESS ) {
-			instance_parent->Report( result, "Internal error: Cannot get physical device surface support!" );
+			instance->Report( result, "Internal error: Cannot get physical device surface support!" );
 			return false;
 		}
 		if( !surface_supported ) {
-			instance_parent->Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Vulkan surface does not support presentation using primary render queue, cannot continue!" );
+			instance->Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Vulkan surface does not support presentation using primary render queue, cannot continue!" );
 			return false;
 		}
 	}
@@ -2122,7 +2122,7 @@ bool vk2d::_internal::WindowImpl::CreateSurface()
 		&surface_capabilities
 	);
 	if( result != VK_SUCCESS ) {
-		instance_parent->Report( result, "Cannot get physical device surface capabilities, cannot continue!" );
+		instance->Report( result, "Cannot get physical device surface capabilities, cannot continue!" );
 		return false;
 	}
 
@@ -2130,7 +2130,7 @@ bool vk2d::_internal::WindowImpl::CreateSurface()
 	{
 		VkImageUsageFlags required_image_support = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
 		if( !( ( surface_capabilities.supportedUsageFlags & required_image_support ) == required_image_support ) ) {
-			instance_parent->Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Window Vulkan surface does not support required image capabilities, cannot continue!" );
+			instance->Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Window Vulkan surface does not support required image capabilities, cannot continue!" );
 			return false;
 		}
 	}
@@ -2147,7 +2147,7 @@ bool vk2d::_internal::WindowImpl::CreateSurface()
 				nullptr
 			);
 			if( result != VK_SUCCESS ) {
-				instance_parent->Report( result, "Internal error: Cannot query physical device surface formats, cannot continue!" );
+				instance->Report( result, "Internal error: Cannot query physical device surface formats, cannot continue!" );
 				return false;
 			}
 			surface_formats.resize( surface_format_count );
@@ -2159,7 +2159,7 @@ bool vk2d::_internal::WindowImpl::CreateSurface()
 				surface_formats.data()
 			);
 			if( result != VK_SUCCESS ) {
-				instance_parent->Report( result, "Internal error: Cannot query physical device surface formats, cannot continue!" );
+				instance->Report( result, "Internal error: Cannot query physical device surface formats, cannot continue!" );
 				return false;
 			}
 		}
@@ -2278,7 +2278,7 @@ bool vk2d::_internal::WindowImpl::CreateRenderPass()
 		&vk_render_pass
 	);
 	if( result != VK_SUCCESS ) {
-		instance_parent->Report( result, "Internal error: Cannot create Vulkan render pass!" );
+		instance->Report( result, "Internal error: Cannot create Vulkan render pass!" );
 		return false;
 	}
 
@@ -2309,7 +2309,7 @@ bool vk2d::_internal::WindowImpl::CreateCommandPool()
 		&vk_command_pool
 	);
 	if( result != VK_SUCCESS ) {
-		instance_parent->Report( result, "Internal error: Cannot create window Vulkan command pool!" );
+		instance->Report( result, "Internal error: Cannot create window Vulkan command pool!" );
 		return false;
 	}
 
@@ -2342,7 +2342,7 @@ bool vk2d::_internal::WindowImpl::AllocateCommandBuffers()
 		temp.data()
 	);
 	if( result != VK_SUCCESS ) {
-		instance_parent->Report( result, "Internal error: Cannot allocate window Vulkan command buffers!" );
+		instance->Report( result, "Internal error: Cannot allocate window Vulkan command buffers!" );
 		return false;
 	}
 
@@ -2416,7 +2416,7 @@ bool vk2d::_internal::WindowImpl::ReCreateSwapchain()
 				&surface_capabilities
 			);
 			if( result != VK_SUCCESS ) {
-				instance_parent->Report( result, "Internal error: Cannot query physical device surface capabilities, cannot continue!" );
+				instance->Report( result, "Internal error: Cannot query physical device surface capabilities, cannot continue!" );
 				return false;
 			}
 
@@ -2442,7 +2442,7 @@ bool vk2d::_internal::WindowImpl::ReCreateSwapchain()
 						nullptr
 					);
 					if( result != VK_SUCCESS ) {
-						instance_parent->Report( result, "Internal error: Cannot query physical device surface present modes!" );
+						instance->Report( result, "Internal error: Cannot query physical device surface present modes!" );
 						return false;
 					}
 					surface_present_modes.resize( present_mode_count );
@@ -2453,7 +2453,7 @@ bool vk2d::_internal::WindowImpl::ReCreateSwapchain()
 						surface_present_modes.data()
 					);
 					if( result != VK_SUCCESS ) {
-						instance_parent->Report( result, "Internal error: Cannot query physical device surface present modes!" );
+						instance->Report( result, "Internal error: Cannot query physical device surface present modes!" );
 						return false;
 					}
 				}
@@ -2503,7 +2503,7 @@ bool vk2d::_internal::WindowImpl::ReCreateSwapchain()
 				&vk_swapchain
 			);
 			if( result != VK_SUCCESS ) {
-				instance_parent->Report( result, "Internal error: Cannot create Vulkan swapchain!" );
+				instance->Report( result, "Internal error: Cannot create Vulkan swapchain!" );
 				return false;
 			}
 		}
@@ -2518,7 +2518,7 @@ bool vk2d::_internal::WindowImpl::ReCreateSwapchain()
 				nullptr
 			);
 			if( result != VK_SUCCESS ) {
-				instance_parent->Report( result, "Internal error: Cannot query Vulkan swapchain images!" );
+				instance->Report( result, "Internal error: Cannot query Vulkan swapchain images!" );
 				return false;
 			}
 			vk_swapchain_images.resize( swapchain_image_count );
@@ -2529,7 +2529,7 @@ bool vk2d::_internal::WindowImpl::ReCreateSwapchain()
 				vk_swapchain_images.data()
 			);
 			if( result != VK_SUCCESS ) {
-				instance_parent->Report( result, "Internal error: Cannot query Vulkan swapchain images!" );
+				instance->Report( result, "Internal error: Cannot query Vulkan swapchain images!" );
 				return false;
 			}
 
@@ -2571,7 +2571,7 @@ bool vk2d::_internal::WindowImpl::ReCreateSwapchain()
 					&vk_swapchain_image_views[ i ]
 				);
 				if( result != VK_SUCCESS ) {
-					instance_parent->Report( result, "Internal error: Cannot create Vulkan swapchain image views!" );
+					instance->Report( result, "Internal error: Cannot create Vulkan swapchain image views!" );
 					return false;
 				}
 			}
@@ -2598,7 +2598,7 @@ bool vk2d::_internal::WindowImpl::ReCreateScreenshotResources()
 		std::this_thread::sleep_for( std::chrono::microseconds( 10 ) );
 	}
 
-	auto memory_pool	= instance_parent->GetDeviceMemoryPool();
+	auto memory_pool	= instance->GetDeviceMemoryPool();
 	assert( memory_pool );
 
 	memory_pool->FreeCompleteResource( screenshot_buffer );
@@ -2620,12 +2620,12 @@ bool vk2d::_internal::WindowImpl::ReCreateScreenshotResources()
 	image_create_info.queueFamilyIndexCount		= 0;
 	image_create_info.pQueueFamilyIndices		= nullptr;
 	image_create_info.initialLayout				= VK_IMAGE_LAYOUT_UNDEFINED;
-	screenshot_image = instance_parent->GetDeviceMemoryPool()->CreateCompleteImageResource(
+	screenshot_image = instance->GetDeviceMemoryPool()->CreateCompleteImageResource(
 		&image_create_info,
 		VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT
 	);
 	if( screenshot_image != VK_SUCCESS ) {
-		instance_parent->Report( screenshot_image.result, "Internal error: Cannot create internal screenshot image, screenshots disabled!" );
+		instance->Report( screenshot_image.result, "Internal error: Cannot create internal screenshot image, screenshots disabled!" );
 		screenshot_state	= vk2d::_internal::WindowImpl::ScreenshotState::IDLE_ERROR;
 		return false;
 	}
@@ -2639,12 +2639,12 @@ bool vk2d::_internal::WindowImpl::ReCreateScreenshotResources()
 	buffer_create_info.sharingMode				= VK_SHARING_MODE_EXCLUSIVE;
 	buffer_create_info.queueFamilyIndexCount	= 0;
 	buffer_create_info.pQueueFamilyIndices		= nullptr;
-	screenshot_buffer = instance_parent->GetDeviceMemoryPool()->CreateCompleteBufferResource(
+	screenshot_buffer = instance->GetDeviceMemoryPool()->CreateCompleteBufferResource(
 		&buffer_create_info,
 		VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT
 	);
 	if( screenshot_buffer != VK_SUCCESS ) {
-		instance_parent->Report( screenshot_buffer.result, "Internal error: Cannot create internal screenshot buffer, screenshots disabled!" );
+		instance->Report( screenshot_buffer.result, "Internal error: Cannot create internal screenshot buffer, screenshots disabled!" );
 		screenshot_state	= vk2d::_internal::WindowImpl::ScreenshotState::IDLE_ERROR;
 		return false;
 	}
@@ -2707,13 +2707,13 @@ bool vk2d::_internal::WindowImpl::CreateFramebuffers()
 			image_view_create_info.subresourceRange.baseArrayLayer	= 0;
 			image_view_create_info.subresourceRange.layerCount		= 1;
 
-			multisample_render_targets[ i ] = instance_parent->GetDeviceMemoryPool()->CreateCompleteImageResource(
+			multisample_render_targets[ i ] = instance->GetDeviceMemoryPool()->CreateCompleteImageResource(
 				&image_create_info,
 				VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
 				&image_view_create_info
 			);
 			if( multisample_render_targets[ i ] != VK_SUCCESS ) {
-				instance_parent->Report( multisample_render_targets[ i ].result, "Internal error: Cannot create multisample render targets!" );
+				instance->Report( multisample_render_targets[ i ].result, "Internal error: Cannot create multisample render targets!" );
 				return false;
 			}
 		}
@@ -2742,7 +2742,7 @@ bool vk2d::_internal::WindowImpl::CreateFramebuffers()
 			&vk_framebuffers[ i ]
 		);
 		if( result != VK_SUCCESS ) {
-			instance_parent->Report( result, "Internal error: Cannot create Vulkan framebuffers!" );
+			instance->Report( result, "Internal error: Cannot create Vulkan framebuffers!" );
 			return false;
 		}
 	}
@@ -2774,7 +2774,7 @@ bool vk2d::_internal::WindowImpl::CreateWindowSynchronizationPrimitives()
 		&vk_aquire_image_fence
 	);
 	if( result != VK_SUCCESS ) {
-		instance_parent->Report( result, "Internal error: Cannot create image aquisition fence!" );
+		instance->Report( result, "Internal error: Cannot create image aquisition fence!" );
 		return false;
 	}
 
@@ -2790,7 +2790,7 @@ bool vk2d::_internal::WindowImpl::CreateWindowSynchronizationPrimitives()
 		&vk_transfer_semaphore
 	);
 	if( result != VK_SUCCESS ) {
-		instance_parent->Report( result, "Internal error: Cannot create mesh transfer semaphore!" );
+		instance->Report( result, "Internal error: Cannot create mesh transfer semaphore!" );
 		return false;
 	}
 
@@ -2822,7 +2822,7 @@ bool vk2d::_internal::WindowImpl::CreateFrameSynchronizationPrimitives()
 			&s
 		);
 		if( result != VK_SUCCESS ) {
-			instance_parent->Report( result, "Internal error: Cannot create frame synchronization semaphores!" );
+			instance->Report( result, "Internal error: Cannot create frame synchronization semaphores!" );
 			return false;
 		}
 	}
@@ -2842,7 +2842,7 @@ bool vk2d::_internal::WindowImpl::CreateFrameSynchronizationPrimitives()
 			&f
 		);
 		if( result != VK_SUCCESS ) {
-			instance_parent->Report( result, "Internal error: Cannot create frame synchronization fences!" );
+			instance->Report( result, "Internal error: Cannot create frame synchronization fences!" );
 			return false;
 		}
 	}
@@ -2863,12 +2863,12 @@ bool vk2d::_internal::WindowImpl::CreateWindowFrameDataBuffer()
 		staging_buffer_create_info.sharingMode				= VK_SHARING_MODE_EXCLUSIVE;
 		staging_buffer_create_info.queueFamilyIndexCount	= 0;
 		staging_buffer_create_info.pQueueFamilyIndices		= nullptr;
-		frame_data_staging_buffer = instance_parent->GetDeviceMemoryPool()->CreateCompleteBufferResource(
+		frame_data_staging_buffer = instance->GetDeviceMemoryPool()->CreateCompleteBufferResource(
 			&staging_buffer_create_info,
 			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT
 		);
 		if( frame_data_staging_buffer != VK_SUCCESS ) {
-			instance_parent->Report( frame_data_staging_buffer.result, "Internal error. Cannot create staging buffer for FrameData!" );
+			instance->Report( frame_data_staging_buffer.result, "Internal error. Cannot create staging buffer for FrameData!" );
 			return false;
 		}
 
@@ -2881,23 +2881,23 @@ bool vk2d::_internal::WindowImpl::CreateWindowFrameDataBuffer()
 		device_buffer_create_info.sharingMode				= VK_SHARING_MODE_EXCLUSIVE;
 		device_buffer_create_info.queueFamilyIndexCount		= 0;
 		device_buffer_create_info.pQueueFamilyIndices		= nullptr;
-		frame_data_device_buffer = instance_parent->GetDeviceMemoryPool()->CreateCompleteBufferResource(
+		frame_data_device_buffer = instance->GetDeviceMemoryPool()->CreateCompleteBufferResource(
 			&device_buffer_create_info,
 			VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT
 		);
 		if( frame_data_device_buffer != VK_SUCCESS ) {
-			instance_parent->Report( frame_data_device_buffer.result, "Internal error. Cannot create device local buffer for FrameData!" );
+			instance->Report( frame_data_device_buffer.result, "Internal error. Cannot create device local buffer for FrameData!" );
 			return false;
 		}
 	}
 
 	// Create descriptor set
 	{
-		frame_data_descriptor_set	= instance_parent->AllocateDescriptorSet(
-			instance_parent->GetUniformBufferDescriptorSetLayout()
+		frame_data_descriptor_set	= instance->AllocateDescriptorSet(
+			instance->GetUniformBufferDescriptorSetLayout()
 		);
 		if( frame_data_descriptor_set != VK_SUCCESS ) {
-			instance_parent->Report( frame_data_descriptor_set.result, "Internal error: Cannot allocate descriptor set for FrameData device buffer!" );
+			instance->Report( frame_data_descriptor_set.result, "Internal error: Cannot allocate descriptor set for FrameData device buffer!" );
 			return false;
 		}
 		VkDescriptorBufferInfo descriptor_write_buffer_info {};
@@ -3015,7 +3015,7 @@ void vk2d::_internal::WindowImpl::CmdBindPipelineIfDifferent(
 )
 {
 	if( previous_pipeline_settings != pipeline_settings ) {
-		auto pipeline = instance_parent->GetVulkanPipeline( pipeline_settings );
+		auto pipeline = instance->GetVulkanPipeline( pipeline_settings );
 
 		vkCmdBindPipeline(
 			command_buffer,
@@ -3032,12 +3032,11 @@ void vk2d::_internal::WindowImpl::CmdBindTextureSamplerIfDifferent(
 	vk2d::Texture					*	texture
 )
 {
-	// If sampler and texture did not change since last call, do nothing.
 	if( !sampler ) {
-		sampler		= instance_parent->GetDefaultSampler();
+		sampler		= instance->GetDefaultSampler();
 	}
 	if( !texture ) {
-		texture		= instance_parent->GetDefaultTexture();
+		texture		= instance->GetDefaultTexture();
 	}
 
 	// if sampler or texture changed since previous call, bind a different descriptor set.
@@ -3047,11 +3046,13 @@ void vk2d::_internal::WindowImpl::CmdBindTextureSamplerIfDifferent(
 		// If this descriptor set doesn't exist yet for this
 		// sampler texture combo, create one and update it.
 		if( set.descriptor_set.descriptorSet == VK_NULL_HANDLE ) {
-			set.descriptor_set = instance_parent->AllocateDescriptorSet(
-				instance_parent->GetSamplerTextureDescriptorSetLayout()
+			set.descriptor_set = instance->AllocateDescriptorSet(
+				instance->GetSamplerTextureDescriptorSetLayout()
 			);
 
-			texture->WaitUntilLoaded();
+			if( !texture->WaitUntilLoaded() ) {
+				texture = instance->GetDefaultTexture();
+			}
 
 			VkDescriptorImageInfo image_info {};
 			image_info.sampler						= sampler->impl->GetVulkanSampler();
@@ -3096,7 +3097,7 @@ void vk2d::_internal::WindowImpl::CmdBindTextureSamplerIfDifferent(
 		vkCmdBindDescriptorSets(
 			command_buffer,
 			VK_PIPELINE_BIND_POINT_GRAPHICS,
-			instance_parent->GetVulkanPipelineLayout(),
+			instance->GetVulkanPipelineLayout(),
 			DESCRIPTOR_SET_ALLOCATION_TEXTURE_AND_SAMPLER,
 			1, &set.descriptor_set.descriptorSet,
 			0, nullptr
@@ -3167,7 +3168,7 @@ bool vk2d::_internal::WindowImpl::CmdUpdateFrameData(
 	{
 		auto frame_data = frame_data_staging_buffer.memory.Map<vk2d::_internal::FrameData>();
 		if( !frame_data ) {
-			instance_parent->Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot map FrameData staging buffer memory!" );
+			instance->Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot map FrameData staging buffer memory!" );
 			return false;
 		}
 		frame_data->coordinate_scaling		= window_coordinate_scaling;
@@ -3202,8 +3203,8 @@ vk2d::_internal::CursorImpl::CursorImpl(
 	vk2d::Vector2i							hot_spot
 )
 {
-	instance_parent		= instance;
-	assert( instance_parent );
+	instance		= instance;
+	assert( instance );
 
 	int x = 0, y = 0, channels = 0;
 	auto stbiData = stbi_load( image_path.string().c_str(), &x, &y, &channels, 4 );
@@ -3227,14 +3228,14 @@ vk2d::_internal::CursorImpl::CursorImpl(
 	vk2d::Vector2i							hot_spot
 )
 {
-	instance_parent		= instance;
-	assert( instance_parent );
+	instance		= instance;
+	assert( instance );
 
 	if( size_t( image_size.x ) * size_t( image_size.y ) != image_data.size() ) {
 		std::stringstream ss;
 		ss << "Cannot create cursor, image dimensions do not match required texel count.\n"
 			<< "Cursor dimensions are: X=" << image_size.x << " Y=" << image_size.y << ".";
-		instance_parent->Report( vk2d::ReportSeverity::NON_CRITICAL_ERROR, ss.str() );
+		instance->Report( vk2d::ReportSeverity::NON_CRITICAL_ERROR, ss.str() );
 		return;
 	}
 
@@ -3250,7 +3251,7 @@ vk2d::_internal::CursorImpl::CursorImpl(
 		hotSpot	= { hot_spot.x, hot_spot.y };
 		extent	= { image_size.x, image_size.y };
 	} else {
-		instance_parent->Report( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot create cursor!" );
+		instance->Report( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot create cursor!" );
 		return;
 	}
 
@@ -3262,7 +3263,7 @@ vk2d::_internal::CursorImpl::CursorImpl(
 {
 	this->~CursorImpl();
 	*this	= vk2d::_internal::CursorImpl(
-		other.instance_parent,
+		other.instance,
 		{ other.extent.width, other.extent.height },
 		other.pixel_data,
 		{ other.hotSpot.x, other.hotSpot.y }
@@ -3282,7 +3283,7 @@ vk2d::_internal::CursorImpl & vk2d::_internal::CursorImpl::operator=(
 {
 	this->~CursorImpl();
 	*this	= vk2d::_internal::CursorImpl(
-		other.instance_parent,
+		other.instance,
 		{ other.extent.width, other.extent.height },
 		other.pixel_data,
 		{ other.hotSpot.x, other.hotSpot.y }
@@ -3298,7 +3299,7 @@ bool vk2d::_internal::CursorImpl::IsGood()
 
 vk2d::_internal::InstanceImpl * vk2d::_internal::CursorImpl::GetInstance()
 {
-	return instance_parent;
+	return instance;
 }
 
 const std::vector<vk2d::Color8> & vk2d::_internal::CursorImpl::GetPixelData()

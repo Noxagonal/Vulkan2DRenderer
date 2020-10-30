@@ -903,6 +903,7 @@ void vk2d::_internal::TextureResourceImpl::MTUnload(
 
 bool vk2d::_internal::TextureResourceImpl::IsLoaded()
 {
+	// TODO: I don't like locking and unlocking mutex every time we check if texture has been loaded or not, see about other solutions.
 	std::unique_lock<std::mutex>		is_loaded_lock( is_loaded_mutex, std::defer_lock );
 	if( !is_loaded_lock.try_lock() ) {
 		return false;
@@ -939,6 +940,7 @@ bool vk2d::_internal::TextureResourceImpl::IsLoaded()
 
 bool vk2d::_internal::TextureResourceImpl::WaitUntilLoaded()
 {
+	// TODO: I don't like locking and unlocking mutex every time we check if texture has been loaded or not, see about other solutions.
 	std::lock_guard<std::mutex> is_loaded_lock( is_loaded_mutex );
 
 	if( is_loaded )						return true;

@@ -12,20 +12,20 @@
 
 
 
-VK2D_API					vk2d::Window::Window(
-	vk2d::_internal::InstanceImpl	*	instance_parent,
+VK2D_API vk2d::Window::Window(
+	vk2d::_internal::InstanceImpl	*	instance,
 	const vk2d::WindowCreateInfo	&	window_create_info
 )
 {
 	impl	= std::make_unique<vk2d::_internal::WindowImpl>(
 		this,
-		instance_parent,
+		instance,
 		window_create_info
 		);
 	if( impl && impl->IsGood() ) {
 		is_good			= true;
 	} else {
-		instance_parent->Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot create window implementation!" );
+		instance->Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot create window implementation!" );
 		is_good			= false;
 	}
 }

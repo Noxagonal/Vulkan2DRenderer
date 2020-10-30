@@ -53,6 +53,7 @@ public:
 	VK2D_API uint32_t											VK2D_APIENTRY				GetLayerCount() const;
 
 	VK2D_API bool												VK2D_APIENTRY				WaitUntilLoaded();
+	VK2D_API bool												VK2D_APIENTRY				IsLoaded();
 
 	// Begins the render operations. You must call this before using any drawing commands.
 	// For best performance you should calculate game logic first, when you're ready to draw

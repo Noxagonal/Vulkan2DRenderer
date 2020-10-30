@@ -55,7 +55,7 @@ vk2d::_internal::DescriptorSetLayout::DescriptorSetLayout(
 	assert( instance );
 	assert( device );
 
-	instance_parent		= instance;
+	instance		= instance;
 	refDevice			= device;
 	createInfo			= *pCreateInfo;
 
@@ -68,7 +68,7 @@ vk2d::_internal::DescriptorSetLayout::DescriptorSetLayout(
 			&setLayout
 		);
 		if( result != VK_SUCCESS ) {
-			instance_parent->Report( result, "Internal error: Cannot create descriptor set layout!" );
+			instance->Report( result, "Internal error: Cannot create descriptor set layout!" );
 			return;
 		}
 
@@ -145,7 +145,7 @@ vk2d::_internal::DescriptorAutoPool::DescriptorAutoPool(
 {
 	assert( instance );
 	assert( device );
-	instance_parent			= instance;
+	instance			= instance;
 	refDevice				= device;
 
 	is_good		= true;
@@ -229,7 +229,7 @@ vk2d::_internal::PoolDescriptorSet vk2d::_internal::DescriptorAutoPool::Allocate
 				sc.second->isFull	= true;
 				break;
 			default:
-				instance_parent->Report( result, "Internal error: Cannot allocate Vulkan descriptor sets!" );
+				instance->Report( result, "Internal error: Cannot allocate Vulkan descriptor sets!" );
 				ret.result			= result;
 				return ret;
 			}
@@ -270,7 +270,7 @@ vk2d::_internal::PoolDescriptorSet vk2d::_internal::DescriptorAutoPool::Allocate
 				&newCategory.pool
 			);
 			if( result != VK_SUCCESS ) {
-				instance_parent->Report( result, "Internal error: Cannot create Vulkan descriptor pool!" );
+				instance->Report( result, "Internal error: Cannot create Vulkan descriptor pool!" );
 				ret.result	= result;
 				return ret;
 			}
@@ -290,7 +290,7 @@ vk2d::_internal::PoolDescriptorSet vk2d::_internal::DescriptorAutoPool::Allocate
 				&set
 			);
 			if( result != VK_SUCCESS ) {
-				instance_parent->Report( result, "Internal error: Cannot allocate Vulkan descriptor sets!" );
+				instance->Report( result, "Internal error: Cannot allocate Vulkan descriptor sets!" );
 				ret.result	= result;
 				return ret;
 			}

@@ -23,12 +23,13 @@ vk2d::_internal::RenderTargetTextureRenderCollector::Collection & vk2d::_interna
 
 vk2d::_internal::RenderTargetTextureRenderCollector::Collection * vk2d::_internal::RenderTargetTextureRenderCollector::begin()
 {
-	return &collection[ 0 ];
+	// TODO: Do proper iterator for RenderTargetTextureRenderCollector.
+	return collection.data();
 }
 
 vk2d::_internal::RenderTargetTextureRenderCollector::Collection * vk2d::_internal::RenderTargetTextureRenderCollector::end()
 {
-	return begin() + std::size( collection );
+	return collection.data() + std::size( collection );
 }
 
 size_t vk2d::_internal::RenderTargetTextureRenderCollector::size()

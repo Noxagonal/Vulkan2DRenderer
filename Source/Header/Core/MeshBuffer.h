@@ -152,7 +152,7 @@ private:
 	void													FreeBufferBlockFromStorage(
 		vk2d::_internal::MeshBufferBlock<float>			*	buffer_block );
 
-	vk2d::_internal::InstanceImpl						*	instance_parent							= {};
+	vk2d::_internal::InstanceImpl						*	instance							= {};
 	VkDevice												device									= {};
 	VkPhysicalDeviceLimits									physicald_device_limits					= {};
 	vk2d::_internal::DeviceMemoryPool					*	device_memory_pool						= {};
@@ -199,7 +199,7 @@ public:
 		assert( buffer_usage_flags );
 
 		mesh_buffer_parent			= mesh_buffer;
-		auto instance				= mesh_buffer_parent->instance_parent;
+		auto instance				= mesh_buffer_parent->instance;
 		auto memory_pool			= instance->GetDeviceMemoryPool();
 
 		total_byte_size				= vk2d::_internal::CalculateAlignmentForBuffer(
@@ -320,10 +320,10 @@ public:
 
 	~MeshBufferBlock()
 	{
-		auto memory_pool		= mesh_buffer_parent->instance_parent->GetDeviceMemoryPool();
+		auto memory_pool		= mesh_buffer_parent->instance->GetDeviceMemoryPool();
 
 		// TODO: MeshBufferBlock::descriptor_set allocation and freeing needs to be thread specific instead of allocating from the instance.
-		mesh_buffer_parent->instance_parent->FreeDescriptorSet( descriptor_set );
+		mesh_buffer_parent->instance->FreeDescriptorSet( descriptor_set );
 		memory_pool->FreeCompleteResource( device_buffer );
 		memory_pool->FreeCompleteResource( staging_buffer );
 	}
@@ -332,7 +332,7 @@ public:
 	{
 		auto mapped_memory	= staging_buffer.memory.Map<T>();
 		if( !mapped_memory ) {
-			mesh_buffer_parent->instance_parent->Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot copy mesh buffer block to  map staging buffer memory" );
+			mesh_buffer_parent->instance->Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot copy mesh buffer block to  map staging buffer memory" );
 			return false;
 		} else {
 			std::memcpy( mapped_memory, host_data.data(), used_byte_size );

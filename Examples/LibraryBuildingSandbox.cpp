@@ -33,6 +33,14 @@ public:
 
 
 
+void DrawRenderTargetTextureContent(
+	float								delta_time,
+	float								basic_animation_counter,
+	vk2d::RenderTargetTexture		*	render_target_texture,
+	vk2d::Texture					*	texture_resource );
+
+
+
 int main()
 {
 	vk2d::InstanceCreateInfo instance_create_info {};
@@ -50,7 +58,7 @@ int main()
 
 	vk2d::RenderTargetTextureCreateInfo render_target_texture_create_info {};
 	render_target_texture_create_info.coordinate_space	= vk2d::RenderCoordinateSpace::TEXEL_SPACE;
-	render_target_texture_create_info.size				= vk2d::Vector2u( 512, 512 );
+	render_target_texture_create_info.size				= vk2d::Vector2u( 64, 64 );
 	auto render_target_texture = instance->CreateRenderTargetTexture(
 		render_target_texture_create_info
 	);
@@ -58,13 +66,44 @@ int main()
 	auto resource_manager = instance->GetResourceManager();
 	auto texture_resource = resource_manager->LoadTextureResource( "../../Data/GrafGear_128.png" );
 
-	auto render_target_size_f = vk2d::Vector2f( render_target_texture->GetSize().x, render_target_texture->GetSize().y );
-	auto animation_delta = 0.01f;
-	auto animation_counter = 0.0f;
+	vk2d::SamplerCreateInfo sampler_create_info {};
+	sampler_create_info.minification_filter				= vk2d::SamplerFilter::NEAREST;
+	sampler_create_info.magnification_filter			= vk2d::SamplerFilter::NEAREST;
+	sampler_create_info.mipmap_mode						= vk2d::SamplerMipmapMode::NEAREST;
+	sampler_create_info.address_mode_u					= vk2d::SamplerAddressMode::CLAMP_TO_EDGE;
+	sampler_create_info.address_mode_v					= vk2d::SamplerAddressMode::CLAMP_TO_EDGE;
+	sampler_create_info.border_color					= { 0.0f, 0.0f, 0.0f, 1.0f };
+	sampler_create_info.mipmap_enable					= false;
+	sampler_create_info.mipmap_max_anisotropy			= 16.0f;
+	sampler_create_info.mipmap_level_of_detail_bias		= 0.0f;
+	sampler_create_info.mipmap_min_level_of_detail		= 0.0f;
+	sampler_create_info.mipmap_max_level_of_detail		= 128.0f;
+	auto pixel_sampler		= instance->CreateSampler( sampler_create_info );
+
+	auto delta_time_time_point = std::chrono::high_resolution_clock::now();
+	float animation_counter = 0.0f;
+	auto delta_time = 0.0f;
+
+	TODO this shit below;
+	// This shouldn't work at all at this point, render target is rendered once and then reused, double check the path the
+	// render target takes. Timeline semaphore value is not updated between reuses and not other path is given at this point.
+	// Use render target's "has_been_submitted" variable to detect if render target is pending render. if it's false,
+	// then we don't have to wait for the semaphore, nor update it's value, just use without any dependency barriers like
+	// regular textures.
+	DrawRenderTargetTextureContent(
+		delta_time,
+		animation_counter,
+		render_target_texture,
+		texture_resource
+	);
 
 	while( !window->ShouldClose() ) {
-
-		animation_counter += animation_delta;
+		{
+			auto now = std::chrono::high_resolution_clock::now();
+			delta_time = std::chrono::duration<float>( now - delta_time_time_point ).count();
+			delta_time_time_point = now;
+		}
+		animation_counter += delta_time;
 
 		// Using render target textures introduces a new dependency tree
 		// Example 1:
@@ -140,71 +179,34 @@ int main()
 		// we'll set the timeline semaphore to the number of times recorded. We'll also pass that value
 		// on to other parts as a value to wait for when depending on the render target to finish render.
 
-		{
-			render_target_texture->BeginRender();
-
-
-			auto textured_box = vk2d::GenerateBoxMesh(
-				vk2d::Vector2f( 0, 0 ),
-				render_target_size_f
-			);
-			textured_box.SetTexture( texture_resource );
-			textured_box.SetVertexColor( vk2d::Colorf( 1, 1, 1, 1 ) );
-			render_target_texture->DrawMesh( textured_box );
-
-
-			render_target_texture->DrawPieBox(
-				vk2d::Vector2f( 0, 0 ),
-				render_target_size_f,
-				std::sin( animation_counter * 0.125f ) * PI * 2.0f,
-				std::sin( animation_counter * 0.237f ) * 0.5f + 0.5f,
-				true,
-				vk2d::Colorf( 1.0f, 1.0f, 1.0f, 0.6f )
-			);
-
-			render_target_texture->DrawPoint(
-				vk2d::Vector2f( 0, 0 ),
-				vk2d::Colorf( 1, 1, 1, 1 ),
-				10.0f
-			);
-
-			render_target_texture->DrawPoint(
-				vk2d::Vector2f( 512, 0 ),
-				vk2d::Colorf( 1, 1, 1, 1 ),
-				10.0f
-			);
-
-			render_target_texture->DrawPoint(
-				vk2d::Vector2f( 0, 512 ),
-				vk2d::Colorf( 1, 1, 1, 1 ),
-				10.0f
-			);
-
-			render_target_texture->DrawPoint(
-				vk2d::Vector2f( 512, 512 ),
-				vk2d::Colorf( 1, 1, 1, 1 ),
-				10.0f
-			);
-
-			render_target_texture->EndRender();
-		}
+		//DrawRenderTargetTextureContent(
+		//	delta_time,
+		//	animation_counter,
+		//	render_target_texture,
+		//	texture_resource
+		//);
 
 		{
 			if( !window->BeginRender() ) return -1;
 
-			window->DrawTexture(
-				render_target_size_f * vk2d::Vector2f( -1, -0.5 ),
-				render_target_texture
-			);
+			auto draw_rect_size = vk2d::Vector2f( 512, 512 );
 
+			auto textured_box = vk2d::GenerateBoxMesh(
+				draw_rect_size * vk2d::Vector2f( -1, -0.5 ),
+				draw_rect_size * vk2d::Vector2f( 0, 0.5 )
+			);
+			textured_box.SetTexture( render_target_texture );
+			textured_box.SetSampler( pixel_sampler );
+			window->DrawMesh( textured_box );
 
 			auto grid = vk2d::GenerateLatticeMesh(
-				render_target_size_f * vk2d::Vector2f( -0, -0.5 ),
-				render_target_size_f * vk2d::Vector2f( 1, 0.5 ),
+				draw_rect_size * vk2d::Vector2f( 0, -0.5 ),
+				draw_rect_size * vk2d::Vector2f( 1, 0.5 ),
 				vk2d::Vector2f( 30, 30 ),
 				true
 			);
 			grid.SetTexture( render_target_texture );
+			grid.SetSampler( pixel_sampler );
 			grid.Wave(
 				2.36f,
 				1.4f,
@@ -225,4 +227,62 @@ int main()
 	}
 
 	return 0;
+}
+
+
+
+void DrawRenderTargetTextureContent(
+	float								delta_time,
+	float								basic_animation_counter,
+	vk2d::RenderTargetTexture		*	render_target_texture,
+	vk2d::Texture					*	texture_resource
+)
+{
+	auto render_target_size_f = vk2d::Vector2f( render_target_texture->GetSize().x, render_target_texture->GetSize().y );
+
+	render_target_texture->BeginRender();
+
+	auto textured_box = vk2d::GenerateBoxMesh(
+		vk2d::Vector2f( 0, 0 ),
+		render_target_size_f
+	);
+	textured_box.SetTexture( texture_resource );
+	textured_box.SetVertexColor( vk2d::Colorf( 1, 1, 1, 1 ) );
+	render_target_texture->DrawMesh( textured_box );
+
+
+	render_target_texture->DrawPieBox(
+		vk2d::Vector2f( 0, 0 ),
+		render_target_size_f,
+		std::sin( basic_animation_counter * 0.125f ) * PI * 2.0f,
+		std::sin( basic_animation_counter * 0.237f ) * 0.5f + 0.5f,
+		true,
+		vk2d::Colorf( 1.0f, 1.0f, 1.0f, 0.6f )
+	);
+
+	render_target_texture->DrawPoint(
+		vk2d::Vector2f( 0, 0 ),
+		vk2d::Colorf( 1, 1, 1, 1 ),
+		10.0f
+	);
+
+	render_target_texture->DrawPoint(
+		vk2d::Vector2f( 512, 0 ),
+		vk2d::Colorf( 1, 1, 1, 1 ),
+		10.0f
+	);
+
+	render_target_texture->DrawPoint(
+		vk2d::Vector2f( 0, 512 ),
+		vk2d::Colorf( 1, 1, 1, 1 ),
+		10.0f
+	);
+
+	render_target_texture->DrawPoint(
+		vk2d::Vector2f( 512, 512 ),
+		vk2d::Colorf( 1, 1, 1, 1 ),
+		10.0f
+	);
+
+	render_target_texture->EndRender();
 }

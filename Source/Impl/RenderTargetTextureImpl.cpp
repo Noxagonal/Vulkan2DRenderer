@@ -161,6 +161,11 @@ bool vk2d::_internal::RenderTargetTextureImpl::WaitUntilLoaded()
 	return true;
 }
 
+bool vk2d::_internal::RenderTargetTextureImpl::IsLoaded()
+{
+	return true;
+}
+
 bool vk2d::_internal::RenderTargetTextureImpl::BeginRender()
 {
 	auto result = VK_SUCCESS;
@@ -1588,7 +1593,7 @@ bool vk2d::_internal::RenderTargetTextureImpl::CreateSynchronizationPrimitives()
 {
 	auto result = VK_SUCCESS;
 
-	// We need timeline semaphores, even if we don't really use the timeline feature,
+	// We use timeline semaphores to track render completion.
 	// the primary difference is that timeline semaphores can be waited on without
 	// automatically resetting their value. We can manually reset the value when we
 	// begin recording the render target command buffer and count on the GPU / driver
@@ -2035,6 +2040,13 @@ void vk2d::_internal::RenderTargetTextureImpl::CmdBindTextureSamplerIfDifferent(
 	vk2d::Texture					*	texture
 )
 {
+	if( !sampler ) {
+		sampler		= instance->GetDefaultSampler();
+	}
+	if( !texture ) {
+		texture		= instance->GetDefaultTexture();
+	}
+
 	// if sampler or texture changed since previous call, bind a different descriptor set.
 	if( sampler != previous_sampler || texture != previous_texture ) {
 		auto & set = sampler_texture_descriptor_sets[ sampler ][ texture ];
@@ -2046,7 +2058,9 @@ void vk2d::_internal::RenderTargetTextureImpl::CmdBindTextureSamplerIfDifferent(
 				instance->GetSamplerTextureDescriptorSetLayout()
 			);
 
-			texture->WaitUntilLoaded();
+			if( !texture->WaitUntilLoaded() ) {
+				texture = instance->GetDefaultTexture();
+			}
 
 			VkDescriptorImageInfo image_info {};
 			image_info.sampler						= sampler->impl->GetVulkanSampler();

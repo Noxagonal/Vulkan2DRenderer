@@ -66,16 +66,16 @@ vk2d::_internal::ResourceManagerImpl::ResourceManagerImpl(
 	vk2d::_internal::InstanceImpl	*	parent_instance
 )
 {
-	instance_parent			= parent_instance;
-	assert( instance_parent );
+	instance			= parent_instance;
+	assert( instance );
 
-	vk_device		= instance_parent->GetVulkanDevice();
+	vk_device		= instance->GetVulkanDevice();
 	assert( vk_device );
 
-	thread_pool		= instance_parent->GetThreadPool();
+	thread_pool		= instance->GetThreadPool();
 	assert( thread_pool );
 
-	loader_threads	= instance_parent->GetLoaderThreads();
+	loader_threads	= instance->GetLoaderThreads();
 
 	is_good		= true;
 }
@@ -282,7 +282,7 @@ void vk2d::_internal::ResourceManagerImpl::DestroyResource(
 
 vk2d::_internal::InstanceImpl * vk2d::_internal::ResourceManagerImpl::GetInstance() const
 {
-	return instance_parent;
+	return instance;
 }
 
 vk2d::_internal::ThreadPool * vk2d::_internal::ResourceManagerImpl::GetThreadPool() const

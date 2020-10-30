@@ -425,7 +425,7 @@ class Window {
 private:
 	// Only accessible through Instance::CreateOutputWindow();
 	VK2D_API																		Window(
-		vk2d::_internal::InstanceImpl				*	instance_parent,
+		vk2d::_internal::InstanceImpl				*	instance,
 		const vk2d::WindowCreateInfo				&	window_create_info );
 
 public:

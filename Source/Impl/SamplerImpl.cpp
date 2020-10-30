@@ -9,16 +9,16 @@
 
 vk2d::_internal::SamplerImpl::SamplerImpl(
 	vk2d::Sampler					*	sampler_parent,
-	vk2d::_internal::InstanceImpl	*	instance_parent,
+	vk2d::_internal::InstanceImpl	*	instance,
 	const vk2d::SamplerCreateInfo	&	create_info
 )
 {
 	this->sampler_parent		= sampler_parent;
-	this->instance_parent		= instance_parent;
+	this->instance		= instance;
 	assert( this->sampler_parent );
-	assert( this->instance_parent );
+	assert( this->instance );
 
-	vk_device					= instance_parent->GetVulkanDevice();
+	vk_device					= instance->GetVulkanDevice();
 	assert( vk_device );
 
 	// Error report here if anything is nullptr or VK_NULL_HANDLE;
@@ -35,7 +35,7 @@ vk2d::_internal::SamplerImpl::SamplerImpl(
 		magFilter	= VkFilter::VK_FILTER_CUBIC_EXT;
 		break;
 	default:
-		instance_parent->Report(
+		instance->Report(
 			vk2d::ReportSeverity::WARNING,
 			"Sampler parameter: 'vk2d::SamplerCreateInfo::magnification_filter'\n"
 			"was none of 'vk2d::SamplerFilter' options,\n"
@@ -56,7 +56,7 @@ vk2d::_internal::SamplerImpl::SamplerImpl(
 		minFilter	= VkFilter::VK_FILTER_CUBIC_EXT;
 		break;
 	default:
-		instance_parent->Report(
+		instance->Report(
 			vk2d::ReportSeverity::WARNING,
 			"Sampler parameter: 'vk2d::SamplerCreateInfo::minification_filter'\n"
 			"was none of 'vk2d::SamplerFilter' options,\n"
@@ -74,7 +74,7 @@ vk2d::_internal::SamplerImpl::SamplerImpl(
 		mipmapMode	= VkSamplerMipmapMode::VK_SAMPLER_MIPMAP_MODE_LINEAR;
 		break;
 	default:
-		instance_parent->Report(
+		instance->Report(
 			vk2d::ReportSeverity::WARNING,
 			"Sampler parameter: 'vk2d::SamplerCreateInfo::mipmap_mode'\n"
 			"was none of 'vk2d::SamplerMipmapMode' options,\n"
@@ -102,7 +102,7 @@ vk2d::_internal::SamplerImpl::SamplerImpl(
 		addressModeU	= VkSamplerAddressMode::VK_SAMPLER_ADDRESS_MODE_MIRROR_CLAMP_TO_EDGE;
 		break;
 	default:
-		instance_parent->Report(
+		instance->Report(
 			vk2d::ReportSeverity::WARNING,
 			"Sampler parameter: 'vk2d::SamplerCreateInfo::address_mode_u'\n"
 			"was none of 'vk2d::SamplerAddressMode' options,\n"
@@ -130,7 +130,7 @@ vk2d::_internal::SamplerImpl::SamplerImpl(
 		addressModeV	= VkSamplerAddressMode::VK_SAMPLER_ADDRESS_MODE_MIRROR_CLAMP_TO_EDGE;
 		break;
 	default:
-		instance_parent->Report(
+		instance->Report(
 			vk2d::ReportSeverity::WARNING,
 			"Sampler parameter: 'vk2d::SamplerCreateInfo::address_mode_v'\n"
 			"was none of 'vk2d::SamplerAddressMode' options,\n"
@@ -143,7 +143,7 @@ vk2d::_internal::SamplerImpl::SamplerImpl(
 	if( anisotropyEnable ) {
 		if( create_info.minification_filter == vk2d::SamplerFilter::CUBIC ||
 			create_info.magnification_filter == vk2d::SamplerFilter::CUBIC ) {
-			instance_parent->Report(
+			instance->Report(
 				vk2d::ReportSeverity::WARNING,
 				"Sampler parameter: 'vk2d::SamplerCreateInfo::mipmap_enable'\n"
 				"was set to 'true' even though\n"
@@ -157,7 +157,7 @@ vk2d::_internal::SamplerImpl::SamplerImpl(
 
 	float maxAnisotropy = std::min(
 		create_info.mipmap_max_anisotropy,
-		instance_parent->GetVulkanPhysicalDeviceProperties().limits.maxSamplerAnisotropy
+		instance->GetVulkanPhysicalDeviceProperties().limits.maxSamplerAnisotropy
 	);
 
 	VkSamplerCreateInfo sampler_create_info {};
@@ -186,7 +186,7 @@ vk2d::_internal::SamplerImpl::SamplerImpl(
 		&vk_sampler
 	);
 	if( result != VK_SUCCESS ) {
-		instance_parent->Report( result, "Internal error: Cannot create Vulkan sampler!" );
+		instance->Report( result, "Internal error: Cannot create Vulkan sampler!" );
 		return;
 	}
 
@@ -199,12 +199,12 @@ vk2d::_internal::SamplerImpl::SamplerImpl(
 	buffer_create_info.sharingMode				= VK_SHARING_MODE_EXCLUSIVE;
 	buffer_create_info.queueFamilyIndexCount	= 0;
 	buffer_create_info.pQueueFamilyIndices		= nullptr;
-	sampler_data = instance_parent->GetDeviceMemoryPool()->CreateCompleteBufferResource(
+	sampler_data = instance->GetDeviceMemoryPool()->CreateCompleteBufferResource(
 		&buffer_create_info,
 		VkMemoryPropertyFlagBits::VK_MEMORY_PROPERTY_HOST_CACHED_BIT
 	);
 	if( sampler_data != VK_SUCCESS ) {
-		instance_parent->Report( sampler_data.result, "Internal error: Cannot create sampler data!" );
+		instance->Report( sampler_data.result, "Internal error: Cannot create sampler data!" );
 		return;
 	}
 	{
@@ -222,13 +222,13 @@ vk2d::_internal::SamplerImpl::SamplerImpl(
 
 vk2d::_internal::SamplerImpl::~SamplerImpl()
 {
-	instance_parent->GetDeviceMemoryPool()->FreeCompleteResource( sampler_data );
+	instance->GetDeviceMemoryPool()->FreeCompleteResource( sampler_data );
 	vkDestroySampler(
 		vk_device,
 		vk_sampler,
 		nullptr
 	);
-//	instance_parent->GetDescriptorPool()->FreeDescriptorSet( descriptor_set );
+//	instance->GetDescriptorPool()->FreeDescriptorSet( descriptor_set );
 }
 
 VkSampler vk2d::_internal::SamplerImpl::GetVulkanSampler() const
