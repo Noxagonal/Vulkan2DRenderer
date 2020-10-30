@@ -9,6 +9,9 @@
 // THIS IS SET BY CMake
 // #define VK2D_DEBUG_ENABLE											1
 
+// Draws all solid polygons with overlayed triangle mesh, can help with visual debugging.
+#define VK2D_BUILD_OPTION_DEBUG_ALWAYS_DRAW_TRIANGLES_WIREFRAME			0
+
 // Use Vulkan validation.
 // Used only if VK2D_DEBUG_ENABLE == 1
 #define VK2D_BUILD_OPTION_VULKAN_VALIDATION								1

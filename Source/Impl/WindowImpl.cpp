@@ -303,6 +303,8 @@ vk2d::_internal::WindowImpl::WindowImpl(
 		instance->GetDeviceMemoryPool()
 	);
 
+	render_target_texture_dependencies.resize( swapchain_image_count );
+
 	if( !this->mesh_buffer ) {
 		instance->Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot create MeshBuffer object!" );
 		return;
@@ -944,9 +946,9 @@ bool vk2d::_internal::WindowImpl::EndRender()
 		std::vector<VkSemaphore>			render_wait_for_semaphores;
 		std::vector<uint64_t>				render_wait_for_semaphore_timeline_values;
 		std::vector<VkPipelineStageFlags>	render_wait_for_pipeline_stages;
-		render_wait_for_semaphores.reserve( std::size( render_target_texture_dependencies ) + 1 );
-		render_wait_for_semaphore_timeline_values.reserve( std::size( render_target_texture_dependencies ) + 1 );
-		render_wait_for_pipeline_stages.reserve( std::size( render_target_texture_dependencies ) + 1 );
+		render_wait_for_semaphores.reserve( std::size( render_target_texture_dependencies[ next_image ] ) + 1 );
+		render_wait_for_semaphore_timeline_values.reserve( std::size( render_target_texture_dependencies[ next_image ] ) + 1 );
+		render_wait_for_pipeline_stages.reserve( std::size( render_target_texture_dependencies[ next_image ] ) + 1 );
 
 		// First entry is the regular transfer semaphore which is a binary semaphore.
 		render_wait_for_semaphores.push_back( vk_transfer_semaphore );
@@ -954,7 +956,7 @@ bool vk2d::_internal::WindowImpl::EndRender()
 		render_wait_for_pipeline_stages.push_back( VK_PIPELINE_STAGE_VERTEX_INPUT_BIT | VK_PIPELINE_STAGE_VERTEX_SHADER_BIT );
 
 		// Resolve immediate dependencies we need to wait for before the main render.
-		for( auto & d : render_target_texture_dependencies ) {
+		for( auto & d : render_target_texture_dependencies[ next_image ] ) {
 			render_wait_for_semaphores.push_back( d.render_target->GetCurrentSwapRenderCompleteSemaphore() );
 			render_wait_for_semaphore_timeline_values.push_back( d.render_target->GetCurrentSwapRenderCounter() );
 			render_wait_for_pipeline_stages.push_back( VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT );
@@ -996,17 +998,6 @@ bool vk2d::_internal::WindowImpl::EndRender()
 		window_render_submit_info.signalSemaphoreCount		= 1;
 		window_render_submit_info.pSignalSemaphores			= &vk_submit_to_present_semaphores[ next_image ];
 		submit_infos.push_back( window_render_submit_info );
-
-		#if 1
-		// Debugging...
-		uint64_t value = 10;
-		auto semaphore = render_wait_for_semaphores[ 1 ];
-		vkGetSemaphoreCounterValue(
-			instance->GetVulkanDevice(),
-			semaphore,
-			&value
-		);
-		#endif
 
 		auto result = primary_render_queue.Submit(
 			submit_infos,
@@ -1070,7 +1061,6 @@ bool vk2d::_internal::WindowImpl::EndRender()
 	previous_sampler					= {};
 	previous_texture					= {};
 	previous_line_width					= {};
-	render_target_texture_dependencies.clear();
 
 	glfwPollEvents();
 
@@ -1492,6 +1482,21 @@ void vk2d::_internal::WindowImpl::DrawTriangleList(
 	} else {
 		instance->Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot push mesh into mesh render queue!" );
 	}
+
+	#if VK2D_BUILD_OPTION_DEBUG_ALWAYS_DRAW_TRIANGLES_WIREFRAME
+	if( solid ) {
+		auto vertices_copy = vertices;
+		for( auto & v : vertices_copy ) {
+			v.color = vk2d::Colorf( 0.2f, 1.0f, 0.4f, 0.25f );
+		}
+		DrawTriangleList(
+			raw_indices,
+			vertices_copy,
+			{},
+			false
+		);
+	}
+	#endif
 }
 
 void vk2d::_internal::WindowImpl::DrawLineList(
@@ -1914,6 +1919,9 @@ bool vk2d::_internal::WindowImpl::SynchronizeFrame()
 			instance->Report( result, "Internal error: Cannot properly synchronize frame." );
 			return false;
 		}
+
+		ConfirmRenderTargetTextureRenderFinished( previous_image );
+
 		result = vkResetFences(
 			vk_device,
 			1, &vk_gpu_to_cpu_frame_fences[ previous_image ]
@@ -1965,6 +1973,10 @@ bool vk2d::_internal::WindowImpl::RecreateWindowSizeDependantResources( )
 	instance->Report( vk2d::ReportSeverity::VERBOSE, "Begin recreating window resources." );
 
 	if( !ReCreateSwapchain() ) return false;
+
+	// Doing this here because it's dependant of the swapchain image count.
+	render_target_texture_dependencies.resize( swapchain_image_count );
+
 	ReCreateScreenshotResources();
 
 	// Reallocate framebuffers
@@ -2929,7 +2941,7 @@ bool vk2d::_internal::WindowImpl::CommitRenderTargetTextureRender(
 	vk2d::_internal::RenderTargetTextureRenderCollector		&	collector
 )
 {
-	for( auto & d : render_target_texture_dependencies ) {
+	for( auto & d : render_target_texture_dependencies[ next_image ] ) {
 		if( !d.render_target->CommitRenderTargetTextureRender( d, collector ) ) {
 			return false;
 		}
@@ -2939,16 +2951,27 @@ bool vk2d::_internal::WindowImpl::CommitRenderTargetTextureRender(
 
 void vk2d::_internal::WindowImpl::ConfirmRenderTargetTextureRenderSubmission()
 {
-	for( auto & d : render_target_texture_dependencies ) {
+	for( auto & d : render_target_texture_dependencies[ next_image ] ) {
 		d.render_target->ConfirmRenderTargetTextureRenderSubmission( d );
 	}
 }
 
+void vk2d::_internal::WindowImpl::ConfirmRenderTargetTextureRenderFinished(
+	uint32_t	for_frame_image_index
+)
+{
+	for( auto & d : render_target_texture_dependencies[ for_frame_image_index ] ) {
+		d.render_target->ConfirmRenderTargetTextureRenderFinished( d );
+	}
+	render_target_texture_dependencies[ for_frame_image_index ].clear();
+}
+
 void vk2d::_internal::WindowImpl::AbortRenderTargetTextureRender()
 {
-	for( auto & d : render_target_texture_dependencies ) {
+	for( auto & d : render_target_texture_dependencies[ next_image ] ) {
 		d.render_target->AbortRenderTargetTextureRender( d );
 	}
+	render_target_texture_dependencies[ next_image ].clear();
 }
 //
 //void vk2d::_internal::WindowImpl::ClearRenderTargetTextureDepencies()
@@ -2966,14 +2989,14 @@ void vk2d::_internal::WindowImpl::CheckAndAddRenderTargetTextureDependency(
 	auto render_target = dynamic_cast<vk2d::_internal::RenderTargetTextureImpl*>( texture->texture_impl );
 	if( render_target ) {
 		if( std::none_of(
-			render_target_texture_dependencies.begin(),
-			render_target_texture_dependencies.end(),
+			render_target_texture_dependencies[ next_image ].begin(),
+			render_target_texture_dependencies[ next_image ].end(),
 			[ render_target ]( vk2d::_internal::RenderTargetTextureDependencyInfo & rt ) {
 				if( render_target == rt.render_target ) return true;
 				return false;
 			} ) )
 		{
-			render_target_texture_dependencies.push_back( render_target->GetDependencyInfo() );
+			render_target_texture_dependencies[ next_image ].push_back( render_target->GetDependencyInfo() );
 		}
 	}
 }

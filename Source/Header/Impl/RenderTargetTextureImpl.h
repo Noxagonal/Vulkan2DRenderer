@@ -101,6 +101,7 @@ private:
 		std::mutex														render_commitment_request_mutex				= {};
 
 		bool															has_been_submitted							= {};
+		bool															contains_non_pending_sampled_image			= {};	// Sampled image ready to be used anywhere without checks or barriers.
 	};
 
 public:
@@ -152,6 +153,10 @@ public:
 
 	// This notifies that the render target texture has been submitted to rendering.
 	void																ConfirmRenderTargetTextureRenderSubmission(
+		vk2d::_internal::RenderTargetTextureDependencyInfo			&	dependency_info );
+
+	// This notifies that the render target texture has been successfully rendered.
+	void																ConfirmRenderTargetTextureRenderFinished(
 		vk2d::_internal::RenderTargetTextureDependencyInfo			&	dependency_info );
 
 	// In case something goes wrong, allows cancelling render commission.

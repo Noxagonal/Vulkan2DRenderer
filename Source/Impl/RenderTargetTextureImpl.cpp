@@ -196,6 +196,9 @@ bool vk2d::_internal::RenderTargetTextureImpl::BeginRender()
 			return false;
 		}
 
+		// We no longer contain sampled image that's ready to be used without synchronization.
+		swap.contains_non_pending_sampled_image = false;
+
 		ResetRenderTargetTextureRenderDependencies( current_swap_buffer );
 
 		#if 0
@@ -455,15 +458,16 @@ bool vk2d::_internal::RenderTargetTextureImpl::SynchronizeFrame()
 	using namespace std::chrono;
 	using namespace std::chrono_literals;
 
-	if( swap_buffers[ current_swap_buffer ].has_been_submitted ) {
-		uint64_t semaphore_wait_value = 1;
+	auto & swap = swap_buffers[ current_swap_buffer ];
+
+	if( swap.has_been_submitted ) {
 		VkSemaphoreWaitInfo semaphore_wait_info {};
 		semaphore_wait_info.sType				= VK_STRUCTURE_TYPE_SEMAPHORE_WAIT_INFO;
 		semaphore_wait_info.pNext				= nullptr;
 		semaphore_wait_info.flags				= 0;
 		semaphore_wait_info.semaphoreCount		= 1;
-		semaphore_wait_info.pSemaphores			= &swap_buffers[ current_swap_buffer ].vk_render_complete_semaphore;
-		semaphore_wait_info.pValues				= &semaphore_wait_value;
+		semaphore_wait_info.pSemaphores			= &swap.vk_render_complete_semaphore;
+		semaphore_wait_info.pValues				= &swap.render_counter;
 		result = vkWaitSemaphores(
 			instance->GetVulkanDevice(),
 			&semaphore_wait_info,
@@ -474,7 +478,7 @@ bool vk2d::_internal::RenderTargetTextureImpl::SynchronizeFrame()
 			return false;
 		}
 
-		swap_buffers[ current_swap_buffer ].has_been_submitted = false;
+		swap.has_been_submitted = false;
 	}
 	return true;
 }
@@ -485,7 +489,7 @@ bool vk2d::_internal::RenderTargetTextureImpl::WaitIdle()
 	std::array<uint64_t, std::tuple_size_v<decltype( swap_buffers )>> semaphore_values;
 	for( size_t i = 0; i < std::size( swap_buffers ); ++i ) {
 		semaphores[ i ]			= swap_buffers[ i ].vk_render_complete_semaphore;
-		semaphore_values[ i ]	= 1;
+		semaphore_values[ i ]	= swap_buffers[ i ].render_counter;
 	}
 	VkSemaphoreWaitInfo wait_info {};
 	wait_info.sType				= VK_STRUCTURE_TYPE_SEMAPHORE_WAIT_INFO;
@@ -519,32 +523,17 @@ bool vk2d::_internal::RenderTargetTextureImpl::CommitRenderTargetTextureRender(
 
 	auto & swap = swap_buffers[ dependency_info.swap_buffer_index ];
 
-	for( auto & d : swap.render_target_texture_dependencies ) {
-		if( !d.render_target->CommitRenderTargetTextureRender( d, collector ) ) {
-			return false;
-		}
-	}
+	if( !swap.contains_non_pending_sampled_image ) {
 
-	// Set semaphore value manually to 0, this primes the semaphore to block
-	// dependant renders until this render target completes it's own render.
-	{
 		std::lock_guard<std::mutex> lock_guard( swap.render_commitment_request_mutex );
 
 		if( swap.render_commitment_request_count == 0 ) {
 
-			//VkSemaphoreSignalInfo signal_info {};
-			//signal_info.sType		= VK_STRUCTURE_TYPE_SEMAPHORE_SIGNAL_INFO;
-			//signal_info.pNext		= nullptr;
-			//signal_info.semaphore	= swap.vk_render_complete_semaphore;
-			//signal_info.value		= 0;
-			//auto result = vkSignalSemaphore(
-			//	instance->GetVulkanDevice(),
-			//	&signal_info
-			//);
-			//if( result != VK_SUCCESS ) {
-			//	instance->Report( result, "Internal error: Cannot commit render target texture render, cannot signal semaphore!" );
-			//	return false;
-			//}
+			for( auto & d : swap.render_target_texture_dependencies ) {
+				if( !d.render_target->CommitRenderTargetTextureRender( d, collector ) ) {
+					return false;
+				}
+			}
 
 			// Give this render info to the collector if this render target texture data is out of date.
 			// Basically if render commitment count is 0 so far or render command buffer has not been re-recorded.
@@ -557,9 +546,9 @@ bool vk2d::_internal::RenderTargetTextureImpl::CommitRenderTargetTextureRender(
 				}
 
 				assert( std::size( swap.render_wait_for_semaphores ) == std::size( swap.render_wait_for_semaphore_timeline_values ) &&
-						std::size( swap.render_wait_for_semaphores ) == std::size( swap.render_wait_for_pipeline_stages ) );
+					std::size( swap.render_wait_for_semaphores ) == std::size( swap.render_wait_for_pipeline_stages ) );
 
-				// Update submit info to account for render dependencies.
+			// Update submit info to account for render dependencies.
 				swap.vk_render_timeline_semaphore_submit_info.waitSemaphoreValueCount	= uint32_t( std::size( swap.render_wait_for_semaphore_timeline_values ) );
 				swap.vk_render_timeline_semaphore_submit_info.pWaitSemaphoreValues		= swap.render_wait_for_semaphore_timeline_values.data();
 				swap.vk_render_submit_info.waitSemaphoreCount							= uint32_t( std::size( swap.render_wait_for_semaphores ) );
@@ -576,7 +565,6 @@ bool vk2d::_internal::RenderTargetTextureImpl::CommitRenderTargetTextureRender(
 
 		++swap.render_commitment_request_count;
 	}
-
 	return true;
 }
 
@@ -594,6 +582,20 @@ void vk2d::_internal::RenderTargetTextureImpl::ConfirmRenderTargetTextureRenderS
 	}
 }
 
+void vk2d::_internal::RenderTargetTextureImpl::ConfirmRenderTargetTextureRenderFinished(
+	vk2d::_internal::RenderTargetTextureDependencyInfo	&	dependency_info
+)
+{
+	assert( dependency_info.render_target == this );
+	auto & swap = swap_buffers[ dependency_info.swap_buffer_index ];
+
+	swap.contains_non_pending_sampled_image	= true;
+
+	for( auto & d : swap.render_target_texture_dependencies ) {
+		d.render_target->ConfirmRenderTargetTextureRenderFinished( d );
+	}
+}
+
 void vk2d::_internal::RenderTargetTextureImpl::AbortRenderTargetTextureRender(
 	vk2d::_internal::RenderTargetTextureDependencyInfo	&	dependency_info
 )
@@ -602,29 +604,13 @@ void vk2d::_internal::RenderTargetTextureImpl::AbortRenderTargetTextureRender(
 
 	auto & swap = swap_buffers[ dependency_info.swap_buffer_index ];
 
-	// Set semaphore value to 1, this unprimes the semaphore from blocking dependant renders.
-	// Used only when aborting render, normally this is set by physical device when render finishes.
 	{
 		std::lock_guard<std::mutex> lock_guard( swap.render_commitment_request_mutex );
 
+		swap.has_been_submitted = false;
+
 		--swap.render_commitment_request_count;
 		assert( swap.render_commitment_request_count != UINT32_MAX );
-
-		//if( swap.render_commitment_request_count == 0 ) {
-		//	VkSemaphoreSignalInfo signal_info {};
-		//	signal_info.sType		= VK_STRUCTURE_TYPE_SEMAPHORE_SIGNAL_INFO;
-		//	signal_info.pNext		= nullptr;
-		//	signal_info.semaphore	= swap.vk_render_complete_semaphore;
-		//	signal_info.value		= 1;
-
-		//	auto result = vkSignalSemaphore(
-		//		instance->GetVulkanDevice(),
-		//		&signal_info
-		//	);
-		//	if( result != VK_SUCCESS ) {
-		//		instance->Report( result, "Internal error: Cannot cancel render target texture render commitment, cannot signal semaphore!" );
-		//	}
-		//}
 	}
 
 	for( auto & d : swap.render_target_texture_dependencies ) {
@@ -640,10 +626,6 @@ void vk2d::_internal::RenderTargetTextureImpl::ResetRenderTargetTextureRenderDep
 
 	std::lock_guard<std::mutex> lock_guard( swap.render_commitment_request_mutex );
 
-	// TODO: Investigate a need for reference count of some sort. Render target can have dependencies to multiple different parents.
-	//for( auto & d : swap.render_target_texture_dependencies ) {
-	//	d.render_target->ClearRenderTargetTextureDepencies( swap_buffer_index );
-	//}
 	swap.render_commitment_request_count	= 0;
 	swap.render_target_texture_dependencies.clear();
 	swap.render_wait_for_semaphores.clear();
@@ -716,7 +698,7 @@ void vk2d::_internal::RenderTargetTextureImpl::DrawTriangleList(
 	const std::vector<uint32_t>				&	raw_indices,
 	const std::vector<vk2d::Vertex>			&	vertices,
 	const std::vector<float>				&	texture_channel_weights,
-	bool										filled,
+	bool										solid,
 	vk2d::Texture							*	texture,
 	vk2d::Sampler							*	sampler
 )
@@ -752,7 +734,7 @@ void vk2d::_internal::RenderTargetTextureImpl::DrawTriangleList(
 		vk2d::_internal::PipelineSettings pipeline_settings {};
 		pipeline_settings.vk_render_pass		= vk_attachment_render_pass;
 		pipeline_settings.primitive_topology	= VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
-		pipeline_settings.polygon_mode			= filled ? VK_POLYGON_MODE_FILL : VK_POLYGON_MODE_LINE;
+		pipeline_settings.polygon_mode			= solid ? VK_POLYGON_MODE_FILL : VK_POLYGON_MODE_LINE;
 		pipeline_settings.shader_programs		= shader_programs;
 		pipeline_settings.samples				= VkSampleCountFlags( create_info_copy.samples );
 
@@ -809,6 +791,21 @@ void vk2d::_internal::RenderTargetTextureImpl::DrawTriangleList(
 	} else {
 		instance->Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot push mesh into mesh render queue!" );
 	}
+
+	#if VK2D_BUILD_OPTION_DEBUG_ALWAYS_DRAW_TRIANGLES_WIREFRAME
+	if( solid ) {
+		auto vertices_copy = vertices;
+		for( auto & v : vertices_copy ) {
+			v.color = vk2d::Colorf( 0.2f, 1.0f, 0.4f, 0.25f );
+		}
+		DrawTriangleList(
+			raw_indices,
+			vertices_copy,
+			{},
+			false
+		);
+	}
+	#endif
 }
 
 void vk2d::_internal::RenderTargetTextureImpl::DrawLineList(

@@ -239,6 +239,8 @@ private:
 		vk2d::_internal::RenderTargetTextureRenderCollector	&	collector );
 
 	void														ConfirmRenderTargetTextureRenderSubmission();
+	void														ConfirmRenderTargetTextureRenderFinished(
+		uint32_t												for_frame_image_index );
 
 	// In case something goes wrong, allows cancelling render commitment.
 	void														AbortRenderTargetTextureRender();
@@ -266,7 +268,7 @@ private:
 		VkCommandBuffer											command_buffer );
 
 	vk2d::Window											*	window_parent								= {};
-	vk2d::_internal::InstanceImpl							*	instance								= {};
+	vk2d::_internal::InstanceImpl							*	instance									= {};
 	vk2d::WindowCreateInfo										create_info_copy							= {};
 
 	vk2d::WindowEventHandler								*	event_handler								= {};
@@ -338,7 +340,7 @@ private:
 
 	std::unique_ptr<vk2d::_internal::MeshBuffer>				mesh_buffer									= {};
 
-	std::vector<vk2d::_internal::RenderTargetTextureDependencyInfo>
+	std::vector<std::vector<vk2d::_internal::RenderTargetTextureDependencyInfo>>
 																render_target_texture_dependencies			= {};
 
 	enum class ScreenshotState : uint32_t {
