@@ -29,7 +29,7 @@ struct RenderTargetTextureCreateInfo
 	vk2d::RenderCoordinateSpace				coordinate_space			= vk2d::RenderCoordinateSpace::TEXEL_SPACE;	// Coordinate space of the render target.
 	vk2d::Vector2u							size						= vk2d::Vector2u( 512, 512 );				// Render target texture size.
 	vk2d::Multisamples						samples						= vk2d::Multisamples::SAMPLE_COUNT_1;		// Multisample count.
-	bool									enable_blur					= false;									// Ability to blur the texture on the fly.
+//	bool									enable_blur					= false;									// Ability to blur the texture on the fly.
 };
 
 
