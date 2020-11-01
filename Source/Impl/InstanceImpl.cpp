@@ -972,8 +972,8 @@ vk2d::_internal::ShaderProgram vk2d::_internal::InstanceImpl::GetCompatibleShade
 	return {};
 }
 
-VkPipeline vk2d::_internal::InstanceImpl::GetVulkanPipeline(
-	const vk2d::_internal::PipelineSettings		&	settings
+VkPipeline vk2d::_internal::InstanceImpl::GetGraphicsPipeline(
+	const vk2d::_internal::GraphicsPipelineSettings		&	settings
 )
 {
 	// FIXME: multiple thread access conflict.
@@ -990,11 +990,11 @@ VkPipeline vk2d::_internal::InstanceImpl::GetVulkanPipeline(
 	if( p_it != vk_pipelines.end() ) {
 		return p_it->second;
 	}
-	return CreateVulkanPipeline( settings );
+	return CreateGraphicsPipeline( settings );
 }
 
-VkPipeline vk2d::_internal::InstanceImpl::CreateVulkanPipeline(
-	const vk2d::_internal::PipelineSettings		&	settings
+VkPipeline vk2d::_internal::InstanceImpl::CreateGraphicsPipeline(
+	const vk2d::_internal::GraphicsPipelineSettings		&	settings
 )
 {
 	std::array<VkPipelineShaderStageCreateInfo, 2> shader_stage_create_infos {};

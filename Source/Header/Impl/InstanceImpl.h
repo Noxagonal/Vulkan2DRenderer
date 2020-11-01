@@ -268,13 +268,13 @@ public:
 
 
 	// Any thread.
-	VkPipeline												GetVulkanPipeline(
-		const vk2d::_internal::PipelineSettings			&	settings );
+	VkPipeline												GetGraphicsPipeline(
+		const vk2d::_internal::GraphicsPipelineSettings			&	settings );
 
 
 	// Any thread.
-	VkPipeline												CreateVulkanPipeline(
-		const vk2d::_internal::PipelineSettings			&	settings );
+	VkPipeline												CreateGraphicsPipeline(
+		const vk2d::_internal::GraphicsPipelineSettings			&	settings );
 
 
 	// Any thread.
@@ -378,7 +378,7 @@ private:
 	std::vector<VkShaderModule>								vk_shader_modules;
 
 	std::map<vk2d::_internal::ShaderProgramID, vk2d::_internal::ShaderProgram>	shader_programs;
-	std::map<vk2d::_internal::PipelineSettings, VkPipeline>						vk_pipelines;
+	std::map<vk2d::_internal::GraphicsPipelineSettings, VkPipeline>						vk_pipelines;
 
 	VkPipelineCache											vk_pipeline_cache						= {};
 	VkPipelineLayout										vk_pipeline_layout						= {};

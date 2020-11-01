@@ -280,7 +280,7 @@ private:
 
 	void																CmdBindPipelineIfDifferent(
 		VkCommandBuffer													command_buffer,
-		const vk2d::_internal::PipelineSettings						&	pipeline_settings );
+		const vk2d::_internal::GraphicsPipelineSettings						&	pipeline_settings );
 
 	void																CmdBindTextureSamplerIfDifferent(
 		VkCommandBuffer													command_buffer,
@@ -321,7 +321,7 @@ private:
 	VkImageLayout														vk_sampled_image_final_layout				= {};
 	VkAccessFlags														vk_sampled_image_final_access_mask			= {};
 
-	vk2d::_internal::PipelineSettings									previous_pipeline_settings					= {};
+	vk2d::_internal::GraphicsPipelineSettings									previous_pipeline_settings					= {};
 	vk2d::Texture													*	previous_texture							= {};
 	vk2d::Sampler													*	previous_sampler							= {};
 	float																previous_line_width							= {};

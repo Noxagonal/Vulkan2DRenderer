@@ -1409,7 +1409,7 @@ void vk2d::_internal::WindowImpl::DrawTriangleList(
 			3
 		);
 
-		vk2d::_internal::PipelineSettings pipeline_settings {};
+		vk2d::_internal::GraphicsPipelineSettings pipeline_settings {};
 		pipeline_settings.vk_render_pass		= vk_render_pass;
 		pipeline_settings.primitive_topology	= VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
 		pipeline_settings.polygon_mode			= solid ? VK_POLYGON_MODE_FILL : VK_POLYGON_MODE_LINE;
@@ -1545,7 +1545,7 @@ void vk2d::_internal::WindowImpl::DrawLineList(
 			2
 		);
 
-		vk2d::_internal::PipelineSettings pipeline_settings {};
+		vk2d::_internal::GraphicsPipelineSettings pipeline_settings {};
 		pipeline_settings.vk_render_pass		= vk_render_pass;
 		pipeline_settings.primitive_topology	= VK_PRIMITIVE_TOPOLOGY_LINE_LIST;
 		pipeline_settings.polygon_mode			= VK_POLYGON_MODE_LINE;
@@ -1636,7 +1636,7 @@ void vk2d::_internal::WindowImpl::DrawPointList(
 			1
 		);
 
-		vk2d::_internal::PipelineSettings pipeline_settings {};
+		vk2d::_internal::GraphicsPipelineSettings pipeline_settings {};
 		pipeline_settings.vk_render_pass			= vk_render_pass;
 		pipeline_settings.primitive_topology	= VK_PRIMITIVE_TOPOLOGY_POINT_LIST;
 		pipeline_settings.polygon_mode			= VK_POLYGON_MODE_POINT;
@@ -3020,11 +3020,11 @@ void vk2d::_internal::WindowImpl::HandleScreenshotEvent()
 
 void vk2d::_internal::WindowImpl::CmdBindPipelineIfDifferent(
 	VkCommandBuffer									command_buffer,
-	const vk2d::_internal::PipelineSettings		&	pipeline_settings
+	const vk2d::_internal::GraphicsPipelineSettings		&	pipeline_settings
 )
 {
 	if( previous_pipeline_settings != pipeline_settings ) {
-		auto pipeline = instance->GetVulkanPipeline( pipeline_settings );
+		auto pipeline = instance->GetGraphicsPipeline( pipeline_settings );
 
 		vkCmdBindPipeline(
 			command_buffer,
