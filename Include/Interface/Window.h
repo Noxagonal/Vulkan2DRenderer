@@ -3,6 +3,8 @@
 #include "../Core/Common.h"
 
 #include "RenderPrimitives.h"
+#include "RenderTargetCommon.hpp"
+#include "Texture.h"
 
 #include <memory>
 #include <string>
@@ -19,7 +21,7 @@ class WindowImpl;
 class CursorImpl;
 class MonitorImpl;
 
-void UpdateMonitorLists();
+void UpdateMonitorLists( bool globals_locked );
 } // _internal
 
 
@@ -34,32 +36,6 @@ class Monitor;
 class Sampler;
 
 
-
-enum class Multisamples : uint32_t {
-	SAMPLE_COUNT_1		= 1,
-	SAMPLE_COUNT_2		= 2,
-	SAMPLE_COUNT_4		= 4,
-	SAMPLE_COUNT_8		= 8,
-	SAMPLE_COUNT_16		= 16,
-	SAMPLE_COUNT_32		= 32,
-	SAMPLE_COUNT_64		= 64
-};
-inline vk2d::Multisamples operator&( vk2d::Multisamples m1, vk2d::Multisamples m2 )
-{
-	return vk2d::Multisamples( uint32_t( m1 ) & uint32_t( m2 ) );
-}
-inline vk2d::Multisamples operator|( vk2d::Multisamples m1, vk2d::Multisamples m2 )
-{
-	return vk2d::Multisamples( uint32_t( m1 ) | uint32_t( m2 ) );
-}
-
-enum class WindowCoordinateSpace : uint32_t {
-	TEXEL_SPACE,					// Default, ( 0, 0 ) at top left corner of the screen, bottom right is window extent.
-	TEXEL_SPACE_CENTERED,			// Same as TEXEL_SPACE but ( 0, 0 ) coordinates are at screen center.
-	NORMALIZED_SPACE,				// Window always contains 1x1 coordinate space, larger side is extended to keep window contents from stretching.
-	NORMALIZED_SPACE_CENTERED,		// Same as NORMALIZED SPACE but window always contains 2x2 coordinate space, ( 0, 0 ) is window center
-	NORMALIZED_VULKAN,				// ( -1, -1 ) top left, ( 1, 1 ) bottom right.
-};
 
 enum class ButtonAction : int32_t {
 	RELEASE				= 0,
@@ -238,7 +214,7 @@ struct WindowCreateInfo {
 	bool								focused						= true;			// Is the window focused and brought forth when created.
 	bool								maximized					= false;		// Is the window maximized to fill the screen when created.
 	bool								transparent_framebuffer		= false;		// Is the alpha value of the render interpreted as a transparent window background.
-	vk2d::WindowCoordinateSpace			coordinate_space			= vk2d::WindowCoordinateSpace::TEXEL_SPACE; // Window coordinate system to be used, see WindowCoordinateSpace.
+	vk2d::RenderCoordinateSpace			coordinate_space			= vk2d::RenderCoordinateSpace::TEXEL_SPACE; // Window coordinate system to be used, see RenderCoordinateSpace.
 	vk2d::Vector2u						size						= { 800, 600 };	// Window framebuffer initial size
 	vk2d::Vector2u						min_size					= { 32, 32 };	// Minimum size of the window, will be adjusted to suit the hardware.
 	vk2d::Vector2u						max_size					= { UINT32_MAX, UINT32_MAX };	// Maximum size of the window, will be adjusted to suit the hardware.
@@ -304,7 +280,7 @@ private:
 class Monitor {
 	friend class vk2d::Window;
 	friend class vk2d::_internal::WindowImpl;
-	friend void vk2d::_internal::UpdateMonitorLists();
+	friend void vk2d::_internal::UpdateMonitorLists( bool globals_locked );
 
 	// Monitor constructor from implementation directly, used internally.
 	VK2D_API																				Monitor(
@@ -449,8 +425,8 @@ class Window {
 private:
 	// Only accessible through Instance::CreateOutputWindow();
 	VK2D_API																		Window(
-		vk2d::_internal::InstanceImpl				*	instance_parent,
-		vk2d::WindowCreateInfo						&	window_create_info );
+		vk2d::_internal::InstanceImpl				*	instance,
+		const vk2d::WindowCreateInfo				&	window_create_info );
 
 public:
 	VK2D_API																		~Window();
@@ -630,82 +606,233 @@ public:
 	// current state of the cursor. See vk2d::CursorState for more information.
 	VK2D_API vk2d::CursorState							VK2D_APIENTRY				GetCursorState();
 
-	// Begins the render operations. You must call this before using any drawing commands.
-	// For best performance you should calculate game logic first, when you're ready to draw
-	// call this function just before your first draw command.
+	/// @brief		Begins the render operations. You must call this before using any drawing commands.
+	///				For best performance you should calculate game logic first, when you're ready to draw
+	///				call this function just before your first draw command. Every draw call must be
+	///				between this and vk2d::Window::EndRender().
+	/// @see		vk2d::Window::EndRender()
+	/// @note		Multithreading: Main thread only.
+	/// @return		true if operation was successful, false on error and if you should quit.
 	VK2D_API bool										VK2D_APIENTRY				BeginRender();
 
-	// Ends the rendering operations. You must call this after you're done drawing.
-	// This will display the results on screen.
+	/// @brief		Ends the rendering operations. You must call this after you're done drawing
+	///				everything in order to display the results on the window surface.
+	/// @see		vk2d::Window::BeginRender()
+	/// @note		Multithreading: Main thread only.
+	/// @return		true if operation was successful, false on error and if you should quit.
 	VK2D_API bool										VK2D_APIENTRY				EndRender();
 
+	/// @brief		Draw triangles directly.
+	///				Best used if you want to manipulate and draw vertices directly.
+	/// @note		Multithreading: Main thread only.
+	/// @param[in]	indices
+	///				List of indices telling how to form triangles between vertices.
+	/// @param[in]	vertices
+	///				List of vertices that define the shape.
+	/// @param[in]	texture_channels
+	///				Only has effect if provided texture has more than 1 layer.
+	///				This tell how much weight each texture layer has on each vertex.
+	///				TODO: Need to check formatting... Yank Niko, he forgot...
+	/// @param[in]	solid
+	///				If true, renders solid polygons, if false renders as wireframe.
+	/// @param[in]	texture
+	///				Pointer to texture, see vk2d::Vertex for UV mapping details.
+	///				Can be nullptr in which case a white texture is used (vertex colors only).
+	/// @param[in]	sampler
+	///				Pointer to sampler which determines how the texture is drawn.
+	///				Can be nullptr in which case the default sampler is used.
 	VK2D_API void										VK2D_APIENTRY				DrawTriangleList(
 		const std::vector<vk2d::VertexIndex_3>		&	indices,
 		const std::vector<vk2d::Vertex>				&	vertices,
-		const std::vector<float>					&	texture_channels,
-		bool											filled						= true,
-		vk2d::TextureResource						*	texture						= nullptr,
+		const std::vector<float>					&	texture_channel_weights,
+		bool											solid						= true,
+		vk2d::Texture								*	texture						= nullptr,
 		vk2d::Sampler								*	sampler						= nullptr );
 
+	/// @brief		Draws lines directly.
+	///				Best used if you want to manipulate and draw vertices directly.
+	/// @note		Multithreading: Main thread only.
+	/// @param[in]	indices
+	///				List of indices telling how to form lines between vertices.
+	/// @param[in]	vertices 
+	///				List of vertices that define the shape.
+	/// @param[in]	texture_channel_weights 
+	///				Only has effect if provided texture has more than 1 layer.
+	///				This tell how much weight each texture layer has on each vertex.
+	///				TODO: Need to check formatting... Yank Niko, he forgot...
+	/// @param[in]	texture 
+	///				Pointer to texture, see vk2d::Vertex for UV mapping details.
+	///				Can be nullptr in which case a white texture is used (vertex colors only).
+	/// @param[in]	sampler 
+	///				Pointer to sampler which determines how the texture is drawn.
+	///				Can be nullptr in which case the default sampler is used.
 	VK2D_API void										VK2D_APIENTRY				DrawLineList(
 		const std::vector<vk2d::VertexIndex_2>		&	indices,
 		const std::vector<vk2d::Vertex>				&	vertices,
-		const std::vector<float>					&	texture_channels,
-		vk2d::TextureResource						*	texture						= nullptr,
+		const std::vector<float>					&	texture_channel_weights,
+		vk2d::Texture								*	texture						= nullptr,
 		vk2d::Sampler								*	sampler						= nullptr );
 
+	/// @brief		Draws points directly.
+	///				Best used if you want to manipulate and draw vertices directly.
+	/// @note		Multithreading: Main thread only.
+	/// @param[in]	vertices 
+	///				List of vertices that define where and how points are drawn.
+	/// @param[in]	texture_channel_weights 
+	///				Only has effect if provided texture has more than 1 layer.
+	///				This tell how much weight each texture layer has on each vertex.
+	///				TODO: Need to check formatting... Yank Niko, he forgot...
+	/// @param[in]	texture 
+	///				Pointer to texture, see vk2d::Vertex for UV mapping details.
+	///				Can be nullptr in which case a white texture is used (vertex colors only).
+	/// @param[in]	sampler 
+	///				Pointer to sampler which determines how the texture is drawn.
+	///				Can be nullptr in which case the default sampler is used.
 	VK2D_API void										VK2D_APIENTRY				DrawPointList(
 		const std::vector<vk2d::Vertex>				&	vertices,
-		const std::vector<float>					&	texture_channels,
-		vk2d::TextureResource						*	texture						= nullptr,
+		const std::vector<float>					&	texture_channel_weights,
+		vk2d::Texture								*	texture						= nullptr,
 		vk2d::Sampler								*	sampler						= nullptr );
 
+	/// @brief		Draws an individual point.
+	///				Inefficient, for when you really just need a single point drawn without extra information.
+	///				As soon as you need to draw 2 or more points, use vk2d::Window::DrawPointList() instead.
+	/// @note		Multithreading: Main thread only.
+	/// @param[in]	location
+	///				Where to draw the point to, depends on the coordinate system. See vk2d::RenderCoordinateSpace for more info.
+	/// @param[in]	color
+	///				Color of the point to be drawn.
+	/// @param[in]	size
+	///				Size of the point to be drawn, sizes larger than 1.0f will appear as a rectangle.
 	VK2D_API void										VK2D_APIENTRY				DrawPoint(
 		vk2d::Vector2f									location,
 		vk2d::Colorf									color						= { 1.0f, 1.0f, 1.0f, 1.0f },
 		float											size						= 1.0f );
 
+	/// @brief		Draws an individual line.
+	///				Inefficient, for when you really just need a single line drawn without extra information.
+	///				As soon as you need to draw 2 or more lines, use vk2d::Window::DrawLineList() instead.
+	/// @note		Multithreading: Main thread only.
+	/// @param[in]	point_1
+	///				Coordinates of the starting point of the line, depends on the coordinate system. See vk2d::RenderCoordinateSpace for more info.
+	/// @param[in]	point_2
+	///				Coordinates of the ending point of the line, depends on the coordinate system. See vk2d::RenderCoordinateSpace for more info.
+	/// @param[in]	color 
+	///				Color of the line to be drawn.
 	VK2D_API void										VK2D_APIENTRY				DrawLine(
 		vk2d::Vector2f									point_1,
 		vk2d::Vector2f									point_2,
 		vk2d::Colorf									color						= { 1.0f, 1.0f, 1.0f, 1.0f } );
 
+	/// @brief		Draws a box.
+	/// @note		Multithreading: Main thread only.
+	/// @param[in]	top_left
+	///				Top left coordinates of the box, depends on the coordinate system. See vk2d::RenderCoordinateSpace for more info.
+	/// @param[in]	bottom_right
+	///				Bottom right coordinates of the box, depends on the coordinate system. See vk2d::RenderCoordinateSpace for more info.
+	/// @param[in]	solid
+	///				true if the inside of the box is drawn, false for the outline only.
+	/// @param[in]	color
+	///				Color of the box to be drawn.
 	VK2D_API void										VK2D_APIENTRY				DrawBox(
 		vk2d::Vector2f									top_left,
 		vk2d::Vector2f									bottom_right,
-		bool											filled						= true,
+		bool											solid						= true,
 		vk2d::Colorf									color						= { 1.0f, 1.0f, 1.0f, 1.0f } );
 
-	VK2D_API void										VK2D_APIENTRY				DrawCircle(
+	/// @brief		Draws an ellipse or a circle.
+	/// @note		Multithreading: Main thread only.
+	/// @param[in]	top_left
+	///				Consider this as a box the ellipse must form to, this is the top left coordinate of that box,
+	///				depends on the coordinate system. See vk2d::RenderCoordinateSpace for more info.
+	/// @param[in]	bottom_right 
+	///				Consider this as a box the ellipse must form to, this is the bottom right coordinate of that box,
+	///				depends on the coordinate system. See vk2d::RenderCoordinateSpace for more info.
+	/// @param[in]	solid
+	///				true to draw the inside of the ellipse/circle, false to draw the outline only.
+	/// @param[in]	edge_count
+	///				How many corners this ellipse should have, or quality if you prefer. This is a float value for
+	///				"smoother" transitions between amount of corners, in case this value is animated.
+	/// @param[in]	color
+	///				Color of the ellipse/circle to be drawn.
+	VK2D_API void										VK2D_APIENTRY				DrawEllipse(
 		vk2d::Vector2f									top_left,
 		vk2d::Vector2f									bottom_right,
-		bool											filled						= true,
+		bool											solid						= true,
 		float											edge_count					= 64.0f,
 		vk2d::Colorf									color						= { 1.0f, 1.0f, 1.0f, 1.0f } );
 
+	/// @brief		Draws an ellipse or a circle that has a "slice" cut out, similar to usual pie graphs.
+	/// @note		Multithreading: Main thread only.
+	/// @param[in]	top_left
+	///				Consider this as a box the ellipse must form to, this is the top left coordinate of that box,
+	///				depends on the coordinate system. See vk2d::RenderCoordinateSpace for more info.
+	/// @param[in]	bottom_right
+	///				Consider this as a box the ellipse must form to, this is the bottom right coordinate of that box,
+	///				depends on the coordinate system. See vk2d::RenderCoordinateSpace for more info.
+	/// @param[in]	begin_angle_radians
+	///				Angle (in radians) where the slice cut should start.
+	/// @param[in]	coverage
+	///				Size of the slice, value is between 0 to 1 where 0 is not visible and 1 draws the full ellipse.
+	/// @param[in]	solid
+	///				true to draw the inside of the pie, false to draw the outline only.
+	/// @param[in]	edge_count 
+	///				How many corners the complete ellipse should have, or quality if you prefer. This is a float value for
+	///				"smoother" transitions between amount of corners, in case this value is animated.
+	/// @param[in]	color 
+	///				Color of the pie to be drawn.
 	VK2D_API void										VK2D_APIENTRY				DrawPie(
 		vk2d::Vector2f									top_left,
 		vk2d::Vector2f									bottom_right,
 		float											begin_angle_radians,
 		float											coverage,
-		bool											filled						= true,
+		bool											solid						= true,
 		float											edge_count					= 64.0f,
 		vk2d::Colorf									color						= { 1.0f, 1.0f, 1.0f, 1.0f } );
 
+	/// @brief		Draw pie box, similar to drawing a box but which has a pie slice cut out.
+	/// @note		Multithreading: Main thread only.
+	/// @param[in]	top_left 
+	///				Top left coordinates of the box, depends on the coordinate system. See vk2d::RenderCoordinateSpace for more info.
+	/// @param[in]	bottom_right
+	///				Bottom right coordinates of the box, depends on the coordinate system. See vk2d::RenderCoordinateSpace for more info.
+	/// @param[in]	begin_angle_radians
+	///				Angle (in radians) where the slice cut should start.
+	/// @param[in]	coverage 
+	///				Size of the slice, value is between 0 to 1 where 0 is not visible and 1 draws the full box.
+	/// @param[in]	solid
+	///				true to draw the inside of the pie box, false to draw the outline only.
+	/// @param[in]	color 
+	///				Color of the pie box to be drawn.
 	VK2D_API void										VK2D_APIENTRY				DrawPieBox(
 		vk2d::Vector2f									top_left,
 		vk2d::Vector2f									bottom_right,
 		float											begin_angle_radians,
 		float											coverage,
-		bool											filled						= true,
+		bool											solid						= true,
 		vk2d::Colorf									color						= { 1.0f, 1.0f, 1.0f, 1.0f } );
 
+	/// @brief		Draws a box with texture and use the size of the texture to determine size of the box.
+	/// @warning	!! If window surface coordinate space is normalized, this will not work properly as bottom
+	///				right coordinates are offsetted by the texture size !! See vk2d::RenderCoordinateSpace for more info.
+	/// @param[in]	location
+	///				Draw location of the texture, this is the top left corner of the texture,
+	///				depends on the coordinate system. See vk2d::RenderCoordinateSpace for more info.
+	/// @param[in]	texture
+	///				Texture to draw.
+	/// @param[in]	color 
+	///				Color multiplier of the texture texel color, eg. If Red color is 0.0 then texture will
+	///				lack all Red color, or if alpha channel of the color is 0.5 then texture appears half transparent.
 	VK2D_API void										VK2D_APIENTRY				DrawTexture(
-		vk2d::Vector2f									top_left,
-		vk2d::Vector2f									bottom_right,
-		vk2d::TextureResource						*	texture,
+		vk2d::Vector2f									location,
+		vk2d::Texture								*	texture,
 		vk2d::Colorf									color						= { 1.0f, 1.0f, 1.0f, 1.0f } );
 
+	/// @brief		The most useful drawing method. Draws vk2d::Mesh which contains all information needed for the render.
+	/// @note		Multithreading: Main thread only.
+	/// @see		vk2d::Mesh
+	/// @param[in]	mesh
+	///				Mesh object to draw.
 	VK2D_API void										VK2D_APIENTRY				DrawMesh(
 		const vk2d::Mesh							&	mesh );
 
@@ -722,111 +849,217 @@ private:
 
 
 
-// Window event handler
-// Responsible in signalling back events from the window object
+/// @brief		Window event handler base class. You can override member methods to receive keyboard, mouse, gamepad, other... events. <br>
+///				Example event handler:
+/// @code		
+///				class MyEventHandler : public vk2d::WindowEventHandler
+///				{
+///				public:
+///					// Keyboard button was pressed, released or kept down ( repeating ).
+///					void										VK2D_APIENTRY		EventKeyboard(
+///						vk2d::Window						*	window,
+///						vk2d::KeyboardButton					button,
+///						int32_t									scancode,
+///						vk2d::ButtonAction						action,
+///						vk2d::ModifierKeyFlags					modifierKeys
+///					)
+///					{};
+///				};
+///	@endcode
+///	@note		You must use VK2D_APIENTRY when overriding events.
 class WindowEventHandler {
 public:
-	// Window position changed.
+	/// @brief		Window position changed.
+	/// @param[in]	window
+	///				Which window's position changed.
+	/// @param[in]	position
+	///				Where the window moved to.
 	virtual void								VK2D_APIENTRY		EventWindowPosition(
 		vk2d::Window						*	window,
 		vk2d::Vector2i							position )
 	{};
 
-	// Window size changed.
+	/// @brief		Window size changed.
+	/// @param[in]	window
+	///				Which window's position changed.
+	/// @param[in]	size
+	///				what's the new size of the window.
 	virtual void								VK2D_APIENTRY		EventWindowSize(
 		vk2d::Window						*	window,
 		vk2d::Vector2u							size )
 	{};
 
-	// Window wants to close, either the window "X" was pressed or system wants to close the window.
-	// This function will not be called when the window will actually close, only when window wants to be closed.
-	// Window::CloseWindow() does not call this event.
+	/// @brief		Window wants to close when this event runs, either the user pressed the "X", the OS
+	///				wants to close the window, user pressed Alt+F4...
+	///				This event is not called when the window is actually closed, only when the window should be. <br>
+	///				Default behavior is: @code window->CloseWindow(); @endcode
+	///				If you override this function, you'll have to handle closing the window yourself.
+	/// @param[in]	window
+	///				Window that should be closed.
 	virtual void								VK2D_APIENTRY		EventWindowClose(
 		vk2d::Window						*	window )
 	{
 		window->CloseWindow();
 	};
 
-	// Window refreshed itself, not as useful nowadays.
+	/// @brief		Window refreshed itself. <br>
+	///				Not that useful nowadays as modern OSes don't use CPU to draw the windows anymore,
+	///				this doesn't trigger often if at all. Might remove this event later.
+	/// @param[in]	window
+	///				Window that refreshed itself.
 	virtual void								VK2D_APIENTRY		EventWindowRefresh(
 		vk2d::Window						*	window )
 	{};
 
-	// Window gained or lost focus.
+	/// @brief		Window gained or lost focus. Ie. Became topmost window, or lost the topmost position.
+	/// @param[in]	window
+	///				Window that became topmost or lost it's position.
+	/// @param[in]	focused
+	///				true if the window became topmost, false if it lost the topmost position.
 	virtual void								VK2D_APIENTRY		EventWindowFocus(
 		vk2d::Window						*	window,
 		bool									focused )
 	{};
 
-	// Window was iconified or recovered from iconified state.
+	/// @brief		Window was iconified to the taskbar or recovered from there.
+	/// @param[in]	window
+	///				Window that was iconified or recovered.
+	/// @param[in]	iconified
+	///				true if the window was iconified, false if recovered from taskbar.
 	virtual void								VK2D_APIENTRY		EventWindowIconify(
 		vk2d::Window						*	window,
 		bool									iconified )
 	{};
 
-	// Window was maximized or recovered from maximized state.
+	/// @brief		Window was maximized or recovered from maximized state.
+	/// @param[in]	window
+	///				Window that was maximized or recovered from maximized state.
+	/// @param[in]	maximized
+	///				true if maximized or false if recevered from maximized state.
 	virtual void								VK2D_APIENTRY		EventWindowMaximize(
 		vk2d::Window						*	window,
 		bool									maximized )
 	{};
 
 
-	// Mouse button pressed or released.
+	/// @brief		Mouse button was pressed or released.
+	/// @param[in]	window
+	///				Window that the mouse click happened in.
+	/// @param[in]	button
+	///				Which mouse button was clicked or released.
+	/// @param[in]	action
+	///				Tells if the button was pressed or released.
+	/// @param[in]	modifier_keys
+	///				What modifier keys were also pressed down when the mouse button was clicked or released.
 	virtual void								VK2D_APIENTRY		EventMouseButton(
 		vk2d::Window						*	window,
 		vk2d::MouseButton						button,
 		vk2d::ButtonAction						action,
-		vk2d::ModifierKeyFlags					modifierKeys )
+		vk2d::ModifierKeyFlags					modifier_keys )
 	{};
 
-	// Cursor position on window changed.
+	/// @brief		Mouse moved to a new position on the window.
+	/// @param[in]	window
+	///				Which window the mouse movement happened in.
+	/// @param[in]	position
+	///				Tells the new mouse position.
 	virtual void								VK2D_APIENTRY		EventCursorPosition(
 		vk2d::Window						*	window,
 		vk2d::Vector2d							position )
 	{};
 
-	// Cursor entered or left window client area.
+	/// @brief		Mouse cursor moved on top of the window area, or left it.
+	/// @param[in]	window
+	///				Which window the mouse cursor entered.
+	/// @param[in]	entered
+	///				true if entered, false if cursor left the window area.
 	virtual void								VK2D_APIENTRY		EventCursorEnter(
 		vk2d::Window						*	window,
 		bool									entered )
 	{};
 
-	// Scrolling happened, y for vertical scrolling, x for horisontal.
+	/// @brief		Mouse wheel was scrolled.
+	/// @param[in]	window
+	///				Which window the scrolling happened in.
+	/// @param[in]	scroll
+	///				Scroll direction vector telling what changed since last event handling.
+	///				This is a vector2 because some mice have sideways scrolling. Normal vertical
+	///				scrolling is reported in the Y axis, sideways movement in the X axis.
 	virtual void								VK2D_APIENTRY		EventScroll(
 		vk2d::Window						*	window,
 		vk2d::Vector2d							scroll )
 	{};
 
-	// Keyboard button was pressed, released or kept down ( repeating ).
+	/// @brief		Keyboard button was pressed, released or kepth down (repeating).
+	/// @param[in]	window
+	///				Which window the keyboard event happened in.
+	/// @param[in]	button
+	///				Keyboard button that was pressed, released or is repeating.
+	/// @param[in]	scancode
+	///				Raw scancode from the keyboard, may change from platform to platform.
+	/// @param[in]	action
+	///				Tells if the button was pressed or released or repeating.
+	/// @param[in]	modifier_keys
+	///				What modifier keys were also kept down.
 	virtual void								VK2D_APIENTRY		EventKeyboard(
 		vk2d::Window						*	window,
 		vk2d::KeyboardButton					button,
 		int32_t									scancode,
 		vk2d::ButtonAction						action,
-		vk2d::ModifierKeyFlags					modifierKeys )
+		vk2d::ModifierKeyFlags					modifier_keys )
 	{};
 
-	// Character input, use this if you want to know the character that was received from combination of keyboard presses, character is in UTF-32 format.
+	/// @brief		Text input event, use this if you want to know the character that was received from
+	///				combination of keyboard presses. Character is in UTF-32 format.
+	/// @param[in]	window
+	///				Window where we're directing text input to.
+	/// @param[in]	character
+	///				Resulting combined character from the OS. Eg. A = 'a', Shift+A = 'A'.
+	///				This also takes into consideration the region and locale setting of the
+	///				OS and keyboard.
+	/// @param[in]	modifier_keys
+	///				What modifier keys were pressed down when character event was generated.
 	virtual void								VK2D_APIENTRY		EventCharacter(
 		vk2d::Window						*	window,
 		uint32_t								character,
-		vk2d::ModifierKeyFlags					modifierKeys )
+		vk2d::ModifierKeyFlags					modifier_keys )
 	{};
 
 
-	// File or files were dropped on window.
+	/// @brief		File was drag-dropped onto the window.
+	/// @param[in]	window
+	///				Window where files were dragged and dropped onto.
+	/// @param[in]	files
+	///				List of file paths.
 	virtual void								VK2D_APIENTRY		EventFileDrop(
 		vk2d::Window						*	window,
 		std::vector<std::filesystem::path>		files )
 	{};
-	
-	// Screenshot events, called when screenshot save was successfully saved on disk or if there was an error, if error, error message is also given.
+
+	/// @brief		Screenshot event, called when screenshot was successfully saved to disk
+	///				or it's ready for manual manipulation or if there was an error somewhere.
+	///				Screenshots can either be saved to disk directly or the image data can be returned here.
+	///				Taking screenshots is multithreaded operation and will take a while to process,
+	///				so we need to use this event to notify when it's ready.
+	/// @param[in]	window
+	///				Window where the screenshot was taken from.
+	/// @param[in]	screenshot_path
+	///				Screenshot save path if screenshot was saved to disk.
+	/// @param[in]	screenshot_data
+	///				Screenshot data if screenshot was not automatically saved to disk.
+	///				WARNING! Returned data will be destroyed as soon as this event finishes,
+	///				so if you want to further modify the data you'll have to copy it somewhere else first.
+	/// @param[in]	success
+	///				true if taking the screenshot was successful, either saved to file or returned here as data.
+	///				false if there was an error.
+	/// @param[in]	error_message
+	///				if success was false then this tells what kind of error we encountered.
 	virtual void								VK2D_APIENTRY		EventScreenshot(
 		vk2d::Window						*	window,
 		const std::filesystem::path			&	screenshot_path,
 		const vk2d::ImageData				&	screenshot_data,
 		bool									success,
-		const std::string					&	errorMessage )
+		const std::string					&	error_message )
 	{};
 };
 

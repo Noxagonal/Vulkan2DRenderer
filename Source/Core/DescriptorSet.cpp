@@ -4,12 +4,6 @@
 #include "../Header/Core/DescriptorSet.h"
 #include "../Header/Impl/InstanceImpl.h"
 
-#include <algorithm>
-#include <memory>
-#include <vector>
-#include <bitset>
-#include <assert.h>
-
 namespace vk2d {
 namespace _internal {
 
@@ -61,19 +55,20 @@ vk2d::_internal::DescriptorSetLayout::DescriptorSetLayout(
 	assert( instance );
 	assert( device );
 
-	instance_parent		= instance;
+	instance		= instance;
 	refDevice			= device;
 	createInfo			= *pCreateInfo;
 
 	// Create the actual descriptor set layout
 	{
-		if( vkCreateDescriptorSetLayout(
+		auto result = vkCreateDescriptorSetLayout(
 			refDevice,
 			&createInfo,
 			nullptr,
 			&setLayout
-		) != VK_SUCCESS ) {
-			instance_parent->Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot create descriptor set layout!" );
+		);
+		if( result != VK_SUCCESS ) {
+			instance->Report( result, "Internal error: Cannot create descriptor set layout!" );
 			return;
 		}
 
@@ -150,7 +145,7 @@ vk2d::_internal::DescriptorAutoPool::DescriptorAutoPool(
 {
 	assert( instance );
 	assert( device );
-	instance_parent			= instance;
+	instance			= instance;
 	refDevice				= device;
 
 	is_good		= true;
@@ -171,6 +166,14 @@ vk2d::_internal::DescriptorAutoPool::~DescriptorAutoPool()
 vk2d::_internal::PoolDescriptorSet vk2d::_internal::DescriptorAutoPool::AllocateDescriptorSet(
 	const DescriptorSetLayout		&	rForDescriptorSetLayout )
 {
+	VK2D_ASSERT_SINGLE_THREAD_ACCESS_SCOPE();
+
+	// FIXME: multiple thread access conflict.
+	// This function will be called from multiple threads, possibly often.
+	// Need a mutex or per thread descriptor auto pool.
+	// Alternatively force access to single thread only
+	// and require descriptor set allocation via instance.
+
 	const auto & setPoolRequirements	= rForDescriptorSetLayout.GetDescriptorPoolRequirements();
 	PoolDescriptorSet ret				= {};
 
@@ -226,7 +229,7 @@ vk2d::_internal::PoolDescriptorSet vk2d::_internal::DescriptorAutoPool::Allocate
 				sc.second->isFull	= true;
 				break;
 			default:
-				instance_parent->Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot allocate Vulkan descriptor sets!" );
+				instance->Report( result, "Internal error: Cannot allocate Vulkan descriptor sets!" );
 				ret.result			= result;
 				return ret;
 			}
@@ -267,7 +270,7 @@ vk2d::_internal::PoolDescriptorSet vk2d::_internal::DescriptorAutoPool::Allocate
 				&newCategory.pool
 			);
 			if( result != VK_SUCCESS ) {
-				instance_parent->Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot create Vulkan descriptor pool!" );
+				instance->Report( result, "Internal error: Cannot create Vulkan descriptor pool!" );
 				ret.result	= result;
 				return ret;
 			}
@@ -287,7 +290,7 @@ vk2d::_internal::PoolDescriptorSet vk2d::_internal::DescriptorAutoPool::Allocate
 				&set
 			);
 			if( result != VK_SUCCESS ) {
-				instance_parent->Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot allocate Vulkan descriptor sets!" );
+				instance->Report( result, "Internal error: Cannot allocate Vulkan descriptor sets!" );
 				ret.result	= result;
 				return ret;
 			}
@@ -309,6 +312,8 @@ void vk2d::_internal::DescriptorAutoPool::FreeDescriptorSet(
 	vk2d::_internal::PoolDescriptorSet		&	rDescriptorSet
 )
 {
+	VK2D_ASSERT_SINGLE_THREAD_ACCESS_SCOPE();
+
 	if( rDescriptorSet.allocated ) {
 		assert( rDescriptorSet.parentPool );
 		auto it = poolCategories.begin();

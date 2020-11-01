@@ -10,7 +10,6 @@
 #include "../../Include/Interface/TextureResource.h"
 
 #include <stb_image_write.h>
-#include <sstream>
 
 uint32_t RoundToCeilingPowerOfTwo( uint32_t value )
 {

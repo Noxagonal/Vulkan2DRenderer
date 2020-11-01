@@ -6,19 +6,17 @@
 #include "../Header/Core/DescriptorSet.h"
 #include "../Header/Core/VulkanMemoryManagement.h"
 
-#include <sstream>
-
 
 
 vk2d::_internal::ThreadLoaderResource::ThreadLoaderResource( InstanceImpl * instance )
 {
-	instance_parent		= instance;
-	device				= instance->GetVulkanDevice();
+	this->instance		= instance;
+	this->device		= instance->GetVulkanDevice();
 }
 
 vk2d::_internal::InstanceImpl * vk2d::_internal::ThreadLoaderResource::GetInstance() const
 {
-	return instance_parent;
+	return instance;
 }
 
 VkDevice vk2d::_internal::ThreadLoaderResource::GetVulkanDevice() const
@@ -62,9 +60,9 @@ bool vk2d::_internal::ThreadLoaderResource::ThreadBegin()
 
 	// Command buffers
 	{
-		auto primary_render_queue_family_index			= instance_parent->GetPrimaryRenderQueue().GetQueueFamilyIndex();
-		auto secondary_render_queue_family_index		= instance_parent->GetSecondaryRenderQueue().GetQueueFamilyIndex();
-		auto primary_transfer_queue_family_index		= instance_parent->GetPrimaryTransferQueue().GetQueueFamilyIndex();
+		auto primary_render_queue_family_index			= instance->GetPrimaryRenderQueue().GetQueueFamilyIndex();
+		auto secondary_render_queue_family_index		= instance->GetSecondaryRenderQueue().GetQueueFamilyIndex();
+		auto primary_transfer_queue_family_index		= instance->GetPrimaryTransferQueue().GetQueueFamilyIndex();
 
 		VkCommandPoolCreateInfo command_pool_create_info {};
 		command_pool_create_info.sType		= VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
@@ -73,46 +71,49 @@ bool vk2d::_internal::ThreadLoaderResource::ThreadBegin()
 
 		{
 			command_pool_create_info.queueFamilyIndex	= primary_render_queue_family_index;
-			if( vkCreateCommandPool(
+			auto result = vkCreateCommandPool(
 				device,
 				&command_pool_create_info,
 				nullptr,
 				&primary_render_command_pool
-			) != VK_SUCCESS ) {
+			);
+			if( result != VK_SUCCESS ) {
 				std::stringstream ss;
 				ss << "Internal error: Cannot create Vulkan command pool for primary render queue in thread: "
 					<< std::this_thread::get_id();
-				instance_parent->Report( vk2d::ReportSeverity::CRITICAL_ERROR, ss.str() );
+				instance->Report( result, ss.str() );
 				return false;
 			}
 		}
 		{
 			command_pool_create_info.queueFamilyIndex	= secondary_render_queue_family_index;
-			if( vkCreateCommandPool(
+			auto result = vkCreateCommandPool(
 				device,
 				&command_pool_create_info,
 				nullptr,
 				&secondary_render_command_pool
-			) != VK_SUCCESS ) {
+			);
+			if( result != VK_SUCCESS ) {
 				std::stringstream ss;
 				ss << "Internal error: Cannot create Vulkan command pool for secondary render queue in thread: "
 					<< std::this_thread::get_id();
-				instance_parent->Report( vk2d::ReportSeverity::CRITICAL_ERROR, ss.str() );
+				instance->Report( result, ss.str() );
 				return false;
 			}
 		}
 		{
 			command_pool_create_info.queueFamilyIndex	= primary_transfer_queue_family_index;
-			if( vkCreateCommandPool(
+			auto result = vkCreateCommandPool(
 				device,
 				&command_pool_create_info,
 				nullptr,
 				&primary_transfer_command_pool
-			) != VK_SUCCESS ) {
+			);
+			if( result != VK_SUCCESS ) {
 				std::stringstream ss;
 				ss << "Internal error: Cannot create Vulkan command pool for primary transfer queue in thread: "
 					<< std::this_thread::get_id();
-				instance_parent->Report( vk2d::ReportSeverity::CRITICAL_ERROR, ss.str() );
+				instance->Report( result, ss.str() );
 				return false;
 			}
 		}
@@ -121,14 +122,14 @@ bool vk2d::_internal::ThreadLoaderResource::ThreadBegin()
 	// Descriptor pool
 	{
 		descriptor_auto_pool	= vk2d::_internal::CreateDescriptorAutoPool(
-			instance_parent,
+			instance,
 			device
 		);
 		if( !descriptor_auto_pool ) {
 			std::stringstream ss;
 			ss << "Internal error: Cannot create descriptor auto pool in thread: "
 				<< std::this_thread::get_id();
-			instance_parent->Report( vk2d::ReportSeverity::CRITICAL_ERROR, ss.str() );
+			instance->Report( vk2d::ReportSeverity::CRITICAL_ERROR, ss.str() );
 			return false;
 		}
 	}
@@ -136,14 +137,14 @@ bool vk2d::_internal::ThreadLoaderResource::ThreadBegin()
 	// Device memory pool
 	{
 		device_memory_pool			= vk2d::_internal::MakeDeviceMemoryPool(
-			instance_parent->GetVulkanPhysicalDevice(),
+			instance->GetVulkanPhysicalDevice(),
 			device
 		);
 		if( !device_memory_pool ) {
 			std::stringstream ss;
 			ss << "Internal error: Cannot create device memory pool in thread: "
 				<< std::this_thread::get_id();
-			instance_parent->Report( vk2d::ReportSeverity::CRITICAL_ERROR, ss.str() );
+			instance->Report( vk2d::ReportSeverity::CRITICAL_ERROR, ss.str() );
 			return false;
 		}
 	}
@@ -155,7 +156,7 @@ bool vk2d::_internal::ThreadLoaderResource::ThreadBegin()
 			std::stringstream ss;
 			ss << "Internal error: Cannot create FreeType instance in thread: "
 				<< std::this_thread::get_id();
-			instance_parent->Report( vk2d::ReportSeverity::CRITICAL_ERROR, ss.str() );
+			instance->Report( vk2d::ReportSeverity::CRITICAL_ERROR, ss.str() );
 			return false;
 		}
 	}

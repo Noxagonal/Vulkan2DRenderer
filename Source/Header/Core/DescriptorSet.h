@@ -2,10 +2,6 @@
 
 #include "SourceCommon.h"
 
-#include <memory>
-#include <vector>
-#include <array>
-
 namespace vk2d {
 
 namespace _internal {
@@ -37,7 +33,8 @@ class DescriptorPoolRequirements {
 	friend class vk2d::_internal::DescriptorSetLayout;
 
 public:
-	inline const std::array<uint32_t, VK_DESCRIPTOR_TYPE_RANGE_SIZE>	&	GetBindingAmounts() const
+	inline const std::array<uint32_t, VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT + 1>
+																&	GetBindingAmounts() const
 	{
 		return bindingAmounts;
 	};
@@ -47,7 +44,7 @@ public:
 		const DescriptorPoolRequirements						&	other ) const;
 
 private:
-	std::array<uint32_t, VK_DESCRIPTOR_TYPE_RANGE_SIZE>				bindingAmounts					= {};
+	std::array<uint32_t, VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT + 1>	bindingAmounts					= {};
 	uint64_t														typeBits						= {};
 };
 
@@ -83,7 +80,7 @@ public:
 																	operator VkDescriptorSetLayout() const;
 
 private:
-	vk2d::_internal::InstanceImpl								*	instance_parent							= {};
+	vk2d::_internal::InstanceImpl								*	instance							= {};
 
 	VkDescriptorSetLayoutCreateInfo									createInfo								= {};
 	VkDevice														refDevice								= {};
@@ -93,6 +90,7 @@ private:
 	bool															is_good									= {};
 };
 
+// TODO: Remove CreateDescriptorSetLayout() function, we don't really need a factory function here.
 std::unique_ptr<vk2d::_internal::DescriptorSetLayout>				CreateDescriptorSetLayout(
 	vk2d::_internal::InstanceImpl								*	instance,
 	VkDevice														device,
@@ -127,13 +125,13 @@ public:
 																	~DescriptorAutoPool();
 
 	vk2d::_internal::PoolDescriptorSet								AllocateDescriptorSet(
-		const vk2d::_internal::DescriptorSetLayout				&	rForDescriptorSetLaout);
+		const vk2d::_internal::DescriptorSetLayout				&	rForDescriptorSetLayout );
 
 	 void															FreeDescriptorSet(
 		 vk2d::_internal::PoolDescriptorSet						&	pDescriptorSet );
 
 private:
-	vk2d::_internal::InstanceImpl								*	instance_parent			= {};
+	vk2d::_internal::InstanceImpl								*	instance			= {};
 
 	VkDevice														refDevice				= {};
 	std::vector<vk2d::_internal::PoolCategory>						poolCategories			= {};
@@ -141,6 +139,7 @@ private:
 	bool															is_good					= {};
 };
 
+// TODO: Remove CreateDescriptorAutoPool() function, we don't really need a factory function here.
 std::unique_ptr<vk2d::_internal::DescriptorAutoPool>				CreateDescriptorAutoPool(
 	vk2d::_internal::InstanceImpl								*	instance,
 	VkDevice														device );

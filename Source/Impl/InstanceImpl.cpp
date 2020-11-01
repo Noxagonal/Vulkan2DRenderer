@@ -18,11 +18,6 @@
 #include <GLFW/glfw3.h>
 
 
-#include <sstream>
-#include <iostream>
-#include <vector>
-#include <list>
-
 
 namespace vk2d {
 
@@ -35,6 +30,8 @@ void VK2D_APIENTRY VK2D_default_ReportFunction(
 	std::string						message
 )
 {
+	VK2D_ASSERT_SINGLE_THREAD_ACCESS_SCOPE();
+
 	switch( severity ) {
 	case vk2d::ReportSeverity::NONE:
 		vk2d::SetConsoleColor();
@@ -55,6 +52,7 @@ void VK2D_APIENTRY VK2D_default_ReportFunction(
 		vk2d::SetConsoleColor( vk2d::ConsoleColor::RED );
 		break;
 	case vk2d::ReportSeverity::CRITICAL_ERROR:
+	case vk2d::ReportSeverity::DEVICE_LOST:
 		vk2d::SetConsoleColor( vk2d::ConsoleColor::WHITE, vk2d::ConsoleColor::DARK_RED );
 		break;
 	default:
@@ -65,9 +63,9 @@ void VK2D_APIENTRY VK2D_default_ReportFunction(
 	std::cout << message << "\n";
 	vk2d::SetConsoleColor();
 
-	if( severity == vk2d::ReportSeverity::CRITICAL_ERROR ) {
-
 #if VK2D_BUILD_OPTION_VULKAN_COMMAND_BUFFER_CHECKMARKS && VK2D_BUILD_OPTION_VULKAN_VALIDATION && VK2D_DEBUG_ENABLE
+	if( severity == vk2d::ReportSeverity::DEVICE_LOST ) {
+
 		auto checkpoints = vk2d::_internal::GetCommandBufferCheckpoints();
 		if( checkpoints.size() ) {
 			std::cout << "\n\nLatest command buffer checkpoint marker stages: " << checkpoints.size() << "\n";
@@ -95,24 +93,36 @@ void VK2D_APIENTRY VK2D_default_ReportFunction(
 			}
 			delete reinterpret_cast<CommandBufferCheckpointData*>( checkpoints[ 0 ].pCheckpointMarker );
 		}
+	}
 #endif
 
+	if( severity >= vk2d::ReportSeverity::NON_CRITICAL_ERROR ) {
 #ifdef _WIN32
 		MessageBox( NULL, message.c_str(), "Critical error!", MB_OK | MB_ICONERROR );
 #endif
-
-		std::exit( -1 );
+		if( severity >= vk2d::ReportSeverity::CRITICAL_ERROR ) {
+			std::exit( -1 );
+		}
 	}
 }
 
 
 
+std::mutex										instance_globals_mutex;
 vk2d::Monitor									primary_monitor				= {};
 std::vector<vk2d::Monitor>						all_monitors				= {};
 std::list<vk2d::_internal::InstanceImpl*>		instance_listeners			= {};
 
-void UpdateMonitorLists()
+void UpdateMonitorLists(
+	bool		globals_locked		= false
+)
 {
+	// Lock globals if not already locked.
+	std::unique_lock<std::mutex> unique_lock;
+	if( !globals_locked ) {
+		unique_lock = std::unique_lock<std::mutex>( instance_globals_mutex );
+	}
+
 	auto BuildMonitorData = [](
 		GLFWmonitor		*	monitor
 		) -> std::unique_ptr<vk2d::_internal::MonitorImpl>
@@ -201,6 +211,8 @@ void glfwMonitorCallback(
 
 void glfwJoystickEventCallback( int joystick, int event )
 {
+	std::lock_guard<std::mutex> lock_guard( instance_globals_mutex );
+
 	if( event == GLFW_CONNECTED ) {
 		std::string joystic_name = glfwGetJoystickName( joystick );
 
@@ -233,7 +245,7 @@ uint64_t vk2d::_internal::InstanceImpl::instance_count				= 0;
 
 vk2d::_internal::InstanceImpl::InstanceImpl( const InstanceCreateInfo & instance_create_info )
 {
-	vk2d::_internal::instance_listeners.push_back( this );
+	std::lock_guard<std::mutex> lock_guard( instance_globals_mutex );
 
 	// Initialize glfw if this is the first instance.
 	if( instance_count == 0 ) {
@@ -246,7 +258,7 @@ vk2d::_internal::InstanceImpl::InstanceImpl( const InstanceCreateInfo & instance
 		glfwWindowHint( GLFW_CLIENT_API, GLFW_NO_API );
 		glfwSetMonitorCallback( vk2d::_internal::glfwMonitorCallback );
 		glfwSetJoystickCallback( vk2d::_internal::glfwJoystickEventCallback );
-		vk2d::_internal::UpdateMonitorLists();
+		vk2d::_internal::UpdateMonitorLists( true );
 	}
 	++instance_count;
 
@@ -261,7 +273,7 @@ vk2d::_internal::InstanceImpl::InstanceImpl( const InstanceCreateInfo & instance
 	create_info_copy	= instance_create_info;
 	report_function		= create_info_copy.report_function;
 
-#if VK2D_DEBUG
+#if VK2D_DEBUG_ENABLE
 	if( report_function == nullptr ) {
 		report_function = VK2D_default_ReportFunction;
 	}
@@ -270,7 +282,6 @@ vk2d::_internal::InstanceImpl::InstanceImpl( const InstanceCreateInfo & instance
 //	Introduce layers and extensions here
 //	instance_layers;
 //	Instance extensions.
-	instance_extensions.push_back( VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME );
 	{
 		// Adding glfw instance extensions
 		uint32_t glfw_instance_extension_count = 0;
@@ -282,7 +293,6 @@ vk2d::_internal::InstanceImpl::InstanceImpl( const InstanceCreateInfo & instance
 
 	// Device extensions.
 	device_extensions.push_back( VK_KHR_SWAPCHAIN_EXTENSION_NAME );
-	device_extensions.push_back( VK_KHR_SAMPLER_MIRROR_CLAMP_TO_EDGE_EXTENSION_NAME );
 
 #if VK2D_BUILD_OPTION_VULKAN_COMMAND_BUFFER_CHECKMARKS && VK2D_BUILD_OPTION_VULKAN_VALIDATION && VK2D_DEBUG_ENABLE
 	device_extensions.push_back( VK_NV_DEVICE_DIAGNOSTIC_CHECKPOINTS_EXTENSION_NAME );
@@ -292,7 +302,7 @@ vk2d::_internal::InstanceImpl::InstanceImpl( const InstanceCreateInfo & instance
 	if( !PickPhysicalDevice() ) return;
 	if( !CreateDeviceAndQueues() ) return;
 
-#if VK2D_BUILD_OPTION_VULKAN_COMMAND_BUFFER_CHECKMARKS && VK2D_BUILD_OPTION_VULKAN_VALIDATION && VK2D_DEBUG_ENABLE
+	#if VK2D_BUILD_OPTION_VULKAN_COMMAND_BUFFER_CHECKMARKS && VK2D_BUILD_OPTION_VULKAN_VALIDATION && VK2D_DEBUG_ENABLE
 	if( instance_count == 1 ) {
 		vk2d::_internal::SetCommandBufferCheckpointQueue(
 			vk_device,
@@ -300,7 +310,7 @@ vk2d::_internal::InstanceImpl::InstanceImpl( const InstanceCreateInfo & instance
 			primary_render_queue.GetQueueMutex()
 		);
 	}
-#endif
+	#endif
 
 	if( !CreateDescriptorSetLayouts() ) return;
 	if( !CreateDescriptorPool() ) return;
@@ -313,14 +323,21 @@ vk2d::_internal::InstanceImpl::InstanceImpl( const InstanceCreateInfo & instance
 	if( !CreateDefaultTexture() ) return;
 	if( !CreateDefaultSampler() ) return;
 
-	is_good		= true;
+	vk2d::_internal::instance_listeners.push_back( this );
+	creator_thread_id	= std::this_thread::get_id();
+	is_good				= true;
 }
 
 vk2d::_internal::InstanceImpl::~InstanceImpl()
 {
+	std::lock_guard<std::mutex> lock_guard( instance_globals_mutex );
+
+	vk2d::_internal::instance_listeners.remove( this );
+
 	vkDeviceWaitIdle( vk_device );
 
 	windows.clear();
+	render_target_textures.clear();
 	cursors.clear();
 	samplers.clear();
 
@@ -343,12 +360,15 @@ vk2d::_internal::InstanceImpl::~InstanceImpl()
 	if( instance_count == 0 ) {
 		glfwTerminate();
 	}
-
-	vk2d::_internal::instance_listeners.remove( this );
 }
 
 std::vector<vk2d::Monitor*> vk2d::_internal::InstanceImpl::GetMonitors()
 {
+	if( !IsThisThreadCreatorThread() ) {
+		Report( vk2d::ReportSeverity::WARNING, "Instance::GetMonitors() must be called from main thread only!" );
+		return {};
+	}
+
 	std::vector<vk2d::Monitor*> ret;
 	ret.reserve( vk2d::_internal::all_monitors.size() );
 
@@ -359,7 +379,7 @@ std::vector<vk2d::Monitor*> vk2d::_internal::InstanceImpl::GetMonitors()
 	return ret;
 }
 
-vk2d::Monitor * vk2d::_internal::InstanceImpl::GetPrimaryMonitor()
+vk2d::Monitor * vk2d::_internal::InstanceImpl::GetPrimaryMonitor() const
 {
 	return &vk2d::_internal::primary_monitor;
 }
@@ -368,6 +388,11 @@ void vk2d::_internal::InstanceImpl::SetMonitorUpdateCallback(
 	vk2d::MonitorUpdateCallbackFun		monitor_update_callback_funtion
 )
 {
+	if( !IsThisThreadCreatorThread() ) {
+		Report( vk2d::ReportSeverity::WARNING, "Instance::SetMonitorUpdateCallback() must be called from main thread only!" );
+		return;
+	}
+
 	monitor_update_callback		= monitor_update_callback_funtion;
 }
 
@@ -376,6 +401,11 @@ vk2d::Cursor * vk2d::_internal::InstanceImpl::CreateCursor(
 	vk2d::Vector2i							hot_spot
 )
 {
+	if( !IsThisThreadCreatorThread() ) {
+		Report( vk2d::ReportSeverity::WARNING, "Instance::CreateCursor() must be called from main thread only!" );
+		return {};
+	}
+
 	auto cursor = std::unique_ptr<vk2d::Cursor>( new vk2d::Cursor(
 		this,
 		image_path,
@@ -397,6 +427,11 @@ vk2d::Cursor * vk2d::_internal::InstanceImpl::CreateCursor(
 	vk2d::Vector2i							hot_spot
 )
 {
+	if( !IsThisThreadCreatorThread() ) {
+		Report( vk2d::ReportSeverity::WARNING, "Instance::CreateCursor() must be called from main thread only!" );
+		return {};
+	}
+
 	auto cursor = std::unique_ptr<vk2d::Cursor>( new vk2d::Cursor(
 		this,
 		image_size,
@@ -417,6 +452,11 @@ void vk2d::_internal::InstanceImpl::DestroyCursor(
 	vk2d::Cursor		*	cursor
 )
 {
+	if( !IsThisThreadCreatorThread() ) {
+		Report( vk2d::ReportSeverity::WARNING, "Instance::DestroyCursor() must be called from main thread only!" );
+		return;
+	}
+
 	auto it = cursors.begin();
 	while( it != cursors.end() ) {
 		if( it->get() == cursor ) {
@@ -428,20 +468,30 @@ void vk2d::_internal::InstanceImpl::DestroyCursor(
 	}
 }
 
-vk2d::GamepadEventCallbackFun vk2d::_internal::InstanceImpl::GetGamepadEventCallback()
+vk2d::GamepadEventCallbackFun vk2d::_internal::InstanceImpl::GetGamepadEventCallback() const
 {
-	return vk2d::GamepadEventCallbackFun();
+	return joystick_event_callback;
 }
 
 void vk2d::_internal::InstanceImpl::SetGamepadEventCallback(
 	vk2d::GamepadEventCallbackFun		joystick_event_callback_function
 )
 {
+	if( !IsThisThreadCreatorThread() ) {
+		Report( vk2d::ReportSeverity::WARNING, "Instance::SetGamepadEventCallback() must be called from main thread only!" );
+		return;
+	}
+
 	joystick_event_callback		= joystick_event_callback_function;
 }
 
 bool vk2d::_internal::InstanceImpl::IsGamepadPresent( vk2d::Gamepad joystick )
 {
+	if( !IsThisThreadCreatorThread() ) {
+		Report( vk2d::ReportSeverity::WARNING, "Instance::IsGamepadPresent() must be called from main thread only!" );
+		return {};
+	}
+
 	if( glfwJoystickIsGamepad( int( joystick ) ) == GLFW_TRUE ) {
 		return true;
 	} else {
@@ -451,12 +501,22 @@ bool vk2d::_internal::InstanceImpl::IsGamepadPresent( vk2d::Gamepad joystick )
 
 std::string vk2d::_internal::InstanceImpl::GetGamepadName( vk2d::Gamepad gamepad )
 {
+	if( !IsThisThreadCreatorThread() ) {
+		Report( vk2d::ReportSeverity::WARNING, "Instance::GetGamepadName() must be called from main thread only!" );
+		return {};
+	}
+
 	return glfwGetGamepadName( int( gamepad ) );
 }
 
 vk2d::GamepadState vk2d::_internal::InstanceImpl::QueryGamepadState(
 	vk2d::Gamepad			gamepad )
 {
+	if( !IsThisThreadCreatorThread() ) {
+		Report( vk2d::ReportSeverity::WARNING, "Instance::QueryGamepadState() must be called from main thread only!" );
+		return {};
+	}
+
 	vk2d::GamepadState	gamepad_state {};
 	GLFWgamepadstate	glfw_gamepad_state {};
 
@@ -484,9 +544,14 @@ vk2d::GamepadState vk2d::_internal::InstanceImpl::QueryGamepadState(
 
 
 vk2d::Window * vk2d::_internal::InstanceImpl::CreateOutputWindow(
-	vk2d::WindowCreateInfo	&	window_create_info
+	const vk2d::WindowCreateInfo	&	window_create_info
 )
 {
+	if( !IsThisThreadCreatorThread() ) {
+		Report( vk2d::ReportSeverity::WARNING, "Instance::CreateOutputWindow() must be called from main thread only!" );
+		return {};
+	}
+
 	auto new_window = std::unique_ptr<vk2d::Window>( new vk2d::Window( this, window_create_info ) );
 
 	if( new_window->is_good ) {
@@ -496,10 +561,15 @@ vk2d::Window * vk2d::_internal::InstanceImpl::CreateOutputWindow(
 	return {};
 }
 
-void vk2d::_internal::InstanceImpl::CloseOutputWindow(
+void vk2d::_internal::InstanceImpl::DestroyOutputWindow(
 	vk2d::Window				*	window
 )
 {
+	if( !IsThisThreadCreatorThread() ) {
+		Report( vk2d::ReportSeverity::WARNING, "Instance::DestroyOutputWindow() must be called from main thread only!" );
+		return;
+	}
+
 	vkDeviceWaitIdle( vk_device );
 
 	auto it = windows.begin();
@@ -513,20 +583,98 @@ void vk2d::_internal::InstanceImpl::CloseOutputWindow(
 	}
 }
 
+vk2d::RenderTargetTexture * vk2d::_internal::InstanceImpl::CreateRenderTargetTexture(
+	const vk2d::RenderTargetTextureCreateInfo		&	render_target_texture_create_info
+)
+{
+	if( !IsThisThreadCreatorThread() ) {
+		Report( vk2d::ReportSeverity::WARNING, "Instance::CreateRenderTargetTexture() must be called from main thread only!" );
+		return {};
+	}
+
+	auto render_target_texture	= std::unique_ptr<vk2d::RenderTargetTexture>(
+		new vk2d::RenderTargetTexture( this, render_target_texture_create_info )
+	);
+
+	if( render_target_texture && render_target_texture->IsGood() ) {
+		auto ret	= render_target_texture.get();
+		render_target_textures.push_back( std::move( render_target_texture ) );
+		return ret;
+	} else {
+		return nullptr;
+	}
+}
+
+void vk2d::_internal::InstanceImpl::DestroyRenderTargetTexture(
+	vk2d::RenderTargetTexture						*	render_target_texture
+)
+{
+	if( !IsThisThreadCreatorThread() ) {
+		Report( vk2d::ReportSeverity::WARNING, "Instance::DestroyRenderTargetTexture() must be called from main thread only!" );
+		return;
+	}
+
+	auto result = vkDeviceWaitIdle(
+		vk_device
+	);
+	if( result != VK_SUCCESS ) {
+		Report( result, "Cannot destroy render target, error waiting device!" );
+	}
+
+	auto it = render_target_textures.begin();
+	while( it != render_target_textures.end() ) {
+		if( it->get() == render_target_texture ) {
+			it = render_target_textures.erase( it );
+			break;
+		} else {
+			++it;
+		}
+	}
+}
+
+vk2d::_internal::PoolDescriptorSet vk2d::_internal::InstanceImpl::AllocateDescriptorSet(
+	const vk2d::_internal::DescriptorSetLayout		&	for_descriptor_set_layout
+)
+{
+	std::lock_guard<std::mutex> lock_guard( descriptor_pool_mutex );
+
+	return descriptor_pool->AllocateDescriptorSet(
+		for_descriptor_set_layout
+	);
+}
+
+void vk2d::_internal::InstanceImpl::FreeDescriptorSet(
+	vk2d::_internal::PoolDescriptorSet & descriptor_set
+)
+{
+	std::lock_guard<std::mutex> lock_guard( descriptor_pool_mutex );
+
+	descriptor_pool->FreeDescriptorSet(
+		descriptor_set
+	);
+}
 
 
+/*
 vk2d::_internal::DescriptorAutoPool * vk2d::_internal::InstanceImpl::GetDescriptorPool()
 {
 	return descriptor_pool.get();
 }
-
+*/
 
 
 vk2d::Sampler * vk2d::_internal::InstanceImpl::CreateSampler(
 	const vk2d::SamplerCreateInfo	&	sampler_create_info
 )
 {
-	auto sampler	= std::unique_ptr<vk2d::Sampler>( new vk2d::Sampler( this, sampler_create_info ) );
+	if( !IsThisThreadCreatorThread() ) {
+		Report( vk2d::ReportSeverity::WARNING, "Instance::CreateSampler() must be called from main thread only!" );
+		return {};
+	}
+
+	auto sampler	= std::unique_ptr<vk2d::Sampler>(
+		new vk2d::Sampler( this, sampler_create_info )
+	);
 
 	if( sampler && sampler->IsGood() ) {
 		auto ret	= sampler.get();
@@ -541,8 +689,16 @@ void vk2d::_internal::InstanceImpl::DestroySampler(
 	vk2d::Sampler					*	sampler
 )
 {
-	if( vkDeviceWaitIdle( vk_device ) != VK_SUCCESS ) {
-		Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Device lost!" );
+	if( !IsThisThreadCreatorThread() ) {
+		Report( vk2d::ReportSeverity::WARNING, "Instance::DestroySampler() must be called from main thread only!" );
+		return;
+	}
+
+	auto result = vkDeviceWaitIdle(
+		vk_device
+	);
+	if( result != VK_SUCCESS ) {
+		Report( result, "Cannot destroy sampler, error waiting device!" );
 	}
 
 	auto it = samplers.begin();
@@ -556,7 +712,7 @@ void vk2d::_internal::InstanceImpl::DestroySampler(
 	}
 }
 
-vk2d::Multisamples vk2d::_internal::InstanceImpl::GetMaximumSupportedMultisampling()
+vk2d::Multisamples vk2d::_internal::InstanceImpl::GetMaximumSupportedMultisampling() const
 {
 	vk2d::Multisamples max_samples	= vk2d::Multisamples( vk_physical_device_properties.limits.framebufferColorSampleCounts );
 	if( uint32_t( max_samples )			& uint32_t( vk2d::Multisamples::SAMPLE_COUNT_64 ) )	return vk2d::Multisamples::SAMPLE_COUNT_64;
@@ -569,7 +725,7 @@ vk2d::Multisamples vk2d::_internal::InstanceImpl::GetMaximumSupportedMultisampli
 	return vk2d::Multisamples::SAMPLE_COUNT_1;
 }
 
-vk2d::Multisamples vk2d::_internal::InstanceImpl::GetAllSupportedMultisampling()
+vk2d::Multisamples vk2d::_internal::InstanceImpl::GetAllSupportedMultisampling() const
 {
 	return vk2d::Multisamples( vk_physical_device_properties.limits.framebufferColorSampleCounts );
 }
@@ -588,12 +744,107 @@ vk2d::PFN_VK2D_ReportFunction vk2d::_internal::InstanceImpl::GetReportFunction()
 }
 
 void vk2d::_internal::InstanceImpl::Report(
+	VkResult					vk_result,
 	vk2d::ReportSeverity		severity,
 	const std::string		&	message
 )
 {
 	if( report_function ) {
 		std::lock_guard<std::mutex> report_lock( report_mutex );
+
+		if( vk_result == VK_ERROR_DEVICE_LOST ) severity = vk2d::ReportSeverity::DEVICE_LOST;
+
+		report_function(
+			severity,
+			message
+		);
+	}
+}
+
+void vk2d::_internal::InstanceImpl::Report(
+	VkResult					vk_result,
+	const std::string		&	message )
+{
+	if( report_function ) {
+		std::lock_guard<std::mutex> report_lock( report_mutex );
+
+		auto severity = vk2d::ReportSeverity::NONE;
+
+		switch( vk_result ) {
+			case VK_SUCCESS:
+			case VK_THREAD_IDLE_KHR:
+			case VK_THREAD_DONE_KHR:
+			case VK_OPERATION_DEFERRED_KHR:
+			case VK_OPERATION_NOT_DEFERRED_KHR:
+				severity = vk2d::ReportSeverity::VERBOSE;
+				break;
+
+			case VK_PIPELINE_COMPILE_REQUIRED_EXT:
+				severity = vk2d::ReportSeverity::INFO;
+				break;
+
+			case VK_NOT_READY:
+			case VK_TIMEOUT:
+			case VK_EVENT_SET:
+			case VK_EVENT_RESET:
+			case VK_INCOMPLETE:
+			case VK_SUBOPTIMAL_KHR:
+				severity = vk2d::ReportSeverity::WARNING;
+				break;
+
+			case VK_ERROR_OUT_OF_HOST_MEMORY:
+			case VK_ERROR_OUT_OF_DEVICE_MEMORY:
+			case VK_ERROR_MEMORY_MAP_FAILED:
+			case VK_ERROR_TOO_MANY_OBJECTS:
+			case VK_ERROR_FORMAT_NOT_SUPPORTED:
+			case VK_ERROR_FRAGMENTED_POOL:
+			case VK_ERROR_OUT_OF_POOL_MEMORY:
+			case VK_ERROR_FRAGMENTATION:
+			case VK_ERROR_OUT_OF_DATE_KHR:
+				severity = vk2d::ReportSeverity::NON_CRITICAL_ERROR;
+				break;
+
+			case VK_ERROR_INITIALIZATION_FAILED:
+			case VK_ERROR_LAYER_NOT_PRESENT:
+			case VK_ERROR_EXTENSION_NOT_PRESENT:
+			case VK_ERROR_FEATURE_NOT_PRESENT:
+			case VK_ERROR_INCOMPATIBLE_DRIVER:
+			case VK_ERROR_UNKNOWN:
+			case VK_ERROR_INVALID_EXTERNAL_HANDLE:
+			case VK_ERROR_INVALID_OPAQUE_CAPTURE_ADDRESS:
+			case VK_ERROR_SURFACE_LOST_KHR:
+			case VK_ERROR_NATIVE_WINDOW_IN_USE_KHR:
+			case VK_ERROR_INCOMPATIBLE_DISPLAY_KHR:
+			case VK_ERROR_VALIDATION_FAILED_EXT:
+			case VK_ERROR_INVALID_SHADER_NV:
+			case VK_ERROR_INCOMPATIBLE_VERSION_KHR:
+			case VK_ERROR_INVALID_DRM_FORMAT_MODIFIER_PLANE_LAYOUT_EXT:
+			case VK_ERROR_NOT_PERMITTED_EXT:
+			case VK_ERROR_FULL_SCREEN_EXCLUSIVE_MODE_LOST_EXT:
+				severity = vk2d::ReportSeverity::CRITICAL_ERROR;
+				break;
+
+			case VK_ERROR_DEVICE_LOST:
+				severity = vk2d::ReportSeverity::DEVICE_LOST;
+				break;
+
+			default:
+				severity = vk2d::ReportSeverity::CRITICAL_ERROR;
+				break;
+		}
+
+		report_function(
+			severity,
+			message
+		);
+	}
+}
+
+void vk2d::_internal::InstanceImpl::Report( vk2d::ReportSeverity severity, const std::string & message )
+{
+	if( report_function ) {
+		std::lock_guard<std::mutex> report_lock( report_mutex );
+
 		report_function(
 			severity,
 			message
@@ -672,7 +923,8 @@ const VkPhysicalDeviceFeatures & vk2d::_internal::InstanceImpl::GetVulkanPhysica
 }
 
 vk2d::_internal::ShaderProgram vk2d::_internal::InstanceImpl::GetShaderModules(
-	vk2d::_internal::ShaderProgramID			id ) const
+	vk2d::_internal::ShaderProgramID			id
+) const
 {
 	auto collection = shader_programs.find( id );
 	if( collection != shader_programs.end() ) {
@@ -685,7 +937,7 @@ vk2d::_internal::ShaderProgram vk2d::_internal::InstanceImpl::GetCompatibleShade
 	bool				multitextured,
 	bool				custom_uv_border_color,
 	uint32_t			vertices_per_primitive
-)
+) const
 {
 	if( multitextured ) {
 		if( custom_uv_border_color ) {
@@ -724,6 +976,16 @@ VkPipeline vk2d::_internal::InstanceImpl::GetVulkanPipeline(
 	const vk2d::_internal::PipelineSettings		&	settings
 )
 {
+	// FIXME: multiple thread access conflict.
+	// Need mutex here as this function can be called from multiple threads.
+	// Alternatively we could create vulkan pipelines per window and render
+	// target texture, but that would probably be wasteful. Regardless this
+	// function will be called very often so we'll need a way of caching
+	// these pipelines within the windows and render target textures.
+	// Since the pipelines won't change throughout the execution a simple
+	// std::map per window and render target with a pipeline pointer
+	// would probably work well, if the pipeline is not found in the local
+	// cache, use this function to get it / create it.
 	auto p_it = vk_pipelines.find( settings );
 	if( p_it != vk_pipelines.end() ) {
 		return p_it->second;
@@ -919,21 +1181,22 @@ VkPipeline vk2d::_internal::InstanceImpl::CreateVulkanPipeline(
 	pipeline_create_info.pColorBlendState		= &color_blend_state_create_info;
 	pipeline_create_info.pDynamicState			= &dynamic_state_create_info;
 	pipeline_create_info.layout					= GetVulkanPipelineLayout();
-	pipeline_create_info.renderPass				= settings.render_pass;
+	pipeline_create_info.renderPass				= settings.vk_render_pass;
 	pipeline_create_info.subpass				= 0;
 	pipeline_create_info.basePipelineHandle		= VK_NULL_HANDLE;
 	pipeline_create_info.basePipelineIndex		= 0;
 
 	VkPipeline pipeline {};
-	if( vkCreateGraphicsPipelines(
+	auto result = vkCreateGraphicsPipelines(
 		vk_device,
 		GetVulkanPipelineCache(),
 		1,
 		&pipeline_create_info,
 		nullptr,
 		&pipeline
-	) != VK_SUCCESS ) {
-		Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot create Vulkan graphics pipeline!" );
+	);
+	if( result != VK_SUCCESS ) {
+		Report( result, "Internal error: Cannot create Vulkan graphics pipeline!" );
 		return {};
 	}
 
@@ -966,7 +1229,7 @@ const vk2d::_internal::DescriptorSetLayout & vk2d::_internal::InstanceImpl::GetS
 	return *storage_buffer_descriptor_set_layout;
 }
 
-vk2d::TextureResource * vk2d::_internal::InstanceImpl::GetDefaultTexture() const
+vk2d::Texture * vk2d::_internal::InstanceImpl::GetDefaultTexture() const
 {
 	return default_texture;
 }
@@ -979,6 +1242,16 @@ vk2d::Sampler * vk2d::_internal::InstanceImpl::GetDefaultSampler() const
 vk2d::_internal::DeviceMemoryPool * vk2d::_internal::InstanceImpl::GetDeviceMemoryPool() const
 {
 	return device_memory_pool.get();
+}
+
+std::thread::id vk2d::_internal::InstanceImpl::GetCreatorThreadID() const
+{
+	return creator_thread_id;
+}
+
+bool vk2d::_internal::InstanceImpl::IsThisThreadCreatorThread() const
+{
+	return creator_thread_id == std::this_thread::get_id();
 }
 
 bool vk2d::_internal::InstanceImpl::IsGood() const
@@ -1050,16 +1323,23 @@ VkBool32 VKAPI_PTR DebugMessenger(
 	}
 
 	std::stringstream ss_title;
-	ss_title << "Vulkan Validation: " << str_type << " " << str_severity;
+	ss_title << "Vulkan Validation: " << str_severity << " | " << str_type;
 
 	std::stringstream ss_message;
-	ss_message << ss_title.str() << ":\n - " << pCallbackData->pMessage << "\n";
+	ss_message << "\n" << ss_title.str() << ":\n\n - " << pCallbackData->pMessage << "\n\n";
 	// TODO: labels, object, message id name / number;
 
 	auto instance = reinterpret_cast<vk2d::_internal::InstanceImpl*>( pUserData );
 	assert( instance );
 
-	instance->Report( vk2d_severity, ss_message.str() );
+	instance->GetReportFunction()( vk2d_severity, ss_message.str() );
+
+	//std::cout << ss_message.str();
+	//#if _WIN32
+	//if( messageSeverity >= VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT ) {
+	//	MessageBox( NULL, ss_message.str().c_str(), ss_title.str().c_str(), MB_OK | MB_ICONERROR );
+	//}
+	//#endif
 
 	return VK_FALSE;
 }
@@ -1082,7 +1362,8 @@ bool vk2d::_internal::InstanceImpl::CreateInstance()
 {
 
 #if VK2D_BUILD_OPTION_VULKAN_VALIDATION && VK2D_DEBUG_ENABLE
-	instance_layers.push_back( "VK_LAYER_LUNARG_standard_validation" );
+	instance_layers.push_back( "VK_LAYER_KHRONOS_validation" );
+	// instance_layers.push_back( "VK_LAYER_LUNARG_device_simulation" );
 	instance_extensions.push_back( VK_EXT_DEBUG_UTILS_EXTENSION_NAME );
 
 	VkDebugUtilsMessageSeverityFlagsEXT severity_flags {};
@@ -1133,6 +1414,8 @@ bool vk2d::_internal::InstanceImpl::CreateInstance()
 #endif
 
 	{
+		assert( VK_HEADER_VERSION_COMPLETE >= VK2D_BUILD_OPTION_VULKAN_MINIMUM_REQUIRED_VERSION );
+
 		VkApplicationInfo application_info {};
 		application_info.sType				= VK_STRUCTURE_TYPE_APPLICATION_INFO;
 		application_info.pNext				= nullptr;
@@ -1140,7 +1423,7 @@ bool vk2d::_internal::InstanceImpl::CreateInstance()
 		application_info.applicationVersion	= create_info_copy.application_version.ToVulkanVersion();
 		application_info.pEngineName		= create_info_copy.engine_name.c_str();
 		application_info.engineVersion		= create_info_copy.engine_version.ToVulkanVersion();
-		application_info.apiVersion			= VK_API_VERSION_1_0;
+		application_info.apiVersion			= VK2D_BUILD_OPTION_VULKAN_MINIMUM_REQUIRED_VERSION;
 
 		VkInstanceCreateInfo instance_create_info {};
 		instance_create_info.sType						= VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
@@ -1156,13 +1439,13 @@ bool vk2d::_internal::InstanceImpl::CreateInstance()
 		instance_create_info.enabledExtensionCount		= uint32_t( instance_extensions.size() );
 		instance_create_info.ppEnabledExtensionNames	= instance_extensions.data();
 
-		VkResult result = vkCreateInstance(
+		auto result = vkCreateInstance(
 			&instance_create_info,
 			nullptr,
 			&vk_instance
 		);
 		if( result != VK_SUCCESS ) {
-			Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot create vulkan instance!" );
+			Report( result, "Internal error: Cannot create vulkan instance!" );
 			return false;
 		}
 	}
@@ -1171,7 +1454,7 @@ bool vk2d::_internal::InstanceImpl::CreateInstance()
 	{
 		auto createDebugUtilsMessenger = (PFN_vkCreateDebugUtilsMessengerEXT)vkGetInstanceProcAddr( vk_instance, "vkCreateDebugUtilsMessengerEXT" );
 		if( !createDebugUtilsMessenger ) {
-			Report( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot create vulkan debug object!" );
+			Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot create vulkan debug object!" );
 			return false;
 		}
 		auto result = createDebugUtilsMessenger(
@@ -1181,7 +1464,7 @@ bool vk2d::_internal::InstanceImpl::CreateInstance()
 			&vk_debug_utils_messenger
 		);
 		if( result != VK_SUCCESS ) {
-			Report( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot create vulkan debug object!" );
+			Report( result, "Internal error: Cannot create vulkan debug object!" );
 			return false;
 		}
 	}
@@ -1201,6 +1484,7 @@ bool vk2d::_internal::InstanceImpl::CreateInstance()
 bool vk2d::_internal::InstanceImpl::PickPhysicalDevice()
 {
 	vk_physical_device	= PickBestVulkanPhysicalDevice();
+
 	if( !vk_physical_device ) {
 		Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Cannot find physical device!" );
 	}
@@ -1254,9 +1538,15 @@ bool vk2d::_internal::InstanceImpl::CreateDeviceAndQueues()
 	features.geometryShader						= VK_TRUE;
 //	features.fragmentStoresAndAtomics			= VK_TRUE;
 
+	VkPhysicalDeviceVulkan12Features features_1_2 {};
+	features_1_2.sType							= VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_FEATURES;
+	features_1_2.pNext							= nullptr;
+	features_1_2.samplerMirrorClampToEdge		= VK_TRUE;
+	features_1_2.timelineSemaphore				= VK_TRUE;
+
 	VkDeviceCreateInfo device_create_info {};
 	device_create_info.sType					= VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
-	device_create_info.pNext					= nullptr;
+	device_create_info.pNext					= &features_1_2;
 	device_create_info.flags					= 0;
 	device_create_info.queueCreateInfoCount		= uint32_t( queue_create_infos.size() );
 	device_create_info.pQueueCreateInfos		= queue_create_infos.data();
@@ -1273,7 +1563,7 @@ bool vk2d::_internal::InstanceImpl::CreateDeviceAndQueues()
 		&vk_device
 	);
 	if( result != VK_SUCCESS ) {
-		Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot create Vulkan device!" );
+		Report( result, "Internal error: Cannot create Vulkan device!" );
 		return false;
 	}
 
@@ -1352,13 +1642,14 @@ bool vk2d::_internal::InstanceImpl::CreatePipelineCache()
 	pipeline_cache_create_info.initialDataSize		= 0;
 	pipeline_cache_create_info.pInitialData			= nullptr;
 
-	if( vkCreatePipelineCache(
+	auto result = vkCreatePipelineCache(
 		vk_device,
 		&pipeline_cache_create_info,
 		nullptr,
 		&vk_pipeline_cache
-	) != VK_SUCCESS ) {
-		Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot create Vulkan pipeline cache!" );
+	);
+	if( result != VK_SUCCESS ) {
+		Report( result, "Internal error: Cannot create Vulkan pipeline cache!" );
 		return false;
 	}
 
@@ -1388,13 +1679,14 @@ bool vk2d::_internal::InstanceImpl::CreateShaderModules()
 		shader_create_info.pCode		= code;
 
 		VkShaderModule shader_module {};
-		if( vkCreateShaderModule(
+		auto result = vkCreateShaderModule(
 			vk_device,
 			&shader_create_info,
 			nullptr,
 			&shader_module
-		) != VK_SUCCESS ) {
-			Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot create Vulkan shader module!" );
+		);
+		if( result != VK_SUCCESS ) {
+			Report( result, "Internal error: Cannot create Vulkan shader module!" );
 			return {};
 		}
 		return shader_module;
@@ -1596,7 +1888,7 @@ bool vk2d::_internal::InstanceImpl::CreatePipelineLayout()
 	// This must match shader layout.
 
 	std::vector<VkDescriptorSetLayout> set_layouts {
-		uniform_buffer_descriptor_set_layout->GetVulkanDescriptorSetLayout(),	// Pipeline set 0 is WindowFrameData.
+		uniform_buffer_descriptor_set_layout->GetVulkanDescriptorSetLayout(),	// Pipeline set 0 is FrameData.
 		storage_buffer_descriptor_set_layout->GetVulkanDescriptorSetLayout(),	// Pipeline set 1 is vertex index buffer as storage buffer.
 		storage_buffer_descriptor_set_layout->GetVulkanDescriptorSetLayout(),	// Pipeline set 2 is vertex buffer as storage buffer.
 		sampler_texture_descriptor_set_layout->GetVulkanDescriptorSetLayout(),	// Pipeline set 3 is combined sampler texture and it's data uniform.
@@ -1617,13 +1909,14 @@ bool vk2d::_internal::InstanceImpl::CreatePipelineLayout()
 	pipeline_layout_create_info.pushConstantRangeCount	= uint32_t( push_constant_ranges.size() );
 	pipeline_layout_create_info.pPushConstantRanges		= push_constant_ranges.data();
 
-	if( vkCreatePipelineLayout(
+	auto result = vkCreatePipelineLayout(
 		vk_device,
 		&pipeline_layout_create_info,
 		nullptr,
 		&vk_pipeline_layout
-	) != VK_SUCCESS ) {
-		Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot create Vulkan pipeline layout!" );
+	);
+	if( result != VK_SUCCESS ) {
+		Report( result, "Internal error: Cannot create Vulkan pipeline layout!" );
 		return false;
 	}
 
@@ -1841,15 +2134,31 @@ void vk2d::_internal::InstanceImpl::DestroyDefaultTexture()
 
 std::vector<VkPhysicalDevice> vk2d::_internal::InstanceImpl::EnumeratePhysicalDevices()
 {
+	auto result = VK_SUCCESS;
+
 	uint32_t physical_device_count		= UINT32_MAX;
-	if( vkEnumeratePhysicalDevices( vk_instance, &physical_device_count, nullptr ) == VK_SUCCESS ) {
-		std::vector<VkPhysicalDevice> physical_devices( physical_device_count );
-		if( vkEnumeratePhysicalDevices( vk_instance, &physical_device_count, physical_devices.data() ) == VK_SUCCESS ) {
-			return physical_devices;
-		}
+	result = vkEnumeratePhysicalDevices(
+		vk_instance,
+		&physical_device_count,
+		nullptr
+	);
+	if( result != VK_SUCCESS ) {
+		Report( result, "Internal error: Cannot enumerate physical devices!" );
+		return {};
 	}
-	Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot enumerate physical devices!" );
-	return {};
+
+	std::vector<VkPhysicalDevice> physical_devices( physical_device_count );
+	result = vkEnumeratePhysicalDevices(
+		vk_instance,
+		&physical_device_count,
+		physical_devices.data()
+	);
+	if( result != VK_SUCCESS ) {
+		Report( result, "Internal error: Cannot enumerate physical devices!" );
+		return {};
+	}
+
+	return physical_devices;
 }
 
 

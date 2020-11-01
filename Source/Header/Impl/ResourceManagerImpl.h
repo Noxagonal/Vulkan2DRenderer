@@ -6,10 +6,6 @@
 
 #include "../Core/ThreadPool.h"
 
-#include <list>
-#include <filesystem>
-#include <mutex>
-
 namespace vk2d {
 
 class Resource;
@@ -93,7 +89,7 @@ private:
 		return resource_ptr;
 	}
 
-	vk2d::_internal::InstanceImpl						*	instance_parent						= {};
+	vk2d::_internal::InstanceImpl						*	instance						= {};
 	VkDevice												vk_device							= {};
 
 	vk2d::_internal::ThreadPool							*	thread_pool							= {};

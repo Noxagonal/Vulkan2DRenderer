@@ -94,6 +94,14 @@ struct Vector2Base {
 		y /= other;
 		return *this;
 	}
+	bool operator==( vk2d::Vector2Base<T> other )
+	{
+		return x == other.x && y == other.y;
+	}
+	bool operator!=( vk2d::Vector2Base<T> other )
+	{
+		return x != other.x || y != other.y;
+	}
 };
 
 using Vector2f			= vk2d::Vector2Base<float>;
@@ -173,6 +181,14 @@ struct Matrix2Base {
 		*this	= *this * other;
 		return *this;
 	}
+	bool operator==( vk2d::Matrix2Base<T> other )
+	{
+		return row_1 == other.row_1 && row_2 == other.row_2;
+	}
+	bool operator!=( vk2d::Matrix2Base<T> other )
+	{
+		return row_1 != other.row_1 || row_2 != other.row_2;
+	}
 };
 
 using Matrix2f			= vk2d::Matrix2Base<float>;
@@ -247,6 +263,14 @@ struct AABB2Base {
 		top_left -= other;
 		bottom_right -= other;
 		return *this;
+	}
+	bool operator==( vk2d::AABB2Base<T> other )
+	{
+		return top_left == other.top_left && bottom_right == other.bottom_right;
+	}
+	bool operator!=( vk2d::AABB2Base<T> other )
+	{
+		return top_left != other.top_left || bottom_right != other.bottom_right;
 	}
 };
 

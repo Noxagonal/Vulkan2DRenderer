@@ -2,12 +2,6 @@
 
 #include "SourceCommon.h"
 
-#include <cstring>
-#include <list>
-#include <memory>
-#include <utility>
-#include <vector>
-
 namespace vk2d {
 
 namespace _internal {

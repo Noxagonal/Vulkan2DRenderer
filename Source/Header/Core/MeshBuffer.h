@@ -8,11 +8,6 @@
 #include "../Core/VulkanMemoryManagement.h"
 #include "DescriptorSet.h"
 
-#include <cstring>
-#include <vector>
-#include <stdint.h>
-#include <memory>
-
 
 
 namespace vk2d {
@@ -76,7 +71,6 @@ public:
 		vk2d::_internal::InstanceImpl					*	instance,
 		VkDevice											device,
 		const VkPhysicalDeviceLimits					&	physicald_device_limits,
-		vk2d::_internal::WindowImpl						*	window_data,
 		vk2d::_internal::DeviceMemoryPool				*	device_memory_pool );
 
 	~MeshBuffer();
@@ -158,10 +152,9 @@ private:
 	void													FreeBufferBlockFromStorage(
 		vk2d::_internal::MeshBufferBlock<float>			*	buffer_block );
 
-	vk2d::_internal::InstanceImpl						*	instance_parent							= {};
+	vk2d::_internal::InstanceImpl						*	instance							= {};
 	VkDevice												device									= {};
 	VkPhysicalDeviceLimits									physicald_device_limits					= {};
-	vk2d::_internal::WindowImpl							*	window_data								= {};
 	vk2d::_internal::DeviceMemoryPool					*	device_memory_pool						= {};
 
 	bool													first_draw								= {};
@@ -206,7 +199,7 @@ public:
 		assert( buffer_usage_flags );
 
 		mesh_buffer_parent			= mesh_buffer;
-		auto instance				= mesh_buffer_parent->instance_parent;
+		auto instance				= mesh_buffer_parent->instance;
 		auto memory_pool			= instance->GetDeviceMemoryPool();
 
 		total_byte_size				= vk2d::_internal::CalculateAlignmentForBuffer(
@@ -260,14 +253,13 @@ public:
 
 		// Create descriptor set
 		{
-			auto descriptor_pool	= instance->GetDescriptorPool();
-
 			switch( descriptor_set_type ) {
 			case vk2d::_internal::MeshBufferDescriptorSetType::NONE:
 				break;
 			case vk2d::_internal::MeshBufferDescriptorSetType::UNIFORM:
 			{
-				descriptor_set			= descriptor_pool->AllocateDescriptorSet( instance->GetUniformBufferDescriptorSetLayout() );
+				// TODO: MeshBufferBlock::descriptor_set allocation and freeing needs to be thread specific instead of allocating from the instance.
+				descriptor_set			= instance->AllocateDescriptorSet( instance->GetUniformBufferDescriptorSetLayout() );
 
 				VkDescriptorBufferInfo descriptor_write_buffer_info {};
 				descriptor_write_buffer_info.buffer		= device_buffer.buffer;
@@ -293,7 +285,8 @@ public:
 				break;
 			case vk2d::_internal::MeshBufferDescriptorSetType::STORAGE:
 			{
-				descriptor_set			= descriptor_pool->AllocateDescriptorSet( instance->GetStorageBufferDescriptorSetLayout() );
+				// TODO: MeshBufferBlock::descriptor_set allocation and freeing needs to be thread specific instead of allocating from the instance.
+				descriptor_set			= instance->AllocateDescriptorSet( instance->GetStorageBufferDescriptorSetLayout() );
 
 				VkDescriptorBufferInfo descriptor_write_buffer_info {};
 				descriptor_write_buffer_info.buffer		= device_buffer.buffer;
@@ -327,10 +320,10 @@ public:
 
 	~MeshBufferBlock()
 	{
-		auto descriptor_pool	= mesh_buffer_parent->instance_parent->GetDescriptorPool();
-		auto memory_pool		= mesh_buffer_parent->instance_parent->GetDeviceMemoryPool();
+		auto memory_pool		= mesh_buffer_parent->instance->GetDeviceMemoryPool();
 
-		descriptor_pool->FreeDescriptorSet( descriptor_set );
+		// TODO: MeshBufferBlock::descriptor_set allocation and freeing needs to be thread specific instead of allocating from the instance.
+		mesh_buffer_parent->instance->FreeDescriptorSet( descriptor_set );
 		memory_pool->FreeCompleteResource( device_buffer );
 		memory_pool->FreeCompleteResource( staging_buffer );
 	}
@@ -339,7 +332,7 @@ public:
 	{
 		auto mapped_memory	= staging_buffer.memory.Map<T>();
 		if( !mapped_memory ) {
-			mesh_buffer_parent->instance_parent->Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot copy mesh buffer block to  map staging buffer memory" );
+			mesh_buffer_parent->instance->Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot copy mesh buffer block to  map staging buffer memory" );
 			return false;
 		} else {
 			std::memcpy( mapped_memory, host_data.data(), used_byte_size );

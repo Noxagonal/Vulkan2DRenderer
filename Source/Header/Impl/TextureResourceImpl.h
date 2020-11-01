@@ -6,6 +6,7 @@
 #include "../../Header/Core/DescriptorSet.h"
 #include "../../Header/Core/ThreadPrivateResources.h"
 #include "../../../Include/Interface/RenderPrimitives.h"
+#include "TextureImpl.h"
 
 
 namespace vk2d {
@@ -16,7 +17,8 @@ class ResourceManagerImpl;
 class DestroyTextureLoadResources;
 
 
-class TextureResourceImpl
+class TextureResourceImpl :
+	public vk2d::_internal::TextureImpl
 {
 	friend class vk2d::TextureResource;
 	friend class vk2d::_internal::ResourceManagerImpl;
@@ -54,6 +56,8 @@ public:
 	VkImage													GetVulkanImage() const;
 	VkImageView												GetVulkanImageView() const;
 	VkImageLayout											GetVulkanImageLayout() const;
+
+	vk2d::Vector2u											GetSize() const;
 	uint32_t												GetLayerCount() const;
 
 	bool													IsGood() const;

@@ -4,8 +4,7 @@
 
 #include "../Core/ThreadPrivateResources.h"
 #include "../../../Include/Interface/RenderPrimitives.h"
-
-#include <map>
+#include "../../Include/Interface/TextureResource.h"
 
 #include <ft2build.h>
 #include FT_FREETYPE_H

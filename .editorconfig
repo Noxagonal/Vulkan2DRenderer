@@ -1,0 +1,14 @@
+root = true
+
+[*]
+trim_trailing_whitespace = true
+insert_final_newline = true
+
+# Matches multiple files with brace expansion notation
+[*.{h,hpp,c,cpp}]
+indent_style = tab
+indent_size = 4
+
+[CMakeLists.txt]
+indent_style = tab
+indent_size = 4

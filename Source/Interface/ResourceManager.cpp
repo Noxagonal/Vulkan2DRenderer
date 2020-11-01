@@ -6,8 +6,6 @@
 #include "../../Include/Interface/ResourceManager.h"
 #include "../Header/Impl/ResourceManagerImpl.h"
 
-#include <memory>
-
 
 
 VK2D_API vk2d::ResourceManager::ResourceManager(

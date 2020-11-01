@@ -3,7 +3,6 @@
 #include "../Core/SourceCommon.h"
 
 #include "../../../Include/Interface/Instance.h"
-
 #include "../../Header/Core/MeshBuffer.h"
 #include "../Core/QueueResolver.h"
 #include "../Core/VulkanMemoryManagement.h"
@@ -11,6 +10,7 @@
 #include "../Impl/InstanceImpl.h"
 #include "../Core/ShaderInterface.h"
 #include "../../../Include/Core/SynchronizedObject.hpp"
+#include "RenderTargetCommonImpl.hpp"
 
 #define GLFW_INCLUDE_NONE
 #include <GLFW/glfw3.h>
@@ -172,23 +172,23 @@ public:
 		const std::vector<vk2d::VertexIndex_3>				&	indices,
 		const std::vector<vk2d::Vertex>						&	vertices,
 		const std::vector<float>							&	texture_channel_weights,
-		bool													filled						= true,
-		vk2d::TextureResource								*	texture						= nullptr,
+		bool													solid						= true,
+		vk2d::Texture										*	texture						= nullptr,
 		vk2d::Sampler										*	sampler						= nullptr );
 
 	void														DrawTriangleList(
 		const std::vector<uint32_t>							&	raw_indices,
 		const std::vector<vk2d::Vertex>						&	vertices,
 		const std::vector<float>							&	texture_channel_weights,
-		bool													filled						= true,
-		vk2d::TextureResource								*	texture						= nullptr,
+		bool													solid						= true,
+		vk2d::Texture										*	texture						= nullptr,
 		vk2d::Sampler										*	sampler						= nullptr );
 
 	void														DrawLineList(
 		const std::vector<vk2d::VertexIndex_2>				&	indices,
 		const std::vector<vk2d::Vertex>						&	vertices,
 		const std::vector<float>							&	texture_channel_weights,
-		vk2d::TextureResource								*	texture						= nullptr,
+		vk2d::Texture										*	texture						= nullptr,
 		vk2d::Sampler										*	sampler						= nullptr,
 		float													line_width					= 1.0f );
 
@@ -196,61 +196,15 @@ public:
 		const std::vector<uint32_t>							&	raw_indices,
 		const std::vector<vk2d::Vertex>						&	vertices,
 		const std::vector<float>							&	texture_channel_weights,
-		vk2d::TextureResource								*	texture						= nullptr,
+		vk2d::Texture										*	texture						= nullptr,
 		vk2d::Sampler										*	sampler						= nullptr,
 		float													line_width					= 1.0f );
 
 	void														DrawPointList(
 		const std::vector<vk2d::Vertex>						&	vertices,
 		const std::vector<float>							&	texture_channel_weights,
-		vk2d::TextureResource								*	texture						= nullptr,
+		vk2d::Texture										*	texture						= nullptr,
 		vk2d::Sampler										*	sampler						= nullptr );
-
-	void														DrawPoint(
-		vk2d::Vector2f											location,
-		vk2d::Colorf											color						= { 1.0f, 1.0f, 1.0f, 1.0f },
-		float													size						= 1.0f );
-
-	void														DrawLine(
-		vk2d::Vector2f											point_1,
-		vk2d::Vector2f											point_2,
-		vk2d::Colorf											color						= { 1.0f, 1.0f, 1.0f, 1.0f } );
-
-	void														DrawBox(
-		vk2d::Vector2f											top_left,
-		vk2d::Vector2f											bottom_right,
-		bool													filled						= true,
-		vk2d::Colorf											color						= { 1.0f, 1.0f, 1.0f, 1.0f } );
-
-	void														DrawCircle(
-		vk2d::Vector2f											top_left,
-		vk2d::Vector2f											bottom_right,
-		bool													filled						= true,
-		float													edge_count					= 64.0f,
-		vk2d::Colorf											color						= { 1.0f, 1.0f, 1.0f, 1.0f } );
-
-	void														DrawPie(
-		vk2d::Vector2f											top_left,
-		vk2d::Vector2f											bottom_right,
-		float													begin_angle_radians,
-		float													coverage,
-		bool													filled						= true,
-		float													edge_count					= 64.0f,
-		vk2d::Colorf											color						= { 1.0f, 1.0f, 1.0f, 1.0f } );
-
-	void														DrawPieBox(
-		vk2d::Vector2f											top_left,
-		vk2d::Vector2f											bottom_right,
-		float													begin_angle_radians,
-		float													coverage,
-		bool													filled						= true,
-		vk2d::Colorf											color						= { 1.0f, 1.0f, 1.0f, 1.0f } );
-
-	void														DrawTexture(
-		vk2d::Vector2f											top_left,
-		vk2d::Vector2f											bottom_right,
-		vk2d::TextureResource								*	texture,
-		vk2d::Colorf											color						= { 1.0f, 1.0f, 1.0f, 1.0f } );
 
 	void														DrawMesh(
 		const vk2d::Mesh									&	mesh );
@@ -276,6 +230,25 @@ private:
 	bool														CreateFrameSynchronizationPrimitives();
 	bool														CreateWindowFrameDataBuffer();
 
+	// Should be called once render is definitely going to happen. When this is called,
+	// SynchronizeFrame() will start blocking until the the contents of the
+	// RenderTargerTexture have been fully rendered. BeginRender() can be called however,
+	// it will swap the buffers so 2 renders can be queued, however third call to
+	// BeginRender() will be blocked until the first BeginRender() call has been rendered.
+	bool														CommitRenderTargetTextureRender(
+		vk2d::_internal::RenderTargetTextureRenderCollector	&	collector );
+
+	void														ConfirmRenderTargetTextureRenderSubmission();
+	void														ConfirmRenderTargetTextureRenderFinished(
+		uint32_t												for_frame_image_index );
+
+	// In case something goes wrong, allows cancelling render commitment.
+	void														AbortRenderTargetTextureRender();
+
+//	void														ClearRenderTargetTextureDepencies();
+	void														CheckAndAddRenderTargetTextureDependency(
+		vk2d::Texture										*	texture );
+
 	void														HandleScreenshotEvent();
 
 	void														CmdBindPipelineIfDifferent(
@@ -285,15 +258,7 @@ private:
 	void														CmdBindTextureSamplerIfDifferent(
 		VkCommandBuffer											command_buffer,
 		vk2d::Sampler										*	sampler,
-		vk2d::TextureResource								*	texture );
-
-	struct SamplerTextureDescriptorPoolData {
-		vk2d::_internal::PoolDescriptorSet						descriptor_set								= {};
-		std::chrono::time_point<std::chrono::steady_clock>		previous_access_time						= {};	// For cleanup
-	};
-
-	std::map<vk2d::Sampler*, std::map<vk2d::TextureResource*, vk2d::_internal::WindowImpl::SamplerTextureDescriptorPoolData>>
-		sampler_texture_descriptor_sets							= {};
+		vk2d::Texture										*	texture );
 
 	void														CmdSetLineWidthIfDifferent(
 		VkCommandBuffer											command_buffer,
@@ -303,7 +268,7 @@ private:
 		VkCommandBuffer											command_buffer );
 
 	vk2d::Window											*	window_parent								= {};
-	vk2d::_internal::InstanceImpl							*	instance_parent								= {};
+	vk2d::_internal::InstanceImpl							*	instance									= {};
 	vk2d::WindowCreateInfo										create_info_copy							= {};
 
 	vk2d::WindowEventHandler								*	event_handler								= {};
@@ -338,8 +303,8 @@ private:
 
 	VkCommandPool												vk_command_pool								= {};
 	std::vector<VkCommandBuffer>								vk_render_command_buffers					= {};	// For more overlapped execution multiple command buffers are needed.
-	VkCommandBuffer												vk_complementary_transfer_command_buffer	= {};	// For data transfer each frame, this is small command buffer and can be re-recorded just before submitting the work.
-	VkSemaphore													vk_mesh_transfer_semaphore					= {};
+	VkCommandBuffer												vk_transfer_command_buffer					= {};	// For data transfer each frame, this is small command buffer and can be re-recorded just before submitting the work.
+	VkSemaphore													vk_transfer_semaphore						= {};
 
 	VkExtent2D													min_extent									= {};
 	VkExtent2D													max_extent									= {};
@@ -366,11 +331,17 @@ private:
 	bool														should_close								= {};
 
 	vk2d::_internal::PipelineSettings							previous_pipeline_settings					= {};
-	vk2d::TextureResource									*	previous_texture							= {};
+	vk2d::Texture											*	previous_texture							= {};
 	vk2d::Sampler											*	previous_sampler							= {};
 	float														previous_line_width							= {};
 
+	std::map<vk2d::Sampler*, std::map<vk2d::Texture*, vk2d::_internal::SamplerTextureDescriptorPoolData>>
+		sampler_texture_descriptor_sets																		= {};
+
 	std::unique_ptr<vk2d::_internal::MeshBuffer>				mesh_buffer									= {};
+
+	std::vector<std::vector<vk2d::_internal::RenderTargetTextureDependencyInfo>>
+																render_target_texture_dependencies			= {};
 
 	enum class ScreenshotState : uint32_t {
 		IDLE					= 0,	// doing nothing
@@ -451,7 +422,7 @@ public:
 	vk2d::Vector2i								GetHotSpot();
 
 private:
-	vk2d::_internal::InstanceImpl			*	instance_parent					= {};
+	vk2d::_internal::InstanceImpl			*	instance					= {};
 	std::vector<vk2d::Color8>					pixel_data						= {};
 	GLFWcursor								*	cursor							= nullptr;
 	VkExtent2D									extent							= {};

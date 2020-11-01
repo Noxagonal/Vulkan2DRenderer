@@ -5,19 +5,20 @@
 #include "../Header/Impl/ResourceManagerImpl.h"
 #include "../Header/Core/ThreadPrivateResources.h"
 #include "../Header/Core/DescriptorSet.h"
+#include "../Header/Core/CommonTools.h"
 
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
-
-#include <assert.h>
-#include <thread>
 
 
 
 vk2d::_internal::TextureResourceImpl::TextureResourceImpl(
 	vk2d::TextureResource					*	texture_resource_parent,
 	vk2d::_internal::ResourceManagerImpl	*	resource_manager
-)
+) :
+	vk2d::_internal::TextureImpl(
+		resource_manager->GetInstance()
+	)
 {
 	this->texture_parent				= texture_resource_parent;
 	this->resource_manager		= resource_manager;
@@ -31,7 +32,11 @@ vk2d::_internal::TextureResourceImpl::TextureResourceImpl(
 	vk2d::TextureResource					*	texture_resource_parent,
 	vk2d::_internal::ResourceManagerImpl	*	resource_manager,
 	vk2d::Vector2u								size,
-	const std::vector<vk2d::Color8>			&	texels )
+	const std::vector<vk2d::Color8>			&	texels
+) :
+	vk2d::_internal::TextureImpl(
+		resource_manager->GetInstance()
+	)
 {
 	this->texture_parent				= texture_resource_parent;
 	this->resource_manager		= resource_manager;
@@ -49,7 +54,11 @@ vk2d::_internal::TextureResourceImpl::TextureResourceImpl(
 	vk2d::TextureResource							*	texture_resource_parent,
 	vk2d::_internal::ResourceManagerImpl			*	resource_manager,
 	vk2d::Vector2u										size,
-	const std::vector<std::vector<vk2d::Color8>*>	&	texels )
+	const std::vector<std::vector<vk2d::Color8>*>	&	texels
+) :
+	vk2d::_internal::TextureImpl(
+		resource_manager->GetInstance()
+	)
 {
 	this->texture_parent				= texture_resource_parent;
 	this->resource_manager		= resource_manager;
@@ -73,6 +82,8 @@ bool vk2d::_internal::TextureResourceImpl::MTLoad(
 	vk2d::_internal::ThreadPrivateResource	*	thread_resource
 )
 {
+	auto result = VK_SUCCESS;
+
 	// 1. Load and process image from file.
 	// 2. Create staging buffer, we'll also need memory pool for this.
 	// 3. Create image and image view Vulkan objects.
@@ -196,23 +207,10 @@ bool vk2d::_internal::TextureResourceImpl::MTLoad(
 	}
 
 	// 3. Create image and image view Vulkan objects.
-	std::vector<VkExtent2D> mipmap_levels;
+	auto mipmap_levels = vk2d::_internal::GenerateMipSizes(
+		vk2d::Vector2u( image_info.x, image_info.y )
+	);
 	{
-		// generate mipmap levels
-		mipmap_levels.reserve( 32 );
-		{
-			VkExtent2D last { image_info.x, image_info.y };
-			mipmap_levels.push_back( last );
-
-			while( last.width != 1 && last.height != 1 ) {
-				VkExtent2D current_dim_size	= { last.width / 2, last.height / 2 };
-				if( current_dim_size.width < 1 )	current_dim_size.width = 1;
-				if( current_dim_size.height < 1 )	current_dim_size.height = 1;
-				last	= current_dim_size;
-				mipmap_levels.push_back( current_dim_size );
-			}
-		}
-
 		VkImageCreateInfo image_create_info {};
 		image_create_info.sType						= VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
 		image_create_info.pNext						= nullptr;
@@ -255,7 +253,7 @@ bool vk2d::_internal::TextureResourceImpl::MTLoad(
 			&image_view_create_info
 		);
 		if( image != VK_SUCCESS ) {
-			instance->Report( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot create texture resource image!" );
+			instance->Report( image.result, "Internal error: Cannot create texture resource image!" );
 			return false;
 		}
 	}
@@ -270,12 +268,13 @@ bool vk2d::_internal::TextureResourceImpl::MTLoad(
 			command_buffer_allocate_info.commandPool			= loader_thread_resource->GetPrimaryRenderCommandPool();
 			command_buffer_allocate_info.level					= VK_COMMAND_BUFFER_LEVEL_PRIMARY;
 			command_buffer_allocate_info.commandBufferCount		= 1;
-			if( vkAllocateCommandBuffers(
+			result = vkAllocateCommandBuffers(
 				loader_thread_resource->GetVulkanDevice(),
 				&command_buffer_allocate_info,
 				&vk_primary_render_command_buffer
-			) != VK_SUCCESS ) {
-				instance->Report( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot allocate command buffers for texture data upload!" );
+			);
+			if( result != VK_SUCCESS ) {
+				instance->Report( result, "Internal error: Cannot allocate command buffers for texture data upload!" );
 				return false;
 			}
 
@@ -284,11 +283,12 @@ bool vk2d::_internal::TextureResourceImpl::MTLoad(
 			command_buffer_begin_info.pNext				= nullptr;
 			command_buffer_begin_info.flags				= VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
 			command_buffer_begin_info.pInheritanceInfo	= nullptr;
-			if( vkBeginCommandBuffer(
+			result = vkBeginCommandBuffer(
 				vk_primary_render_command_buffer,
 				&command_buffer_begin_info
-			) != VK_SUCCESS ) {
-				instance->Report( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot record command buffers for texture data upload!" );
+			);
+			if( result != VK_SUCCESS ) {
+				instance->Report( result, "Internal error: Cannot record command buffers for texture data upload!" );
 				return false;
 			}
 		} else {
@@ -303,11 +303,13 @@ bool vk2d::_internal::TextureResourceImpl::MTLoad(
 			command_buffer_allocate_info.commandPool			= loader_thread_resource->GetSecondaryRenderCommandPool();
 			command_buffer_allocate_info.level					= VK_COMMAND_BUFFER_LEVEL_PRIMARY;
 			command_buffer_allocate_info.commandBufferCount		= 1;
-			if( vkAllocateCommandBuffers(
+			result = vkAllocateCommandBuffers(
 				loader_thread_resource->GetVulkanDevice(),
 				&command_buffer_allocate_info,
 				&vk_secondary_render_command_buffer
-			) != VK_SUCCESS ) {
+			);
+			if( result != VK_SUCCESS ) {
+				instance->Report( result, "Internal error: Cannot allocate blit command buffer for texture mip map processing!" );
 				return false;
 			}
 
@@ -316,10 +318,12 @@ bool vk2d::_internal::TextureResourceImpl::MTLoad(
 			command_buffer_begin_info.pNext				= nullptr;
 			command_buffer_begin_info.flags				= VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
 			command_buffer_begin_info.pInheritanceInfo	= nullptr;
-			if( vkBeginCommandBuffer(
+			result = vkBeginCommandBuffer(
 				vk_secondary_render_command_buffer,
 				&command_buffer_begin_info
-			) != VK_SUCCESS ) {
+			);
+			if( result != VK_SUCCESS ) {
+				instance->Report( result, "Internal error: Cannot begin command buffer for texture data upload!" );
 				return false;
 			}
 		}
@@ -332,11 +336,13 @@ bool vk2d::_internal::TextureResourceImpl::MTLoad(
 			command_buffer_allocate_info.commandPool			= loader_thread_resource->GetPrimaryTransferCommandPool();
 			command_buffer_allocate_info.level					= VK_COMMAND_BUFFER_LEVEL_PRIMARY;
 			command_buffer_allocate_info.commandBufferCount		= 1;
-			if( vkAllocateCommandBuffers(
+			result = vkAllocateCommandBuffers(
 				loader_thread_resource->GetVulkanDevice(),
 				&command_buffer_allocate_info,
 				&vk_primary_transfer_command_buffer
-			) != VK_SUCCESS ) {
+			);
+			if( result != VK_SUCCESS ) {
+				instance->Report( result, "Internal error: Cannot allocate command buffers for texture data upload!" );
 				return false;
 			}
 
@@ -345,10 +351,12 @@ bool vk2d::_internal::TextureResourceImpl::MTLoad(
 			command_buffer_begin_info.pNext				= nullptr;
 			command_buffer_begin_info.flags				= VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
 			command_buffer_begin_info.pInheritanceInfo	= nullptr;
-			if( vkBeginCommandBuffer(
+			result = vkBeginCommandBuffer(
 				vk_primary_transfer_command_buffer,
 				&command_buffer_begin_info
-			) != VK_SUCCESS ) {
+			);
+			if( result != VK_SUCCESS ) {
+				instance->Report( result, "Internal error: Cannot begin command buffers for texture data upload!" );
 				return false;
 			}
 		}
@@ -664,52 +672,64 @@ bool vk2d::_internal::TextureResourceImpl::MTLoad(
 		fence_create_info.pNext			= nullptr;
 		fence_create_info.flags			= 0;
 
-		if( vkCreateSemaphore(
+		result = vkCreateSemaphore(
 			loader_thread_resource->GetVulkanDevice(),
 			&semaphore_create_info,
 			nullptr,
 			&vk_transfer_semaphore
-		) != VK_SUCCESS ) {
-			instance->Report( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot create semaphore for texture data upload synchronization!" );
+		);
+		if( result != VK_SUCCESS ) {
+			instance->Report( result, "Internal error: Cannot create semaphore for texture data upload synchronization!" );
 			return false;
 		}
 
 		if( is_primary_render_needed ) {
-			if( vkCreateSemaphore(
+			auto result = vkCreateSemaphore(
 				loader_thread_resource->GetVulkanDevice(),
 				&semaphore_create_info,
 				nullptr,
 				&vk_blit_semaphore
-			) != VK_SUCCESS ) {
-				instance->Report( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot create semaphore for texture data upload synchronization!" );
+			);
+			if( result != VK_SUCCESS ) {
+				instance->Report( result, "Internal error: Cannot create semaphore for texture data upload synchronization!" );
 				return false;
 			}
 		}
 
-		if( vkCreateFence(
+		result = vkCreateFence(
 			loader_thread_resource->GetVulkanDevice(),
 			&fence_create_info,
 			nullptr,
 			&vk_texture_complete_fence
-		) != VK_SUCCESS ) {
-			instance->Report( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot create fence for texture data upload synchronization!" );
+		);
+		if( result != VK_SUCCESS ) {
+			instance->Report( result, "Internal error: Cannot create fence for texture data upload synchronization!" );
 			return false;
 		}
 	}
 
 	// 8. Submit command buffer to the GPU, get a fence handle to indicate when the image is ready to be used.
 	{
-		if( vkEndCommandBuffer( vk_primary_transfer_command_buffer ) != VK_SUCCESS ) {
-			instance->Report( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot compile transfer command buffer for texture data upload!" );
+		result = vkEndCommandBuffer(
+			vk_primary_transfer_command_buffer
+		);
+		if( result != VK_SUCCESS ) {
+			instance->Report( result, "Internal error: Cannot compile transfer command buffer for texture data upload!" );
 			return false;
 		}
-		if( vkEndCommandBuffer( vk_secondary_render_command_buffer ) != VK_SUCCESS ) {
-			instance->Report( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot compile secondary render queue command buffer for texture mipmap creation!" );
+		result = vkEndCommandBuffer(
+			vk_secondary_render_command_buffer
+		);
+		if( result != VK_SUCCESS ) {
+			instance->Report( result, "Internal error: Cannot compile secondary render queue command buffer for texture mipmap creation!" );
 			return false;
 		}
 		if( is_primary_render_needed ) {
-			if( vkEndCommandBuffer( vk_primary_render_command_buffer ) != VK_SUCCESS ) {
-				instance->Report( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot compile primary render queue command buffer for texture queue family handover finalization!" );
+			auto result = vkEndCommandBuffer(
+				vk_primary_render_command_buffer
+			);
+			if( result != VK_SUCCESS ) {
+				instance->Report( result, "Internal error: Cannot compile primary render queue command buffer for texture queue family handover finalization!" );
 				return false;
 			}
 		}
@@ -727,11 +747,12 @@ bool vk2d::_internal::TextureResourceImpl::MTLoad(
 			submit_info.signalSemaphoreCount	= 1;
 			submit_info.pSignalSemaphores		= &vk_transfer_semaphore;
 			
-			if( resource_manager->GetInstance()->GetPrimaryTransferQueue().Submit(
+			auto result = resource_manager->GetInstance()->GetPrimaryTransferQueue().Submit(
 				submit_info,
 				VK_NULL_HANDLE
-			) != VK_SUCCESS ) {
-				instance->Report( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot submit texture upload command buffer!" );
+			);
+			if( result != VK_SUCCESS ) {
+				instance->Report( result, "Internal error: Cannot submit texture upload command buffer!" );
 				return false;
 			}
 		}
@@ -749,11 +770,12 @@ bool vk2d::_internal::TextureResourceImpl::MTLoad(
 			submit_info.pCommandBuffers			= &vk_secondary_render_command_buffer;
 			submit_info.signalSemaphoreCount	= is_primary_render_needed ? 1 : 0;
 			submit_info.pSignalSemaphores		= is_primary_render_needed ? &vk_blit_semaphore : nullptr;
-			if( resource_manager->GetInstance()->GetSecondaryRenderQueue().Submit(
+			auto result = resource_manager->GetInstance()->GetSecondaryRenderQueue().Submit(
 				submit_info,
 				is_primary_render_needed ? VK_NULL_HANDLE : vk_texture_complete_fence
-			) != VK_SUCCESS ) {
-				instance->Report( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot submit texture mipmap generation command buffer!" );
+			);
+			if( result != VK_SUCCESS ) {
+				instance->Report( result, "Internal error: Cannot submit texture mipmap generation command buffer!" );
 				return false;
 			}
 		}
@@ -771,11 +793,12 @@ bool vk2d::_internal::TextureResourceImpl::MTLoad(
 			submit_info.pCommandBuffers			= &vk_primary_render_command_buffer;
 			submit_info.signalSemaphoreCount	= 0;
 			submit_info.pSignalSemaphores		= nullptr;
-			if( resource_manager->GetInstance()->GetPrimaryRenderQueue().Submit(
+			auto result = resource_manager->GetInstance()->GetPrimaryRenderQueue().Submit(
 				submit_info,
 				vk_texture_complete_fence
-			) != VK_SUCCESS ) {
-				instance->Report( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot submit texture queue family handover command buffer!" );
+			);
+			if( result != VK_SUCCESS ) {
+				instance->Report( result, "Internal error: Cannot submit texture queue family handover command buffer!" );
 				return false;
 			}
 		}
@@ -880,6 +903,7 @@ void vk2d::_internal::TextureResourceImpl::MTUnload(
 
 bool vk2d::_internal::TextureResourceImpl::IsLoaded()
 {
+	// TODO: I don't like locking and unlocking mutex every time we check if texture has been loaded or not, see about other solutions.
 	std::unique_lock<std::mutex>		is_loaded_lock( is_loaded_mutex, std::defer_lock );
 	if( !is_loaded_lock.try_lock() ) {
 		return false;
@@ -916,6 +940,7 @@ bool vk2d::_internal::TextureResourceImpl::IsLoaded()
 
 bool vk2d::_internal::TextureResourceImpl::WaitUntilLoaded()
 {
+	// TODO: I don't like locking and unlocking mutex every time we check if texture has been loaded or not, see about other solutions.
 	std::lock_guard<std::mutex> is_loaded_lock( is_loaded_mutex );
 
 	if( is_loaded )						return true;
@@ -936,19 +961,16 @@ bool vk2d::_internal::TextureResourceImpl::WaitUntilLoaded()
 		VK_TRUE,
 		UINT64_MAX
 	);
-	if( result == VK_SUCCESS ) {
-		// Loaded, free some resources used to load
-		is_loaded							= true;
-		ScheduleTextureLoadResourceDestruction();
-		return true;
-
-	} else {
+	if( result != VK_SUCCESS ) {
 		texture_parent->failed_to_load	= true;
-		resource_manager->GetInstance()->Report( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Resource failed to load properly while waiting for it in 'WaitUntilLoaded()'!" );
+		resource_manager->GetInstance()->Report( result, "Resource failed to load properly while waiting for it in 'WaitUntilLoaded()'!" );
 		return false;
 	};
 
-	return false;
+	// Loaded, free some resources used to load
+	is_loaded							= true;
+	ScheduleTextureLoadResourceDestruction();
+	return true;
 }
 
 //VkDescriptorSet vk2d::_internal::TextureResourceImpl::GetDescriptorSet() const
@@ -969,6 +991,11 @@ VkImageView vk2d::_internal::TextureResourceImpl::GetVulkanImageView() const
 VkImageLayout vk2d::_internal::TextureResourceImpl::GetVulkanImageLayout() const
 {
 	return vk_image_layout;
+}
+
+vk2d::Vector2u vk2d::_internal::TextureResourceImpl::GetSize() const
+{
+	return vk2d::Vector2u( extent.width, extent.height );
 }
 
 uint32_t vk2d::_internal::TextureResourceImpl::GetLayerCount() const
