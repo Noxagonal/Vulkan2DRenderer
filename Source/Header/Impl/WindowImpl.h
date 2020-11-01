@@ -253,7 +253,7 @@ private:
 
 	void														CmdBindPipelineIfDifferent(
 		VkCommandBuffer											command_buffer,
-		const vk2d::_internal::PipelineSettings				&	pipeline_settings );
+		const vk2d::_internal::GraphicsPipelineSettings				&	pipeline_settings );
 
 	void														CmdBindTextureSamplerIfDifferent(
 		VkCommandBuffer											command_buffer,
@@ -330,7 +330,7 @@ private:
 	bool														should_reconstruct							= {};
 	bool														should_close								= {};
 
-	vk2d::_internal::PipelineSettings							previous_pipeline_settings					= {};
+	vk2d::_internal::GraphicsPipelineSettings							previous_pipeline_settings					= {};
 	vk2d::Texture											*	previous_texture							= {};
 	vk2d::Sampler											*	previous_sampler							= {};
 	float														previous_line_width							= {};

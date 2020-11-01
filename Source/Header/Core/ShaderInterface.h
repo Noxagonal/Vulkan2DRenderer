@@ -84,23 +84,23 @@ public:
 
 
 
-class PipelineSettings {
+class GraphicsPipelineSettings {
 public:
-	PipelineSettings()																= default;
-	PipelineSettings( const vk2d::_internal::PipelineSettings & other )				= default;
-	PipelineSettings( vk2d::_internal::PipelineSettings && other )					= default;
+	GraphicsPipelineSettings()																= default;
+	GraphicsPipelineSettings( const vk2d::_internal::GraphicsPipelineSettings & other )				= default;
+	GraphicsPipelineSettings( vk2d::_internal::GraphicsPipelineSettings && other )					= default;
 	template<typename T>
-	PipelineSettings( std::initializer_list<T> )									= delete;
+	GraphicsPipelineSettings( std::initializer_list<T> )									= delete;
 
-	vk2d::_internal::PipelineSettings & operator=( const vk2d::_internal::PipelineSettings & other )	= default;
-	vk2d::_internal::PipelineSettings & operator=( vk2d::_internal::PipelineSettings && other )			= default;
+	vk2d::_internal::GraphicsPipelineSettings & operator=( const vk2d::_internal::GraphicsPipelineSettings & other )	= default;
+	vk2d::_internal::GraphicsPipelineSettings & operator=( vk2d::_internal::GraphicsPipelineSettings && other )			= default;
 
-	bool operator<( const vk2d::_internal::PipelineSettings & other ) const;
-	bool operator>( const vk2d::_internal::PipelineSettings & other ) const;
-	bool operator<=( const vk2d::_internal::PipelineSettings & other ) const;
-	bool operator>=( const vk2d::_internal::PipelineSettings & other ) const;
-	bool operator==( const vk2d::_internal::PipelineSettings & other ) const;
-	bool operator!=( const vk2d::_internal::PipelineSettings & other ) const;
+	bool operator<( const vk2d::_internal::GraphicsPipelineSettings & other ) const;
+	bool operator>( const vk2d::_internal::GraphicsPipelineSettings & other ) const;
+	bool operator<=( const vk2d::_internal::GraphicsPipelineSettings & other ) const;
+	bool operator>=( const vk2d::_internal::GraphicsPipelineSettings & other ) const;
+	bool operator==( const vk2d::_internal::GraphicsPipelineSettings & other ) const;
+	bool operator!=( const vk2d::_internal::GraphicsPipelineSettings & other ) const;
 
 	VkRenderPass						vk_render_pass				= {};
 	VkPrimitiveTopology					primitive_topology			= {};

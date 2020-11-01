@@ -739,7 +739,7 @@ void vk2d::_internal::RenderTargetTextureImpl::DrawTriangleList(
 			3
 		);
 
-		vk2d::_internal::PipelineSettings pipeline_settings {};
+		vk2d::_internal::GraphicsPipelineSettings pipeline_settings {};
 		pipeline_settings.vk_render_pass		= vk_attachment_render_pass;
 		pipeline_settings.primitive_topology	= VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
 		pipeline_settings.polygon_mode			= solid ? VK_POLYGON_MODE_FILL : VK_POLYGON_MODE_LINE;
@@ -880,7 +880,7 @@ void vk2d::_internal::RenderTargetTextureImpl::DrawLineList(
 			2
 		);
 
-		vk2d::_internal::PipelineSettings pipeline_settings {};
+		vk2d::_internal::GraphicsPipelineSettings pipeline_settings {};
 		pipeline_settings.vk_render_pass		= vk_attachment_render_pass;
 		pipeline_settings.primitive_topology	= VK_PRIMITIVE_TOPOLOGY_LINE_LIST;
 		pipeline_settings.polygon_mode			= VK_POLYGON_MODE_LINE;
@@ -976,7 +976,7 @@ void vk2d::_internal::RenderTargetTextureImpl::DrawPointList(
 			1
 		);
 
-		vk2d::_internal::PipelineSettings pipeline_settings {};
+		vk2d::_internal::GraphicsPipelineSettings pipeline_settings {};
 		pipeline_settings.vk_render_pass		= vk_attachment_render_pass;
 		pipeline_settings.primitive_topology	= VK_PRIMITIVE_TOPOLOGY_POINT_LIST;
 		pipeline_settings.polygon_mode			= VK_POLYGON_MODE_POINT;
@@ -1102,7 +1102,9 @@ bool vk2d::_internal::RenderTargetTextureImpl::DetermineType()
 
 	if( samples == vk2d::Multisamples::SAMPLE_COUNT_1 ) {
 		// no multisamples
-		if( create_info_copy.enable_blur ) {
+		// TODO: Enable this branch when blur is implemented
+		// if( create_info_copy.enable_blur ) {
+		if( false ) {
 			// with blur
 			type = vk2d::_internal::RenderTargetTextureType::WITH_BLUR;
 		} else {
@@ -1111,7 +1113,9 @@ bool vk2d::_internal::RenderTargetTextureImpl::DetermineType()
 		}
 	} else {
 		// with multisamples
-		if( create_info_copy.enable_blur ) {
+		// TODO: Enable this branch when blur is implemented
+		// if( create_info_copy.enable_blur ) {
+		if( false ) {
 			// with blur
 			type = vk2d::_internal::RenderTargetTextureType::WITH_MULTISAMPLE_AND_BLUR;
 		} else {
@@ -2100,11 +2104,11 @@ void vk2d::_internal::RenderTargetTextureImpl::CmdBlitMipmapsToSampledImage(
 
 void vk2d::_internal::RenderTargetTextureImpl::CmdBindPipelineIfDifferent(
 	VkCommandBuffer									command_buffer,
-	const vk2d::_internal::PipelineSettings		&	pipeline_settings
+	const vk2d::_internal::GraphicsPipelineSettings		&	pipeline_settings
 )
 {
 	if( previous_pipeline_settings != pipeline_settings ) {
-		auto pipeline = instance->GetVulkanPipeline( pipeline_settings );
+		auto pipeline = instance->GetGraphicsPipeline( pipeline_settings );
 
 		vkCmdBindPipeline(
 			command_buffer,
