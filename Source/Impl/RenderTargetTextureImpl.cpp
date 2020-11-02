@@ -674,9 +674,12 @@ void vk2d::_internal::RenderTargetTextureImpl::DrawTriangleList(
 		);
 	}
 
-	CmdBindTextureSamplerIfDifferent(
+	CmdBindSamplerIfDifferent(
 		command_buffer,
-		sampler,
+		sampler
+	);
+	CmdBindTextureIfDifferent(
+		command_buffer,
 		texture
 	);
 
@@ -815,9 +818,12 @@ void vk2d::_internal::RenderTargetTextureImpl::DrawLineList(
 		);
 	}
 
-	CmdBindTextureSamplerIfDifferent(
+	CmdBindSamplerIfDifferent(
 		command_buffer,
-		sampler,
+		sampler
+	);
+	CmdBindTextureIfDifferent(
+		command_buffer,
 		texture
 	);
 
@@ -911,9 +917,12 @@ void vk2d::_internal::RenderTargetTextureImpl::DrawPointList(
 		);
 	}
 
-	CmdBindTextureSamplerIfDifferent(
+	CmdBindSamplerIfDifferent(
 		command_buffer,
-		sampler,
+		sampler
+	);
+	CmdBindTextureIfDifferent(
+		command_buffer,
 		texture
 	);
 
@@ -2399,6 +2408,7 @@ void vk2d::_internal::RenderTargetTextureImpl::CmdBindGraphicsPipelineIfDifferen
 	}
 }
 
+/*
 void vk2d::_internal::RenderTargetTextureImpl::CmdBindTextureSamplerIfDifferent(
 	VkCommandBuffer						command_buffer,
 	vk2d::Sampler					*	sampler,
@@ -2477,6 +2487,139 @@ void vk2d::_internal::RenderTargetTextureImpl::CmdBindTextureSamplerIfDifferent(
 		);
 
 		previous_sampler		= sampler;
+		previous_texture		= texture;
+	}
+}
+*/
+
+void vk2d::_internal::RenderTargetTextureImpl::CmdBindSamplerIfDifferent(
+	VkCommandBuffer			command_buffer,
+	vk2d::Sampler		*	sampler
+)
+{
+	assert( sampler );
+
+	// if sampler or texture changed since previous call, bind a different descriptor set.
+	if( sampler != previous_sampler ) {
+		auto & set = sampler_descriptor_sets[ sampler ];
+
+		// If this descriptor set doesn't exist yet for this
+		// sampler texture combo, create one and update it.
+		if( set.descriptor_set.descriptorSet == VK_NULL_HANDLE ) {
+			set.descriptor_set = instance->AllocateDescriptorSet(
+				instance->GetSamplerDescriptorSetLayout()
+			);
+
+			VkDescriptorImageInfo image_info {};
+			image_info.sampler						= sampler->impl->GetVulkanSampler();
+			image_info.imageView					= VK_NULL_HANDLE;
+			image_info.imageLayout					= VK_IMAGE_LAYOUT_UNDEFINED;
+
+			VkDescriptorBufferInfo buffer_info {};
+			buffer_info.buffer						= sampler->impl->GetVulkanBufferForSamplerData();
+			buffer_info.offset						= 0;
+			buffer_info.range						= sizeof( vk2d::_internal::SamplerImpl::BufferData );
+
+			std::array<VkWriteDescriptorSet, 2> descriptor_write {};
+			descriptor_write[ 0 ].sType				= VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+			descriptor_write[ 0 ].pNext				= nullptr;
+			descriptor_write[ 0 ].dstSet			= set.descriptor_set.descriptorSet;
+			descriptor_write[ 0 ].dstBinding		= 0;
+			descriptor_write[ 0 ].dstArrayElement	= 0;
+			descriptor_write[ 0 ].descriptorCount	= 1;
+			descriptor_write[ 0 ].descriptorType	= VK_DESCRIPTOR_TYPE_SAMPLER;
+			descriptor_write[ 0 ].pImageInfo		= &image_info;
+			descriptor_write[ 0 ].pBufferInfo		= nullptr;
+			descriptor_write[ 0 ].pTexelBufferView	= nullptr;
+
+			descriptor_write[ 1 ].sType				= VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+			descriptor_write[ 1 ].pNext				= nullptr;
+			descriptor_write[ 1 ].dstSet			= set.descriptor_set.descriptorSet;
+			descriptor_write[ 1 ].dstBinding		= 1;
+			descriptor_write[ 1 ].dstArrayElement	= 0;
+			descriptor_write[ 1 ].descriptorCount	= 1;
+			descriptor_write[ 1 ].descriptorType	= VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+			descriptor_write[ 1 ].pImageInfo		= nullptr;
+			descriptor_write[ 1 ].pBufferInfo		= &buffer_info;
+			descriptor_write[ 1 ].pTexelBufferView	= nullptr;
+
+			vkUpdateDescriptorSets(
+				instance->GetVulkanDevice(),
+				uint32_t( descriptor_write.size() ), descriptor_write.data(),
+				0, nullptr
+			);
+		}
+		set.previous_access_time = std::chrono::steady_clock::now();
+
+		vkCmdBindDescriptorSets(
+			command_buffer,
+			VK_PIPELINE_BIND_POINT_GRAPHICS,
+			instance->GetGraphicsPipelineLayout(),
+			DESCRIPTOR_SET_ALLOCATION_SAMPLER_AND_SAMPLER_DATA,
+			1, &set.descriptor_set.descriptorSet,
+			0, nullptr
+		);
+
+		previous_sampler		= sampler;
+	}
+}
+
+void vk2d::_internal::RenderTargetTextureImpl::CmdBindTextureIfDifferent(
+	VkCommandBuffer			command_buffer,
+	vk2d::Texture		*	texture
+)
+{
+	assert( texture );
+
+	// if sampler or texture changed since previous call, bind a different descriptor set.
+	if( texture != previous_texture ) {
+		auto & set = texture_descriptor_sets[ texture ];
+
+		// If this descriptor set doesn't exist yet for this
+		// sampler texture combo, create one and update it.
+		if( set.descriptor_set.descriptorSet == VK_NULL_HANDLE ) {
+			set.descriptor_set = instance->AllocateDescriptorSet(
+				instance->GetTextureDescriptorSetLayout()
+			);
+
+			if( !texture->WaitUntilLoaded() ) {
+				texture = instance->GetDefaultTexture();
+			}
+
+			VkDescriptorImageInfo image_info {};
+			image_info.sampler						= VK_NULL_HANDLE;
+			image_info.imageView					= texture->texture_impl->GetVulkanImageView();
+			image_info.imageLayout					= texture->texture_impl->GetVulkanImageLayout();
+
+			std::array<VkWriteDescriptorSet, 1> descriptor_write {};
+			descriptor_write[ 0 ].sType				= VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+			descriptor_write[ 0 ].pNext				= nullptr;
+			descriptor_write[ 0 ].dstSet			= set.descriptor_set.descriptorSet;
+			descriptor_write[ 0 ].dstBinding		= 0;
+			descriptor_write[ 0 ].dstArrayElement	= 0;
+			descriptor_write[ 0 ].descriptorCount	= 1;
+			descriptor_write[ 0 ].descriptorType	= VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
+			descriptor_write[ 0 ].pImageInfo		= &image_info;
+			descriptor_write[ 0 ].pBufferInfo		= nullptr;
+			descriptor_write[ 0 ].pTexelBufferView	= nullptr;
+
+			vkUpdateDescriptorSets(
+				instance->GetVulkanDevice(),
+				uint32_t( descriptor_write.size() ), descriptor_write.data(),
+				0, nullptr
+			);
+		}
+		set.previous_access_time = std::chrono::steady_clock::now();
+
+		vkCmdBindDescriptorSets(
+			command_buffer,
+			VK_PIPELINE_BIND_POINT_GRAPHICS,
+			instance->GetGraphicsPipelineLayout(),
+			DESCRIPTOR_SET_ALLOCATION_TEXTURE,
+			1, &set.descriptor_set.descriptorSet,
+			0, nullptr
+		);
+
 		previous_texture		= texture;
 	}
 }

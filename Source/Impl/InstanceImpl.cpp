@@ -1294,9 +1294,14 @@ VkPipelineLayout vk2d::_internal::InstanceImpl::GetComputePipelineLayout() const
 	return vk_compute_pipeline_layout;
 }
 
-const vk2d::_internal::DescriptorSetLayout & vk2d::_internal::InstanceImpl::GetSamplerTextureDescriptorSetLayout() const
+const vk2d::_internal::DescriptorSetLayout & vk2d::_internal::InstanceImpl::GetSamplerDescriptorSetLayout() const
 {
-	return *sampler_texture_descriptor_set_layout;
+	return *sampler_descriptor_set_layout;
+}
+
+const vk2d::_internal::DescriptorSetLayout & vk2d::_internal::InstanceImpl::GetTextureDescriptorSetLayout() const
+{
+	return *texture_descriptor_set_layout;
 }
 
 const vk2d::_internal::DescriptorSetLayout & vk2d::_internal::InstanceImpl::GetUniformBufferDescriptorSetLayout() const
@@ -1893,14 +1898,14 @@ bool vk2d::_internal::InstanceImpl::CreateDescriptorSetLayouts()
 {
 	// These must match shader set types.
 
-	// Set 1 layout, Combined image sampler and sampler data
-	// Binding 0 = Combined image sampler
+	// Descriptor set layout for sampler.
+	// Binding 0 = Sampler
 	// Binding 1 = Uniform buffer for sampler data
 	{
 		std::array<VkDescriptorSetLayoutBinding, 2> descriptor_set_layout_bindings {};
 
 		descriptor_set_layout_bindings[ 0 ].binding				= 0;
-		descriptor_set_layout_bindings[ 0 ].descriptorType		= VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;	// Need this to access array textures
+		descriptor_set_layout_bindings[ 0 ].descriptorType		= VK_DESCRIPTOR_TYPE_SAMPLER;
 		descriptor_set_layout_bindings[ 0 ].descriptorCount		= 1;
 		descriptor_set_layout_bindings[ 0 ].stageFlags			= VK_SHADER_STAGE_FRAGMENT_BIT;
 		descriptor_set_layout_bindings[ 0 ].pImmutableSamplers	= nullptr;
@@ -1918,12 +1923,41 @@ bool vk2d::_internal::InstanceImpl::CreateDescriptorSetLayouts()
 		descriptor_set_layout_create_info.bindingCount	= uint32_t( descriptor_set_layout_bindings.size() );
 		descriptor_set_layout_create_info.pBindings		= descriptor_set_layout_bindings.data();
 
-		sampler_texture_descriptor_set_layout		= vk2d::_internal::CreateDescriptorSetLayout(
+		sampler_descriptor_set_layout = vk2d::_internal::CreateDescriptorSetLayout(
 			this,
 			vk_device,
 			&descriptor_set_layout_create_info
 		);
-		if( !sampler_texture_descriptor_set_layout ) {
+		if( !sampler_descriptor_set_layout ) {
+			Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot create sampler descriptor set layout!" );
+			return false;
+		}
+	}
+
+	// Descriptor set layout for texture.
+	// Binding 0 = Sampled image
+	{
+		std::array<VkDescriptorSetLayoutBinding, 1> descriptor_set_layout_bindings {};
+
+		descriptor_set_layout_bindings[ 0 ].binding				= 0;
+		descriptor_set_layout_bindings[ 0 ].descriptorType		= VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
+		descriptor_set_layout_bindings[ 0 ].descriptorCount		= 1;
+		descriptor_set_layout_bindings[ 0 ].stageFlags			= VK_SHADER_STAGE_FRAGMENT_BIT;
+		descriptor_set_layout_bindings[ 0 ].pImmutableSamplers	= nullptr;
+
+		VkDescriptorSetLayoutCreateInfo descriptor_set_layout_create_info {};
+		descriptor_set_layout_create_info.sType			= VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+		descriptor_set_layout_create_info.pNext			= nullptr;
+		descriptor_set_layout_create_info.flags			= 0;
+		descriptor_set_layout_create_info.bindingCount	= uint32_t( descriptor_set_layout_bindings.size() );
+		descriptor_set_layout_create_info.pBindings		= descriptor_set_layout_bindings.data();
+
+		texture_descriptor_set_layout = vk2d::_internal::CreateDescriptorSetLayout(
+			this,
+			vk_device,
+			&descriptor_set_layout_create_info
+		);
+		if( !texture_descriptor_set_layout ) {
 			Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot create sampler descriptor set layout!" );
 			return false;
 		}
@@ -2005,8 +2039,9 @@ bool vk2d::_internal::InstanceImpl::CreatePipelineLayouts()
 			uniform_buffer_descriptor_set_layout->GetVulkanDescriptorSetLayout(),	// Pipeline set 0 is FrameData.
 			storage_buffer_descriptor_set_layout->GetVulkanDescriptorSetLayout(),	// Pipeline set 1 is vertex index buffer as storage buffer.
 			storage_buffer_descriptor_set_layout->GetVulkanDescriptorSetLayout(),	// Pipeline set 2 is vertex buffer as storage buffer.
-			sampler_texture_descriptor_set_layout->GetVulkanDescriptorSetLayout(),	// Pipeline set 3 is combined sampler texture and it's data uniform.
-			storage_buffer_descriptor_set_layout->GetVulkanDescriptorSetLayout()	// Pipeline set 4 is texture channel weight data.
+			sampler_descriptor_set_layout->GetVulkanDescriptorSetLayout(),			// Pipeline set 3 is sampler and it's data uniform.
+			texture_descriptor_set_layout->GetVulkanDescriptorSetLayout(),			// Pipeline set 4 is texture.
+			storage_buffer_descriptor_set_layout->GetVulkanDescriptorSetLayout()	// Pipeline set 5 is texture channel weight data.
 		};
 
 		std::array<VkPushConstantRange, 1> push_constant_ranges {};
@@ -2248,7 +2283,8 @@ void vk2d::_internal::InstanceImpl::DestroyShaderModules()
 
 void vk2d::_internal::InstanceImpl::DestroyDescriptorSetLayouts()
 {
-	sampler_texture_descriptor_set_layout	= nullptr;
+	sampler_descriptor_set_layout			= nullptr;
+	texture_descriptor_set_layout			= nullptr;
 	uniform_buffer_descriptor_set_layout	= nullptr;
 	storage_buffer_descriptor_set_layout	= nullptr;
 }

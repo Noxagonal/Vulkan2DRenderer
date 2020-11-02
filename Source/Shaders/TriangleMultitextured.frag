@@ -24,15 +24,18 @@ layout(std430, set=2, binding=0) readonly buffer	VertexBuffer {
 	Vertex		ssbo[];
 } vertex_buffer;
 
-// Set 3: Texture and sampler
-layout(set=3, binding=0) uniform sampler2DArray		image_sampler;
+// Set 3: Sampler
+layout(set=3, binding=0) uniform sampler			image_sampler;
 layout(std140, set=3, binding=1) uniform			image_sampler_data {
 	vec4		border_color;
 	uvec2		border_color_enable;
 } sampler_data;
 
-// Set 4: Texture channel weights
-layout(std430, set=4, binding=0) readonly buffer	TextureChannelWeights {
+// Set 4: Texture
+layout(set=4, binding=0) uniform texture2DArray		sampled_image;
+
+// Set 5: Texture channel weights
+layout(std430, set=5, binding=0) readonly buffer	TextureChannelWeights {
 	float		ssbo[];
 } texture_channel_weights;
 
@@ -181,7 +184,7 @@ vec4 CalculateTriangleWeightedTextureColor( uvec3 indices, vec3 vertex_weights )
 		float total_pixel_weight				= vertex_combined_channel_weights[ 0 ] + vertex_combined_channel_weights[ 1 ] + vertex_combined_channel_weights[ 2 ];
 
 		if( total_pixel_weight > 0.0 ) {
-			vec4 tc = texture( image_sampler, vec3( fragment_input_UV, float( i ) ) );
+			vec4 tc = texture( sampler2DArray( sampled_image, image_sampler ), vec3( fragment_input_UV, float( i ) ) );
 			weighted_texture_color				+= tc * total_pixel_weight;
 		}
 	}
@@ -202,7 +205,7 @@ vec4 CalculateLineWeightedTextureColor( uvec2 indices, vec2 vertex_weights )
 		float total_pixel_weight				= vertex_combined_channel_weights[ 0 ] + vertex_combined_channel_weights[ 1 ];
 
 		if( total_pixel_weight > 0.0 ) {
-			vec4 tc = texture( image_sampler, vec3( fragment_input_UV, float( i ) ) );
+			vec4 tc = texture( sampler2DArray( sampled_image, image_sampler ), vec3( fragment_input_UV, float( i ) ) );
 			weighted_texture_color				+= tc * total_pixel_weight;
 		}
 	}
@@ -218,7 +221,7 @@ vec4 CalculatePointWeightedTextureColor()
 		float total_pixel_weight		= texture_channel_weights.ssbo[ fragment_input_vertex_index * push_constants.texture_channel_count + i ];
 
 		if( total_pixel_weight > 0.0 ) {
-			vec4 tc = texture( image_sampler, vec3( fragment_input_UV, float( i ) ) );
+			vec4 tc = texture( sampler2DArray( sampled_image, image_sampler ), vec3( fragment_input_UV, float( i ) ) );
 			weighted_texture_color				+= tc * total_pixel_weight;
 		}
 	}

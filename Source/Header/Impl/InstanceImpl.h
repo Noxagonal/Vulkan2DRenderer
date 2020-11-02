@@ -306,7 +306,10 @@ public:
 
 
 	// Any thread.
-	const vk2d::_internal::DescriptorSetLayout			&	GetSamplerTextureDescriptorSetLayout() const;
+	const vk2d::_internal::DescriptorSetLayout			&	GetSamplerDescriptorSetLayout() const;
+
+	// Any thread.
+	const vk2d::_internal::DescriptorSetLayout			&	GetTextureDescriptorSetLayout() const;
 
 	// Any thread.
 	const vk2d::_internal::DescriptorSetLayout			&	GetUniformBufferDescriptorSetLayout() const;
@@ -415,7 +418,8 @@ private:
 	VkPipelineLayout										vk_graphics_pipeline_layout				= {};
 	VkPipelineLayout										vk_compute_pipeline_layout				= {};
 
-	std::unique_ptr<vk2d::_internal::DescriptorSetLayout>	sampler_texture_descriptor_set_layout;
+	std::unique_ptr<vk2d::_internal::DescriptorSetLayout>	sampler_descriptor_set_layout;
+	std::unique_ptr<vk2d::_internal::DescriptorSetLayout>	texture_descriptor_set_layout;
 	std::unique_ptr<vk2d::_internal::DescriptorSetLayout>	uniform_buffer_descriptor_set_layout;
 	std::unique_ptr<vk2d::_internal::DescriptorSetLayout>	storage_buffer_descriptor_set_layout;
 

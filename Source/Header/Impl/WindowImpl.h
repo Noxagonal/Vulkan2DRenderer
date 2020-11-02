@@ -255,9 +255,19 @@ private:
 		VkCommandBuffer											command_buffer,
 		const vk2d::_internal::GraphicsPipelineSettings				&	pipeline_settings );
 
+	/*
 	void														CmdBindTextureSamplerIfDifferent(
 		VkCommandBuffer											command_buffer,
 		vk2d::Sampler										*	sampler,
+		vk2d::Texture										*	texture );
+	*/
+
+	void														CmdBindSamplerIfDifferent(
+		VkCommandBuffer											command_buffer,
+		vk2d::Sampler										*	sampler );
+
+	void														CmdBindTextureIfDifferent(
+		VkCommandBuffer											command_buffer,
 		vk2d::Texture										*	texture );
 
 	void														CmdSetLineWidthIfDifferent(
@@ -330,13 +340,16 @@ private:
 	bool														should_reconstruct							= {};
 	bool														should_close								= {};
 
-	vk2d::_internal::GraphicsPipelineSettings							previous_pipeline_settings					= {};
+	vk2d::_internal::GraphicsPipelineSettings					previous_pipeline_settings					= {};
 	vk2d::Texture											*	previous_texture							= {};
 	vk2d::Sampler											*	previous_sampler							= {};
 	float														previous_line_width							= {};
 
-	std::map<vk2d::Sampler*, std::map<vk2d::Texture*, vk2d::_internal::SamplerTextureDescriptorPoolData>>
-		sampler_texture_descriptor_sets																		= {};
+	std::map<vk2d::Sampler*, vk2d::_internal::SamplerTextureDescriptorPoolData>
+																sampler_descriptor_sets						= {};
+
+	std::map<vk2d::Texture*, vk2d::_internal::SamplerTextureDescriptorPoolData>
+																texture_descriptor_sets						= {};
 
 	std::unique_ptr<vk2d::_internal::MeshBuffer>				mesh_buffer									= {};
 
