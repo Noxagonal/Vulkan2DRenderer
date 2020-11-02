@@ -943,7 +943,7 @@ bool vk2d::_internal::WindowImpl::EndRender()
 
 		// Resolve immediate dependencies we need to wait for before the main render.
 		for( auto & d : render_target_texture_dependencies[ next_image ] ) {
-			render_wait_for_semaphores.push_back( d.render_target->GetCurrentSwapRenderCompleteSemaphore() );
+			render_wait_for_semaphores.push_back( d.render_target->GetCurrentSwapAllCompleteSemaphore() );
 			render_wait_for_semaphore_timeline_values.push_back( d.render_target->GetCurrentSwapRenderCounter() );
 			render_wait_for_pipeline_stages.push_back( VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT );
 		}

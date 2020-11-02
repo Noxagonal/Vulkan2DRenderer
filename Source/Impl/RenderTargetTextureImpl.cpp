@@ -80,7 +80,7 @@ void vk2d::_internal::RenderTargetTextureImpl::SetSize(
 			std::array<VkSemaphore, std::tuple_size_v<decltype( swap_buffers )>> semaphores;
 			std::array<uint64_t, std::tuple_size_v<decltype( swap_buffers )>> semaphore_values;
 			for( size_t i = 0; i < std::size( swap_buffers ); ++i ) {
-				semaphores[ i ]			= swap_buffers[ i ].vk_render_complete_semaphore;
+				semaphores[ i ]			= create_info_copy.enable_blur ? swap_buffers[ i ].vk_mipmap_complete_semaphore : swap_buffers[ i ].vk_render_complete_semaphore;
 				semaphore_values[ i ]	= 1;
 			}
 			VkSemaphoreWaitInfo wait_info {};
@@ -149,9 +149,11 @@ VkFramebuffer vk2d::_internal::RenderTargetTextureImpl::GetFramebuffer() const
 	return swap_buffers[ current_swap_buffer ].vk_framebuffer;
 }
 
-VkSemaphore vk2d::_internal::RenderTargetTextureImpl::GetCurrentSwapRenderCompleteSemaphore() const
+VkSemaphore vk2d::_internal::RenderTargetTextureImpl::GetCurrentSwapAllCompleteSemaphore() const
 {
-	return swap_buffers[ current_swap_buffer ].vk_render_complete_semaphore;
+	return create_info_copy.enable_blur ?
+		swap_buffers[ current_swap_buffer ].vk_mipmap_complete_semaphore :
+		swap_buffers[ current_swap_buffer ].vk_render_complete_semaphore;
 }
 
 uint64_t vk2d::_internal::RenderTargetTextureImpl::GetCurrentSwapRenderCounter() const
@@ -325,6 +327,7 @@ bool vk2d::_internal::RenderTargetTextureImpl::EndRender()
 	auto & swap									= swap_buffers[ current_swap_buffer ];
 	VkCommandBuffer		render_command_buffer	= swap.vk_render_command_buffer;
 	VkCommandBuffer		transfer_command_buffer	= swap.vk_transfer_command_buffer;
+	VkCommandBuffer		blur_command_buffer		= swap.vk_blur_command_buffer;
 
 	// End render pass.
 	{
@@ -335,8 +338,9 @@ bool vk2d::_internal::RenderTargetTextureImpl::EndRender()
 		);
 		vkCmdEndRenderPass( render_command_buffer );
 	}
-
-	CmdFinalizeRender( swap );
+	if( !create_info_copy.enable_blur ) {
+		CmdFinalizeNonBlurredRender( swap );
+	}
 
 	// End command buffer
 	vk2d::_internal::CmdInsertCommandBufferCheckpoint(
@@ -352,56 +356,11 @@ bool vk2d::_internal::RenderTargetTextureImpl::EndRender()
 		return false;
 	}
 
-	// Record command buffer to upload complementary data to GPU
-	{
-		// Begin command buffer
-		{
-			VkCommandBufferBeginInfo transfer_command_buffer_begin_info {};
-			transfer_command_buffer_begin_info.sType			= VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-			transfer_command_buffer_begin_info.pNext			= nullptr;
-			transfer_command_buffer_begin_info.flags			= VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
-			transfer_command_buffer_begin_info.pInheritanceInfo	= nullptr;
+	RecordTransferCommandBuffer( swap );
 
-			auto result = vkBeginCommandBuffer(
-				transfer_command_buffer,
-				&transfer_command_buffer_begin_info
-			);
-			if( result != VK_SUCCESS ) {
-				instance->Report( result, "Internal error: Cannot render to RenderTargetTexture, Cannot record mesh to GPU transfer command buffer!" );
-				return false;
-			}
-		}
-
-		// Record commands to upload frame data to gpu
-		{
-			if( !CmdUpdateFrameData(
-				transfer_command_buffer
-			) ) {
-				instance->Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot render to RenderTargetTexture, Cannot record commands to transfer FrameData to GPU!" );
-				return false;
-			}
-		}
-
-		// Record commands to upload mesh data to gpu
-		{
-			if( !mesh_buffer->CmdUploadMeshDataToGPU(
-				transfer_command_buffer
-			) ) {
-				instance->Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot render to RenderTargetTexture, Cannot record commands to transfer mesh data to GPU!" );
-				return false;
-			}
-		}
-
-		// End command buffer
-		{
-			auto result = vkEndCommandBuffer(
-				transfer_command_buffer
-			);
-			if( result != VK_SUCCESS ) {
-				instance->Report( result, "Internal error: Cannot render to RenderTargetTexture, Cannot compile mesh to GPU transfer command buffer!" );
-				return false;
-			}
-		}
+	// Need to record blur and mipmap generation here if blur is enabled;
+	if( create_info_copy.enable_blur ) {
+		instance->Report( vk2d::ReportSeverity::CRITICAL_ERROR, "TODO" );
 	}
 
 	// Now that everything is recorded into a command buffer we'll
@@ -409,52 +368,12 @@ bool vk2d::_internal::RenderTargetTextureImpl::EndRender()
 	// Window will have to order the render target command buffers
 	// so that the deepest render target gets processed first.
 
-	// Update submit infos to be used later when frame is being rendered.
-	{
-		swap.vk_transfer_submit_info.sType					= VK_STRUCTURE_TYPE_SUBMIT_INFO;
-		swap.vk_transfer_submit_info.pNext					= nullptr;
-		swap.vk_transfer_submit_info.waitSemaphoreCount		= 0;
-		swap.vk_transfer_submit_info.pWaitSemaphores		= nullptr;
-		swap.vk_transfer_submit_info.pWaitDstStageMask		= nullptr;
-		swap.vk_transfer_submit_info.commandBufferCount		= 1;
-		swap.vk_transfer_submit_info.pCommandBuffers		= &swap.vk_transfer_command_buffer;
-		swap.vk_transfer_submit_info.signalSemaphoreCount	= 1;
-		swap.vk_transfer_submit_info.pSignalSemaphores		= &swap.vk_transfer_to_render_semaphore;
+	++swap.render_counter;
 
-		// render_wait_for_semaphores lists all semaphores the render must wait for.
-		// render_wait_for_semaphore_timeline_values lists values to wait for in the timeline semaphores.
-		// These lists need to be same size, each semaphore in render_wait_for_semaphores has a corresponding
-		// timeline value to wait for in render_wait_for_semaphore_timeline_values.
-		// First entry is a transfer semaphore (binary), rest will be from dependant render target render
-		// semaphores (timeline). We need a dummy value for every binary semaphore to keep the lists in sync.
-		swap.render_wait_for_semaphores.push_back( swap.vk_transfer_to_render_semaphore );
-		swap.render_wait_for_semaphore_timeline_values.push_back( 1 );
-		swap.render_wait_for_pipeline_stages.push_back( VK_PIPELINE_STAGE_VERTEX_INPUT_BIT | VK_PIPELINE_STAGE_VERTEX_SHADER_BIT );
-
-		++swap.render_counter;
-
-		swap.vk_render_timeline_semaphore_submit_info.sType						= VK_STRUCTURE_TYPE_TIMELINE_SEMAPHORE_SUBMIT_INFO;
-		swap.vk_render_timeline_semaphore_submit_info.pNext						= nullptr;
-		swap.vk_render_timeline_semaphore_submit_info.waitSemaphoreValueCount	= uint32_t( std::size( swap.render_wait_for_semaphore_timeline_values ) );
-		swap.vk_render_timeline_semaphore_submit_info.pWaitSemaphoreValues		= swap.render_wait_for_semaphore_timeline_values.data();
-		swap.vk_render_timeline_semaphore_submit_info.signalSemaphoreValueCount	= 1;
-		swap.vk_render_timeline_semaphore_submit_info.pSignalSemaphoreValues	= &swap.render_counter;
-
-		swap.vk_render_submit_info.sType					= VK_STRUCTURE_TYPE_SUBMIT_INFO;
-		swap.vk_render_submit_info.pNext					= &swap.vk_render_timeline_semaphore_submit_info;
-		swap.vk_render_submit_info.waitSemaphoreCount		= uint32_t( std::size( swap.render_wait_for_semaphores ) );
-		swap.vk_render_submit_info.pWaitSemaphores			= swap.render_wait_for_semaphores.data();		// Updated later if this render target texture has child render targets.
-		swap.vk_render_submit_info.pWaitDstStageMask		= swap.render_wait_for_pipeline_stages.data();
-		swap.vk_render_submit_info.commandBufferCount		= 1;
-		swap.vk_render_submit_info.pCommandBuffers			= &swap.vk_render_command_buffer;
-		swap.vk_render_submit_info.signalSemaphoreCount		= 1;
-		swap.vk_render_submit_info.pSignalSemaphores		= &swap.vk_render_complete_semaphore;
-	}
-
-	previous_pipeline_settings		= {};
-	previous_texture				= {};
-	previous_sampler				= {};
-	previous_line_width				= 1.0f;
+	previous_graphics_pipeline_settings	= {};
+	previous_texture					= {};
+	previous_sampler					= {};
+	previous_line_width					= 1.0f;
 
 	return true;
 }
@@ -474,7 +393,7 @@ bool vk2d::_internal::RenderTargetTextureImpl::SynchronizeFrame()
 		semaphore_wait_info.pNext				= nullptr;
 		semaphore_wait_info.flags				= 0;
 		semaphore_wait_info.semaphoreCount		= 1;
-		semaphore_wait_info.pSemaphores			= &swap.vk_render_complete_semaphore;
+		semaphore_wait_info.pSemaphores			= create_info_copy.enable_blur ? &swap.vk_mipmap_complete_semaphore : &swap.vk_render_complete_semaphore;
 		semaphore_wait_info.pValues				= &swap.render_counter;
 		result = vkWaitSemaphores(
 			instance->GetVulkanDevice(),
@@ -496,7 +415,7 @@ bool vk2d::_internal::RenderTargetTextureImpl::WaitIdle()
 	std::array<VkSemaphore, std::tuple_size_v<decltype( swap_buffers )>> semaphores;
 	std::array<uint64_t, std::tuple_size_v<decltype( swap_buffers )>> semaphore_values;
 	for( size_t i = 0; i < std::size( swap_buffers ); ++i ) {
-		semaphores[ i ]			= swap_buffers[ i ].vk_render_complete_semaphore;
+		semaphores[ i ]			= create_info_copy.enable_blur ? swap_buffers[ i ].vk_mipmap_complete_semaphore : swap_buffers[ i ].vk_render_complete_semaphore;
 		semaphore_values[ i ]	= swap_buffers[ i ].render_counter;
 	}
 	VkSemaphoreWaitInfo wait_info {};
@@ -533,7 +452,7 @@ bool vk2d::_internal::RenderTargetTextureImpl::CommitRenderTargetTextureRender(
 
 	if( !swap.contains_non_pending_sampled_image ) {
 
-		std::lock_guard<std::mutex> lock_guard( swap.render_commitment_request_mutex );
+		//std::lock_guard<std::mutex> lock_guard( swap.render_commitment_request_mutex );
 
 		if( swap.render_commitment_request_count == 0 ) {
 
@@ -544,24 +463,27 @@ bool vk2d::_internal::RenderTargetTextureImpl::CommitRenderTargetTextureRender(
 			}
 
 			// Give this render info to the collector if this render target texture data is out of date.
-			// Basically if render commitment count is 0 so far or render command buffer has not been re-recorded.
+			// Basically if we're pending render and render commitment count is 0.
 			{
 				// Get immediate children render complete semaphores.
+				std::vector<VkSemaphore>			wait_for_semaphores;				wait_for_semaphores.reserve( std::size( swap.render_target_texture_dependencies ) );
+				std::vector<uint64_t>				wait_for_semaphore_timeline_values;	wait_for_semaphore_timeline_values.reserve( std::size( swap.render_target_texture_dependencies ) );
+				std::vector<VkPipelineStageFlags>	wait_for_semaphore_pipeline_stages;	wait_for_semaphore_pipeline_stages.reserve( std::size( swap.render_target_texture_dependencies ) );
 				for( auto & d : swap.render_target_texture_dependencies ) {
-					swap.render_wait_for_semaphores.push_back( d.render_target->GetCurrentSwapRenderCompleteSemaphore() );
-					swap.render_wait_for_semaphore_timeline_values.push_back( d.render_target->GetCurrentSwapRenderCounter() );
-					swap.render_wait_for_pipeline_stages.push_back( VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT );
+					wait_for_semaphores.push_back( d.render_target->GetCurrentSwapAllCompleteSemaphore() );
+					wait_for_semaphore_timeline_values.push_back( d.render_target->GetCurrentSwapRenderCounter() );
+					wait_for_semaphore_pipeline_stages.push_back( VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT );
 				}
 
-				assert( std::size( swap.render_wait_for_semaphores ) == std::size( swap.render_wait_for_semaphore_timeline_values ) &&
-					std::size( swap.render_wait_for_semaphores ) == std::size( swap.render_wait_for_pipeline_stages ) );
-
-			// Update submit info to account for render dependencies.
-				swap.vk_render_timeline_semaphore_submit_info.waitSemaphoreValueCount	= uint32_t( std::size( swap.render_wait_for_semaphore_timeline_values ) );
-				swap.vk_render_timeline_semaphore_submit_info.pWaitSemaphoreValues		= swap.render_wait_for_semaphore_timeline_values.data();
-				swap.vk_render_submit_info.waitSemaphoreCount							= uint32_t( std::size( swap.render_wait_for_semaphores ) );
-				swap.vk_render_submit_info.pWaitSemaphores								= swap.render_wait_for_semaphores.data();
-				swap.vk_render_submit_info.pWaitDstStageMask							= swap.render_wait_for_pipeline_stages.data();
+				// Update submit info to account for render dependencies.
+				if( !UpdateSubmitInfos(
+					swap,
+					wait_for_semaphores,
+					wait_for_semaphore_timeline_values,
+					wait_for_semaphore_pipeline_stages
+				) ) {
+					return false;
+				}
 
 				// Append to render collector.
 				collector.Append(
@@ -613,7 +535,7 @@ void vk2d::_internal::RenderTargetTextureImpl::AbortRenderTargetTextureRender(
 	auto & swap = swap_buffers[ dependency_info.swap_buffer_index ];
 
 	{
-		std::lock_guard<std::mutex> lock_guard( swap.render_commitment_request_mutex );
+		//std::lock_guard<std::mutex> lock_guard( swap.render_commitment_request_mutex );
 
 		swap.has_been_submitted = false;
 
@@ -632,7 +554,7 @@ void vk2d::_internal::RenderTargetTextureImpl::ResetRenderTargetTextureRenderDep
 {
 	auto & swap = swap_buffers[ swap_buffer_index ];
 
-	std::lock_guard<std::mutex> lock_guard( swap.render_commitment_request_mutex );
+	//std::lock_guard<std::mutex> lock_guard( swap.render_commitment_request_mutex );
 
 	swap.render_commitment_request_count	= 0;
 	swap.render_target_texture_dependencies.clear();
@@ -651,7 +573,7 @@ void vk2d::_internal::RenderTargetTextureImpl::CheckAndAddRenderTargetTextureDep
 	// TODO: Investigate a need for reference count of some sort. Render target can have dependencies to multiple different parents.
 	if( auto render_target = dynamic_cast<vk2d::_internal::RenderTargetTextureImpl*>( texture->texture_impl ) ) {
 
-		std::lock_guard<std::mutex> lock_guard( swap.render_commitment_request_mutex );
+		//std::lock_guard<std::mutex> lock_guard( swap.render_commitment_request_mutex );
 
 		if( std::none_of(
 			swap.render_target_texture_dependencies.begin(),
@@ -1102,9 +1024,7 @@ bool vk2d::_internal::RenderTargetTextureImpl::DetermineType()
 
 	if( samples == vk2d::Multisamples::SAMPLE_COUNT_1 ) {
 		// no multisamples
-		// TODO: Enable this branch when blur is implemented
-		// if( create_info_copy.enable_blur ) {
-		if( false ) {
+		if( create_info_copy.enable_blur ) {
 			// with blur
 			type = vk2d::_internal::RenderTargetTextureType::WITH_BLUR;
 		} else {
@@ -1113,9 +1033,7 @@ bool vk2d::_internal::RenderTargetTextureImpl::DetermineType()
 		}
 	} else {
 		// with multisamples
-		// TODO: Enable this branch when blur is implemented
-		// if( create_info_copy.enable_blur ) {
-		if( false ) {
+		if( create_info_copy.enable_blur ) {
 			// with blur
 			type = vk2d::_internal::RenderTargetTextureType::WITH_MULTISAMPLE_AND_BLUR;
 		} else {
@@ -1128,29 +1046,63 @@ bool vk2d::_internal::RenderTargetTextureImpl::DetermineType()
 
 bool vk2d::_internal::RenderTargetTextureImpl::CreateCommandBuffers()
 {
-	VkCommandPoolCreateInfo command_pool_create_info {};
-	command_pool_create_info.sType				= VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
-	command_pool_create_info.pNext				= nullptr;
-	command_pool_create_info.flags				= VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
-	command_pool_create_info.queueFamilyIndex	= instance->GetPrimaryRenderQueue().GetQueueFamilyIndex();
-	auto result = vkCreateCommandPool(
-		instance->GetVulkanDevice(),
-		&command_pool_create_info,
-		nullptr,
-		&vk_command_pool
-	);
-	if( result != VK_SUCCESS ) {
-		instance->Report( result, "Internal error: Cannot create RenderTargetTexture, cannot create command pool!" );
-		return false;
-	}
+	auto render_queue_family_index = instance->GetPrimaryRenderQueue().GetQueueFamilyIndex();
+	auto compute_queue_family_index = instance->GetPrimaryComputeQueue().GetQueueFamilyIndex();
 
 	{
-		std::vector<VkCommandBuffer> allocated_command_buffers( swap_buffers.size() * 2 );
+		VkCommandPoolCreateInfo command_pool_create_info {};
+		command_pool_create_info.sType				= VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+		command_pool_create_info.pNext				= nullptr;
+		command_pool_create_info.flags				= VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
+		command_pool_create_info.queueFamilyIndex	= render_queue_family_index;
+		auto result = vkCreateCommandPool(
+			instance->GetVulkanDevice(),
+			&command_pool_create_info,
+			nullptr,
+			&vk_graphics_command_pool
+		);
+		if( result != VK_SUCCESS ) {
+			instance->Report( result, "Internal error: Cannot create RenderTargetTexture, cannot create graphics command pool!" );
+			return false;
+		}
+	}
+
+	if( create_info_copy.enable_blur && compute_queue_family_index != render_queue_family_index ) {
+
+		VkCommandPoolCreateInfo command_pool_create_info {};
+		command_pool_create_info.sType				= VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+		command_pool_create_info.pNext				= nullptr;
+		command_pool_create_info.flags				= VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
+		command_pool_create_info.queueFamilyIndex	= compute_queue_family_index;
+		auto result = vkCreateCommandPool(
+			instance->GetVulkanDevice(),
+			&command_pool_create_info,
+			nullptr,
+			&vk_compute_command_pool
+		);
+		if( result != VK_SUCCESS ) {
+			instance->Report( result, "Internal error: Cannot create RenderTargetTexture, cannot create compute command pool!" );
+			return false;
+		}
+	} else {
+		vk_compute_command_pool = vk_graphics_command_pool;
+	}
+
+	// Allocate transfer and render command buffers.
+	// We're using the render queue to transfer vertex data to the GPU,
+	// this needs to change if we'll ever use transfer queue to transfer the data.
+	{
+		std::vector<VkCommandBuffer> allocated_command_buffers;
+		if( create_info_copy.enable_blur ) {
+			allocated_command_buffers.resize( swap_buffers.size() * 3 );
+		} else {
+			allocated_command_buffers.resize( swap_buffers.size() * 2 );
+		}
 		{
 			VkCommandBufferAllocateInfo command_buffer_allocate_info {};
 			command_buffer_allocate_info.sType				= VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
 			command_buffer_allocate_info.pNext				= nullptr;
-			command_buffer_allocate_info.commandPool		= vk_command_pool;
+			command_buffer_allocate_info.commandPool		= vk_graphics_command_pool;
 			command_buffer_allocate_info.level				= VK_COMMAND_BUFFER_LEVEL_PRIMARY;
 			command_buffer_allocate_info.commandBufferCount	= uint32_t( allocated_command_buffers.size() );
 			auto result = vkAllocateCommandBuffers(
@@ -1169,9 +1121,41 @@ bool vk2d::_internal::RenderTargetTextureImpl::CreateCommandBuffers()
 			for( auto & s : swap_buffers ) {
 				s.vk_render_command_buffer		= allocated_command_buffers[ cb_counter++ ];
 			}
-
 			for( auto & s : swap_buffers ) {
 				s.vk_transfer_command_buffer	= allocated_command_buffers[ cb_counter++ ];
+			}
+			if( create_info_copy.enable_blur ) {
+				for( auto & s : swap_buffers ) {
+					s.vk_mipmap_command_buffer	= allocated_command_buffers[ cb_counter++ ];
+				}
+			}
+		}
+	}
+
+	// Allocate blur command buffers.
+	if( create_info_copy.enable_blur ) {
+		std::vector<VkCommandBuffer> allocated_command_buffers( swap_buffers.size() );
+		{
+			VkCommandBufferAllocateInfo command_buffer_allocate_info {};
+			command_buffer_allocate_info.sType				= VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+			command_buffer_allocate_info.pNext				= nullptr;
+			command_buffer_allocate_info.commandPool		= vk_compute_command_pool;
+			command_buffer_allocate_info.level				= VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+			command_buffer_allocate_info.commandBufferCount	= uint32_t( allocated_command_buffers.size() );
+			auto result = vkAllocateCommandBuffers(
+				instance->GetVulkanDevice(),
+				&command_buffer_allocate_info,
+				allocated_command_buffers.data()
+			);
+			if( result != VK_SUCCESS ) {
+				instance->Report( result, "Internal error: Cannot create RenderTargetTexture, cannot create command pool!" );
+				return false;
+			}
+		}
+
+		{
+			for( size_t i = 0; i < std::size( swap_buffers ); ++i ) {
+				swap_buffers[ i ].vk_blur_command_buffer = allocated_command_buffers[ i ];
 			}
 		}
 	}
@@ -1182,9 +1166,19 @@ void vk2d::_internal::RenderTargetTextureImpl::DestroyCommandBuffers()
 {
 	vkDestroyCommandPool(
 		instance->GetVulkanDevice(),
-		vk_command_pool,
+		vk_graphics_command_pool,
 		nullptr
 	);
+	if( vk_compute_command_pool != vk_graphics_command_pool ) {
+		vkDestroyCommandPool(
+			instance->GetVulkanDevice(),
+			vk_compute_command_pool,
+			nullptr
+		);
+	}
+
+	vk_graphics_command_pool	= {};
+	vk_compute_command_pool		= {};
 }
 
 bool vk2d::_internal::RenderTargetTextureImpl::CreateFrameDataBuffers()
@@ -1683,7 +1677,7 @@ bool vk2d::_internal::RenderTargetTextureImpl::CreateSynchronizationPrimitives()
 			instance->GetVulkanDevice(),
 			&binary_semaphore_create_info,
 			nullptr,
-			&s.vk_transfer_to_render_semaphore
+			&s.vk_transfer_complete_semaphore
 		);
 		if( result != VK_SUCCESS ) {
 			instance->Report( result, "Internal error: Cannot create RenderTargetTexture, cannot create synchronization primitives!" );
@@ -1692,13 +1686,37 @@ bool vk2d::_internal::RenderTargetTextureImpl::CreateSynchronizationPrimitives()
 
 		result = vkCreateSemaphore(
 			instance->GetVulkanDevice(),
-			&timeline_semaphore_create_info,
+			create_info_copy.enable_blur ? &binary_semaphore_create_info : &timeline_semaphore_create_info,
 			nullptr,
 			&s.vk_render_complete_semaphore
 		);
 		if( result != VK_SUCCESS ) {
 			instance->Report( result, "Internal error: Cannot create RenderTargetTexture, cannot create synchronization primitives!" );
 			return false;
+		}
+
+		if( create_info_copy.enable_blur ) {
+			result = vkCreateSemaphore(
+				instance->GetVulkanDevice(),
+				&binary_semaphore_create_info,
+				nullptr,
+				&s.vk_blur_complete_semaphore
+			);
+			if( result != VK_SUCCESS ) {
+				instance->Report( result, "Internal error: Cannot create RenderTargetTexture, cannot create synchronization primitives!" );
+				return false;
+			}
+
+			result = vkCreateSemaphore(
+				instance->GetVulkanDevice(),
+				&timeline_semaphore_create_info,
+				nullptr,
+				&s.vk_mipmap_complete_semaphore
+			);
+			if( result != VK_SUCCESS ) {
+				instance->Report( result, "Internal error: Cannot create RenderTargetTexture, cannot create synchronization primitives!" );
+				return false;
+			}
 		}
 	}
 	return true;
@@ -1709,7 +1727,7 @@ void vk2d::_internal::RenderTargetTextureImpl::DestroySynchronizationPrimitives(
 	for( auto & s : swap_buffers ) {
 		vkDestroySemaphore(
 			instance->GetVulkanDevice(),
-			s.vk_transfer_to_render_semaphore,
+			s.vk_transfer_complete_semaphore,
 			nullptr
 		);
 		vkDestroySemaphore(
@@ -1717,10 +1735,281 @@ void vk2d::_internal::RenderTargetTextureImpl::DestroySynchronizationPrimitives(
 			s.vk_render_complete_semaphore,
 			nullptr
 		);
+		vkDestroySemaphore(
+			instance->GetVulkanDevice(),
+			s.vk_blur_complete_semaphore,
+			nullptr
+		);
+		vkDestroySemaphore(
+			instance->GetVulkanDevice(),
+			s.vk_mipmap_complete_semaphore,
+			nullptr
+		);
 	}
 }
 
-void vk2d::_internal::RenderTargetTextureImpl::CmdFinalizeRender(
+bool vk2d::_internal::RenderTargetTextureImpl::RecordTransferCommandBuffer(
+	vk2d::_internal::RenderTargetTextureImpl::SwapBuffer	&	swap
+)
+{
+	assert( swap.vk_transfer_command_buffer );
+
+	auto command_buffer = swap.vk_transfer_command_buffer;
+
+	// Begin command buffer
+	{
+		VkCommandBufferBeginInfo transfer_command_buffer_begin_info {};
+		transfer_command_buffer_begin_info.sType			= VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+		transfer_command_buffer_begin_info.pNext			= nullptr;
+		transfer_command_buffer_begin_info.flags			= VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+		transfer_command_buffer_begin_info.pInheritanceInfo	= nullptr;
+
+		auto result = vkBeginCommandBuffer(
+			command_buffer,
+			&transfer_command_buffer_begin_info
+		);
+		if( result != VK_SUCCESS ) {
+			instance->Report( result, "Internal error: Cannot render to RenderTargetTexture, Cannot record mesh to GPU transfer command buffer!" );
+			return false;
+		}
+	}
+
+	// Record commands to upload frame data to gpu
+	{
+		if( !CmdUpdateFrameData(
+			command_buffer
+		) ) {
+			instance->Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot render to RenderTargetTexture, Cannot record commands to transfer FrameData to GPU!" );
+			return false;
+		}
+	}
+
+	// Record commands to upload mesh data to gpu
+	{
+		if( !mesh_buffer->CmdUploadMeshDataToGPU(
+			command_buffer
+		) ) {
+			instance->Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot render to RenderTargetTexture, Cannot record commands to transfer mesh data to GPU!" );
+			return false;
+		}
+	}
+
+	// End command buffer
+	{
+		auto result = vkEndCommandBuffer(
+			command_buffer
+		);
+		if( result != VK_SUCCESS ) {
+			instance->Report( result, "Internal error: Cannot render to RenderTargetTexture, Cannot compile mesh to GPU transfer command buffer!" );
+			return false;
+		}
+	}
+}
+
+bool vk2d::_internal::RenderTargetTextureImpl::RecordBlurCommandBuffer(
+	vk2d::_internal::RenderTargetTextureImpl::SwapBuffer	&	swap,
+	vk2d::_internal::CompleteImageResource					&	source_image,
+	VkImageLayout												source_image_layout,
+	VkPipelineStageFlagBits										source_image_pipeline_barrier_src_stage,
+	vk2d::_internal::CompleteImageResource					&	intermediate_image,
+	vk2d::_internal::CompleteImageResource					&	final_image
+)
+{
+	assert( swap.vk_blur_command_buffer );
+
+	auto command_buffer = swap.vk_blur_command_buffer;
+
+	// Missing a lot of shit here;
+	// Starting with images, descriptor sets, sampler, pipeline layout stuff...;
+	// Need to separate sampler from image also...;
+	instance->Report( vk2d::ReportSeverity::CRITICAL_ERROR, "TODO" );
+
+	// TODO: Need to make this more centralized.
+	auto blur_workgroup_size = vk2d::Vector2u( 8, 8 );
+
+	// Begin command buffer
+	{
+		VkCommandBufferBeginInfo command_buffer_begin_info {};
+		command_buffer_begin_info.sType			= VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+		command_buffer_begin_info.pNext			= nullptr;
+		command_buffer_begin_info.flags			= VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+		command_buffer_begin_info.pInheritanceInfo	= nullptr;
+
+		auto result = vkBeginCommandBuffer(
+			command_buffer,
+			&command_buffer_begin_info
+		);
+		if( result != VK_SUCCESS ) {
+			instance->Report( result, "Internal error: Cannot render to RenderTargetTexture, Cannot record mesh to GPU transfer command buffer!" );
+			return false;
+		}
+	}
+
+	// Record first blur pass.
+	{
+		// TODO: vk2d::_internal::ComputePipelineSettings is a bit extra, it's copied from vk2d::_internal::GraphicsPipelineSettings and unnecessarily complicated to use.
+		// It's probably a good idea to simplify this a bit at some point, it would separate fetching compute pipelines from graphics pipelines.
+
+		vk2d::_internal::ComputePipelineSettings pipeline_settings {};
+		pipeline_settings.shader_programs		= instance->GetComputeShaderModules( vk2d::_internal::ComputeShaderProgramID::RENDER_TARGET_BLUR_PASS_1 );
+		auto pipeline = instance->GetComputePipeline( pipeline_settings );
+
+		vkCmdBindPipeline(
+			command_buffer,
+			VK_PIPELINE_BIND_POINT_COMPUTE,
+			pipeline
+		);
+
+		vkCmdDispatch(
+			command_buffer,
+			( size.x - 1 ) / blur_workgroup_size.x + 1,
+			( size.y - 1 ) / blur_workgroup_size.y + 1,
+			1
+		);
+	}
+
+	// Record pipeline barrier because the 2 blur passes have write to read dependency.
+	{
+		VkMemoryBarrier memory_barrier {};
+		memory_barrier.sType			= VK_STRUCTURE_TYPE_MEMORY_BARRIER;
+		memory_barrier.pNext			= nullptr;
+		memory_barrier.srcAccessMask	= VK_ACCESS_MEMORY_WRITE_BIT;
+		memory_barrier.dstAccessMask	= VK_ACCESS_MEMORY_READ_BIT;
+
+		vkCmdPipelineBarrier(
+			command_buffer,
+			VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
+			VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
+			0,
+			1, &memory_barrier,
+			0, nullptr,
+			0, nullptr
+		);
+	}
+
+	// Record second blur pass.
+	{
+		vk2d::_internal::ComputePipelineSettings pipeline_settings {};
+		pipeline_settings.shader_programs		= instance->GetComputeShaderModules( vk2d::_internal::ComputeShaderProgramID::RENDER_TARGET_BLUR_PASS_2 );
+		auto pipeline = instance->GetComputePipeline( pipeline_settings );
+
+		vkCmdBindPipeline(
+			command_buffer,
+			VK_PIPELINE_BIND_POINT_COMPUTE,
+			pipeline
+		);
+
+		vkCmdDispatch(
+			command_buffer,
+			( size.x - 1 ) / blur_workgroup_size.x + 1,
+			( size.y - 1 ) / blur_workgroup_size.y + 1,
+			1
+		);
+	}
+
+	// End command buffer
+	{
+		auto result = vkEndCommandBuffer(
+			command_buffer
+		);
+		if( result != VK_SUCCESS ) {
+			instance->Report( result, "Internal error: Cannot render to RenderTargetTexture, Cannot compile mesh to GPU transfer command buffer!" );
+			return false;
+		}
+	}
+}
+
+bool vk2d::_internal::RenderTargetTextureImpl::UpdateSubmitInfos(
+	vk2d::_internal::RenderTargetTextureImpl::SwapBuffer	&	swap,
+	const std::vector<VkSemaphore>							&	wait_for_semaphores,
+	const std::vector<uint64_t>								&	wait_for_semaphore_timeline_values,
+	const std::vector<VkPipelineStageFlags>					&	wait_for_semaphore_pipeline_stages
+)
+{
+	assert( std::size( wait_for_semaphores ) == std::size( wait_for_semaphore_timeline_values ) );
+	assert( std::size( wait_for_semaphores ) == std::size( wait_for_semaphore_pipeline_stages ) );
+
+	swap.vk_transfer_submit_info.sType					= VK_STRUCTURE_TYPE_SUBMIT_INFO;
+	swap.vk_transfer_submit_info.pNext					= nullptr;
+	swap.vk_transfer_submit_info.waitSemaphoreCount		= 0;
+	swap.vk_transfer_submit_info.pWaitSemaphores		= nullptr;
+	swap.vk_transfer_submit_info.pWaitDstStageMask		= nullptr;
+	swap.vk_transfer_submit_info.commandBufferCount		= 1;
+	swap.vk_transfer_submit_info.pCommandBuffers		= &swap.vk_transfer_command_buffer;
+	swap.vk_transfer_submit_info.signalSemaphoreCount	= 1;
+	swap.vk_transfer_submit_info.pSignalSemaphores		= &swap.vk_transfer_complete_semaphore;
+
+	// wait_for_semaphores lists all semaphores the render must wait for.
+	// wait_for_semaphore_timeline_values lists values to wait for in the timeline semaphores.
+	// These lists need to be same size, each semaphore in wait_for_semaphores has a corresponding
+	// timeline value to wait for in wait_for_semaphore_timeline_values.
+	// First entry is a transfer semaphore (binary), rest will be from dependant render target render
+	// semaphores (timeline). We need a dummy value for every binary semaphore to keep the lists in sync.
+
+	swap.render_wait_for_semaphores.push_back( swap.vk_transfer_complete_semaphore );
+	swap.render_wait_for_semaphore_timeline_values.push_back( 1 );
+	swap.render_wait_for_pipeline_stages.push_back( VK_PIPELINE_STAGE_VERTEX_INPUT_BIT | VK_PIPELINE_STAGE_VERTEX_SHADER_BIT );
+
+	for( size_t i = 0; i < std::size( wait_for_semaphores ); ++i ) {
+		swap.render_wait_for_semaphores.push_back( wait_for_semaphores[ i ] );
+		swap.render_wait_for_semaphore_timeline_values.push_back( wait_for_semaphore_timeline_values[ i ] );
+		swap.render_wait_for_pipeline_stages.push_back( wait_for_semaphore_pipeline_stages[ i ] );
+	}
+
+	swap.vk_render_timeline_semaphore_submit_info.sType						= VK_STRUCTURE_TYPE_TIMELINE_SEMAPHORE_SUBMIT_INFO;
+	swap.vk_render_timeline_semaphore_submit_info.pNext						= nullptr;
+	swap.vk_render_timeline_semaphore_submit_info.waitSemaphoreValueCount	= uint32_t( std::size( swap.render_wait_for_semaphore_timeline_values ) );
+	swap.vk_render_timeline_semaphore_submit_info.pWaitSemaphoreValues		= swap.render_wait_for_semaphore_timeline_values.data();
+	swap.vk_render_timeline_semaphore_submit_info.signalSemaphoreValueCount	= 1;
+	swap.vk_render_timeline_semaphore_submit_info.pSignalSemaphoreValues	= &swap.render_counter;		// Ignored if blur is enabled.
+
+	swap.vk_render_submit_info.sType					= VK_STRUCTURE_TYPE_SUBMIT_INFO;
+	swap.vk_render_submit_info.pNext					= &swap.vk_render_timeline_semaphore_submit_info;
+	swap.vk_render_submit_info.waitSemaphoreCount		= uint32_t( std::size( swap.render_wait_for_semaphores ) );
+	swap.vk_render_submit_info.pWaitSemaphores			= swap.render_wait_for_semaphores.data();
+	swap.vk_render_submit_info.pWaitDstStageMask		= swap.render_wait_for_pipeline_stages.data();
+	swap.vk_render_submit_info.commandBufferCount		= 1;
+	swap.vk_render_submit_info.pCommandBuffers			= &swap.vk_render_command_buffer;
+	swap.vk_render_submit_info.signalSemaphoreCount		= 1;
+	swap.vk_render_submit_info.pSignalSemaphores		= &swap.vk_render_complete_semaphore;
+
+	if( create_info_copy.enable_blur ) {
+
+		swap.vk_blur_submit_info_wait_dst_stage_mask	= VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+		swap.vk_blur_submit_info.sType					= VK_STRUCTURE_TYPE_SUBMIT_INFO;
+		swap.vk_blur_submit_info.pNext					= nullptr;
+		swap.vk_blur_submit_info.waitSemaphoreCount		= 1;
+		swap.vk_blur_submit_info.pWaitSemaphores		= &swap.vk_render_complete_semaphore;
+		swap.vk_blur_submit_info.pWaitDstStageMask		= &swap.vk_blur_submit_info_wait_dst_stage_mask;
+		swap.vk_blur_submit_info.commandBufferCount		= 1;
+		swap.vk_blur_submit_info.pCommandBuffers		= &swap.vk_blur_command_buffer;
+		swap.vk_blur_submit_info.signalSemaphoreCount	= 1;
+		swap.vk_blur_submit_info.pSignalSemaphores		= &swap.vk_blur_complete_semaphore;
+
+
+		swap.vk_mipmap_timeline_semaphore_submit_info.sType						= VK_STRUCTURE_TYPE_TIMELINE_SEMAPHORE_SUBMIT_INFO;
+		swap.vk_mipmap_timeline_semaphore_submit_info.pNext						= nullptr;
+		swap.vk_mipmap_timeline_semaphore_submit_info.waitSemaphoreValueCount	= 1;
+		swap.vk_mipmap_timeline_semaphore_submit_info.pWaitSemaphoreValues		= &swap.render_counter;		// Ignored, a placeholder for vk_blur_complete_semaphore which is a binary semaphore.
+		swap.vk_mipmap_timeline_semaphore_submit_info.signalSemaphoreValueCount	= 1;
+		swap.vk_mipmap_timeline_semaphore_submit_info.pSignalSemaphoreValues	= &swap.render_counter;
+
+		swap.vk_mipmap_submit_info_wait_dst_stage_mask	= VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT;
+		swap.vk_mipmap_submit_info.sType				= VK_STRUCTURE_TYPE_SUBMIT_INFO;
+		swap.vk_mipmap_submit_info.pNext				= &swap.vk_mipmap_timeline_semaphore_submit_info;
+		swap.vk_mipmap_submit_info.waitSemaphoreCount	= 1;
+		swap.vk_mipmap_submit_info.pWaitSemaphores		= &swap.vk_blur_complete_semaphore;
+		swap.vk_mipmap_submit_info.pWaitDstStageMask	= &swap.vk_mipmap_submit_info_wait_dst_stage_mask;
+		swap.vk_mipmap_submit_info.commandBufferCount	= 1;
+		swap.vk_mipmap_submit_info.pCommandBuffers		= &swap.vk_mipmap_command_buffer;
+		swap.vk_mipmap_submit_info.signalSemaphoreCount	= 1;
+		swap.vk_mipmap_submit_info.pSignalSemaphores	= &swap.vk_mipmap_complete_semaphore;
+	}
+
+	return true;
+}
+
+void vk2d::_internal::RenderTargetTextureImpl::CmdFinalizeNonBlurredRender(
 	vk2d::_internal::RenderTargetTextureImpl::SwapBuffer		&	swap
 )
 {
@@ -1748,31 +2037,15 @@ void vk2d::_internal::RenderTargetTextureImpl::CmdFinalizeRender(
 		case vk2d::_internal::RenderTargetTextureType::WITH_BLUR:
 			// (Render) -> Attachment -> (Render) -> Buffer1 -> (Render) -> Attachment -> (Blit) -> Sampled.
 
-			// TODO: Finalize render with blur.
-			instance->Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Unimplemented functionality... TODO." );
-			break;
 		case vk2d::_internal::RenderTargetTextureType::WITH_MULTISAMPLE_AND_BLUR:
 			// (Render) -> Attachment -> (Resolve) -> Buffer1 -> (Render) -> Buffer2 -> (Render) -> Buffer1 -> (Blit) -> Sampled.
+			assert( 0 && "Called CmdFinalizeNonBlurredRender() with blurred render." );
 
-			// TODO: Finalize render with multisample and blur, might be able to automatically resolve multisample via render pass, check it.
-			instance->Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Unimplemented functionality... TODO." );
 			break;
 		default:
 			instance->Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot finalize render target texture rendering, Invalid RenderTargetTextureType!" );
 			break;
 	}
-}
-
-void vk2d::_internal::RenderTargetTextureImpl::CmdBlur(
-	vk2d::_internal::RenderTargetTextureImpl::SwapBuffer	&	swap,
-	vk2d::_internal::CompleteImageResource					&	source_image,
-	VkImageLayout												source_image_layout,
-	VkPipelineStageFlagBits										source_image_pipeline_barrier_src_stage,
-	vk2d::_internal::CompleteImageResource					&	intermediate_image,
-	vk2d::_internal::CompleteImageResource					&	final_image
-)
-{
-	// TODO: Render target texture blur.
 }
 
 void vk2d::_internal::RenderTargetTextureImpl::CmdBlitMipmapsToSampledImage(
@@ -1864,7 +2137,11 @@ void vk2d::_internal::RenderTargetTextureImpl::CmdBlitMipmapsToSampledImage(
 	}
 
 	if( granularity_aligned ) {
-		// Copy from source to sampled ( on mip level 0 only ).
+
+		// Copying from the source image to sampled image mip level 0.
+		// The render target image size is aligned to image granularity so we
+		// can do a fast copy from source to sampled image.
+
 		VkImageCopy region {};
 		region.srcSubresource.aspectMask		= VK_IMAGE_ASPECT_COLOR_BIT;
 		region.srcSubresource.mipLevel			= 0;
@@ -1887,14 +2164,18 @@ void vk2d::_internal::RenderTargetTextureImpl::CmdBlitMipmapsToSampledImage(
 		);
 	} else {
 
+		// Copying from the source image to sampled image mip level 0.
+		// The render target image is not aligned to image granularity
+		// so as a shortcut we'll do a 1:1 blit operation.
+
 		// TODO: Investigate if we can get rid of blitting when copying from source to sampled image with unaligned granularity.
 		// Force render target extent to be multiple of the primary render queue
 		// family granularity. Needs more research of how the render target
 		// texture behaves when rendered as a texture on a surface, specifically
 		// need to know if we can control the image extent manually when sampling
-		// the image in a shader.
+		// the sampled image in a shader.
 
-		// Blit from source to sampled ( on mip level 0 only ).
+		// Blit from source to sampled ( to mip level 0 only ).
 		VkImageBlit region {};
 		region.srcSubresource.aspectMask		= VK_IMAGE_ASPECT_COLOR_BIT;
 		region.srcSubresource.mipLevel			= 0;
@@ -1921,7 +2202,7 @@ void vk2d::_internal::RenderTargetTextureImpl::CmdBlitMipmapsToSampledImage(
 
 	// We can directly blit into the second mip level from the source image.
 	if( std::size( mipmap_levels ) > 1 ) {
-		// Blit from source to sampled ( on mip level 1 only ).
+		// Blit from source to sampled ( to mip level 1 only ).
 		VkImageBlit region {};
 		region.srcSubresource.aspectMask		= VK_IMAGE_ASPECT_COLOR_BIT;
 		region.srcSubresource.mipLevel			= 0;
@@ -1946,10 +2227,9 @@ void vk2d::_internal::RenderTargetTextureImpl::CmdBlitMipmapsToSampledImage(
 		);
 	}
 
-	// Sampled image ( mip level 0 only )
-	// image layout transition to shader use.
+	// Transition sampled image mip level 0 layout to shader use optimal.
 	// Since we're blitting the second mip level directly from the
-	// source image we can immediately set the mip level of sampled
+	// source image we can immediately set the mip level 0 of sampled
 	// image to final layout.
 	{
 		std::array<VkImageMemoryBarrier, 1> image_memory_barriers;
@@ -2103,11 +2383,11 @@ void vk2d::_internal::RenderTargetTextureImpl::CmdBlitMipmapsToSampledImage(
 }
 
 void vk2d::_internal::RenderTargetTextureImpl::CmdBindGraphicsPipelineIfDifferent(
-	VkCommandBuffer									command_buffer,
-	const vk2d::_internal::GraphicsPipelineSettings		&	pipeline_settings
+	VkCommandBuffer										command_buffer,
+	const vk2d::_internal::GraphicsPipelineSettings	&	pipeline_settings
 )
 {
-	if( previous_pipeline_settings != pipeline_settings ) {
+	if( previous_graphics_pipeline_settings != pipeline_settings ) {
 		auto pipeline = instance->GetGraphicsPipeline( pipeline_settings );
 
 		vkCmdBindPipeline(
@@ -2115,7 +2395,7 @@ void vk2d::_internal::RenderTargetTextureImpl::CmdBindGraphicsPipelineIfDifferen
 			VK_PIPELINE_BIND_POINT_GRAPHICS,
 			pipeline
 		);
-		previous_pipeline_settings	= pipeline_settings;
+		previous_graphics_pipeline_settings	= pipeline_settings;
 	}
 }
 
