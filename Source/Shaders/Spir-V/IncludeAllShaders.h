@@ -10,3 +10,5 @@
 #include "MultitexturedFragmentLineWithUVBorderColor.frag.spv.h"
 #include "MultitexturedFragmentPoint.frag.spv.h"
 #include "MultitexturedFragmentPointWithUVBorderColor.frag.spv.h"
+#include "RenderTargetTextureBlurPass1.comp.spv.h"
+#include "RenderTargetTextureBlurPass2.comp.spv.h"

@@ -316,7 +316,7 @@ vk2d::_internal::InstanceImpl::InstanceImpl( const InstanceCreateInfo & instance
 	if( !CreateDescriptorPool() ) return;
 	if( !CreatePipelineCache() ) return;
 	if( !CreateShaderModules() ) return;
-	if( !CreatePipelineLayout() ) return;
+	if( !CreatePipelineLayouts() ) return;
 	if( !CreateDeviceMemoryPool() ) return;
 	if( !CreateThreadPool() ) return;
 	if( !CreateResourceManager() ) return;
@@ -347,9 +347,9 @@ vk2d::_internal::InstanceImpl::~InstanceImpl()
 	DestroyThreadPool();
 	DestroyDeviceMemoryPool();
 	DestroyPipelines();
-	DestroyPipelineLayout();
+	DestroyPipelineLayouts();
 	DestroyShaderModules();
-	DestroyPipelineCache();
+	DestroyPipelineCaches();
 	DestroyDescriptorPool();
 	DestroyDescriptorSetLayouts();
 	DestroyDevice();
@@ -922,18 +922,29 @@ const VkPhysicalDeviceFeatures & vk2d::_internal::InstanceImpl::GetVulkanPhysica
 	return vk_physical_device_features;
 }
 
-vk2d::_internal::ShaderProgram vk2d::_internal::InstanceImpl::GetShaderModules(
-	vk2d::_internal::ShaderProgramID			id
+vk2d::_internal::GraphicsShaderProgram vk2d::_internal::InstanceImpl::GetGraphicsShaderModules(
+	vk2d::_internal::GraphicsShaderProgramID			id
 ) const
 {
-	auto collection = shader_programs.find( id );
-	if( collection != shader_programs.end() ) {
+	auto collection = graphics_shader_programs.find( id );
+	if( collection != graphics_shader_programs.end() ) {
 		return collection->second;
 	}
 	return {};
 }
 
-vk2d::_internal::ShaderProgram vk2d::_internal::InstanceImpl::GetCompatibleShaderModules(
+vk2d::_internal::ComputeShaderProgram vk2d::_internal::InstanceImpl::GetComputeShaderModules(
+	vk2d::_internal::ComputeShaderProgramID	id
+) const
+{
+	auto collection = compute_shader_programs.find( id );
+	if( collection != compute_shader_programs.end() ) {
+		return collection->second;
+	}
+	return {};
+}
+
+vk2d::_internal::GraphicsShaderProgram vk2d::_internal::InstanceImpl::GetCompatibleGraphicsShaderModules(
 	bool				multitextured,
 	bool				custom_uv_border_color,
 	uint32_t			vertices_per_primitive
@@ -942,30 +953,30 @@ vk2d::_internal::ShaderProgram vk2d::_internal::InstanceImpl::GetCompatibleShade
 	if( multitextured ) {
 		if( custom_uv_border_color ) {
 			if( vertices_per_primitive == 1 ) {
-				return GetShaderModules( vk2d::_internal::ShaderProgramID::MULTITEXTURED_POINT_UV_BORDER_COLOR );
+				return GetGraphicsShaderModules( vk2d::_internal::GraphicsShaderProgramID::MULTITEXTURED_POINT_UV_BORDER_COLOR );
 			}
 			if( vertices_per_primitive == 2 ) {
-				return GetShaderModules( vk2d::_internal::ShaderProgramID::MULTITEXTURED_LINE_UV_BORDER_COLOR );
+				return GetGraphicsShaderModules( vk2d::_internal::GraphicsShaderProgramID::MULTITEXTURED_LINE_UV_BORDER_COLOR );
 			}
 			if( vertices_per_primitive == 3 ) {
-				return GetShaderModules( vk2d::_internal::ShaderProgramID::MULTITEXTURED_TRIANGLE_UV_BORDER_COLOR );
+				return GetGraphicsShaderModules( vk2d::_internal::GraphicsShaderProgramID::MULTITEXTURED_TRIANGLE_UV_BORDER_COLOR );
 			}
 		} else {
 			if( vertices_per_primitive == 1 ) {
-				return GetShaderModules( vk2d::_internal::ShaderProgramID::MULTITEXTURED_POINT );
+				return GetGraphicsShaderModules( vk2d::_internal::GraphicsShaderProgramID::MULTITEXTURED_POINT );
 			}
 			if( vertices_per_primitive == 2 ) {
-				return GetShaderModules( vk2d::_internal::ShaderProgramID::MULTITEXTURED_LINE );
+				return GetGraphicsShaderModules( vk2d::_internal::GraphicsShaderProgramID::MULTITEXTURED_LINE );
 			}
 			if( vertices_per_primitive == 3 ) {
-				return GetShaderModules( vk2d::_internal::ShaderProgramID::MULTITEXTURED_TRIANGLE );
+				return GetGraphicsShaderModules( vk2d::_internal::GraphicsShaderProgramID::MULTITEXTURED_TRIANGLE );
 			}
 		}
 	} else {
 		if( custom_uv_border_color ) {
-			return GetShaderModules( vk2d::_internal::ShaderProgramID::SINGLE_TEXTURED_UV_BORDER_COLOR );
+			return GetGraphicsShaderModules( vk2d::_internal::GraphicsShaderProgramID::SINGLE_TEXTURED_UV_BORDER_COLOR );
 		} else {
-			return GetShaderModules( vk2d::_internal::ShaderProgramID::SINGLE_TEXTURED );
+			return GetGraphicsShaderModules( vk2d::_internal::GraphicsShaderProgramID::SINGLE_TEXTURED );
 		}
 	}
 
@@ -976,7 +987,7 @@ VkPipeline vk2d::_internal::InstanceImpl::GetGraphicsPipeline(
 	const vk2d::_internal::GraphicsPipelineSettings		&	settings
 )
 {
-	// FIXME: multiple thread access conflict.
+	// TODO: Potential multithreaded access conflict, don't know if this will be a requirement at this point.
 	// Need mutex here as this function can be called from multiple threads.
 	// Alternatively we could create vulkan pipelines per window and render
 	// target texture, but that would probably be wasteful. Regardless this
@@ -986,11 +997,32 @@ VkPipeline vk2d::_internal::InstanceImpl::GetGraphicsPipeline(
 	// std::map per window and render target with a pipeline pointer
 	// would probably work well, if the pipeline is not found in the local
 	// cache, use this function to get it / create it.
-	auto p_it = vk_pipelines.find( settings );
-	if( p_it != vk_pipelines.end() ) {
+	auto p_it = vk_graphics_pipelines.find( settings );
+	if( p_it != vk_graphics_pipelines.end() ) {
 		return p_it->second;
 	}
 	return CreateGraphicsPipeline( settings );
+}
+
+VkPipeline vk2d::_internal::InstanceImpl::GetComputePipeline(
+	const vk2d::_internal::ComputePipelineSettings		&	settings
+)
+{
+	// TODO: Potential multithreaded access conflict, don't know if this will be a requirement at this point.
+	// Need mutex here as this function can be called from multiple threads.
+	// Alternatively we could create vulkan pipelines per window and render
+	// target texture, but that would probably be wasteful. Regardless this
+	// function will be called very often so we'll need a way of caching
+	// these pipelines within the windows and render target textures.
+	// Since the pipelines won't change throughout the execution a simple
+	// std::map per window and render target with a pipeline pointer
+	// would probably work well, if the pipeline is not found in the local
+	// cache, use this function to get it / create it.
+	auto p_it = vk_compute_pipelines.find( settings );
+	if( p_it != vk_compute_pipelines.end() ) {
+		return p_it->second;
+	}
+	return CreateComputePipeline( settings );
 }
 
 VkPipeline vk2d::_internal::InstanceImpl::CreateGraphicsPipeline(
@@ -1180,7 +1212,7 @@ VkPipeline vk2d::_internal::InstanceImpl::CreateGraphicsPipeline(
 	pipeline_create_info.pDepthStencilState		= &depth_stencil_state_create_info;
 	pipeline_create_info.pColorBlendState		= &color_blend_state_create_info;
 	pipeline_create_info.pDynamicState			= &dynamic_state_create_info;
-	pipeline_create_info.layout					= GetVulkanPipelineLayout();
+	pipeline_create_info.layout					= GetGraphicsPipelineLayout();
 	pipeline_create_info.renderPass				= settings.vk_render_pass;
 	pipeline_create_info.subpass				= 0;
 	pipeline_create_info.basePipelineHandle		= VK_NULL_HANDLE;
@@ -1189,7 +1221,7 @@ VkPipeline vk2d::_internal::InstanceImpl::CreateGraphicsPipeline(
 	VkPipeline pipeline {};
 	auto result = vkCreateGraphicsPipelines(
 		vk_device,
-		GetVulkanPipelineCache(),
+		GetGraphicsPipelineCache(),
 		1,
 		&pipeline_create_info,
 		nullptr,
@@ -1200,18 +1232,66 @@ VkPipeline vk2d::_internal::InstanceImpl::CreateGraphicsPipeline(
 		return {};
 	}
 
-	vk_pipelines[ settings ] = pipeline;
+	vk_graphics_pipelines[ settings ] = pipeline;
 	return pipeline;
 }
 
-VkPipelineCache vk2d::_internal::InstanceImpl::GetVulkanPipelineCache() const
+VkPipeline vk2d::_internal::InstanceImpl::CreateComputePipeline( const vk2d::_internal::ComputePipelineSettings & settings )
 {
-	return vk_pipeline_cache;
+	VkPipelineShaderStageCreateInfo stage_create_info {};
+	stage_create_info.sType						= VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+	stage_create_info.pNext						= nullptr;
+	stage_create_info.flags						= 0;
+	stage_create_info.stage						= VK_SHADER_STAGE_COMPUTE_BIT;
+	stage_create_info.module					= settings.shader_programs.compute;
+	stage_create_info.pName						= "main";
+	stage_create_info.pSpecializationInfo		= nullptr;
+
+	VkComputePipelineCreateInfo pipeline_create_info {};
+	pipeline_create_info.sType					= VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO;
+	pipeline_create_info.pNext					= nullptr;
+	pipeline_create_info.flags					= 0;
+	pipeline_create_info.stage					= stage_create_info;
+	pipeline_create_info.layout					= GetComputePipelineLayout();
+	pipeline_create_info.basePipelineHandle		= VK_NULL_HANDLE;
+	pipeline_create_info.basePipelineIndex		= 0;
+
+	VkPipeline pipeline {};
+	auto result = vkCreateComputePipelines(
+		vk_device,
+		GetComputePipelineCache(),
+		1,
+		&pipeline_create_info,
+		nullptr,
+		&pipeline
+	);
+	if( result != VK_SUCCESS ) {
+		Report( result, "Internal error: Cannot create Vulkan compute pipeline!" );
+		return {};
+	}
+
+	vk_compute_pipelines[ settings ] = pipeline;
+	return pipeline;
 }
 
-VkPipelineLayout vk2d::_internal::InstanceImpl::GetVulkanPipelineLayout() const
+VkPipelineCache vk2d::_internal::InstanceImpl::GetGraphicsPipelineCache() const
 {
-	return vk_pipeline_layout;
+	return vk_graphics_pipeline_cache;
+}
+
+VkPipelineCache vk2d::_internal::InstanceImpl::GetComputePipelineCache() const
+{
+	return vk_compute_pipeline_cache;
+}
+
+VkPipelineLayout vk2d::_internal::InstanceImpl::GetGraphicsPipelineLayout() const
+{
+	return vk_graphics_pipeline_layout;
+}
+
+VkPipelineLayout vk2d::_internal::InstanceImpl::GetComputePipelineLayout() const
+{
+	return vk_compute_pipeline_layout;
 }
 
 const vk2d::_internal::DescriptorSetLayout & vk2d::_internal::InstanceImpl::GetSamplerTextureDescriptorSetLayout() const
@@ -1646,7 +1726,7 @@ bool vk2d::_internal::InstanceImpl::CreatePipelineCache()
 		vk_device,
 		&pipeline_cache_create_info,
 		nullptr,
-		&vk_pipeline_cache
+		&vk_graphics_pipeline_cache
 	);
 	if( result != VK_SUCCESS ) {
 		Report( result, "Internal error: Cannot create Vulkan pipeline cache!" );
@@ -1693,77 +1773,110 @@ bool vk2d::_internal::InstanceImpl::CreateShaderModules()
 	};
 
 
+	////////////////////////////////
+	// Graphics shaders
+	////////////////////////////////
 
-	// Create individual shader modules for single textured entries.
-	auto single_textured_vertex								= CreateModule(
-		SingleTexturedVertex_vert_shader_data.data(),
-		SingleTexturedVertex_vert_shader_data.size()
-	);
-	auto single_textured_fragment							= CreateModule(
-		SingleTexturedFragment_frag_shader_data.data(),
-		SingleTexturedFragment_frag_shader_data.size()
-	);
-	auto single_textured_fragment_uv_border_color			= CreateModule(
-		SingleTexturedFragmentWithUVBorderColor_frag_shader_data.data(),
-		SingleTexturedFragmentWithUVBorderColor_frag_shader_data.size()
-	);
+	{
+		// Create individual shader modules for single textured entries.
+		auto single_textured_vertex								= CreateModule(
+			SingleTexturedVertex_vert_shader_data.data(),
+			SingleTexturedVertex_vert_shader_data.size()
+		);
+		auto single_textured_fragment							= CreateModule(
+			SingleTexturedFragment_frag_shader_data.data(),
+			SingleTexturedFragment_frag_shader_data.size()
+		);
+		auto single_textured_fragment_uv_border_color			= CreateModule(
+			SingleTexturedFragmentWithUVBorderColor_frag_shader_data.data(),
+			SingleTexturedFragmentWithUVBorderColor_frag_shader_data.size()
+		);
 
 
 
-	// Create individual shader modules for single textured entries.
-	auto multitextured_vertex								= CreateModule(
-		MultitexturedVertex_vert_shader_data.data(),
-		MultitexturedVertex_vert_shader_data.size()
-	);
+		// Create individual shader modules for single textured entries.
+		auto multitextured_vertex								= CreateModule(
+			MultitexturedVertex_vert_shader_data.data(),
+			MultitexturedVertex_vert_shader_data.size()
+		);
 
-	auto multitextured_fragment_triangle					= CreateModule(
-		MultitexturedFragmentTriangle_frag_shader_data.data(),
-		MultitexturedFragmentTriangle_frag_shader_data.size()
-	);
-	auto multitextured_fragment_line						= CreateModule(
-		MultitexturedFragmentLine_frag_shader_data.data(),
-		MultitexturedFragmentLine_frag_shader_data.size()
-	);
-	auto multitextured_fragment_point						= CreateModule(
-		MultitexturedFragmentPoint_frag_shader_data.data(),
-		MultitexturedFragmentPoint_frag_shader_data.size()
-	);
-	auto multitextured_fragment_triangle_uv_border_color	= CreateModule(
-		MultitexturedFragmentTriangleWithUVBorderColor_frag_shader_data.data(),
-		MultitexturedFragmentTriangleWithUVBorderColor_frag_shader_data.size()
-	);
-	auto multitextured_fragment_line_uv_border_color		= CreateModule(
-		MultitexturedFragmentLineWithUVBorderColor_frag_shader_data.data(),
-		MultitexturedFragmentLineWithUVBorderColor_frag_shader_data.size()
-	);
-	auto multitextured_fragment_point_uv_border_color		= CreateModule(
-		MultitexturedFragmentPointWithUVBorderColor_frag_shader_data.data(),
-		MultitexturedFragmentPointWithUVBorderColor_frag_shader_data.size()
-	);
+		auto multitextured_fragment_triangle					= CreateModule(
+			MultitexturedFragmentTriangle_frag_shader_data.data(),
+			MultitexturedFragmentTriangle_frag_shader_data.size()
+		);
+		auto multitextured_fragment_line						= CreateModule(
+			MultitexturedFragmentLine_frag_shader_data.data(),
+			MultitexturedFragmentLine_frag_shader_data.size()
+		);
+		auto multitextured_fragment_point						= CreateModule(
+			MultitexturedFragmentPoint_frag_shader_data.data(),
+			MultitexturedFragmentPoint_frag_shader_data.size()
+		);
+		auto multitextured_fragment_triangle_uv_border_color	= CreateModule(
+			MultitexturedFragmentTriangleWithUVBorderColor_frag_shader_data.data(),
+			MultitexturedFragmentTriangleWithUVBorderColor_frag_shader_data.size()
+		);
+		auto multitextured_fragment_line_uv_border_color		= CreateModule(
+			MultitexturedFragmentLineWithUVBorderColor_frag_shader_data.data(),
+			MultitexturedFragmentLineWithUVBorderColor_frag_shader_data.size()
+		);
+		auto multitextured_fragment_point_uv_border_color		= CreateModule(
+			MultitexturedFragmentPointWithUVBorderColor_frag_shader_data.data(),
+			MultitexturedFragmentPointWithUVBorderColor_frag_shader_data.size()
+		);
 
-	// List all individual shader modules into a vector
-	vk_shader_modules.push_back( single_textured_vertex );
-	vk_shader_modules.push_back( single_textured_fragment );
-	vk_shader_modules.push_back( single_textured_fragment_uv_border_color );
+		// List all individual shader modules into a vector
+		vk_graphics_shader_modules.push_back( single_textured_vertex );
+		vk_graphics_shader_modules.push_back( single_textured_fragment );
+		vk_graphics_shader_modules.push_back( single_textured_fragment_uv_border_color );
 
-	vk_shader_modules.push_back( multitextured_vertex );
-	vk_shader_modules.push_back( multitextured_fragment_triangle );
-	vk_shader_modules.push_back( multitextured_fragment_line );
-	vk_shader_modules.push_back( multitextured_fragment_point );
-	vk_shader_modules.push_back( multitextured_fragment_triangle_uv_border_color );
-	vk_shader_modules.push_back( multitextured_fragment_line_uv_border_color );
-	vk_shader_modules.push_back( multitextured_fragment_point_uv_border_color );
+		vk_graphics_shader_modules.push_back( multitextured_vertex );
+		vk_graphics_shader_modules.push_back( multitextured_fragment_triangle );
+		vk_graphics_shader_modules.push_back( multitextured_fragment_line );
+		vk_graphics_shader_modules.push_back( multitextured_fragment_point );
+		vk_graphics_shader_modules.push_back( multitextured_fragment_triangle_uv_border_color );
+		vk_graphics_shader_modules.push_back( multitextured_fragment_line_uv_border_color );
+		vk_graphics_shader_modules.push_back( multitextured_fragment_point_uv_border_color );
 
-	// Collect a listing of shader units, which is a collection of shader modules needed to create a pipeline.
-	shader_programs[ vk2d::_internal::ShaderProgramID::SINGLE_TEXTURED ]							= vk2d::_internal::ShaderProgram( single_textured_vertex, single_textured_fragment );
-	shader_programs[ vk2d::_internal::ShaderProgramID::SINGLE_TEXTURED_UV_BORDER_COLOR ]			= vk2d::_internal::ShaderProgram( single_textured_vertex, single_textured_fragment_uv_border_color );
+		// Collect a listing of shader units, which is a collection of shader modules needed to create a pipeline.
+		graphics_shader_programs[ vk2d::_internal::GraphicsShaderProgramID::SINGLE_TEXTURED ]							= vk2d::_internal::GraphicsShaderProgram( single_textured_vertex, single_textured_fragment );
+		graphics_shader_programs[ vk2d::_internal::GraphicsShaderProgramID::SINGLE_TEXTURED_UV_BORDER_COLOR ]			= vk2d::_internal::GraphicsShaderProgram( single_textured_vertex, single_textured_fragment_uv_border_color );
 
-	shader_programs[ vk2d::_internal::ShaderProgramID::MULTITEXTURED_TRIANGLE ]					= vk2d::_internal::ShaderProgram( multitextured_vertex, multitextured_fragment_triangle );
-	shader_programs[ vk2d::_internal::ShaderProgramID::MULTITEXTURED_LINE ]						= vk2d::_internal::ShaderProgram( multitextured_vertex, multitextured_fragment_line );
-	shader_programs[ vk2d::_internal::ShaderProgramID::MULTITEXTURED_POINT ]						= vk2d::_internal::ShaderProgram( multitextured_vertex, multitextured_fragment_point );
-	shader_programs[ vk2d::_internal::ShaderProgramID::MULTITEXTURED_TRIANGLE_UV_BORDER_COLOR ]	= vk2d::_internal::ShaderProgram( multitextured_vertex, multitextured_fragment_triangle_uv_border_color );
-	shader_programs[ vk2d::_internal::ShaderProgramID::MULTITEXTURED_LINE_UV_BORDER_COLOR ]		= vk2d::_internal::ShaderProgram( multitextured_vertex, multitextured_fragment_line_uv_border_color );
-	shader_programs[ vk2d::_internal::ShaderProgramID::MULTITEXTURED_POINT_UV_BORDER_COLOR ]		= vk2d::_internal::ShaderProgram( multitextured_vertex, multitextured_fragment_point_uv_border_color );
+		graphics_shader_programs[ vk2d::_internal::GraphicsShaderProgramID::MULTITEXTURED_TRIANGLE ]					= vk2d::_internal::GraphicsShaderProgram( multitextured_vertex, multitextured_fragment_triangle );
+		graphics_shader_programs[ vk2d::_internal::GraphicsShaderProgramID::MULTITEXTURED_LINE ]						= vk2d::_internal::GraphicsShaderProgram( multitextured_vertex, multitextured_fragment_line );
+		graphics_shader_programs[ vk2d::_internal::GraphicsShaderProgramID::MULTITEXTURED_POINT ]						= vk2d::_internal::GraphicsShaderProgram( multitextured_vertex, multitextured_fragment_point );
+		graphics_shader_programs[ vk2d::_internal::GraphicsShaderProgramID::MULTITEXTURED_TRIANGLE_UV_BORDER_COLOR ]	= vk2d::_internal::GraphicsShaderProgram( multitextured_vertex, multitextured_fragment_triangle_uv_border_color );
+		graphics_shader_programs[ vk2d::_internal::GraphicsShaderProgramID::MULTITEXTURED_LINE_UV_BORDER_COLOR ]		= vk2d::_internal::GraphicsShaderProgram( multitextured_vertex, multitextured_fragment_line_uv_border_color );
+		graphics_shader_programs[ vk2d::_internal::GraphicsShaderProgramID::MULTITEXTURED_POINT_UV_BORDER_COLOR ]		= vk2d::_internal::GraphicsShaderProgram( multitextured_vertex, multitextured_fragment_point_uv_border_color );
+	}
+
+
+
+	////////////////////////////////
+	// Compute shaders
+	////////////////////////////////
+
+	{
+		// Render target texture blur shaders
+		auto render_target_texture_blur_pass_1			= CreateModule(
+			RenderTargetTextureBlurPass1_comp_shader_data.data(),
+			RenderTargetTextureBlurPass1_comp_shader_data.size()
+		);
+		auto render_target_texture_blur_pass_2			= CreateModule(
+			RenderTargetTextureBlurPass2_comp_shader_data.data(),
+			RenderTargetTextureBlurPass2_comp_shader_data.size()
+		);
+
+		// List all individual shader modules into a vector
+		vk_compute_shader_modules.push_back( render_target_texture_blur_pass_1 );
+		vk_compute_shader_modules.push_back( render_target_texture_blur_pass_2 );
+
+		// Collect a listing of shader units, which is a collection of shader modules needed to create a pipeline.
+		compute_shader_programs[ vk2d::_internal::ComputeShaderProgramID::RENDER_TARGET_BLUR_PASS_1 ]				= vk2d::_internal::ComputeShaderProgram( render_target_texture_blur_pass_1 );
+		compute_shader_programs[ vk2d::_internal::ComputeShaderProgramID::RENDER_TARGET_BLUR_PASS_2 ]				= vk2d::_internal::ComputeShaderProgram( render_target_texture_blur_pass_2 );
+	}
+
+
 
 	return true;
 }
@@ -1883,43 +1996,73 @@ bool vk2d::_internal::InstanceImpl::CreateDescriptorSetLayouts()
 
 
 
-bool vk2d::_internal::InstanceImpl::CreatePipelineLayout()
+bool vk2d::_internal::InstanceImpl::CreatePipelineLayouts()
 {
-	// This must match shader layout.
+	// Graphics pipeline layout
+	{
+		// This must match shader layout.
+		std::vector<VkDescriptorSetLayout> set_layouts {
+			uniform_buffer_descriptor_set_layout->GetVulkanDescriptorSetLayout(),	// Pipeline set 0 is FrameData.
+			storage_buffer_descriptor_set_layout->GetVulkanDescriptorSetLayout(),	// Pipeline set 1 is vertex index buffer as storage buffer.
+			storage_buffer_descriptor_set_layout->GetVulkanDescriptorSetLayout(),	// Pipeline set 2 is vertex buffer as storage buffer.
+			sampler_texture_descriptor_set_layout->GetVulkanDescriptorSetLayout(),	// Pipeline set 3 is combined sampler texture and it's data uniform.
+			storage_buffer_descriptor_set_layout->GetVulkanDescriptorSetLayout()	// Pipeline set 4 is texture channel weight data.
+		};
 
-	std::vector<VkDescriptorSetLayout> set_layouts {
-		uniform_buffer_descriptor_set_layout->GetVulkanDescriptorSetLayout(),	// Pipeline set 0 is FrameData.
-		storage_buffer_descriptor_set_layout->GetVulkanDescriptorSetLayout(),	// Pipeline set 1 is vertex index buffer as storage buffer.
-		storage_buffer_descriptor_set_layout->GetVulkanDescriptorSetLayout(),	// Pipeline set 2 is vertex buffer as storage buffer.
-		sampler_texture_descriptor_set_layout->GetVulkanDescriptorSetLayout(),	// Pipeline set 3 is combined sampler texture and it's data uniform.
-		storage_buffer_descriptor_set_layout->GetVulkanDescriptorSetLayout()	// Pipeline set 4 is texture channel weight data.
-	};
+		std::array<VkPushConstantRange, 1> push_constant_ranges {};
+		push_constant_ranges[ 0 ].stageFlags	= VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
+		push_constant_ranges[ 0 ].offset		= 0;
+		push_constant_ranges[ 0 ].size			= uint32_t( sizeof( vk2d::_internal::PushConstants ) );
 
-	std::array<VkPushConstantRange, 1> push_constant_ranges {};
-	push_constant_ranges[ 0 ].stageFlags	= VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
-	push_constant_ranges[ 0 ].offset		= 0;
-	push_constant_ranges[ 0 ].size			= uint32_t( sizeof( vk2d::_internal::PushConstants ) );
+		VkPipelineLayoutCreateInfo pipeline_layout_create_info {};
+		pipeline_layout_create_info.sType					= VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+		pipeline_layout_create_info.pNext					= nullptr;
+		pipeline_layout_create_info.flags					= 0;
+		pipeline_layout_create_info.setLayoutCount			= uint32_t( set_layouts.size() );
+		pipeline_layout_create_info.pSetLayouts				= set_layouts.data();
+		pipeline_layout_create_info.pushConstantRangeCount	= uint32_t( push_constant_ranges.size() );
+		pipeline_layout_create_info.pPushConstantRanges		= push_constant_ranges.data();
 
-	VkPipelineLayoutCreateInfo pipeline_layout_create_info {};
-	pipeline_layout_create_info.sType					= VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-	pipeline_layout_create_info.pNext					= nullptr;
-	pipeline_layout_create_info.flags					= 0;
-	pipeline_layout_create_info.setLayoutCount			= uint32_t( set_layouts.size() );
-	pipeline_layout_create_info.pSetLayouts				= set_layouts.data();
-	pipeline_layout_create_info.pushConstantRangeCount	= uint32_t( push_constant_ranges.size() );
-	pipeline_layout_create_info.pPushConstantRanges		= push_constant_ranges.data();
-
-	auto result = vkCreatePipelineLayout(
-		vk_device,
-		&pipeline_layout_create_info,
-		nullptr,
-		&vk_pipeline_layout
-	);
-	if( result != VK_SUCCESS ) {
-		Report( result, "Internal error: Cannot create Vulkan pipeline layout!" );
-		return false;
+		auto result = vkCreatePipelineLayout(
+			vk_device,
+			&pipeline_layout_create_info,
+			nullptr,
+			&vk_graphics_pipeline_layout
+		);
+		if( result != VK_SUCCESS ) {
+			Report( result, "Internal error: Cannot create Vulkan pipeline layout!" );
+			return false;
+		}
 	}
 
+	// Compute pipeline layout
+	{
+		// This must match shader layout.
+		std::vector<VkDescriptorSetLayout> set_layouts {
+		};
+
+		std::array<VkPushConstantRange, 0> push_constant_ranges {};
+
+		VkPipelineLayoutCreateInfo pipeline_layout_create_info {};
+		pipeline_layout_create_info.sType					= VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+		pipeline_layout_create_info.pNext					= nullptr;
+		pipeline_layout_create_info.flags					= 0;
+		pipeline_layout_create_info.setLayoutCount			= uint32_t( set_layouts.size() );
+		pipeline_layout_create_info.pSetLayouts				= set_layouts.data();
+		pipeline_layout_create_info.pushConstantRangeCount	= uint32_t( push_constant_ranges.size() );
+		pipeline_layout_create_info.pPushConstantRanges		= push_constant_ranges.data();
+
+		auto result = vkCreatePipelineLayout(
+			vk_device,
+			&pipeline_layout_create_info,
+			nullptr,
+			&vk_compute_pipeline_layout
+		);
+		if( result != VK_SUCCESS ) {
+			Report( result, "Internal error: Cannot create Vulkan pipeline layout!" );
+			return false;
+		}
+	}
 	return true;
 }
 
@@ -2042,40 +2185,65 @@ void vk2d::_internal::InstanceImpl::DestroyDefaultSampler()
 	default_sampler			= {};
 }
 
-void vk2d::_internal::InstanceImpl::DestroyPipelineCache()
+void vk2d::_internal::InstanceImpl::DestroyPipelineCaches()
 {
 	vkDestroyPipelineCache(
 		vk_device,
-		vk_pipeline_cache,
+		vk_graphics_pipeline_cache,
 		nullptr
 	);
+	vk_graphics_pipeline_cache			= {};
 
-	vk_pipeline_cache			= {};
+	vkDestroyPipelineCache(
+		vk_device,
+		vk_compute_pipeline_cache,
+		nullptr
+	);
+	vk_compute_pipeline_cache			= {};
 }
 
 void vk2d::_internal::InstanceImpl::DestroyPipelines()
 {
-	for( auto p : vk_pipelines ) {
+	for( auto p : vk_graphics_pipelines ) {
 		vkDestroyPipeline(
 			vk_device,
 			p.second,
 			nullptr
 		);
 	}
-	vk_pipelines.clear();
+	vk_graphics_pipelines.clear();
+
+	for( auto p : vk_compute_pipelines ) {
+		vkDestroyPipeline(
+			vk_device,
+			p.second,
+			nullptr
+		);
+	}
+	vk_compute_pipelines.clear();
 }
 
 void vk2d::_internal::InstanceImpl::DestroyShaderModules()
 {
-	for( auto s : vk_shader_modules ) {
+	for( auto s : vk_graphics_shader_modules ) {
 		vkDestroyShaderModule(
 			vk_device,
 			s,
 			nullptr
 		);
 	}
-	vk_shader_modules.clear();
-	shader_programs.clear();
+	vk_graphics_shader_modules.clear();
+	graphics_shader_programs.clear();
+
+	for( auto s : vk_compute_shader_modules ) {
+		vkDestroyShaderModule(
+			vk_device,
+			s,
+			nullptr
+		);
+	}
+	vk_compute_shader_modules.clear();
+	compute_shader_programs.clear();
 }
 
 void vk2d::_internal::InstanceImpl::DestroyDescriptorSetLayouts()
@@ -2085,15 +2253,21 @@ void vk2d::_internal::InstanceImpl::DestroyDescriptorSetLayouts()
 	storage_buffer_descriptor_set_layout	= nullptr;
 }
 
-void vk2d::_internal::InstanceImpl::DestroyPipelineLayout()
+void vk2d::_internal::InstanceImpl::DestroyPipelineLayouts()
 {
 	vkDestroyPipelineLayout(
 		vk_device,
-		vk_pipeline_layout,
+		vk_graphics_pipeline_layout,
 		nullptr
 	);
+	vk_graphics_pipeline_layout			= {};
 
-	vk_pipeline_layout			= {};
+	vkDestroyPipelineLayout(
+		vk_device,
+		vk_compute_pipeline_layout,
+		nullptr
+	);
+	vk_compute_pipeline_layout			= {};
 }
 
 void vk2d::_internal::InstanceImpl::DestroyDeviceMemoryPool()
@@ -2115,13 +2289,6 @@ void vk2d::_internal::InstanceImpl::DestroyDefaultTexture()
 {
 	resource_manager->DestroyResource( default_texture );
 	default_texture						= {};
-
-	// Old code replaced by texture resource.
-//	descriptor_pool->FreeDescriptorSet( default_texture_descriptor_set );
-//	device_memory_pool->FreeCompleteResource( default_texture );
-
-//	default_texture						= {};
-//	default_texture_descriptor_set		= {};
 }
 
 

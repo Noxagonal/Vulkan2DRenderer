@@ -256,12 +256,17 @@ public:
 
 
 	// Any thread.
-	vk2d::_internal::ShaderProgram							GetShaderModules(
-		vk2d::_internal::ShaderProgramID					id ) const;
+	vk2d::_internal::GraphicsShaderProgram					GetGraphicsShaderModules(
+		vk2d::_internal::GraphicsShaderProgramID			id ) const;
 
 
 	// Any thread.
-	vk2d::_internal::ShaderProgram							GetCompatibleShaderModules(
+	vk2d::_internal::ComputeShaderProgram					GetComputeShaderModules(
+		vk2d::_internal::ComputeShaderProgramID				id ) const;
+
+
+	// Any thread.
+	vk2d::_internal::GraphicsShaderProgram					GetCompatibleGraphicsShaderModules(
 		bool												multitextured,
 		bool												custom_uv_border_color,
 		uint32_t											vertices_per_primitive ) const;
@@ -269,19 +274,35 @@ public:
 
 	// Any thread.
 	VkPipeline												GetGraphicsPipeline(
-		const vk2d::_internal::GraphicsPipelineSettings			&	settings );
+		const vk2d::_internal::GraphicsPipelineSettings	&	settings );
+
+
+	// Any thread.
+	VkPipeline												GetComputePipeline(
+		const vk2d::_internal::ComputePipelineSettings	&	settings );
 
 
 	// Any thread.
 	VkPipeline												CreateGraphicsPipeline(
-		const vk2d::_internal::GraphicsPipelineSettings			&	settings );
+		const vk2d::_internal::GraphicsPipelineSettings	&	settings );
 
 
 	// Any thread.
-	VkPipelineCache											GetVulkanPipelineCache() const;
+	VkPipeline												CreateComputePipeline(
+		const vk2d::_internal::ComputePipelineSettings	&	settings );
+
 
 	// Any thread.
-	VkPipelineLayout										GetVulkanPipelineLayout() const;
+	VkPipelineCache											GetGraphicsPipelineCache() const;
+
+	// Any thread.
+	VkPipelineCache											GetComputePipelineCache() const;
+
+	// Any thread.
+	VkPipelineLayout										GetGraphicsPipelineLayout() const;
+
+	// Any thread.
+	VkPipelineLayout										GetComputePipelineLayout() const;
 
 
 	// Any thread.
@@ -324,7 +345,7 @@ private:
 	bool													CreatePipelineCache();
 	bool													CreateShaderModules();
 	bool													CreateDescriptorSetLayouts();
-	bool													CreatePipelineLayout();
+	bool													CreatePipelineLayouts();
 	bool													CreateDeviceMemoryPool();
 	bool													CreateThreadPool();
 	bool													CreateResourceManager();
@@ -334,11 +355,11 @@ private:
 	void													DestroyDevice();
 	void													DestroyDescriptorPool();
 	void													DestroyDefaultSampler();
-	void													DestroyPipelineCache();
+	void													DestroyPipelineCaches();
 	void													DestroyPipelines();
 	void													DestroyShaderModules();
 	void													DestroyDescriptorSetLayouts();
-	void													DestroyPipelineLayout();
+	void													DestroyPipelineLayouts();
 	void													DestroyDeviceMemoryPool();
 	void													DestroyThreadPool();
 	void													DestroyResourceManager();
@@ -375,13 +396,24 @@ private:
 	VkPhysicalDeviceMemoryProperties						vk_physical_device_memory_properties	= {};
 	VkPhysicalDeviceFeatures								vk_physical_device_features				= {};
 
-	std::vector<VkShaderModule>								vk_shader_modules;
+	std::vector<VkShaderModule>								vk_graphics_shader_modules;
+	std::vector<VkShaderModule>								vk_compute_shader_modules;
 
-	std::map<vk2d::_internal::ShaderProgramID, vk2d::_internal::ShaderProgram>	shader_programs;
-	std::map<vk2d::_internal::GraphicsPipelineSettings, VkPipeline>						vk_pipelines;
+	std::map<vk2d::_internal::GraphicsShaderProgramID, vk2d::_internal::GraphicsShaderProgram>
+															graphics_shader_programs;
+	std::map<vk2d::_internal::ComputeShaderProgramID, vk2d::_internal::ComputeShaderProgram>
+															compute_shader_programs;
 
-	VkPipelineCache											vk_pipeline_cache						= {};
-	VkPipelineLayout										vk_pipeline_layout						= {};
+	std::map<vk2d::_internal::GraphicsPipelineSettings, VkPipeline>
+															vk_graphics_pipelines;
+	std::map<vk2d::_internal::ComputePipelineSettings, VkPipeline>
+															vk_compute_pipelines;
+
+	VkPipelineCache											vk_graphics_pipeline_cache				= {};
+	VkPipelineCache											vk_compute_pipeline_cache				= {};
+
+	VkPipelineLayout										vk_graphics_pipeline_layout				= {};
+	VkPipelineLayout										vk_compute_pipeline_layout				= {};
 
 	std::unique_ptr<vk2d::_internal::DescriptorSetLayout>	sampler_texture_descriptor_set_layout;
 	std::unique_ptr<vk2d::_internal::DescriptorSetLayout>	uniform_buffer_descriptor_set_layout;

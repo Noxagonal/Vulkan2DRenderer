@@ -9,8 +9,8 @@
 
 
 
-bool vk2d::_internal::ShaderProgram::operator<(
-	const vk2d::_internal::ShaderProgram		&	other
+bool vk2d::_internal::GraphicsShaderProgram::operator<(
+	const vk2d::_internal::GraphicsShaderProgram		&	other
 ) const
 {
 	return
@@ -24,8 +24,8 @@ bool vk2d::_internal::ShaderProgram::operator<(
 		);
 }
 
-bool vk2d::_internal::ShaderProgram::operator>(
-	const vk2d::_internal::ShaderProgram		&	other
+bool vk2d::_internal::GraphicsShaderProgram::operator>(
+	const vk2d::_internal::GraphicsShaderProgram		&	other
 ) const
 {
 	return
@@ -39,8 +39,8 @@ bool vk2d::_internal::ShaderProgram::operator>(
 		);
 }
 
-bool vk2d::_internal::ShaderProgram::operator<=(
-	const vk2d::_internal::ShaderProgram		&	other
+bool vk2d::_internal::GraphicsShaderProgram::operator<=(
+	const vk2d::_internal::GraphicsShaderProgram		&	other
 	) const
 {
 	return
@@ -54,8 +54,8 @@ bool vk2d::_internal::ShaderProgram::operator<=(
 		);
 }
 
-bool vk2d::_internal::ShaderProgram::operator>=(
-	const vk2d::_internal::ShaderProgram		&	other
+bool vk2d::_internal::GraphicsShaderProgram::operator>=(
+	const vk2d::_internal::GraphicsShaderProgram		&	other
 	) const
 {
 	return
@@ -69,8 +69,8 @@ bool vk2d::_internal::ShaderProgram::operator>=(
 		);
 }
 
-bool vk2d::_internal::ShaderProgram::operator==(
-	const vk2d::_internal::ShaderProgram		&	other
+bool vk2d::_internal::GraphicsShaderProgram::operator==(
+	const vk2d::_internal::GraphicsShaderProgram		&	other
 ) const
 {
 	return
@@ -84,8 +84,8 @@ bool vk2d::_internal::ShaderProgram::operator==(
 		);
 }
 
-bool vk2d::_internal::ShaderProgram::operator!=(
-	const vk2d::_internal::ShaderProgram		&	other
+bool vk2d::_internal::GraphicsShaderProgram::operator!=(
+	const vk2d::_internal::GraphicsShaderProgram		&	other
 ) const
 {
 	return
@@ -230,5 +230,137 @@ bool vk2d::_internal::GraphicsPipelineSettings::operator!=(
 			other.polygon_mode,
 			other.shader_programs,
 			other.samples
+		);
+}
+
+bool vk2d::_internal::ComputeShaderProgram::operator<( const vk2d::_internal::ComputeShaderProgram & other ) const
+{
+	return
+		std::tie(
+			compute
+		) <
+		std::tie(
+			other.compute
+		);
+}
+
+bool vk2d::_internal::ComputeShaderProgram::operator>( const vk2d::_internal::ComputeShaderProgram & other ) const
+{
+	return
+		std::tie(
+			compute
+		) >
+		std::tie(
+			other.compute
+		);
+}
+
+bool vk2d::_internal::ComputeShaderProgram::operator<=( const vk2d::_internal::ComputeShaderProgram & other ) const
+{
+	return
+		std::tie(
+			compute
+		) <=
+		std::tie(
+			other.compute
+		);
+}
+
+bool vk2d::_internal::ComputeShaderProgram::operator>=( const vk2d::_internal::ComputeShaderProgram & other ) const
+{
+	return
+		std::tie(
+			compute
+		) >=
+		std::tie(
+			other.compute
+		);
+}
+
+bool vk2d::_internal::ComputeShaderProgram::operator==( const vk2d::_internal::ComputeShaderProgram & other ) const
+{
+	return
+		std::tie(
+			compute
+		) ==
+		std::tie(
+			other.compute
+		);
+}
+
+bool vk2d::_internal::ComputeShaderProgram::operator!=( const vk2d::_internal::ComputeShaderProgram & other ) const
+{
+	return
+		std::tie(
+			compute
+		) !=
+		std::tie(
+			other.compute
+		);
+}
+
+bool vk2d::_internal::ComputePipelineSettings::operator<( const vk2d::_internal::ComputePipelineSettings & other ) const
+{
+	return
+		std::tie(
+			shader_programs
+		) <
+		std::tie(
+			other.shader_programs
+		);
+}
+
+bool vk2d::_internal::ComputePipelineSettings::operator>( const vk2d::_internal::ComputePipelineSettings & other ) const
+{
+	return
+		std::tie(
+			shader_programs
+		) >
+		std::tie(
+			other.shader_programs
+		);
+}
+
+bool vk2d::_internal::ComputePipelineSettings::operator<=( const vk2d::_internal::ComputePipelineSettings & other ) const
+{
+	return
+		std::tie(
+			shader_programs
+		) <=
+		std::tie(
+			other.shader_programs
+		);
+}
+
+bool vk2d::_internal::ComputePipelineSettings::operator>=( const vk2d::_internal::ComputePipelineSettings & other ) const
+{
+	return
+		std::tie(
+			shader_programs
+		) >=
+		std::tie(
+			other.shader_programs
+		);
+}
+
+bool vk2d::_internal::ComputePipelineSettings::operator==( const vk2d::_internal::ComputePipelineSettings & other ) const
+{
+	return
+		std::tie(
+			shader_programs
+		) ==
+		std::tie(
+			other.shader_programs
+		);
+}
+
+bool vk2d::_internal::ComputePipelineSettings::operator!=( const vk2d::_internal::ComputePipelineSettings & other ) const
+{
+	return
+		std::tie(
+			shader_programs
+		) !=
+		std::tie(
+			other.shader_programs
 		);
 }

@@ -275,7 +275,7 @@ bool vk2d::_internal::RenderTargetTextureImpl::BeginRender()
 			vkCmdBindDescriptorSets(
 				command_buffer,
 				VK_PIPELINE_BIND_POINT_GRAPHICS,
-				instance->GetVulkanPipelineLayout(),
+				instance->GetGraphicsPipelineLayout(),
 				DESCRIPTOR_SET_ALLOCATION_WINDOW_FRAME_DATA,
 				1, &frame_data_descriptor_set.descriptorSet,
 				0, nullptr
@@ -733,7 +733,7 @@ void vk2d::_internal::RenderTargetTextureImpl::DrawTriangleList(
 		bool multitextured = texture->GetLayerCount() > 1 &&
 			texture_channel_weights.size() >= texture->GetLayerCount() * vertices.size();
 
-		auto shader_programs = instance->GetCompatibleShaderModules(
+		auto graphics_shader_programs = instance->GetCompatibleGraphicsShaderModules(
 			multitextured,
 			sampler->impl->IsAnyBorderColorEnabled(),
 			3
@@ -743,10 +743,10 @@ void vk2d::_internal::RenderTargetTextureImpl::DrawTriangleList(
 		pipeline_settings.vk_render_pass		= vk_attachment_render_pass;
 		pipeline_settings.primitive_topology	= VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
 		pipeline_settings.polygon_mode			= solid ? VK_POLYGON_MODE_FILL : VK_POLYGON_MODE_LINE;
-		pipeline_settings.shader_programs		= shader_programs;
+		pipeline_settings.shader_programs		= graphics_shader_programs;
 		pipeline_settings.samples				= VkSampleCountFlags( samples );
 
-		CmdBindPipelineIfDifferent(
+		CmdBindGraphicsPipelineIfDifferent(
 			command_buffer,
 			pipeline_settings
 		);
@@ -776,7 +776,7 @@ void vk2d::_internal::RenderTargetTextureImpl::DrawTriangleList(
 
 			vkCmdPushConstants(
 				command_buffer,
-				instance->GetVulkanPipelineLayout(),
+				instance->GetGraphicsPipelineLayout(),
 				VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
 				0, sizeof( pc ),
 				&pc
@@ -874,7 +874,7 @@ void vk2d::_internal::RenderTargetTextureImpl::DrawLineList(
 		bool multitextured = texture->GetLayerCount() > 1 &&
 			texture_channel_weights.size() >= texture->GetLayerCount() * vertices.size();
 
-		auto shader_programs = instance->GetCompatibleShaderModules(
+		auto graphics_shader_programs = instance->GetCompatibleGraphicsShaderModules(
 			multitextured,
 			sampler->impl->IsAnyBorderColorEnabled(),
 			2
@@ -884,10 +884,10 @@ void vk2d::_internal::RenderTargetTextureImpl::DrawLineList(
 		pipeline_settings.vk_render_pass		= vk_attachment_render_pass;
 		pipeline_settings.primitive_topology	= VK_PRIMITIVE_TOPOLOGY_LINE_LIST;
 		pipeline_settings.polygon_mode			= VK_POLYGON_MODE_LINE;
-		pipeline_settings.shader_programs		= shader_programs;
+		pipeline_settings.shader_programs		= graphics_shader_programs;
 		pipeline_settings.samples				= VkSampleCountFlags( samples );
 
-		CmdBindPipelineIfDifferent(
+		CmdBindGraphicsPipelineIfDifferent(
 			command_buffer,
 			pipeline_settings
 		);
@@ -917,7 +917,7 @@ void vk2d::_internal::RenderTargetTextureImpl::DrawLineList(
 
 			vkCmdPushConstants(
 				command_buffer,
-				instance->GetVulkanPipelineLayout(),
+				instance->GetGraphicsPipelineLayout(),
 				VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
 				0, sizeof( pc ),
 				&pc
@@ -970,7 +970,7 @@ void vk2d::_internal::RenderTargetTextureImpl::DrawPointList(
 		bool multitextured = texture->GetLayerCount() > 1 &&
 			texture_channel_weights.size() >= texture->GetLayerCount() * vertices.size();
 
-		auto shader_programs = instance->GetCompatibleShaderModules(
+		auto graphics_shader_programs = instance->GetCompatibleGraphicsShaderModules(
 			multitextured,
 			sampler->impl->IsAnyBorderColorEnabled(),
 			1
@@ -980,10 +980,10 @@ void vk2d::_internal::RenderTargetTextureImpl::DrawPointList(
 		pipeline_settings.vk_render_pass		= vk_attachment_render_pass;
 		pipeline_settings.primitive_topology	= VK_PRIMITIVE_TOPOLOGY_POINT_LIST;
 		pipeline_settings.polygon_mode			= VK_POLYGON_MODE_POINT;
-		pipeline_settings.shader_programs		= shader_programs;
+		pipeline_settings.shader_programs		= graphics_shader_programs;
 		pipeline_settings.samples				= VkSampleCountFlags( samples );
 
-		CmdBindPipelineIfDifferent(
+		CmdBindGraphicsPipelineIfDifferent(
 			command_buffer,
 			pipeline_settings
 		);
@@ -1013,7 +1013,7 @@ void vk2d::_internal::RenderTargetTextureImpl::DrawPointList(
 
 			vkCmdPushConstants(
 				command_buffer,
-				instance->GetVulkanPipelineLayout(),
+				instance->GetGraphicsPipelineLayout(),
 				VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
 				0, sizeof( pc ),
 				&pc
@@ -2102,7 +2102,7 @@ void vk2d::_internal::RenderTargetTextureImpl::CmdBlitMipmapsToSampledImage(
 	}
 }
 
-void vk2d::_internal::RenderTargetTextureImpl::CmdBindPipelineIfDifferent(
+void vk2d::_internal::RenderTargetTextureImpl::CmdBindGraphicsPipelineIfDifferent(
 	VkCommandBuffer									command_buffer,
 	const vk2d::_internal::GraphicsPipelineSettings		&	pipeline_settings
 )
@@ -2190,7 +2190,7 @@ void vk2d::_internal::RenderTargetTextureImpl::CmdBindTextureSamplerIfDifferent(
 		vkCmdBindDescriptorSets(
 			command_buffer,
 			VK_PIPELINE_BIND_POINT_GRAPHICS,
-			instance->GetVulkanPipelineLayout(),
+			instance->GetGraphicsPipelineLayout(),
 			DESCRIPTOR_SET_ALLOCATION_TEXTURE_AND_SAMPLER,
 			1, &set.descriptor_set.descriptorSet,
 			0, nullptr

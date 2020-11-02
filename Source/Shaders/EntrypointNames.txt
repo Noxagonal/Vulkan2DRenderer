@@ -13,6 +13,10 @@
 
 
 
+////////////////////////////////
+// Graphics shaders
+////////////////////////////////
+
 // Single textured
 SingleTexturedVertex								// Single textured vertex shader used for all single textured vertex shaders.
 
@@ -30,3 +34,13 @@ MultitexturedFragmentLine							// Multitextured fragment shader for line, no cu
 MultitexturedFragmentLineWithUVBorderColor			// Multitextured fragment shader for line, with custom UV border color.
 MultitexturedFragmentPoint							// Multitextured fragment shader for point, no custom UV border color.
 MultitexturedFragmentPointWithUVBorderColor			// Multitextured fragment shader for point, with custom UV border color.
+
+
+
+////////////////////////////////
+// Compute shaders
+////////////////////////////////
+
+// Render target texture blur
+RenderTargetTextureBlurPass1
+RenderTargetTextureBlurPass2

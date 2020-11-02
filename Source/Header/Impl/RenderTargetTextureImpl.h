@@ -278,7 +278,7 @@ private:
 		VkImageLayout													source_image_layout,
 		VkPipelineStageFlagBits											source_image_pipeline_barrier_src_stage );
 
-	void																CmdBindPipelineIfDifferent(
+	void																CmdBindGraphicsPipelineIfDifferent(
 		VkCommandBuffer													command_buffer,
 		const vk2d::_internal::GraphicsPipelineSettings						&	pipeline_settings );
 

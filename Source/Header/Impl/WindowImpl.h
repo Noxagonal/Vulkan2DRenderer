@@ -37,7 +37,7 @@ class CursorImpl;
 class MeshBuffer;
 class TextureResourceImpl;
 class ScreenshotSaverTask;
-class ShaderProgram;
+class GraphicsShaderProgram;
 
 bool											AquireImage(
 	vk2d::_internal::WindowImpl				*	data,
@@ -251,7 +251,7 @@ private:
 
 	void														HandleScreenshotEvent();
 
-	void														CmdBindPipelineIfDifferent(
+	void														CmdBindGraphicsPipelineIfDifferent(
 		VkCommandBuffer											command_buffer,
 		const vk2d::_internal::GraphicsPipelineSettings				&	pipeline_settings );
 
