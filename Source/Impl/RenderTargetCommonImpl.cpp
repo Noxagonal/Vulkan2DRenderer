@@ -4,13 +4,17 @@
 #include "../Header/Impl/InstanceImpl.h"
 
 void vk2d::_internal::RenderTargetTextureRenderCollector::Append(
-	VkSubmitInfo	transfer_submit_info,
-	VkSubmitInfo	render_submit_info
+	VkSubmitInfo	*	transfer_submit_info,
+	VkSubmitInfo	*	render_submit_info,
+	VkSubmitInfo	*	blur_submit_info,
+	VkSubmitInfo	*	mipmap_submit_info
 )
 {
 	collection.push_back( vk2d::_internal::RenderTargetTextureRenderCollector::Collection {
 		transfer_submit_info,
-		render_submit_info
+		render_submit_info,
+		blur_submit_info,
+		mipmap_submit_info
 	} );
 }
 

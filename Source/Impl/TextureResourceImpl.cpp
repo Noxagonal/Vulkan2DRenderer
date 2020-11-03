@@ -808,7 +808,7 @@ bool vk2d::_internal::TextureResourceImpl::MTLoad(
 	// Not used anymore because array textures require combined texture samplers.
 //	{
 //		descriptor_set = loader_thread_resource->GetDescriptorAutoPool()->AllocateDescriptorSet(
-//			resource_manager->GetInstance()->GetTextureDescriptorSetLayout()
+//			resource_manager->GetInstance()->GetGraphicsTextureDescriptorSetLayout()
 //		);
 //		if( descriptor_set != VK_SUCCESS ) {
 //			return false;

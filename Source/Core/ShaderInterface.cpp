@@ -303,10 +303,12 @@ bool vk2d::_internal::ComputePipelineSettings::operator<( const vk2d::_internal:
 {
 	return
 		std::tie(
-			shader_programs
+			shader_programs,
+			pipeline_layout
 		) <
 		std::tie(
-			other.shader_programs
+			other.shader_programs,
+			other.pipeline_layout
 		);
 }
 
@@ -314,10 +316,12 @@ bool vk2d::_internal::ComputePipelineSettings::operator>( const vk2d::_internal:
 {
 	return
 		std::tie(
-			shader_programs
+			shader_programs,
+			pipeline_layout
 		) >
 		std::tie(
-			other.shader_programs
+			other.shader_programs,
+			other.pipeline_layout
 		);
 }
 
@@ -325,10 +329,12 @@ bool vk2d::_internal::ComputePipelineSettings::operator<=( const vk2d::_internal
 {
 	return
 		std::tie(
-			shader_programs
+			shader_programs,
+			pipeline_layout
 		) <=
 		std::tie(
-			other.shader_programs
+			other.shader_programs,
+			other.pipeline_layout
 		);
 }
 
@@ -336,10 +342,12 @@ bool vk2d::_internal::ComputePipelineSettings::operator>=( const vk2d::_internal
 {
 	return
 		std::tie(
-			shader_programs
+			shader_programs,
+			pipeline_layout
 		) >=
 		std::tie(
-			other.shader_programs
+			other.shader_programs,
+			other.pipeline_layout
 		);
 }
 
@@ -347,10 +355,12 @@ bool vk2d::_internal::ComputePipelineSettings::operator==( const vk2d::_internal
 {
 	return
 		std::tie(
-			shader_programs
+			shader_programs,
+			pipeline_layout
 		) ==
 		std::tie(
-			other.shader_programs
+			other.shader_programs,
+			other.pipeline_layout
 		);
 }
 
@@ -358,9 +368,11 @@ bool vk2d::_internal::ComputePipelineSettings::operator!=( const vk2d::_internal
 {
 	return
 		std::tie(
-			shader_programs
+			shader_programs,
+			pipeline_layout
 		) !=
 		std::tie(
-			other.shader_programs
+			other.shader_programs,
+			other.pipeline_layout
 		);
 }

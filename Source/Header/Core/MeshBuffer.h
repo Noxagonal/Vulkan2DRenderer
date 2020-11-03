@@ -259,7 +259,7 @@ public:
 			case vk2d::_internal::MeshBufferDescriptorSetType::UNIFORM:
 			{
 				// TODO: MeshBufferBlock::descriptor_set allocation and freeing needs to be thread specific instead of allocating from the instance.
-				descriptor_set			= instance->AllocateDescriptorSet( instance->GetUniformBufferDescriptorSetLayout() );
+				descriptor_set			= instance->AllocateDescriptorSet( instance->GetGraphicsUniformBufferDescriptorSetLayout() );
 
 				VkDescriptorBufferInfo descriptor_write_buffer_info {};
 				descriptor_write_buffer_info.buffer		= device_buffer.buffer;
@@ -286,7 +286,7 @@ public:
 			case vk2d::_internal::MeshBufferDescriptorSetType::STORAGE:
 			{
 				// TODO: MeshBufferBlock::descriptor_set allocation and freeing needs to be thread specific instead of allocating from the instance.
-				descriptor_set			= instance->AllocateDescriptorSet( instance->GetStorageBufferDescriptorSetLayout() );
+				descriptor_set			= instance->AllocateDescriptorSet( instance->GetGraphicsStorageBufferDescriptorSetLayout() );
 
 				VkDescriptorBufferInfo descriptor_write_buffer_info {};
 				descriptor_write_buffer_info.buffer		= device_buffer.buffer;

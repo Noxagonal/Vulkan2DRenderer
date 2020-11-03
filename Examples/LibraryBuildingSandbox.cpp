@@ -64,6 +64,7 @@ int main()
 	render_target_texture_create_info.coordinate_space	= vk2d::RenderCoordinateSpace::TEXEL_SPACE;
 	render_target_texture_create_info.size				= vk2d::Vector2u( 256, 256 );
 	render_target_texture_create_info.samples			= vk2d::Multisamples::SAMPLE_COUNT_8;
+	render_target_texture_create_info.enable_blur		= true;
 	auto render_target_texture1 = instance->CreateRenderTargetTexture(
 		render_target_texture_create_info
 	);
@@ -129,7 +130,7 @@ int main()
 				draw_rect_size * vk2d::Vector2f( -1, -0.5 ),
 				draw_rect_size * vk2d::Vector2f( 0, 0.5 )
 			);
-			textured_box.SetTexture( render_target_texture2 );
+			textured_box.SetTexture( render_target_texture1 );
 			textured_box.SetSampler( pixel_sampler );
 			window1->DrawMesh( textured_box );
 
@@ -139,7 +140,7 @@ int main()
 				vk2d::Vector2f( 30, 30 ),
 				true
 			);
-			grid.SetTexture( render_target_texture2 );
+			grid.SetTexture( render_target_texture1 );
 			grid.SetSampler( pixel_sampler );
 			grid.Wave(
 				2.36f,
@@ -237,7 +238,7 @@ void DrawRenderTargetTextureContent(
 	}
 
 
-
+	/*
 	{
 		auto render_target2_size_f = vk2d::Vector2f( render_target_texture2->GetSize().x, render_target_texture2->GetSize().y );
 
@@ -260,4 +261,5 @@ void DrawRenderTargetTextureContent(
 
 		render_target_texture2->EndRender();
 	}
+	*/
 }

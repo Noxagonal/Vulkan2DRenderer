@@ -257,7 +257,8 @@ private:
 		VkImageLayout													source_image_layout,
 		VkPipelineStageFlagBits											source_image_pipeline_barrier_src_stage,
 		vk2d::_internal::CompleteImageResource						&	intermediate_image,
-		vk2d::_internal::CompleteImageResource						&	final_image );
+		vk2d::_internal::CompleteImageResource						&	destination_image,
+		VkImageLayout													destination_image_final_layout );
 
 	bool																RecordMipmapCommandBuffer(
 		vk2d::_internal::RenderTargetTextureImpl::SwapBuffer		&	swap,
@@ -271,6 +272,28 @@ private:
 		const std::vector<uint64_t>									&	wait_for_semaphore_timeline_values,
 		const std::vector<VkPipelineStageFlags>						&	wait_for_semaphore_pipeline_stages );
 
+	vk2d::_internal::TimedDescriptorPoolData						&	GetOrCreateDescriptorSetForSampler(
+		vk2d::Sampler												*	sampler );
+
+	vk2d::_internal::TimedDescriptorPoolData						&	GetOrCreateDescriptorSetForTexture(
+		vk2d::Texture												*	texture );
+
+	void																CmdPushBlurTextureDescriptorWritesDirectly(
+		VkCommandBuffer													command_buffer,
+		VkPipelineLayout												pipeline_layout,
+		uint32_t														set,
+		VkImageView														source_image,
+		VkImageLayout													source_image_layout,
+		VkImageView														destination_image,
+		VkImageLayout													destination_image_layout );
+
+	/*
+	// Not worth it to allocate descriptor sets, instead push directly into the command buffer using CmdPushBlurTextureDescriptorWritesDirectly().
+	vk2d::_internal::TimedDescriptorPoolData						&	GetOrCreateDescriptorSetForBlurImages(
+		VkImageView														source_image,
+		VkImageView														write_image );
+	*/
+
 	/// @brief		Record commands to finalize render into the sampled image.
 	///				This includes resolving multisamples, blur, mipmap generation and storing the result
 	///				into sampled image to be used later as a texture.
@@ -283,11 +306,14 @@ private:
 	void																CmdFinalizeNonBlurredRender(
 		vk2d::_internal::RenderTargetTextureImpl::SwapBuffer		&	swap );
 
+	bool																FinalizeBlurredRender(
+		vk2d::_internal::RenderTargetTextureImpl::SwapBuffer		&	swap );
+
 	/// @brief		Record commands to copy an image to the final sampled image, then generate mipmaps for it.
 	///				Called by vk2d::_internal::RenderTargetTextureImpl::CmdFinalizeNonBlurredRender().
 	/// @note		Multithreading: Main thread only.
-	/// @param[in]	swap
-	///				Reference to internal structure which contains all the information about the current frame.
+	/// @param[in]	command_buffer
+	///				Command buffer where to record mipmap blit commands to.
 	/// @param[in]	source_image
 	///				Reference to image object from where data is copied and blitted from.
 	///				Only mip level 0 is accessed.
@@ -297,11 +323,14 @@ private:
 	///				Source image current layout. See Vulkan documentation about VkImageLayout.
 	/// @param[in]	source_image_pipeline_barrier_src_stage
 	///				Vulkan pipeline stage flags that must complete before source image data is accessed.
+	/// @param[in]	destination_image
+	///				Sampled image to be used as shader read only optimal, has to have correct amount of mip levels.
 	void																CmdBlitMipmapsToSampledImage(
-		vk2d::_internal::RenderTargetTextureImpl::SwapBuffer		&	swap,
+		VkCommandBuffer												&	command_buffer,
 		vk2d::_internal::CompleteImageResource						&	source_image,
 		VkImageLayout													source_image_layout,
-		VkPipelineStageFlagBits											source_image_pipeline_barrier_src_stage );
+		VkPipelineStageFlagBits											source_image_pipeline_barrier_src_stage,
+		vk2d::_internal::CompleteImageResource						&	destination_image );
 
 	void																CmdBindGraphicsPipelineIfDifferent(
 		VkCommandBuffer													command_buffer,
@@ -362,11 +391,10 @@ private:
 	vk2d::Sampler													*	previous_sampler							= {};
 	float																previous_line_width							= {};
 
-	std::map<vk2d::Sampler*, vk2d::_internal::SamplerTextureDescriptorPoolData>
-																		sampler_descriptor_sets						= {};
-
-	std::map<vk2d::Texture*, vk2d::_internal::SamplerTextureDescriptorPoolData>
-																		texture_descriptor_sets						= {};
+	std::map<vk2d::Sampler*, vk2d::_internal::TimedDescriptorPoolData>	sampler_descriptor_sets						= {};
+	std::map<vk2d::Texture*, vk2d::_internal::TimedDescriptorPoolData>	texture_descriptor_sets						= {};
+	std::map<VkImageView, std::map<VkImageView, vk2d::_internal::TimedDescriptorPoolData>>
+																		image_descriptor_sets						= {};
 
 	bool																is_good										= {};
 };

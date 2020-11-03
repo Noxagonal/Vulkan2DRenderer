@@ -296,6 +296,7 @@ private:
 	VkDevice													vk_device									= {};
 
 	vk2d::_internal::ResolvedQueue								primary_render_queue						= {};
+	vk2d::_internal::ResolvedQueue								primary_compute_queue						= {};
 
 	vk2d::PFN_VK2D_ReportFunction								report_function								= {};
 
@@ -345,10 +346,10 @@ private:
 	vk2d::Sampler											*	previous_sampler							= {};
 	float														previous_line_width							= {};
 
-	std::map<vk2d::Sampler*, vk2d::_internal::SamplerTextureDescriptorPoolData>
+	std::map<vk2d::Sampler*, vk2d::_internal::TimedDescriptorPoolData>
 																sampler_descriptor_sets						= {};
 
-	std::map<vk2d::Texture*, vk2d::_internal::SamplerTextureDescriptorPoolData>
+	std::map<vk2d::Texture*, vk2d::_internal::TimedDescriptorPoolData>
 																texture_descriptor_sets						= {};
 
 	std::unique_ptr<vk2d::_internal::MeshBuffer>				mesh_buffer									= {};

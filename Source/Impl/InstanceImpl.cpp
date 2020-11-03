@@ -10,6 +10,7 @@
 #include "../Header/Core/DescriptorSet.h"
 #include "../Header/Impl/WindowImpl.h"
 #include "../../Include/Interface/Sampler.h"
+#include "../Header/Impl/SamplerImpl.h"
 #include "../../Include/Interface/TextureResource.h"
 
 #include "../Shaders/Spir-V/IncludeAllShaders.h"
@@ -293,6 +294,7 @@ vk2d::_internal::InstanceImpl::InstanceImpl( const InstanceCreateInfo & instance
 
 	// Device extensions.
 	device_extensions.push_back( VK_KHR_SWAPCHAIN_EXTENSION_NAME );
+	device_extensions.push_back( VK_KHR_PUSH_DESCRIPTOR_EXTENSION_NAME );
 
 #if VK2D_BUILD_OPTION_VULKAN_COMMAND_BUFFER_CHECKMARKS && VK2D_BUILD_OPTION_VULKAN_VALIDATION && VK2D_DEBUG_ENABLE
 	device_extensions.push_back( VK_NV_DEVICE_DIAGNOSTIC_CHECKPOINTS_EXTENSION_NAME );
@@ -312,6 +314,7 @@ vk2d::_internal::InstanceImpl::InstanceImpl( const InstanceCreateInfo & instance
 	}
 	#endif
 
+	if( !PopulateNonStaticallyExposedVulkanFunctions() ) return;
 	if( !CreateDescriptorSetLayouts() ) return;
 	if( !CreateDescriptorPool() ) return;
 	if( !CreatePipelineCache() ) return;
@@ -322,6 +325,7 @@ vk2d::_internal::InstanceImpl::InstanceImpl( const InstanceCreateInfo & instance
 	if( !CreateResourceManager() ) return;
 	if( !CreateDefaultTexture() ) return;
 	if( !CreateDefaultSampler() ) return;
+	if( !CreateBlurSampler() ) return;
 
 	vk2d::_internal::instance_listeners.push_back( this );
 	creator_thread_id	= std::this_thread::get_id();
@@ -341,6 +345,7 @@ vk2d::_internal::InstanceImpl::~InstanceImpl()
 	cursors.clear();
 	samplers.clear();
 
+	DestroyBlurSampler();
 	DestroyDefaultSampler();
 	DestroyDefaultTexture();
 	DestroyResourceManager();
@@ -1252,7 +1257,7 @@ VkPipeline vk2d::_internal::InstanceImpl::CreateComputePipeline( const vk2d::_in
 	pipeline_create_info.pNext					= nullptr;
 	pipeline_create_info.flags					= 0;
 	pipeline_create_info.stage					= stage_create_info;
-	pipeline_create_info.layout					= GetComputePipelineLayout();
+	pipeline_create_info.layout					= settings.pipeline_layout;
 	pipeline_create_info.basePipelineHandle		= VK_NULL_HANDLE;
 	pipeline_create_info.basePipelineIndex		= 0;
 
@@ -1289,29 +1294,39 @@ VkPipelineLayout vk2d::_internal::InstanceImpl::GetGraphicsPipelineLayout() cons
 	return vk_graphics_pipeline_layout;
 }
 
-VkPipelineLayout vk2d::_internal::InstanceImpl::GetComputePipelineLayout() const
+VkPipelineLayout vk2d::_internal::InstanceImpl::GetComputeBlurPipelineLayout() const
 {
-	return vk_compute_pipeline_layout;
+	return vk_compute_blur_pipeline_layout;
 }
 
-const vk2d::_internal::DescriptorSetLayout & vk2d::_internal::InstanceImpl::GetSamplerDescriptorSetLayout() const
+const vk2d::_internal::DescriptorSetLayout & vk2d::_internal::InstanceImpl::GetComputeBasicSamplerDescriptorSetLayout() const
 {
-	return *sampler_descriptor_set_layout;
+	return *compute_basic_sampler_descriptor_set_layout;
 }
 
-const vk2d::_internal::DescriptorSetLayout & vk2d::_internal::InstanceImpl::GetTextureDescriptorSetLayout() const
+const vk2d::_internal::DescriptorSetLayout & vk2d::_internal::InstanceImpl::GetComputeBlurTexturesDescriptorSetLayout() const
 {
-	return *texture_descriptor_set_layout;
+	return *compute_blur_textures_descriptor_set_layout;
 }
 
-const vk2d::_internal::DescriptorSetLayout & vk2d::_internal::InstanceImpl::GetUniformBufferDescriptorSetLayout() const
+const vk2d::_internal::DescriptorSetLayout & vk2d::_internal::InstanceImpl::GetGraphicsSamplerDescriptorSetLayout() const
 {
-	return *uniform_buffer_descriptor_set_layout;
+	return *graphics_sampler_descriptor_set_layout;
 }
 
-const vk2d::_internal::DescriptorSetLayout & vk2d::_internal::InstanceImpl::GetStorageBufferDescriptorSetLayout() const
+const vk2d::_internal::DescriptorSetLayout & vk2d::_internal::InstanceImpl::GetGraphicsTextureDescriptorSetLayout() const
 {
-	return *storage_buffer_descriptor_set_layout;
+	return *graphics_texture_descriptor_set_layout;
+}
+
+const vk2d::_internal::DescriptorSetLayout & vk2d::_internal::InstanceImpl::GetGraphicsUniformBufferDescriptorSetLayout() const
+{
+	return *graphics_uniform_buffer_descriptor_set_layout;
+}
+
+const vk2d::_internal::DescriptorSetLayout & vk2d::_internal::InstanceImpl::GetGraphicsStorageBufferDescriptorSetLayout() const
+{
+	return *graphics_storage_buffer_descriptor_set_layout;
 }
 
 vk2d::Texture * vk2d::_internal::InstanceImpl::GetDefaultTexture() const
@@ -1322,6 +1337,11 @@ vk2d::Texture * vk2d::_internal::InstanceImpl::GetDefaultTexture() const
 vk2d::Sampler * vk2d::_internal::InstanceImpl::GetDefaultSampler() const
 {
 	return default_sampler.get();
+}
+
+VkDescriptorSet vk2d::_internal::InstanceImpl::GetBlurSamplerDescriptorSet() const
+{
+	return blur_sampler_descriptor_set.descriptorSet;
 }
 
 vk2d::_internal::DeviceMemoryPool * vk2d::_internal::InstanceImpl::GetDeviceMemoryPool() const
@@ -1337,6 +1357,25 @@ std::thread::id vk2d::_internal::InstanceImpl::GetCreatorThreadID() const
 bool vk2d::_internal::InstanceImpl::IsThisThreadCreatorThread() const
 {
 	return creator_thread_id == std::this_thread::get_id();
+}
+
+void vk2d::_internal::InstanceImpl::VkFun_vkCmdPushDescriptorSetKHR(
+	VkCommandBuffer					commandBuffer,
+	VkPipelineBindPoint				pipelineBindPoint,
+	VkPipelineLayout				layout,
+	uint32_t						set,
+	uint32_t						descriptorWriteCount,
+	const VkWriteDescriptorSet	*	pDescriptorWrites
+)
+{
+	vk_fun_vkCmdPushDescriptorSetKHR(
+		commandBuffer,
+		pipelineBindPoint,
+		layout,
+		set,
+		descriptorWriteCount,
+		pDescriptorWrites
+	);
 }
 
 bool vk2d::_internal::InstanceImpl::IsGood() const
@@ -1617,29 +1656,30 @@ bool vk2d::_internal::InstanceImpl::CreateDeviceAndQueues()
 	auto queue_create_infos = queue_resolver.GetDeviceQueueCreateInfos();
 
 	VkPhysicalDeviceFeatures features {};
-	features.samplerAnisotropy					= VK_TRUE;
-	features.fillModeNonSolid					= VK_TRUE;
-	features.wideLines							= VK_TRUE;
-	features.geometryShader						= VK_TRUE;
-//	features.fragmentStoresAndAtomics			= VK_TRUE;
+	features.samplerAnisotropy						= VK_TRUE;
+	features.fillModeNonSolid						= VK_TRUE;
+	features.wideLines								= VK_TRUE;
+	features.geometryShader							= VK_TRUE;
+	features.shaderStorageImageWriteWithoutFormat	= VK_TRUE;
+//	features.fragmentStoresAndAtomics				= VK_TRUE;
 
 	VkPhysicalDeviceVulkan12Features features_1_2 {};
-	features_1_2.sType							= VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_FEATURES;
-	features_1_2.pNext							= nullptr;
-	features_1_2.samplerMirrorClampToEdge		= VK_TRUE;
-	features_1_2.timelineSemaphore				= VK_TRUE;
+	features_1_2.sType								= VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_FEATURES;
+	features_1_2.pNext								= nullptr;
+	features_1_2.samplerMirrorClampToEdge			= VK_TRUE;
+	features_1_2.timelineSemaphore					= VK_TRUE;
 
 	VkDeviceCreateInfo device_create_info {};
-	device_create_info.sType					= VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
-	device_create_info.pNext					= &features_1_2;
-	device_create_info.flags					= 0;
-	device_create_info.queueCreateInfoCount		= uint32_t( queue_create_infos.size() );
-	device_create_info.pQueueCreateInfos		= queue_create_infos.data();
-	device_create_info.enabledLayerCount		= 0;
-	device_create_info.ppEnabledLayerNames		= nullptr;
-	device_create_info.enabledExtensionCount	= uint32_t( device_extensions.size() );
-	device_create_info.ppEnabledExtensionNames	= device_extensions.data();
-	device_create_info.pEnabledFeatures			= &features;
+	device_create_info.sType						= VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
+	device_create_info.pNext						= &features_1_2;
+	device_create_info.flags						= 0;
+	device_create_info.queueCreateInfoCount			= uint32_t( queue_create_infos.size() );
+	device_create_info.pQueueCreateInfos			= queue_create_infos.data();
+	device_create_info.enabledLayerCount			= 0;
+	device_create_info.ppEnabledLayerNames			= nullptr;
+	device_create_info.enabledExtensionCount		= uint32_t( device_extensions.size() );
+	device_create_info.ppEnabledExtensionNames		= device_extensions.data();
+	device_create_info.pEnabledFeatures				= &features;
 
 	auto result = vkCreateDevice(
 		vk_physical_device,
@@ -1708,6 +1748,65 @@ bool vk2d::_internal::InstanceImpl::CreateDefaultSampler()
 		Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot create default sampler!" );
 		return false;
 	}
+}
+
+bool vk2d::_internal::InstanceImpl::CreateBlurSampler()
+{
+	{
+		vk2d::SamplerCreateInfo sampler_create_info {};
+		sampler_create_info.minification_filter				= vk2d::SamplerFilter::LINEAR;
+		sampler_create_info.magnification_filter			= vk2d::SamplerFilter::LINEAR;
+		sampler_create_info.mipmap_mode						= vk2d::SamplerMipmapMode::NEAREST;
+		sampler_create_info.address_mode_u					= vk2d::SamplerAddressMode::CLAMP_TO_EDGE;
+		sampler_create_info.address_mode_v					= vk2d::SamplerAddressMode::CLAMP_TO_EDGE;
+		sampler_create_info.border_color					= { 0.0f, 0.0f, 0.0f, 1.0f };
+		sampler_create_info.mipmap_enable					= false;
+		sampler_create_info.mipmap_max_anisotropy			= 1.0f;
+		sampler_create_info.mipmap_level_of_detail_bias		= 0.0f;
+		sampler_create_info.mipmap_min_level_of_detail		= 0.0f;
+		sampler_create_info.mipmap_max_level_of_detail		= 128.0f;
+		blur_sampler			= std::unique_ptr<vk2d::Sampler>( new vk2d::Sampler( this, sampler_create_info ) );
+		if( !blur_sampler || !blur_sampler->IsGood() ) {
+			blur_sampler		= nullptr;
+			Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot create blur sampler!" );
+			return false;
+		}
+	}
+
+	{
+		blur_sampler_descriptor_set = AllocateDescriptorSet( *compute_basic_sampler_descriptor_set_layout );
+		if( blur_sampler_descriptor_set != VK_SUCCESS ) {
+			FreeDescriptorSet( blur_sampler_descriptor_set );
+			Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot create blur sampler descriptor set!" );
+			return false;
+		}
+	}
+
+	{
+		VkDescriptorImageInfo image_info {};
+		image_info.sampler		= blur_sampler->impl->GetVulkanSampler();
+		image_info.imageView	= VK_NULL_HANDLE;
+		image_info.imageLayout	= VK_IMAGE_LAYOUT_UNDEFINED;
+
+		VkWriteDescriptorSet descriptor_write {};
+		descriptor_write.sType				= VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+		descriptor_write.pNext				= nullptr;
+		descriptor_write.dstSet				= blur_sampler_descriptor_set.descriptorSet;
+		descriptor_write.dstBinding			= 0;
+		descriptor_write.dstArrayElement	= 0;
+		descriptor_write.descriptorCount	= 1;
+		descriptor_write.descriptorType		= VK_DESCRIPTOR_TYPE_SAMPLER;
+		descriptor_write.pImageInfo			= &image_info;
+		descriptor_write.pBufferInfo		= nullptr;
+		descriptor_write.pTexelBufferView	= nullptr;
+		vkUpdateDescriptorSets(
+			vk_device,
+			1, &descriptor_write,
+			0, nullptr
+		);
+	}
+
+	return true;
 }
 
 
@@ -1898,7 +1997,7 @@ bool vk2d::_internal::InstanceImpl::CreateDescriptorSetLayouts()
 {
 	// These must match shader set types.
 
-	// Descriptor set layout for sampler.
+	// Graphics: Descriptor set layout for sampler.
 	// Binding 0 = Sampler
 	// Binding 1 = Uniform buffer for sampler data
 	{
@@ -1923,18 +2022,18 @@ bool vk2d::_internal::InstanceImpl::CreateDescriptorSetLayouts()
 		descriptor_set_layout_create_info.bindingCount	= uint32_t( descriptor_set_layout_bindings.size() );
 		descriptor_set_layout_create_info.pBindings		= descriptor_set_layout_bindings.data();
 
-		sampler_descriptor_set_layout = vk2d::_internal::CreateDescriptorSetLayout(
+		graphics_sampler_descriptor_set_layout = vk2d::_internal::CreateDescriptorSetLayout(
 			this,
 			vk_device,
 			&descriptor_set_layout_create_info
 		);
-		if( !sampler_descriptor_set_layout ) {
+		if( !graphics_sampler_descriptor_set_layout ) {
 			Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot create sampler descriptor set layout!" );
 			return false;
 		}
 	}
 
-	// Descriptor set layout for texture.
+	// Graphics: Descriptor set layout for texture.
 	// Binding 0 = Sampled image
 	{
 		std::array<VkDescriptorSetLayoutBinding, 1> descriptor_set_layout_bindings {};
@@ -1952,18 +2051,18 @@ bool vk2d::_internal::InstanceImpl::CreateDescriptorSetLayouts()
 		descriptor_set_layout_create_info.bindingCount	= uint32_t( descriptor_set_layout_bindings.size() );
 		descriptor_set_layout_create_info.pBindings		= descriptor_set_layout_bindings.data();
 
-		texture_descriptor_set_layout = vk2d::_internal::CreateDescriptorSetLayout(
+		graphics_texture_descriptor_set_layout = vk2d::_internal::CreateDescriptorSetLayout(
 			this,
 			vk_device,
 			&descriptor_set_layout_create_info
 		);
-		if( !texture_descriptor_set_layout ) {
+		if( !graphics_texture_descriptor_set_layout ) {
 			Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot create sampler descriptor set layout!" );
 			return false;
 		}
 	}
 
-	// General uniform buffer descriptor set layout
+	// Graphics: General uniform buffer descriptor set layout
 	{
 		std::array<VkDescriptorSetLayoutBinding, 1> descriptor_set_layout_bindings {};
 
@@ -1980,18 +2079,18 @@ bool vk2d::_internal::InstanceImpl::CreateDescriptorSetLayouts()
 		descriptor_set_layout_create_info.bindingCount	= uint32_t( descriptor_set_layout_bindings.size() );
 		descriptor_set_layout_create_info.pBindings		= descriptor_set_layout_bindings.data();
 
-		uniform_buffer_descriptor_set_layout			= vk2d::_internal::CreateDescriptorSetLayout(
+		graphics_uniform_buffer_descriptor_set_layout			= vk2d::_internal::CreateDescriptorSetLayout(
 			this,
 			vk_device,
 			&descriptor_set_layout_create_info
 		);
-		if( !uniform_buffer_descriptor_set_layout ) {
+		if( !graphics_uniform_buffer_descriptor_set_layout ) {
 			Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot create storage buffer descriptor set layout!" );
 			return false;
 		}
 	}
 
-	// General storage buffer descriptor set layout
+	// Graphics: General storage buffer descriptor set layout
 	{
 		std::array<VkDescriptorSetLayoutBinding, 1> descriptor_set_layout_bindings {};
 
@@ -2008,13 +2107,78 @@ bool vk2d::_internal::InstanceImpl::CreateDescriptorSetLayouts()
 		descriptor_set_layout_create_info.bindingCount	= uint32_t( descriptor_set_layout_bindings.size() );
 		descriptor_set_layout_create_info.pBindings		= descriptor_set_layout_bindings.data();
 
-		storage_buffer_descriptor_set_layout			= vk2d::_internal::CreateDescriptorSetLayout(
+		graphics_storage_buffer_descriptor_set_layout			= vk2d::_internal::CreateDescriptorSetLayout(
 			this,
 			vk_device,
 			&descriptor_set_layout_create_info
 		);
-		if( !storage_buffer_descriptor_set_layout ) {
+		if( !graphics_storage_buffer_descriptor_set_layout ) {
 			Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot create storage buffer descriptor set layout!" );
+			return false;
+		}
+	}
+
+	// Compute: Descriptor set layout for basic sampler.
+	// Binding 0 = Sampler
+	{
+		std::array<VkDescriptorSetLayoutBinding, 1> descriptor_set_layout_bindings {};
+
+		descriptor_set_layout_bindings[ 0 ].binding				= 0;
+		descriptor_set_layout_bindings[ 0 ].descriptorType		= VK_DESCRIPTOR_TYPE_SAMPLER;
+		descriptor_set_layout_bindings[ 0 ].descriptorCount		= 1;
+		descriptor_set_layout_bindings[ 0 ].stageFlags			= VK_SHADER_STAGE_COMPUTE_BIT;
+		descriptor_set_layout_bindings[ 0 ].pImmutableSamplers	= nullptr;
+
+		VkDescriptorSetLayoutCreateInfo descriptor_set_layout_create_info {};
+		descriptor_set_layout_create_info.sType			= VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+		descriptor_set_layout_create_info.pNext			= nullptr;
+		descriptor_set_layout_create_info.flags			= 0;
+		descriptor_set_layout_create_info.bindingCount	= uint32_t( descriptor_set_layout_bindings.size() );
+		descriptor_set_layout_create_info.pBindings		= descriptor_set_layout_bindings.data();
+
+		compute_basic_sampler_descriptor_set_layout = vk2d::_internal::CreateDescriptorSetLayout(
+			this,
+			vk_device,
+			&descriptor_set_layout_create_info
+		);
+		if( !compute_basic_sampler_descriptor_set_layout ) {
+			Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot create sampler descriptor set layout!" );
+			return false;
+		}
+	}
+
+	// Compute: Descriptor set layout for blur textures.
+	// Binding 0 = Sampled image
+	// Binding 1 = Storage image
+	{
+		std::array<VkDescriptorSetLayoutBinding, 2> descriptor_set_layout_bindings {};
+
+		descriptor_set_layout_bindings[ 0 ].binding				= 0;
+		descriptor_set_layout_bindings[ 0 ].descriptorType		= VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
+		descriptor_set_layout_bindings[ 0 ].descriptorCount		= 1;
+		descriptor_set_layout_bindings[ 0 ].stageFlags			= VK_SHADER_STAGE_COMPUTE_BIT;
+		descriptor_set_layout_bindings[ 0 ].pImmutableSamplers	= nullptr;
+
+		descriptor_set_layout_bindings[ 1 ].binding				= 1;
+		descriptor_set_layout_bindings[ 1 ].descriptorType		= VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
+		descriptor_set_layout_bindings[ 1 ].descriptorCount		= 1;
+		descriptor_set_layout_bindings[ 1 ].stageFlags			= VK_SHADER_STAGE_COMPUTE_BIT;
+		descriptor_set_layout_bindings[ 1 ].pImmutableSamplers	= nullptr;
+
+		VkDescriptorSetLayoutCreateInfo descriptor_set_layout_create_info {};
+		descriptor_set_layout_create_info.sType			= VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+		descriptor_set_layout_create_info.pNext			= nullptr;
+		descriptor_set_layout_create_info.flags			= VK_DESCRIPTOR_SET_LAYOUT_CREATE_PUSH_DESCRIPTOR_BIT_KHR;
+		descriptor_set_layout_create_info.bindingCount	= uint32_t( descriptor_set_layout_bindings.size() );
+		descriptor_set_layout_create_info.pBindings		= descriptor_set_layout_bindings.data();
+
+		compute_blur_textures_descriptor_set_layout = vk2d::_internal::CreateDescriptorSetLayout(
+			this,
+			vk_device,
+			&descriptor_set_layout_create_info
+		);
+		if( !compute_blur_textures_descriptor_set_layout ) {
+			Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot create blur textures descriptor set layout!" );
 			return false;
 		}
 	}
@@ -2036,18 +2200,18 @@ bool vk2d::_internal::InstanceImpl::CreatePipelineLayouts()
 	{
 		// This must match shader layout.
 		std::vector<VkDescriptorSetLayout> set_layouts {
-			uniform_buffer_descriptor_set_layout->GetVulkanDescriptorSetLayout(),	// Pipeline set 0 is FrameData.
-			storage_buffer_descriptor_set_layout->GetVulkanDescriptorSetLayout(),	// Pipeline set 1 is vertex index buffer as storage buffer.
-			storage_buffer_descriptor_set_layout->GetVulkanDescriptorSetLayout(),	// Pipeline set 2 is vertex buffer as storage buffer.
-			sampler_descriptor_set_layout->GetVulkanDescriptorSetLayout(),			// Pipeline set 3 is sampler and it's data uniform.
-			texture_descriptor_set_layout->GetVulkanDescriptorSetLayout(),			// Pipeline set 4 is texture.
-			storage_buffer_descriptor_set_layout->GetVulkanDescriptorSetLayout()	// Pipeline set 5 is texture channel weight data.
+			graphics_uniform_buffer_descriptor_set_layout->GetVulkanDescriptorSetLayout(),	// Pipeline set 0 is FrameData.
+			graphics_storage_buffer_descriptor_set_layout->GetVulkanDescriptorSetLayout(),	// Pipeline set 1 is vertex index buffer as storage buffer.
+			graphics_storage_buffer_descriptor_set_layout->GetVulkanDescriptorSetLayout(),	// Pipeline set 2 is vertex buffer as storage buffer.
+			graphics_sampler_descriptor_set_layout->GetVulkanDescriptorSetLayout(),			// Pipeline set 3 is sampler and it's data uniform.
+			graphics_texture_descriptor_set_layout->GetVulkanDescriptorSetLayout(),			// Pipeline set 4 is texture.
+			graphics_storage_buffer_descriptor_set_layout->GetVulkanDescriptorSetLayout()	// Pipeline set 5 is texture channel weight data.
 		};
 
 		std::array<VkPushConstantRange, 1> push_constant_ranges {};
 		push_constant_ranges[ 0 ].stageFlags	= VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
 		push_constant_ranges[ 0 ].offset		= 0;
-		push_constant_ranges[ 0 ].size			= uint32_t( sizeof( vk2d::_internal::PushConstants ) );
+		push_constant_ranges[ 0 ].size			= uint32_t( sizeof( vk2d::_internal::GraphicsPushConstants ) );
 
 		VkPipelineLayoutCreateInfo pipeline_layout_create_info {};
 		pipeline_layout_create_info.sType					= VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
@@ -2070,13 +2234,18 @@ bool vk2d::_internal::InstanceImpl::CreatePipelineLayouts()
 		}
 	}
 
-	// Compute pipeline layout
+	// Compute blur pipeline layout
 	{
 		// This must match shader layout.
 		std::vector<VkDescriptorSetLayout> set_layouts {
+			compute_basic_sampler_descriptor_set_layout->GetVulkanDescriptorSetLayout(),	// Pipeline set 0 is basic sampler.
+			compute_blur_textures_descriptor_set_layout->GetVulkanDescriptorSetLayout()		// Pipeline set 1 is attached textures.
 		};
 
-		std::array<VkPushConstantRange, 0> push_constant_ranges {};
+		std::array<VkPushConstantRange, 1> push_constant_ranges {};
+		push_constant_ranges[ 0 ].stageFlags	= VK_SHADER_STAGE_COMPUTE_BIT;
+		push_constant_ranges[ 0 ].offset		= 0;
+		push_constant_ranges[ 0 ].size			= uint32_t( sizeof( vk2d::_internal::ComputeBlurPushConstants ) );
 
 		VkPipelineLayoutCreateInfo pipeline_layout_create_info {};
 		pipeline_layout_create_info.sType					= VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
@@ -2091,7 +2260,7 @@ bool vk2d::_internal::InstanceImpl::CreatePipelineLayouts()
 			vk_device,
 			&pipeline_layout_create_info,
 			nullptr,
-			&vk_compute_pipeline_layout
+			&vk_compute_blur_pipeline_layout
 		);
 		if( result != VK_SUCCESS ) {
 			Report( result, "Internal error: Cannot create Vulkan pipeline layout!" );
@@ -2175,6 +2344,17 @@ bool vk2d::_internal::InstanceImpl::CreateDefaultTexture()
 	return true;
 }
 
+bool vk2d::_internal::InstanceImpl::PopulateNonStaticallyExposedVulkanFunctions()
+{
+	vk_fun_vkCmdPushDescriptorSetKHR		= (PFN_vkCmdPushDescriptorSetKHR)vkGetDeviceProcAddr( vk_device, "vkCmdPushDescriptorSetKHR" );
+	if( !vk_fun_vkCmdPushDescriptorSetKHR ) {
+		Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot create Instance, cannot get vulkan function: vkCmdPushDescriptorSetKHR()!" );
+		return false;
+	}
+
+	return true;
+}
+
 
 
 void vk2d::_internal::InstanceImpl::DestroyInstance()
@@ -2218,6 +2398,12 @@ void vk2d::_internal::InstanceImpl::DestroyDescriptorPool()
 void vk2d::_internal::InstanceImpl::DestroyDefaultSampler()
 {
 	default_sampler			= {};
+}
+
+void vk2d::_internal::InstanceImpl::DestroyBlurSampler()
+{
+	FreeDescriptorSet( blur_sampler_descriptor_set );
+	blur_sampler			= {};
 }
 
 void vk2d::_internal::InstanceImpl::DestroyPipelineCaches()
@@ -2283,10 +2469,12 @@ void vk2d::_internal::InstanceImpl::DestroyShaderModules()
 
 void vk2d::_internal::InstanceImpl::DestroyDescriptorSetLayouts()
 {
-	sampler_descriptor_set_layout			= nullptr;
-	texture_descriptor_set_layout			= nullptr;
-	uniform_buffer_descriptor_set_layout	= nullptr;
-	storage_buffer_descriptor_set_layout	= nullptr;
+	graphics_sampler_descriptor_set_layout			= nullptr;
+	graphics_texture_descriptor_set_layout			= nullptr;
+	graphics_uniform_buffer_descriptor_set_layout	= nullptr;
+	graphics_storage_buffer_descriptor_set_layout	= nullptr;
+	compute_basic_sampler_descriptor_set_layout		= nullptr;
+	compute_blur_textures_descriptor_set_layout		= nullptr;
 }
 
 void vk2d::_internal::InstanceImpl::DestroyPipelineLayouts()
@@ -2300,10 +2488,10 @@ void vk2d::_internal::InstanceImpl::DestroyPipelineLayouts()
 
 	vkDestroyPipelineLayout(
 		vk_device,
-		vk_compute_pipeline_layout,
+		vk_compute_blur_pipeline_layout,
 		nullptr
 	);
-	vk_compute_pipeline_layout			= {};
+	vk_compute_blur_pipeline_layout		= {};
 }
 
 void vk2d::_internal::InstanceImpl::DestroyDeviceMemoryPool()

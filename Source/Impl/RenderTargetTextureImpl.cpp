@@ -278,7 +278,7 @@ bool vk2d::_internal::RenderTargetTextureImpl::BeginRender()
 				command_buffer,
 				VK_PIPELINE_BIND_POINT_GRAPHICS,
 				instance->GetGraphicsPipelineLayout(),
-				DESCRIPTOR_SET_ALLOCATION_WINDOW_FRAME_DATA,
+				GRAPHICS_DESCRIPTOR_SET_ALLOCATION_WINDOW_FRAME_DATA,
 				1, &frame_data_descriptor_set.descriptorSet,
 				0, nullptr
 			);
@@ -360,7 +360,7 @@ bool vk2d::_internal::RenderTargetTextureImpl::EndRender()
 
 	// Need to record blur and mipmap generation here if blur is enabled;
 	if( create_info_copy.enable_blur ) {
-		instance->Report( vk2d::ReportSeverity::CRITICAL_ERROR, "TODO" );
+		FinalizeBlurredRender( swap );
 	}
 
 	// Now that everything is recorded into a command buffer we'll
@@ -487,8 +487,10 @@ bool vk2d::_internal::RenderTargetTextureImpl::CommitRenderTargetTextureRender(
 
 				// Append to render collector.
 				collector.Append(
-					swap.vk_transfer_submit_info,
-					swap.vk_render_submit_info
+					&swap.vk_transfer_submit_info,
+					&swap.vk_render_submit_info,
+					create_info_copy.enable_blur ? &swap.vk_blur_submit_info : nullptr,
+					create_info_copy.enable_blur ? &swap.vk_mipmap_submit_info : nullptr
 				);
 			}
 		}
@@ -692,7 +694,7 @@ void vk2d::_internal::RenderTargetTextureImpl::DrawTriangleList(
 
 	if( push_result.success ) {
 		{
-			PushConstants pc {};
+			GraphicsPushConstants pc {};
 			pc.index_offset				= push_result.location_info.index_offset;
 			pc.index_count				= 3;
 			pc.vertex_offset			= push_result.location_info.vertex_offset;
@@ -836,7 +838,7 @@ void vk2d::_internal::RenderTargetTextureImpl::DrawLineList(
 
 	if( push_result.success ) {
 		{
-			PushConstants pc {};
+			GraphicsPushConstants pc {};
 			pc.index_offset				= push_result.location_info.index_offset;
 			pc.index_count				= 2;
 			pc.vertex_offset			= push_result.location_info.vertex_offset;
@@ -935,7 +937,7 @@ void vk2d::_internal::RenderTargetTextureImpl::DrawPointList(
 
 	if( push_result.success ) {
 		{
-			PushConstants pc {};
+			GraphicsPushConstants pc {};
 			pc.index_offset				= push_result.location_info.index_offset;
 			pc.index_count				= 1;
 			pc.vertex_offset			= push_result.location_info.vertex_offset;
@@ -1234,7 +1236,7 @@ bool vk2d::_internal::RenderTargetTextureImpl::CreateFrameDataBuffers()
 	// Create descriptor set
 	{
 		frame_data_descriptor_set	= instance->AllocateDescriptorSet(
-			instance->GetUniformBufferDescriptorSetLayout()
+			instance->GetGraphicsUniformBufferDescriptorSetLayout()
 		);
 		if( frame_data_descriptor_set != VK_SUCCESS ) {
 			instance->Report( frame_data_descriptor_set.result, "Internal error: Cannot allocate descriptor set for FrameData device buffer!" );
@@ -1286,6 +1288,80 @@ bool vk2d::_internal::RenderTargetTextureImpl::CreateImages(
 {
 	assert( instance );
 
+	auto CreateLocalImageResource =[ this ](
+		VkImageUsageFlags										usage,
+		const std::vector<vk2d::_internal::ResolvedQueue*>	&	used_in_queues,
+		VkSampleCountFlagBits									samples				= VK_SAMPLE_COUNT_1_BIT,
+		const std::vector<VkExtent2D>						&	mip_levels			= { { 1, 1 } },
+		bool													is_array_texture	= false
+		) -> vk2d::_internal::CompleteImageResource
+	{
+		std::vector<uint32_t> unique_queue_family_indices;
+		unique_queue_family_indices.clear();
+		for( auto q : used_in_queues ) {
+			if( std::find( unique_queue_family_indices.begin(), unique_queue_family_indices.end(), q->GetQueueFamilyIndex() ) == unique_queue_family_indices.end() ) {
+				unique_queue_family_indices.push_back( q->GetQueueFamilyIndex() );
+			}
+		}
+
+		VkImageCreateInfo image_create_info {};
+		image_create_info.sType						= VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
+		image_create_info.pNext						= nullptr;
+		image_create_info.flags						= 0;
+		image_create_info.imageType					= VK_IMAGE_TYPE_2D;
+		image_create_info.format					= surface_format;
+		image_create_info.extent					= { size.x, size.y, 1 };
+		image_create_info.mipLevels					= uint32_t( std::size( mip_levels ) );
+		image_create_info.arrayLayers				= 1;
+		image_create_info.samples					= samples;
+		image_create_info.tiling					= VK_IMAGE_TILING_OPTIMAL;
+		image_create_info.usage						= usage;
+		image_create_info.initialLayout				= VK_IMAGE_LAYOUT_UNDEFINED;
+		if( std::size( unique_queue_family_indices ) > 1 ) {
+			image_create_info.sharingMode			= VK_SHARING_MODE_CONCURRENT;
+			image_create_info.queueFamilyIndexCount	= uint32_t( std::size( unique_queue_family_indices ) );
+			image_create_info.pQueueFamilyIndices	= unique_queue_family_indices.data();
+		} else {
+			image_create_info.sharingMode			= VK_SHARING_MODE_EXCLUSIVE;
+			image_create_info.queueFamilyIndexCount	= 0;
+			image_create_info.pQueueFamilyIndices	= nullptr;
+		}
+
+		VkImageViewCreateInfo image_view_create_info {};
+		image_view_create_info.sType				= VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+		image_view_create_info.pNext				= nullptr;
+		image_view_create_info.flags				= 0;
+		image_view_create_info.image				= VK_NULL_HANDLE;	// Automatically filled by CreateCompleteImageResource().
+		image_view_create_info.viewType				= is_array_texture ? VK_IMAGE_VIEW_TYPE_2D_ARRAY : VK_IMAGE_VIEW_TYPE_2D;
+		image_view_create_info.format				= surface_format;
+		image_view_create_info.components			= {
+			VK_COMPONENT_SWIZZLE_IDENTITY,
+			VK_COMPONENT_SWIZZLE_IDENTITY,
+			VK_COMPONENT_SWIZZLE_IDENTITY,
+			VK_COMPONENT_SWIZZLE_IDENTITY
+		};
+		image_view_create_info.subresourceRange.aspectMask		= VK_IMAGE_ASPECT_COLOR_BIT;
+		image_view_create_info.subresourceRange.baseMipLevel	= 0;
+		image_view_create_info.subresourceRange.levelCount		= uint32_t( std::size( mip_levels ) );
+		image_view_create_info.subresourceRange.baseArrayLayer	= 0;
+		image_view_create_info.subresourceRange.layerCount		= 1;
+
+		vk2d::_internal::CompleteImageResource image = instance->GetDeviceMemoryPool()->CreateCompleteImageResource(
+			&image_create_info,
+			VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+			&image_view_create_info
+		);
+		if( image != VK_SUCCESS ) {
+			instance->Report( image.result, "Internal error: Cannot create RenderTargetTexture, cannot create image resource!" );
+			return {};
+		}
+
+		return image;
+	};
+
+	auto render_queue			= instance->GetPrimaryRenderQueue();
+	auto compute_queue			= instance->GetPrimaryComputeQueue();
+
 	size						= new_size;
 
 	auto granularity			= instance->GetPrimaryRenderQueue().GetQueueFamilyProperties().minImageTransferGranularity;
@@ -1301,186 +1377,147 @@ bool vk2d::_internal::RenderTargetTextureImpl::CreateImages(
 		create_info_copy.size
 	);
 
-	// Create shared images here.
-	for( auto & s : swap_buffers ) {
-
-		// Create attachment images, these will always be the same, besides sample count.
-		{
-			VkImageCreateInfo image_create_info {};
-			image_create_info.sType						= VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
-			image_create_info.pNext						= nullptr;
-			image_create_info.flags						= 0;
-			image_create_info.imageType					= VK_IMAGE_TYPE_2D;
-			image_create_info.format					= surface_format;
-			image_create_info.extent					= { size.x, size.y, 1 };
-			image_create_info.mipLevels					= 1;
-			image_create_info.arrayLayers				= 1;
-			image_create_info.samples					= VkSampleCountFlagBits( samples );
-			image_create_info.tiling					= VK_IMAGE_TILING_OPTIMAL;
-			image_create_info.usage						= VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
-			image_create_info.sharingMode				= VK_SHARING_MODE_EXCLUSIVE;
-			image_create_info.queueFamilyIndexCount		= 0;
-			image_create_info.pQueueFamilyIndices		= nullptr;
-			image_create_info.initialLayout				= VK_IMAGE_LAYOUT_UNDEFINED;
-
-			VkImageViewCreateInfo image_view_create_info {};
-			image_view_create_info.sType				= VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-			image_view_create_info.pNext				= nullptr;
-			image_view_create_info.flags				= 0;
-			image_view_create_info.image				= VK_NULL_HANDLE;	// Automatically filled by CreateCompleteImageResource().
-			image_view_create_info.viewType				= VK_IMAGE_VIEW_TYPE_2D;
-			image_view_create_info.format				= surface_format;
-			image_view_create_info.components			= {
-				VK_COMPONENT_SWIZZLE_IDENTITY,
-				VK_COMPONENT_SWIZZLE_IDENTITY,
-				VK_COMPONENT_SWIZZLE_IDENTITY,
-				VK_COMPONENT_SWIZZLE_IDENTITY
-			};
-			image_view_create_info.subresourceRange.aspectMask		= VK_IMAGE_ASPECT_COLOR_BIT;
-			image_view_create_info.subresourceRange.baseMipLevel	= 0;
-			image_view_create_info.subresourceRange.levelCount		= 1;
-			image_view_create_info.subresourceRange.baseArrayLayer	= 0;
-			image_view_create_info.subresourceRange.layerCount		= 1;
-
-			s.attachment_image	= instance->GetDeviceMemoryPool()->CreateCompleteImageResource(
-				&image_create_info,
-				VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-				&image_view_create_info
-			);
-			if( s.attachment_image != VK_SUCCESS ) {
-				instance->Report( s.attachment_image.result, "Internal error: Cannot create RenderTargetTexture, cannot create attachment image!" );
-				return false;
-			}
-		}
-
-		// Create Sampled images, these will always be the same so we can just do it here.
-		{
-			VkImageCreateInfo image_create_info {};
-			image_create_info.sType						= VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
-			image_create_info.pNext						= nullptr;
-			image_create_info.flags						= 0;
-			image_create_info.imageType					= VK_IMAGE_TYPE_2D;
-			image_create_info.format					= surface_format;
-			image_create_info.extent					= { size.x, size.y, 1 };
-			image_create_info.mipLevels					= uint32_t( std::size( mipmap_levels ) );
-			image_create_info.arrayLayers				= 1;
-			image_create_info.samples					= VK_SAMPLE_COUNT_1_BIT;
-			image_create_info.tiling					= VK_IMAGE_TILING_OPTIMAL;
-			image_create_info.usage						= VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
-			image_create_info.sharingMode				= VK_SHARING_MODE_EXCLUSIVE;
-			image_create_info.queueFamilyIndexCount		= 0;
-			image_create_info.pQueueFamilyIndices		= nullptr;
-			image_create_info.initialLayout				= VK_IMAGE_LAYOUT_UNDEFINED;
-
-			VkImageViewCreateInfo image_view_create_info {};
-			image_view_create_info.sType				= VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-			image_view_create_info.pNext				= nullptr;
-			image_view_create_info.flags				= 0;
-			image_view_create_info.image				= VK_NULL_HANDLE;	// Automatically filled by CreateCompleteImageResource().
-			image_view_create_info.viewType				= VK_IMAGE_VIEW_TYPE_2D_ARRAY;
-			image_view_create_info.format				= surface_format;
-			image_view_create_info.components			= {
-				VK_COMPONENT_SWIZZLE_IDENTITY,
-				VK_COMPONENT_SWIZZLE_IDENTITY,
-				VK_COMPONENT_SWIZZLE_IDENTITY,
-				VK_COMPONENT_SWIZZLE_IDENTITY
-			};
-			image_view_create_info.subresourceRange.aspectMask		= VK_IMAGE_ASPECT_COLOR_BIT;
-			image_view_create_info.subresourceRange.baseMipLevel	= 0;
-			image_view_create_info.subresourceRange.levelCount		= uint32_t( std::size( mipmap_levels ) );
-			image_view_create_info.subresourceRange.baseArrayLayer	= 0;
-			image_view_create_info.subresourceRange.layerCount		= 1;
-
-			s.sampled_image	= instance->GetDeviceMemoryPool()->CreateCompleteImageResource(
-				&image_create_info,
-				VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-				&image_view_create_info
-			);
-			if( s.sampled_image != VK_SUCCESS ) {
-				instance->Report( s.sampled_image.result, "Internal error: Cannot create RenderTargetTexture, cannot create sampled image!" );
-				return false;
-			}
-		}
-	}
-
 	// Using switch to decouple different paths of what resources to create.
 	switch( type ) {
 		case vk2d::_internal::RenderTargetTextureType::DIRECT:
-			// ( Render ) -> Attachment -> ( Blit ) -> Sampled.
-			// Render normally to attachment, using single sample.
-			// Use blit command to copy the attachment to sampled, including mipmaps.
+			// (Render) -> Attachment -> (Blit) -> Sampled.
+			//			   render				   render
+			// Image queue family ownership ^
 
+		{
 			assert( VkSampleCountFlagBits( samples ) == VK_SAMPLE_COUNT_1_BIT );
+
+			// TODO: Prune Render target texture image usage flags.
+
+			for( auto s : swap_buffers ) {
+
+				// Create attachment image.
+				s.attachment_image = CreateLocalImageResource(
+					VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT,
+					{ &render_queue },
+					VkSampleCountFlagBits( samples )
+				);
+
+				// Create sampled image.
+				s.sampled_image = CreateLocalImageResource(
+					VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
+					{ &render_queue },
+					VK_SAMPLE_COUNT_1_BIT,
+					mipmap_levels,
+					true
+				);
+			}
 			break;
+		}
 
 		case vk2d::_internal::RenderTargetTextureType::WITH_MULTISAMPLE:
 			// (Render) -> Attachment -> (Resolve) -> Buffer1 -> (Blit) -> Sampled.
+			//			   render					  render			   render
+			// Image queue family ownership ^
+
 		{
 			for( auto & s : swap_buffers ) {
-				VkImageCreateInfo image_create_info {};
-				image_create_info.sType						= VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
-				image_create_info.pNext						= nullptr;
-				image_create_info.flags						= 0;
-				image_create_info.imageType					= VK_IMAGE_TYPE_2D;
-				image_create_info.format					= surface_format;
-				image_create_info.extent					= { size.x, size.y, 1 };
-				image_create_info.mipLevels					= 1;
-				image_create_info.arrayLayers				= 1;
-				image_create_info.samples					= VK_SAMPLE_COUNT_1_BIT;
-				image_create_info.tiling					= VK_IMAGE_TILING_OPTIMAL;
-				image_create_info.usage						= VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
-				image_create_info.sharingMode				= VK_SHARING_MODE_EXCLUSIVE;
-				image_create_info.queueFamilyIndexCount		= 0;
-				image_create_info.pQueueFamilyIndices		= nullptr;
-				image_create_info.initialLayout				= VK_IMAGE_LAYOUT_UNDEFINED;
 
-				VkImageViewCreateInfo image_view_create_info {};
-				image_view_create_info.sType				= VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-				image_view_create_info.pNext				= nullptr;
-				image_view_create_info.flags				= 0;
-				image_view_create_info.image				= VK_NULL_HANDLE;	// Automatically filled by CreateCompleteImageResource().
-				image_view_create_info.viewType				= VK_IMAGE_VIEW_TYPE_2D;
-				image_view_create_info.format				= surface_format;
-				image_view_create_info.components			= {
-					VK_COMPONENT_SWIZZLE_IDENTITY,
-					VK_COMPONENT_SWIZZLE_IDENTITY,
-					VK_COMPONENT_SWIZZLE_IDENTITY,
-					VK_COMPONENT_SWIZZLE_IDENTITY
-				};
-				image_view_create_info.subresourceRange.aspectMask		= VK_IMAGE_ASPECT_COLOR_BIT;
-				image_view_create_info.subresourceRange.baseMipLevel	= 0;
-				image_view_create_info.subresourceRange.levelCount		= 1;
-				image_view_create_info.subresourceRange.baseArrayLayer	= 0;
-				image_view_create_info.subresourceRange.layerCount		= 1;
-
-				s.buffer_1_image = instance->GetDeviceMemoryPool()->CreateCompleteImageResource(
-					&image_create_info,
-					VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-					&image_view_create_info
+				// Create attachment image.
+				s.attachment_image = CreateLocalImageResource(
+					VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT,
+					{ &render_queue },
+					VkSampleCountFlagBits( samples )
 				);
-				if( s.buffer_1_image != VK_SUCCESS ) {
-					instance->Report( s.buffer_1_image.result, "Internal error: Cannot create RenderTargetTexture, cannot create buffer 1 image!" );
-					return false;
-				}
+
+				// Create buffer 1 image.
+				s.buffer_1_image = CreateLocalImageResource(
+					VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
+					{ &render_queue },
+					VK_SAMPLE_COUNT_1_BIT
+				);
+
+				// Create sampled image.
+				s.sampled_image = CreateLocalImageResource(
+					VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
+					{ &render_queue },
+					VK_SAMPLE_COUNT_1_BIT,
+					mipmap_levels,
+					true
+				);
 			}
 
 			break;
 		}
 
 		case vk2d::_internal::RenderTargetTextureType::WITH_BLUR:
-			// (Render) -> Attachment -> (Render) -> Buffer1 -> (Render) -> Attachment -> (Blit) -> Sampled.
-			// TODO: Blurred RenderTargetTextureType
+			// (Render) -> Attachment -> (BlurPass1) -> Buffer1 -> (BlurPass2) -> Attachment -> (Blit) -> Sampled.
+			//			   concurrent                   blur					  concurrent			  render
+			// Image queue family ownership ^
+
 		{
-			instance->Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Unsupported feature." );
-			return false;
+			for( auto & s : swap_buffers ) {
+
+				// Create attachment image.
+				s.attachment_image = CreateLocalImageResource(
+					VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT,
+					{ &render_queue, &compute_queue },
+					VkSampleCountFlagBits( samples )
+				);
+
+				// Create buffer 1 image.
+				s.buffer_1_image = CreateLocalImageResource(
+					VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_STORAGE_BIT,
+					{ &compute_queue },
+					VK_SAMPLE_COUNT_1_BIT
+				);
+
+				// Create sampled image.
+				s.sampled_image = CreateLocalImageResource(
+					VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
+					{ &render_queue },
+					VK_SAMPLE_COUNT_1_BIT,
+					mipmap_levels,
+					true
+				);
+			}
+
 			break;
 		}
 		case vk2d::_internal::RenderTargetTextureType::WITH_MULTISAMPLE_AND_BLUR:
-			// (Render) -> Attachment -> (Resolve) -> Buffer1 -> (Render) -> Buffer2 -> (Render) -> Buffer1 -> (Blit) -> Sampled.
-			// TODO: Multisampled and Blurred RenderTargetTextureType
+			// (Render) -> Attachment -> (Resolve) -> Buffer1 -> (BlurPass1) -> Buffer2 -> (BlurPass2) -> Buffer1 -> (Blit) -> Sampled.
+			//			   render					  concurrent				blur					  concurrent		   render
+			// Image queue family ownership ^
+
 		{
-			instance->Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Unsupported feature." );
-			return false;
+			for( auto & s : swap_buffers ) {
+
+				// Create attachment image.
+				s.attachment_image = CreateLocalImageResource(
+					VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT,
+					{ &render_queue },
+					VkSampleCountFlagBits( samples )
+				);
+
+				// Create buffer 1 image.
+				s.buffer_1_image = CreateLocalImageResource(
+					VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_STORAGE_BIT,
+					{ &render_queue, &compute_queue },
+					VK_SAMPLE_COUNT_1_BIT
+				);
+
+				// Create buffer 2 image.
+				s.buffer_2_image = CreateLocalImageResource(
+					VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_STORAGE_BIT,
+					{ &compute_queue },
+					VK_SAMPLE_COUNT_1_BIT
+				);
+
+				// Create sampled image.
+				s.sampled_image = CreateLocalImageResource(
+					VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
+					{ &render_queue },
+					VK_SAMPLE_COUNT_1_BIT,
+					mipmap_levels,
+					true
+				);
+			}
+
 			break;
 		}
 		default:
@@ -1813,6 +1850,8 @@ bool vk2d::_internal::RenderTargetTextureImpl::RecordTransferCommandBuffer(
 			return false;
 		}
 	}
+
+	return true;
 }
 
 bool vk2d::_internal::RenderTargetTextureImpl::RecordBlurCommandBuffer(
@@ -1821,27 +1860,31 @@ bool vk2d::_internal::RenderTargetTextureImpl::RecordBlurCommandBuffer(
 	VkImageLayout												source_image_layout,
 	VkPipelineStageFlagBits										source_image_pipeline_barrier_src_stage,
 	vk2d::_internal::CompleteImageResource					&	intermediate_image,
-	vk2d::_internal::CompleteImageResource					&	final_image
+	vk2d::_internal::CompleteImageResource					&	destination_image,
+	VkImageLayout												destination_image_final_layout
 )
 {
 	assert( swap.vk_blur_command_buffer );
 
-	auto command_buffer = swap.vk_blur_command_buffer;
+	auto command_buffer			= swap.vk_blur_command_buffer;
+	auto blur_pipeline_layout	= instance->GetComputeBlurPipelineLayout();
 
-	// Missing a lot of shit here;
-	// Starting with images, descriptor sets, sampler, pipeline layout stuff...;
-	// Need to separate sampler from image also...;
-	instance->Report( vk2d::ReportSeverity::CRITICAL_ERROR, "TODO" );
+	VkImageSubresourceRange common_subresource_range {};
+	common_subresource_range.aspectMask		= VK_IMAGE_ASPECT_COLOR_BIT;
+	common_subresource_range.baseMipLevel	= 0;
+	common_subresource_range.levelCount		= 1;
+	common_subresource_range.baseArrayLayer	= 0;
+	common_subresource_range.layerCount		= 1;
 
-	// TODO: Need to make this more centralized.
+	// TODO: Need to make blur compute shader workgroup size more centralized.
 	auto blur_workgroup_size = vk2d::Vector2u( 8, 8 );
 
 	// Begin command buffer
 	{
 		VkCommandBufferBeginInfo command_buffer_begin_info {};
-		command_buffer_begin_info.sType			= VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-		command_buffer_begin_info.pNext			= nullptr;
-		command_buffer_begin_info.flags			= VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+		command_buffer_begin_info.sType				= VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+		command_buffer_begin_info.pNext				= nullptr;
+		command_buffer_begin_info.flags				= VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
 		command_buffer_begin_info.pInheritanceInfo	= nullptr;
 
 		auto result = vkBeginCommandBuffer(
@@ -1854,19 +1897,101 @@ bool vk2d::_internal::RenderTargetTextureImpl::RecordBlurCommandBuffer(
 		}
 	}
 
+	// Keeping track of image layouts.
+	VkImageLayout source_image_current_layout;
+	VkImageLayout intermediate_image_current_layout;
+	VkImageLayout destination_image_current_layout;
+
+	// Pipeline barriers for image layout transitions.
+	{
+		auto source_image_new_layout		= VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+		auto intermediate_image_new_layout	= VK_IMAGE_LAYOUT_GENERAL;
+		auto destination_image_new_layout	= VK_IMAGE_LAYOUT_UNDEFINED;
+
+		std::array<VkImageMemoryBarrier, 2> image_memory_barriers {};
+
+		image_memory_barriers[ 0 ].sType				= VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+		image_memory_barriers[ 0 ].pNext				= nullptr;
+		image_memory_barriers[ 0 ].srcAccessMask		= 0;
+		image_memory_barriers[ 0 ].dstAccessMask		= VK_ACCESS_SHADER_READ_BIT;
+		image_memory_barriers[ 0 ].oldLayout			= source_image_layout;
+		image_memory_barriers[ 0 ].newLayout			= source_image_new_layout;
+		image_memory_barriers[ 0 ].srcQueueFamilyIndex	= VK_QUEUE_FAMILY_IGNORED;
+		image_memory_barriers[ 0 ].dstQueueFamilyIndex	= VK_QUEUE_FAMILY_IGNORED;
+		image_memory_barriers[ 0 ].image				= source_image.image;
+		image_memory_barriers[ 0 ].subresourceRange		= common_subresource_range;
+
+		image_memory_barriers[ 1 ].sType				= VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+		image_memory_barriers[ 1 ].pNext				= nullptr;
+		image_memory_barriers[ 1 ].srcAccessMask		= 0;
+		image_memory_barriers[ 1 ].dstAccessMask		= VK_ACCESS_SHADER_WRITE_BIT;
+		image_memory_barriers[ 1 ].oldLayout			= VK_IMAGE_LAYOUT_UNDEFINED;
+		image_memory_barriers[ 1 ].newLayout			= intermediate_image_new_layout;
+		image_memory_barriers[ 1 ].srcQueueFamilyIndex	= VK_QUEUE_FAMILY_IGNORED;
+		image_memory_barriers[ 1 ].dstQueueFamilyIndex	= VK_QUEUE_FAMILY_IGNORED;
+		image_memory_barriers[ 1 ].image				= intermediate_image.image;
+		image_memory_barriers[ 1 ].subresourceRange		= common_subresource_range;
+
+		vkCmdPipelineBarrier(
+			command_buffer,
+			VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
+			VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
+			0,
+			0, nullptr,
+			0, nullptr,
+			uint32_t( std::size( image_memory_barriers ) ), image_memory_barriers.data()
+		);
+
+		source_image_current_layout			= source_image_new_layout;
+		intermediate_image_current_layout	= intermediate_image_new_layout;
+		destination_image_current_layout	= destination_image_new_layout;
+	}
+
 	// Record first blur pass.
 	{
-		// TODO: vk2d::_internal::ComputePipelineSettings is a bit extra, it's copied from vk2d::_internal::GraphicsPipelineSettings and unnecessarily complicated to use.
-		// It's probably a good idea to simplify this a bit at some point, it would separate fetching compute pipelines from graphics pipelines.
-
 		vk2d::_internal::ComputePipelineSettings pipeline_settings {};
 		pipeline_settings.shader_programs		= instance->GetComputeShaderModules( vk2d::_internal::ComputeShaderProgramID::RENDER_TARGET_BLUR_PASS_1 );
+		pipeline_settings.pipeline_layout		= blur_pipeline_layout;
 		auto pipeline = instance->GetComputePipeline( pipeline_settings );
 
 		vkCmdBindPipeline(
 			command_buffer,
 			VK_PIPELINE_BIND_POINT_COMPUTE,
 			pipeline
+		);
+
+		// Bind the blur sampler.
+		std::array<VkDescriptorSet, 1> bind_descriptor_sets;
+		bind_descriptor_sets[ 0 ] = instance->GetBlurSamplerDescriptorSet();
+		vkCmdBindDescriptorSets(
+			command_buffer,
+			VK_PIPELINE_BIND_POINT_COMPUTE,
+			blur_pipeline_layout,
+			0,
+			uint32_t( std::size( bind_descriptor_sets ) ), bind_descriptor_sets.data(),
+			0, nullptr
+		);
+
+		CmdPushBlurTextureDescriptorWritesDirectly(
+			command_buffer,
+			blur_pipeline_layout,
+			1,
+			source_image.view,
+			source_image_current_layout,
+			intermediate_image.view,
+			intermediate_image_current_layout
+		);
+
+		vk2d::_internal::ComputeBlurPushConstants push_constants {};
+		push_constants.kernel_count = 1;
+		push_constants.image_size_x = size.x;
+		push_constants.image_size_y = size.y;
+		vkCmdPushConstants(
+			command_buffer,
+			blur_pipeline_layout,
+			VK_SHADER_STAGE_COMPUTE_BIT,
+			0, sizeof( vk2d::_internal::ComputeBlurPushConstants ),
+			&push_constants
 		);
 
 		vkCmdDispatch(
@@ -1879,27 +2004,54 @@ bool vk2d::_internal::RenderTargetTextureImpl::RecordBlurCommandBuffer(
 
 	// Record pipeline barrier because the 2 blur passes have write to read dependency.
 	{
-		VkMemoryBarrier memory_barrier {};
-		memory_barrier.sType			= VK_STRUCTURE_TYPE_MEMORY_BARRIER;
-		memory_barrier.pNext			= nullptr;
-		memory_barrier.srcAccessMask	= VK_ACCESS_MEMORY_WRITE_BIT;
-		memory_barrier.dstAccessMask	= VK_ACCESS_MEMORY_READ_BIT;
+		auto source_image_new_layout		= VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+		auto intermediate_image_new_layout	= VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+		auto destination_image_new_layout	= VK_IMAGE_LAYOUT_GENERAL;
+
+		std::array<VkImageMemoryBarrier, 2> image_memory_barriers {};
+
+		image_memory_barriers[ 0 ].sType				= VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+		image_memory_barriers[ 0 ].pNext				= nullptr;
+		image_memory_barriers[ 0 ].srcAccessMask		= VK_ACCESS_SHADER_WRITE_BIT;
+		image_memory_barriers[ 0 ].dstAccessMask		= VK_ACCESS_SHADER_READ_BIT;
+		image_memory_barriers[ 0 ].oldLayout			= intermediate_image_current_layout;
+		image_memory_barriers[ 0 ].newLayout			= intermediate_image_new_layout;
+		image_memory_barriers[ 0 ].srcQueueFamilyIndex	= VK_QUEUE_FAMILY_IGNORED;
+		image_memory_barriers[ 0 ].dstQueueFamilyIndex	= VK_QUEUE_FAMILY_IGNORED;
+		image_memory_barriers[ 0 ].image				= intermediate_image.image;
+		image_memory_barriers[ 0 ].subresourceRange		= common_subresource_range;
+
+		image_memory_barriers[ 1 ].sType				= VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+		image_memory_barriers[ 1 ].pNext				= nullptr;
+		image_memory_barriers[ 1 ].srcAccessMask		= VK_ACCESS_SHADER_READ_BIT;
+		image_memory_barriers[ 1 ].dstAccessMask		= VK_ACCESS_SHADER_WRITE_BIT;
+		image_memory_barriers[ 1 ].oldLayout			= destination_image_current_layout;
+		image_memory_barriers[ 1 ].newLayout			= destination_image_new_layout;
+		image_memory_barriers[ 1 ].srcQueueFamilyIndex	= VK_QUEUE_FAMILY_IGNORED;
+		image_memory_barriers[ 1 ].dstQueueFamilyIndex	= VK_QUEUE_FAMILY_IGNORED;
+		image_memory_barriers[ 1 ].image				= destination_image.image;
+		image_memory_barriers[ 1 ].subresourceRange		= common_subresource_range;
 
 		vkCmdPipelineBarrier(
 			command_buffer,
 			VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
 			VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
 			0,
-			1, &memory_barrier,
 			0, nullptr,
-			0, nullptr
+			0, nullptr,
+			uint32_t( std::size( image_memory_barriers ) ), image_memory_barriers.data()
 		);
+
+		source_image_current_layout			= source_image_new_layout;
+		intermediate_image_current_layout	= intermediate_image_new_layout;
+		destination_image_current_layout	= destination_image_new_layout;
 	}
 
 	// Record second blur pass.
 	{
 		vk2d::_internal::ComputePipelineSettings pipeline_settings {};
 		pipeline_settings.shader_programs		= instance->GetComputeShaderModules( vk2d::_internal::ComputeShaderProgramID::RENDER_TARGET_BLUR_PASS_2 );
+		pipeline_settings.pipeline_layout		= blur_pipeline_layout;
 		auto pipeline = instance->GetComputePipeline( pipeline_settings );
 
 		vkCmdBindPipeline(
@@ -1908,11 +2060,118 @@ bool vk2d::_internal::RenderTargetTextureImpl::RecordBlurCommandBuffer(
 			pipeline
 		);
 
+		CmdPushBlurTextureDescriptorWritesDirectly(
+			command_buffer,
+			blur_pipeline_layout,
+			1,
+			intermediate_image.view,
+			intermediate_image_current_layout,
+			destination_image.view,
+			destination_image_current_layout
+		);
+
+		vk2d::_internal::ComputeBlurPushConstants push_constants {};
+		push_constants.kernel_count = 1;
+		push_constants.image_size_x = size.x;
+		push_constants.image_size_y = size.y;
+		vkCmdPushConstants(
+			command_buffer,
+			blur_pipeline_layout,
+			VK_SHADER_STAGE_COMPUTE_BIT,
+			0, sizeof( vk2d::_internal::ComputeBlurPushConstants ),
+			&push_constants
+		);
+
 		vkCmdDispatch(
 			command_buffer,
 			( size.x - 1 ) / blur_workgroup_size.x + 1,
 			( size.y - 1 ) / blur_workgroup_size.y + 1,
 			1
+		);
+	}
+
+	// Record pipeline barrier for the final image layout change
+	{
+		auto source_image_new_layout		= VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+		auto intermediate_image_new_layout	= VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+		auto destination_image_new_layout	= destination_image_final_layout;
+
+		std::array<VkImageMemoryBarrier, 1> image_memory_barriers {};
+
+		image_memory_barriers[ 0 ].sType				= VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+		image_memory_barriers[ 0 ].pNext				= nullptr;
+		image_memory_barriers[ 0 ].srcAccessMask		= VK_ACCESS_SHADER_WRITE_BIT;
+		image_memory_barriers[ 0 ].dstAccessMask		= VK_ACCESS_SHADER_READ_BIT;
+		image_memory_barriers[ 0 ].oldLayout			= destination_image_current_layout;
+		image_memory_barriers[ 0 ].newLayout			= destination_image_new_layout;
+		image_memory_barriers[ 0 ].srcQueueFamilyIndex	= VK_QUEUE_FAMILY_IGNORED;
+		image_memory_barriers[ 0 ].dstQueueFamilyIndex	= VK_QUEUE_FAMILY_IGNORED;
+		image_memory_barriers[ 0 ].image				= destination_image.image;
+		image_memory_barriers[ 0 ].subresourceRange		= common_subresource_range;
+
+		vkCmdPipelineBarrier(
+			command_buffer,
+			VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
+			VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
+			0,
+			0, nullptr,
+			0, nullptr,
+			uint32_t( std::size( image_memory_barriers ) ), image_memory_barriers.data()
+		);
+
+		source_image_current_layout			= source_image_new_layout;
+		intermediate_image_current_layout	= intermediate_image_new_layout;
+		destination_image_current_layout	= destination_image_new_layout;
+	}
+
+	// End command buffer
+	{
+		auto result = vkEndCommandBuffer(
+			command_buffer
+		);
+		if( result != VK_SUCCESS ) {
+			instance->Report( result, "Internal error: Cannot render to RenderTargetTexture, Cannot compile mesh to GPU transfer command buffer!" );
+			return false;
+		}
+	}
+
+	return true;
+}
+
+bool vk2d::_internal::RenderTargetTextureImpl::RecordMipmapCommandBuffer(
+	vk2d::_internal::RenderTargetTextureImpl::SwapBuffer	&	swap,
+	vk2d::_internal::CompleteImageResource					&	source_image,
+	VkImageLayout												source_image_layout,
+	VkPipelineStageFlagBits										source_image_pipeline_barrier_src_stage
+)
+{
+	auto command_buffer = swap.vk_mipmap_command_buffer;
+
+	// Begin command buffer
+	{
+		VkCommandBufferBeginInfo command_buffer_begin_info {};
+		command_buffer_begin_info.sType				= VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+		command_buffer_begin_info.pNext				= nullptr;
+		command_buffer_begin_info.flags				= VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+		command_buffer_begin_info.pInheritanceInfo	= nullptr;
+
+		auto result = vkBeginCommandBuffer(
+			command_buffer,
+			&command_buffer_begin_info
+		);
+		if( result != VK_SUCCESS ) {
+			instance->Report( result, "Internal error: Cannot render to RenderTargetTexture, Cannot record mesh to GPU transfer command buffer!" );
+			return false;
+		}
+	}
+
+	{
+		CmdBlitMipmapsToSampledImage(
+			command_buffer,
+			source_image,
+			source_image_layout,
+			source_image_pipeline_barrier_src_stage,
+			swap.sampled_image
 		);
 	}
 
@@ -1926,6 +2185,8 @@ bool vk2d::_internal::RenderTargetTextureImpl::RecordBlurCommandBuffer(
 			return false;
 		}
 	}
+
+	return true;
 }
 
 bool vk2d::_internal::RenderTargetTextureImpl::UpdateSubmitInfos(
@@ -2018,6 +2279,228 @@ bool vk2d::_internal::RenderTargetTextureImpl::UpdateSubmitInfos(
 	return true;
 }
 
+vk2d::_internal::TimedDescriptorPoolData & vk2d::_internal::RenderTargetTextureImpl::GetOrCreateDescriptorSetForSampler(
+	vk2d::Sampler	*	sampler
+)
+{
+	auto & set = sampler_descriptor_sets[ sampler ];
+
+	// If this descriptor set doesn't exist yet for this
+	// sampler texture combo, create one and update it.
+	if( set.descriptor_set.descriptorSet == VK_NULL_HANDLE ) {
+		set.descriptor_set = instance->AllocateDescriptorSet(
+			instance->GetGraphicsSamplerDescriptorSetLayout()
+		);
+		if( set.descriptor_set != VK_SUCCESS ) {
+			return set;
+		}
+
+		VkDescriptorImageInfo image_info {};
+		image_info.sampler						= sampler->impl->GetVulkanSampler();
+		image_info.imageView					= VK_NULL_HANDLE;
+		image_info.imageLayout					= VK_IMAGE_LAYOUT_UNDEFINED;
+
+		VkDescriptorBufferInfo buffer_info {};
+		buffer_info.buffer						= sampler->impl->GetVulkanBufferForSamplerData();
+		buffer_info.offset						= 0;
+		buffer_info.range						= sizeof( vk2d::_internal::SamplerImpl::BufferData );
+
+		std::array<VkWriteDescriptorSet, 2> descriptor_write {};
+		descriptor_write[ 0 ].sType				= VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+		descriptor_write[ 0 ].pNext				= nullptr;
+		descriptor_write[ 0 ].dstSet			= set.descriptor_set.descriptorSet;
+		descriptor_write[ 0 ].dstBinding		= 0;
+		descriptor_write[ 0 ].dstArrayElement	= 0;
+		descriptor_write[ 0 ].descriptorCount	= 1;
+		descriptor_write[ 0 ].descriptorType	= VK_DESCRIPTOR_TYPE_SAMPLER;
+		descriptor_write[ 0 ].pImageInfo		= &image_info;
+		descriptor_write[ 0 ].pBufferInfo		= nullptr;
+		descriptor_write[ 0 ].pTexelBufferView	= nullptr;
+
+		descriptor_write[ 1 ].sType				= VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+		descriptor_write[ 1 ].pNext				= nullptr;
+		descriptor_write[ 1 ].dstSet			= set.descriptor_set.descriptorSet;
+		descriptor_write[ 1 ].dstBinding		= 1;
+		descriptor_write[ 1 ].dstArrayElement	= 0;
+		descriptor_write[ 1 ].descriptorCount	= 1;
+		descriptor_write[ 1 ].descriptorType	= VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+		descriptor_write[ 1 ].pImageInfo		= nullptr;
+		descriptor_write[ 1 ].pBufferInfo		= &buffer_info;
+		descriptor_write[ 1 ].pTexelBufferView	= nullptr;
+
+		vkUpdateDescriptorSets(
+			instance->GetVulkanDevice(),
+			uint32_t( descriptor_write.size() ), descriptor_write.data(),
+			0, nullptr
+		);
+	}
+
+	return set;
+}
+
+vk2d::_internal::TimedDescriptorPoolData & vk2d::_internal::RenderTargetTextureImpl::GetOrCreateDescriptorSetForTexture(
+	vk2d::Texture	*	texture
+)
+{
+	auto & set = texture_descriptor_sets[ texture ];
+
+	// If this descriptor set doesn't exist yet for this
+	// sampler texture combo, create one and update it.
+	if( set.descriptor_set.descriptorSet == VK_NULL_HANDLE ) {
+		set.descriptor_set = instance->AllocateDescriptorSet(
+			instance->GetGraphicsTextureDescriptorSetLayout()
+		);
+		if( set.descriptor_set != VK_SUCCESS ) {
+			return set;
+		}
+
+		if( !texture->WaitUntilLoaded() ) {
+			texture = instance->GetDefaultTexture();
+		}
+
+		VkDescriptorImageInfo image_info {};
+		image_info.sampler						= VK_NULL_HANDLE;
+		image_info.imageView					= texture->texture_impl->GetVulkanImageView();
+		image_info.imageLayout					= texture->texture_impl->GetVulkanImageLayout();
+
+		std::array<VkWriteDescriptorSet, 1> descriptor_write {};
+		descriptor_write[ 0 ].sType				= VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+		descriptor_write[ 0 ].pNext				= nullptr;
+		descriptor_write[ 0 ].dstSet			= set.descriptor_set.descriptorSet;
+		descriptor_write[ 0 ].dstBinding		= 0;
+		descriptor_write[ 0 ].dstArrayElement	= 0;
+		descriptor_write[ 0 ].descriptorCount	= 1;
+		descriptor_write[ 0 ].descriptorType	= VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
+		descriptor_write[ 0 ].pImageInfo		= &image_info;
+		descriptor_write[ 0 ].pBufferInfo		= nullptr;
+		descriptor_write[ 0 ].pTexelBufferView	= nullptr;
+
+		vkUpdateDescriptorSets(
+			instance->GetVulkanDevice(),
+			uint32_t( descriptor_write.size() ), descriptor_write.data(),
+			0, nullptr
+		);
+	}
+
+	return set;
+}
+
+void vk2d::_internal::RenderTargetTextureImpl::CmdPushBlurTextureDescriptorWritesDirectly(
+	VkCommandBuffer		command_buffer,
+	VkPipelineLayout	pipeline_layout,
+	uint32_t			set,
+	VkImageView			source_image,
+	VkImageLayout		source_image_layout,
+	VkImageView			destination_image,
+	VkImageLayout		destination_image_layout
+)
+{
+
+	VkDescriptorImageInfo source_image_info {};
+	source_image_info.sampler				= VK_NULL_HANDLE;
+	source_image_info.imageView				= source_image;
+	source_image_info.imageLayout			= source_image_layout;
+
+	VkDescriptorImageInfo destination_image_info {};
+	destination_image_info.sampler			= VK_NULL_HANDLE;
+	destination_image_info.imageView		= destination_image;
+	destination_image_info.imageLayout		= destination_image_layout;
+
+	std::array<VkWriteDescriptorSet, 2> descriptor_write {};
+	descriptor_write[ 0 ].sType				= VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+	descriptor_write[ 0 ].pNext				= nullptr;
+	descriptor_write[ 0 ].dstSet			= VK_NULL_HANDLE;	// Ignored when pushing descriptor set directly into the command buffer.
+	descriptor_write[ 0 ].dstBinding		= 0;
+	descriptor_write[ 0 ].dstArrayElement	= 0;
+	descriptor_write[ 0 ].descriptorCount	= 1;
+	descriptor_write[ 0 ].descriptorType	= VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
+	descriptor_write[ 0 ].pImageInfo		= &source_image_info;
+	descriptor_write[ 0 ].pBufferInfo		= nullptr;
+	descriptor_write[ 0 ].pTexelBufferView	= nullptr;
+
+	descriptor_write[ 1 ].sType				= VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+	descriptor_write[ 1 ].pNext				= nullptr;
+	descriptor_write[ 1 ].dstSet			= VK_NULL_HANDLE;	// Ignored when pushing descriptor set directly into the command buffer.
+	descriptor_write[ 1 ].dstBinding		= 1;
+	descriptor_write[ 1 ].dstArrayElement	= 0;
+	descriptor_write[ 1 ].descriptorCount	= 1;
+	descriptor_write[ 1 ].descriptorType	= VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
+	descriptor_write[ 1 ].pImageInfo		= &destination_image_info;
+	descriptor_write[ 1 ].pBufferInfo		= nullptr;
+	descriptor_write[ 1 ].pTexelBufferView	= nullptr;
+
+	instance->VkFun_vkCmdPushDescriptorSetKHR(
+		command_buffer,
+		VK_PIPELINE_BIND_POINT_COMPUTE,
+		pipeline_layout,
+		set,
+		uint32_t( std::size( descriptor_write ) ),
+		descriptor_write.data()
+	);
+}
+
+/*
+vk2d::_internal::TimedDescriptorPoolData & vk2d::_internal::RenderTargetTextureImpl::GetOrCreateDescriptorSetForBlurImages(
+	VkImageView			source_image,
+	VkImageView			destination_image
+)
+{
+	auto & set = image_descriptor_sets[ source_image ][ destination_image ];
+
+	// If this descriptor set doesn't exist yet for this
+	// sampler texture combo, create one and update it.
+	if( set.descriptor_set.descriptorSet == VK_NULL_HANDLE ) {
+		set.descriptor_set = instance->AllocateDescriptorSet(
+			instance->GetComputeBlurTexturesDescriptorSetLayout()
+		);
+		if( set.descriptor_set != VK_SUCCESS ) {
+			return set;
+		}
+
+		VkDescriptorImageInfo source_image_info {};
+		source_image_info.sampler				= VK_NULL_HANDLE;
+		source_image_info.imageView				= source_image;
+		source_image_info.imageLayout			= VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+
+		VkDescriptorImageInfo destination_image_info {};
+		destination_image_info.sampler			= VK_NULL_HANDLE;
+		destination_image_info.imageView		= destination_image;
+		destination_image_info.imageLayout		= VK_IMAGE_LAYOUT_GENERAL;
+
+		std::array<VkWriteDescriptorSet, 2> descriptor_write {};
+		descriptor_write[ 0 ].sType				= VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+		descriptor_write[ 0 ].pNext				= nullptr;
+		descriptor_write[ 0 ].dstSet			= set.descriptor_set.descriptorSet;
+		descriptor_write[ 0 ].dstBinding		= 0;
+		descriptor_write[ 0 ].dstArrayElement	= 0;
+		descriptor_write[ 0 ].descriptorCount	= 1;
+		descriptor_write[ 0 ].descriptorType	= VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
+		descriptor_write[ 0 ].pImageInfo		= &source_image_info;
+		descriptor_write[ 0 ].pBufferInfo		= nullptr;
+		descriptor_write[ 0 ].pTexelBufferView	= nullptr;
+
+		descriptor_write[ 1 ].sType				= VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+		descriptor_write[ 1 ].pNext				= nullptr;
+		descriptor_write[ 1 ].dstSet			= set.descriptor_set.descriptorSet;
+		descriptor_write[ 1 ].dstBinding		= 1;
+		descriptor_write[ 1 ].dstArrayElement	= 0;
+		descriptor_write[ 1 ].descriptorCount	= 1;
+		descriptor_write[ 1 ].descriptorType	= VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
+		descriptor_write[ 1 ].pImageInfo		= &destination_image_info;
+		descriptor_write[ 1 ].pBufferInfo		= nullptr;
+		descriptor_write[ 1 ].pTexelBufferView	= nullptr;
+
+		vkUpdateDescriptorSets(
+			instance->GetVulkanDevice(),
+			uint32_t( descriptor_write.size() ), descriptor_write.data(),
+			0, nullptr
+		);
+	}
+
+	return set;
+}
+*/
+
 void vk2d::_internal::RenderTargetTextureImpl::CmdFinalizeNonBlurredRender(
 	vk2d::_internal::RenderTargetTextureImpl::SwapBuffer		&	swap
 )
@@ -2027,20 +2510,22 @@ void vk2d::_internal::RenderTargetTextureImpl::CmdFinalizeNonBlurredRender(
 			// ( Render ) -> Attachment -> ( Blit ) -> Sampled.
 
 			CmdBlitMipmapsToSampledImage(
-				swap,
+				swap.vk_render_command_buffer,
 				swap.attachment_image,
 				VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,			// Coming from render pass, the image layout will be transfer source optimal.
-				VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT
+				VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+				swap.sampled_image
 			);
 			break;
 		case vk2d::_internal::RenderTargetTextureType::WITH_MULTISAMPLE:
 			// (Render) -> Attachment -> (Resolve) -> Buffer1 -> (Blit) -> Sampled.
 
 			CmdBlitMipmapsToSampledImage(
-				swap,
+				swap.vk_render_command_buffer,
 				swap.buffer_1_image,
 				VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,			// Coming from render pass, the image layout will be transfer source optimal.
-				VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT
+				VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+				swap.sampled_image
 			);
 			break;
 		case vk2d::_internal::RenderTargetTextureType::WITH_BLUR:
@@ -2057,11 +2542,86 @@ void vk2d::_internal::RenderTargetTextureImpl::CmdFinalizeNonBlurredRender(
 	}
 }
 
+bool vk2d::_internal::RenderTargetTextureImpl::FinalizeBlurredRender(
+	vk2d::_internal::RenderTargetTextureImpl::SwapBuffer	&	swap
+)
+{
+	switch( type ) {
+		case vk2d::_internal::RenderTargetTextureType::DIRECT:
+			// ( Render ) -> Attachment -> ( Blit ) -> Sampled.
+
+		case vk2d::_internal::RenderTargetTextureType::WITH_MULTISAMPLE:
+			// (Render) -> Attachment -> (Resolve) -> Buffer1 -> (Blit) -> Sampled.
+			assert( 0 && "Called FinalizeBlurredRender() with non-blurred render." );
+
+			break;
+
+		case vk2d::_internal::RenderTargetTextureType::WITH_BLUR:
+			// (Render) -> Attachment -> (Render) -> Buffer1 -> (Render) -> Attachment -> (Blit) -> Sampled.
+
+		{
+			if( !RecordBlurCommandBuffer(
+				swap,
+				swap.attachment_image,
+				VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+				VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
+				swap.buffer_1_image,
+				swap.attachment_image,
+				VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL
+			) ) {
+				return false;
+			}
+			if( !RecordMipmapCommandBuffer(
+				swap,
+				swap.attachment_image,
+				VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+				VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT
+			) ) {
+				return false;
+			}
+
+			break;
+		}
+
+		case vk2d::_internal::RenderTargetTextureType::WITH_MULTISAMPLE_AND_BLUR:
+			// (Render) -> Attachment -> (Resolve) -> Buffer1 -> (Render) -> Buffer2 -> (Render) -> Buffer1 -> (Blit) -> Sampled.
+
+		{
+			if( !RecordBlurCommandBuffer(
+				swap,
+				swap.buffer_1_image,
+				VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+				VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
+				swap.buffer_2_image,
+				swap.buffer_1_image,
+				VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL
+			) ) {
+				return false;
+			}
+			if( !RecordMipmapCommandBuffer(
+				swap,
+				swap.buffer_1_image,
+				VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+				VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT
+			) ) {
+				return false;
+			}
+
+			break;
+		}
+		default:
+			instance->Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot finalize render target texture rendering, Invalid RenderTargetTextureType!" );
+			break;
+	}
+	return true;
+}
+
 void vk2d::_internal::RenderTargetTextureImpl::CmdBlitMipmapsToSampledImage(
-	vk2d::_internal::RenderTargetTextureImpl::SwapBuffer	&	swap,
+	VkCommandBuffer											&	command_buffer,
 	vk2d::_internal::CompleteImageResource					&	source_image,
 	VkImageLayout												source_image_layout,
-	VkPipelineStageFlagBits										source_image_pipeline_barrier_src_stage
+	VkPipelineStageFlagBits										source_image_pipeline_barrier_src_stage,
+	vk2d::_internal::CompleteImageResource					&	destination_image
 )
 {
 	// Source image only has 1 mip level as it's being rendered
@@ -2077,10 +2637,9 @@ void vk2d::_internal::RenderTargetTextureImpl::CmdBlitMipmapsToSampledImage(
 	// - Use pipeline barriers between write to read dependencies
 	//   and for image layout conversions.
 
+	assert( command_buffer );
 	assert( instance );
 	assert( std::size( mipmap_levels ) );
-
-	auto command_buffer = swap.vk_render_command_buffer;
 
 	// TODO: Study different ways of blitting the mipmaps.
 	// It might be more efficient to copy the first mip level,
@@ -2131,7 +2690,7 @@ void vk2d::_internal::RenderTargetTextureImpl::CmdBlitMipmapsToSampledImage(
 		image_memory_barriers[ 1 ].newLayout				= VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
 		image_memory_barriers[ 1 ].srcQueueFamilyIndex		= VK_QUEUE_FAMILY_IGNORED;
 		image_memory_barriers[ 1 ].dstQueueFamilyIndex		= VK_QUEUE_FAMILY_IGNORED;
-		image_memory_barriers[ 1 ].image					= swap.sampled_image.image;
+		image_memory_barriers[ 1 ].image					= destination_image.image;
 		image_memory_barriers[ 1 ].subresourceRange			= subresource_range_all_mips;
 
 		vkCmdPipelineBarrier(
@@ -2167,7 +2726,7 @@ void vk2d::_internal::RenderTargetTextureImpl::CmdBlitMipmapsToSampledImage(
 			command_buffer,
 			source_image.image,
 			VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-			swap.sampled_image.image,
+			destination_image.image,
 			VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
 			1, &region
 		);
@@ -2202,7 +2761,7 @@ void vk2d::_internal::RenderTargetTextureImpl::CmdBlitMipmapsToSampledImage(
 			command_buffer,
 			source_image.image,
 			VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-			swap.sampled_image.image,
+			destination_image.image,
 			VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
 			1, &region,
 			VK_FILTER_NEAREST
@@ -2229,7 +2788,7 @@ void vk2d::_internal::RenderTargetTextureImpl::CmdBlitMipmapsToSampledImage(
 			command_buffer,
 			source_image.image,
 			VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-			swap.sampled_image.image,
+			destination_image.image,
 			VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
 			1, &region,
 			VK_FILTER_LINEAR
@@ -2251,7 +2810,7 @@ void vk2d::_internal::RenderTargetTextureImpl::CmdBlitMipmapsToSampledImage(
 		image_memory_barriers[ 0 ].newLayout				= vk_sampled_image_final_layout;
 		image_memory_barriers[ 0 ].srcQueueFamilyIndex		= VK_QUEUE_FAMILY_IGNORED;
 		image_memory_barriers[ 0 ].dstQueueFamilyIndex		= VK_QUEUE_FAMILY_IGNORED;
-		image_memory_barriers[ 0 ].image					= swap.sampled_image.image;
+		image_memory_barriers[ 0 ].image					= destination_image.image;
 		image_memory_barriers[ 0 ].subresourceRange			= subresource_range_mip_0;
 
 		vkCmdPipelineBarrier(
@@ -2281,7 +2840,7 @@ void vk2d::_internal::RenderTargetTextureImpl::CmdBlitMipmapsToSampledImage(
 			image_memory_barriers[ 0 ].newLayout						= VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
 			image_memory_barriers[ 0 ].srcQueueFamilyIndex				= VK_QUEUE_FAMILY_IGNORED;
 			image_memory_barriers[ 0 ].dstQueueFamilyIndex				= VK_QUEUE_FAMILY_IGNORED;
-			image_memory_barriers[ 0 ].image							= swap.sampled_image.image;
+			image_memory_barriers[ 0 ].image							= destination_image.image;
 			image_memory_barriers[ 0 ].subresourceRange.aspectMask		= VK_IMAGE_ASPECT_COLOR_BIT;
 			image_memory_barriers[ 0 ].subresourceRange.baseMipLevel	= uint32_t( i - 1 );
 			image_memory_barriers[ 0 ].subresourceRange.levelCount		= 1;
@@ -2316,9 +2875,9 @@ void vk2d::_internal::RenderTargetTextureImpl::CmdBlitMipmapsToSampledImage(
 			region.dstOffsets[ 1 ]					= { int32_t( mipmap_levels[ i ].width ), int32_t( mipmap_levels[ i ].height ), 1 };
 			vkCmdBlitImage(
 				command_buffer,
-				swap.sampled_image.image,
+				destination_image.image,
 				VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-				swap.sampled_image.image,
+				destination_image.image,
 				VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
 				1, &region,
 				VK_FILTER_LINEAR
@@ -2339,7 +2898,7 @@ void vk2d::_internal::RenderTargetTextureImpl::CmdBlitMipmapsToSampledImage(
 			image_memory_barriers[ 0 ].newLayout						= vk_sampled_image_final_layout;
 			image_memory_barriers[ 0 ].srcQueueFamilyIndex				= VK_QUEUE_FAMILY_IGNORED;
 			image_memory_barriers[ 0 ].dstQueueFamilyIndex				= VK_QUEUE_FAMILY_IGNORED;
-			image_memory_barriers[ 0 ].image							= swap.sampled_image.image;
+			image_memory_barriers[ 0 ].image							= destination_image.image;
 			image_memory_barriers[ 0 ].subresourceRange.aspectMask		= VK_IMAGE_ASPECT_COLOR_BIT;
 			image_memory_barriers[ 0 ].subresourceRange.baseMipLevel	= uint32_t( i - 1 );
 			image_memory_barriers[ 0 ].subresourceRange.levelCount		= 1;
@@ -2372,7 +2931,7 @@ void vk2d::_internal::RenderTargetTextureImpl::CmdBlitMipmapsToSampledImage(
 		image_memory_barriers[ 0 ].newLayout						= vk_sampled_image_final_layout;
 		image_memory_barriers[ 0 ].srcQueueFamilyIndex				= VK_QUEUE_FAMILY_IGNORED;
 		image_memory_barriers[ 0 ].dstQueueFamilyIndex				= VK_QUEUE_FAMILY_IGNORED;
-		image_memory_barriers[ 0 ].image							= swap.sampled_image.image;
+		image_memory_barriers[ 0 ].image							= destination_image.image;
 		image_memory_barriers[ 0 ].subresourceRange.aspectMask		= VK_IMAGE_ASPECT_COLOR_BIT;
 		image_memory_barriers[ 0 ].subresourceRange.baseMipLevel	= uint32_t( std::size( mipmap_levels ) - 1 );
 		image_memory_barriers[ 0 ].subresourceRange.levelCount		= 1;
@@ -2501,61 +3060,14 @@ void vk2d::_internal::RenderTargetTextureImpl::CmdBindSamplerIfDifferent(
 
 	// if sampler or texture changed since previous call, bind a different descriptor set.
 	if( sampler != previous_sampler ) {
-		auto & set = sampler_descriptor_sets[ sampler ];
-
-		// If this descriptor set doesn't exist yet for this
-		// sampler texture combo, create one and update it.
-		if( set.descriptor_set.descriptorSet == VK_NULL_HANDLE ) {
-			set.descriptor_set = instance->AllocateDescriptorSet(
-				instance->GetSamplerDescriptorSetLayout()
-			);
-
-			VkDescriptorImageInfo image_info {};
-			image_info.sampler						= sampler->impl->GetVulkanSampler();
-			image_info.imageView					= VK_NULL_HANDLE;
-			image_info.imageLayout					= VK_IMAGE_LAYOUT_UNDEFINED;
-
-			VkDescriptorBufferInfo buffer_info {};
-			buffer_info.buffer						= sampler->impl->GetVulkanBufferForSamplerData();
-			buffer_info.offset						= 0;
-			buffer_info.range						= sizeof( vk2d::_internal::SamplerImpl::BufferData );
-
-			std::array<VkWriteDescriptorSet, 2> descriptor_write {};
-			descriptor_write[ 0 ].sType				= VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-			descriptor_write[ 0 ].pNext				= nullptr;
-			descriptor_write[ 0 ].dstSet			= set.descriptor_set.descriptorSet;
-			descriptor_write[ 0 ].dstBinding		= 0;
-			descriptor_write[ 0 ].dstArrayElement	= 0;
-			descriptor_write[ 0 ].descriptorCount	= 1;
-			descriptor_write[ 0 ].descriptorType	= VK_DESCRIPTOR_TYPE_SAMPLER;
-			descriptor_write[ 0 ].pImageInfo		= &image_info;
-			descriptor_write[ 0 ].pBufferInfo		= nullptr;
-			descriptor_write[ 0 ].pTexelBufferView	= nullptr;
-
-			descriptor_write[ 1 ].sType				= VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-			descriptor_write[ 1 ].pNext				= nullptr;
-			descriptor_write[ 1 ].dstSet			= set.descriptor_set.descriptorSet;
-			descriptor_write[ 1 ].dstBinding		= 1;
-			descriptor_write[ 1 ].dstArrayElement	= 0;
-			descriptor_write[ 1 ].descriptorCount	= 1;
-			descriptor_write[ 1 ].descriptorType	= VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-			descriptor_write[ 1 ].pImageInfo		= nullptr;
-			descriptor_write[ 1 ].pBufferInfo		= &buffer_info;
-			descriptor_write[ 1 ].pTexelBufferView	= nullptr;
-
-			vkUpdateDescriptorSets(
-				instance->GetVulkanDevice(),
-				uint32_t( descriptor_write.size() ), descriptor_write.data(),
-				0, nullptr
-			);
-		}
+		auto & set = GetOrCreateDescriptorSetForSampler( sampler );
 		set.previous_access_time = std::chrono::steady_clock::now();
 
 		vkCmdBindDescriptorSets(
 			command_buffer,
 			VK_PIPELINE_BIND_POINT_GRAPHICS,
 			instance->GetGraphicsPipelineLayout(),
-			DESCRIPTOR_SET_ALLOCATION_SAMPLER_AND_SAMPLER_DATA,
+			GRAPHICS_DESCRIPTOR_SET_ALLOCATION_SAMPLER_AND_SAMPLER_DATA,
 			1, &set.descriptor_set.descriptorSet,
 			0, nullptr
 		);
@@ -2573,49 +3085,14 @@ void vk2d::_internal::RenderTargetTextureImpl::CmdBindTextureIfDifferent(
 
 	// if sampler or texture changed since previous call, bind a different descriptor set.
 	if( texture != previous_texture ) {
-		auto & set = texture_descriptor_sets[ texture ];
-
-		// If this descriptor set doesn't exist yet for this
-		// sampler texture combo, create one and update it.
-		if( set.descriptor_set.descriptorSet == VK_NULL_HANDLE ) {
-			set.descriptor_set = instance->AllocateDescriptorSet(
-				instance->GetTextureDescriptorSetLayout()
-			);
-
-			if( !texture->WaitUntilLoaded() ) {
-				texture = instance->GetDefaultTexture();
-			}
-
-			VkDescriptorImageInfo image_info {};
-			image_info.sampler						= VK_NULL_HANDLE;
-			image_info.imageView					= texture->texture_impl->GetVulkanImageView();
-			image_info.imageLayout					= texture->texture_impl->GetVulkanImageLayout();
-
-			std::array<VkWriteDescriptorSet, 1> descriptor_write {};
-			descriptor_write[ 0 ].sType				= VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-			descriptor_write[ 0 ].pNext				= nullptr;
-			descriptor_write[ 0 ].dstSet			= set.descriptor_set.descriptorSet;
-			descriptor_write[ 0 ].dstBinding		= 0;
-			descriptor_write[ 0 ].dstArrayElement	= 0;
-			descriptor_write[ 0 ].descriptorCount	= 1;
-			descriptor_write[ 0 ].descriptorType	= VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
-			descriptor_write[ 0 ].pImageInfo		= &image_info;
-			descriptor_write[ 0 ].pBufferInfo		= nullptr;
-			descriptor_write[ 0 ].pTexelBufferView	= nullptr;
-
-			vkUpdateDescriptorSets(
-				instance->GetVulkanDevice(),
-				uint32_t( descriptor_write.size() ), descriptor_write.data(),
-				0, nullptr
-			);
-		}
+		auto & set = GetOrCreateDescriptorSetForTexture( texture );
 		set.previous_access_time = std::chrono::steady_clock::now();
 
 		vkCmdBindDescriptorSets(
 			command_buffer,
 			VK_PIPELINE_BIND_POINT_GRAPHICS,
 			instance->GetGraphicsPipelineLayout(),
-			DESCRIPTOR_SET_ALLOCATION_TEXTURE,
+			GRAPHICS_DESCRIPTOR_SET_ALLOCATION_TEXTURE,
 			1, &set.descriptor_set.descriptorSet,
 			0, nullptr
 		);

@@ -260,6 +260,7 @@ vk2d::_internal::WindowImpl::WindowImpl(
 	this->vk_physical_device		= instance->GetVulkanPhysicalDevice();
 	this->vk_device					= instance->GetVulkanDevice();
 	this->primary_render_queue		= instance->GetPrimaryRenderQueue();
+	this->primary_compute_queue		= instance->GetPrimaryComputeQueue();
 
 	this->create_info_copy			= window_create_info;
 	this->window_parent				= window;
@@ -616,7 +617,7 @@ bool vk2d::_internal::WindowImpl::BeginRender()
 				command_buffer,
 				VK_PIPELINE_BIND_POINT_GRAPHICS,
 				instance->GetGraphicsPipelineLayout(),
-				DESCRIPTOR_SET_ALLOCATION_WINDOW_FRAME_DATA,
+				GRAPHICS_DESCRIPTOR_SET_ALLOCATION_WINDOW_FRAME_DATA,
 				1, &frame_data_descriptor_set.descriptorSet,
 				0, nullptr
 			);
@@ -919,13 +920,18 @@ bool vk2d::_internal::WindowImpl::EndRender()
 			return false;
 		}
 
-		std::vector<VkSubmitInfo> submit_infos;
-		submit_infos.reserve( collector.size() * 2 + 2 );
+		std::vector<VkSubmitInfo> graphics_pre_compute_submit_infos;
+		std::vector<VkSubmitInfo> graphics_post_compute_submit_infos;
+		std::vector<VkSubmitInfo> compute_submit_infos;
+		graphics_pre_compute_submit_infos.reserve( collector.size() * 2 + 2 );
+		compute_submit_infos.reserve( collector.size() );
 
 		// Get all the submit infos from all render targets into one list.
 		for( auto & c : collector ) {
-			submit_infos.push_back( c.vk_transfer_submit_info );
-			submit_infos.push_back( c.vk_render_submit_info );
+			graphics_pre_compute_submit_infos.push_back( *c.vk_transfer_submit_info );
+			graphics_pre_compute_submit_infos.push_back( *c.vk_render_submit_info );
+			if( c.vk_blur_submit_info ) compute_submit_infos.push_back( *c.vk_blur_submit_info );
+			if( c.vk_mipmap_submit_info ) graphics_post_compute_submit_infos.push_back( *c.vk_mipmap_submit_info );
 		}
 
 		// Collection of semaphores that the main window render needs to wait for, this considers timeline semaphores.
@@ -945,7 +951,7 @@ bool vk2d::_internal::WindowImpl::EndRender()
 		for( auto & d : render_target_texture_dependencies[ next_image ] ) {
 			render_wait_for_semaphores.push_back( d.render_target->GetCurrentSwapAllCompleteSemaphore() );
 			render_wait_for_semaphore_timeline_values.push_back( d.render_target->GetCurrentSwapRenderCounter() );
-			render_wait_for_pipeline_stages.push_back( VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT );
+			render_wait_for_pipeline_stages.push_back( VK_PIPELINE_STAGE_ALL_COMMANDS_BIT );
 		}
 
 		assert( std::size( render_wait_for_semaphores ) == std::size( render_wait_for_semaphore_timeline_values ) &&
@@ -962,7 +968,7 @@ bool vk2d::_internal::WindowImpl::EndRender()
 		window_transfer_submit_info.pCommandBuffers			= &vk_transfer_command_buffer;
 		window_transfer_submit_info.signalSemaphoreCount	= 1;
 		window_transfer_submit_info.pSignalSemaphores		= &vk_transfer_semaphore;
-		submit_infos.push_back( window_transfer_submit_info );
+		graphics_post_compute_submit_infos.push_back( window_transfer_submit_info );
 
 		uint64_t signal_timeline_semaphore_value = 1;
 		VkTimelineSemaphoreSubmitInfo window_render_timeline_submit_info {};
@@ -983,19 +989,53 @@ bool vk2d::_internal::WindowImpl::EndRender()
 		window_render_submit_info.pCommandBuffers			= &render_command_buffer;
 		window_render_submit_info.signalSemaphoreCount		= 1;
 		window_render_submit_info.pSignalSemaphores			= &vk_submit_to_present_semaphores[ next_image ];
-		submit_infos.push_back( window_render_submit_info );
+		graphics_post_compute_submit_infos.push_back( window_render_submit_info );
+
+		Somethings off in here;
+		// It's likely a timeline semaphore. We get stuck waiting for a value perhaps.
+		// Try updating the render target texture every frame and see what happens.
 
 		auto result = primary_render_queue.Submit(
-			submit_infos,
-			vk_gpu_to_cpu_frame_fences[ next_image ]
+			graphics_pre_compute_submit_infos,
+			std::size( graphics_post_compute_submit_infos ) ? VK_NULL_HANDLE : vk_gpu_to_cpu_frame_fences[ next_image ]
 		);
 		if( result != VK_SUCCESS ) {
 			AbortRenderTargetTextureRender();
 			instance->Report(
 				result,
-				"Internal error: Cannot submit frame end command buffers!"
+				"Internal error: Cannot submit frame end pre compute graphics command buffers!"
 			);
 			return false;
+		}
+
+		if( std::size( compute_submit_infos ) ) {
+			result = primary_compute_queue.Submit(
+				compute_submit_infos,
+				VK_NULL_HANDLE
+			);
+			if( result != VK_SUCCESS ) {
+				AbortRenderTargetTextureRender();
+				instance->Report(
+					result,
+					"Internal error: Cannot submit frame end compute command buffers!"
+				);
+				return false;
+			}
+		}
+
+		if( std::size( graphics_post_compute_submit_infos ) ) {
+			result = primary_render_queue.Submit(
+				graphics_post_compute_submit_infos,
+				VK_NULL_HANDLE
+			);
+			if( result != VK_SUCCESS ) {
+				AbortRenderTargetTextureRender();
+				instance->Report(
+					result,
+					"Internal error: Cannot submit frame end post compute graphics command buffers!"
+				);
+				return false;
+			}
 		}
 
 		// Notify render targets about successful command buffer submission.
@@ -1439,7 +1479,7 @@ void vk2d::_internal::WindowImpl::DrawTriangleList(
 
 	if( push_result.success ) {
 		{
-			PushConstants pc {};
+			GraphicsPushConstants pc {};
 			pc.index_offset				= push_result.location_info.index_offset;
 			pc.index_count				= 3;
 			pc.vertex_offset			= push_result.location_info.vertex_offset;
@@ -1578,7 +1618,7 @@ void vk2d::_internal::WindowImpl::DrawLineList(
 
 	if( push_result.success ) {
 		{
-			PushConstants pc {};
+			GraphicsPushConstants pc {};
 			pc.index_offset				= push_result.location_info.index_offset;
 			pc.index_count				= 2;
 			pc.vertex_offset			= push_result.location_info.vertex_offset;
@@ -1672,7 +1712,7 @@ void vk2d::_internal::WindowImpl::DrawPointList(
 
 	if( push_result.success ) {
 		{
-			PushConstants pc {};
+			GraphicsPushConstants pc {};
 			pc.index_offset				= push_result.location_info.index_offset;
 			pc.index_count				= 1;
 			pc.vertex_offset			= push_result.location_info.vertex_offset;
@@ -1904,12 +1944,19 @@ bool vk2d::_internal::WindowImpl::SynchronizeFrame()
 	auto result = VK_SUCCESS;
 
 	if( previous_frame_need_synchronization ) {
+
+		using namespace std::chrono_literals;
+
 		result = vkWaitForFences(
 			vk_device,
 			1, &vk_gpu_to_cpu_frame_fences[ previous_image ],
 			VK_TRUE,
-			UINT64_MAX
+			std::chrono::duration_cast<std::chrono::nanoseconds>( 5s ).count()
 		);
+		if( result == VK_TIMEOUT ) {
+			instance->Report( result, "Internal error: Timeout synchronizing frame." );
+			return false;
+		}
 		if( result != VK_SUCCESS ) {
 			instance->Report( result, "Internal error: Cannot properly synchronize frame." );
 			return false;
@@ -2901,7 +2948,7 @@ bool vk2d::_internal::WindowImpl::CreateWindowFrameDataBuffer()
 	// Create descriptor set
 	{
 		frame_data_descriptor_set	= instance->AllocateDescriptorSet(
-			instance->GetUniformBufferDescriptorSetLayout()
+			instance->GetGraphicsUniformBufferDescriptorSetLayout()
 		);
 		if( frame_data_descriptor_set != VK_SUCCESS ) {
 			instance->Report( frame_data_descriptor_set.result, "Internal error: Cannot allocate descriptor set for FrameData device buffer!" );
@@ -3143,7 +3190,7 @@ void vk2d::_internal::WindowImpl::CmdBindSamplerIfDifferent(
 		// sampler texture combo, create one and update it.
 		if( set.descriptor_set.descriptorSet == VK_NULL_HANDLE ) {
 			set.descriptor_set = instance->AllocateDescriptorSet(
-				instance->GetSamplerDescriptorSetLayout()
+				instance->GetGraphicsSamplerDescriptorSetLayout()
 			);
 
 			VkDescriptorImageInfo image_info {};
@@ -3191,7 +3238,7 @@ void vk2d::_internal::WindowImpl::CmdBindSamplerIfDifferent(
 			command_buffer,
 			VK_PIPELINE_BIND_POINT_GRAPHICS,
 			instance->GetGraphicsPipelineLayout(),
-			DESCRIPTOR_SET_ALLOCATION_SAMPLER_AND_SAMPLER_DATA,
+			GRAPHICS_DESCRIPTOR_SET_ALLOCATION_SAMPLER_AND_SAMPLER_DATA,
 			1, &set.descriptor_set.descriptorSet,
 			0, nullptr
 		);
@@ -3215,7 +3262,7 @@ void vk2d::_internal::WindowImpl::CmdBindTextureIfDifferent(
 		// sampler texture combo, create one and update it.
 		if( set.descriptor_set.descriptorSet == VK_NULL_HANDLE ) {
 			set.descriptor_set = instance->AllocateDescriptorSet(
-				instance->GetTextureDescriptorSetLayout()
+				instance->GetGraphicsTextureDescriptorSetLayout()
 			);
 
 			if( !texture->WaitUntilLoaded() ) {
@@ -3251,7 +3298,7 @@ void vk2d::_internal::WindowImpl::CmdBindTextureIfDifferent(
 			command_buffer,
 			VK_PIPELINE_BIND_POINT_GRAPHICS,
 			instance->GetGraphicsPipelineLayout(),
-			DESCRIPTOR_SET_ALLOCATION_TEXTURE,
+			GRAPHICS_DESCRIPTOR_SET_ALLOCATION_TEXTURE,
 			1, &set.descriptor_set.descriptorSet,
 			0, nullptr
 		);

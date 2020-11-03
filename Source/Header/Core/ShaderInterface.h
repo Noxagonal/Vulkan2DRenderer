@@ -10,12 +10,12 @@ namespace vk2d {
 namespace _internal {
 
 // Descriptor set allocations.
-constexpr uint32_t DESCRIPTOR_SET_ALLOCATION_WINDOW_FRAME_DATA					= 0;
-constexpr uint32_t DESCRIPTOR_SET_ALLOCATION_INDEX_BUFFER_AS_STORAGE_BUFFER		= 1;
-constexpr uint32_t DESCRIPTOR_SET_ALLOCATION_VERTEX_BUFFER_AS_STORAGE_BUFFER	= 2;
-constexpr uint32_t DESCRIPTOR_SET_ALLOCATION_SAMPLER_AND_SAMPLER_DATA			= 3;
-constexpr uint32_t DESCRIPTOR_SET_ALLOCATION_TEXTURE							= 4;
-constexpr uint32_t DESCRIPTOR_SET_ALLOCATION_TEXTURE_CHANNEL_WEIGHTS			= 5;
+constexpr uint32_t GRAPHICS_DESCRIPTOR_SET_ALLOCATION_WINDOW_FRAME_DATA					= 0;
+constexpr uint32_t GRAPHICS_DESCRIPTOR_SET_ALLOCATION_INDEX_BUFFER_AS_STORAGE_BUFFER	= 1;
+constexpr uint32_t GRAPHICS_DESCRIPTOR_SET_ALLOCATION_VERTEX_BUFFER_AS_STORAGE_BUFFER	= 2;
+constexpr uint32_t GRAPHICS_DESCRIPTOR_SET_ALLOCATION_SAMPLER_AND_SAMPLER_DATA			= 3;
+constexpr uint32_t GRAPHICS_DESCRIPTOR_SET_ALLOCATION_TEXTURE							= 4;
+constexpr uint32_t GRAPHICS_DESCRIPTOR_SET_ALLOCATION_TEXTURE_CHANNEL_WEIGHTS			= 5;
 
 
 
@@ -28,12 +28,19 @@ struct FrameData {
 	alignas( 8 )	WindowCoordinateScaling		coordinate_scaling		= {};
 };
 
-struct PushConstants {
+struct GraphicsPushConstants {
 	alignas( 4 )	uint32_t					index_offset			= {};	// Offset into the index buffer.
 	alignas( 4 )	uint32_t					index_count				= {};	// Amount of indices this shader should handle.
 	alignas( 4 )	uint32_t					vertex_offset			= {};	// Offset to first vertex in vertex buffer.
 	alignas( 4 )	uint32_t					texture_channel_offset	= {};	// Location of the texture channels in the texture channel weights ssbo.
 	alignas( 4 )	uint32_t					texture_channel_count	= {};	// Just the amount of texture channels.
+};
+
+struct ComputeBlurPushConstants
+{
+	alignas( 4 )	uint32_t					kernel_count			= {};	// How many kernels we're using to determine blur.
+	alignas( 4 )	uint32_t					image_size_x			= {};	// Size of the image we're processing.
+	alignas( 4 )	uint32_t					image_size_y			= {};	// Size of the image we're processing.
 };
 
 
@@ -169,6 +176,7 @@ public:
 	bool operator!=( const vk2d::_internal::ComputePipelineSettings & other ) const;
 
 	vk2d::_internal::ComputeShaderProgram	shader_programs				= {};
+	VkPipelineLayout						pipeline_layout				= {};
 };
 
 
