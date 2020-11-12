@@ -260,6 +260,7 @@ vk2d::_internal::WindowImpl::WindowImpl(
 	this->vk_physical_device		= instance->GetVulkanPhysicalDevice();
 	this->vk_device					= instance->GetVulkanDevice();
 	this->primary_render_queue		= instance->GetPrimaryRenderQueue();
+	this->primary_compute_queue		= instance->GetPrimaryComputeQueue();
 
 	this->create_info_copy			= window_create_info;
 	this->window_parent				= window;
@@ -615,8 +616,8 @@ bool vk2d::_internal::WindowImpl::BeginRender()
 			vkCmdBindDescriptorSets(
 				command_buffer,
 				VK_PIPELINE_BIND_POINT_GRAPHICS,
-				instance->GetVulkanPipelineLayout(),
-				DESCRIPTOR_SET_ALLOCATION_WINDOW_FRAME_DATA,
+				instance->GetGraphicsPrimaryRenderPipelineLayout(),
+				GRAPHICS_DESCRIPTOR_SET_ALLOCATION_WINDOW_FRAME_DATA,
 				1, &frame_data_descriptor_set.descriptorSet,
 				0, nullptr
 			);
@@ -919,13 +920,16 @@ bool vk2d::_internal::WindowImpl::EndRender()
 			return false;
 		}
 
-		std::vector<VkSubmitInfo> submit_infos;
-		submit_infos.reserve( collector.size() * 2 + 2 );
+		std::vector<VkSubmitInfo> graphics_queue_submit_infos;
+		graphics_queue_submit_infos.reserve( collector.size() * 2 + 2 );
+
+		// TODO: During submission on the frame it could be more efficient to separate transfer and render further and just use a single semaphore between all transfers and renders.
+		// Right now the transfer and render submissions are rather fragmented. Need to get a larger workload to measure impact on performance before modifying this.
 
 		// Get all the submit infos from all render targets into one list.
 		for( auto & c : collector ) {
-			submit_infos.push_back( c.vk_transfer_submit_info );
-			submit_infos.push_back( c.vk_render_submit_info );
+			graphics_queue_submit_infos.push_back( *c.vk_transfer_submit_info );
+			graphics_queue_submit_infos.push_back( *c.vk_render_submit_info );
 		}
 
 		// Collection of semaphores that the main window render needs to wait for, this considers timeline semaphores.
@@ -941,17 +945,18 @@ bool vk2d::_internal::WindowImpl::EndRender()
 		render_wait_for_semaphore_timeline_values.push_back( 1 );
 		render_wait_for_pipeline_stages.push_back( VK_PIPELINE_STAGE_VERTEX_INPUT_BIT | VK_PIPELINE_STAGE_VERTEX_SHADER_BIT );
 
-		// Resolve immediate dependencies we need to wait for before the main render.
+		// Resolve immediate dependencies we need to wait for before the main render happens.
 		for( auto & d : render_target_texture_dependencies[ next_image ] ) {
-			render_wait_for_semaphores.push_back( d.render_target->GetCurrentSwapRenderCompleteSemaphore() );
-			render_wait_for_semaphore_timeline_values.push_back( d.render_target->GetCurrentSwapRenderCounter() );
-			render_wait_for_pipeline_stages.push_back( VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT );
+			render_wait_for_semaphores.push_back( d.render_target->GetAllCompleteSemaphore( d ) );
+			render_wait_for_semaphore_timeline_values.push_back( d.render_target->GetRenderCounter( d ) );
+			// TODO: Replace VK_PIPELINE_STAGE_ALL_COMMANDS_BIT with something that narrows down the potential pipeline bubble more.
+			render_wait_for_pipeline_stages.push_back( VK_PIPELINE_STAGE_ALL_COMMANDS_BIT );
 		}
 
 		assert( std::size( render_wait_for_semaphores ) == std::size( render_wait_for_semaphore_timeline_values ) &&
 				std::size( render_wait_for_semaphores ) == std::size( render_wait_for_pipeline_stages ) );
 
-		// Get window specific submit infos.
+		// Get submit infos for the window itself.
 		VkSubmitInfo window_transfer_submit_info {};
 		window_transfer_submit_info.sType					= VK_STRUCTURE_TYPE_SUBMIT_INFO;
 		window_transfer_submit_info.pNext					= nullptr;
@@ -962,7 +967,7 @@ bool vk2d::_internal::WindowImpl::EndRender()
 		window_transfer_submit_info.pCommandBuffers			= &vk_transfer_command_buffer;
 		window_transfer_submit_info.signalSemaphoreCount	= 1;
 		window_transfer_submit_info.pSignalSemaphores		= &vk_transfer_semaphore;
-		submit_infos.push_back( window_transfer_submit_info );
+		graphics_queue_submit_infos.push_back( window_transfer_submit_info );
 
 		uint64_t signal_timeline_semaphore_value = 1;
 		VkTimelineSemaphoreSubmitInfo window_render_timeline_submit_info {};
@@ -983,17 +988,17 @@ bool vk2d::_internal::WindowImpl::EndRender()
 		window_render_submit_info.pCommandBuffers			= &render_command_buffer;
 		window_render_submit_info.signalSemaphoreCount		= 1;
 		window_render_submit_info.pSignalSemaphores			= &vk_submit_to_present_semaphores[ next_image ];
-		submit_infos.push_back( window_render_submit_info );
+		graphics_queue_submit_infos.push_back( window_render_submit_info );
 
 		auto result = primary_render_queue.Submit(
-			submit_infos,
+			graphics_queue_submit_infos,
 			vk_gpu_to_cpu_frame_fences[ next_image ]
 		);
 		if( result != VK_SUCCESS ) {
 			AbortRenderTargetTextureRender();
 			instance->Report(
 				result,
-				"Internal error: Cannot submit frame end command buffers!"
+				"Internal error: Cannot submit frame end pre compute graphics command buffers!"
 			);
 			return false;
 		}
@@ -1403,28 +1408,33 @@ void vk2d::_internal::WindowImpl::DrawTriangleList(
 		bool multitextured = texture->GetLayerCount() > 1 &&
 			texture_channel_weights.size() >= texture->GetLayerCount() * vertices.size();
 
-		auto shader_programs = instance->GetCompatibleShaderModules(
+		auto graphics_shader_programs = instance->GetCompatibleGraphicsShaderModules(
 			multitextured,
 			sampler->impl->IsAnyBorderColorEnabled(),
 			3
 		);
 
 		vk2d::_internal::GraphicsPipelineSettings pipeline_settings {};
+		pipeline_settings.vk_pipeline_layout	= instance->GetGraphicsPrimaryRenderPipelineLayout();
 		pipeline_settings.vk_render_pass		= vk_render_pass;
 		pipeline_settings.primitive_topology	= VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
 		pipeline_settings.polygon_mode			= solid ? VK_POLYGON_MODE_FILL : VK_POLYGON_MODE_LINE;
-		pipeline_settings.shader_programs		= shader_programs;
+		pipeline_settings.shader_programs		= graphics_shader_programs;
 		pipeline_settings.samples				= VkSampleCountFlags( create_info_copy.samples );
+		pipeline_settings.enable_blending		= VK_TRUE;
 
-		CmdBindPipelineIfDifferent(
+		CmdBindGraphicsPipelineIfDifferent(
 			command_buffer,
 			pipeline_settings
 		);
 	}
 
-	CmdBindTextureSamplerIfDifferent(
+	CmdBindSamplerIfDifferent(
 		command_buffer,
-		sampler,
+		sampler
+	);
+	CmdBindTextureIfDifferent(
+		command_buffer,
 		texture
 	);
 
@@ -1436,7 +1446,7 @@ void vk2d::_internal::WindowImpl::DrawTriangleList(
 
 	if( push_result.success ) {
 		{
-			PushConstants pc {};
+			vk2d::_internal::GraphicsPrimaryRenderPushConstants pc {};
 			pc.index_offset				= push_result.location_info.index_offset;
 			pc.index_count				= 3;
 			pc.vertex_offset			= push_result.location_info.vertex_offset;
@@ -1445,7 +1455,7 @@ void vk2d::_internal::WindowImpl::DrawTriangleList(
 
 			vkCmdPushConstants(
 				command_buffer,
-				instance->GetVulkanPipelineLayout(),
+				instance->GetGraphicsPrimaryRenderPipelineLayout(),
 				VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
 				0, sizeof( pc ),
 				&pc
@@ -1539,28 +1549,33 @@ void vk2d::_internal::WindowImpl::DrawLineList(
 		bool multitextured = texture->GetLayerCount() > 1 &&
 			texture_channel_weights.size() >= texture->GetLayerCount() * vertices.size();
 
-		auto shader_programs = instance->GetCompatibleShaderModules(
+		auto graphics_shader_programs = instance->GetCompatibleGraphicsShaderModules(
 			multitextured,
 			sampler->impl->IsAnyBorderColorEnabled(),
 			2
 		);
 
 		vk2d::_internal::GraphicsPipelineSettings pipeline_settings {};
+		pipeline_settings.vk_pipeline_layout	= instance->GetGraphicsPrimaryRenderPipelineLayout();
 		pipeline_settings.vk_render_pass		= vk_render_pass;
 		pipeline_settings.primitive_topology	= VK_PRIMITIVE_TOPOLOGY_LINE_LIST;
 		pipeline_settings.polygon_mode			= VK_POLYGON_MODE_LINE;
-		pipeline_settings.shader_programs		= shader_programs;
+		pipeline_settings.shader_programs		= graphics_shader_programs;
 		pipeline_settings.samples				= VkSampleCountFlags( create_info_copy.samples );
+		pipeline_settings.enable_blending		= VK_TRUE;
 
-		CmdBindPipelineIfDifferent(
+		CmdBindGraphicsPipelineIfDifferent(
 			command_buffer,
 			pipeline_settings
 		);
 	}
 
-	CmdBindTextureSamplerIfDifferent(
+	CmdBindSamplerIfDifferent(
 		command_buffer,
-		sampler,
+		sampler
+	);
+	CmdBindTextureIfDifferent(
+		command_buffer,
 		texture
 	);
 
@@ -1572,7 +1587,7 @@ void vk2d::_internal::WindowImpl::DrawLineList(
 
 	if( push_result.success ) {
 		{
-			PushConstants pc {};
+			vk2d::_internal::GraphicsPrimaryRenderPushConstants pc {};
 			pc.index_offset				= push_result.location_info.index_offset;
 			pc.index_count				= 2;
 			pc.vertex_offset			= push_result.location_info.vertex_offset;
@@ -1581,7 +1596,7 @@ void vk2d::_internal::WindowImpl::DrawLineList(
 
 			vkCmdPushConstants(
 				command_buffer,
-				instance->GetVulkanPipelineLayout(),
+				instance->GetGraphicsPrimaryRenderPipelineLayout(),
 				VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
 				0, sizeof( pc ),
 				&pc
@@ -1630,28 +1645,33 @@ void vk2d::_internal::WindowImpl::DrawPointList(
 		bool multitextured = texture->GetLayerCount() > 1 &&
 			texture_channel_weights.size() >= texture->GetLayerCount() * vertices.size();
 
-		auto shader_programs = instance->GetCompatibleShaderModules(
+		auto graphics_shader_programs = instance->GetCompatibleGraphicsShaderModules(
 			multitextured,
 			sampler->impl->IsAnyBorderColorEnabled(),
 			1
 		);
 
 		vk2d::_internal::GraphicsPipelineSettings pipeline_settings {};
-		pipeline_settings.vk_render_pass			= vk_render_pass;
+		pipeline_settings.vk_pipeline_layout	= instance->GetGraphicsPrimaryRenderPipelineLayout();
+		pipeline_settings.vk_render_pass		= vk_render_pass;
 		pipeline_settings.primitive_topology	= VK_PRIMITIVE_TOPOLOGY_POINT_LIST;
 		pipeline_settings.polygon_mode			= VK_POLYGON_MODE_POINT;
-		pipeline_settings.shader_programs		= shader_programs;
+		pipeline_settings.shader_programs		= graphics_shader_programs;
 		pipeline_settings.samples				= VkSampleCountFlags( create_info_copy.samples );
+		pipeline_settings.enable_blending		= VK_TRUE;
 
-		CmdBindPipelineIfDifferent(
+		CmdBindGraphicsPipelineIfDifferent(
 			command_buffer,
 			pipeline_settings
 		);
 	}
 
-	CmdBindTextureSamplerIfDifferent(
+	CmdBindSamplerIfDifferent(
 		command_buffer,
-		sampler,
+		sampler
+	);
+	CmdBindTextureIfDifferent(
+		command_buffer,
 		texture
 	);
 
@@ -1663,7 +1683,7 @@ void vk2d::_internal::WindowImpl::DrawPointList(
 
 	if( push_result.success ) {
 		{
-			PushConstants pc {};
+			vk2d::_internal::GraphicsPrimaryRenderPushConstants pc {};
 			pc.index_offset				= push_result.location_info.index_offset;
 			pc.index_count				= 1;
 			pc.vertex_offset			= push_result.location_info.vertex_offset;
@@ -1672,7 +1692,7 @@ void vk2d::_internal::WindowImpl::DrawPointList(
 
 			vkCmdPushConstants(
 				command_buffer,
-				instance->GetVulkanPipelineLayout(),
+				instance->GetGraphicsPrimaryRenderPipelineLayout(),
 				VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
 				0, sizeof( pc ),
 				&pc
@@ -1895,12 +1915,19 @@ bool vk2d::_internal::WindowImpl::SynchronizeFrame()
 	auto result = VK_SUCCESS;
 
 	if( previous_frame_need_synchronization ) {
+
+		using namespace std::chrono_literals;
+
 		result = vkWaitForFences(
 			vk_device,
 			1, &vk_gpu_to_cpu_frame_fences[ previous_image ],
 			VK_TRUE,
-			UINT64_MAX
+			std::chrono::duration_cast<std::chrono::nanoseconds>( 5s ).count()
 		);
+		if( result == VK_TIMEOUT ) {
+			instance->Report( result, "Internal error: Timeout synchronizing frame." );
+			return false;
+		}
 		if( result != VK_SUCCESS ) {
 			instance->Report( result, "Internal error: Cannot properly synchronize frame." );
 			return false;
@@ -2892,7 +2919,7 @@ bool vk2d::_internal::WindowImpl::CreateWindowFrameDataBuffer()
 	// Create descriptor set
 	{
 		frame_data_descriptor_set	= instance->AllocateDescriptorSet(
-			instance->GetUniformBufferDescriptorSetLayout()
+			instance->GetGraphicsUniformBufferDescriptorSetLayout()
 		);
 		if( frame_data_descriptor_set != VK_SUCCESS ) {
 			instance->Report( frame_data_descriptor_set.result, "Internal error: Cannot allocate descriptor set for FrameData device buffer!" );
@@ -3018,8 +3045,8 @@ void vk2d::_internal::WindowImpl::HandleScreenshotEvent()
 	screenshot_state				= vk2d::_internal::WindowImpl::ScreenshotState::IDLE;
 }
 
-void vk2d::_internal::WindowImpl::CmdBindPipelineIfDifferent(
-	VkCommandBuffer									command_buffer,
+void vk2d::_internal::WindowImpl::CmdBindGraphicsPipelineIfDifferent(
+	VkCommandBuffer											command_buffer,
 	const vk2d::_internal::GraphicsPipelineSettings		&	pipeline_settings
 )
 {
@@ -3035,6 +3062,7 @@ void vk2d::_internal::WindowImpl::CmdBindPipelineIfDifferent(
 	}
 }
 
+/*
 void vk2d::_internal::WindowImpl::CmdBindTextureSamplerIfDifferent(
 	VkCommandBuffer						command_buffer,
 	vk2d::Sampler					*	sampler,
@@ -3106,13 +3134,146 @@ void vk2d::_internal::WindowImpl::CmdBindTextureSamplerIfDifferent(
 		vkCmdBindDescriptorSets(
 			command_buffer,
 			VK_PIPELINE_BIND_POINT_GRAPHICS,
-			instance->GetVulkanPipelineLayout(),
+			instance->GetGraphicsPipelineLayout(),
 			DESCRIPTOR_SET_ALLOCATION_TEXTURE_AND_SAMPLER,
 			1, &set.descriptor_set.descriptorSet,
 			0, nullptr
 		);
 
 		previous_sampler		= sampler;
+		previous_texture		= texture;
+	}
+}
+*/
+
+void vk2d::_internal::WindowImpl::CmdBindSamplerIfDifferent(
+	VkCommandBuffer			command_buffer,
+	vk2d::Sampler		*	sampler
+)
+{
+	assert( sampler );
+
+	// if sampler or texture changed since previous call, bind a different descriptor set.
+	if( sampler != previous_sampler ) {
+		auto & set = sampler_descriptor_sets[ sampler ];
+
+		// If this descriptor set doesn't exist yet for this
+		// sampler texture combo, create one and update it.
+		if( set.descriptor_set.descriptorSet == VK_NULL_HANDLE ) {
+			set.descriptor_set = instance->AllocateDescriptorSet(
+				instance->GetGraphicsSamplerDescriptorSetLayout()
+			);
+
+			VkDescriptorImageInfo image_info {};
+			image_info.sampler						= sampler->impl->GetVulkanSampler();
+			image_info.imageView					= VK_NULL_HANDLE;
+			image_info.imageLayout					= VK_IMAGE_LAYOUT_UNDEFINED;
+
+			VkDescriptorBufferInfo buffer_info {};
+			buffer_info.buffer						= sampler->impl->GetVulkanBufferForSamplerData();
+			buffer_info.offset						= 0;
+			buffer_info.range						= sizeof( vk2d::_internal::SamplerImpl::BufferData );
+
+			std::array<VkWriteDescriptorSet, 2> descriptor_write {};
+			descriptor_write[ 0 ].sType				= VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+			descriptor_write[ 0 ].pNext				= nullptr;
+			descriptor_write[ 0 ].dstSet			= set.descriptor_set.descriptorSet;
+			descriptor_write[ 0 ].dstBinding		= 0;
+			descriptor_write[ 0 ].dstArrayElement	= 0;
+			descriptor_write[ 0 ].descriptorCount	= 1;
+			descriptor_write[ 0 ].descriptorType	= VK_DESCRIPTOR_TYPE_SAMPLER;
+			descriptor_write[ 0 ].pImageInfo		= &image_info;
+			descriptor_write[ 0 ].pBufferInfo		= nullptr;
+			descriptor_write[ 0 ].pTexelBufferView	= nullptr;
+
+			descriptor_write[ 1 ].sType				= VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+			descriptor_write[ 1 ].pNext				= nullptr;
+			descriptor_write[ 1 ].dstSet			= set.descriptor_set.descriptorSet;
+			descriptor_write[ 1 ].dstBinding		= 1;
+			descriptor_write[ 1 ].dstArrayElement	= 0;
+			descriptor_write[ 1 ].descriptorCount	= 1;
+			descriptor_write[ 1 ].descriptorType	= VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+			descriptor_write[ 1 ].pImageInfo		= nullptr;
+			descriptor_write[ 1 ].pBufferInfo		= &buffer_info;
+			descriptor_write[ 1 ].pTexelBufferView	= nullptr;
+
+			vkUpdateDescriptorSets(
+				instance->GetVulkanDevice(),
+				uint32_t( descriptor_write.size() ), descriptor_write.data(),
+				0, nullptr
+			);
+		}
+		set.previous_access_time = std::chrono::steady_clock::now();
+
+		vkCmdBindDescriptorSets(
+			command_buffer,
+			VK_PIPELINE_BIND_POINT_GRAPHICS,
+			instance->GetGraphicsPrimaryRenderPipelineLayout(),
+			GRAPHICS_DESCRIPTOR_SET_ALLOCATION_SAMPLER_AND_SAMPLER_DATA,
+			1, &set.descriptor_set.descriptorSet,
+			0, nullptr
+		);
+
+		previous_sampler		= sampler;
+	}
+}
+
+void vk2d::_internal::WindowImpl::CmdBindTextureIfDifferent(
+	VkCommandBuffer			command_buffer,
+	vk2d::Texture		*	texture
+)
+{
+	assert( texture );
+
+	// if sampler or texture changed since previous call, bind a different descriptor set.
+	if( texture != previous_texture ) {
+		auto & set = texture_descriptor_sets[ texture ];
+
+		// If this descriptor set doesn't exist yet for this
+		// sampler texture combo, create one and update it.
+		if( set.descriptor_set.descriptorSet == VK_NULL_HANDLE ) {
+			set.descriptor_set = instance->AllocateDescriptorSet(
+				instance->GetGraphicsTextureDescriptorSetLayout()
+			);
+
+			if( !texture->WaitUntilLoaded() ) {
+				texture = instance->GetDefaultTexture();
+			}
+
+			VkDescriptorImageInfo image_info {};
+			image_info.sampler						= VK_NULL_HANDLE;
+			image_info.imageView					= texture->texture_impl->GetVulkanImageView();
+			image_info.imageLayout					= texture->texture_impl->GetVulkanImageLayout();
+
+			std::array<VkWriteDescriptorSet, 1> descriptor_write {};
+			descriptor_write[ 0 ].sType				= VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+			descriptor_write[ 0 ].pNext				= nullptr;
+			descriptor_write[ 0 ].dstSet			= set.descriptor_set.descriptorSet;
+			descriptor_write[ 0 ].dstBinding		= 0;
+			descriptor_write[ 0 ].dstArrayElement	= 0;
+			descriptor_write[ 0 ].descriptorCount	= 1;
+			descriptor_write[ 0 ].descriptorType	= VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
+			descriptor_write[ 0 ].pImageInfo		= &image_info;
+			descriptor_write[ 0 ].pBufferInfo		= nullptr;
+			descriptor_write[ 0 ].pTexelBufferView	= nullptr;
+
+			vkUpdateDescriptorSets(
+				instance->GetVulkanDevice(),
+				uint32_t( descriptor_write.size() ), descriptor_write.data(),
+				0, nullptr
+			);
+		}
+		set.previous_access_time = std::chrono::steady_clock::now();
+
+		vkCmdBindDescriptorSets(
+			command_buffer,
+			VK_PIPELINE_BIND_POINT_GRAPHICS,
+			instance->GetGraphicsPrimaryRenderPipelineLayout(),
+			GRAPHICS_DESCRIPTOR_SET_ALLOCATION_TEXTURE,
+			1, &set.descriptor_set.descriptorSet,
+			0, nullptr
+		);
+
 		previous_texture		= texture;
 	}
 }

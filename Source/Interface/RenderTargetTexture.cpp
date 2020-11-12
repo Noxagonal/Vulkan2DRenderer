@@ -63,9 +63,12 @@ VK2D_API bool VK2D_APIENTRY vk2d::RenderTargetTexture::BeginRender()
 	return impl->BeginRender();
 }
 
-VK2D_API bool VK2D_APIENTRY vk2d::RenderTargetTexture::EndRender()
+VK2D_API bool VK2D_APIENTRY vk2d::RenderTargetTexture::EndRender(
+	vk2d::Vector2f						blur_amount,
+	vk2d::RenderTargetTextureBlurType	blur_type
+)
 {
-	return impl->EndRender();
+	return impl->EndRender( blur_type, blur_amount );
 }
 
 VK2D_API void VK2D_APIENTRY vk2d::RenderTargetTexture::DrawTriangleList(

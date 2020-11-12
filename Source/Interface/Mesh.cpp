@@ -254,7 +254,7 @@ VK2D_API void VK2D_APIENTRY vk2d::Mesh::SetVertexColorGradient(
 	if( coord_lenght > 0.0f ) {
 		coord_dir					= coord_vector / coord_lenght;
 	} else {
-		coord_lenght				= 0.0001f;
+		coord_lenght				= vk2d::_internal::KINDA_SMALL_VALUE;
 		coord_dir					= { 1.0f, 0.0f };
 	}
 
@@ -854,8 +854,8 @@ VK2D_API vk2d::Mesh VK2D_APIENTRY vk2d::GeneratePieBoxMesh(
 		Vector2f			point_2
 		) -> bool
 	{
-		if( point_1.y < point_2.y + 0.0001f &&
-			point_1.y > point_2.y - 0.0001f ) {
+		if( point_1.y < point_2.y + vk2d::_internal::KINDA_SMALL_VALUE &&
+			point_1.y > point_2.y - vk2d::_internal::KINDA_SMALL_VALUE ) {
 			return true;
 		}
 		return false;
@@ -866,8 +866,8 @@ VK2D_API vk2d::Mesh VK2D_APIENTRY vk2d::GeneratePieBoxMesh(
 		Vector2f			point_2
 		) -> bool
 	{
-		if( point_1.x < point_2.x + 0.0001f &&
-			point_1.x > point_2.x - 0.0001f ) {
+		if( point_1.x < point_2.x + vk2d::_internal::KINDA_SMALL_VALUE &&
+			point_1.x > point_2.x - vk2d::_internal::KINDA_SMALL_VALUE ) {
 			return true;
 		}
 		return false;
@@ -876,7 +876,7 @@ VK2D_API vk2d::Mesh VK2D_APIENTRY vk2d::GeneratePieBoxMesh(
 	// Generate an ordered point list
 	std::vector<Vector2f> outer_point_list;
 	{
-		// We'll linearize / unwrap the box so that a single number represents x/y coordinates
+		// We'll linearize / unwrap the box so that a single number represents both x and y coordinates
 		//
 		// 0---1
 		// |   |	->	0---1---2---3---0

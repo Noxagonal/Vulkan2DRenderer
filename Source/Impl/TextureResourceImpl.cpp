@@ -15,10 +15,7 @@
 vk2d::_internal::TextureResourceImpl::TextureResourceImpl(
 	vk2d::TextureResource					*	texture_resource_parent,
 	vk2d::_internal::ResourceManagerImpl	*	resource_manager
-) :
-	vk2d::_internal::TextureImpl(
-		resource_manager->GetInstance()
-	)
+)
 {
 	this->texture_parent				= texture_resource_parent;
 	this->resource_manager		= resource_manager;
@@ -33,10 +30,7 @@ vk2d::_internal::TextureResourceImpl::TextureResourceImpl(
 	vk2d::_internal::ResourceManagerImpl	*	resource_manager,
 	vk2d::Vector2u								size,
 	const std::vector<vk2d::Color8>			&	texels
-) :
-	vk2d::_internal::TextureImpl(
-		resource_manager->GetInstance()
-	)
+)
 {
 	this->texture_parent				= texture_resource_parent;
 	this->resource_manager		= resource_manager;
@@ -55,10 +49,7 @@ vk2d::_internal::TextureResourceImpl::TextureResourceImpl(
 	vk2d::_internal::ResourceManagerImpl			*	resource_manager,
 	vk2d::Vector2u										size,
 	const std::vector<std::vector<vk2d::Color8>*>	&	texels
-) :
-	vk2d::_internal::TextureImpl(
-		resource_manager->GetInstance()
-	)
+)
 {
 	this->texture_parent				= texture_resource_parent;
 	this->resource_manager		= resource_manager;
@@ -72,10 +63,6 @@ vk2d::_internal::TextureResourceImpl::TextureResourceImpl(
 	}
 
 	is_good						= true;
-}
-
-vk2d::_internal::TextureResourceImpl::~TextureResourceImpl()
-{
 }
 
 bool vk2d::_internal::TextureResourceImpl::MTLoad(
@@ -808,7 +795,7 @@ bool vk2d::_internal::TextureResourceImpl::MTLoad(
 	// Not used anymore because array textures require combined texture samplers.
 //	{
 //		descriptor_set = loader_thread_resource->GetDescriptorAutoPool()->AllocateDescriptorSet(
-//			resource_manager->GetInstance()->GetTextureDescriptorSetLayout()
+//			resource_manager->GetInstance()->GetGraphicsTextureDescriptorSetLayout()
 //		);
 //		if( descriptor_set != VK_SUCCESS ) {
 //			return false;

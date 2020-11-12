@@ -1,5 +1,5 @@
 #version 450
-// #extension GL_KHR_vulkan_glsl : enable
+#extension GL_KHR_vulkan_glsl : enable
 
 
 
@@ -7,12 +7,15 @@
 // Shader program interface.
 ////////////////////////////////////////////////////////////////
 
-// Set 3: Texture and sampler
-layout(set=3, binding=0) uniform sampler2DArray		image_sampler;
+// Set 3: Sampler
+layout(set=3, binding=0) uniform sampler			image_sampler;
 layout(std140, set=3, binding=1) uniform			image_sampler_data {
 	vec4		border_color;
 	uvec2		border_color_enable;
 } sampler_data;
+
+// Set 4: Texture
+layout(set=4, binding=0) uniform texture2DArray		sampled_image;
 
 // Push constants.
 layout(std140, push_constant) uniform PushConstants {
@@ -54,7 +57,7 @@ void SingleTexturedFragmentWithUVBorderColor()
 		}
 	}
 
-	vec4	texture_color		= texture( image_sampler, vec3( fragment_input_UV, float( fragment_input_texture_channel ) ) );
+	vec4	texture_color		= texture( sampler2DArray( sampled_image, image_sampler ), vec3( fragment_input_UV, float( fragment_input_texture_channel ) ) );
 	final_fragment_color		= texture_color * fragment_input_color;
 }
 
@@ -64,6 +67,6 @@ void SingleTexturedFragmentWithUVBorderColor()
 // Only a single texture channel can be used per vertex.
 void SingleTexturedFragment()
 {
-	vec4	texture_color		= texture( image_sampler, vec3( fragment_input_UV, float( fragment_input_texture_channel ) ) );
+	vec4	texture_color		= texture( sampler2DArray( sampled_image, image_sampler ), vec3( fragment_input_UV, float( fragment_input_texture_channel ) ) );
 	final_fragment_color		= texture_color * fragment_input_color;
 }

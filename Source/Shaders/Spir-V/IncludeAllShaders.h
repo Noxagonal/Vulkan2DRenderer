@@ -10,3 +10,8 @@
 #include "MultitexturedFragmentLineWithUVBorderColor.frag.spv.h"
 #include "MultitexturedFragmentPoint.frag.spv.h"
 #include "MultitexturedFragmentPointWithUVBorderColor.frag.spv.h"
+#include "RenderTargetTextureBlurVertex.vert.spv.h"
+#include "RenderTargetTexture_GaussianBlur_Horisontal.frag.spv.h"
+#include "RenderTargetTexture_GaussianBlur_Vertical.frag.spv.h"
+#include "RenderTargetTexture_BoxBlur_Horisontal.frag.spv.h"
+#include "RenderTargetTexture_BoxBlur_Vertical.frag.spv.h"

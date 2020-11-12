@@ -50,14 +50,15 @@ double vk2d::_internal::DescriptorPoolRequirements::CheckCompatibilityWith(
 vk2d::_internal::DescriptorSetLayout::DescriptorSetLayout(
 	vk2d::_internal::InstanceImpl			*	instance,
 	VkDevice									device,
-	const VkDescriptorSetLayoutCreateInfo	*	pCreateInfo )
+	const VkDescriptorSetLayoutCreateInfo	*	pCreateInfo
+) :
+	instance( instance ),
+	refDevice( device ),
+	createInfo( *pCreateInfo )
 {
 	assert( instance );
 	assert( device );
-
-	instance		= instance;
-	refDevice			= device;
-	createInfo			= *pCreateInfo;
+	assert( pCreateInfo );
 
 	// Create the actual descriptor set layout
 	{

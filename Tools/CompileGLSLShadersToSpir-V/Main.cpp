@@ -4,6 +4,7 @@
 #include <fstream>
 #include <sstream>
 #include <assert.h>
+#include <thread>
 
 #include <glslang/Public/ShaderLang.h>
 #include <StandAlone/ResourceLimits.h>	// To get glslang::DefaultTBuiltInResource so we don't have to make one ourselves
@@ -95,7 +96,8 @@ int main( int argc, char * argv[] )
 		}
 	}
 
-	cout << "GLSL shader search path: " << glsl_location << "\n";
+	cout << "Running GLSL to SPV header compiler.\n"
+		<< "    GLSL shader search path: " << glsl_location << "\n\n";
 
 	GetEntrypointNames();
 
@@ -103,7 +105,12 @@ int main( int argc, char * argv[] )
 
 	for( auto & entrypoint : entrypoint_names ) {
 		for( auto & file : fs::directory_iterator( glsl_location ) ) {
-			if( file.path().extension() == ".vert" || file.path().extension() == ".frag" ) {
+			if( file.path().extension() == ".vert" ||
+				file.path().extension() == ".tesc" ||
+				file.path().extension() == ".tese" ||
+				file.path().extension() == ".geom" ||
+				file.path().extension() == ".frag" ||
+				file.path().extension() == ".comp" ) {
 				if( IsEntrypointInFile( file, entrypoint ) ) {
 					file_entries.push_back( std::move( GetGLSLFileEntryForEntrypoint( file, entrypoint ) ) );
 				}
@@ -111,6 +118,8 @@ int main( int argc, char * argv[] )
 		}
 	}
 
+	// This would be the perfect spot for multithreading, if only glslang would allow it...
+	// Might be worth looking into making this a multiple program call instead.
 	for( auto & fe : file_entries ) {
 		ExecuteGlslang( fe );
 	}
@@ -123,6 +132,8 @@ int main( int argc, char * argv[] )
 		auto filename = e.destination_file.filename();
 		include_file << "#include " << filename << "\n";
 	}
+
+	cout << "GLSL to SPV header compiler completed successfully." << endl;
 
 	return 0;
 }
@@ -180,8 +191,16 @@ FileEntry GetGLSLFileEntryForEntrypoint( fs::path path, string entrypoint )
 	auto file_extension = path.extension();
 	if( file_extension == ".vert" ) {
 		file_entry.stage = EShLanguage::EShLangVertex;
+	} else if( file_extension == ".tesc" ) {
+		file_entry.stage = EShLanguage::EShLangTessControl;
+	} else if( file_extension == ".tese" ) {
+		file_entry.stage = EShLanguage::EShLangTessEvaluation;
+	} else if( file_extension == ".geom" ) {
+		file_entry.stage = EShLanguage::EShLangGeometry;
 	} else if( file_extension == ".frag" ) {
 		file_entry.stage = EShLanguage::EShLangFragment;
+	} else if( file_extension == ".comp" ) {
+		file_entry.stage = EShLanguage::EShLangCompute;
 	} else {
 		cout << "Invalid file extension. Shouldn't get this.\n";
 		exit( -1 );
@@ -233,9 +252,25 @@ void ExecuteGlslang( FileEntry file_entry )
 			compile_failed		= true;
 		}
 
-		cout << "\n";
-		cout << shader.getInfoLog();
-		cout << shader.getInfoDebugLog();
+		if( shader.getInfoLog() && std::strlen( shader.getInfoLog() ) ) {
+			string info_log	= shader.getInfoLog();
+
+			vector<string> suppressed_warnings {
+				"extension not supported: GL_KHR_vulkan_glsl"
+			};
+
+			if( none_of( suppressed_warnings.begin(), suppressed_warnings.end(), [&info_log]( string & s )
+				{
+					return info_log.find( s ) != string::npos;
+				} ) ) {
+
+				// No suppressed warnings, display it.
+				cout << "Shader info log: " << shader.getInfoLog() << endl;
+			}
+		}
+		if( shader.getInfoDebugLog() && std::strlen( shader.getInfoDebugLog() ) ) {
+			cout << "Shader info debug log: " << shader.getInfoDebugLog() << endl;
+		}
 
 		if( compile_failed ) {
 			cout << "Compiling failed: " << file_entry.destination_file << "\n";
@@ -253,8 +288,12 @@ void ExecuteGlslang( FileEntry file_entry )
 			link_failed			= true;
 		}
 
-		cout << program.getInfoLog();
-		cout << program.getInfoDebugLog();
+		if( program.getInfoLog() && std::strlen( program.getInfoLog() ) ) {
+			cout << "Program info log: " << program.getInfoLog() << endl;
+		}
+		if( program.getInfoDebugLog() && std::strlen( program.getInfoDebugLog() ) ) {
+			cout << "Program info debug log: " << program.getInfoDebugLog() << endl;
+		}
 
 		if( link_failed ) {
 			cout << "Linking failed: " << file_entry.destination_file << "\n";
@@ -275,7 +314,10 @@ void ExecuteGlslang( FileEntry file_entry )
 			spv_options.disassemble			= false;
 			spv_options.validate			= false;
 			glslang::GlslangToSpv( *program.getIntermediate( file_entry.stage ), spirv, &logger, &spv_options );
-			cout << logger.getAllMessages();
+			auto logger_messages = logger.getAllMessages();
+			if( logger_messages.size() ) {
+				cout << "Logger messages: \n" << logger.getAllMessages() << endl;
+			}
 
 			auto extension_name		= file_entry.source_file.extension().string();
 			extension_name			= extension_name.substr( 1 );
@@ -302,9 +344,12 @@ void ExecuteGlslang( FileEntry file_entry )
 			}
 
 			header_file << "\n};\n";
-
-//			glslang::OutputSpvBin( spirv, "Test.frag" );
 		}
 	}
 	glslang::FinalizeProcess();
+
+	cout << "Successfully converted shader entrypoint:\n"
+		<< "    " << file_entry.entrypoint_name << "\n"
+		<< "    From source file: " << file_entry.source_file << "\n"
+		<< "    To header file: " << file_entry.destination_file << "\n" << endl;
 }
