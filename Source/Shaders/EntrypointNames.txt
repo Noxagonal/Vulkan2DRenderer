@@ -24,7 +24,6 @@ SingleTexturedFragment								// Single textured fragment shader for triangle / 
 SingleTexturedFragmentWithUVBorderColor				// Single textured fragment shader for triangle / line / point, with custom UV border color.
 
 
-
 // Multitextured
 MultitexturedVertex									// Multitextured vertex shader used for all multitextured vertex shaders.
 
@@ -36,11 +35,17 @@ MultitexturedFragmentPoint							// Multitextured fragment shader for point, no 
 MultitexturedFragmentPointWithUVBorderColor			// Multitextured fragment shader for point, with custom UV border color.
 
 
+// Render target texture blur.
+RenderTargetTextureBlurVertex
+
+RenderTargetTexture_GaussianBlur_Horisontal
+RenderTargetTexture_GaussianBlur_Vertical
+RenderTargetTexture_BoxBlur_Horisontal
+RenderTargetTexture_BoxBlur_Vertical
+
 
 ////////////////////////////////
 // Compute shaders
 ////////////////////////////////
 
-// Render target texture blur
-RenderTargetTextureBlurPass1
-RenderTargetTextureBlurPass2
+// Nothing yet.

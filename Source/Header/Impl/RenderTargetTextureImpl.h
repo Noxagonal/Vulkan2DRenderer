@@ -76,23 +76,17 @@ private:
 		vk2d::_internal::CompleteImageResource							buffer_1_image								= {};	// Buffer image, used as multisample resolve and blur buffer
 		vk2d::_internal::CompleteImageResource							buffer_2_image								= {};	// Buffer image, used as second blur buffer
 		vk2d::_internal::CompleteImageResource							sampled_image								= {};	// Output, sampled image with mip mapping
-		VkFramebuffer													vk_framebuffer								= {};
+		VkFramebuffer													vk_render_framebuffer						= {};	// Framebuffer for the main render
+		VkFramebuffer													vk_blur_framebuffer_1						= {};	// Framebuffer for blur pass 1
+		VkFramebuffer													vk_blur_framebuffer_2						= {};	// Framebuffer for blur pass 2
 
 		VkCommandBuffer													vk_transfer_command_buffer					= {};	// Data transfer command buffer, this transfers vertex, index, etc... data in the primary render queue.
 		VkCommandBuffer													vk_render_command_buffer					= {};	// Primary render, if no blur is used then also embeds mipmap generation.
-		VkCommandBuffer													vk_blur_command_buffer						= {};	// Blur command buffer, used exlusively for blur commands.
-		VkCommandBuffer													vk_mipmap_command_buffer					= {};	// If blur is enabled then we'll schedule mipmap generation after the blur, but we'll need the primary render queue for that so this is the command buffer for that.
 
 		VkSubmitInfo													vk_transfer_submit_info						= {};
 		VkSubmitInfo													vk_render_submit_info						= {};
-		VkSubmitInfo													vk_blur_submit_info							= {};
-		VkSubmitInfo													vk_mipmap_submit_info						= {};
 
 		VkTimelineSemaphoreSubmitInfo									vk_render_timeline_semaphore_submit_info	= {};
-		VkTimelineSemaphoreSubmitInfo									vk_mipmap_timeline_semaphore_submit_info	= {};
-
-		VkPipelineStageFlags											vk_blur_submit_info_wait_dst_stage_mask		= {};
-		VkPipelineStageFlags											vk_mipmap_submit_info_wait_dst_stage_mask	= {};
 
 		std::vector<VkSemaphore>										render_wait_for_semaphores;
 		std::vector<uint64_t>											render_wait_for_semaphore_timeline_values;			// Used with render_wait_for_semaphores.
@@ -100,15 +94,13 @@ private:
 
 		VkSemaphore														vk_transfer_complete_semaphore				= {};	// Binary
 		VkSemaphore														vk_render_complete_semaphore				= {};	// Binary if blur enabled, Timeline if blur enabled.
-		VkSemaphore														vk_blur_complete_semaphore					= {};	// Binary
-		VkSemaphore														vk_mipmap_complete_semaphore				= {};	// Timeline
 
 		uint64_t														render_counter								= {};	// Used with the vk_render_complete_semaphore to determine value to wait for.
 
 		std::vector<vk2d::_internal::RenderTargetTextureDependencyInfo>	render_target_texture_dependencies			= {};
 
 		uint32_t														render_commitment_request_count				= {};
-		//std::mutex														render_commitment_request_mutex				= {};
+		//std::mutex													render_commitment_request_mutex				= {};
 
 		bool															has_been_submitted							= {};
 		bool															contains_non_pending_sampled_image			= {};	// Sampled image ready to be used anywhere without checks or barriers.
@@ -130,11 +122,13 @@ public:
 	VkImage																GetVulkanImage() const;
 	VkImageView															GetVulkanImageView() const;
 	VkImageLayout														GetVulkanImageLayout() const;
-	VkFramebuffer														GetFramebuffer() const;
-	VkSemaphore															GetCurrentSwapAllCompleteSemaphore() const;
+	VkFramebuffer														GetFramebuffer(
+		vk2d::_internal::RenderTargetTextureDependencyInfo			&	dependency_info ) const;
+	VkSemaphore															GetAllCompleteSemaphore(
+		vk2d::_internal::RenderTargetTextureDependencyInfo			&	dependency_info ) const;
 
-	// TODO: Rename GetCurrentSwapRenderCounter() to something more fitting to purpose, it's used to get a value for a timeline semaphore to wait for to make sure render has completed.
-	uint64_t															GetCurrentSwapRenderCounter() const;
+	uint64_t															GetRenderCounter(
+		vk2d::_internal::RenderTargetTextureDependencyInfo			&	dependency_info ) const;
 
 	bool																WaitUntilLoaded();
 	bool																IsLoaded();
@@ -146,7 +140,9 @@ public:
 
 	// Ends the rendering operations. You must call this after you're done drawing.
 	// This will display the results on screen.
-	bool																EndRender();
+	bool																EndRender(
+		vk2d::RenderTargetTextureBlurType								blur_type,
+		vk2d::Vector2f													blur_amount );
 
 	bool																SynchronizeFrame();
 	bool																WaitIdle();
@@ -239,8 +235,8 @@ private:
 		vk2d::Vector2u													new_size );
 	void																DestroyImages();
 
-	bool																CreateRenderPass();
-	void																DestroyRenderPass();
+	bool																CreateRenderPasses();
+	void																DestroyRenderPasses();
 
 	bool																CreateFramebuffers();
 	void																DestroyFramebuffers();
@@ -250,21 +246,6 @@ private:
 
 	bool																RecordTransferCommandBuffer(
 		vk2d::_internal::RenderTargetTextureImpl::SwapBuffer		&	swap );
-
-	bool																RecordBlurCommandBuffer(
-		vk2d::_internal::RenderTargetTextureImpl::SwapBuffer		&	swap,
-		vk2d::_internal::CompleteImageResource						&	source_image,
-		VkImageLayout													source_image_layout,
-		VkPipelineStageFlagBits											source_image_pipeline_barrier_src_stage,
-		vk2d::_internal::CompleteImageResource						&	intermediate_image,
-		vk2d::_internal::CompleteImageResource						&	destination_image,
-		VkImageLayout													destination_image_final_layout );
-
-	bool																RecordMipmapCommandBuffer(
-		vk2d::_internal::RenderTargetTextureImpl::SwapBuffer		&	swap,
-		vk2d::_internal::CompleteImageResource						&	source_image,
-		VkImageLayout													source_image_layout,
-		VkPipelineStageFlagBits											source_image_pipeline_barrier_src_stage );
 
 	bool																UpdateSubmitInfos(
 		vk2d::_internal::RenderTargetTextureImpl::SwapBuffer		&	swap,
@@ -280,19 +261,10 @@ private:
 
 	void																CmdPushBlurTextureDescriptorWritesDirectly(
 		VkCommandBuffer													command_buffer,
-		VkPipelineLayout												pipeline_layout,
-		uint32_t														set,
+		VkPipelineLayout												use_pipeline_layout,
+		uint32_t														set_index,
 		VkImageView														source_image,
-		VkImageLayout													source_image_layout,
-		VkImageView														destination_image,
-		VkImageLayout													destination_image_layout );
-
-	/*
-	// Not worth it to allocate descriptor sets, instead push directly into the command buffer using CmdPushBlurTextureDescriptorWritesDirectly().
-	vk2d::_internal::TimedDescriptorPoolData						&	GetOrCreateDescriptorSetForBlurImages(
-		VkImageView														source_image,
-		VkImageView														write_image );
-	*/
+		VkImageLayout													source_image_layout );
 
 	/// @brief		Record commands to finalize render into the sampled image.
 	///				This includes resolving multisamples, blur, mipmap generation and storing the result
@@ -303,11 +275,10 @@ private:
 	/// @see		vk2d::_internal::RenderTargetTextureType
 	/// @param[in]	swap
 	///				Reference to internal structure which contains all the information about the current frame.
-	void																CmdFinalizeNonBlurredRender(
-		vk2d::_internal::RenderTargetTextureImpl::SwapBuffer		&	swap );
-
-	bool																FinalizeBlurredRender(
-		vk2d::_internal::RenderTargetTextureImpl::SwapBuffer		&	swap );
+	void																CmdFinalizeRender(
+		vk2d::_internal::RenderTargetTextureImpl::SwapBuffer		&	swap,
+		vk2d::RenderTargetTextureBlurType								blur_type,
+		vk2d::Vector2f													blur_amount );
 
 	/// @brief		Record commands to copy an image to the final sampled image, then generate mipmaps for it.
 	///				Called by vk2d::_internal::RenderTargetTextureImpl::CmdFinalizeNonBlurredRender().
@@ -326,29 +297,36 @@ private:
 	/// @param[in]	destination_image
 	///				Sampled image to be used as shader read only optimal, has to have correct amount of mip levels.
 	void																CmdBlitMipmapsToSampledImage(
-		VkCommandBuffer												&	command_buffer,
+		VkCommandBuffer													command_buffer,
 		vk2d::_internal::CompleteImageResource						&	source_image,
 		VkImageLayout													source_image_layout,
 		VkPipelineStageFlagBits											source_image_pipeline_barrier_src_stage,
 		vk2d::_internal::CompleteImageResource						&	destination_image );
 
+	bool																CmdRecordBlurCommands(
+		vk2d::_internal::RenderTargetTextureImpl::SwapBuffer		&	swap,
+		VkCommandBuffer													command_buffer,
+		vk2d::RenderTargetTextureBlurType								blur_type,
+		vk2d::Vector2f													blur_amount,
+		vk2d::_internal::CompleteImageResource						&	source_image,
+		VkImageLayout													source_image_layout,
+		VkPipelineStageFlagBits											source_image_pipeline_barrier_src_stage,
+		vk2d::_internal::CompleteImageResource						&	intermediate_image,
+		vk2d::_internal::CompleteImageResource						&	destination_image );
+
 	void																CmdBindGraphicsPipelineIfDifferent(
 		VkCommandBuffer													command_buffer,
 		const vk2d::_internal::GraphicsPipelineSettings				&	pipeline_settings );
-	/*
-	void																CmdBindTextureSamplerIfDifferent(
-		VkCommandBuffer													command_buffer,
-		vk2d::Sampler												*	sampler,
-		vk2d::Texture												*	texture );
-	*/
 
 	void																CmdBindSamplerIfDifferent(
 		VkCommandBuffer													command_buffer,
-		vk2d::Sampler												*	sampler );
+		vk2d::Sampler												*	sampler,
+		VkPipelineLayout												use_pipeline_layout );
 
 	void																CmdBindTextureIfDifferent(
 		VkCommandBuffer													command_buffer,
-		vk2d::Texture												*	texture );
+		vk2d::Texture												*	texture,
+		VkPipelineLayout												use_pipeline_layout );
 
 	void																CmdSetLineWidthIfDifferent(
 		VkCommandBuffer													command_buffer,
@@ -373,9 +351,11 @@ private:
 	vk2d::_internal::PoolDescriptorSet									frame_data_descriptor_set					= {};
 
 	VkCommandPool														vk_graphics_command_pool					= {};
-	VkCommandPool														vk_compute_command_pool						= {};
+	//VkCommandPool														vk_compute_command_pool						= {};
 
 	VkRenderPass														vk_attachment_render_pass					= {};
+	VkRenderPass														vk_blur_render_pass_1						= {};
+	VkRenderPass														vk_blur_render_pass_2						= {};
 
 	std::unique_ptr<vk2d::_internal::MeshBuffer>						mesh_buffer;
 

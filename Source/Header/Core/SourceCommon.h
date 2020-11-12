@@ -14,6 +14,10 @@ namespace _internal {
 
 
 
+constexpr float KINDA_SMALL_VALUE			= 0.001f;
+
+
+
 std::string				VkResultToString( VkResult result );
 std::string				VkPipelineStageFlagBitsToString( VkPipelineStageFlagBits flags );
 

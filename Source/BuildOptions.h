@@ -16,6 +16,17 @@
 // Used only if VK2D_DEBUG_ENABLE == 1
 #define VK2D_BUILD_OPTION_VULKAN_VALIDATION								1
 
+// Dump Vulkan API calls
+#define VK2D_BUILD_OPTION_VULKAN_VALIDATION_API_DUMP					0
+
+// Vulkan API dump file path and name, relation to working folder or folder
+// containing the executable. No need to put in the file extension.
+#define VK2D_BUILD_OPTION_VULKAN_VALIDATION_API_DUMP_FILE_PATH			"api_dump"
+
+// Which format to use if using api dump.
+// Supported formats are: "txt", "html", "json"
+#define VK2D_BUILD_OPTION_VULKAN_VALIDATION_API_DUMP_FILE_EXTENSION		"txt"
+
 // Use Vulkan GPU assisted validation
 // Used only if VK2D_BUILD_OPTION_VULKAN_VALIDATION == 1 and if VK2D_DEBUG_ENABLE == 1
 #define VK2D_BUILD_OPTION_VULKAN_GPU_ASSISTED_VALIDATION				1

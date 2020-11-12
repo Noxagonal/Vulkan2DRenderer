@@ -4,6 +4,7 @@
 #include <fstream>
 #include <sstream>
 #include <assert.h>
+#include <thread>
 
 #include <glslang/Public/ShaderLang.h>
 #include <StandAlone/ResourceLimits.h>	// To get glslang::DefaultTBuiltInResource so we don't have to make one ourselves
@@ -117,6 +118,8 @@ int main( int argc, char * argv[] )
 		}
 	}
 
+	// This would be the perfect spot for multithreading, if only glslang would allow it...
+	// Might be worth looking into making this a multiple program call instead.
 	for( auto & fe : file_entries ) {
 		ExecuteGlslang( fe );
 	}
@@ -250,7 +253,20 @@ void ExecuteGlslang( FileEntry file_entry )
 		}
 
 		if( shader.getInfoLog() && std::strlen( shader.getInfoLog() ) ) {
-			cout << "Shader info log: " << shader.getInfoLog() << endl;
+			string info_log	= shader.getInfoLog();
+
+			vector<string> suppressed_warnings {
+				"extension not supported: GL_KHR_vulkan_glsl"
+			};
+
+			if( none_of( suppressed_warnings.begin(), suppressed_warnings.end(), [&info_log]( string & s )
+				{
+					return info_log.find( s ) != string::npos;
+				} ) ) {
+
+				// No suppressed warnings, display it.
+				cout << "Shader info log: " << shader.getInfoLog() << endl;
+			}
 		}
 		if( shader.getInfoDebugLog() && std::strlen( shader.getInfoDebugLog() ) ) {
 			cout << "Shader info debug log: " << shader.getInfoDebugLog() << endl;

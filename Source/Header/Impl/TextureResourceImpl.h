@@ -41,8 +41,6 @@ public:
 		vk2d::Vector2u										size,
 		const std::vector<std::vector<vk2d::Color8>*>	&	texels );
 
-															~TextureResourceImpl();
-
 	bool													MTLoad(
 		vk2d::_internal::ThreadPrivateResource			*	thread_resource );
 

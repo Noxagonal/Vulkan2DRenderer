@@ -61,7 +61,7 @@ vk2d::_internal::MeshBuffer::PushResult vk2d::_internal::MeshBuffer::CmdPushMesh
 		vkCmdBindDescriptorSets(
 			command_buffer,
 			VK_PIPELINE_BIND_POINT_GRAPHICS,
-			instance->GetGraphicsPipelineLayout(),
+			instance->GetGraphicsPrimaryRenderPipelineLayout(),
 			GRAPHICS_DESCRIPTOR_SET_ALLOCATION_INDEX_BUFFER_AS_STORAGE_BUFFER,
 			1, &reserve_result.index_block->descriptor_set.descriptorSet,
 			0, nullptr
@@ -78,7 +78,7 @@ vk2d::_internal::MeshBuffer::PushResult vk2d::_internal::MeshBuffer::CmdPushMesh
 		vkCmdBindDescriptorSets(
 			command_buffer,
 			VK_PIPELINE_BIND_POINT_GRAPHICS,
-			instance->GetGraphicsPipelineLayout(),
+			instance->GetGraphicsPrimaryRenderPipelineLayout(),
 			GRAPHICS_DESCRIPTOR_SET_ALLOCATION_VERTEX_BUFFER_AS_STORAGE_BUFFER,
 			1, &reserve_result.vertex_block->descriptor_set.descriptorSet,
 			0, nullptr
@@ -95,7 +95,7 @@ vk2d::_internal::MeshBuffer::PushResult vk2d::_internal::MeshBuffer::CmdPushMesh
 		vkCmdBindDescriptorSets(
 			command_buffer,
 			VK_PIPELINE_BIND_POINT_GRAPHICS,
-			instance->GetGraphicsPipelineLayout(),
+			instance->GetGraphicsPrimaryRenderPipelineLayout(),
 			GRAPHICS_DESCRIPTOR_SET_ALLOCATION_TEXTURE_CHANNEL_WEIGHTS,
 			1, &reserve_result.texture_channel_block->descriptor_set.descriptorSet,
 			0, nullptr

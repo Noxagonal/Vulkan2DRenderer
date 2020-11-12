@@ -616,7 +616,7 @@ bool vk2d::_internal::WindowImpl::BeginRender()
 			vkCmdBindDescriptorSets(
 				command_buffer,
 				VK_PIPELINE_BIND_POINT_GRAPHICS,
-				instance->GetGraphicsPipelineLayout(),
+				instance->GetGraphicsPrimaryRenderPipelineLayout(),
 				GRAPHICS_DESCRIPTOR_SET_ALLOCATION_WINDOW_FRAME_DATA,
 				1, &frame_data_descriptor_set.descriptorSet,
 				0, nullptr
@@ -920,18 +920,16 @@ bool vk2d::_internal::WindowImpl::EndRender()
 			return false;
 		}
 
-		std::vector<VkSubmitInfo> graphics_pre_compute_submit_infos;
-		std::vector<VkSubmitInfo> graphics_post_compute_submit_infos;
-		std::vector<VkSubmitInfo> compute_submit_infos;
-		graphics_pre_compute_submit_infos.reserve( collector.size() * 2 + 2 );
-		compute_submit_infos.reserve( collector.size() );
+		std::vector<VkSubmitInfo> graphics_queue_submit_infos;
+		graphics_queue_submit_infos.reserve( collector.size() * 2 + 2 );
+
+		// TODO: During submission on the frame it could be more efficient to separate transfer and render further and just use a single semaphore between all transfers and renders.
+		// Right now the transfer and render submissions are rather fragmented. Need to get a larger workload to measure impact on performance before modifying this.
 
 		// Get all the submit infos from all render targets into one list.
 		for( auto & c : collector ) {
-			graphics_pre_compute_submit_infos.push_back( *c.vk_transfer_submit_info );
-			graphics_pre_compute_submit_infos.push_back( *c.vk_render_submit_info );
-			if( c.vk_blur_submit_info ) compute_submit_infos.push_back( *c.vk_blur_submit_info );
-			if( c.vk_mipmap_submit_info ) graphics_post_compute_submit_infos.push_back( *c.vk_mipmap_submit_info );
+			graphics_queue_submit_infos.push_back( *c.vk_transfer_submit_info );
+			graphics_queue_submit_infos.push_back( *c.vk_render_submit_info );
 		}
 
 		// Collection of semaphores that the main window render needs to wait for, this considers timeline semaphores.
@@ -947,17 +945,18 @@ bool vk2d::_internal::WindowImpl::EndRender()
 		render_wait_for_semaphore_timeline_values.push_back( 1 );
 		render_wait_for_pipeline_stages.push_back( VK_PIPELINE_STAGE_VERTEX_INPUT_BIT | VK_PIPELINE_STAGE_VERTEX_SHADER_BIT );
 
-		// Resolve immediate dependencies we need to wait for before the main render.
+		// Resolve immediate dependencies we need to wait for before the main render happens.
 		for( auto & d : render_target_texture_dependencies[ next_image ] ) {
-			render_wait_for_semaphores.push_back( d.render_target->GetCurrentSwapAllCompleteSemaphore() );
-			render_wait_for_semaphore_timeline_values.push_back( d.render_target->GetCurrentSwapRenderCounter() );
+			render_wait_for_semaphores.push_back( d.render_target->GetAllCompleteSemaphore( d ) );
+			render_wait_for_semaphore_timeline_values.push_back( d.render_target->GetRenderCounter( d ) );
+			// TODO: Replace VK_PIPELINE_STAGE_ALL_COMMANDS_BIT with something that narrows down the potential pipeline bubble more.
 			render_wait_for_pipeline_stages.push_back( VK_PIPELINE_STAGE_ALL_COMMANDS_BIT );
 		}
 
 		assert( std::size( render_wait_for_semaphores ) == std::size( render_wait_for_semaphore_timeline_values ) &&
 				std::size( render_wait_for_semaphores ) == std::size( render_wait_for_pipeline_stages ) );
 
-		// Get window specific submit infos.
+		// Get submit infos for the window itself.
 		VkSubmitInfo window_transfer_submit_info {};
 		window_transfer_submit_info.sType					= VK_STRUCTURE_TYPE_SUBMIT_INFO;
 		window_transfer_submit_info.pNext					= nullptr;
@@ -968,7 +967,7 @@ bool vk2d::_internal::WindowImpl::EndRender()
 		window_transfer_submit_info.pCommandBuffers			= &vk_transfer_command_buffer;
 		window_transfer_submit_info.signalSemaphoreCount	= 1;
 		window_transfer_submit_info.pSignalSemaphores		= &vk_transfer_semaphore;
-		graphics_post_compute_submit_infos.push_back( window_transfer_submit_info );
+		graphics_queue_submit_infos.push_back( window_transfer_submit_info );
 
 		uint64_t signal_timeline_semaphore_value = 1;
 		VkTimelineSemaphoreSubmitInfo window_render_timeline_submit_info {};
@@ -989,15 +988,11 @@ bool vk2d::_internal::WindowImpl::EndRender()
 		window_render_submit_info.pCommandBuffers			= &render_command_buffer;
 		window_render_submit_info.signalSemaphoreCount		= 1;
 		window_render_submit_info.pSignalSemaphores			= &vk_submit_to_present_semaphores[ next_image ];
-		graphics_post_compute_submit_infos.push_back( window_render_submit_info );
-
-		Somethings off in here;
-		// It's likely a timeline semaphore. We get stuck waiting for a value perhaps.
-		// Try updating the render target texture every frame and see what happens.
+		graphics_queue_submit_infos.push_back( window_render_submit_info );
 
 		auto result = primary_render_queue.Submit(
-			graphics_pre_compute_submit_infos,
-			std::size( graphics_post_compute_submit_infos ) ? VK_NULL_HANDLE : vk_gpu_to_cpu_frame_fences[ next_image ]
+			graphics_queue_submit_infos,
+			vk_gpu_to_cpu_frame_fences[ next_image ]
 		);
 		if( result != VK_SUCCESS ) {
 			AbortRenderTargetTextureRender();
@@ -1006,36 +1001,6 @@ bool vk2d::_internal::WindowImpl::EndRender()
 				"Internal error: Cannot submit frame end pre compute graphics command buffers!"
 			);
 			return false;
-		}
-
-		if( std::size( compute_submit_infos ) ) {
-			result = primary_compute_queue.Submit(
-				compute_submit_infos,
-				VK_NULL_HANDLE
-			);
-			if( result != VK_SUCCESS ) {
-				AbortRenderTargetTextureRender();
-				instance->Report(
-					result,
-					"Internal error: Cannot submit frame end compute command buffers!"
-				);
-				return false;
-			}
-		}
-
-		if( std::size( graphics_post_compute_submit_infos ) ) {
-			result = primary_render_queue.Submit(
-				graphics_post_compute_submit_infos,
-				VK_NULL_HANDLE
-			);
-			if( result != VK_SUCCESS ) {
-				AbortRenderTargetTextureRender();
-				instance->Report(
-					result,
-					"Internal error: Cannot submit frame end post compute graphics command buffers!"
-				);
-				return false;
-			}
 		}
 
 		// Notify render targets about successful command buffer submission.
@@ -1450,11 +1415,13 @@ void vk2d::_internal::WindowImpl::DrawTriangleList(
 		);
 
 		vk2d::_internal::GraphicsPipelineSettings pipeline_settings {};
+		pipeline_settings.vk_pipeline_layout	= instance->GetGraphicsPrimaryRenderPipelineLayout();
 		pipeline_settings.vk_render_pass		= vk_render_pass;
 		pipeline_settings.primitive_topology	= VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
 		pipeline_settings.polygon_mode			= solid ? VK_POLYGON_MODE_FILL : VK_POLYGON_MODE_LINE;
 		pipeline_settings.shader_programs		= graphics_shader_programs;
 		pipeline_settings.samples				= VkSampleCountFlags( create_info_copy.samples );
+		pipeline_settings.enable_blending		= VK_TRUE;
 
 		CmdBindGraphicsPipelineIfDifferent(
 			command_buffer,
@@ -1479,7 +1446,7 @@ void vk2d::_internal::WindowImpl::DrawTriangleList(
 
 	if( push_result.success ) {
 		{
-			GraphicsPushConstants pc {};
+			vk2d::_internal::GraphicsPrimaryRenderPushConstants pc {};
 			pc.index_offset				= push_result.location_info.index_offset;
 			pc.index_count				= 3;
 			pc.vertex_offset			= push_result.location_info.vertex_offset;
@@ -1488,7 +1455,7 @@ void vk2d::_internal::WindowImpl::DrawTriangleList(
 
 			vkCmdPushConstants(
 				command_buffer,
-				instance->GetGraphicsPipelineLayout(),
+				instance->GetGraphicsPrimaryRenderPipelineLayout(),
 				VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
 				0, sizeof( pc ),
 				&pc
@@ -1589,11 +1556,13 @@ void vk2d::_internal::WindowImpl::DrawLineList(
 		);
 
 		vk2d::_internal::GraphicsPipelineSettings pipeline_settings {};
+		pipeline_settings.vk_pipeline_layout	= instance->GetGraphicsPrimaryRenderPipelineLayout();
 		pipeline_settings.vk_render_pass		= vk_render_pass;
 		pipeline_settings.primitive_topology	= VK_PRIMITIVE_TOPOLOGY_LINE_LIST;
 		pipeline_settings.polygon_mode			= VK_POLYGON_MODE_LINE;
 		pipeline_settings.shader_programs		= graphics_shader_programs;
 		pipeline_settings.samples				= VkSampleCountFlags( create_info_copy.samples );
+		pipeline_settings.enable_blending		= VK_TRUE;
 
 		CmdBindGraphicsPipelineIfDifferent(
 			command_buffer,
@@ -1618,7 +1587,7 @@ void vk2d::_internal::WindowImpl::DrawLineList(
 
 	if( push_result.success ) {
 		{
-			GraphicsPushConstants pc {};
+			vk2d::_internal::GraphicsPrimaryRenderPushConstants pc {};
 			pc.index_offset				= push_result.location_info.index_offset;
 			pc.index_count				= 2;
 			pc.vertex_offset			= push_result.location_info.vertex_offset;
@@ -1627,7 +1596,7 @@ void vk2d::_internal::WindowImpl::DrawLineList(
 
 			vkCmdPushConstants(
 				command_buffer,
-				instance->GetGraphicsPipelineLayout(),
+				instance->GetGraphicsPrimaryRenderPipelineLayout(),
 				VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
 				0, sizeof( pc ),
 				&pc
@@ -1683,11 +1652,13 @@ void vk2d::_internal::WindowImpl::DrawPointList(
 		);
 
 		vk2d::_internal::GraphicsPipelineSettings pipeline_settings {};
-		pipeline_settings.vk_render_pass			= vk_render_pass;
+		pipeline_settings.vk_pipeline_layout	= instance->GetGraphicsPrimaryRenderPipelineLayout();
+		pipeline_settings.vk_render_pass		= vk_render_pass;
 		pipeline_settings.primitive_topology	= VK_PRIMITIVE_TOPOLOGY_POINT_LIST;
 		pipeline_settings.polygon_mode			= VK_POLYGON_MODE_POINT;
 		pipeline_settings.shader_programs		= graphics_shader_programs;
 		pipeline_settings.samples				= VkSampleCountFlags( create_info_copy.samples );
+		pipeline_settings.enable_blending		= VK_TRUE;
 
 		CmdBindGraphicsPipelineIfDifferent(
 			command_buffer,
@@ -1712,7 +1683,7 @@ void vk2d::_internal::WindowImpl::DrawPointList(
 
 	if( push_result.success ) {
 		{
-			GraphicsPushConstants pc {};
+			vk2d::_internal::GraphicsPrimaryRenderPushConstants pc {};
 			pc.index_offset				= push_result.location_info.index_offset;
 			pc.index_count				= 1;
 			pc.vertex_offset			= push_result.location_info.vertex_offset;
@@ -1721,7 +1692,7 @@ void vk2d::_internal::WindowImpl::DrawPointList(
 
 			vkCmdPushConstants(
 				command_buffer,
-				instance->GetGraphicsPipelineLayout(),
+				instance->GetGraphicsPrimaryRenderPipelineLayout(),
 				VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
 				0, sizeof( pc ),
 				&pc
@@ -3237,7 +3208,7 @@ void vk2d::_internal::WindowImpl::CmdBindSamplerIfDifferent(
 		vkCmdBindDescriptorSets(
 			command_buffer,
 			VK_PIPELINE_BIND_POINT_GRAPHICS,
-			instance->GetGraphicsPipelineLayout(),
+			instance->GetGraphicsPrimaryRenderPipelineLayout(),
 			GRAPHICS_DESCRIPTOR_SET_ALLOCATION_SAMPLER_AND_SAMPLER_DATA,
 			1, &set.descriptor_set.descriptorSet,
 			0, nullptr
@@ -3297,7 +3268,7 @@ void vk2d::_internal::WindowImpl::CmdBindTextureIfDifferent(
 		vkCmdBindDescriptorSets(
 			command_buffer,
 			VK_PIPELINE_BIND_POINT_GRAPHICS,
-			instance->GetGraphicsPipelineLayout(),
+			instance->GetGraphicsPrimaryRenderPipelineLayout(),
 			GRAPHICS_DESCRIPTOR_SET_ALLOCATION_TEXTURE,
 			1, &set.descriptor_set.descriptorSet,
 			0, nullptr

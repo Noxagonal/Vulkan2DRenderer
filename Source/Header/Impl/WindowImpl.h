@@ -253,7 +253,7 @@ private:
 
 	void														CmdBindGraphicsPipelineIfDifferent(
 		VkCommandBuffer											command_buffer,
-		const vk2d::_internal::GraphicsPipelineSettings				&	pipeline_settings );
+		const vk2d::_internal::GraphicsPipelineSettings		&	pipeline_settings );
 
 	/*
 	void														CmdBindTextureSamplerIfDifferent(

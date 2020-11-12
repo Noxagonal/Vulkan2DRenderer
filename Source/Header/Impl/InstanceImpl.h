@@ -261,7 +261,7 @@ public:
 
 
 	// Any thread.
-	vk2d::_internal::ComputeShaderProgram					GetComputeShaderModules(
+	VkShaderModule											GetComputeShaderModules(
 		vk2d::_internal::ComputeShaderProgramID				id ) const;
 
 
@@ -299,23 +299,19 @@ public:
 	VkPipelineCache											GetComputePipelineCache() const;
 
 	// Any thread.
-	VkPipelineLayout										GetGraphicsPipelineLayout() const;
+	VkPipelineLayout										GetGraphicsPrimaryRenderPipelineLayout() const;
 
 	// Any thread.
-	VkPipelineLayout										GetComputeBlurPipelineLayout() const;
-
-
-	// Any thread.
-	const vk2d::_internal::DescriptorSetLayout			&	GetComputeBasicSamplerDescriptorSetLayout() const;
-
-	// Any thread.
-	const vk2d::_internal::DescriptorSetLayout			&	GetComputeBlurTexturesDescriptorSetLayout() const;
+	VkPipelineLayout										GetGraphicsBlurPipelineLayout() const;
 
 	// Any thread.
 	const vk2d::_internal::DescriptorSetLayout			&	GetGraphicsSamplerDescriptorSetLayout() const;
 
 	// Any thread.
 	const vk2d::_internal::DescriptorSetLayout			&	GetGraphicsTextureDescriptorSetLayout() const;
+	
+	// Any thread.
+	const vk2d::_internal::DescriptorSetLayout			&	GetGraphicsRenderTargetBlurTextureDescriptorSetLayout() const;
 
 	// Any thread.
 	const vk2d::_internal::DescriptorSetLayout			&	GetGraphicsUniformBufferDescriptorSetLayout() const;
@@ -329,6 +325,7 @@ public:
 	// Any thread.
 	vk2d::Sampler										*	GetDefaultSampler() const;
 
+	// Any thread.
 	VkDescriptorSet											GetBlurSamplerDescriptorSet() const;
 
 
@@ -423,7 +420,7 @@ private:
 
 	std::map<vk2d::_internal::GraphicsShaderProgramID, vk2d::_internal::GraphicsShaderProgram>
 															graphics_shader_programs;
-	std::map<vk2d::_internal::ComputeShaderProgramID, vk2d::_internal::ComputeShaderProgram>
+	std::map<vk2d::_internal::ComputeShaderProgramID, VkShaderModule>
 															compute_shader_programs;
 
 	std::map<vk2d::_internal::GraphicsPipelineSettings, VkPipeline>
@@ -431,24 +428,23 @@ private:
 	std::map<vk2d::_internal::ComputePipelineSettings, VkPipeline>
 															vk_compute_pipelines;
 
-	VkPipelineCache											vk_graphics_pipeline_cache				= {};
-	VkPipelineCache											vk_compute_pipeline_cache				= {};
+	VkPipelineCache											vk_graphics_pipeline_cache					= {};
+	VkPipelineCache											vk_compute_pipeline_cache					= {};
 
-	VkPipelineLayout										vk_graphics_pipeline_layout				= {};
-	VkPipelineLayout										vk_compute_blur_pipeline_layout			= {};
+	VkPipelineLayout										vk_graphics_primary_render_pipeline_layout	= {};
+	VkPipelineLayout										vk_graphics_blur_pipeline_layout			= {};
 
+	std::unique_ptr<vk2d::_internal::DescriptorSetLayout>	graphics_simple_sampler_descriptor_set_layout;
 	std::unique_ptr<vk2d::_internal::DescriptorSetLayout>	graphics_sampler_descriptor_set_layout;
 	std::unique_ptr<vk2d::_internal::DescriptorSetLayout>	graphics_texture_descriptor_set_layout;
+	std::unique_ptr<vk2d::_internal::DescriptorSetLayout>	graphics_render_target_blur_texture_descriptor_set_layout;
 	std::unique_ptr<vk2d::_internal::DescriptorSetLayout>	graphics_uniform_buffer_descriptor_set_layout;
 	std::unique_ptr<vk2d::_internal::DescriptorSetLayout>	graphics_storage_buffer_descriptor_set_layout;
 
-	std::unique_ptr<vk2d::_internal::DescriptorSetLayout>	compute_basic_sampler_descriptor_set_layout;
-	std::unique_ptr<vk2d::_internal::DescriptorSetLayout>	compute_blur_textures_descriptor_set_layout;
-
-	vk2d::_internal::ResolvedQueue							primary_render_queue					= {};
-	vk2d::_internal::ResolvedQueue							secondary_render_queue					= {};
-	vk2d::_internal::ResolvedQueue							primary_compute_queue					= {};
-	vk2d::_internal::ResolvedQueue							primary_transfer_queue					= {};
+	vk2d::_internal::ResolvedQueue							primary_render_queue						= {};
+	vk2d::_internal::ResolvedQueue							secondary_render_queue						= {};
+	vk2d::_internal::ResolvedQueue							primary_compute_queue						= {};
+	vk2d::_internal::ResolvedQueue							primary_transfer_queue						= {};
 
 	std::unique_ptr<vk2d::_internal::DeviceMemoryPool>		device_memory_pool;
 
@@ -456,22 +452,22 @@ private:
 	std::unique_ptr<vk2d::_internal::DescriptorAutoPool>	descriptor_pool;
 
 	std::unique_ptr<vk2d::Sampler>							default_sampler;
-	vk2d::TextureResource								*	default_texture							= {};
+	vk2d::TextureResource								*	default_texture								= {};
 	std::unique_ptr<vk2d::Sampler>							blur_sampler;
-	vk2d::_internal::PoolDescriptorSet						blur_sampler_descriptor_set				= {};
+	vk2d::_internal::PoolDescriptorSet						blur_sampler_descriptor_set					= {};
 
 	std::vector<std::unique_ptr<vk2d::Window>>				windows;
 	std::vector<std::unique_ptr<vk2d::RenderTargetTexture>>	render_target_textures;
 	std::vector<std::unique_ptr<vk2d::Sampler>>				samplers;
 	std::vector<std::unique_ptr<vk2d::Cursor>>				cursors;
 
-	vk2d::GamepadEventCallbackFun							joystick_event_callback					= {};
+	vk2d::GamepadEventCallbackFun							joystick_event_callback						= {};
 
-	std::thread::id											creator_thread_id						= {};
+	std::thread::id											creator_thread_id							= {};
 
-	PFN_vkCmdPushDescriptorSetKHR							vk_fun_vkCmdPushDescriptorSetKHR		= {};
+	PFN_vkCmdPushDescriptorSetKHR							vk_fun_vkCmdPushDescriptorSetKHR			= {};
 
-	bool													is_good									= {};
+	bool													is_good										= {};
 };
 
 

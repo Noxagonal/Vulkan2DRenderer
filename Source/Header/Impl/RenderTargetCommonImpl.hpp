@@ -44,15 +44,16 @@ public:
 	{
 		VkSubmitInfo		*	vk_transfer_submit_info			= {};
 		VkSubmitInfo		*	vk_render_submit_info			= {};
-		VkSubmitInfo		*	vk_blur_submit_info				= {};
-		VkSubmitInfo		*	vk_mipmap_submit_info			= {};
+		//VkSubmitInfo		*	vk_blur_submit_info				= {};
+		//VkSubmitInfo		*	vk_mipmap_submit_info			= {};
 	};
 
 	void						Append(
 		VkSubmitInfo		*	transfer_submit_info,
-		VkSubmitInfo		*	render_submit_info,
-		VkSubmitInfo		*	blur_submit_info,
-		VkSubmitInfo		*	mipmap_submit_info );
+		VkSubmitInfo		*	render_submit_info
+		//VkSubmitInfo		*	blur_submit_info,
+		//VkSubmitInfo		*	mipmap_submit_info
+	);
 
 	vk2d::_internal::RenderTargetTextureRenderCollector::Collection				&	operator[]( size_t index );
 	vk2d::_internal::RenderTargetTextureRenderCollector::Collection				*	begin();

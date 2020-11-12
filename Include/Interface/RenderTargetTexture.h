@@ -24,6 +24,12 @@ class RenderTargetTextureImpl;
 
 
 
+enum class RenderTargetTextureBlurType
+{
+	BOX,
+	GAUSSIAN,
+};
+
 struct RenderTargetTextureCreateInfo
 {
 	vk2d::RenderCoordinateSpace				coordinate_space			= vk2d::RenderCoordinateSpace::TEXEL_SPACE;	// Coordinate space of the render target.
@@ -62,7 +68,9 @@ public:
 
 	// Ends the rendering operations. You must call this after you're done drawing.
 	// This will display the results on screen.
-	VK2D_API bool												VK2D_APIENTRY				EndRender();
+	VK2D_API bool												VK2D_APIENTRY				EndRender(
+		vk2d::Vector2f											blur_amount					= {},
+		vk2d::RenderTargetTextureBlurType						blur_type					= vk2d::RenderTargetTextureBlurType::GAUSSIAN );
 
 	VK2D_API void												VK2D_APIENTRY				DrawTriangleList(
 		const std::vector<vk2d::VertexIndex_3>				&	indices,

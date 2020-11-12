@@ -48,7 +48,7 @@ int main()
 			vk2d::Vector2f( 200, 200 ),
 			vk2d::Vector2f( 700, 400 )
 		);
-		window->DrawCircle(
+		window->DrawEllipse(
 			vk2d::Vector2f( 450, 200 ),
 			vk2d::Vector2f( 750, 500 ),
 			true,

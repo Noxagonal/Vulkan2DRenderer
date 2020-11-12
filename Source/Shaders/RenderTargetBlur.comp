@@ -1,5 +1,5 @@
 #version 450
-// #extension GL_KHR_vulkan_glsl : enable
+#extension GL_KHR_vulkan_glsl : enable
 
 
 
@@ -32,7 +32,8 @@ layout(std140, push_constant) uniform PushConstants {
 void RenderTargetTextureBlurPass1()
 {
 	if( gl_GlobalInvocationID.x < push_constants.image_size_x && gl_GlobalInvocationID.y < push_constants.image_size_y ) {
-		vec4 texel_color = texture( sampler2D( input_image, image_sampler ), vec2( gl_GlobalInvocationID.xy ) );
+		vec4 texel_color = texture( sampler2D( input_image, image_sampler ), vec2( gl_GlobalInvocationID.xy ) / vec2( push_constants.image_size_x, push_constants.image_size_y ) );
+		vec4 test_color = vec4( 1.0, 0.5, 0.0, 1.0 );
 		imageStore( output_image, ivec2( gl_GlobalInvocationID.xy ), texel_color );
 	}
 }
@@ -40,7 +41,8 @@ void RenderTargetTextureBlurPass1()
 void RenderTargetTextureBlurPass2()
 {
 	if( gl_GlobalInvocationID.x < push_constants.image_size_x && gl_GlobalInvocationID.y < push_constants.image_size_y ) {
-		vec4 texel_color = texture( sampler2D( input_image, image_sampler ), vec2( gl_GlobalInvocationID.xy ) );
+		vec4 texel_color = texture( sampler2D( input_image, image_sampler ), vec2( gl_GlobalInvocationID.xy ) / vec2( push_constants.image_size_x, push_constants.image_size_y ) );
+		vec4 test_color = vec4( 1.0, 0.5, 0.0, 1.0 );
 		imageStore( output_image, ivec2( gl_GlobalInvocationID.xy ), texel_color );
 	}
 }

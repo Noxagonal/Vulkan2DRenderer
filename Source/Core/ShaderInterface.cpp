@@ -113,18 +113,22 @@ bool vk2d::_internal::GraphicsPipelineSettings::operator<(
 
 	return
 		std::tie(
+			vk_pipeline_layout,
 			vk_render_pass,
 			primitive_topology,
 			polygon_mode,
 			shader_programs,
-			samples
+			samples,
+			enable_blending
 		) <
 		std::tie(
+			other.vk_pipeline_layout,
 			other.vk_render_pass,
 			other.primitive_topology,
 			other.polygon_mode,
 			other.shader_programs,
-			other.samples
+			other.samples,
+			other.enable_blending
 		);
 }
 
@@ -134,18 +138,22 @@ bool vk2d::_internal::GraphicsPipelineSettings::operator>(
 {
 	return
 		std::tie(
+			vk_pipeline_layout,
 			vk_render_pass,
 			primitive_topology,
 			polygon_mode,
 			shader_programs,
-			samples
+			samples,
+			enable_blending
 		) >
 		std::tie(
+			other.vk_pipeline_layout,
 			other.vk_render_pass,
 			other.primitive_topology,
 			other.polygon_mode,
 			other.shader_programs,
-			other.samples
+			other.samples,
+			other.enable_blending
 		);
 }
 
@@ -155,18 +163,22 @@ bool vk2d::_internal::GraphicsPipelineSettings::operator<=(
 {
 	return
 		std::tie(
+			vk_pipeline_layout,
 			vk_render_pass,
 			primitive_topology,
 			polygon_mode,
 			shader_programs,
-			samples
+			samples,
+			enable_blending
 		) <=
 		std::tie(
+			other.vk_pipeline_layout,
 			other.vk_render_pass,
 			other.primitive_topology,
 			other.polygon_mode,
 			other.shader_programs,
-			other.samples
+			other.samples,
+			other.enable_blending
 		);
 }
 
@@ -176,18 +188,22 @@ bool vk2d::_internal::GraphicsPipelineSettings::operator>=(
 {
 	return
 		std::tie(
+			vk_pipeline_layout,
 			vk_render_pass,
 			primitive_topology,
 			polygon_mode,
 			shader_programs,
-			samples
+			samples,
+			enable_blending
 		) >=
 		std::tie(
+			other.vk_pipeline_layout,
 			other.vk_render_pass,
 			other.primitive_topology,
 			other.polygon_mode,
 			other.shader_programs,
-			other.samples
+			other.samples,
+			other.enable_blending
 		);
 }
 
@@ -197,118 +213,62 @@ bool vk2d::_internal::GraphicsPipelineSettings::operator==(
 {
 	return
 		std::tie(
+			vk_pipeline_layout,
 			vk_render_pass,
 			primitive_topology,
 			polygon_mode,
 			shader_programs,
-			samples
+			samples,
+			enable_blending
 		) ==
 		std::tie(
+			other.vk_pipeline_layout,
 			other.vk_render_pass,
 			other.primitive_topology,
 			other.polygon_mode,
 			other.shader_programs,
-			other.samples
+			other.samples,
+			other.enable_blending
 		);
 }
 
 bool vk2d::_internal::GraphicsPipelineSettings::operator!=(
 	const vk2d::_internal::GraphicsPipelineSettings		&	other
-) const
+	) const
 {
 	return
 		std::tie(
+			vk_pipeline_layout,
 			vk_render_pass,
 			primitive_topology,
 			polygon_mode,
 			shader_programs,
-			samples
+			samples,
+			enable_blending
 		) !=
 		std::tie(
+			other.vk_pipeline_layout,
 			other.vk_render_pass,
 			other.primitive_topology,
 			other.polygon_mode,
 			other.shader_programs,
-			other.samples
+			other.samples,
+			other.enable_blending
 		);
 }
 
-bool vk2d::_internal::ComputeShaderProgram::operator<( const vk2d::_internal::ComputeShaderProgram & other ) const
-{
-	return
-		std::tie(
-			compute
-		) <
-		std::tie(
-			other.compute
-		);
-}
 
-bool vk2d::_internal::ComputeShaderProgram::operator>( const vk2d::_internal::ComputeShaderProgram & other ) const
-{
-	return
-		std::tie(
-			compute
-		) >
-		std::tie(
-			other.compute
-		);
-}
-
-bool vk2d::_internal::ComputeShaderProgram::operator<=( const vk2d::_internal::ComputeShaderProgram & other ) const
-{
-	return
-		std::tie(
-			compute
-		) <=
-		std::tie(
-			other.compute
-		);
-}
-
-bool vk2d::_internal::ComputeShaderProgram::operator>=( const vk2d::_internal::ComputeShaderProgram & other ) const
-{
-	return
-		std::tie(
-			compute
-		) >=
-		std::tie(
-			other.compute
-		);
-}
-
-bool vk2d::_internal::ComputeShaderProgram::operator==( const vk2d::_internal::ComputeShaderProgram & other ) const
-{
-	return
-		std::tie(
-			compute
-		) ==
-		std::tie(
-			other.compute
-		);
-}
-
-bool vk2d::_internal::ComputeShaderProgram::operator!=( const vk2d::_internal::ComputeShaderProgram & other ) const
-{
-	return
-		std::tie(
-			compute
-		) !=
-		std::tie(
-			other.compute
-		);
-}
 
 bool vk2d::_internal::ComputePipelineSettings::operator<( const vk2d::_internal::ComputePipelineSettings & other ) const
 {
 	return
 		std::tie(
-			shader_programs,
-			pipeline_layout
+			vk_pipeline_layout,
+			vk_shader_program
 		) <
 		std::tie(
-			other.shader_programs,
-			other.pipeline_layout
+			other.vk_pipeline_layout,
+			other.vk_shader_program
 		);
 }
 
@@ -316,12 +276,12 @@ bool vk2d::_internal::ComputePipelineSettings::operator>( const vk2d::_internal:
 {
 	return
 		std::tie(
-			shader_programs,
-			pipeline_layout
+			vk_pipeline_layout,
+			vk_shader_program
 		) >
 		std::tie(
-			other.shader_programs,
-			other.pipeline_layout
+			other.vk_pipeline_layout,
+			other.vk_shader_program
 		);
 }
 
@@ -329,12 +289,12 @@ bool vk2d::_internal::ComputePipelineSettings::operator<=( const vk2d::_internal
 {
 	return
 		std::tie(
-			shader_programs,
-			pipeline_layout
+			vk_pipeline_layout,
+			vk_shader_program
 		) <=
 		std::tie(
-			other.shader_programs,
-			other.pipeline_layout
+			other.vk_pipeline_layout,
+			other.vk_shader_program
 		);
 }
 
@@ -342,12 +302,12 @@ bool vk2d::_internal::ComputePipelineSettings::operator>=( const vk2d::_internal
 {
 	return
 		std::tie(
-			shader_programs,
-			pipeline_layout
+			vk_pipeline_layout,
+			vk_shader_program
 		) >=
 		std::tie(
-			other.shader_programs,
-			other.pipeline_layout
+			other.vk_pipeline_layout,
+			other.vk_shader_program
 		);
 }
 
@@ -355,12 +315,12 @@ bool vk2d::_internal::ComputePipelineSettings::operator==( const vk2d::_internal
 {
 	return
 		std::tie(
-			shader_programs,
-			pipeline_layout
+			vk_pipeline_layout,
+			vk_shader_program
 		) ==
 		std::tie(
-			other.shader_programs,
-			other.pipeline_layout
+			other.vk_pipeline_layout,
+			other.vk_shader_program
 		);
 }
 
@@ -368,11 +328,11 @@ bool vk2d::_internal::ComputePipelineSettings::operator!=( const vk2d::_internal
 {
 	return
 		std::tie(
-			shader_programs,
-			pipeline_layout
+			vk_pipeline_layout,
+			vk_shader_program
 		) !=
 		std::tie(
-			other.shader_programs,
-			other.pipeline_layout
+			other.vk_pipeline_layout,
+			other.vk_shader_program
 		);
 }

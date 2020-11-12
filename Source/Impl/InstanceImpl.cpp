@@ -18,6 +18,8 @@
 #define GLFW_INCLUDE_NONE
 #include <GLFW/glfw3.h>
 
+#include <cstdlib>
+
 
 
 namespace vk2d {
@@ -938,7 +940,7 @@ vk2d::_internal::GraphicsShaderProgram vk2d::_internal::InstanceImpl::GetGraphic
 	return {};
 }
 
-vk2d::_internal::ComputeShaderProgram vk2d::_internal::InstanceImpl::GetComputeShaderModules(
+VkShaderModule vk2d::_internal::InstanceImpl::GetComputeShaderModules(
 	vk2d::_internal::ComputeShaderProgramID	id
 ) const
 {
@@ -996,7 +998,7 @@ VkPipeline vk2d::_internal::InstanceImpl::GetGraphicsPipeline(
 	// Need mutex here as this function can be called from multiple threads.
 	// Alternatively we could create vulkan pipelines per window and render
 	// target texture, but that would probably be wasteful. Regardless this
-	// function will be called very often so we'll need a way of caching
+	// function will be called very often so we could benefit from caching
 	// these pipelines within the windows and render target textures.
 	// Since the pipelines won't change throughout the execution a simple
 	// std::map per window and render target with a pipeline pointer
@@ -1017,7 +1019,7 @@ VkPipeline vk2d::_internal::InstanceImpl::GetComputePipeline(
 	// Need mutex here as this function can be called from multiple threads.
 	// Alternatively we could create vulkan pipelines per window and render
 	// target texture, but that would probably be wasteful. Regardless this
-	// function will be called very often so we'll need a way of caching
+	// function will be called very often so we could benefit from caching
 	// these pipelines within the windows and render target textures.
 	// Since the pipelines won't change throughout the execution a simple
 	// std::map per window and render target with a pipeline pointer
@@ -1163,12 +1165,12 @@ VkPipeline vk2d::_internal::InstanceImpl::CreateGraphicsPipeline(
 	depth_stencil_state_create_info.maxDepthBounds			= 1.0f;
 
 	std::array<VkPipelineColorBlendAttachmentState, 1> color_blend_attachment_states {};
-	color_blend_attachment_states[ 0 ].blendEnable			= VK_TRUE;
+	color_blend_attachment_states[ 0 ].blendEnable			= settings.enable_blending;
 	color_blend_attachment_states[ 0 ].srcColorBlendFactor	= VK_BLEND_FACTOR_SRC_ALPHA;
 	color_blend_attachment_states[ 0 ].dstColorBlendFactor	= VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
 	color_blend_attachment_states[ 0 ].colorBlendOp			= VK_BLEND_OP_ADD;
-	color_blend_attachment_states[ 0 ].srcAlphaBlendFactor	= VK_BLEND_FACTOR_SRC_ALPHA;
-	color_blend_attachment_states[ 0 ].dstAlphaBlendFactor	= VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
+	color_blend_attachment_states[ 0 ].srcAlphaBlendFactor	= VK_BLEND_FACTOR_ONE_MINUS_DST_ALPHA;
+	color_blend_attachment_states[ 0 ].dstAlphaBlendFactor	= VK_BLEND_FACTOR_ONE;
 	color_blend_attachment_states[ 0 ].alphaBlendOp			= VK_BLEND_OP_ADD;
 	color_blend_attachment_states[ 0 ].colorWriteMask		=
 		VK_COLOR_COMPONENT_R_BIT |
@@ -1217,7 +1219,7 @@ VkPipeline vk2d::_internal::InstanceImpl::CreateGraphicsPipeline(
 	pipeline_create_info.pDepthStencilState		= &depth_stencil_state_create_info;
 	pipeline_create_info.pColorBlendState		= &color_blend_state_create_info;
 	pipeline_create_info.pDynamicState			= &dynamic_state_create_info;
-	pipeline_create_info.layout					= GetGraphicsPipelineLayout();
+	pipeline_create_info.layout					= settings.vk_pipeline_layout;
 	pipeline_create_info.renderPass				= settings.vk_render_pass;
 	pipeline_create_info.subpass				= 0;
 	pipeline_create_info.basePipelineHandle		= VK_NULL_HANDLE;
@@ -1248,7 +1250,7 @@ VkPipeline vk2d::_internal::InstanceImpl::CreateComputePipeline( const vk2d::_in
 	stage_create_info.pNext						= nullptr;
 	stage_create_info.flags						= 0;
 	stage_create_info.stage						= VK_SHADER_STAGE_COMPUTE_BIT;
-	stage_create_info.module					= settings.shader_programs.compute;
+	stage_create_info.module					= settings.vk_shader_program;
 	stage_create_info.pName						= "main";
 	stage_create_info.pSpecializationInfo		= nullptr;
 
@@ -1257,7 +1259,7 @@ VkPipeline vk2d::_internal::InstanceImpl::CreateComputePipeline( const vk2d::_in
 	pipeline_create_info.pNext					= nullptr;
 	pipeline_create_info.flags					= 0;
 	pipeline_create_info.stage					= stage_create_info;
-	pipeline_create_info.layout					= settings.pipeline_layout;
+	pipeline_create_info.layout					= settings.vk_pipeline_layout;
 	pipeline_create_info.basePipelineHandle		= VK_NULL_HANDLE;
 	pipeline_create_info.basePipelineIndex		= 0;
 
@@ -1289,11 +1291,17 @@ VkPipelineCache vk2d::_internal::InstanceImpl::GetComputePipelineCache() const
 	return vk_compute_pipeline_cache;
 }
 
-VkPipelineLayout vk2d::_internal::InstanceImpl::GetGraphicsPipelineLayout() const
+VkPipelineLayout vk2d::_internal::InstanceImpl::GetGraphicsPrimaryRenderPipelineLayout() const
 {
-	return vk_graphics_pipeline_layout;
+	return vk_graphics_primary_render_pipeline_layout;
 }
 
+VkPipelineLayout vk2d::_internal::InstanceImpl::GetGraphicsBlurPipelineLayout() const
+{
+	return vk_graphics_blur_pipeline_layout;
+}
+
+/*
 VkPipelineLayout vk2d::_internal::InstanceImpl::GetComputeBlurPipelineLayout() const
 {
 	return vk_compute_blur_pipeline_layout;
@@ -1308,6 +1316,7 @@ const vk2d::_internal::DescriptorSetLayout & vk2d::_internal::InstanceImpl::GetC
 {
 	return *compute_blur_textures_descriptor_set_layout;
 }
+*/
 
 const vk2d::_internal::DescriptorSetLayout & vk2d::_internal::InstanceImpl::GetGraphicsSamplerDescriptorSetLayout() const
 {
@@ -1317,6 +1326,11 @@ const vk2d::_internal::DescriptorSetLayout & vk2d::_internal::InstanceImpl::GetG
 const vk2d::_internal::DescriptorSetLayout & vk2d::_internal::InstanceImpl::GetGraphicsTextureDescriptorSetLayout() const
 {
 	return *graphics_texture_descriptor_set_layout;
+}
+
+const vk2d::_internal::DescriptorSetLayout & vk2d::_internal::InstanceImpl::GetGraphicsRenderTargetBlurTextureDescriptorSetLayout() const
+{
+	return *graphics_render_target_blur_texture_descriptor_set_layout;
 }
 
 const vk2d::_internal::DescriptorSetLayout & vk2d::_internal::InstanceImpl::GetGraphicsUniformBufferDescriptorSetLayout() const
@@ -1486,9 +1500,28 @@ bool vk2d::_internal::InstanceImpl::CreateInstance()
 {
 
 #if VK2D_BUILD_OPTION_VULKAN_VALIDATION && VK2D_DEBUG_ENABLE
+
 	instance_layers.push_back( "VK_LAYER_KHRONOS_validation" );
 	// instance_layers.push_back( "VK_LAYER_LUNARG_device_simulation" );
 	instance_extensions.push_back( VK_EXT_DEBUG_UTILS_EXTENSION_NAME );
+
+#if VK2D_BUILD_OPTION_VULKAN_VALIDATION_API_DUMP
+	instance_layers.push_back( "VK_LAYER_LUNARG_api_dump" );
+
+	std::stringstream dump_file;
+	std::stringstream dump_extension;
+
+	dump_file << "VK_APIDUMP_LOG_FILENAME="
+		<< VK2D_BUILD_OPTION_VULKAN_VALIDATION_API_DUMP_FILE_PATH
+		<< "."
+		<< VK2D_BUILD_OPTION_VULKAN_VALIDATION_API_DUMP_FILE_EXTENSION;
+
+	dump_extension << "VK_APIDUMP_OUTPUT_FORMAT="
+		<< VK2D_BUILD_OPTION_VULKAN_VALIDATION_API_DUMP_FILE_EXTENSION;
+
+	putenv( dump_file.str().c_str() );
+	putenv( dump_extension.str().c_str() );
+#endif
 
 	VkDebugUtilsMessageSeverityFlagsEXT severity_flags {};
 #if VK2D_BUILD_OPTION_VULKAN_VALIDATION_SEVERITY_VERBOSE
@@ -1660,7 +1693,7 @@ bool vk2d::_internal::InstanceImpl::CreateDeviceAndQueues()
 	features.fillModeNonSolid						= VK_TRUE;
 	features.wideLines								= VK_TRUE;
 	features.geometryShader							= VK_TRUE;
-	features.shaderStorageImageWriteWithoutFormat	= VK_TRUE;
+//	features.shaderStorageImageWriteWithoutFormat	= VK_TRUE;
 //	features.fragmentStoresAndAtomics				= VK_TRUE;
 
 	VkPhysicalDeviceVulkan12Features features_1_2 {};
@@ -1774,7 +1807,7 @@ bool vk2d::_internal::InstanceImpl::CreateBlurSampler()
 	}
 
 	{
-		blur_sampler_descriptor_set = AllocateDescriptorSet( *compute_basic_sampler_descriptor_set_layout );
+		blur_sampler_descriptor_set = AllocateDescriptorSet( *graphics_simple_sampler_descriptor_set_layout );
 		if( blur_sampler_descriptor_set != VK_SUCCESS ) {
 			FreeDescriptorSet( blur_sampler_descriptor_set );
 			Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot create blur sampler descriptor set!" );
@@ -1808,7 +1841,6 @@ bool vk2d::_internal::InstanceImpl::CreateBlurSampler()
 
 	return true;
 }
-
 
 
 
@@ -1929,6 +1961,34 @@ bool vk2d::_internal::InstanceImpl::CreateShaderModules()
 			MultitexturedFragmentPointWithUVBorderColor_frag_shader_data.size()
 		);
 
+
+
+		// Create individual shader modules for render target texture blur passes.
+		auto render_target_texture_blur_vertex								= CreateModule(
+			RenderTargetTextureBlurVertex_vert_shader_data.data(),
+			RenderTargetTextureBlurVertex_vert_shader_data.size()
+		);
+
+		auto render_target_texture_fragment_box_blur_horisontal				= CreateModule(
+			RenderTargetTexture_BoxBlur_Horisontal_frag_shader_data.data(),
+			RenderTargetTexture_BoxBlur_Horisontal_frag_shader_data.size()
+		);
+		auto render_target_texture_fragment_box_blur_vertical				= CreateModule(
+			RenderTargetTexture_BoxBlur_Vertical_frag_shader_data.data(),
+			RenderTargetTexture_BoxBlur_Vertical_frag_shader_data.size()
+		);
+
+		auto render_target_texture_fragment_gaussian_blur_horisontal		= CreateModule(
+			RenderTargetTexture_GaussianBlur_Horisontal_frag_shader_data.data(),
+			RenderTargetTexture_GaussianBlur_Horisontal_frag_shader_data.size()
+		);
+		auto render_target_texture_fragment_gaussian_blur_vertical			= CreateModule(
+			RenderTargetTexture_GaussianBlur_Vertical_frag_shader_data.data(),
+			RenderTargetTexture_GaussianBlur_Vertical_frag_shader_data.size()
+		);
+
+
+
 		// List all individual shader modules into a vector
 		vk_graphics_shader_modules.push_back( single_textured_vertex );
 		vk_graphics_shader_modules.push_back( single_textured_fragment );
@@ -1942,16 +2002,27 @@ bool vk2d::_internal::InstanceImpl::CreateShaderModules()
 		vk_graphics_shader_modules.push_back( multitextured_fragment_line_uv_border_color );
 		vk_graphics_shader_modules.push_back( multitextured_fragment_point_uv_border_color );
 
-		// Collect a listing of shader units, which is a collection of shader modules needed to create a pipeline.
-		graphics_shader_programs[ vk2d::_internal::GraphicsShaderProgramID::SINGLE_TEXTURED ]							= vk2d::_internal::GraphicsShaderProgram( single_textured_vertex, single_textured_fragment );
-		graphics_shader_programs[ vk2d::_internal::GraphicsShaderProgramID::SINGLE_TEXTURED_UV_BORDER_COLOR ]			= vk2d::_internal::GraphicsShaderProgram( single_textured_vertex, single_textured_fragment_uv_border_color );
+		vk_graphics_shader_modules.push_back( render_target_texture_blur_vertex );
+		vk_graphics_shader_modules.push_back( render_target_texture_fragment_box_blur_horisontal );
+		vk_graphics_shader_modules.push_back( render_target_texture_fragment_box_blur_vertical );
+		vk_graphics_shader_modules.push_back( render_target_texture_fragment_gaussian_blur_horisontal );
+		vk_graphics_shader_modules.push_back( render_target_texture_fragment_gaussian_blur_vertical);
 
-		graphics_shader_programs[ vk2d::_internal::GraphicsShaderProgramID::MULTITEXTURED_TRIANGLE ]					= vk2d::_internal::GraphicsShaderProgram( multitextured_vertex, multitextured_fragment_triangle );
-		graphics_shader_programs[ vk2d::_internal::GraphicsShaderProgramID::MULTITEXTURED_LINE ]						= vk2d::_internal::GraphicsShaderProgram( multitextured_vertex, multitextured_fragment_line );
-		graphics_shader_programs[ vk2d::_internal::GraphicsShaderProgramID::MULTITEXTURED_POINT ]						= vk2d::_internal::GraphicsShaderProgram( multitextured_vertex, multitextured_fragment_point );
-		graphics_shader_programs[ vk2d::_internal::GraphicsShaderProgramID::MULTITEXTURED_TRIANGLE_UV_BORDER_COLOR ]	= vk2d::_internal::GraphicsShaderProgram( multitextured_vertex, multitextured_fragment_triangle_uv_border_color );
-		graphics_shader_programs[ vk2d::_internal::GraphicsShaderProgramID::MULTITEXTURED_LINE_UV_BORDER_COLOR ]		= vk2d::_internal::GraphicsShaderProgram( multitextured_vertex, multitextured_fragment_line_uv_border_color );
-		graphics_shader_programs[ vk2d::_internal::GraphicsShaderProgramID::MULTITEXTURED_POINT_UV_BORDER_COLOR ]		= vk2d::_internal::GraphicsShaderProgram( multitextured_vertex, multitextured_fragment_point_uv_border_color );
+		// Collect a listing of shader units, which is a collection of shader modules needed to create a pipeline.
+		graphics_shader_programs[ vk2d::_internal::GraphicsShaderProgramID::SINGLE_TEXTURED ]								= vk2d::_internal::GraphicsShaderProgram( single_textured_vertex, single_textured_fragment );
+		graphics_shader_programs[ vk2d::_internal::GraphicsShaderProgramID::SINGLE_TEXTURED_UV_BORDER_COLOR ]				= vk2d::_internal::GraphicsShaderProgram( single_textured_vertex, single_textured_fragment_uv_border_color );
+
+		graphics_shader_programs[ vk2d::_internal::GraphicsShaderProgramID::MULTITEXTURED_TRIANGLE ]						= vk2d::_internal::GraphicsShaderProgram( multitextured_vertex, multitextured_fragment_triangle );
+		graphics_shader_programs[ vk2d::_internal::GraphicsShaderProgramID::MULTITEXTURED_LINE ]							= vk2d::_internal::GraphicsShaderProgram( multitextured_vertex, multitextured_fragment_line );
+		graphics_shader_programs[ vk2d::_internal::GraphicsShaderProgramID::MULTITEXTURED_POINT ]							= vk2d::_internal::GraphicsShaderProgram( multitextured_vertex, multitextured_fragment_point );
+		graphics_shader_programs[ vk2d::_internal::GraphicsShaderProgramID::MULTITEXTURED_TRIANGLE_UV_BORDER_COLOR ]		= vk2d::_internal::GraphicsShaderProgram( multitextured_vertex, multitextured_fragment_triangle_uv_border_color );
+		graphics_shader_programs[ vk2d::_internal::GraphicsShaderProgramID::MULTITEXTURED_LINE_UV_BORDER_COLOR ]			= vk2d::_internal::GraphicsShaderProgram( multitextured_vertex, multitextured_fragment_line_uv_border_color );
+		graphics_shader_programs[ vk2d::_internal::GraphicsShaderProgramID::MULTITEXTURED_POINT_UV_BORDER_COLOR ]			= vk2d::_internal::GraphicsShaderProgram( multitextured_vertex, multitextured_fragment_point_uv_border_color );
+
+		graphics_shader_programs[ vk2d::_internal::GraphicsShaderProgramID::RENDER_TARGET_BOX_BLUR_HORISONTAL ]				= vk2d::_internal::GraphicsShaderProgram( render_target_texture_blur_vertex, render_target_texture_fragment_box_blur_horisontal );
+		graphics_shader_programs[ vk2d::_internal::GraphicsShaderProgramID::RENDER_TARGET_BOX_BLUR_VERTICAL ]				= vk2d::_internal::GraphicsShaderProgram( render_target_texture_blur_vertex, render_target_texture_fragment_box_blur_vertical );
+		graphics_shader_programs[ vk2d::_internal::GraphicsShaderProgramID::RENDER_TARGET_GAUSSIAN_BLUR_HORISONTAL ]		= vk2d::_internal::GraphicsShaderProgram( render_target_texture_blur_vertex, render_target_texture_fragment_gaussian_blur_horisontal );
+		graphics_shader_programs[ vk2d::_internal::GraphicsShaderProgramID::RENDER_TARGET_GAUSSIAN_BLUR_VERTICAL ]			= vk2d::_internal::GraphicsShaderProgram( render_target_texture_blur_vertex, render_target_texture_fragment_gaussian_blur_vertical );
 	}
 
 
@@ -1961,23 +2032,7 @@ bool vk2d::_internal::InstanceImpl::CreateShaderModules()
 	////////////////////////////////
 
 	{
-		// Render target texture blur shaders
-		auto render_target_texture_blur_pass_1			= CreateModule(
-			RenderTargetTextureBlurPass1_comp_shader_data.data(),
-			RenderTargetTextureBlurPass1_comp_shader_data.size()
-		);
-		auto render_target_texture_blur_pass_2			= CreateModule(
-			RenderTargetTextureBlurPass2_comp_shader_data.data(),
-			RenderTargetTextureBlurPass2_comp_shader_data.size()
-		);
-
-		// List all individual shader modules into a vector
-		vk_compute_shader_modules.push_back( render_target_texture_blur_pass_1 );
-		vk_compute_shader_modules.push_back( render_target_texture_blur_pass_2 );
-
-		// Collect a listing of shader units, which is a collection of shader modules needed to create a pipeline.
-		compute_shader_programs[ vk2d::_internal::ComputeShaderProgramID::RENDER_TARGET_BLUR_PASS_1 ]				= vk2d::_internal::ComputeShaderProgram( render_target_texture_blur_pass_1 );
-		compute_shader_programs[ vk2d::_internal::ComputeShaderProgramID::RENDER_TARGET_BLUR_PASS_2 ]				= vk2d::_internal::ComputeShaderProgram( render_target_texture_blur_pass_2 );
+		// Nothing yet.
 	}
 
 
@@ -1995,40 +2050,85 @@ bool vk2d::_internal::InstanceImpl::CreateShaderModules()
 
 bool vk2d::_internal::InstanceImpl::CreateDescriptorSetLayouts()
 {
+	// TODO: Creating descriptor sets could be streamlined some, consider creating descriptor set layouts on the fly as needed for each shader.
+	// Checking, changing and making sure descriptor set layouts match the shaders is a bit tedious and prone to errors. So we could use a system
+	// that would automate this based on parameters when creating/choosing the pipeline for example, though this could eventually introduce some
+	// microstutter if we create everything on the fly as needed, so this will require some thinking first. One possible solution is to create
+	// some pipelines and descriptor set layouts ahead of time based on some commonly used parameters, another is to just loop through each and
+	// every possible settings iteration and create everything ahead of time but this could make opening the application slower (maybe create them
+	// asyncronously on another thread?) and could potentially create a lot of unneeded pipelines wasting memory.
+	// For now we're just going to leave it as is, however we could make the code a bit shorter as we don't need most of the CreateInfo structure
+	// options.
+
 	// These must match shader set types.
+
+	struct Binding
+	{
+		VkDescriptorType		descriptor_type;
+		VkShaderStageFlags		shader_stage_flags;
+	};
+	auto CreateLocalDescriptorSetLayout =[this](
+		const std::vector<Binding>			&	bindings,
+		VkDescriptorSetLayoutCreateFlags		flags			= 0
+	) -> std::unique_ptr<vk2d::_internal::DescriptorSetLayout>
+	{
+		std::vector<VkDescriptorSetLayoutBinding> set_bindings( std::size( bindings ) );
+		for( size_t i = 0; i < std::size( bindings ); ++i ) {
+
+			auto & src = bindings[ i ];
+			auto & dst = set_bindings[ i ];
+
+			dst.binding				= uint32_t( i );
+			dst.descriptorType		= src.descriptor_type;
+			dst.descriptorCount		= 1;
+			dst.stageFlags			= src.shader_stage_flags;
+			dst.pImmutableSamplers	= nullptr;
+		}
+
+		VkDescriptorSetLayoutCreateInfo descriptor_set_layout_create_info {};
+		descriptor_set_layout_create_info.sType			= VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+		descriptor_set_layout_create_info.pNext			= nullptr;
+		descriptor_set_layout_create_info.flags			= flags;
+		descriptor_set_layout_create_info.bindingCount	= uint32_t( std::size( set_bindings ) );
+		descriptor_set_layout_create_info.pBindings		= set_bindings.data();
+
+		auto descriptor_set_layout = vk2d::_internal::CreateDescriptorSetLayout(
+			this,
+			vk_device,
+			&descriptor_set_layout_create_info
+		);
+		if( !descriptor_set_layout ) {
+			Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot create sampler descriptor set layout!" );
+			return {};
+		}
+
+		return descriptor_set_layout;
+	};
+
+	// Graphics: Descriptor set layout for simple sampler.
+	// Binding 0 = Sampler
+	{
+		graphics_simple_sampler_descriptor_set_layout = CreateLocalDescriptorSetLayout(
+			{
+				{ VK_DESCRIPTOR_TYPE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT }
+			}
+		);
+		if( !graphics_simple_sampler_descriptor_set_layout ) {
+			return false;
+		}
+	}
 
 	// Graphics: Descriptor set layout for sampler.
 	// Binding 0 = Sampler
 	// Binding 1 = Uniform buffer for sampler data
 	{
-		std::array<VkDescriptorSetLayoutBinding, 2> descriptor_set_layout_bindings {};
-
-		descriptor_set_layout_bindings[ 0 ].binding				= 0;
-		descriptor_set_layout_bindings[ 0 ].descriptorType		= VK_DESCRIPTOR_TYPE_SAMPLER;
-		descriptor_set_layout_bindings[ 0 ].descriptorCount		= 1;
-		descriptor_set_layout_bindings[ 0 ].stageFlags			= VK_SHADER_STAGE_FRAGMENT_BIT;
-		descriptor_set_layout_bindings[ 0 ].pImmutableSamplers	= nullptr;
-
-		descriptor_set_layout_bindings[ 1 ].binding				= 1;
-		descriptor_set_layout_bindings[ 1 ].descriptorType		= VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-		descriptor_set_layout_bindings[ 1 ].descriptorCount		= 1;
-		descriptor_set_layout_bindings[ 1 ].stageFlags			= VK_SHADER_STAGE_FRAGMENT_BIT;
-		descriptor_set_layout_bindings[ 1 ].pImmutableSamplers	= nullptr;
-
-		VkDescriptorSetLayoutCreateInfo descriptor_set_layout_create_info {};
-		descriptor_set_layout_create_info.sType			= VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-		descriptor_set_layout_create_info.pNext			= nullptr;
-		descriptor_set_layout_create_info.flags			= 0;
-		descriptor_set_layout_create_info.bindingCount	= uint32_t( descriptor_set_layout_bindings.size() );
-		descriptor_set_layout_create_info.pBindings		= descriptor_set_layout_bindings.data();
-
-		graphics_sampler_descriptor_set_layout = vk2d::_internal::CreateDescriptorSetLayout(
-			this,
-			vk_device,
-			&descriptor_set_layout_create_info
+		graphics_sampler_descriptor_set_layout = CreateLocalDescriptorSetLayout(
+			{
+				{ VK_DESCRIPTOR_TYPE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT },
+				{ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT }
+			}
 		);
 		if( !graphics_sampler_descriptor_set_layout ) {
-			Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot create sampler descriptor set layout!" );
 			return false;
 		}
 	}
@@ -2036,149 +2136,50 @@ bool vk2d::_internal::InstanceImpl::CreateDescriptorSetLayouts()
 	// Graphics: Descriptor set layout for texture.
 	// Binding 0 = Sampled image
 	{
-		std::array<VkDescriptorSetLayoutBinding, 1> descriptor_set_layout_bindings {};
-
-		descriptor_set_layout_bindings[ 0 ].binding				= 0;
-		descriptor_set_layout_bindings[ 0 ].descriptorType		= VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
-		descriptor_set_layout_bindings[ 0 ].descriptorCount		= 1;
-		descriptor_set_layout_bindings[ 0 ].stageFlags			= VK_SHADER_STAGE_FRAGMENT_BIT;
-		descriptor_set_layout_bindings[ 0 ].pImmutableSamplers	= nullptr;
-
-		VkDescriptorSetLayoutCreateInfo descriptor_set_layout_create_info {};
-		descriptor_set_layout_create_info.sType			= VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-		descriptor_set_layout_create_info.pNext			= nullptr;
-		descriptor_set_layout_create_info.flags			= 0;
-		descriptor_set_layout_create_info.bindingCount	= uint32_t( descriptor_set_layout_bindings.size() );
-		descriptor_set_layout_create_info.pBindings		= descriptor_set_layout_bindings.data();
-
-		graphics_texture_descriptor_set_layout = vk2d::_internal::CreateDescriptorSetLayout(
-			this,
-			vk_device,
-			&descriptor_set_layout_create_info
+		graphics_texture_descriptor_set_layout = CreateLocalDescriptorSetLayout(
+			{
+				{ VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, VK_SHADER_STAGE_FRAGMENT_BIT }
+			}
 		);
 		if( !graphics_texture_descriptor_set_layout ) {
-			Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot create sampler descriptor set layout!" );
+			return false;
+		}
+	}
+
+	// Graphics: Descriptor set layout for texture meant for render target texture blur shader.
+	// Binding 0 = Sampled image
+	{
+		graphics_render_target_blur_texture_descriptor_set_layout = CreateLocalDescriptorSetLayout(
+			{
+				{ VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, VK_SHADER_STAGE_FRAGMENT_BIT }
+			},
+			VK_DESCRIPTOR_SET_LAYOUT_CREATE_PUSH_DESCRIPTOR_BIT_KHR
+		);
+		if( !graphics_render_target_blur_texture_descriptor_set_layout ) {
 			return false;
 		}
 	}
 
 	// Graphics: General uniform buffer descriptor set layout
 	{
-		std::array<VkDescriptorSetLayoutBinding, 1> descriptor_set_layout_bindings {};
-
-		descriptor_set_layout_bindings[ 0 ].binding				= 0;
-		descriptor_set_layout_bindings[ 0 ].descriptorType		= VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-		descriptor_set_layout_bindings[ 0 ].descriptorCount		= 1;
-		descriptor_set_layout_bindings[ 0 ].stageFlags			= VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
-		descriptor_set_layout_bindings[ 0 ].pImmutableSamplers	= nullptr;
-
-		VkDescriptorSetLayoutCreateInfo descriptor_set_layout_create_info {};
-		descriptor_set_layout_create_info.sType			= VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-		descriptor_set_layout_create_info.pNext			= nullptr;
-		descriptor_set_layout_create_info.flags			= 0;
-		descriptor_set_layout_create_info.bindingCount	= uint32_t( descriptor_set_layout_bindings.size() );
-		descriptor_set_layout_create_info.pBindings		= descriptor_set_layout_bindings.data();
-
-		graphics_uniform_buffer_descriptor_set_layout			= vk2d::_internal::CreateDescriptorSetLayout(
-			this,
-			vk_device,
-			&descriptor_set_layout_create_info
+		graphics_uniform_buffer_descriptor_set_layout = CreateLocalDescriptorSetLayout(
+			{
+				{ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT }
+			}
 		);
 		if( !graphics_uniform_buffer_descriptor_set_layout ) {
-			Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot create storage buffer descriptor set layout!" );
 			return false;
 		}
 	}
 
 	// Graphics: General storage buffer descriptor set layout
 	{
-		std::array<VkDescriptorSetLayoutBinding, 1> descriptor_set_layout_bindings {};
-
-		descriptor_set_layout_bindings[ 0 ].binding				= 0;
-		descriptor_set_layout_bindings[ 0 ].descriptorType		= VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
-		descriptor_set_layout_bindings[ 0 ].descriptorCount		= 1;
-		descriptor_set_layout_bindings[ 0 ].stageFlags			= VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
-		descriptor_set_layout_bindings[ 0 ].pImmutableSamplers	= nullptr;
-
-		VkDescriptorSetLayoutCreateInfo descriptor_set_layout_create_info {};
-		descriptor_set_layout_create_info.sType			= VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-		descriptor_set_layout_create_info.pNext			= nullptr;
-		descriptor_set_layout_create_info.flags			= 0;
-		descriptor_set_layout_create_info.bindingCount	= uint32_t( descriptor_set_layout_bindings.size() );
-		descriptor_set_layout_create_info.pBindings		= descriptor_set_layout_bindings.data();
-
-		graphics_storage_buffer_descriptor_set_layout			= vk2d::_internal::CreateDescriptorSetLayout(
-			this,
-			vk_device,
-			&descriptor_set_layout_create_info
+		graphics_storage_buffer_descriptor_set_layout = CreateLocalDescriptorSetLayout(
+			{
+				{ VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT }
+			}
 		);
 		if( !graphics_storage_buffer_descriptor_set_layout ) {
-			Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot create storage buffer descriptor set layout!" );
-			return false;
-		}
-	}
-
-	// Compute: Descriptor set layout for basic sampler.
-	// Binding 0 = Sampler
-	{
-		std::array<VkDescriptorSetLayoutBinding, 1> descriptor_set_layout_bindings {};
-
-		descriptor_set_layout_bindings[ 0 ].binding				= 0;
-		descriptor_set_layout_bindings[ 0 ].descriptorType		= VK_DESCRIPTOR_TYPE_SAMPLER;
-		descriptor_set_layout_bindings[ 0 ].descriptorCount		= 1;
-		descriptor_set_layout_bindings[ 0 ].stageFlags			= VK_SHADER_STAGE_COMPUTE_BIT;
-		descriptor_set_layout_bindings[ 0 ].pImmutableSamplers	= nullptr;
-
-		VkDescriptorSetLayoutCreateInfo descriptor_set_layout_create_info {};
-		descriptor_set_layout_create_info.sType			= VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-		descriptor_set_layout_create_info.pNext			= nullptr;
-		descriptor_set_layout_create_info.flags			= 0;
-		descriptor_set_layout_create_info.bindingCount	= uint32_t( descriptor_set_layout_bindings.size() );
-		descriptor_set_layout_create_info.pBindings		= descriptor_set_layout_bindings.data();
-
-		compute_basic_sampler_descriptor_set_layout = vk2d::_internal::CreateDescriptorSetLayout(
-			this,
-			vk_device,
-			&descriptor_set_layout_create_info
-		);
-		if( !compute_basic_sampler_descriptor_set_layout ) {
-			Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot create sampler descriptor set layout!" );
-			return false;
-		}
-	}
-
-	// Compute: Descriptor set layout for blur textures.
-	// Binding 0 = Sampled image
-	// Binding 1 = Storage image
-	{
-		std::array<VkDescriptorSetLayoutBinding, 2> descriptor_set_layout_bindings {};
-
-		descriptor_set_layout_bindings[ 0 ].binding				= 0;
-		descriptor_set_layout_bindings[ 0 ].descriptorType		= VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
-		descriptor_set_layout_bindings[ 0 ].descriptorCount		= 1;
-		descriptor_set_layout_bindings[ 0 ].stageFlags			= VK_SHADER_STAGE_COMPUTE_BIT;
-		descriptor_set_layout_bindings[ 0 ].pImmutableSamplers	= nullptr;
-
-		descriptor_set_layout_bindings[ 1 ].binding				= 1;
-		descriptor_set_layout_bindings[ 1 ].descriptorType		= VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
-		descriptor_set_layout_bindings[ 1 ].descriptorCount		= 1;
-		descriptor_set_layout_bindings[ 1 ].stageFlags			= VK_SHADER_STAGE_COMPUTE_BIT;
-		descriptor_set_layout_bindings[ 1 ].pImmutableSamplers	= nullptr;
-
-		VkDescriptorSetLayoutCreateInfo descriptor_set_layout_create_info {};
-		descriptor_set_layout_create_info.sType			= VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-		descriptor_set_layout_create_info.pNext			= nullptr;
-		descriptor_set_layout_create_info.flags			= VK_DESCRIPTOR_SET_LAYOUT_CREATE_PUSH_DESCRIPTOR_BIT_KHR;
-		descriptor_set_layout_create_info.bindingCount	= uint32_t( descriptor_set_layout_bindings.size() );
-		descriptor_set_layout_create_info.pBindings		= descriptor_set_layout_bindings.data();
-
-		compute_blur_textures_descriptor_set_layout = vk2d::_internal::CreateDescriptorSetLayout(
-			this,
-			vk_device,
-			&descriptor_set_layout_create_info
-		);
-		if( !compute_blur_textures_descriptor_set_layout ) {
-			Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot create blur textures descriptor set layout!" );
 			return false;
 		}
 	}
@@ -2196,7 +2197,7 @@ bool vk2d::_internal::InstanceImpl::CreateDescriptorSetLayouts()
 
 bool vk2d::_internal::InstanceImpl::CreatePipelineLayouts()
 {
-	// Graphics pipeline layout
+	// Graphics primary render pipeline layout.
 	{
 		// This must match shader layout.
 		std::vector<VkDescriptorSetLayout> set_layouts {
@@ -2211,7 +2212,7 @@ bool vk2d::_internal::InstanceImpl::CreatePipelineLayouts()
 		std::array<VkPushConstantRange, 1> push_constant_ranges {};
 		push_constant_ranges[ 0 ].stageFlags	= VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
 		push_constant_ranges[ 0 ].offset		= 0;
-		push_constant_ranges[ 0 ].size			= uint32_t( sizeof( vk2d::_internal::GraphicsPushConstants ) );
+		push_constant_ranges[ 0 ].size			= uint32_t( sizeof( vk2d::_internal::GraphicsPrimaryRenderPushConstants ) );
 
 		VkPipelineLayoutCreateInfo pipeline_layout_create_info {};
 		pipeline_layout_create_info.sType					= VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
@@ -2226,7 +2227,7 @@ bool vk2d::_internal::InstanceImpl::CreatePipelineLayouts()
 			vk_device,
 			&pipeline_layout_create_info,
 			nullptr,
-			&vk_graphics_pipeline_layout
+			&vk_graphics_primary_render_pipeline_layout
 		);
 		if( result != VK_SUCCESS ) {
 			Report( result, "Internal error: Cannot create Vulkan pipeline layout!" );
@@ -2234,18 +2235,18 @@ bool vk2d::_internal::InstanceImpl::CreatePipelineLayouts()
 		}
 	}
 
-	// Compute blur pipeline layout
+	// Graphics blur pipeline layout.
 	{
 		// This must match shader layout.
 		std::vector<VkDescriptorSetLayout> set_layouts {
-			compute_basic_sampler_descriptor_set_layout->GetVulkanDescriptorSetLayout(),	// Pipeline set 0 is basic sampler.
-			compute_blur_textures_descriptor_set_layout->GetVulkanDescriptorSetLayout()		// Pipeline set 1 is attached textures.
+			graphics_simple_sampler_descriptor_set_layout->GetVulkanDescriptorSetLayout(),				// Pipeline set 0 is a simple sampler.
+			graphics_render_target_blur_texture_descriptor_set_layout->GetVulkanDescriptorSetLayout(),	// Pipeline set 1 is texture.
 		};
 
 		std::array<VkPushConstantRange, 1> push_constant_ranges {};
-		push_constant_ranges[ 0 ].stageFlags	= VK_SHADER_STAGE_COMPUTE_BIT;
+		push_constant_ranges[ 0 ].stageFlags	= VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
 		push_constant_ranges[ 0 ].offset		= 0;
-		push_constant_ranges[ 0 ].size			= uint32_t( sizeof( vk2d::_internal::ComputeBlurPushConstants ) );
+		push_constant_ranges[ 0 ].size			= uint32_t( sizeof( vk2d::_internal::GraphicsBlurPushConstants ) );
 
 		VkPipelineLayoutCreateInfo pipeline_layout_create_info {};
 		pipeline_layout_create_info.sType					= VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
@@ -2260,13 +2261,14 @@ bool vk2d::_internal::InstanceImpl::CreatePipelineLayouts()
 			vk_device,
 			&pipeline_layout_create_info,
 			nullptr,
-			&vk_compute_blur_pipeline_layout
+			&vk_graphics_blur_pipeline_layout
 		);
 		if( result != VK_SUCCESS ) {
 			Report( result, "Internal error: Cannot create Vulkan pipeline layout!" );
 			return false;
 		}
 	}
+
 	return true;
 }
 
@@ -2469,29 +2471,29 @@ void vk2d::_internal::InstanceImpl::DestroyShaderModules()
 
 void vk2d::_internal::InstanceImpl::DestroyDescriptorSetLayouts()
 {
-	graphics_sampler_descriptor_set_layout			= nullptr;
-	graphics_texture_descriptor_set_layout			= nullptr;
-	graphics_uniform_buffer_descriptor_set_layout	= nullptr;
-	graphics_storage_buffer_descriptor_set_layout	= nullptr;
-	compute_basic_sampler_descriptor_set_layout		= nullptr;
-	compute_blur_textures_descriptor_set_layout		= nullptr;
+	graphics_simple_sampler_descriptor_set_layout				= nullptr;
+	graphics_sampler_descriptor_set_layout						= nullptr;
+	graphics_texture_descriptor_set_layout						= nullptr;
+	graphics_render_target_blur_texture_descriptor_set_layout	= nullptr;
+	graphics_uniform_buffer_descriptor_set_layout				= nullptr;
+	graphics_storage_buffer_descriptor_set_layout				= nullptr;
 }
 
 void vk2d::_internal::InstanceImpl::DestroyPipelineLayouts()
 {
 	vkDestroyPipelineLayout(
 		vk_device,
-		vk_graphics_pipeline_layout,
+		vk_graphics_primary_render_pipeline_layout,
 		nullptr
 	);
-	vk_graphics_pipeline_layout			= {};
+	vk_graphics_primary_render_pipeline_layout = {};
 
 	vkDestroyPipelineLayout(
 		vk_device,
-		vk_compute_blur_pipeline_layout,
+		vk_graphics_blur_pipeline_layout,
 		nullptr
 	);
-	vk_compute_blur_pipeline_layout		= {};
+	vk_graphics_blur_pipeline_layout = {};
 }
 
 void vk2d::_internal::InstanceImpl::DestroyDeviceMemoryPool()
@@ -2512,7 +2514,7 @@ void vk2d::_internal::InstanceImpl::DestroyResourceManager()
 void vk2d::_internal::InstanceImpl::DestroyDefaultTexture()
 {
 	resource_manager->DestroyResource( default_texture );
-	default_texture						= {};
+	default_texture			= {};
 }
 
 
