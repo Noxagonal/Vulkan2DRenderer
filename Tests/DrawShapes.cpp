@@ -89,84 +89,84 @@ int main()
 			vk2d::Colorf( 1.0f, 0.0f, 0.0f, 1.0f )
 		);
 
-		window->DrawCircle(
+		window->DrawEllipse(
 			Coords( grid ),
 			true,
 			3.0f,
 			vk2d::Colorf( 0.0f, 1.0f, 0.0f, 1.0f )
 		);
 
-		window->DrawCircle(
+		window->DrawEllipse(
 			Coords( grid ),
 			false,
 			3.0f,
 			vk2d::Colorf( 0.0f, 1.0f, 0.0f, 1.0f )
 		);
 
-		window->DrawCircle(
+		window->DrawEllipse(
 			Coords( grid ),
 			true,
 			5.5f,
 			vk2d::Colorf( 0.0f, 1.0f, 0.0f, 1.0f )
 		);
 
-		window->DrawCircle(
+		window->DrawEllipse(
 			Coords( grid ),
 			false,
 			5.5f,
 			vk2d::Colorf( 0.0f, 1.0f, 0.0f, 1.0f )
 		);
 
-		window->DrawCircle(
+		window->DrawEllipse(
 			Coords( grid ),
 			true,
 			16.0f,
 			vk2d::Colorf( 0.0f, 1.0f, 0.0f, 1.0f )
 		);
 
-		window->DrawCircle(
+		window->DrawEllipse(
 			Coords( grid ),
 			false,
 			16.0f,
 			vk2d::Colorf( 0.0f, 1.0f, 0.0f, 1.0f )
 		);
 
-		window->DrawCircle(
+		window->DrawEllipse(
 			Coords( grid ),
 			true,
 			32.0f,
 			vk2d::Colorf( 0.0f, 1.0f, 1.0f, 1.0f )
 		);
 
-		window->DrawCircle(
+		window->DrawEllipse(
 			Coords( grid ),
 			false,
 			32.0f,
 			vk2d::Colorf( 0.0f, 1.0f, 1.0f, 1.0f )
 		);
 
-		window->DrawCircle(
+		window->DrawEllipse(
 			Coords( grid ),
 			true,
 			32.0f,
 			vk2d::Colorf( 0.0f, 1.0f, 0.0f, 1.0f )
 		);
 
-		window->DrawCircle(
+		window->DrawEllipse(
 			Coords( grid ),
 			false,
 			32.0f,
 			vk2d::Colorf( 0.0f, 1.0f, 0.0f, 1.0f )
 		);
 
-		window->DrawCircle(
+		window->DrawEllipse(
 			Coords( grid ),
 			true,
 			64.0f,
 			vk2d::Colorf( 0.0f, 1.0f, 0.0f, 1.0f )
 		);
 
-		window->DrawCircle(
+		window->DrawEllipse(
 			Coords( grid ),
 			false,
 			64.0f,

@@ -2,9 +2,9 @@
 
 #include "../Core/Common.h"
 
-#include "RenderPrimitives.h"
-#include "RenderTargetCommon.hpp"
-#include "Texture.h"
+#include "../Types/Primitives.hpp"
+#include "../Types/Multisamples.h"
+#include "../Types/RenderCoordinateSpace.hpp"
 
 #include <memory>
 #include <string>
@@ -27,7 +27,7 @@ void UpdateMonitorLists( bool globals_locked );
 
 
 class Instance;
-class TextureResource;
+class Texture;
 class Mesh;
 class WindowEventHandler;
 class Window;
@@ -288,7 +288,7 @@ class Monitor {
 
 public:
 	// Monitor constructor for an empty monitor.
-	VK2D_API																				Monitor()			= default;
+	VK2D_API																				Monitor();
 
 	// Monitor copy constructor.
 	VK2D_API																				Monitor(
@@ -296,10 +296,10 @@ public:
 
 	// Monitor move constructor.
 	VK2D_API																				Monitor(
-		vk2d::Monitor									&&	other )							= default;
+		vk2d::Monitor									&&	other )							noexcept;
 
 	// Monitor destructor.
-	VK2D_API																				~Monitor()			= default;
+	VK2D_API																				~Monitor();
 
 	// Get current video mode, resolution, bits per color and refresh rate.
 	// Returns:
@@ -338,14 +338,12 @@ public:
 
 	// Move operator.
 	VK2D_API vk2d::Monitor								&	VK2D_APIENTRY					operator=(
-		vk2d::Monitor									&&	other )							= default;
+		vk2d::Monitor									&&	other )							noexcept;
 
-	VK2D_API bool											VK2D_APIENTRY					IsGood();
+	VK2D_API bool											VK2D_APIENTRY					IsGood() const;
 
 private:
 	std::unique_ptr<vk2d::_internal::MonitorImpl>			impl;
-
-	bool													is_good							= {};
 };
 
 
@@ -388,10 +386,9 @@ public:
 
 	// Move constructor from another cursor.
 	VK2D_API																		Cursor(
-		vk2d::Cursor						&&	other )								= default;
+		vk2d::Cursor						&&	other )								noexcept;
 
-	// Destructor for cursor.
-	VK2D_API																		~Cursor();
+	VK2D_API									VK2D_APIENTRY						~Cursor();
 
 	// Copy operator from another cursor.
 	VK2D_API vk2d::Cursor					&	VK2D_APIENTRY						operator=(
@@ -399,18 +396,16 @@ public:
 
 	// Move operator from another cursor.
 	VK2D_API vk2d::Cursor					&	VK2D_APIENTRY						operator=(
-		vk2d::Cursor						&&	other )								= default;
+		vk2d::Cursor						&&	other )								noexcept;
 
 	VK2D_API vk2d::Vector2u						VK2D_APIENTRY						GetSize();
 	VK2D_API vk2d::Vector2i						VK2D_APIENTRY						GetHotSpot();
 	VK2D_API std::vector<vk2d::Color8>			VK2D_APIENTRY						GetPixelData();
 
-	VK2D_API bool								VK2D_APIENTRY						IsGood();
+	VK2D_API bool								VK2D_APIENTRY						IsGood() const;
 
 private:
 	std::unique_ptr<vk2d::_internal::CursorImpl>	impl;
-
-	bool										is_good								= {};
 };
 
 
@@ -836,11 +831,11 @@ public:
 	VK2D_API void										VK2D_APIENTRY				DrawMesh(
 		const vk2d::Mesh							&	mesh );
 
+	VK2D_API bool										VK2D_APIENTRY				IsGood() const;
+
 
 private:
 	std::unique_ptr<vk2d::_internal::WindowImpl>		impl;
-
-	bool												is_good				= {};
 };
 
 

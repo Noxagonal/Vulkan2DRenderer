@@ -1,7 +1,5 @@
 
-#include "../Header/Core/SourceCommon.h"
-
-#include "../Header/Impl/InstanceImpl.h"
+#include "../Core/SourceCommon.h"
 
 
 
