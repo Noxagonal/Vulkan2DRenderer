@@ -99,7 +99,7 @@ void RenderTargetTexture_GaussianBlur_Horisontal()
 {
 	float		sigma			= push_constants.blur_info[ 0 ];
 	int			support			= int( sigma * 3.0 );							// int(sigma * 3.0) truncation
-	vec2		loc				= gl_FragCoord.xy * push_constants.pixel_size;	// center pixel cooordinate
+	vec2		loc				= gl_FragCoord.xy * push_constants.pixel_size;	// center pixel coordinate
 	vec2		dir				= vec2( push_constants.pixel_size.x, 0.0 );		// horiz=(1.0, 0.0), vert=(0.0, 1.0)
 	vec4		acc				= vec4( 0.0 );									// accumulator
 	float		norm			= 0.0;
@@ -119,7 +119,7 @@ void RenderTargetTexture_GaussianBlur_Vertical()
 {
 	float		sigma			= push_constants.blur_info[ 0 ];
 	int			support			= int( sigma * 3.0 );							// int(sigma * 3.0) truncation
-	vec2		loc				= gl_FragCoord.xy * push_constants.pixel_size;	// center pixel cooordinate
+	vec2		loc				= gl_FragCoord.xy * push_constants.pixel_size;	// center pixel coordinate
 	vec2		dir				= vec2( 0.0, push_constants.pixel_size.y );		// horiz=(1.0, 0.0), vert=(0.0, 1.0)
 	vec4		acc				= vec4( 0.0 );									// accumulator
 	float		norm			= 0.0;
@@ -149,7 +149,7 @@ void RenderTargetTexture_GaussianBlur_Horisontal()
 {
 	float		sigma			= push_constants.blur_info[ 0 ];
 	int			support			= int( sigma * 3.0 );							// int(sigma * 3.0) truncation
-	vec2		loc				= gl_FragCoord.xy * push_constants.pixel_size;	// center pixel cooordinate
+	vec2		loc				= gl_FragCoord.xy * push_constants.pixel_size;	// center pixel coordinate
 	vec2		dir				= vec2( push_constants.pixel_size.x, 0.0 );		// horiz=(1.0, 0.0), vert=(0.0, 1.0)
 	vec4		acc				= vec4( 0.0 );									// accumulator
 	float		norm			= 0.0;
@@ -179,7 +179,7 @@ void RenderTargetTexture_GaussianBlur_Vertical()
 {
 	float		sigma			= push_constants.blur_info[ 0 ];
 	int			support			= int( sigma * 3.0 );							// int(sigma * 3.0) truncation
-	vec2		loc				= gl_FragCoord.xy * push_constants.pixel_size;	// center pixel cooordinate
+	vec2		loc				= gl_FragCoord.xy * push_constants.pixel_size;	// center pixel coordinate
 	vec2		dir				= vec2( 0.0, push_constants.pixel_size.y );		// horiz=(1.0, 0.0), vert=(0.0, 1.0)
 	vec4		acc				= vec4( 0.0 );									// accumulator
 	float		norm			= 0.0;
@@ -219,7 +219,7 @@ void RenderTargetTexture_GaussianBlur_Horisontal()
 {
 	float		sigma			= push_constants.blur_info[ 0 ];
 	int			support			= int( sigma * 3.0 );							// int(sigma * 3.0) truncation
-	vec2		loc				= gl_FragCoord.xy * push_constants.pixel_size;	// center pixel cooordinate
+	vec2		loc				= gl_FragCoord.xy * push_constants.pixel_size;	// center pixel coordinate
 	vec2		dir				= vec2( push_constants.pixel_size.x, 0.0 );		// horiz=(1.0, 0.0), vert=(0.0, 1.0)
 	vec4		acc				= vec4( 0.0 );									// accumulator
 	float		norm			= 0.0;
@@ -257,7 +257,7 @@ void RenderTargetTexture_GaussianBlur_Vertical()
 {
 	float		sigma			= push_constants.blur_info[ 0 ];
 	int			support			= int( sigma * 3.0 );							// int(sigma * 3.0) truncation
-	vec2		loc				= gl_FragCoord.xy * push_constants.pixel_size;	// center pixel cooordinate
+	vec2		loc				= gl_FragCoord.xy * push_constants.pixel_size;	// center pixel coordinate
 	vec2		dir				= vec2( 0.0, push_constants.pixel_size.y );		// horiz=(1.0, 0.0), vert=(0.0, 1.0)
 	vec4		acc				= vec4( 0.0 );									// accumulator
 	float		norm			= 0.0;
@@ -311,12 +311,10 @@ void RenderTargetTexture_GaussianBlur_Horisontal()
 	float		sigma			= push_constants.blur_info[ 0 ];
 	float		precomp_norm	= push_constants.blur_info[ 1 ];
 	int			support			= int( sigma * 3.0 );							// int(sigma * 3.0) truncation
-	vec2		loc				= gl_FragCoord.xy * push_constants.pixel_size;	// center pixel cooordinate
+	vec2		loc				= gl_FragCoord.xy * push_constants.pixel_size;	// center pixel coordinate
 	vec2		dir				= vec2( push_constants.pixel_size.x, 0.0 );		// horiz=(1.0, 0.0), vert=(0.0, 1.0)
 	vec4		acc				= vec4( 0.0 );									// accumulator
 
-	// See performance after we get rid of these.
-	float delta = 1.0;
 	vec3 g;
 	g.x		= push_constants.blur_info[ 2 ];		// g.x is the coefficient
 	g.y		= push_constants.blur_info[ 3 ];
@@ -336,7 +334,6 @@ void RenderTargetTexture_GaussianBlur_Horisontal()
 
 		float tf_weight	= t_weights[ 0 ] + t_weights[ 1 ];
 		float tf_offset	= ( t_offsets[ 0 ] * t_weights[ 0 ] + t_offsets[ 1 ] * t_weights[ 1 ] ) / tf_weight;
-		//float tf_offset		= ( t_offsets[ 0 ] + t_offsets[ 1 ] ) * 0.5f;	// Inaccurate, but used to compare performance.
 
 		acc += texture( sampler2D( sampled_image, image_sampler ), loc + tf_offset * dir ) * tf_weight;
 		acc += texture( sampler2D( sampled_image, image_sampler ), loc - tf_offset * dir ) * tf_weight;
@@ -355,12 +352,10 @@ void RenderTargetTexture_GaussianBlur_Vertical()
 	float		sigma			= push_constants.blur_info[ 0 ];
 	float		precomp_norm	= push_constants.blur_info[ 1 ];
 	int			support			= int( sigma * 3.0 );							// int(sigma * 3.0) truncation
-	vec2		loc				= gl_FragCoord.xy * push_constants.pixel_size;	// center pixel cooordinate
+	vec2		loc				= gl_FragCoord.xy * push_constants.pixel_size;	// center pixel coordinate
 	vec2		dir				= vec2( 0.0, push_constants.pixel_size.y );		// horiz=(1.0, 0.0), vert=(0.0, 1.0)
 	vec4		acc				= vec4( 0.0 );									// accumulator
 
-	// See performance after we get rid of these.
-	float delta = 1.0;
 	vec3 g;
 	g.x		= push_constants.blur_info[ 2 ];		// g.x is the coefficient
 	g.y		= push_constants.blur_info[ 3 ];
@@ -380,7 +375,6 @@ void RenderTargetTexture_GaussianBlur_Vertical()
 
 		float tf_weight	= t_weights[ 0 ] + t_weights[ 1 ];
 		float tf_offset	= ( t_offsets[ 0 ] * t_weights[ 0 ] + t_offsets[ 1 ] * t_weights[ 1 ] ) / tf_weight;
-		//float tf_offset		= ( t_offsets[ 0 ] + t_offsets[ 1 ] ) * 0.5f;	// Inaccurate, but used to compare performance.
 
 		acc += texture( sampler2D( sampled_image, image_sampler ), loc + tf_offset * dir ) * tf_weight;
 		acc += texture( sampler2D( sampled_image, image_sampler ), loc - tf_offset * dir ) * tf_weight;
