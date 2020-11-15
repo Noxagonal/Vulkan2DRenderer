@@ -8,12 +8,15 @@ You only need a few lines of code to create a window and display simple shapes.
 On the other hand you can create a variety of different effects using meshes and applying different modifiers to them.
 Internally workloads are automatically grouped to create more efficient submissions to the GPU and all resource loading and saving is multithreaded.
 
+![latest screenshot](/Screenshots/GaussianBlur.png)
+
 ------
 
 ### Motivation
 
 - This project is primarily a passion project.
 - Vulkan 2D rendering engines are not common and I didn't find any fitting my needs.
+- This should also work pretty well as an example for people wanting to see concrete Vulkan API use.
 
 ------
 
