@@ -2,7 +2,7 @@
 
 #include "../Core/Common.h"
 
-#include "../Interface/RenderPrimitives.h"
+#include "../Types/Primitives.hpp"
 
 #include <memory>
 
@@ -66,11 +66,10 @@ class Sampler {
 public:
 	VK2D_API																			~Sampler();
 
-	VK2D_API bool										VK2D_APIENTRY					IsGood();
+	VK2D_API bool										VK2D_APIENTRY					IsGood() const;
 
 private:
 	std::unique_ptr<vk2d::_internal::SamplerImpl>		impl;
-	bool												is_good							= {};
 };
 
 
