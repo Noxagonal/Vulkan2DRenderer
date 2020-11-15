@@ -2,18 +2,18 @@
 
 #include "../Core/Common.h"
 
-#include "RenderPrimitives.h"
-#include "RenderTargetCommon.hpp"
-#include "Mesh.h"
+#include "../Types/Primitives.hpp"
+#include "../Types/Multisamples.h"
+#include "../Types/RenderCoordinateSpace.hpp"
+
 #include "Texture.h"
 
 #include <memory>
 
 namespace vk2d {
 
-class TextureResource;
-class FontResource;
 class Sampler;
+class Mesh;
 
 namespace _internal {
 
@@ -145,7 +145,6 @@ public:
 
 private:
 	std::unique_ptr<vk2d::_internal::RenderTargetTextureImpl>	impl;
-	bool														is_good						= {};
 };
 
 

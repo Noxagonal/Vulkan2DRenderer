@@ -137,7 +137,7 @@ set_target_properties(VK2D
 
 target_precompile_headers(VK2D
 	PRIVATE
-		"${CMAKE_SOURCE_DIR}/Source/Header/Core/PreCompiledHeader.h"
+		"${CMAKE_SOURCE_DIR}/Source/Core/PreCompiledHeader.h"
 )
 
 set(EXTERNAL_INCLUDES_PATH

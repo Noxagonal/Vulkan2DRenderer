@@ -1,10 +1,10 @@
 #pragma once
 
 #include "../Core/Common.h"
+#include "../Core/Version.hpp"
 
 #include "Window.h"
 #include "RenderTargetTexture.h"
-#include "../Core/Version.hpp"
 #include "Sampler.h"
 
 #include <string>
@@ -15,13 +15,9 @@ namespace vk2d {
 
 namespace _internal {
 class InstanceImpl;
-class MonitorImpl;
 } // _internal
 
 
-class Window;
-class RenderTargetTexture;
-class Monitor;
 class ResourceManager;
 
 
@@ -175,6 +171,8 @@ public:
 	/// @note		Multithreading: Main thread only.
 	VK2D_API																				~Instance();
 
+	VK2D_API vk2d::ResourceManager					*	VK2D_APIENTRY						GetResourceManager();
+
 	///	@brief		Get a list of monitors connected to the system, this will be
 	///				needed later if the vk2d application is ran fullscreen mode.
 	/// @note		Multithreading: Main thread only.
@@ -249,6 +247,12 @@ public:
 	VK2D_API void										VK2D_APIENTRY						DestroyCursor(
 		vk2d::Cursor								*	cursor );
 
+	/// @brief		Gets the gamepad event callback function.
+	/// @note		Multithreading: Main thread only.
+	/// @see		vk2d::Instance::SetGamepadEventCallback(), vk2d::GamepadEventCallbackFun().
+	/// @return		Function pointer to the event callback function that's being called when gamepad event happened.
+	VK2D_API vk2d::GamepadEventCallbackFun				VK2D_APIENTRY						GetGamepadEventCallback() const;
+
 	/// @brief		Set gamepad event callback function, the callback gets
 	///				called if a gamepad gets added or removed from the system.
 	/// @note		Multithreading: Main thread only.
@@ -285,7 +289,7 @@ public:
 		vk2d::Gamepad									gamepad );
 	 
 	// TODO: gamepad mapping
-//	VK2D_API void										VK2D_APIENTRY						SetGamepadMapping();
+	//VK2D_API void										VK2D_APIENTRY						SetGamepadMapping();
 
 
 	VK2D_API vk2d::Window							*	VK2D_APIENTRY						CreateOutputWindow(
@@ -298,21 +302,31 @@ public:
 	VK2D_API void										VK2D_APIENTRY						DestroyRenderTargetTexture(
 		vk2d::RenderTargetTexture					*	render_target_texture );
 
+	/// @brief		Create sampler and return a handle to it. InstanceImpl will save
+	///				the sampler internally so we don't have to worry about freeing
+	///				manually at the end, though it can be done with DestroySampler().
+	/// @note		Multithreading: Main thread only.
+	/// @param[in]	sampler_create_info 
+	///				SamplerCreateInfo structure defines what type of sampler we want to create.
+	/// @return		new Sampler object handle.
 	VK2D_API vk2d::Sampler							*	VK2D_APIENTRY						CreateSampler(
 		const vk2d::SamplerCreateInfo				&	sampler_create_info );
 
+	/// @brief		Manually destroy Sampler. If parameter is nullptr then this
+	///				function does nothing.
+	/// @note		Multithreading: Main thread only.
+	/// @param[in]	sampler
+	///				pointer to Sampler object handle or nullptr.
 	VK2D_API void										VK2D_APIENTRY						DestroySampler(
 		vk2d::Sampler								*	sampler );
 
 	VK2D_API vk2d::Multisamples							VK2D_APIENTRY						GetMaximumSupportedMultisampling();
 	VK2D_API vk2d::Multisamples							VK2D_APIENTRY						GetAllSupportedMultisampling();
 
-	VK2D_API vk2d::ResourceManager					*	VK2D_APIENTRY						GetResourceManager();
+	VK2D_API bool										VK2D_APIENTRY						IsGood() const;
 
 private:
 	std::unique_ptr<vk2d::_internal::InstanceImpl>		impl;
-
-	bool												is_good					= {};
 };
 
 
