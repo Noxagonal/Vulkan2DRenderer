@@ -5,7 +5,7 @@ trim_trailing_whitespace = true
 insert_final_newline = true
 
 # Matches multiple files with brace expansion notation
-[*.{h,hpp,c,cpp}]
+[*.{h,hpp,c,cpp,vert,frag,comp}]
 indent_style = tab
 indent_size = 4
 
