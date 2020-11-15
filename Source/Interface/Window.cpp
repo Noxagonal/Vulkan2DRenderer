@@ -13,7 +13,7 @@
 #include "InstanceImpl.h"
 
 #include "../../Include/Interface/ResourceManager/TextureResource.h"
-#include "Resources/TextureResourceImpl.h"
+#include "ResourceManager/TextureResourceImpl.h"
 
 #include "../../Include/Interface/RenderTargetTexture.h"
 #include "RenderTargetTextureImpl.h"

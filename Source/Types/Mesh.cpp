@@ -2,7 +2,7 @@
 #include "../Core/SourceCommon.h"
 
 #include "../../Include/Interface/ResourceManager/FontResource.h"
-#include "../Interface/Resources/FontResourceImpl.h"
+#include "../Interface/ResourceManager/FontResourceImpl.h"
 
 #include "../../Include/Interface/ResourceManager/TextureResource.h"
 #include "../../Include/Interface/Texture.h"

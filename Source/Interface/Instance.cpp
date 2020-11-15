@@ -10,7 +10,7 @@
 #include "InstanceImpl.h"
 
 #include "../../Include/Interface/ResourceManager/ResourceManager.h"
-#include "Resources/ResourceManagerImpl.h"
+#include "ResourceManager/ResourceManagerImpl.h"
 
 #include "../../Include/Interface/Window.h"
 #include "WindowImpl.h"
@@ -19,7 +19,7 @@
 #include "SamplerImpl.h"
 
 #include "../../Include/Interface/ResourceManager/TextureResource.h"
-#include "Resources/TextureResourceImpl.h"
+#include "ResourceManager/TextureResourceImpl.h"
 
 #include "../Shaders/Spir-V/IncludeAllShaders.h"
 
