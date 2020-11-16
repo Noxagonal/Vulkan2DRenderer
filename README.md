@@ -1,9 +1,9 @@
 
-# C++ Vulkan 2D Renderer
+# Vulkan 2D Renderer library
 
-:exclamation: This project is a work in progress and is not ready to be used in any project as of yet. API will change frequently. :exclamation:
+:exclamation: This project is a work in progress (pre-alpha). Frequent API changes, ABI changes, crashes... :exclamation:
 
-Vulkan 2D Renderer is a C++17 library designed to be easy to use, powerful and high performance 2D rendering backend.
+Vulkan 2D Renderer is a C++17 library, it is designed to be easy to use, high performance 2D rendering backend for realtime applications.
 You only need a few lines of code to create a window and display simple shapes.
 On the other hand you can create a variety of different effects using meshes and applying different modifiers to them.
 Internally workloads are automatically grouped to create more efficient submissions to the GPU and all resource loading and saving is multithreaded.
@@ -22,10 +22,12 @@ Internally workloads are automatically grouped to create more efficient submissi
 
 ### Capabilities
 
-- Generate and draw predefined 2D shapes. ( Box, Circle, Pie... )
-- Draw direcly from vertex and index lists. ( Useful for GUI rendering )
+- Generate and draw simple 2D shapes. ( Box, Circle, Pie... )
+- Draw direcly from vertex and index lists. ( Useful for GUI rendering and for more complex stuff )
 - Mesh modifiers to warp and distort shapes.
 - Textures, Samplers, Color and alpha blending.
+- Render target textures.
+- Gaussian blur.
 - Multi-threaded resource loading and saving.
 - Multi-window support.
 - Multisampling.
@@ -43,11 +45,11 @@ Internally workloads are automatically grouped to create more efficient submissi
 
 ### Building
 
-:exclamation: You will need to use Git, downloading plain Zip file from GitHub will not work because of dependencies. :exclamation:
+:exclamation: You will need to use Git, direct download from GitHub will not work because of dependencies. :exclamation:
 
 Prior to building this library on any platform you will need:
 - Git
-- CMake 3.10 or newer
+- CMake 3.16 or newer
 - Vulkan SDK, Version 1.2
 
 ##### Windows Visual Studio 2019
@@ -78,14 +80,14 @@ cmake -G "Visual Studio 15 2017 Win64" ..
 #### Available CMake options:
 ```
 VK2D_DEBUG                  = default OFF   -> Enable or disable library debug features, used only for the library development.
-VK2D_BUILD_STATIC_LIBRARY   = default OFF   -> Build the library as static. EXPERIMENTAL!
+VK2D_BUILD_STATIC_LIBRARY   = default OFF   -> Build the library as static. DOES NOT WORK YET!
 VK2D_BUILD_TESTS            = default OFF   -> Build tests.
 VK2D_BUILD_EXAMPLES         = default ON    -> Build and include examples on how to use this library.
 ```
 
 ------
 
-### External libraries
+### External libraries used in this project
 
 | Library | License | Web page |
 | --- | --- | --- |
