@@ -88,8 +88,8 @@ int main()
 
 	vk2d::RenderTargetTextureCreateInfo render_target_texture_create_info {};
 	render_target_texture_create_info.coordinate_space	= vk2d::RenderCoordinateSpace::TEXEL_SPACE;
-	render_target_texture_create_info.size				= vk2d::Vector2u( 512, 512);
-	render_target_texture_create_info.samples			= vk2d::Multisamples::SAMPLE_COUNT_1;
+	render_target_texture_create_info.size				= vk2d::Vector2u( 128, 128 );
+	render_target_texture_create_info.samples			= vk2d::Multisamples::SAMPLE_COUNT_64;
 	render_target_texture_create_info.enable_blur		= false;
 	auto render_target_texture1 = instance->CreateRenderTargetTexture(
 		render_target_texture_create_info
@@ -110,8 +110,8 @@ int main()
 		render_target_texture_create_info
 	);
 
-	auto resource_manager = instance->GetResourceManager();
-	auto texture_resource = resource_manager->LoadTextureResource( "../../Data/GrafGear_128.png" );
+	auto resource_manager	= instance->GetResourceManager();
+	auto texture_resource	= resource_manager->LoadTextureResource( "../../Data/GrafGear_128.png" );
 	auto font_resource		= resource_manager->LoadFontResource( "../../Data/Fonts/DroidSandMono/DroidSansMono.ttf", 28 );
 
 	vk2d::SamplerCreateInfo sampler_create_info {};
