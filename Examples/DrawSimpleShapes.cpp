@@ -13,7 +13,7 @@
 
 int main()
 {
-	// Create instance, this is the root node of everything else.
+	// Create VK2D instance, this is the root node of everything else.
 	// Return type is std::unique_ptr, this will properly destroy the instance
 	// as soon as it goes out of scope and it will clean everything up for us.
 	vk2d::InstanceCreateInfo instance_create_info {};
