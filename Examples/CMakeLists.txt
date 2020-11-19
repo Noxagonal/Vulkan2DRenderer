@@ -1,7 +1,7 @@
 
 #Examples root
 
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.16)
 
 function(BuildExample EXECUTABLE_NAME)
 
@@ -30,5 +30,10 @@ function(BuildExample EXECUTABLE_NAME)
 
 endfunction()
 
-BuildExample("DrawSimpleShapes")
-BuildExample("LibraryBuildingSandbox")
+
+# Create project/executable for each .cpp file in this directory.
+file(GLOB ExampleFiles "*.cpp")
+foreach(ExampleFile ${ExampleFiles})
+	get_filename_component(ExampleFileName ${ExampleFile} NAME_WE)
+	BuildExample(${ExampleFileName})
+endforeach()
