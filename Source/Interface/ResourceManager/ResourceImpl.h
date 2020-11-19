@@ -52,11 +52,12 @@ public:
 	virtual bool											WaitUntilLoaded()				= 0;
 
 protected:
-	// Internal use only.
+	// Multithreaded load function, runs when the thread pool has time to process this resource.
 	// Return true if loading was successful.
 	virtual bool											MTLoad(
 		vk2d::_internal::ThreadPrivateResource			*	thread_resource )				= 0;
 
+	// Multithreaded unload function, runs when the thread pool has time to process this resource.
 	// Internal use only.
 	virtual void											MTUnload(
 		vk2d::_internal::ThreadPrivateResource			*	thread_resource )				= 0;

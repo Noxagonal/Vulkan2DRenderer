@@ -156,16 +156,16 @@ struct ThreadSignal {
 class ThreadPool {
 public:
 	// thread_resources.size() tells the amount of threads in the pool
-	// MAIN THREAD ONLY!
-	// PARAMETER IS CONSUMED, VALUES ARE MOVED OUT, DO NOT USE AFTER THIS FUNCTION!
+	// Main thread only!
+	// 'thread_resources' IS CONSUMED!
 	ThreadPool(
 		std::vector<std::unique_ptr<vk2d::_internal::ThreadPrivateResource>>		&&	thread_resources );
 
 	// MAIN THREAD ONLY!
 	virtual												~ThreadPool();
 
-	// ANY THREAD!
-	// PARAMETER 'task' IS CONSUMED, VALUES ARE MOVED OUT, DO NOT USE AFTER THIS FUNCTION!
+	// Any thread.
+	// 'unique_task' IS CONSUMED!
 	// Returns task index that can be used for dependencies.
 	template<typename T>
 	uint64_t											ScheduleTask(
@@ -184,15 +184,15 @@ public:
 		return AddTask( std::move( unique_task ) );
 	}
 
-	// ANY THREAD!
+	// Any thread.
 	std::thread::id										GetThreadID(
 		uint32_t										thread_index ) const;
 
-	// ANY THREAD!
+	// Any thread.
 	bool												IsGood() const;
 
-	// ANY THREAD!
-	// Meant for shutdown. Can add up to a millisecond of wasted time, so not for runtime use.
+	// Any thread.
+	// Meant for shutdown. Can add up to a millisecond of wasted time.
 	void												WaitIdle();
 
 private:

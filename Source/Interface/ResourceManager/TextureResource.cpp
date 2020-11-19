@@ -969,38 +969,6 @@ bool vk2d::_internal::TextureResourceImpl::MTLoad(
 		}
 	}
 
-	// 9. Allocate and update descriptor set that points to the image.
-	// Not used anymore because array textures require combined texture samplers.
-//	{
-//		descriptor_set = loader_thread_resource->GetDescriptorAutoPool()->AllocateDescriptorSet(
-//			resource_manager->GetInstance()->GetGraphicsTextureDescriptorSetLayout()
-//		);
-//		if( descriptor_set != VK_SUCCESS ) {
-//			return false;
-//		}
-//
-//		VkDescriptorImageInfo descriptor_image_info {};
-//		descriptor_image_info.sampler		= VK_NULL_HANDLE;
-//		descriptor_image_info.imageView		= image.view;
-//		descriptor_image_info.imageLayout	= VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-//		VkWriteDescriptorSet descriptor_write {};
-//		descriptor_write.sType				= VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-//		descriptor_write.pNext				= nullptr;
-//		descriptor_write.dstSet				= descriptor_set.descriptorSet;
-//		descriptor_write.dstBinding			= 0;
-//		descriptor_write.dstArrayElement	= 0;
-//		descriptor_write.descriptorCount	= 1;
-//		descriptor_write.descriptorType		= VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
-//		descriptor_write.pImageInfo			= &descriptor_image_info;
-//		descriptor_write.pBufferInfo		= nullptr;
-//		descriptor_write.pTexelBufferView	= nullptr;
-//		vkUpdateDescriptorSets(
-//			resource_manager->GetVulkanDevice(),
-//			1, &descriptor_write,
-//			0, nullptr
-//		);
-//	}
-
 	vk_image_layout		= VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 
 	return true;
@@ -1115,6 +1083,7 @@ bool vk2d::_internal::TextureResourceImpl::WaitUntilLoaded()
 
 	// We can check the status of the fence in any thread,
 	// it will not be removed until the resource is removed.
+	// TODO: Add a timeout for TextureResourceImpl::WaitUntilLoaded() to prevent the program possibly halting forever if something bad happens.
 	assert( vk_texture_complete_fence );
 	auto result = vkWaitForFences(
 		resource_manager->GetVulkanDevice(),

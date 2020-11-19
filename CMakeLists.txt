@@ -67,7 +67,7 @@ set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
 
 
-add_subdirectory("ExternalLibraries")
+add_subdirectory("ExternalLibraries" EXCLUDE_FROM_ALL)
 
 
 
@@ -89,6 +89,10 @@ option(VK2D_BUILD_EXAMPLES
 )
 option(VK2D_BUILD_DOCS
 	"Build documentation"
+	OFF
+)
+option(VK2D_BUILD_DOCS_FOR_COMPLETE_SOURCE
+	"Build documentation for internal source files too"
 	OFF
 )
 
@@ -181,9 +185,7 @@ endif()
 
 add_custom_target(RunTool_CompileGLSLShaderToSpirV
 	DEPENDS
-		"${CMAKE_SOURCE_DIR}/Source/Shaders/*.txt"
-		"${CMAKE_SOURCE_DIR}/Source/Shaders/*.vert"
-		"${CMAKE_SOURCE_DIR}/Source/Shaders/*.frag"
+		"${CMAKE_SOURCE_DIR}/Source/Shaders/*.*"
 	COMMAND
 		CompileGLSLShadersToSpirV
 		"-shaderpath" "${CMAKE_SOURCE_DIR}/Source/Shaders"
@@ -213,5 +215,34 @@ if(VK2D_BUILD_EXAMPLES)
 endif()
 
 if(VK2D_BUILD_DOCS)
-	add_subdirectory("DocsSource")
+	add_subdirectory("Docs")
 endif()
+
+
+
+install(
+	TARGETS
+		VK2D
+	LIBRARY DESTINATION "lib"
+	ARCHIVE DESTINATION "lib"
+	RUNTIME DESTINATION "bin"
+)
+install(
+	DIRECTORY
+		"${CMAKE_CURRENT_SOURCE_DIR}/Include/"
+	DESTINATION
+		"include/"
+)
+install(
+	DIRECTORY
+		"${CMAKE_CURRENT_BINARY_DIR}/Docs/Docs/Doxygen/html/"
+	DESTINATION
+		"docs/"
+)
+install(
+	FILES
+		"${CMAKE_CURRENT_SOURCE_DIR}/README.md"
+		"${CMAKE_CURRENT_SOURCE_DIR}/LICENSE.md"
+	DESTINATION
+		"./"
+)
