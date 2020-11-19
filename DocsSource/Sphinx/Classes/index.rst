@@ -1,9 +1,0 @@
-
-=======
-Classes
-=======
-
-.. toctree::
-
-	Instance
-	InstanceImpl
