@@ -133,15 +133,13 @@ int main()
 		if( !primary_window->BeginRender() ) return -1;
 
 		primary_window->DrawRectangle(
-			create_button.top_left,
-			create_button.bottom_right,
+			create_button,
 			true,
 			{ 0.2f, 1.0f, 0.3f, 1.0f }
 		);
 
 		primary_window->DrawRectangle(
-			destroy_button.top_left,
-			destroy_button.bottom_right,
+			destroy_button,
 			true,
 			{ 1.0f, 0.3f, 0.2f, 1.0f }
 		);
@@ -152,8 +150,8 @@ int main()
 			w->BeginRender();
 
 			w->DrawEllipse(
-				{ 50.0f, 50.0f },
-				{ 350.0f, 350.0f },
+				{ 50.0f, 50.0f,
+				350.0f, 350.0f },
 				true,
 				64.0f,
 				{ 0.3f, 0.6f, 1.0f, 1.0f }

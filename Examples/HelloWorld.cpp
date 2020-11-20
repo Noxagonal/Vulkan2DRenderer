@@ -73,30 +73,36 @@ int main()
 		// drawing commands, and "EndRender()".
 		if( !window->BeginRender() ) return -1;
 
-		// Draw a simple rectangle
+		// Draw a simple rectangle, most direct draw commands take in a vk2d::Rect2f
+		// object which tells the position and size of draw.
 		window->DrawRectangle(
-			vk2d::Vector2f( 200, 200 ),
-			vk2d::Vector2f( 700, 400 )
+			vk2d::Rect2f(
+			vk2d::Vector2f( 200.0f, 200.0f ),
+			vk2d::Vector2f( 700.0f, 400.0f ) )
 		);
 
 		// Draw an ellipse or a circle.
+		// First parameter is vk2d::Rect2f but can be simplified to {x1, y1, x2, y2} or
+		// { { x1, y1 }, { x2, y2 } }, whichever is easier to read.
+		// The last parameter is vk2d::Colorf object but again this can be simplified to
+		// { R, G, B, A }.
 		window->DrawEllipse(
-			vk2d::Vector2f( 450, 200 ),
-			vk2d::Vector2f( 750, 500 ),
+			{ 450.0f, 200.0f, 750.0f, 500.0f },
 			true,
 			12.0f,
 			vk2d::Colorf( 0.2f, 0.5f, 0.8f, 0.2f )
 		);
 
 		// Draws an ellipse but with a slice cut out of it.
+		// This time given parameters use slightly different format but the first
+		// parameter is still vk2d::Rect2f and the last is vk2d::Colorf object.
 		window->DrawEllipsePie(
-			vk2d::Vector2f( 50, 50 ),
-			vk2d::Vector2f( 400, 350 ),
+			{ { 50.0f, 50.0f },	{ 400.0f, 350.0f } },
 			0.3f,
 			0.9f,
 			true,
 			64.0f,
-			vk2d::Colorf( 1.0f, 0.8f, 0.1f, 0.8f )
+			{ 1.0f, 0.8f, 0.1f, 0.8f }
 		);
 
 		// There are more basic types to draw, try them out.

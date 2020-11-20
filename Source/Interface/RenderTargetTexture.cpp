@@ -1,6 +1,9 @@
 
 #include "../Core/SourceCommon.h"
 
+#include "../../Include/Types/Vector2.h"
+#include "../../Include/Types/Rect2.h"
+#include "../../Include/Types/Color.h"
 #include "../../Include/Types/Mesh.h"
 
 #include "../System/RenderTargetTextureDependecyGraphInfo.hpp"
@@ -178,15 +181,13 @@ VK2D_API void VK2D_APIENTRY vk2d::RenderTargetTexture::DrawLine(
 }
 
 VK2D_API void VK2D_APIENTRY vk2d::RenderTargetTexture::DrawRectangle(
-	vk2d::Vector2f					top_left,
-	vk2d::Vector2f					bottom_right,
+	vk2d::Rect2f					area,
 	bool							filled,
 	vk2d::Colorf					color
 )
 {
 	auto mesh = vk2d::GenerateRectangleMesh(
-		top_left,
-		bottom_right,
+		area,
 		filled
 	);
 	mesh.SetVertexColor( color );
@@ -194,16 +195,14 @@ VK2D_API void VK2D_APIENTRY vk2d::RenderTargetTexture::DrawRectangle(
 }
 
 VK2D_API void VK2D_APIENTRY vk2d::RenderTargetTexture::DrawEllipse(
-	vk2d::Vector2f					top_left,
-	vk2d::Vector2f					bottom_right,
+	vk2d::Rect2f					area,
 	bool							filled,
 	float							edge_count,
 	vk2d::Colorf					color
 )
 {
 	auto mesh = vk2d::GenerateEllipseMesh(
-		top_left,
-		bottom_right,
+		area,
 		filled,
 		edge_count
 	);
@@ -212,8 +211,7 @@ VK2D_API void VK2D_APIENTRY vk2d::RenderTargetTexture::DrawEllipse(
 }
 
 VK2D_API void VK2D_APIENTRY vk2d::RenderTargetTexture::DrawEllipsePie(
-	vk2d::Vector2f					top_left,
-	vk2d::Vector2f					bottom_right,
+	vk2d::Rect2f					area,
 	float							begin_angle_radians,
 	float							coverage,
 	bool							filled,
@@ -221,9 +219,8 @@ VK2D_API void VK2D_APIENTRY vk2d::RenderTargetTexture::DrawEllipsePie(
 	vk2d::Colorf					color
 )
 {
-	auto mesh = vk2d::GeneratePieMesh(
-		top_left,
-		bottom_right,
+	auto mesh = vk2d::GenerateEllipsePieMesh(
+		area,
 		begin_angle_radians,
 		coverage,
 		filled,
@@ -234,17 +231,15 @@ VK2D_API void VK2D_APIENTRY vk2d::RenderTargetTexture::DrawEllipsePie(
 }
 
 VK2D_API void VK2D_APIENTRY vk2d::RenderTargetTexture::DrawRectanglePie(
-	vk2d::Vector2f					top_left,
-	vk2d::Vector2f					bottom_right,
+	vk2d::Rect2f					area,
 	float							begin_angle_radians,
 	float							coverage,
 	bool							filled,
 	vk2d::Colorf					color
 )
 {
-	auto mesh = vk2d::GeneratePieBoxMesh(
-		top_left,
-		bottom_right,
+	auto mesh = vk2d::GenerateRectanglePieMesh(
+		area,
 		begin_angle_radians,
 		coverage,
 		filled
@@ -263,8 +258,7 @@ VK2D_API void VK2D_APIENTRY vk2d::RenderTargetTexture::DrawTexture(
 		auto texture_size = texture->GetSize();
 		auto bottom_right = top_left + vk2d::Vector2f( float( texture_size.x ), float( texture_size.y ) );
 		auto mesh = vk2d::GenerateRectangleMesh(
-			top_left,
-			bottom_right
+			{ top_left, bottom_right }
 		);
 		mesh.SetTexture( texture );
 		mesh.SetVertexColor( color );

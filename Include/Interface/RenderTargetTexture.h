@@ -3,6 +3,7 @@
 #include "../Core/Common.h"
 
 #include "../Types/Vector2.h"
+#include "../Types/Rect2.h"
 #include "../Types/Color.h"
 #include "../Types/Multisamples.h"
 #include "../Types/RenderCoordinateSpace.hpp"
@@ -105,21 +106,18 @@ public:
 		vk2d::Colorf											color						= { 1.0f, 1.0f, 1.0f, 1.0f } );
 
 	VK2D_API void												VK2D_APIENTRY				DrawRectangle(
-		vk2d::Vector2f											top_left,
-		vk2d::Vector2f											bottom_right,
+		vk2d::Rect2f											area,
 		bool													filled						= true,
 		vk2d::Colorf											color						= { 1.0f, 1.0f, 1.0f, 1.0f } );
 
 	VK2D_API void												VK2D_APIENTRY				DrawEllipse(
-		vk2d::Vector2f											top_left,
-		vk2d::Vector2f											bottom_right,
+		vk2d::Rect2f											area,
 		bool													filled						= true,
 		float													edge_count					= 64.0f,
 		vk2d::Colorf											color						= { 1.0f, 1.0f, 1.0f, 1.0f } );
 
 	VK2D_API void												VK2D_APIENTRY				DrawEllipsePie(
-		vk2d::Vector2f											top_left,
-		vk2d::Vector2f											bottom_right,
+		vk2d::Rect2f											area,
 		float													begin_angle_radians,
 		float													coverage,
 		bool													filled						= true,
@@ -127,8 +125,7 @@ public:
 		vk2d::Colorf											color						= { 1.0f, 1.0f, 1.0f, 1.0f } );
 
 	VK2D_API void												VK2D_APIENTRY				DrawRectanglePie(
-		vk2d::Vector2f											top_left,
-		vk2d::Vector2f											bottom_right,
+		vk2d::Rect2f											area,
 		float													begin_angle_radians,
 		float													coverage,
 		bool													filled						= true,

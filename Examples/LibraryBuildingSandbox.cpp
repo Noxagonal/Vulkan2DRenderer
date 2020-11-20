@@ -194,16 +194,16 @@ int main()
 			auto draw_rect_size = vk2d::Vector2f( 512, 512 );
 
 			auto textured_box = vk2d::GenerateRectangleMesh(
-				draw_rect_size * vk2d::Vector2f( -1, -0.5 ),
-				draw_rect_size * vk2d::Vector2f( 0, 0.5 )
+				{ draw_rect_size * vk2d::Vector2f( -1, -0.5 ),
+				draw_rect_size * vk2d::Vector2f( 0, 0.5 ) }
 			);
 			textured_box.SetTexture( render_target_texture2 );
 			textured_box.SetSampler( pixel_sampler );
 			window1->DrawMesh( textured_box );
 
 			auto grid = vk2d::GenerateLatticeMesh(
-				draw_rect_size * vk2d::Vector2f( 0, -0.5 ),
-				draw_rect_size * vk2d::Vector2f( 1, 0.5 ),
+				{ draw_rect_size * vk2d::Vector2f( 0, -0.5 ),
+				draw_rect_size * vk2d::Vector2f( 1, 0.5 ) },
 				vk2d::Vector2f( 30, 30 ),
 				true
 			);
@@ -270,8 +270,7 @@ void DrawRenderTargetTextureContent1(
 		render_target_texture->BeginRender();
 
 		auto textured_box = vk2d::GenerateRectangleMesh(
-			vk2d::Vector2f( 0, 0 ),
-			render_target1_size_f
+			{ vk2d::Vector2f( 0, 0 ), render_target1_size_f }
 		);
 		textured_box.SetTexture( texture_resource );
 		textured_box.SetVertexColor( vk2d::Colorf( 1, 1, 1, 1 ) );
@@ -279,8 +278,7 @@ void DrawRenderTargetTextureContent1(
 
 
 		render_target_texture->DrawRectanglePie(
-			vk2d::Vector2f( 0, 0 ),
-			render_target1_size_f,
+			{ vk2d::Vector2f( 0, 0 ), render_target1_size_f },
 			std::sin( basic_animation_counter * 0.125f ) * PI * 2.0f,
 			std::sin( basic_animation_counter * 0.237f ) * 0.5f + 0.5f,
 			true,
@@ -346,8 +344,7 @@ void DrawRenderTargetTextureContent2(
 		render_target_texture->BeginRender();
 
 		auto lattice_mesh = vk2d::GenerateLatticeMesh(
-			vk2d::Vector2f( 0, 0 ),
-			render_target2_size_f,
+			{ vk2d::Vector2f( 0, 0 ), render_target2_size_f },
 			vk2d::Vector2f( 20, 20 )
 		);
 		lattice_mesh.SetTexture( texture_resource );

@@ -78,103 +78,103 @@ int main()
 		if( !window->BeginRender() ) ExitWithCode( ExitCodes::CANNOT_BEGIN_RENDER );
 
 		window->DrawRectangle(
-			Coords( grid ),
+			GetTestGridCoords( grid ),
 			true,
 			vk2d::Colorf( 1.0f, 0.0f, 0.0f, 1.0f )
 		);
 
 		window->DrawRectangle(
-			Coords( grid ),
+			GetTestGridCoords( grid ),
 			false,
 			vk2d::Colorf( 1.0f, 0.0f, 0.0f, 1.0f )
 		);
 
 		window->DrawEllipse(
-			Coords( grid ),
+			GetTestGridCoords( grid ),
 			true,
 			3.0f,
 			vk2d::Colorf( 0.0f, 1.0f, 0.0f, 1.0f )
 		);
 
 		window->DrawEllipse(
-			Coords( grid ),
+			GetTestGridCoords( grid ),
 			false,
 			3.0f,
 			vk2d::Colorf( 0.0f, 1.0f, 0.0f, 1.0f )
 		);
 
 		window->DrawEllipse(
-			Coords( grid ),
+			GetTestGridCoords( grid ),
 			true,
 			5.5f,
 			vk2d::Colorf( 0.0f, 1.0f, 0.0f, 1.0f )
 		);
 
 		window->DrawEllipse(
-			Coords( grid ),
+			GetTestGridCoords( grid ),
 			false,
 			5.5f,
 			vk2d::Colorf( 0.0f, 1.0f, 0.0f, 1.0f )
 		);
 
 		window->DrawEllipse(
-			Coords( grid ),
+			GetTestGridCoords( grid ),
 			true,
 			16.0f,
 			vk2d::Colorf( 0.0f, 1.0f, 0.0f, 1.0f )
 		);
 
 		window->DrawEllipse(
-			Coords( grid ),
+			GetTestGridCoords( grid ),
 			false,
 			16.0f,
 			vk2d::Colorf( 0.0f, 1.0f, 0.0f, 1.0f )
 		);
 
 		window->DrawEllipse(
-			Coords( grid ),
+			GetTestGridCoords( grid ),
 			true,
 			32.0f,
 			vk2d::Colorf( 0.0f, 1.0f, 1.0f, 1.0f )
 		);
 
 		window->DrawEllipse(
-			Coords( grid ),
+			GetTestGridCoords( grid ),
 			false,
 			32.0f,
 			vk2d::Colorf( 0.0f, 1.0f, 1.0f, 1.0f )
 		);
 
 		window->DrawEllipse(
-			Coords( grid ),
+			GetTestGridCoords( grid ),
 			true,
 			32.0f,
 			vk2d::Colorf( 0.0f, 1.0f, 0.0f, 1.0f )
 		);
 
 		window->DrawEllipse(
-			Coords( grid ),
+			GetTestGridCoords( grid ),
 			false,
 			32.0f,
 			vk2d::Colorf( 0.0f, 1.0f, 0.0f, 1.0f )
 		);
 
 		window->DrawEllipse(
-			Coords( grid ),
+			GetTestGridCoords( grid ),
 			true,
 			64.0f,
 			vk2d::Colorf( 0.0f, 1.0f, 0.0f, 1.0f )
 		);
 
 		window->DrawEllipse(
-			Coords( grid ),
+			GetTestGridCoords( grid ),
 			false,
 			64.0f,
 			vk2d::Colorf( 0.0f, 1.0f, 0.0f, 1.0f )
 		);
 
 		window->DrawEllipsePie(
-			Coords( grid ),
+			GetTestGridCoords( grid ),
 			1.1f,
 			0.9f,
 			true,
@@ -183,7 +183,7 @@ int main()
 		);
 
 		window->DrawEllipsePie(
-			Coords( grid ),
+			GetTestGridCoords( grid ),
 			1.1f,
 			0.9f,
 			false,
@@ -192,7 +192,7 @@ int main()
 		);
 
 		window->DrawEllipsePie(
-			Coords( grid ),
+			GetTestGridCoords( grid ),
 			0.6f,
 			0.33f,
 			true,
@@ -201,7 +201,7 @@ int main()
 		);
 
 		window->DrawEllipsePie(
-			Coords( grid ),
+			GetTestGridCoords( grid ),
 			0.6f,
 			0.33f,
 			false,
@@ -210,7 +210,7 @@ int main()
 		);
 
 		window->DrawRectanglePie(
-			Coords( grid ),
+			GetTestGridCoords( grid ),
 			1.1f,
 			0.9f,
 			true,
@@ -218,7 +218,7 @@ int main()
 		);
 
 		window->DrawRectanglePie(
-			Coords( grid ),
+			GetTestGridCoords( grid ),
 			1.1f,
 			0.9f,
 			false,
@@ -226,7 +226,7 @@ int main()
 		);
 
 		window->DrawRectanglePie(
-			Coords( grid ),
+			GetTestGridCoords( grid ),
 			0.6f,
 			0.77f,
 			true,
@@ -234,7 +234,7 @@ int main()
 		);
 
 		window->DrawRectanglePie(
-			Coords( grid ),
+			GetTestGridCoords( grid ),
 			0.6f,
 			0.77f,
 			false,
@@ -242,7 +242,8 @@ int main()
 		);
 
 		window->DrawLine(
-			Coords( grid ),
+			grid.InsertTopLeft(),
+			grid.InsertBottomRight(),
 			vk2d::Colorf( 0.0f, 0.0f, 1.0f, 1.0f )
 		);
 

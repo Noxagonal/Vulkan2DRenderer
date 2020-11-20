@@ -3,6 +3,7 @@
 #include "../Core/Common.h"
 
 #include "../Types/Vector2.h"
+#include "../Types/Rect2.h"
 #include "../Types/Color.h"
 #include "../Types/MeshPrimitives.hpp"
 #include "../Types/Multisamples.h"
@@ -718,30 +719,25 @@ public:
 		vk2d::Vector2f									point_2,
 		vk2d::Colorf									color						= { 1.0f, 1.0f, 1.0f, 1.0f } );
 
-	/// @brief		Draws a box.
+	/// @brief		Draws a rectangle.
 	/// @note		Multithreading: Main thread only.
-	/// @param[in]	top_left
-	///				Top left coordinates of the box, depends on the coordinate system. See vk2d::RenderCoordinateSpace for more info.
-	/// @param[in]	bottom_right
-	///				Bottom right coordinates of the box, depends on the coordinate system. See vk2d::RenderCoordinateSpace for more info.
+	/// @param[in]	area
+	///				Area of the rectangle that will be covered, depends on the coordinate system. See
+	///				vk2d::RenderCoordinateSpace for more info about what values should be used.
 	/// @param[in]	solid
-	///				true if the inside of the box is drawn, false for the outline only.
+	///				true if the inside of the rectangle is drawn, false for the outline only.
 	/// @param[in]	color
-	///				Color of the box to be drawn.
+	///				Color of the rectangle to be drawn.
 	VK2D_API void										VK2D_APIENTRY				DrawRectangle(
-		vk2d::Vector2f									top_left,
-		vk2d::Vector2f									bottom_right,
+		vk2d::Rect2f									area,
 		bool											solid						= true,
 		vk2d::Colorf									color						= { 1.0f, 1.0f, 1.0f, 1.0f } );
 
 	/// @brief		Draws an ellipse or a circle.
 	/// @note		Multithreading: Main thread only.
-	/// @param[in]	top_left
-	///				Consider this as a box the ellipse must form to, this is the top left coordinate of that box,
-	///				depends on the coordinate system. See vk2d::RenderCoordinateSpace for more info.
-	/// @param[in]	bottom_right 
-	///				Consider this as a box the ellipse must form to, this is the bottom right coordinate of that box,
-	///				depends on the coordinate system. See vk2d::RenderCoordinateSpace for more info.
+	/// @param[in]	area
+	///				Rectangle area in which the ellipse must fit. See vk2d::RenderCoordinateSpace for
+	///				more info about what values should be used.
 	/// @param[in]	solid
 	///				true to draw the inside of the ellipse/circle, false to draw the outline only.
 	/// @param[in]	edge_count
@@ -750,20 +746,16 @@ public:
 	/// @param[in]	color
 	///				Color of the ellipse/circle to be drawn.
 	VK2D_API void										VK2D_APIENTRY				DrawEllipse(
-		vk2d::Vector2f									top_left,
-		vk2d::Vector2f									bottom_right,
+		vk2d::Rect2f									area,
 		bool											solid						= true,
 		float											edge_count					= 64.0f,
 		vk2d::Colorf									color						= { 1.0f, 1.0f, 1.0f, 1.0f } );
 
 	/// @brief		Draws an ellipse or a circle that has a "slice" cut out, similar to usual pie graphs.
 	/// @note		Multithreading: Main thread only.
-	/// @param[in]	top_left
-	///				Consider this as a box the ellipse must form to, this is the top left coordinate of that box,
-	///				depends on the coordinate system. See vk2d::RenderCoordinateSpace for more info.
-	/// @param[in]	bottom_right
-	///				Consider this as a box the ellipse must form to, this is the bottom right coordinate of that box,
-	///				depends on the coordinate system. See vk2d::RenderCoordinateSpace for more info.
+	/// @param[in]	area
+	///				Rectangle area in which the ellipse must fit. See vk2d::RenderCoordinateSpace for
+	///				more info about what values should be used.
 	/// @param[in]	begin_angle_radians
 	///				Angle (in radians) where the slice cut should start.
 	/// @param[in]	coverage
@@ -776,37 +768,34 @@ public:
 	/// @param[in]	color 
 	///				Color of the pie to be drawn.
 	VK2D_API void										VK2D_APIENTRY				DrawEllipsePie(
-		vk2d::Vector2f									top_left,
-		vk2d::Vector2f									bottom_right,
+		vk2d::Rect2f									area,
 		float											begin_angle_radians,
 		float											coverage,
 		bool											solid						= true,
 		float											edge_count					= 64.0f,
 		vk2d::Colorf									color						= { 1.0f, 1.0f, 1.0f, 1.0f } );
 
-	/// @brief		Draw pie box, similar to drawing a box but which has a pie slice cut out.
+	/// @brief		Draw a rectangular pie, similar to drawing a rectangle but which has a pie slice cut out.
 	/// @note		Multithreading: Main thread only.
-	/// @param[in]	top_left 
-	///				Top left coordinates of the box, depends on the coordinate system. See vk2d::RenderCoordinateSpace for more info.
-	/// @param[in]	bottom_right
-	///				Bottom right coordinates of the box, depends on the coordinate system. See vk2d::RenderCoordinateSpace for more info.
+	/// @param[in]	area
+	///				Area of the rectangle to be drawn. See vk2d::RenderCoordinateSpace for
+	///				more info about what values should be used.
 	/// @param[in]	begin_angle_radians
 	///				Angle (in radians) where the slice cut should start.
 	/// @param[in]	coverage 
-	///				Size of the slice, value is between 0 to 1 where 0 is not visible and 1 draws the full box.
+	///				Size of the slice, value is between 0 to 1 where 0 is not visible and 1 draws the full rectangle.
 	/// @param[in]	solid
-	///				true to draw the inside of the pie box, false to draw the outline only.
+	///				true to draw the inside of the pie rectangle, false to draw the outline only.
 	/// @param[in]	color 
-	///				Color of the pie box to be drawn.
+	///				Color of the pie rectangle to be drawn.
 	VK2D_API void										VK2D_APIENTRY				DrawRectanglePie(
-		vk2d::Vector2f									top_left,
-		vk2d::Vector2f									bottom_right,
+		vk2d::Rect2f									area,
 		float											begin_angle_radians,
 		float											coverage,
 		bool											solid						= true,
 		vk2d::Colorf									color						= { 1.0f, 1.0f, 1.0f, 1.0f } );
 
-	/// @brief		Draws a box with texture and use the size of the texture to determine size of the box.
+	/// @brief		Draws a rectangle with texture and use the size of the texture to determine size of the rectangle.
 	/// @warning	!! If window surface coordinate space is normalized, this will not work properly as bottom
 	///				right coordinates are offsetted by the texture size !! See vk2d::RenderCoordinateSpace for more info.
 	/// @param[in]	location

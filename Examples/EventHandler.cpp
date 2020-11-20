@@ -103,14 +103,12 @@ int main()
 			{ float( window->GetSize().x ), event_handler.mouse_position_1.y }
 		);
 		window->DrawRectangle(
-			event_handler.mouse_position_1,
-			event_handler.mouse_position_2,
+			{ event_handler.mouse_position_1, event_handler.mouse_position_2 },
 			true,
 			{ 0.2f, 0.5f, 0.8f, 0.4f }
 		);
 		window->DrawRectangle(
-			event_handler.mouse_position_1,
-			event_handler.mouse_position_2,
+			{ event_handler.mouse_position_1, event_handler.mouse_position_2 },
 			false,
 			{ 0.3f, 0.6f, 0.9f, 1.0f }
 		);
