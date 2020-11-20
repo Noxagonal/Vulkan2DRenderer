@@ -728,7 +728,7 @@ public:
 	///				true if the inside of the box is drawn, false for the outline only.
 	/// @param[in]	color
 	///				Color of the box to be drawn.
-	VK2D_API void										VK2D_APIENTRY				DrawBox(
+	VK2D_API void										VK2D_APIENTRY				DrawRectangle(
 		vk2d::Vector2f									top_left,
 		vk2d::Vector2f									bottom_right,
 		bool											solid						= true,
@@ -775,7 +775,7 @@ public:
 	///				"smoother" transitions between amount of corners, in case this value is animated.
 	/// @param[in]	color 
 	///				Color of the pie to be drawn.
-	VK2D_API void										VK2D_APIENTRY				DrawPie(
+	VK2D_API void										VK2D_APIENTRY				DrawEllipsePie(
 		vk2d::Vector2f									top_left,
 		vk2d::Vector2f									bottom_right,
 		float											begin_angle_radians,
@@ -798,7 +798,7 @@ public:
 	///				true to draw the inside of the pie box, false to draw the outline only.
 	/// @param[in]	color 
 	///				Color of the pie box to be drawn.
-	VK2D_API void										VK2D_APIENTRY				DrawPieBox(
+	VK2D_API void										VK2D_APIENTRY				DrawRectanglePie(
 		vk2d::Vector2f									top_left,
 		vk2d::Vector2f									bottom_right,
 		float											begin_angle_radians,

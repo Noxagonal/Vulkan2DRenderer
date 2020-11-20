@@ -73,8 +73,8 @@ int main()
 		// drawing commands, and "EndRender()".
 		if( !window->BeginRender() ) return -1;
 
-		// Draw a simple box
-		window->DrawBox(
+		// Draw a simple rectangle
+		window->DrawRectangle(
 			vk2d::Vector2f( 200, 200 ),
 			vk2d::Vector2f( 700, 400 )
 		);
@@ -89,7 +89,7 @@ int main()
 		);
 
 		// Draws an ellipse but with a slice cut out of it.
-		window->DrawPie(
+		window->DrawEllipsePie(
 			vk2d::Vector2f( 50, 50 ),
 			vk2d::Vector2f( 400, 350 ),
 			0.3f,

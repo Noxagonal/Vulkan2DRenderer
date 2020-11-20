@@ -350,7 +350,7 @@ VK2D_API void VK2D_APIENTRY vk2d::Window::DrawLine(
 	impl->DrawMesh( mesh );
 }
 
-VK2D_API void VK2D_APIENTRY vk2d::Window::DrawBox(
+VK2D_API void VK2D_APIENTRY vk2d::Window::DrawRectangle(
 	vk2d::Vector2f					top_left,
 	vk2d::Vector2f					bottom_right,
 	bool							solid,
@@ -384,7 +384,7 @@ VK2D_API void VK2D_APIENTRY vk2d::Window::DrawEllipse(
 	impl->DrawMesh( mesh );
 }
 
-VK2D_API void VK2D_APIENTRY vk2d::Window::DrawPie(
+VK2D_API void VK2D_APIENTRY vk2d::Window::DrawEllipsePie(
 	vk2d::Vector2f					top_left,
 	vk2d::Vector2f					bottom_right,
 	float							begin_angle_radians,
@@ -406,7 +406,7 @@ VK2D_API void VK2D_APIENTRY vk2d::Window::DrawPie(
 	impl->DrawMesh( mesh );
 }
 
-VK2D_API void VK2D_APIENTRY vk2d::Window::DrawPieBox(
+VK2D_API void VK2D_APIENTRY vk2d::Window::DrawRectanglePie(
 	vk2d::Vector2f					top_left,
 	vk2d::Vector2f					bottom_right,
 	float							begin_angle_radians,

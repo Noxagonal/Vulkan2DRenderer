@@ -77,13 +77,13 @@ int main()
 
 		if( !window->BeginRender() ) ExitWithCode( ExitCodes::CANNOT_BEGIN_RENDER );
 
-		window->DrawBox(
+		window->DrawRectangle(
 			Coords( grid ),
 			true,
 			vk2d::Colorf( 1.0f, 0.0f, 0.0f, 1.0f )
 		);
 
-		window->DrawBox(
+		window->DrawRectangle(
 			Coords( grid ),
 			false,
 			vk2d::Colorf( 1.0f, 0.0f, 0.0f, 1.0f )
@@ -173,7 +173,7 @@ int main()
 			vk2d::Colorf( 0.0f, 1.0f, 0.0f, 1.0f )
 		);
 
-		window->DrawPie(
+		window->DrawEllipsePie(
 			Coords( grid ),
 			1.1f,
 			0.9f,
@@ -182,7 +182,7 @@ int main()
 			vk2d::Colorf( 0.0f, 0.0f, 1.0f, 1.0f )
 		);
 
-		window->DrawPie(
+		window->DrawEllipsePie(
 			Coords( grid ),
 			1.1f,
 			0.9f,
@@ -191,7 +191,7 @@ int main()
 			vk2d::Colorf( 0.0f, 0.0f, 1.0f, 1.0f )
 		);
 
-		window->DrawPie(
+		window->DrawEllipsePie(
 			Coords( grid ),
 			0.6f,
 			0.33f,
@@ -200,7 +200,7 @@ int main()
 			vk2d::Colorf( 0.0f, 0.0f, 1.0f, 1.0f )
 		);
 
-		window->DrawPie(
+		window->DrawEllipsePie(
 			Coords( grid ),
 			0.6f,
 			0.33f,
@@ -209,7 +209,7 @@ int main()
 			vk2d::Colorf( 0.0f, 0.0f, 1.0f, 1.0f )
 		);
 
-		window->DrawPieBox(
+		window->DrawRectanglePie(
 			Coords( grid ),
 			1.1f,
 			0.9f,
@@ -217,7 +217,7 @@ int main()
 			vk2d::Colorf( 1.0f, 0.7f, 0.2f, 1.0f )
 		);
 
-		window->DrawPieBox(
+		window->DrawRectanglePie(
 			Coords( grid ),
 			1.1f,
 			0.9f,
@@ -225,7 +225,7 @@ int main()
 			vk2d::Colorf( 1.0f, 0.7f, 0.2f, 1.0f )
 		);
 
-		window->DrawPieBox(
+		window->DrawRectanglePie(
 			Coords( grid ),
 			0.6f,
 			0.77f,
@@ -233,7 +233,7 @@ int main()
 			vk2d::Colorf( 1.0f, 0.7f, 0.2f, 1.0f )
 		);
 
-		window->DrawPieBox(
+		window->DrawRectanglePie(
 			Coords( grid ),
 			0.6f,
 			0.77f,

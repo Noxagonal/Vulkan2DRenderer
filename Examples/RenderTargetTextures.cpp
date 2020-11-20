@@ -86,7 +86,7 @@ int main()
 		// inside other render target textures.
 		render_target_texture->BeginRender();
 
-		render_target_texture->DrawPie(
+		render_target_texture->DrawEllipsePie(
 			{ -250.0f, -250.0f },
 			{ 250.0f, 250.0f },
 			( std::sin( seconds_from_launch / 2.0f ) * 0.5f + 0.5f ) * 3.14f * 2.0f,

@@ -278,7 +278,7 @@ void DrawRenderTargetTextureContent1(
 		render_target_texture->DrawMesh( textured_box );
 
 
-		render_target_texture->DrawPieBox(
+		render_target_texture->DrawRectanglePie(
 			vk2d::Vector2f( 0, 0 ),
 			render_target1_size_f,
 			std::sin( basic_animation_counter * 0.125f ) * PI * 2.0f,
@@ -287,7 +287,7 @@ void DrawRenderTargetTextureContent1(
 			vk2d::Colorf( 1.0f, 1.0f, 1.0f, 0.5f )
 		);
 		/*
-		render_target_texture->DrawPieBox(
+		render_target_texture->DrawRectanglePie(
 			vk2d::Vector2f( 0, 0 ),
 			render_target1_size_f,
 			std::sin( basic_animation_counter * 0.0185f ) * PI * 2.0f,
@@ -296,7 +296,7 @@ void DrawRenderTargetTextureContent1(
 			vk2d::Colorf( 1.0f, 1.0f, 1.0f, 0.5f )
 		);
 
-		render_target_texture->DrawPieBox(
+		render_target_texture->DrawRectanglePie(
 			vk2d::Vector2f( 0, 0 ),
 			render_target1_size_f,
 			std::sin( basic_animation_counter * 0.169f ) * PI * 2.0f,

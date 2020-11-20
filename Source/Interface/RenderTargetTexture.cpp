@@ -177,7 +177,7 @@ VK2D_API void VK2D_APIENTRY vk2d::RenderTargetTexture::DrawLine(
 	impl->DrawMesh( mesh );
 }
 
-VK2D_API void VK2D_APIENTRY vk2d::RenderTargetTexture::DrawBox(
+VK2D_API void VK2D_APIENTRY vk2d::RenderTargetTexture::DrawRectangle(
 	vk2d::Vector2f					top_left,
 	vk2d::Vector2f					bottom_right,
 	bool							filled,
@@ -211,7 +211,7 @@ VK2D_API void VK2D_APIENTRY vk2d::RenderTargetTexture::DrawEllipse(
 	impl->DrawMesh( mesh );
 }
 
-VK2D_API void VK2D_APIENTRY vk2d::RenderTargetTexture::DrawPie(
+VK2D_API void VK2D_APIENTRY vk2d::RenderTargetTexture::DrawEllipsePie(
 	vk2d::Vector2f					top_left,
 	vk2d::Vector2f					bottom_right,
 	float							begin_angle_radians,
@@ -233,7 +233,7 @@ VK2D_API void VK2D_APIENTRY vk2d::RenderTargetTexture::DrawPie(
 	impl->DrawMesh( mesh );
 }
 
-VK2D_API void VK2D_APIENTRY vk2d::RenderTargetTexture::DrawPieBox(
+VK2D_API void VK2D_APIENTRY vk2d::RenderTargetTexture::DrawRectanglePie(
 	vk2d::Vector2f					top_left,
 	vk2d::Vector2f					bottom_right,
 	float							begin_angle_radians,
