@@ -1,6 +1,11 @@
 
 #include "../Core/SourceCommon.h"
 
+#include "../../Include/Types/Vector2.h"
+#include "../../Include/Types/Rect2.h"
+#include "../../Include/Types/Matrix2.h"
+#include "../../Include/Types/Color.h"
+
 #include "../../Include/Interface/ResourceManager/FontResource.h"
 #include "../Interface/ResourceManager/FontResourceImpl.h"
 
@@ -15,11 +20,11 @@ namespace vk2d {
 namespace _internal {
 
 template<typename T>
-vk2d::AABB2Base<T> CalculateAABBFromPointList(
+vk2d::Rect2Base<T> CalculateAABBFromPointList(
 	const std::vector<vk2d::Vector2Base<T>>		&	points
 )
 {
-	vk2d::AABB2Base<T> ret { points[ 0 ], points[ 0 ] };
+	vk2d::Rect2Base<T> ret { points[ 0 ], points[ 0 ] };
 	for( auto p : points ) {
 		ret.top_left.x		= std::min( ret.top_left.x, p.x );
 		ret.top_left.y		= std::min( ret.top_left.y, p.y );
@@ -29,11 +34,11 @@ vk2d::AABB2Base<T> CalculateAABBFromPointList(
 	return ret;
 }
 
-vk2d::AABB2f CalculateAABBFromVertexList(
+vk2d::Rect2f CalculateAABBFromVertexList(
 	const std::vector<vk2d::Vertex>			&	vertices
 )
 {
-	vk2d::AABB2f ret { vertices[ 0 ].vertex_coords, vertices[ 0 ].vertex_coords };
+	vk2d::Rect2f ret { vertices[ 0 ].vertex_coords, vertices[ 0 ].vertex_coords };
 	for( auto p : vertices ) {
 		ret.top_left.x		= std::min( ret.top_left.x, p.vertex_coords.x );
 		ret.top_left.y		= std::min( ret.top_left.y, p.vertex_coords.y );
@@ -447,7 +452,7 @@ VK2D_API vk2d::Mesh VK2D_APIENTRY vk2d::GenerateLineMeshFromList(
 	}
 
 	mesh.generated				= true;
-	mesh.generated_mesh_type	= vk2d::MeshType::POINT;
+	mesh.generated_mesh_type	= vk2d::MeshType::LINE;
 	mesh.SetMeshType( mesh.generated_mesh_type );
 	return mesh;
 }
@@ -476,7 +481,7 @@ VK2D_API vk2d::Mesh VK2D_APIENTRY vk2d::GenerateTriangleMeshFromList(
 	return mesh;
 }
 
-VK2D_API vk2d::Mesh VK2D_APIENTRY vk2d::GenerateBoxMesh(
+VK2D_API vk2d::Mesh VK2D_APIENTRY vk2d::GenerateRectangleMesh(
 	vk2d::Vector2f				top_left,
 	vk2d::Vector2f				bottom_right,
 	bool						filled
@@ -533,7 +538,7 @@ VK2D_API vk2d::Mesh VK2D_APIENTRY vk2d::GenerateBoxMesh(
 	return ret;
 }
 
-VK2D_API vk2d::Mesh VK2D_APIENTRY vk2d::GenerateCircleMesh(
+VK2D_API vk2d::Mesh VK2D_APIENTRY vk2d::GenerateEllipseMesh(
 	vk2d::Vector2f			top_left,
 	vk2d::Vector2f			bottom_right,
 	bool					filled,
@@ -765,7 +770,7 @@ VK2D_API vk2d::Mesh VK2D_APIENTRY vk2d::GeneratePieBoxMesh(
 	vk2d::Mesh ret;
 
 	if( coverage >= 1.0f ) {
-		return vk2d::GenerateBoxMesh( top_left, bottom_right, filled );
+		return vk2d::GenerateRectangleMesh( top_left, bottom_right, filled );
 	}
 	if( coverage <= 0.0f ) {
 		return ret;		// Nothing to draw
@@ -1126,8 +1131,8 @@ VK2D_API vk2d::Mesh VK2D_APIENTRY vk2d::GenerateTextMesh(
 
 	auto AppendBox =[ &mesh, scale ](
 		const vk2d::Vector2f	&	location,
-		const vk2d::AABB2f		&	coords,
-		const vk2d::AABB2f		&	uv_coords,
+		const vk2d::Rect2f		&	coords,
+		const vk2d::Rect2f		&	uv_coords,
 		uint32_t					texture_channel
 		)
 	{

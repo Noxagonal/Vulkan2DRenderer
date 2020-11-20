@@ -2,7 +2,9 @@
 
 #include "../Core/Common.h"
 
-#include "../Types/Primitives.hpp"
+#include "../Types/Vector2.h"
+#include "../Types/Color.h"
+#include "../Types/MeshPrimitives.hpp"
 #include "../Types/Multisamples.h"
 #include "../Types/RenderCoordinateSpace.hpp"
 
@@ -208,22 +210,22 @@ enum class KeyboardButton : int32_t {
 };
 
 struct WindowCreateInfo {
-	bool								resizeable					= true;			// Can we use the cursor to resize the window.
-	bool								visible						= true;			// Is the window visible when created.
-	bool								decorated					= true;			// Does the window have default OS borders and buttons.
-	bool								focused						= true;			// Is the window focused and brought forth when created.
-	bool								maximized					= false;		// Is the window maximized to fill the screen when created.
-	bool								transparent_framebuffer		= false;		// Is the alpha value of the render interpreted as a transparent window background.
-	vk2d::RenderCoordinateSpace			coordinate_space			= vk2d::RenderCoordinateSpace::TEXEL_SPACE; // Window coordinate system to be used, see RenderCoordinateSpace.
-	vk2d::Vector2u						size						= { 800, 600 };	// Window framebuffer initial size
-	vk2d::Vector2u						min_size					= { 32, 32 };	// Minimum size of the window, will be adjusted to suit the hardware.
-	vk2d::Vector2u						max_size					= { UINT32_MAX, UINT32_MAX };	// Maximum size of the window, will be adjusted to suit the hardware.
-	vk2d::Monitor					*	fullscreen_monitor			= {};			// Fullscreen monitor pointer, nullptr is windowed, use Instance::GetPrimaryMonitor() to use primary monitor for fullscreen.
-	uint32_t							fullscreen_refresh_rate		= UINT32_MAX;	// Refresh rate in fullscreen mode, UINT32_MAX uses maximum refresh rate available.
-	bool								vsync						= true;			// Vertical synchronization, works in both windowed and fullscreen modes, usually best left on for 2d graphics.
-	vk2d::Multisamples					samples						= vk2d::Multisamples::SAMPLE_COUNT_1;	// Multisampling, must be a single value in vk2d::Multisamples enum.
-	std::string							title						= "";			// Window title.
-	vk2d::WindowEventHandler		*	event_handler				= nullptr;
+	bool								resizeable					= true;											///< Can we use the cursor to resize the window.
+	bool								visible						= true;											///< Is the window visible when created.
+	bool								decorated					= true;											///< Does the window have default OS borders and buttons.
+	bool								focused						= true;											///< Is the window focused and brought forth when created.
+	bool								maximized					= false;										///< Is the window maximized to fill the screen when created.
+	bool								transparent_framebuffer		= false;										///< Is the alpha value of the render interpreted as a transparent window background.
+	vk2d::RenderCoordinateSpace			coordinate_space			= vk2d::RenderCoordinateSpace::TEXEL_SPACE;		///< Window coordinate system to be used, see RenderCoordinateSpace.
+	vk2d::Vector2u						size						= { 800, 600 };									///< Window framebuffer initial size
+	vk2d::Vector2u						min_size					= { 32, 32 };									///< Minimum size of the window, will be adjusted to suit the hardware.
+	vk2d::Vector2u						max_size					= { UINT32_MAX, UINT32_MAX };					///< Maximum size of the window, will be adjusted to suit the hardware.
+	vk2d::Monitor					*	fullscreen_monitor			= {};											///< Fullscreen monitor pointer, nullptr is windowed, use Instance::GetPrimaryMonitor() to use primary monitor for fullscreen.
+	uint32_t							fullscreen_refresh_rate		= UINT32_MAX;									///< Refresh rate in fullscreen mode, UINT32_MAX uses maximum refresh rate available.
+	bool								vsync						= true;											///< Vertical synchronization, works in both windowed and fullscreen modes, usually best left on for 2d graphics.
+	vk2d::Multisamples					samples						= vk2d::Multisamples::SAMPLE_COUNT_1;			///< Multisampling, must be a single value in vk2d::Multisamples enum.
+	std::string							title						= "";											///< Window title.
+	vk2d::WindowEventHandler		*	event_handler				= nullptr;										///< Pointer to a custom event handler that will be used with this window. See vk2d::WindowEventHandler.
 };
 
 
@@ -435,9 +437,6 @@ public:
 	// Returns:
 	// true if the window requested to be removed and closed, false if the window is good to stay open.
 	VK2D_API bool										VK2D_APIENTRY				ShouldClose();
-
-	// Update window events. Need to be called once a frame.
-	VK2D_API void										VK2D_APIENTRY				UpdateEvents();
 
 	// Takes a screenshot of the next image that will be rendered.
 	// Parameters:
@@ -857,7 +856,7 @@ private:
 ///						int32_t									scancode,
 ///						vk2d::ButtonAction						action,
 ///						vk2d::ModifierKeyFlags					modifierKeys
-///					)
+///					) override
 ///					{};
 ///				};
 ///	@endcode

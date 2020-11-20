@@ -144,7 +144,7 @@ int main()
 	auto fps_counter			= 0;
 	auto fps_counter_timer		= 0.0f;
 
-	while( !window1->ShouldClose() ) {
+	while( instance->Run() && !window1->ShouldClose() ) {
 		{
 			auto now = std::chrono::high_resolution_clock::now();
 			delta_time = std::chrono::duration<float>( now - delta_time_time_point ).count();
@@ -193,7 +193,7 @@ int main()
 
 			auto draw_rect_size = vk2d::Vector2f( 512, 512 );
 
-			auto textured_box = vk2d::GenerateBoxMesh(
+			auto textured_box = vk2d::GenerateRectangleMesh(
 				draw_rect_size * vk2d::Vector2f( -1, -0.5 ),
 				draw_rect_size * vk2d::Vector2f( 0, 0.5 )
 			);
@@ -269,7 +269,7 @@ void DrawRenderTargetTextureContent1(
 
 		render_target_texture->BeginRender();
 
-		auto textured_box = vk2d::GenerateBoxMesh(
+		auto textured_box = vk2d::GenerateRectangleMesh(
 			vk2d::Vector2f( 0, 0 ),
 			render_target1_size_f
 		);

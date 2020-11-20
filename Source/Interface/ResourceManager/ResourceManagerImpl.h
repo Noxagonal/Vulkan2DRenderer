@@ -4,7 +4,8 @@
 
  #include "../../System/ThreadPool.h"
 
-#include "../../../Include/Types/Primitives.hpp"
+#include "../../../Include/Types/Vector2.h"
+#include "../../../Include/Types/Color.h"
 
 namespace vk2d {
 

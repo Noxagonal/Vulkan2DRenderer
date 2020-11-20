@@ -1,7 +1,7 @@
 
 #include "../Core/SourceCommon.h"
 
-#include "../../Include/Types/Primitives.hpp"
+#include "../../Include/Types/MeshPrimitives.hpp"
 
 #include "VulkanMemoryManagement.h"
 #include "VulkanMemoryManagement.h"

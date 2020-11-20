@@ -504,7 +504,7 @@ bool vk2d::_internal::FontResourceImpl::MTLoad(
 
 			// Create glyph info structure for the glyph
 			{
-				vk2d::AABB2f uv_coords		= {
+				vk2d::Rect2f uv_coords		= {
 					float( atlas_location.location.top_left.x ) / float( atlas_size ),
 					float( atlas_location.location.top_left.y ) / float( atlas_size ),
 					float( atlas_location.location.bottom_right.x ) / float( atlas_size ),

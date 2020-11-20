@@ -2,7 +2,8 @@
 
 #include "../../Core/SourceCommon.h"
 
-#include "../../../Include/Types/Primitives.hpp"
+#include "../../../Include/Types/Rect2.h"
+#include "../../../Include/Types/Color.h"
 
 #include "ResourceImpl.h"
 
@@ -24,9 +25,9 @@ class ThreadPrivateResource;
 struct GlyphInfo {
 	uint32_t											face_index							= {};
 	uint32_t											atlas_index							= {};
-	vk2d::AABB2f										uv_coords							= {};
-	vk2d::AABB2f										horisontal_coords					= {};
-	vk2d::AABB2f										vertical_coords						= {};
+	vk2d::Rect2f										uv_coords							= {};
+	vk2d::Rect2f										horisontal_coords					= {};
+	vk2d::Rect2f										vertical_coords						= {};
 	float												horisontal_advance					= {};
 	float												vertical_advance					= {};
 };
@@ -82,7 +83,7 @@ private:
 	struct AtlasLocation {
 		AtlasTexture								*	atlas_ptr							= {};
 		uint32_t										atlas_index							= {};
-		vk2d::AABB2u									location							= {};
+		vk2d::Rect2u									location							= {};
 	};
 	struct FaceInfo {
 		FT_Face											face								= {};

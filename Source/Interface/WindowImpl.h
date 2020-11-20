@@ -92,8 +92,6 @@ public:
 	bool														BeginRender();
 	bool														EndRender();
 
-	void														UpdateEvents();
-
 	void														TakeScreenshotToFile(
 		const std::filesystem::path							&	save_path,
 		bool													include_alpha );

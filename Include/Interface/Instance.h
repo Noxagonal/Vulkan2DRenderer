@@ -171,6 +171,21 @@ public:
 	/// @note		Multithreading: Main thread only.
 	VK2D_API																				~Instance();
 
+	/// @brief		You should consider this function as your general instance update function.
+	///				This function should be called once every game loop, even if you don't update all window content
+	///				each frame you should still call this function in a somewhat timely manner. 60 times a second or
+	///				however fast your game loop is going. This function polls input events from the OS and gives an
+	///				opportunity for the instance to schedule resource cleanup and other housekeeping tasks.
+	///				Perfect place to call this function is in the while loop:
+	/// @code
+	///				while( instance->Run() ) {
+	///					// Main game loop and rendering.
+	///				}
+	/// @endcode
+	/// @note		Multithreading: Main thread only.
+	/// @return		true when instance can be kept running, false if instance should be shut down.
+	VK2D_API bool										VK2D_APIENTRY						Run();
+
 	VK2D_API vk2d::ResourceManager					*	VK2D_APIENTRY						GetResourceManager();
 
 	///	@brief		Get a list of monitors connected to the system, this will be

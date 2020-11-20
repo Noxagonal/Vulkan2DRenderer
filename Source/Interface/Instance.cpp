@@ -112,6 +112,11 @@ VK2D_API vk2d::Instance::~Instance()
 {
 }
 
+VK2D_API bool VK2D_APIENTRY vk2d::Instance::Run()
+{
+	return impl->Run();
+}
+
 VK2D_API vk2d::ResourceManager * VK2D_APIENTRY vk2d::Instance::GetResourceManager()
 {
 	return impl->GetResourceManager();
@@ -422,6 +427,15 @@ vk2d::_internal::InstanceImpl::~InstanceImpl()
 	if( vk2d::_internal::instance_count == 0 ) {
 		glfwTerminate();
 	}
+}
+
+bool vk2d::_internal::InstanceImpl::Run()
+{
+	glfwPollEvents();
+
+	// TODO: Schedule cleanup tasks at vk2d::_internal::InstanceImpl::Run().
+
+	return true;
 }
 
 void vk2d::_internal::InstanceImpl::SetMonitorUpdateCallback(

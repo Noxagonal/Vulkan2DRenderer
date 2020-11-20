@@ -2,7 +2,8 @@
 
 #include "../Core/Common.h"
 
-#include "../Types/Primitives.hpp"
+#include "../Types/Vector2.h"
+#include "../Types/Color.h"
 #include "../Types/Multisamples.h"
 #include "../Types/RenderCoordinateSpace.hpp"
 
@@ -109,7 +110,7 @@ public:
 		bool													filled						= true,
 		vk2d::Colorf											color						= { 1.0f, 1.0f, 1.0f, 1.0f } );
 
-	VK2D_API void												VK2D_APIENTRY				DrawCircle(
+	VK2D_API void												VK2D_APIENTRY				DrawEllipse(
 		vk2d::Vector2f											top_left,
 		vk2d::Vector2f											bottom_right,
 		bool													filled						= true,

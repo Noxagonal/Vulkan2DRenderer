@@ -4,7 +4,11 @@
 #include "Core/Common.h"
 #include "Core/Version.hpp"
 
-#include "Types/Primitives.hpp"
+#include "Types/Vector2.h"
+#include "Types/Matrix2.h"
+#include "Types/Rect2.h"
+#include "Types/Color.h"
+#include "Types/MeshPrimitives.hpp"
 #include "Types/Mesh.h"
 #include "Types/Multisamples.h"
 #include "Types/RenderCoordinateSpace.hpp"
