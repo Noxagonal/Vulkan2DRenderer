@@ -2,7 +2,9 @@
 
 #include "../Core/Common.h"
 
-#include "Primitives.hpp"
+#include "MeshPrimitives.hpp"
+#include "Vector2.h"
+#include "Color.h"
 
 #include <vector>
 #include <string>
@@ -36,12 +38,12 @@ class Mesh {
 		const std::vector<vk2d::VertexIndex_3>	&	indices,
 		bool										filled );
 
-	friend VK2D_API vk2d::Mesh						VK2D_APIENTRY					GenerateBoxMesh(
+	friend VK2D_API vk2d::Mesh						VK2D_APIENTRY					GenerateRectangleMesh(
 		vk2d::Vector2f								top_left,
 		vk2d::Vector2f								bottom_right,
 		bool										filled );
 
-	friend VK2D_API vk2d::Mesh						VK2D_APIENTRY					GenerateCircleMesh(
+	friend VK2D_API vk2d::Mesh						VK2D_APIENTRY					GenerateEllipseMesh(
 		vk2d::Vector2f								top_left,
 		vk2d::Vector2f								bottom_right,
 		bool										filled,
@@ -72,6 +74,7 @@ class Mesh {
 		vk2d::FontResource						*	font,
 		vk2d::Vector2f								origin,
 		std::string									text,
+		float										kerning,
 		vk2d::Vector2f								scale,
 		bool										vertical,
 		uint32_t									font_face );
@@ -188,12 +191,12 @@ VK2D_API vk2d::Mesh									VK2D_APIENTRY					GenerateTriangleMeshFromList(
 	const std::vector<vk2d::VertexIndex_3>		&	indices,
 	bool											filled							= true );
 
-VK2D_API vk2d::Mesh									VK2D_APIENTRY					GenerateBoxMesh(
+VK2D_API vk2d::Mesh									VK2D_APIENTRY					GenerateRectangleMesh(
 	vk2d::Vector2f									top_left,
 	vk2d::Vector2f									bottom_right,
 	bool											filled							= true );
 
-VK2D_API vk2d::Mesh									VK2D_APIENTRY					GenerateCircleMesh(
+VK2D_API vk2d::Mesh									VK2D_APIENTRY					GenerateEllipseMesh(
 	vk2d::Vector2f									top_left,
 	vk2d::Vector2f									bottom_right,
 	bool											filled							= true,

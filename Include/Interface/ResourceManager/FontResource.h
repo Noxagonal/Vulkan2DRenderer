@@ -3,7 +3,7 @@
 #include "../../Core/Common.h"
 
 #include "Resource.h"
-#include "../../Types/Primitives.hpp"
+#include "../../Types/Vector2.h"
 
 #include <filesystem>
 

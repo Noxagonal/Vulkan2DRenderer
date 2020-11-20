@@ -78,11 +78,6 @@ VK2D_API bool VK2D_APIENTRY vk2d::Window::ShouldClose()
 	return impl->ShouldClose();
 }
 
-VK2D_API void VK2D_APIENTRY vk2d::Window::UpdateEvents()
-{
-	impl->UpdateEvents();
-}
-
 VK2D_API void VK2D_APIENTRY vk2d::Window::TakeScreenshotToFile(
 	const std::filesystem::path		&	save_path,
 	bool								include_alpha
@@ -362,7 +357,7 @@ VK2D_API void VK2D_APIENTRY vk2d::Window::DrawBox(
 	vk2d::Colorf					color
 )
 {
-	auto mesh = vk2d::GenerateBoxMesh(
+	auto mesh = vk2d::GenerateRectangleMesh(
 		top_left,
 		bottom_right,
 		solid
@@ -379,7 +374,7 @@ VK2D_API void VK2D_APIENTRY vk2d::Window::DrawEllipse(
 	vk2d::Colorf					color
 )
 {
-	auto mesh = vk2d::GenerateCircleMesh(
+	auto mesh = vk2d::GenerateEllipseMesh(
 		top_left,
 		bottom_right,
 		solid,
@@ -441,7 +436,7 @@ VK2D_API void VK2D_APIENTRY vk2d::Window::DrawTexture(
 		auto texture_size	= texture->GetSize();
 		auto bottom_right	= top_left + vk2d::Vector2f( float( texture_size.x ), float( texture_size.y ) );
 		texture->GetSize();
-		auto mesh = vk2d::GenerateBoxMesh(
+		auto mesh = vk2d::GenerateRectangleMesh(
 			top_left,
 			bottom_right
 		);
@@ -1743,14 +1738,7 @@ bool vk2d::_internal::WindowImpl::EndRender()
 	previous_texture					= {};
 	previous_line_width					= {};
 
-	glfwPollEvents();
-
 	return true;
-}
-
-void vk2d::_internal::WindowImpl::UpdateEvents()
-{
-	glfwPollEvents();
 }
 
 void vk2d::_internal::WindowImpl::TakeScreenshotToFile(

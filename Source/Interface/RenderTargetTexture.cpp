@@ -184,7 +184,7 @@ VK2D_API void VK2D_APIENTRY vk2d::RenderTargetTexture::DrawBox(
 	vk2d::Colorf					color
 )
 {
-	auto mesh = vk2d::GenerateBoxMesh(
+	auto mesh = vk2d::GenerateRectangleMesh(
 		top_left,
 		bottom_right,
 		filled
@@ -193,7 +193,7 @@ VK2D_API void VK2D_APIENTRY vk2d::RenderTargetTexture::DrawBox(
 	impl->DrawMesh( mesh );
 }
 
-VK2D_API void VK2D_APIENTRY vk2d::RenderTargetTexture::DrawCircle(
+VK2D_API void VK2D_APIENTRY vk2d::RenderTargetTexture::DrawEllipse(
 	vk2d::Vector2f					top_left,
 	vk2d::Vector2f					bottom_right,
 	bool							filled,
@@ -201,7 +201,7 @@ VK2D_API void VK2D_APIENTRY vk2d::RenderTargetTexture::DrawCircle(
 	vk2d::Colorf					color
 )
 {
-	auto mesh = vk2d::GenerateCircleMesh(
+	auto mesh = vk2d::GenerateEllipseMesh(
 		top_left,
 		bottom_right,
 		filled,
@@ -262,7 +262,7 @@ VK2D_API void VK2D_APIENTRY vk2d::RenderTargetTexture::DrawTexture(
 	if( texture ) {
 		auto texture_size = texture->GetSize();
 		auto bottom_right = top_left + vk2d::Vector2f( float( texture_size.x ), float( texture_size.y ) );
-		auto mesh = vk2d::GenerateBoxMesh(
+		auto mesh = vk2d::GenerateRectangleMesh(
 			top_left,
 			bottom_right
 		);

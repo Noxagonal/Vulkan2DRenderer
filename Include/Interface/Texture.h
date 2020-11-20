@@ -2,7 +2,7 @@
 
 #include "../Core/Common.h"
 
-#include "../Types/Primitives.hpp"
+#include "../Types/Vector2.h"
 
 
 

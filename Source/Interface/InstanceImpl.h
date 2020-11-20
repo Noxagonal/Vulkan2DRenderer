@@ -52,6 +52,9 @@ public:
 	/// @note		Multithreading: Main thread only.
 	~InstanceImpl();
 
+	/// @see		Instance::Run().
+	bool													Run();
+
 	///				Get a list of monitors connected to the system, this will be
 	///				needed later if the vk2d application is ran fullscreen mode.
 	/// @note		Multithreading: Main thread only.

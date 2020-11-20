@@ -2,7 +2,8 @@
 
 #include "../../Core/Common.h"
 
-#include "../../Types/Primitives.hpp"
+#include "../../Types/Vector2.h"
+#include "../../Types/Color.h"
 
 #include "Resource.h"
 #include "../Texture.h"
