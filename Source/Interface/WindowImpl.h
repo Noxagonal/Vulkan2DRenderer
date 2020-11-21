@@ -2,7 +2,7 @@
 
 #include "../Core/SourceCommon.h"
 
-#include "../Types/SynchronizedObject.hpp"
+#include "../Types/Synchronization.hpp"
 
 #include "../System/MeshBuffer.h"
 #include "../System/QueueResolver.h"

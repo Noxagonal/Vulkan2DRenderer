@@ -82,14 +82,9 @@ VK2D_API uint32_t VK2D_APIENTRY vk2d::RenderTargetTexture::GetLayerCount() const
 	return impl->GetLayerCount();
 }
 
-VK2D_API bool VK2D_APIENTRY vk2d::RenderTargetTexture::WaitUntilLoaded()
+VK2D_API bool VK2D_APIENTRY vk2d::RenderTargetTexture::IsTextureDataReady()
 {
-	return impl->WaitUntilLoaded();
-}
-
-VK2D_API bool VK2D_APIENTRY vk2d::RenderTargetTexture::IsLoaded()
-{
-	return impl->IsLoaded();
+	return impl->IsTextureDataReady();
 }
 
 VK2D_API bool VK2D_APIENTRY vk2d::RenderTargetTexture::BeginRender()
@@ -459,12 +454,7 @@ uint64_t vk2d::_internal::RenderTargetTextureImpl::GetRenderCounter(
 	return swap_buffers[ dependency_info.swap_buffer_index ].render_counter;
 }
 
-bool vk2d::_internal::RenderTargetTextureImpl::WaitUntilLoaded()
-{
-	return true;
-}
-
-bool vk2d::_internal::RenderTargetTextureImpl::IsLoaded()
+bool vk2d::_internal::RenderTargetTextureImpl::IsTextureDataReady()
 {
 	return true;
 }
@@ -918,6 +908,9 @@ void vk2d::_internal::RenderTargetTextureImpl::DrawTriangleList(
 	if( !texture ) {
 		texture = instance->GetDefaultTexture();
 	}
+	if( !texture->IsTextureDataReady() ) {
+		texture = instance->GetDefaultTexture();
+	}
 	if( !sampler ) {
 		sampler = instance->GetDefaultSampler();
 	}
@@ -1066,6 +1059,9 @@ void vk2d::_internal::RenderTargetTextureImpl::DrawLineList(
 	if( !texture ) {
 		texture = instance->GetDefaultTexture();
 	}
+	if( !texture->IsTextureDataReady() ) {
+		texture = instance->GetDefaultTexture();
+	}
 	if( !sampler ) {
 		sampler = instance->GetDefaultSampler();
 	}
@@ -1167,6 +1163,9 @@ void vk2d::_internal::RenderTargetTextureImpl::DrawPointList(
 	auto vertex_count	= uint32_t( vertices.size() );
 
 	if( !texture ) {
+		texture = instance->GetDefaultTexture();
+	}
+	if( !texture->IsTextureDataReady() ) {
 		texture = instance->GetDefaultTexture();
 	}
 	if( !sampler ) {
@@ -2369,6 +2368,8 @@ vk2d::_internal::TimedDescriptorPoolData & vk2d::_internal::RenderTargetTextureI
 	vk2d::Texture	*	texture
 )
 {
+	assert( texture );
+
 	auto & set = texture_descriptor_sets[ texture ];
 
 	// If this descriptor set doesn't exist yet for this
@@ -2379,10 +2380,6 @@ vk2d::_internal::TimedDescriptorPoolData & vk2d::_internal::RenderTargetTextureI
 		);
 		if( set.descriptor_set != VK_SUCCESS ) {
 			return set;
-		}
-
-		if( !texture->WaitUntilLoaded() ) {
-			texture = instance->GetDefaultTexture();
 		}
 
 		VkDescriptorImageInfo image_info {};

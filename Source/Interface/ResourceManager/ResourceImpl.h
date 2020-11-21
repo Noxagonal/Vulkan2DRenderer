@@ -2,6 +2,10 @@
 
 #include "../../Core/SourceCommon.h"
 
+#include "../../../Include/Interface/ResourceManager/Resource.h"
+
+#include "../../Types/Synchronization.hpp"
+
 
 
 namespace vk2d {
@@ -43,13 +47,18 @@ public:
 
 	virtual													~ResourceImpl()					= default;
 
-	// Checks if the resource is ready to be used.
-	// Returns true if resource is loaded, false otherwise.
-	virtual bool											IsLoaded()						= 0;
+	// Checks the status of the resource.
+	virtual vk2d::ResourceStatus							GetStatus()						= 0;
 
 	// Blocks until the resource is ready to be used or an error happened.
-	// Returns true if loading was successful, false otherwise.
-	virtual bool											WaitUntilLoaded()				= 0;
+	// Returns the new status of the resource, it's guaranteed to not be undetermined.
+	virtual vk2d::ResourceStatus							WaitUntilLoaded(
+		std::chrono::nanoseconds							timeout							= std::chrono::nanoseconds::max() ) = 0;
+
+	// Blocks until the resource is ready to be used or an error happened.
+	// Returns the new status of the resource, it's guaranteed to not be undetermined.
+	virtual vk2d::ResourceStatus							WaitUntilLoaded(
+		std::chrono::steady_clock::time_point				timeout )						= 0;
 
 protected:
 	// Multithreaded load function, runs when the thread pool has time to process this resource.
@@ -78,10 +87,6 @@ private:
 public:
 	vk2d::Resource										*	GetParentResource();
 
-	// Checks if the resource loading failed.
-	// Returns true if failed to load, false otherwise.
-	bool													FailedToLoad() const;
-
 	// Gets the thread index that was responsible for loading this resource.
 	uint32_t												GetLoaderThread();
 
@@ -101,15 +106,15 @@ protected:
 	// true then resource manager should not delete this resource directly.
 	bool													IsSubResource() const;
 
-	std::atomic_bool										load_function_ran					= {};
-	std::atomic_bool										failed_to_load						= {};
+	vk2d::_internal::Fence									load_function_run_fence;
+	std::atomic<vk2d::ResourceStatus>						status								= {};
 	vk2d::Resource										*	my_interface						= {};
 
 private:
-	std::mutex												resource_mutex;
-	vk2d::_internal::ResourceManagerImpl				*	resource_manager_parent				= {};
+	vk2d::_internal::ResourceManagerImpl				*	resource_manager					= {};
 	uint32_t												loader_thread						= {};
 	std::vector<std::filesystem::path>						file_paths							= {};
+	std::mutex												subresources_mutex;
 	std::vector<vk2d::Resource*>							subresources						= {};
 	vk2d::Resource										*	parent_resource						= {};
 	bool													is_from_file						= {};

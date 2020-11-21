@@ -6,16 +6,10 @@
 
 
 
-VK2D_API bool VK2D_APIENTRY vk2d::Texture::WaitUntilLoaded()
+VK2D_API bool VK2D_APIENTRY vk2d::Texture::IsTextureDataReady()
 {
 	assert( texture_impl );
-	return texture_impl->WaitUntilLoaded();
-}
-
-VK2D_API bool VK2D_APIENTRY vk2d::Texture::IsLoaded()
-{
-	assert( texture_impl );
-	return texture_impl->IsLoaded();
+	return texture_impl->IsTextureDataReady();
 }
 
 VK2D_API vk2d::Vector2u VK2D_APIENTRY vk2d::Texture::GetSize() const

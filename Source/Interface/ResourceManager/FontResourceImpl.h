@@ -51,9 +51,13 @@ public:
 
 	~FontResourceImpl();
 
-	bool																					IsLoaded();
+	vk2d::ResourceStatus																	GetStatus();
 
-	bool																					WaitUntilLoaded();
+	vk2d::ResourceStatus																	WaitUntilLoaded(
+		std::chrono::nanoseconds						timeout );
+
+	vk2d::ResourceStatus																	WaitUntilLoaded(
+		std::chrono::steady_clock::time_point			timeout );
 
 	bool																					MTLoad(
 		vk2d::_internal::ThreadPrivateResource		*	thread_resource );
@@ -109,7 +113,7 @@ private:
 		const std::vector<vk2d::Color8>				&	converted_texture_data );
 
 	vk2d::FontResource								*	my_interface						= {};
-	vk2d::_internal::ResourceManagerImpl			*	resource_manager_parent				= {};
+	vk2d::_internal::ResourceManagerImpl			*	resource_manager					= {};
 
 	bool												use_alpha							= {};
 	uint32_t											glyph_texel_size					= {};
@@ -124,9 +128,6 @@ private:
 
 	vk2d::TextureResource							*	texture_resource					= {};
 
-	std::mutex											is_loaded_mutex;
-
-	bool												is_loaded							= {};
 	bool												is_good								= {};
 };
 

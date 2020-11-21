@@ -317,6 +317,7 @@ vk2d::_internal::InstanceImpl::InstanceImpl(
 	this->my_interface		= my_interface;
 	this->create_info_copy	= instance_create_info;
 	this->report_function	= create_info_copy.report_function;
+	this->creator_thread_id	= std::this_thread::get_id();
 
 	std::lock_guard<std::mutex> lock_guard( instance_globals_mutex );
 
@@ -398,7 +399,6 @@ vk2d::_internal::InstanceImpl::InstanceImpl(
 
 	vk2d::_internal::instance_listeners.push_back( this );
 
-	creator_thread_id	= std::this_thread::get_id();
 	is_good				= true;
 }
 
@@ -2397,6 +2397,7 @@ bool vk2d::_internal::InstanceImpl::CreateDefaultTexture()
 		vk2d::Vector2u( 1, 1 ),
 		{ vk2d::Color8( 255, 255, 255, 255 ) }
 	);
+	default_texture->WaitUntilLoaded();
 	return true;
 }
 

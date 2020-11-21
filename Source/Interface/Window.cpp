@@ -2070,6 +2070,9 @@ void vk2d::_internal::WindowImpl::DrawTriangleList(
 	if( !texture ) {
 		texture = instance->GetDefaultTexture();
 	}
+	if( !texture->IsTextureDataReady() ) {
+		texture = instance->GetDefaultTexture();
+	}
 	if( !sampler ) {
 		sampler = instance->GetDefaultSampler();
 	}
@@ -2211,6 +2214,9 @@ void vk2d::_internal::WindowImpl::DrawLineList(
 	if( !texture ) {
 		texture = instance->GetDefaultTexture();
 	}
+	if( !texture->IsTextureDataReady() ) {
+		texture = instance->GetDefaultTexture();
+	}
 	if( !sampler ) {
 		sampler = instance->GetDefaultSampler();
 	}
@@ -2305,6 +2311,9 @@ void vk2d::_internal::WindowImpl::DrawPointList(
 	auto vertex_count	= uint32_t( vertices.size() );
 
 	if( !texture ) {
+		texture = instance->GetDefaultTexture();
+	}
+	if( !texture->IsTextureDataReady() ) {
 		texture = instance->GetDefaultTexture();
 	}
 	if( !sampler ) {
@@ -3729,90 +3738,6 @@ void vk2d::_internal::WindowImpl::CmdBindGraphicsPipelineIfDifferent(
 	}
 }
 
-/*
-void vk2d::_internal::WindowImpl::CmdBindTextureSamplerIfDifferent(
-	VkCommandBuffer						command_buffer,
-	vk2d::Sampler					*	sampler,
-	vk2d::Texture					*	texture
-)
-{
-	if( !sampler ) {
-		sampler		= instance->GetDefaultSampler();
-	}
-	if( !texture ) {
-		texture		= instance->GetDefaultTexture();
-	}
-
-	// if sampler or texture changed since previous call, bind a different descriptor set.
-	if( sampler != previous_sampler || texture != previous_texture ) {
-		auto & set = sampler_texture_descriptor_sets[ sampler ][ texture ];
-
-		// If this descriptor set doesn't exist yet for this
-		// sampler texture combo, create one and update it.
-		if( set.descriptor_set.descriptorSet == VK_NULL_HANDLE ) {
-			set.descriptor_set = instance->AllocateDescriptorSet(
-				instance->GetSamplerTextureDescriptorSetLayout()
-			);
-
-			if( !texture->WaitUntilLoaded() ) {
-				texture = instance->GetDefaultTexture();
-			}
-
-			VkDescriptorImageInfo image_info {};
-			image_info.sampler						= sampler->impl->GetVulkanSampler();
-			image_info.imageView					= texture->texture_impl->GetVulkanImageView();
-			image_info.imageLayout					= texture->texture_impl->GetVulkanImageLayout();
-
-			VkDescriptorBufferInfo buffer_info {};
-			buffer_info.buffer						= sampler->impl->GetVulkanBufferForSamplerData();
-			buffer_info.offset						= 0;
-			buffer_info.range						= sizeof( vk2d::_internal::SamplerImpl::BufferData );
-
-			std::array<VkWriteDescriptorSet, 2> descriptor_write {};
-			descriptor_write[ 0 ].sType				= VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-			descriptor_write[ 0 ].pNext				= nullptr;
-			descriptor_write[ 0 ].dstSet			= set.descriptor_set.descriptorSet;
-			descriptor_write[ 0 ].dstBinding		= 0;
-			descriptor_write[ 0 ].dstArrayElement	= 0;
-			descriptor_write[ 0 ].descriptorCount	= 1;
-			descriptor_write[ 0 ].descriptorType	= VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-			descriptor_write[ 0 ].pImageInfo		= &image_info;
-			descriptor_write[ 0 ].pBufferInfo		= nullptr;
-			descriptor_write[ 0 ].pTexelBufferView	= nullptr;
-
-			descriptor_write[ 1 ].sType				= VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-			descriptor_write[ 1 ].pNext				= nullptr;
-			descriptor_write[ 1 ].dstSet			= set.descriptor_set.descriptorSet;
-			descriptor_write[ 1 ].dstBinding		= 1;
-			descriptor_write[ 1 ].dstArrayElement	= 0;
-			descriptor_write[ 1 ].descriptorCount	= 1;
-			descriptor_write[ 1 ].descriptorType	= VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-			descriptor_write[ 1 ].pImageInfo		= nullptr;
-			descriptor_write[ 1 ].pBufferInfo		= &buffer_info;
-			descriptor_write[ 1 ].pTexelBufferView	= nullptr;
-
-			vkUpdateDescriptorSets(
-				vk_device,
-				uint32_t( descriptor_write.size() ), descriptor_write.data(),
-				0, nullptr );
-		}
-		set.previous_access_time = std::chrono::steady_clock::now();
-
-		vkCmdBindDescriptorSets(
-			command_buffer,
-			VK_PIPELINE_BIND_POINT_GRAPHICS,
-			instance->GetGraphicsPipelineLayout(),
-			DESCRIPTOR_SET_ALLOCATION_TEXTURE_AND_SAMPLER,
-			1, &set.descriptor_set.descriptorSet,
-			0, nullptr
-		);
-
-		previous_sampler		= sampler;
-		previous_texture		= texture;
-	}
-}
-*/
-
 void vk2d::_internal::WindowImpl::CmdBindSamplerIfDifferent(
 	VkCommandBuffer			command_buffer,
 	vk2d::Sampler		*	sampler
@@ -3902,10 +3827,6 @@ void vk2d::_internal::WindowImpl::CmdBindTextureIfDifferent(
 			set.descriptor_set = instance->AllocateDescriptorSet(
 				instance->GetGraphicsTextureDescriptorSetLayout()
 			);
-
-			if( !texture->WaitUntilLoaded() ) {
-				texture = instance->GetDefaultTexture();
-			}
 
 			VkDescriptorImageInfo image_info {};
 			image_info.sampler						= VK_NULL_HANDLE;

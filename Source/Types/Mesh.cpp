@@ -1112,12 +1112,17 @@ VK2D_API vk2d::Mesh VK2D_APIENTRY vk2d::GenerateTextMesh(
 	float						kerning,
 	vk2d::Vector2f				scale,
 	bool						vertical,
-	uint32_t					font_face )
+	uint32_t					font_face,
+	bool						wait_for_resource_load )
 {
 	if( !font ) return {};
 	if( !font->impl.get() ) return {};
 	auto fi = font->impl.get();
-	fi->WaitUntilLoaded();
+	if( wait_for_resource_load ) {
+		fi->WaitUntilLoaded( std::chrono::nanoseconds::max() );
+	} else {
+		if( fi->GetStatus() == vk2d::ResourceStatus::UNDETERMINED ) return {};
+	}
 	if( !fi->FaceExists( font_face ) ) return {};
 	
 	vk2d::Mesh mesh;

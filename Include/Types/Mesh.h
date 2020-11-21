@@ -73,7 +73,8 @@ class Mesh {
 		float										kerning,
 		vk2d::Vector2f								scale,
 		bool										vertical,
-		uint32_t									font_face );
+		uint32_t									font_face,
+		bool										wait_for_resource_load );
 
 public:
 	VK2D_API void									VK2D_APIENTRY					Translate(
@@ -221,7 +222,8 @@ VK2D_API vk2d::Mesh									VK2D_APIENTRY					GenerateTextMesh(
 	float											kerning							= 0.0f,
 	vk2d::Vector2f									scale							= vk2d::Vector2f( 1.0f, 1.0f ),
 	bool											vertical						= false,
-	uint32_t										font_face						= 0 );
+	uint32_t										font_face						= 0,
+	bool											wait_for_resource_load			= true );
 
 
 

@@ -139,8 +139,7 @@ public:
 	uint64_t															GetRenderCounter(
 		vk2d::_internal::RenderTargetTextureDependencyInfo			&	dependency_info ) const;
 
-	bool																WaitUntilLoaded();
-	bool																IsLoaded();
+	bool																IsTextureDataReady();
 
 	// Begins the render operations. You must call this before using any drawing commands.
 	// For best performance you should calculate game logic first, when you're ready to draw

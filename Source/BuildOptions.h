@@ -1,7 +1,7 @@
 #pragma once
 
 // Required Vulkan API version.
-#define VK2D_BUILD_OPTION_VULKAN_MINIMUM_REQUIRED_VERSION				VK_MAKE_VERSION( 1, 2, 0 )
+#define VK2D_BUILD_OPTION_VULKAN_MINIMUM_REQUIRED_VERSION				VK_API_VERSION_1_2
 
 // Enable general debugging.
 // Setting this to 0 will disable all
@@ -14,14 +14,14 @@
 
 // Use Vulkan validation.
 // Used only if VK2D_DEBUG_ENABLE == 1
-#define VK2D_BUILD_OPTION_VULKAN_VALIDATION								1
+#define VK2D_BUILD_OPTION_VULKAN_VALIDATION								0
 
 // Dump Vulkan API calls
 #define VK2D_BUILD_OPTION_VULKAN_VALIDATION_API_DUMP					0
 
 // Vulkan API dump file path and name, relation to working folder or folder
 // containing the executable. No need to put in the file extension.
-#define VK2D_BUILD_OPTION_VULKAN_VALIDATION_API_DUMP_FILE_PATH			"api_dump"
+#define VK2D_BUILD_OPTION_VULKAN_VALIDATION_API_DUMP_FILE_PATH			"vulkan_api_dump"
 
 // Which format to use if using api dump.
 // Supported formats are: "txt", "html", "json"
