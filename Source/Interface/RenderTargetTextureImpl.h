@@ -116,6 +116,7 @@ private:
 
 public:
 	RenderTargetTextureImpl(
+		vk2d::RenderTargetTexture									*	my_interface,
 		vk2d::_internal::InstanceImpl								*	instance,
 		const vk2d::RenderTargetTextureCreateInfo					&	create_info );
 
@@ -138,8 +139,7 @@ public:
 	uint64_t															GetRenderCounter(
 		vk2d::_internal::RenderTargetTextureDependencyInfo			&	dependency_info ) const;
 
-	bool																WaitUntilLoaded();
-	bool																IsLoaded();
+	bool																IsTextureDataReady();
 
 	// Begins the render operations. You must call this before using any drawing commands.
 	// For best performance you should calculate game logic first, when you're ready to draw
@@ -343,6 +343,7 @@ private:
 	bool																CmdUpdateFrameData(
 		VkCommandBuffer													command_buffer );
 
+	vk2d::RenderTargetTexture										*	my_interface								= {};
 	vk2d::_internal::InstanceImpl									*	instance									= {};
 	vk2d::RenderTargetTextureCreateInfo									create_info_copy							= {};
 

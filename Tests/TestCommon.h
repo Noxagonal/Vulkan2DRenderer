@@ -96,6 +96,6 @@ private:
 	vk2d::Vector2i				location			= {};
 };
 
-#define Coords( grid_object ) \
-	grid_object.InsertTopLeft(), \
-	grid_object.InsertBottomRight()
+#define GetTestGridCoords( grid_object ) \
+	{ grid_object.InsertTopLeft(), \
+	grid_object.InsertBottomRight() }

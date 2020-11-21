@@ -11,6 +11,17 @@ class ResourceThreadLoadTask;
 class ResourceThreadUnloadTask;
 }
 
+
+
+enum class ResourceStatus
+{
+	UNDETERMINED		= 0,
+	LOADED,
+	FAILED_TO_LOAD,
+};
+
+
+
 class Resource {
 	friend class vk2d::_internal::ResourceManagerImpl;
 	friend class vk2d::_internal::ResourceImpl;
@@ -23,17 +34,19 @@ public:
 
 	// Checks if the resource is ready to be used.
 	// Returns true if resource is loaded, false otherwise.
-	VK2D_API bool											VK2D_APIENTRY						IsLoaded();
+	VK2D_API vk2d::ResourceStatus							VK2D_APIENTRY						GetStatus();
 
 	// Blocks until the resource is ready to be used or an error happened.
-	// Returns true if loading was successful, false otherwise.
-	VK2D_API bool											VK2D_APIENTRY						WaitUntilLoaded();
+	// Returns the new status of the resource, it's guaranteed to not be undetermined.
+	VK2D_API vk2d::ResourceStatus							VK2D_APIENTRY						WaitUntilLoaded(
+		std::chrono::nanoseconds							timeout								= std::chrono::nanoseconds::max() );
+
+	// Blocks until the resource is ready to be used or an error happened.
+	// Returns the new status of the resource, it's guaranteed to not be undetermined.
+	VK2D_API vk2d::ResourceStatus							VK2D_APIENTRY						WaitUntilLoaded(
+		std::chrono::steady_clock::time_point				timeout );
 
 	VK2D_API vk2d::Resource								*	VK2D_APIENTRY						GetParentResource();
-
-	// Checks if the resource loading failed.
-	// Returns true if failed to load, false otherwise.
-	VK2D_API bool											VK2D_APIENTRY						FailedToLoad() const;
 
 	// Checks if the resource was loaded from a file.
 	// Returns true if the resource origin is in a file, for example an image, false otherwise.

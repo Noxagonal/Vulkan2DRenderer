@@ -23,8 +23,7 @@ public:
 	virtual VkImageView								GetVulkanImageView() const		= 0;
 	virtual VkImageLayout							GetVulkanImageLayout() const	= 0;
 
-	virtual bool									WaitUntilLoaded()				= 0;
-	virtual bool									IsLoaded()						= 0;
+	virtual bool									IsTextureDataReady()			= 0;
 
 	virtual bool									IsGood() const					= 0;
 

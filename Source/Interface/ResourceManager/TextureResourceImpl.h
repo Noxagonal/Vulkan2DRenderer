@@ -62,8 +62,13 @@ public:
 	void													MTUnload(
 		vk2d::_internal::ThreadPrivateResource			*	thread_resource );
 
-	bool													IsLoaded();
-	bool													WaitUntilLoaded();
+	vk2d::ResourceStatus									GetStatus();
+
+	vk2d::ResourceStatus									WaitUntilLoaded(
+		std::chrono::nanoseconds							timeout );
+
+	vk2d::ResourceStatus									WaitUntilLoaded(
+		std::chrono::steady_clock::time_point				timeout );
 
 	VkImage													GetVulkanImage() const;
 	VkImageView												GetVulkanImageView() const;
@@ -71,6 +76,8 @@ public:
 
 	vk2d::Vector2u											GetSize() const;
 	uint32_t												GetLayerCount() const;
+
+	bool													IsTextureDataReady();
 
 	bool													IsGood() const;
 
@@ -97,8 +104,6 @@ private:
 	VkSemaphore												vk_blit_semaphore							= {};
 	VkFence													vk_texture_complete_fence					= {};
 
-	std::mutex												is_loaded_mutex								= {};
-	bool													is_loaded									= {};
 	bool													is_good										= {};
 };
 

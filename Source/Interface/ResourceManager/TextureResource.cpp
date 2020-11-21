@@ -4,6 +4,7 @@
 #include "../../System/ThreadPrivateResources.h"
 #include "../../System/DescriptorSet.h"
 #include "../../System/CommonTools.h"
+#include "../../System/ImageFormatConverter.hpp"
 
 #include "../../../Include/Interface/Instance.h"
 #include "../InstanceImpl.h"
@@ -37,7 +38,7 @@
 
 
 VK2D_API vk2d::TextureResource::TextureResource(
-	vk2d::_internal::ResourceManagerImpl	*	resource_manager_parent,
+	vk2d::_internal::ResourceManagerImpl	*	resource_manager,
 	uint32_t									loader_thread,
 	vk2d::Resource							*	parent_resource,
 	std::vector<std::filesystem::path>			file_paths_listing
@@ -45,14 +46,14 @@ VK2D_API vk2d::TextureResource::TextureResource(
 {
 	impl = std::make_unique<vk2d::_internal::TextureResourceImpl>(
 		this,
-		resource_manager_parent,
+		resource_manager,
 		loader_thread,
 		nullptr,
 		file_paths_listing
 	);
 	if( !impl || !impl->IsGood() ) {
 		impl	= nullptr;
-		resource_manager_parent->GetInstance()->Report( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot create texture resource implementation!" );
+		resource_manager->GetInstance()->Report( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot create texture resource implementation!" );
 		return;
 	}
 
@@ -61,7 +62,7 @@ VK2D_API vk2d::TextureResource::TextureResource(
 }
 
 VK2D_API vk2d::TextureResource::TextureResource(
-	vk2d::_internal::ResourceManagerImpl	*	resource_manager_parent,
+	vk2d::_internal::ResourceManagerImpl	*	resource_manager,
 	uint32_t									loader_thread,
 	vk2d::Resource							*	parent_resource,
 	vk2d::Vector2u								size,
@@ -70,7 +71,7 @@ VK2D_API vk2d::TextureResource::TextureResource(
 {
 	impl = std::make_unique<vk2d::_internal::TextureResourceImpl>(
 		this,
-		resource_manager_parent,
+		resource_manager,
 		loader_thread,
 		nullptr,
 		size,
@@ -78,7 +79,7 @@ VK2D_API vk2d::TextureResource::TextureResource(
 	);
 	if( !impl || !impl->IsGood() ) {
 		impl	= nullptr;
-		resource_manager_parent->GetInstance()->Report( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot create texture resource implementation!" );
+		resource_manager->GetInstance()->Report( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot create texture resource implementation!" );
 		return;
 	}
 
@@ -87,7 +88,7 @@ VK2D_API vk2d::TextureResource::TextureResource(
 }
 
 VK2D_API vk2d::TextureResource::TextureResource(
-	vk2d::_internal::ResourceManagerImpl			*	resource_manager_parent,
+	vk2d::_internal::ResourceManagerImpl			*	resource_manager,
 	uint32_t											loader_thread,
 	vk2d::Resource									*	parent_resource,
 	vk2d::Vector2u										size,
@@ -96,7 +97,7 @@ VK2D_API vk2d::TextureResource::TextureResource(
 {
 	impl = std::make_unique<vk2d::_internal::TextureResourceImpl>(
 		this,
-		resource_manager_parent,
+		resource_manager,
 		loader_thread,
 		nullptr,
 		size,
@@ -104,7 +105,7 @@ VK2D_API vk2d::TextureResource::TextureResource(
 	);
 	if( !impl || !impl->IsGood() ) {
 		impl	= nullptr;
-		resource_manager_parent->GetInstance()->Report( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot create texture resource implementation!" );
+		resource_manager->GetInstance()->Report( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot create texture resource implementation!" );
 		return;
 	}
 
@@ -115,14 +116,23 @@ VK2D_API vk2d::TextureResource::TextureResource(
 VK2D_API vk2d::TextureResource::~TextureResource()
 {}
 
-VK2D_API bool VK2D_APIENTRY vk2d::TextureResource::IsLoaded()
+VK2D_API vk2d::ResourceStatus VK2D_APIENTRY vk2d::TextureResource::GetStatus()
 {
-	return impl->IsLoaded();
+	return impl->GetStatus();
 }
 
-VK2D_API bool VK2D_APIENTRY vk2d::TextureResource::WaitUntilLoaded()
+VK2D_API vk2d::ResourceStatus VK2D_APIENTRY vk2d::TextureResource::WaitUntilLoaded(
+	std::chrono::nanoseconds				timeout
+)
 {
-	return impl->WaitUntilLoaded();
+	return impl->WaitUntilLoaded( timeout );
+}
+
+VK2D_API vk2d::ResourceStatus VK2D_APIENTRY vk2d::TextureResource::WaitUntilLoaded(
+	std::chrono::steady_clock::time_point	timeout
+)
+{
+	return impl->WaitUntilLoaded( timeout );
 }
 
 VK2D_API vk2d::Vector2u VK2D_APIENTRY vk2d::TextureResource::GetSize() const
@@ -285,21 +295,21 @@ bool vk2d::_internal::TextureResourceImpl::MTLoad(
 
 		for( auto & path : GetFilePaths() ) {
 			// Create texture from a file
-			int image_size_x			= 0;
-			int image_size_y			= 0;
-			int image_channel_count		= 0;
+			int image_size_x				= 0;
+			int image_size_y				= 0;
+			int stbi_image_channel_count	= 0;
+			uint32_t image_channel_count	= 4;
 
-			auto image_data = stbi_load(
+			auto stbi_image_data = stbi_load(
 				path.string().c_str(),
 				&image_size_x,
 				&image_size_y,
-				&image_channel_count,
+				&stbi_image_channel_count,
 				4 );
-			if( !image_data ) {
+			if( !stbi_image_data ) {
 				instance->Report( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Cannot create texture: Cannot load image file: " + path.string() );
 				return false;
 			}
-			assert( image_channel_count == 4 );
 
 			// Check that file images have the same dimensions if we're creating array textures.
 			if( image_info.x == UINT32_MAX ) {
@@ -310,7 +320,7 @@ bool vk2d::_internal::TextureResourceImpl::MTLoad(
 				if( image_info.x != image_size_x ||
 					image_info.y != image_size_y ) {
 					instance->Report( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Cannot create array texture: File images are different dimensions!" );
-					stbi_image_free( image_data );
+					stbi_image_free( stbi_image_data );
 					return false;
 				}
 			}
@@ -318,12 +328,12 @@ bool vk2d::_internal::TextureResourceImpl::MTLoad(
 			// 2. Create staging buffer, we'll also need memory pool for this.
 
 			auto staging_buffer = memory_pool->CreateCompleteHostBufferResourceWithData(
-				image_data,
+				stbi_image_data,
 				VkDeviceSize( image_size_x ) * VkDeviceSize( image_size_y ) * VkDeviceSize( image_channel_count ),
 				VK_BUFFER_USAGE_TRANSFER_SRC_BIT
 			);
 
-			stbi_image_free( image_data );
+			stbi_image_free( stbi_image_data );
 
 			if( staging_buffer != VK_SUCCESS ) {
 				instance->Report( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot create texture resource staging buffer!" );
@@ -988,7 +998,7 @@ void vk2d::_internal::TextureResourceImpl::MTUnload(
 	// Check if loaded successfully, no need to check for failure as this thread was
 	// responsible for loading it, it's either loaded or failed to load but it'll
 	// definitely be either or. MTUnload() does not ever get called before MTLoad().
-	WaitUntilLoaded();
+	WaitUntilLoaded( std::chrono::nanoseconds::max() );
 
 	vkDestroyFence(
 		loader_thread_resource->GetVulkanDevice(),
@@ -1030,77 +1040,90 @@ void vk2d::_internal::TextureResourceImpl::MTUnload(
 	staging_buffers.clear();
 }
 
-bool vk2d::_internal::TextureResourceImpl::IsLoaded()
+vk2d::ResourceStatus vk2d::_internal::TextureResourceImpl::GetStatus()
 {
-	// TODO: I don't like locking and unlocking mutex every time we check if texture has been loaded or not, see about other solutions.
-	std::unique_lock<std::mutex>		is_loaded_lock( is_loaded_mutex, std::defer_lock );
-	if( !is_loaded_lock.try_lock() ) {
-		return false;
+	if( !is_good ) return vk2d::ResourceStatus::FAILED_TO_LOAD;
+
+	auto local_status = status.load();
+	if( local_status == vk2d::ResourceStatus::UNDETERMINED ) {
+
+		if( load_function_run_fence.IsSet() ) {
+
+			// We can check the status of the fence in any thread,
+			// it will not be removed until the resource is removed.
+			assert( vk_texture_complete_fence );
+
+			auto result = vkGetFenceStatus(
+				resource_manager->GetVulkanDevice(),
+				vk_texture_complete_fence
+			);
+			if( result == VK_SUCCESS ) {
+				// Loaded, free some resources used to load
+				status = local_status = vk2d::ResourceStatus::LOADED;
+				ScheduleTextureLoadResourceDestruction();
+			} else if( result == VK_NOT_READY ) {
+				return local_status;
+			} else {
+				status = local_status = vk2d::ResourceStatus::FAILED_TO_LOAD;
+			}
+		}
 	}
 
-	if( is_loaded )				return true;
-	if( !is_good )				return false;
-	if( !load_function_ran )	return false;
-	if( FailedToLoad() )		return false;
-
-	// We can check the status of the fence in any thread,
-	// it will not be removed until the resource is removed.
-	assert( vk_texture_complete_fence );
-	auto result = vkGetFenceStatus(
-		resource_manager->GetVulkanDevice(),
-		vk_texture_complete_fence
-	);
-	if( result == VK_SUCCESS ) {
-		// Loaded, free some resources used to load
-		is_loaded							= true;
-		ScheduleTextureLoadResourceDestruction();
-		return true;
-
-	} else if( result == VK_NOT_READY ) {
-		return false;
-
-	} else {
-		failed_to_load	= true;
-		return false;
-	};
-
-	return false;
+	return local_status;
 }
 
-bool vk2d::_internal::TextureResourceImpl::WaitUntilLoaded()
+vk2d::ResourceStatus vk2d::_internal::TextureResourceImpl::WaitUntilLoaded(
+	std::chrono::nanoseconds				timeout
+)
 {
-	// TODO: I don't like locking and unlocking mutex every time we check if texture has been loaded or not, see about other solutions.
-	std::lock_guard<std::mutex> is_loaded_lock( is_loaded_mutex );
-
-	if( is_loaded )						return true;
-	if( !is_good )						return false;
-	while( !load_function_ran ) {
-		// TODO: use more sophisticated synchronization.
-		// Semi busy loop for now.
-		std::this_thread::sleep_for( std::chrono::microseconds( 10 ) );
+	if( timeout == std::chrono::nanoseconds::max() ) {
+		return WaitUntilLoaded( std::chrono::steady_clock::time_point::max() );
 	}
-	if( FailedToLoad() )				return false;
+	return WaitUntilLoaded( std::chrono::steady_clock::now() + timeout );
+}
 
-	// We can check the status of the fence in any thread,
-	// it will not be removed until the resource is removed.
-	// TODO: Add a timeout for TextureResourceImpl::WaitUntilLoaded() to prevent the program possibly halting forever if something bad happens.
-	assert( vk_texture_complete_fence );
-	auto result = vkWaitForFences(
-		resource_manager->GetVulkanDevice(),
-		1, &vk_texture_complete_fence,
-		VK_TRUE,
-		UINT64_MAX
-	);
-	if( result != VK_SUCCESS ) {
-		failed_to_load	= true;
-		resource_manager->GetInstance()->Report( result, "Resource failed to load properly while waiting for it in 'WaitUntilLoaded()'!" );
-		return false;
-	};
+vk2d::ResourceStatus vk2d::_internal::TextureResourceImpl::WaitUntilLoaded(
+	std::chrono::steady_clock::time_point	timeout
+)
+{
+	// Make sure timeout is in the future.
+	assert( timeout == std::chrono::steady_clock::time_point::max() ||
+		timeout + std::chrono::seconds( 5 ) >= std::chrono::steady_clock::now() );
 
-	// Loaded, free some resources used to load
-	is_loaded							= true;
-	ScheduleTextureLoadResourceDestruction();
-	return true;
+	if( !is_good ) return vk2d::ResourceStatus::FAILED_TO_LOAD;
+
+	auto local_status = status.load();
+	if( local_status == vk2d::ResourceStatus::UNDETERMINED ) {
+
+		if( load_function_run_fence.Wait( timeout ) ) {
+
+			// We can check the status of the fence in any thread,
+			// it will not be removed until the resource is removed.
+
+			auto timeout_for_fences = ( timeout == std::chrono::steady_clock::time_point::max() ) ?
+				UINT64_MAX :
+				uint64_t( std::chrono::duration_cast<std::chrono::nanoseconds>( timeout - std::chrono::steady_clock::now() ).count() );
+
+			assert( vk_texture_complete_fence );
+			auto result = vkWaitForFences(
+				resource_manager->GetVulkanDevice(),
+				1, &vk_texture_complete_fence,
+				VK_TRUE,
+				timeout_for_fences
+			);
+			if( result == VK_SUCCESS ) {
+				status = local_status = vk2d::ResourceStatus::LOADED;
+				ScheduleTextureLoadResourceDestruction();
+			} else if( result == VK_TIMEOUT ) {
+				return local_status;
+			} else {
+				status = local_status = vk2d::ResourceStatus::FAILED_TO_LOAD;
+				ScheduleTextureLoadResourceDestruction();
+			}
+		} // Else timeout and return local_status.
+	}
+
+	return local_status;
 }
 
 VkImage vk2d::_internal::TextureResourceImpl::GetVulkanImage() const
@@ -1126,6 +1149,11 @@ vk2d::Vector2u vk2d::_internal::TextureResourceImpl::GetSize() const
 uint32_t vk2d::_internal::TextureResourceImpl::GetLayerCount() const
 {
 	return image_layer_count;
+}
+
+bool vk2d::_internal::TextureResourceImpl::IsTextureDataReady()
+{
+	return GetStatus() == vk2d::ResourceStatus::LOADED;
 }
 
 bool vk2d::_internal::TextureResourceImpl::IsGood() const

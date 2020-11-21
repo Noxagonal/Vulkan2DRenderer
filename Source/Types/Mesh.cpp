@@ -482,9 +482,8 @@ VK2D_API vk2d::Mesh VK2D_APIENTRY vk2d::GenerateTriangleMeshFromList(
 }
 
 VK2D_API vk2d::Mesh VK2D_APIENTRY vk2d::GenerateRectangleMesh(
-	vk2d::Vector2f				top_left,
-	vk2d::Vector2f				bottom_right,
-	bool						filled
+	vk2d::Rect2f		area,
+	bool				filled
 )
 {
 	vk2d::Mesh ret;
@@ -492,19 +491,19 @@ VK2D_API vk2d::Mesh VK2D_APIENTRY vk2d::GenerateRectangleMesh(
 	vk2d::_internal::ClearVerticesToDefaultValues( ret.vertices );
 
 	// 0. Top left
-	ret.vertices[ 0 ].vertex_coords		= { top_left.x,			top_left.y };
+	ret.vertices[ 0 ].vertex_coords		= { area.top_left.x, area.top_left.y };
 	ret.vertices[ 0 ].uv_coords			= { 0.0f, 0.0f };
 
 	// 1. Top right
-	ret.vertices[ 1 ].vertex_coords		= { bottom_right.x,		top_left.y };
+	ret.vertices[ 1 ].vertex_coords		= { area.bottom_right.x, area.top_left.y };
 	ret.vertices[ 1 ].uv_coords			= { 1.0f, 0.0f };
 
 	// 2. Bottom left
-	ret.vertices[ 2 ].vertex_coords		= { top_left.x,			bottom_right.y };
+	ret.vertices[ 2 ].vertex_coords		= { area.top_left.x, area.bottom_right.y };
 	ret.vertices[ 2 ].uv_coords			= { 0.0f, 1.0f };
 
 	// 3. Bottom right
-	ret.vertices[ 3 ].vertex_coords		= { bottom_right.x,		bottom_right.y };
+	ret.vertices[ 3 ].vertex_coords		= { area.bottom_right.x, area.bottom_right.y };
 	ret.vertices[ 3 ].uv_coords			= { 1.0f, 1.0f };
 
 	if( filled ) {
@@ -539,21 +538,20 @@ VK2D_API vk2d::Mesh VK2D_APIENTRY vk2d::GenerateRectangleMesh(
 }
 
 VK2D_API vk2d::Mesh VK2D_APIENTRY vk2d::GenerateEllipseMesh(
-	vk2d::Vector2f			top_left,
-	vk2d::Vector2f			bottom_right,
-	bool					filled,
-	float					edge_count
+	vk2d::Rect2f		area,
+	bool				filled,
+	float				edge_count
 )
 {
 	if( edge_count < 3.0f ) edge_count = 3.0f;
 
 	Vector2f center_point					= {
-		( top_left.x + bottom_right.x ) / 2.0f,
-		( top_left.y + bottom_right.y ) / 2.0f
+		( area.top_left.x + area.bottom_right.x ) / 2.0f,
+		( area.top_left.y + area.bottom_right.y ) / 2.0f
 	};
 
-	float center_to_edge_x		= bottom_right.x - center_point.x;
-	float center_to_edge_y		= bottom_right.y - center_point.y;
+	float center_to_edge_x		= area.bottom_right.x - center_point.x;
+	float center_to_edge_y		= area.bottom_right.y - center_point.y;
 
 	float rotation_step			= 0.0f;
 	float rotation_step_size	= float( RAD / edge_count );
@@ -612,9 +610,8 @@ VK2D_API vk2d::Mesh VK2D_APIENTRY vk2d::GenerateEllipseMesh(
 	return ret;
 }
 
-VK2D_API vk2d::Mesh VK2D_APIENTRY vk2d::GeneratePieMesh(
-	vk2d::Vector2f		top_left,
-	vk2d::Vector2f		bottom_right,
+VK2D_API vk2d::Mesh VK2D_APIENTRY vk2d::GenerateEllipsePieMesh(
+	vk2d::Rect2f		area,
 	float				begin_angle_radians,
 	float				coverage,
 	bool				filled,
@@ -628,12 +625,12 @@ VK2D_API vk2d::Mesh VK2D_APIENTRY vk2d::GeneratePieMesh(
 	if( coverage <= 0.0f )			return ret;		// Nothing to draw
 
 	Vector2f center_point					= {
-		( top_left.x + bottom_right.x ) / 2.0f,
-		( top_left.y + bottom_right.y ) / 2.0f
+		( area.top_left.x + area.bottom_right.x ) / 2.0f,
+		( area.top_left.y + area.bottom_right.y ) / 2.0f
 	};
 
-	float center_to_edge_x		= bottom_right.x - center_point.x;
-	float center_to_edge_y		= bottom_right.y - center_point.y;
+	float center_to_edge_x		= area.bottom_right.x - center_point.x;
+	float center_to_edge_y		= area.bottom_right.y - center_point.y;
 
 	float rotation_step_size	= float( RAD / edge_count );
 
@@ -759,9 +756,8 @@ VK2D_API vk2d::Mesh VK2D_APIENTRY vk2d::GeneratePieMesh(
 	return ret;
 }
 
-VK2D_API vk2d::Mesh VK2D_APIENTRY vk2d::GeneratePieBoxMesh(
-	vk2d::Vector2f		top_left,
-	vk2d::Vector2f		bottom_right,
+VK2D_API vk2d::Mesh VK2D_APIENTRY vk2d::GenerateRectanglePieMesh(
+	vk2d::Rect2f		area,
 	float				begin_angle_radians,
 	float				coverage,
 	bool				filled
@@ -770,22 +766,22 @@ VK2D_API vk2d::Mesh VK2D_APIENTRY vk2d::GeneratePieBoxMesh(
 	vk2d::Mesh ret;
 
 	if( coverage >= 1.0f ) {
-		return vk2d::GenerateRectangleMesh( top_left, bottom_right, filled );
+		return vk2d::GenerateRectangleMesh( area, filled );
 	}
 	if( coverage <= 0.0f ) {
 		return ret;		// Nothing to draw
 	}
 
 	Vector2f center_point					= {
-		( top_left.x + bottom_right.x ) / 2.0f,
-		( top_left.y + bottom_right.y ) / 2.0f
+		( area.top_left.x + area.bottom_right.x ) / 2.0f,
+		( area.top_left.y + area.bottom_right.y ) / 2.0f
 	};
 
-	float center_to_edge_x		= bottom_right.x - center_point.x;
-	float center_to_edge_y		= bottom_right.y - center_point.y;
+	float center_to_edge_x		= area.bottom_right.x - center_point.x;
+	float center_to_edge_y		= area.bottom_right.y - center_point.y;
 
-	float width					= std::abs( bottom_right.x - top_left.x );
-	float height				= std::abs( bottom_right.y - top_left.y );
+	float width					= std::abs( area.bottom_right.x - area.top_left.x );
+	float height				= std::abs( area.bottom_right.y - area.top_left.y );
 
 	auto end_angle_radians		= float( RAD ) * coverage;
 	end_angle_radians			+= begin_angle_radians;
@@ -800,10 +796,10 @@ VK2D_API vk2d::Mesh VK2D_APIENTRY vk2d::GeneratePieBoxMesh(
 		PIE_END,
 	};
 	std::array<Vector2f, 6>	unordered_outer_points { {
-		{ top_left.x,		top_left.y		},
-		{ bottom_right.x,	top_left.y		},
-		{ bottom_right.x,	bottom_right.y	},
-		{ top_left.x,		bottom_right.y	}
+		{ area.top_left.x,		area.top_left.y		},
+		{ area.bottom_right.x,	area.top_left.y		},
+		{ area.bottom_right.x,	area.bottom_right.y	},
+		{ area.top_left.x,		area.bottom_right.y	}
 	} };
 
 	// Get pie begin and end coordinates
@@ -843,14 +839,14 @@ VK2D_API vk2d::Mesh VK2D_APIENTRY vk2d::GeneratePieBoxMesh(
 		ray_angle_2_end				+= center_point;
 
 		unordered_outer_points[ PIE_BEGIN ]	= RayExitIntersection(
-			top_left,
-			bottom_right,
+			area.top_left,
+			area.bottom_right,
 			center_point,
 			ray_angle_1_end
 		);
 		unordered_outer_points[ PIE_END ]		= RayExitIntersection(
-			top_left,
-			bottom_right,
+			area.top_left,
+			area.bottom_right,
 			center_point,
 			ray_angle_2_end
 		);
@@ -1019,10 +1015,9 @@ VK2D_API vk2d::Mesh VK2D_APIENTRY vk2d::GeneratePieBoxMesh(
 }
 
 VK2D_API vk2d::Mesh VK2D_APIENTRY vk2d::GenerateLatticeMesh(
-	vk2d::Vector2f			top_left,
-	vk2d::Vector2f			bottom_right,
-	vk2d::Vector2f			subdivisions,
-	bool					filled )
+	vk2d::Rect2f		area,
+	vk2d::Vector2f		subdivisions,
+	bool				filled )
 {
 	vk2d::Mesh ret;
 
@@ -1030,7 +1025,7 @@ VK2D_API vk2d::Mesh VK2D_APIENTRY vk2d::GenerateLatticeMesh(
 	uint32_t vertex_count_y			= uint32_t( std::ceil( subdivisions.y ) ) + 2;
 	uint32_t total_vertex_count		= vertex_count_x * vertex_count_y;
 
-	vk2d::Vector2f mesh_size		= bottom_right - top_left;
+	vk2d::Vector2f mesh_size		= area.bottom_right - area.top_left;
 	vk2d::Vector2f vertex_spacing	= mesh_size / ( subdivisions + vk2d::Vector2f( 1.0f, 1.0f ) );
 	vk2d::Vector2f uv_spacing		= vk2d::Vector2f( 1.0f, 1.0f ) / ( subdivisions + vk2d::Vector2f( 1.0f, 1.0f ) );
 
@@ -1040,20 +1035,20 @@ VK2D_API vk2d::Mesh VK2D_APIENTRY vk2d::GenerateLatticeMesh(
 	for( size_t y = 0; y < vertex_count_y - 1; ++y ) {
 		for( size_t x = 0; x < vertex_count_x - 1; ++x ) {
 			auto & v		= ret.vertices[ y * vertex_count_x + x ];
-			v.vertex_coords	= { vertex_spacing.x * x + top_left.x, vertex_spacing.y * y + top_left.y };
+			v.vertex_coords	= { vertex_spacing.x * x + area.top_left.x, vertex_spacing.y * y + area.top_left.y };
 			v.uv_coords		= { uv_spacing.x * x, uv_spacing.y * y };
 		}
 		auto & v			= ret.vertices[ y * vertex_count_x + vertex_count_x - 1 ];
-		v.vertex_coords		= { bottom_right.x, vertex_spacing.y * y + top_left.y };
+		v.vertex_coords		= { area.bottom_right.x, vertex_spacing.y * y + area.top_left.y };
 		v.uv_coords			= { 1.0f, uv_spacing.y * y };
 	}
 	for( size_t x = 0; x < vertex_count_x - 1; ++x ) {
 		auto & v		= ret.vertices[ size_t( vertex_count_y - 1 ) * vertex_count_x + x ];
-		v.vertex_coords	= { vertex_spacing.x * x + top_left.x, bottom_right.y };
+		v.vertex_coords	= { vertex_spacing.x * x + area.top_left.x, area.bottom_right.y };
 		v.uv_coords		= { uv_spacing.x * x, 1.0f };
 	}
 	auto & v			= ret.vertices[ size_t( vertex_count_y - 1 ) * vertex_count_x + vertex_count_x - 1 ];
-	v.vertex_coords		= { bottom_right.x, bottom_right.y };
+	v.vertex_coords		= { area.bottom_right.x, area.bottom_right.y };
 	v.uv_coords			= { 1.0f, 1.0f };
 
 	if( filled ) {
@@ -1117,12 +1112,17 @@ VK2D_API vk2d::Mesh VK2D_APIENTRY vk2d::GenerateTextMesh(
 	float						kerning,
 	vk2d::Vector2f				scale,
 	bool						vertical,
-	uint32_t					font_face )
+	uint32_t					font_face,
+	bool						wait_for_resource_load )
 {
 	if( !font ) return {};
 	if( !font->impl.get() ) return {};
 	auto fi = font->impl.get();
-	fi->WaitUntilLoaded();
+	if( wait_for_resource_load ) {
+		fi->WaitUntilLoaded( std::chrono::nanoseconds::max() );
+	} else {
+		if( fi->GetStatus() == vk2d::ResourceStatus::UNDETERMINED ) return {};
+	}
 	if( !fi->FaceExists( font_face ) ) return {};
 	
 	vk2d::Mesh mesh;

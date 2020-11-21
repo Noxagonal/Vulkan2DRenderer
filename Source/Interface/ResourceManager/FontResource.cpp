@@ -85,14 +85,23 @@ VK2D_API vk2d::FontResource::FontResource(
 VK2D_API vk2d::FontResource::~FontResource()
 {}
 
-VK2D_API bool VK2D_APIENTRY vk2d::FontResource::IsLoaded()
+VK2D_API vk2d::ResourceStatus VK2D_APIENTRY vk2d::FontResource::GetStatus()
 {
-	return impl->IsLoaded();
+	return impl->GetStatus();
 }
 
-VK2D_API bool VK2D_APIENTRY vk2d::FontResource::WaitUntilLoaded()
+VK2D_API vk2d::ResourceStatus VK2D_APIENTRY vk2d::FontResource::WaitUntilLoaded(
+	std::chrono::nanoseconds				timeout
+)
 {
-	return impl->WaitUntilLoaded();
+	return impl->WaitUntilLoaded( timeout );
+}
+
+VK2D_API vk2d::ResourceStatus VK2D_APIENTRY vk2d::FontResource::WaitUntilLoaded(
+	std::chrono::steady_clock::time_point	timeout
+)
+{
+	return impl->WaitUntilLoaded( timeout );
 }
 
 VK2D_API vk2d::TextureResource *VK2D_APIENTRY vk2d::FontResource::GetTextureResource()
@@ -148,7 +157,7 @@ vk2d::_internal::FontResourceImpl::FontResourceImpl(
 	assert( resource_manager );
 
 	this->my_interface					= my_interface;
-	this->resource_manager_parent		= resource_manager;
+	this->resource_manager		= resource_manager;
 
 	this->glyph_texel_size				= glyph_texel_size;
 	this->glyph_atlas_padding			= glyph_atlas_padding;
@@ -161,49 +170,54 @@ vk2d::_internal::FontResourceImpl::FontResourceImpl(
 vk2d::_internal::FontResourceImpl::~FontResourceImpl()
 {}
 
-bool vk2d::_internal::FontResourceImpl::IsLoaded()
+vk2d::ResourceStatus vk2d::_internal::FontResourceImpl::GetStatus()
 {
-	std::unique_lock<std::mutex>		is_loaded_lock( is_loaded_mutex, std::defer_lock );
-	if( !is_loaded_lock.try_lock() ) {
-		return false;
+	if( !is_good )				return vk2d::ResourceStatus::FAILED_TO_LOAD;
+
+	auto local_status = status.load();
+	if( local_status == vk2d::ResourceStatus::UNDETERMINED ) {
+
+		if( load_function_run_fence.IsSet() ) {
+
+			// "texture_resource" is set by the MTLoad() function so we can access it
+			// without further mutex locking. ( "load_function_run_fence" is set )
+			status = local_status = texture_resource->GetStatus();
+		}
 	}
 
-	if( is_loaded )									return true;
-	if( !is_good )									return false;
-	if( !my_interface->impl->load_function_ran )	return false;
-	if( my_interface->impl->FailedToLoad() )		return false;
-
-	if( texture_resource ) {
-		is_loaded = texture_resource->IsLoaded();
-		return is_loaded;
-	}
-	return false;
+	return local_status;
 }
 
-bool vk2d::_internal::FontResourceImpl::WaitUntilLoaded()
+vk2d::ResourceStatus vk2d::_internal::FontResourceImpl::WaitUntilLoaded(
+	std::chrono::nanoseconds timeout
+)
 {
-	while( true ) {
-		if( my_interface->impl->FailedToLoad() ) {
-			return false;
+	if( timeout == std::chrono::nanoseconds::max() ) {
+		return WaitUntilLoaded( std::chrono::steady_clock::time_point::max() );
+	}
+	return WaitUntilLoaded( std::chrono::steady_clock::now() + timeout );
+}
+
+vk2d::ResourceStatus vk2d::_internal::FontResourceImpl::WaitUntilLoaded(
+	std::chrono::steady_clock::time_point timeout
+)
+{
+	// Make sure timeout is in the future.
+	assert( timeout == std::chrono::steady_clock::time_point::max() ||
+		timeout + std::chrono::seconds( 5 ) >= std::chrono::steady_clock::now() );
+
+	if( !is_good ) return vk2d::ResourceStatus::FAILED_TO_LOAD;
+
+	auto local_status = status.load();
+	if( local_status == vk2d::ResourceStatus::UNDETERMINED ) {
+
+		if( load_function_run_fence.Wait( timeout ) ) {
+			status = local_status = texture_resource->WaitUntilLoaded( timeout );
 		}
-		if( my_interface->impl->IsLoaded() ) {
-			break;
-		} else {
-			std::this_thread::sleep_for( std::chrono::microseconds( 10 ) );
-		}
+
 	}
 
-	{
-		bool texture_exists = false;
-		{
-			std::lock_guard<std::mutex> lock_guard( is_loaded_mutex );
-			texture_exists	= !!texture_resource;
-		}
-		if( texture_exists ) {
-			return texture_resource->WaitUntilLoaded();
-		}
-	}
-	return false;
+	return local_status;
 }
 
 bool vk2d::_internal::FontResourceImpl::MTLoad(
@@ -570,9 +584,7 @@ bool vk2d::_internal::FontResourceImpl::MTLoad(
 			texture_data_array[ i ]		= &atlas_textures[ i ]->data;
 		}
 
-		std::lock_guard<std::mutex> lock_guard( is_loaded_mutex );
-
-		texture_resource = resource_manager_parent->CreateArrayTextureResource(
+		texture_resource = resource_manager->CreateArrayTextureResource(
 			vk2d::Vector2u( atlas_size, atlas_size ),
 			texture_data_array,
 			my_interface
@@ -610,10 +622,10 @@ bool vk2d::_internal::FontResourceImpl::FaceExists(
 
 vk2d::TextureResource * vk2d::_internal::FontResourceImpl::GetTextureResource()
 {
-	WaitUntilLoaded();
-
-	std::lock_guard<std::mutex> lock_guard( is_loaded_mutex );
-	return texture_resource;
+	if( GetStatus() == vk2d::ResourceStatus::LOADED ) {
+		return texture_resource;
+	}
+	return {};
 }
 
 const vk2d::_internal::GlyphInfo * vk2d::_internal::FontResourceImpl::GetGlyphInfo(
@@ -749,7 +761,7 @@ vk2d::_internal::FontResourceImpl::AtlasLocation vk2d::_internal::FontResourceIm
 		current_atlas_texture = CreateNewAtlasTexture();
 		if( !current_atlas_texture ) {
 			// Failed to create new atlas texture.
-			resource_manager_parent->GetInstance()->Report( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot create font, cannot create new atlas texture for font!" );
+			resource_manager->GetInstance()->Report( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot create font, cannot create new atlas texture for font!" );
 			return {};
 		}
 
@@ -763,7 +775,7 @@ vk2d::_internal::FontResourceImpl::AtlasLocation vk2d::_internal::FontResourceIm
 		if( !new_location.atlas_ptr ) {
 			// Still could not find enough space, a single font face glyph is too large
 			// to fit entire atlas, this should not happen so we raise an error.
-			resource_manager_parent->GetInstance()->Report( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot create font, a single glyph wont fit into a new atlas." );
+			resource_manager->GetInstance()->Report( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot create font, a single glyph wont fit into a new atlas." );
 			return {};
 		}
 
@@ -807,7 +819,7 @@ vk2d::_internal::FontResourceImpl::AtlasLocation vk2d::_internal::FontResourceIm
 		);
 		return atlas_location;
 	} else {
-		resource_manager_parent->GetInstance()->Report( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot create font, cannot attach glyph to atlas texture!" );
+		resource_manager->GetInstance()->Report( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot create font, cannot attach glyph to atlas texture!" );
 		return {};
 	}
 }

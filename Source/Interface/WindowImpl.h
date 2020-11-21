@@ -2,7 +2,7 @@
 
 #include "../Core/SourceCommon.h"
 
-#include "../Types/SynchronizedObject.hpp"
+#include "../Types/Synchronization.hpp"
 
 #include "../System/MeshBuffer.h"
 #include "../System/QueueResolver.h"
@@ -277,7 +277,7 @@ private:
 	bool														CmdUpdateFrameData(
 		VkCommandBuffer											command_buffer );
 
-	vk2d::Window											*	window_parent								= {};
+	vk2d::Window											*	my_interface								= {};
 	vk2d::_internal::InstanceImpl							*	instance									= {};
 	vk2d::WindowCreateInfo										create_info_copy							= {};
 

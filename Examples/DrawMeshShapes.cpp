@@ -56,8 +56,7 @@ int main()
 	// trivial, so for performance reasons it is better to generate static meshes outside
 	// the main loop whenever possible.
 	auto box_mesh = vk2d::GenerateRectangleMesh(
-		{ -300.0f, -300.0f },
-		{ 300.0f, 300.0f }
+		{ -300.0f, -300.0f, 300.0f, 300.0f }
 	);
 
 	// This is a mesh modifier, every modifier does something to the vertex or index data.
@@ -73,8 +72,7 @@ int main()
 	// Generate lattice mesh.
 	// Lattice mesh is a grid like mesh with variable grid size on both X and Y axis.
 	auto lattice_mesh = vk2d::GenerateLatticeMesh(
-		{ -250.0f, -250.0f },
-		{ 250.0f, 250.0f },
+		{ -250.0f, -250.0f, 250.0f, 250.0f },
 		{ 32.0f, 32.0f },
 		false
 	);

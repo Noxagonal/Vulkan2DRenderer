@@ -97,7 +97,10 @@ VK2D_API										vk2d::Instance::Instance(
 	const vk2d::InstanceCreateInfo			&	instance_create_info
 )
 {
-	impl = std::make_unique<vk2d::_internal::InstanceImpl>( instance_create_info );
+	impl = std::make_unique<vk2d::_internal::InstanceImpl>(
+		this,
+		instance_create_info
+	);
 	if( !impl || !impl->IsGood() ) {
 		impl	= nullptr;
 		if( instance_create_info.report_function ) {
@@ -306,8 +309,16 @@ VK2D_API std::unique_ptr<vk2d::Instance>VK2D_APIENTRY vk2d::CreateInstance(
 
 
 
-vk2d::_internal::InstanceImpl::InstanceImpl( const InstanceCreateInfo & instance_create_info )
+vk2d::_internal::InstanceImpl::InstanceImpl(
+	vk2d::Instance				*	my_interface,
+	const InstanceCreateInfo	&	instance_create_info
+)
 {
+	this->my_interface		= my_interface;
+	this->create_info_copy	= instance_create_info;
+	this->report_function	= create_info_copy.report_function;
+	this->creator_thread_id	= std::this_thread::get_id();
+
 	std::lock_guard<std::mutex> lock_guard( instance_globals_mutex );
 
 	// Initialize glfw if this is the first instance.
@@ -332,9 +343,6 @@ vk2d::_internal::InstanceImpl::InstanceImpl( const InstanceCreateInfo & instance
 		}
 		return;
 	}
-
-	create_info_copy	= instance_create_info;
-	report_function		= create_info_copy.report_function;
 
 	#if VK2D_DEBUG_ENABLE
 	if( report_function == nullptr ) {
@@ -391,7 +399,6 @@ vk2d::_internal::InstanceImpl::InstanceImpl( const InstanceCreateInfo & instance
 
 	vk2d::_internal::instance_listeners.push_back( this );
 
-	creator_thread_id	= std::this_thread::get_id();
 	is_good				= true;
 }
 
@@ -2390,6 +2397,7 @@ bool vk2d::_internal::InstanceImpl::CreateDefaultTexture()
 		vk2d::Vector2u( 1, 1 ),
 		{ vk2d::Color8( 255, 255, 255, 255 ) }
 	);
+	default_texture->WaitUntilLoaded();
 	return true;
 }
 

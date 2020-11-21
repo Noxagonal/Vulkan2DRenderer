@@ -34,14 +34,14 @@ class TextureResource :
 
 	// Array texture from files constructor.
 	VK2D_API																				TextureResource(
-		vk2d::_internal::ResourceManagerImpl				*	resource_manager_parent,
+		vk2d::_internal::ResourceManagerImpl				*	resource_manager,
 		uint32_t												loader_thread,
 		vk2d::Resource										*	parent_resource,
 		std::vector<std::filesystem::path>						file_paths_listing );
 
 	// Texture from data constructor.
 	VK2D_API																				TextureResource(
-		vk2d::_internal::ResourceManagerImpl				*	resource_manager_parent,
+		vk2d::_internal::ResourceManagerImpl				*	resource_manager,
 		uint32_t												loader_thread,
 		vk2d::Resource										*	parent_resource,
 		vk2d::Vector2u											size,
@@ -49,7 +49,7 @@ class TextureResource :
 
 	// Array texture from data constructor.
 	VK2D_API																				TextureResource(
-		vk2d::_internal::ResourceManagerImpl				*	resource_manager_parent,
+		vk2d::_internal::ResourceManagerImpl				*	resource_manager,
 		uint32_t												loader_thread,
 		vk2d::Resource										*	parent_resource,
 		vk2d::Vector2u											size,
@@ -58,8 +58,11 @@ class TextureResource :
 public:
 	VK2D_API																				~TextureResource();
 
-	VK2D_API bool												VK2D_APIENTRY				IsLoaded();
-	VK2D_API bool												VK2D_APIENTRY				WaitUntilLoaded();
+	VK2D_API vk2d::ResourceStatus								VK2D_APIENTRY				GetStatus();
+	VK2D_API vk2d::ResourceStatus								VK2D_APIENTRY				WaitUntilLoaded(
+		std::chrono::nanoseconds								timeout						= std::chrono::nanoseconds::max() );
+	VK2D_API vk2d::ResourceStatus								VK2D_APIENTRY				WaitUntilLoaded(
+		std::chrono::steady_clock::time_point					timeout );
 
 	VK2D_API vk2d::Vector2u										VK2D_APIENTRY				GetSize() const;
 	VK2D_API uint32_t											VK2D_APIENTRY				GetLayerCount() const;

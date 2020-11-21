@@ -22,7 +22,8 @@ VK2D_API vk2d::Mesh VK2D_APIENTRY GenerateTextMesh(
 	float										kerning,
 	vk2d::Vector2f								scale,
 	bool										vertical,
-	uint32_t									font_face );
+	uint32_t									font_face,
+	bool										wait_for_resource_load );
 
 
 
@@ -47,7 +48,8 @@ class FontResource
 		float												kerning,
 		vk2d::Vector2f										scale,
 		bool												vertical,
-		uint32_t											font_face );
+		uint32_t											font_face,
+		bool												wait_for_resource );
 
 public:
 	VK2D_API																					FontResource(
@@ -62,9 +64,11 @@ public:
 
 	VK2D_API																					~FontResource();
 
-	VK2D_API bool											VK2D_APIENTRY						IsLoaded();
-
-	VK2D_API bool											VK2D_APIENTRY						WaitUntilLoaded();
+	VK2D_API vk2d::ResourceStatus							VK2D_APIENTRY						GetStatus();
+	VK2D_API vk2d::ResourceStatus							VK2D_APIENTRY						WaitUntilLoaded(
+		std::chrono::nanoseconds							timeout								= std::chrono::nanoseconds::max() );
+	VK2D_API vk2d::ResourceStatus							VK2D_APIENTRY						WaitUntilLoaded(
+		std::chrono::steady_clock::time_point				timeout );
 
 #pragma VK2D_WARNING( "REMOVE WHEN DONE TESTING!" )
 	VK2D_API vk2d::TextureResource						*	VK2D_APIENTRY						GetTextureResource();

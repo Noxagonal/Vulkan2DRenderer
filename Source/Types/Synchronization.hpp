@@ -10,46 +10,37 @@ namespace _internal {
 /// @brief		This is used to synchronize work.
 class Fence
 {
-	Fence()												= default;
-	Fence( const vk2d::_internal::Fence & other )		= delete;
-	Fence( vk2d::_internal::Fence && other )			= default;
+public:
+	Fence()											= default;
+	Fence( const vk2d::_internal::Fence & other )	= delete;
+	Fence( vk2d::_internal::Fence && other )		= default;
 
-	/// @brief	Unblocks waiting on this fence, any thread calling
-	/// vk2d::_interna::Wait() is allowed to continue after calling this.
-	inline void						Set()
-	{
-		is_set						= true;
-		condition.notify_all();
-	}
+	/// @brief		Unblocks waiting on this fence, any thread calling
+	///				vk2d::_interna::Wait() is allowed to continue after calling this.
+	void											Set();
+
+	/// @brief		Tests without blocking if this fence is set.
+	/// @return		true if set, false if not set.
+	bool											IsSet();
 
 	/// @brief		Blocks calling thread until this fence is set by another thread.
 	/// @param[in]	timeout
 	///				Maximum time to wait before returning false.
 	/// @return		true if successfully waited, false if timeout.
-	inline bool						Wait(
-		std::chrono::nanoseconds	timeout		= std::chrono::nanoseconds::max() )
-	{
-		if( !is_set.load() ) {
-			auto wait_until_time = std::chrono::steady_clock::now() + timeout;
-			while( true ) {
-				std::unique_lock<std::mutex> unique_lock( mutex );
-				condition.wait_until( unique_lock, wait_until_time );
-				if( std::chrono::steady_clock::now() >= wait_until_time ) {
-					if( is_set.load() ) {
-						return true;
-					} else {
-						return false;
-					}
-				}
-			}
-		}
-		return true;
-	}
+	bool											Wait(
+		std::chrono::nanoseconds					timeout		= std::chrono::nanoseconds::max() );
+
+	/// @brief		Blocks calling thread until this fence is set by another thread.
+	/// @param[in]	timeout
+	///				Time point to wait for before returning false.
+	/// @return		true if successfully waited, false if timeout.
+	bool											Wait(
+		std::chrono::steady_clock::time_point		timeout );
 
 private:
-	std::mutex						mutex;
-	std::condition_variable			condition;
-	std::atomic_bool				is_set					= {};
+	std::mutex										mutex;
+	std::condition_variable							condition;
+	std::atomic_bool								is_set					= {};
 };
 
 

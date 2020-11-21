@@ -19,12 +19,17 @@ struct Rect2Base
 	vk2d::Vector2Base<T>		bottom_right		= {};
 
 	Rect2Base()										= default;
+	Rect2Base( const vk2d::Rect2Base<T> & other )	= default;
+	Rect2Base( vk2d::Rect2Base<T> && other )		= default;
 	Rect2Base( T x1, T y1, T x2, T y2
 	) :
 		top_left( { x1, y1 } ), bottom_right( { x2, y2 } )
-	{};
-	Rect2Base( const vk2d::Rect2Base<T> & other )	= default;
-	Rect2Base( vk2d::Rect2Base<T> && other )		= default;
+	{}
+	Rect2Base( Vector2Base<T> top_left, Vector2Base<T> bottom_right
+	) :
+		top_left( top_left ),
+		bottom_right( bottom_right )
+	{}
 	Rect2Base( const std::initializer_list<vk2d::Vector2Base<T>> & elements )
 	{
 		assert( elements.size() <= 2 );

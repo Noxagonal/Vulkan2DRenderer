@@ -4,6 +4,7 @@
 
 #include "MeshPrimitives.hpp"
 #include "Vector2.h"
+#include "Rect2.h"
 #include "Color.h"
 
 #include <vector>
@@ -39,34 +40,29 @@ class Mesh {
 		bool										filled );
 
 	friend VK2D_API vk2d::Mesh						VK2D_APIENTRY					GenerateRectangleMesh(
-		vk2d::Vector2f								top_left,
-		vk2d::Vector2f								bottom_right,
+		vk2d::Rect2f								area,
 		bool										filled );
 
 	friend VK2D_API vk2d::Mesh						VK2D_APIENTRY					GenerateEllipseMesh(
-		vk2d::Vector2f								top_left,
-		vk2d::Vector2f								bottom_right,
+		vk2d::Rect2f								area,
 		bool										filled,
 		float										edge_count );
 
-	friend VK2D_API vk2d::Mesh						VK2D_APIENTRY					GeneratePieMesh(
-		vk2d::Vector2f								top_left,
-		vk2d::Vector2f								bottom_right,
+	friend VK2D_API vk2d::Mesh						VK2D_APIENTRY					GenerateEllipsePieMesh(
+		vk2d::Rect2f								area,
 		float										begin_angle_radians,
 		float										coverage,
 		bool										filled,	
 		float										edge_count );
 
-	friend VK2D_API vk2d::Mesh						VK2D_APIENTRY					GeneratePieBoxMesh(
-		vk2d::Vector2f								top_left,
-		vk2d::Vector2f								bottom_right,
+	friend VK2D_API vk2d::Mesh						VK2D_APIENTRY					GenerateRectanglePieMesh(
+		vk2d::Rect2f								area,
 		float										begin_angle_radians,
 		float										coverage,
 		bool										filled );
 
 	friend VK2D_API vk2d::Mesh						VK2D_APIENTRY					GenerateLatticeMesh(
-		vk2d::Vector2f								top_left,
-		vk2d::Vector2f								bottom_right,
+		vk2d::Rect2f								area,
 		vk2d::Vector2f								subdivisions,
 		bool										filled );
 
@@ -77,7 +73,8 @@ class Mesh {
 		float										kerning,
 		vk2d::Vector2f								scale,
 		bool										vertical,
-		uint32_t									font_face );
+		uint32_t									font_face,
+		bool										wait_for_resource_load );
 
 public:
 	VK2D_API void									VK2D_APIENTRY					Translate(
@@ -192,34 +189,29 @@ VK2D_API vk2d::Mesh									VK2D_APIENTRY					GenerateTriangleMeshFromList(
 	bool											filled							= true );
 
 VK2D_API vk2d::Mesh									VK2D_APIENTRY					GenerateRectangleMesh(
-	vk2d::Vector2f									top_left,
-	vk2d::Vector2f									bottom_right,
+	vk2d::Rect2f									area,
 	bool											filled							= true );
 
 VK2D_API vk2d::Mesh									VK2D_APIENTRY					GenerateEllipseMesh(
-	vk2d::Vector2f									top_left,
-	vk2d::Vector2f									bottom_right,
+	vk2d::Rect2f									area,
 	bool											filled							= true,
 	float											edge_count						= 64.0f );
 
-VK2D_API vk2d::Mesh									VK2D_APIENTRY					GeneratePieMesh(
-	vk2d::Vector2f									top_left,
-	vk2d::Vector2f									bottom_right,
+VK2D_API vk2d::Mesh									VK2D_APIENTRY					GenerateEllipsePieMesh(
+	vk2d::Rect2f									area,
 	float											begin_angle_radians,
 	float											coverage,
 	bool											filled							= true,
 	float											edge_count						= 64.0f );
 
-VK2D_API vk2d::Mesh									VK2D_APIENTRY					GeneratePieBoxMesh(
-	vk2d::Vector2f									top_left,
-	vk2d::Vector2f									bottom_right,
+VK2D_API vk2d::Mesh									VK2D_APIENTRY					GenerateRectanglePieMesh(
+	vk2d::Rect2f									area,
 	float											begin_angle_radians,
 	float											coverage,
 	bool											filled							= true );
 
 VK2D_API vk2d::Mesh									VK2D_APIENTRY					GenerateLatticeMesh(
-	vk2d::Vector2f									top_left,
-	vk2d::Vector2f									bottom_right,
+	vk2d::Rect2f									area,
 	vk2d::Vector2f									subdivisions,
 	bool											filled							= true );
 
@@ -230,7 +222,8 @@ VK2D_API vk2d::Mesh									VK2D_APIENTRY					GenerateTextMesh(
 	float											kerning							= 0.0f,
 	vk2d::Vector2f									scale							= vk2d::Vector2f( 1.0f, 1.0f ),
 	bool											vertical						= false,
-	uint32_t										font_face						= 0 );
+	uint32_t										font_face						= 0,
+	bool											wait_for_resource_load			= true );
 
 
 

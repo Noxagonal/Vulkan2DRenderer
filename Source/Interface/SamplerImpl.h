@@ -35,7 +35,7 @@ public:
 	};
 
 private:
-	vk2d::Sampler							*	sampler_parent		= {};
+	vk2d::Sampler							*	my_interface		= {};
 	vk2d::_internal::InstanceImpl			*	instance			= {};
 	VkDevice									vk_device			= {};
 

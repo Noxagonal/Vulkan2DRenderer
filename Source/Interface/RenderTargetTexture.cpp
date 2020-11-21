@@ -1,6 +1,9 @@
 
 #include "../Core/SourceCommon.h"
 
+#include "../../Include/Types/Vector2.h"
+#include "../../Include/Types/Rect2.h"
+#include "../../Include/Types/Color.h"
 #include "../../Include/Types/Mesh.h"
 
 #include "../System/RenderTargetTextureDependecyGraphInfo.hpp"
@@ -45,6 +48,7 @@ VK2D_API vk2d::RenderTargetTexture::RenderTargetTexture(
 )
 {
 	impl = std::make_unique<vk2d::_internal::RenderTargetTextureImpl>(
+		this,
 		instance,
 		create_info
 	);
@@ -78,14 +82,9 @@ VK2D_API uint32_t VK2D_APIENTRY vk2d::RenderTargetTexture::GetLayerCount() const
 	return impl->GetLayerCount();
 }
 
-VK2D_API bool VK2D_APIENTRY vk2d::RenderTargetTexture::WaitUntilLoaded()
+VK2D_API bool VK2D_APIENTRY vk2d::RenderTargetTexture::IsTextureDataReady()
 {
-	return impl->WaitUntilLoaded();
-}
-
-VK2D_API bool VK2D_APIENTRY vk2d::RenderTargetTexture::IsLoaded()
-{
-	return impl->IsLoaded();
+	return impl->IsTextureDataReady();
 }
 
 VK2D_API bool VK2D_APIENTRY vk2d::RenderTargetTexture::BeginRender()
@@ -177,16 +176,14 @@ VK2D_API void VK2D_APIENTRY vk2d::RenderTargetTexture::DrawLine(
 	impl->DrawMesh( mesh );
 }
 
-VK2D_API void VK2D_APIENTRY vk2d::RenderTargetTexture::DrawBox(
-	vk2d::Vector2f					top_left,
-	vk2d::Vector2f					bottom_right,
+VK2D_API void VK2D_APIENTRY vk2d::RenderTargetTexture::DrawRectangle(
+	vk2d::Rect2f					area,
 	bool							filled,
 	vk2d::Colorf					color
 )
 {
 	auto mesh = vk2d::GenerateRectangleMesh(
-		top_left,
-		bottom_right,
+		area,
 		filled
 	);
 	mesh.SetVertexColor( color );
@@ -194,16 +191,14 @@ VK2D_API void VK2D_APIENTRY vk2d::RenderTargetTexture::DrawBox(
 }
 
 VK2D_API void VK2D_APIENTRY vk2d::RenderTargetTexture::DrawEllipse(
-	vk2d::Vector2f					top_left,
-	vk2d::Vector2f					bottom_right,
+	vk2d::Rect2f					area,
 	bool							filled,
 	float							edge_count,
 	vk2d::Colorf					color
 )
 {
 	auto mesh = vk2d::GenerateEllipseMesh(
-		top_left,
-		bottom_right,
+		area,
 		filled,
 		edge_count
 	);
@@ -211,9 +206,8 @@ VK2D_API void VK2D_APIENTRY vk2d::RenderTargetTexture::DrawEllipse(
 	impl->DrawMesh( mesh );
 }
 
-VK2D_API void VK2D_APIENTRY vk2d::RenderTargetTexture::DrawPie(
-	vk2d::Vector2f					top_left,
-	vk2d::Vector2f					bottom_right,
+VK2D_API void VK2D_APIENTRY vk2d::RenderTargetTexture::DrawEllipsePie(
+	vk2d::Rect2f					area,
 	float							begin_angle_radians,
 	float							coverage,
 	bool							filled,
@@ -221,9 +215,8 @@ VK2D_API void VK2D_APIENTRY vk2d::RenderTargetTexture::DrawPie(
 	vk2d::Colorf					color
 )
 {
-	auto mesh = vk2d::GeneratePieMesh(
-		top_left,
-		bottom_right,
+	auto mesh = vk2d::GenerateEllipsePieMesh(
+		area,
 		begin_angle_radians,
 		coverage,
 		filled,
@@ -233,18 +226,16 @@ VK2D_API void VK2D_APIENTRY vk2d::RenderTargetTexture::DrawPie(
 	impl->DrawMesh( mesh );
 }
 
-VK2D_API void VK2D_APIENTRY vk2d::RenderTargetTexture::DrawPieBox(
-	vk2d::Vector2f					top_left,
-	vk2d::Vector2f					bottom_right,
+VK2D_API void VK2D_APIENTRY vk2d::RenderTargetTexture::DrawRectanglePie(
+	vk2d::Rect2f					area,
 	float							begin_angle_radians,
 	float							coverage,
 	bool							filled,
 	vk2d::Colorf					color
 )
 {
-	auto mesh = vk2d::GeneratePieBoxMesh(
-		top_left,
-		bottom_right,
+	auto mesh = vk2d::GenerateRectanglePieMesh(
+		area,
 		begin_angle_radians,
 		coverage,
 		filled
@@ -263,8 +254,7 @@ VK2D_API void VK2D_APIENTRY vk2d::RenderTargetTexture::DrawTexture(
 		auto texture_size = texture->GetSize();
 		auto bottom_right = top_left + vk2d::Vector2f( float( texture_size.x ), float( texture_size.y ) );
 		auto mesh = vk2d::GenerateRectangleMesh(
-			top_left,
-			bottom_right
+			{ top_left, bottom_right }
 		);
 		mesh.SetTexture( texture );
 		mesh.SetVertexColor( color );
@@ -307,6 +297,7 @@ VK2D_API bool VK2D_APIENTRY vk2d::RenderTargetTexture::IsGood() const
 
 
 vk2d::_internal::RenderTargetTextureImpl::RenderTargetTextureImpl(
+	vk2d::RenderTargetTexture					*	my_interface,
 	vk2d::_internal::InstanceImpl				*	instance,
 	const vk2d::RenderTargetTextureCreateInfo	&	create_info
 )
@@ -317,6 +308,7 @@ vk2d::_internal::RenderTargetTextureImpl::RenderTargetTextureImpl(
 		return;
 	}
 
+	this->my_interface		= my_interface;
 	this->instance			= instance;
 	this->create_info_copy	= create_info;
 	this->surface_format	= VK_FORMAT_R8G8B8A8_UNORM;
@@ -339,7 +331,7 @@ vk2d::_internal::RenderTargetTextureImpl::RenderTargetTextureImpl(
 		instance->GetDeviceMemoryPool()
 		);
 
-		// Initial final image layouts, change later if implementing mipmapless render target texture.
+	// Initial final image layouts, change later if implementing mipmapless render target texture.
 	vk_attachment_image_final_layout	= VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
 	vk_sampled_image_final_layout		= VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 	vk_sampled_image_final_access_mask	= VK_ACCESS_SHADER_READ_BIT;
@@ -462,12 +454,7 @@ uint64_t vk2d::_internal::RenderTargetTextureImpl::GetRenderCounter(
 	return swap_buffers[ dependency_info.swap_buffer_index ].render_counter;
 }
 
-bool vk2d::_internal::RenderTargetTextureImpl::WaitUntilLoaded()
-{
-	return true;
-}
-
-bool vk2d::_internal::RenderTargetTextureImpl::IsLoaded()
+bool vk2d::_internal::RenderTargetTextureImpl::IsTextureDataReady()
 {
 	return true;
 }
@@ -921,6 +908,9 @@ void vk2d::_internal::RenderTargetTextureImpl::DrawTriangleList(
 	if( !texture ) {
 		texture = instance->GetDefaultTexture();
 	}
+	if( !texture->IsTextureDataReady() ) {
+		texture = instance->GetDefaultTexture();
+	}
 	if( !sampler ) {
 		sampler = instance->GetDefaultSampler();
 	}
@@ -1069,6 +1059,9 @@ void vk2d::_internal::RenderTargetTextureImpl::DrawLineList(
 	if( !texture ) {
 		texture = instance->GetDefaultTexture();
 	}
+	if( !texture->IsTextureDataReady() ) {
+		texture = instance->GetDefaultTexture();
+	}
 	if( !sampler ) {
 		sampler = instance->GetDefaultSampler();
 	}
@@ -1170,6 +1163,9 @@ void vk2d::_internal::RenderTargetTextureImpl::DrawPointList(
 	auto vertex_count	= uint32_t( vertices.size() );
 
 	if( !texture ) {
+		texture = instance->GetDefaultTexture();
+	}
+	if( !texture->IsTextureDataReady() ) {
 		texture = instance->GetDefaultTexture();
 	}
 	if( !sampler ) {
@@ -2372,6 +2368,8 @@ vk2d::_internal::TimedDescriptorPoolData & vk2d::_internal::RenderTargetTextureI
 	vk2d::Texture	*	texture
 )
 {
+	assert( texture );
+
 	auto & set = texture_descriptor_sets[ texture ];
 
 	// If this descriptor set doesn't exist yet for this
@@ -2382,10 +2380,6 @@ vk2d::_internal::TimedDescriptorPoolData & vk2d::_internal::RenderTargetTextureI
 		);
 		if( set.descriptor_set != VK_SUCCESS ) {
 			return set;
-		}
-
-		if( !texture->WaitUntilLoaded() ) {
-			texture = instance->GetDefaultTexture();
 		}
 
 		VkDescriptorImageInfo image_info {};

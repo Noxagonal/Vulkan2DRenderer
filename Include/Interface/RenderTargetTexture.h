@@ -3,6 +3,7 @@
 #include "../Core/Common.h"
 
 #include "../Types/Vector2.h"
+#include "../Types/Rect2.h"
 #include "../Types/Color.h"
 #include "../Types/Multisamples.h"
 #include "../Types/RenderCoordinateSpace.hpp"
@@ -59,8 +60,7 @@ public:
 	VK2D_API vk2d::Vector2u										VK2D_APIENTRY				GetSize() const;
 	VK2D_API uint32_t											VK2D_APIENTRY				GetLayerCount() const;
 
-	VK2D_API bool												VK2D_APIENTRY				WaitUntilLoaded();
-	VK2D_API bool												VK2D_APIENTRY				IsLoaded();
+	VK2D_API bool												VK2D_APIENTRY				IsTextureDataReady();
 
 	// Begins the render operations. You must call this before using any drawing commands.
 	// For best performance you should calculate game logic first, when you're ready to draw
@@ -104,31 +104,27 @@ public:
 		vk2d::Vector2f											point_2,
 		vk2d::Colorf											color						= { 1.0f, 1.0f, 1.0f, 1.0f } );
 
-	VK2D_API void												VK2D_APIENTRY				DrawBox(
-		vk2d::Vector2f											top_left,
-		vk2d::Vector2f											bottom_right,
+	VK2D_API void												VK2D_APIENTRY				DrawRectangle(
+		vk2d::Rect2f											area,
 		bool													filled						= true,
 		vk2d::Colorf											color						= { 1.0f, 1.0f, 1.0f, 1.0f } );
 
 	VK2D_API void												VK2D_APIENTRY				DrawEllipse(
-		vk2d::Vector2f											top_left,
-		vk2d::Vector2f											bottom_right,
+		vk2d::Rect2f											area,
 		bool													filled						= true,
 		float													edge_count					= 64.0f,
 		vk2d::Colorf											color						= { 1.0f, 1.0f, 1.0f, 1.0f } );
 
-	VK2D_API void												VK2D_APIENTRY				DrawPie(
-		vk2d::Vector2f											top_left,
-		vk2d::Vector2f											bottom_right,
+	VK2D_API void												VK2D_APIENTRY				DrawEllipsePie(
+		vk2d::Rect2f											area,
 		float													begin_angle_radians,
 		float													coverage,
 		bool													filled						= true,
 		float													edge_count					= 64.0f,
 		vk2d::Colorf											color						= { 1.0f, 1.0f, 1.0f, 1.0f } );
 
-	VK2D_API void												VK2D_APIENTRY				DrawPieBox(
-		vk2d::Vector2f											top_left,
-		vk2d::Vector2f											bottom_right,
+	VK2D_API void												VK2D_APIENTRY				DrawRectanglePie(
+		vk2d::Rect2f											area,
 		float													begin_angle_radians,
 		float													coverage,
 		bool													filled						= true,

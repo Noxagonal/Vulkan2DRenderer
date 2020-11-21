@@ -1,6 +1,9 @@
 
 #include "../Core/SourceCommon.h"
 
+#include "../../Include/Types/Vector2.h"
+#include "../../Include/Types/Rect2.h"
+#include "../../Include/Types/Color.h"
 #include "../../Include/Types/Mesh.h"
 
 #include "../System/MeshBuffer.h"
@@ -350,16 +353,14 @@ VK2D_API void VK2D_APIENTRY vk2d::Window::DrawLine(
 	impl->DrawMesh( mesh );
 }
 
-VK2D_API void VK2D_APIENTRY vk2d::Window::DrawBox(
-	vk2d::Vector2f					top_left,
-	vk2d::Vector2f					bottom_right,
+VK2D_API void VK2D_APIENTRY vk2d::Window::DrawRectangle(
+	vk2d::Rect2f					area,
 	bool							solid,
 	vk2d::Colorf					color
 )
 {
 	auto mesh = vk2d::GenerateRectangleMesh(
-		top_left,
-		bottom_right,
+		area,
 		solid
 	);
 	mesh.SetVertexColor( color );
@@ -367,16 +368,14 @@ VK2D_API void VK2D_APIENTRY vk2d::Window::DrawBox(
 }
 
 VK2D_API void VK2D_APIENTRY vk2d::Window::DrawEllipse(
-	vk2d::Vector2f					top_left,
-	vk2d::Vector2f					bottom_right,
+	vk2d::Rect2f					area,
 	bool							solid,
 	float							edge_count,
 	vk2d::Colorf					color
 )
 {
 	auto mesh = vk2d::GenerateEllipseMesh(
-		top_left,
-		bottom_right,
+		area,
 		solid,
 		edge_count
 	);
@@ -384,9 +383,8 @@ VK2D_API void VK2D_APIENTRY vk2d::Window::DrawEllipse(
 	impl->DrawMesh( mesh );
 }
 
-VK2D_API void VK2D_APIENTRY vk2d::Window::DrawPie(
-	vk2d::Vector2f					top_left,
-	vk2d::Vector2f					bottom_right,
+VK2D_API void VK2D_APIENTRY vk2d::Window::DrawEllipsePie(
+	vk2d::Rect2f					area,
 	float							begin_angle_radians,
 	float							coverage,
 	bool							solid,
@@ -394,9 +392,8 @@ VK2D_API void VK2D_APIENTRY vk2d::Window::DrawPie(
 	vk2d::Colorf					color
 )
 {
-	auto mesh = vk2d::GeneratePieMesh(
-		top_left,
-		bottom_right,
+	auto mesh = vk2d::GenerateEllipsePieMesh(
+		area,
 		begin_angle_radians,
 		coverage,
 		solid,
@@ -406,18 +403,16 @@ VK2D_API void VK2D_APIENTRY vk2d::Window::DrawPie(
 	impl->DrawMesh( mesh );
 }
 
-VK2D_API void VK2D_APIENTRY vk2d::Window::DrawPieBox(
-	vk2d::Vector2f					top_left,
-	vk2d::Vector2f					bottom_right,
+VK2D_API void VK2D_APIENTRY vk2d::Window::DrawRectanglePie(
+	vk2d::Rect2f					area,
 	float							begin_angle_radians,
 	float							coverage,
 	bool							solid,
 	vk2d::Colorf					color
 )
 {
-	auto mesh = vk2d::GeneratePieBoxMesh(
-		top_left,
-		bottom_right,
+	auto mesh = vk2d::GenerateRectanglePieMesh(
+		area,
 		begin_angle_radians,
 		coverage,
 		solid
@@ -437,8 +432,7 @@ VK2D_API void VK2D_APIENTRY vk2d::Window::DrawTexture(
 		auto bottom_right	= top_left + vk2d::Vector2f( float( texture_size.x ), float( texture_size.y ) );
 		texture->GetSize();
 		auto mesh = vk2d::GenerateRectangleMesh(
-			top_left,
-			bottom_right
+			{ top_left, bottom_right }
 		);
 		mesh.SetTexture( texture );
 		mesh.SetVertexColor( color );
@@ -745,7 +739,7 @@ void vk2d::_internal::glfwWindowPosCallback(
 	auto impl = reinterpret_cast<vk2d::_internal::WindowImpl*>( glfwGetWindowUserPointer( glfwWindow ) );
 	impl->position = { int32_t( x ), int32_t( y ) };
 	if( impl->event_handler ) {
-		impl->event_handler->EventWindowPosition( impl->window_parent, { int32_t( x ), int32_t( y ) } );
+		impl->event_handler->EventWindowPosition( impl->my_interface, { int32_t( x ), int32_t( y ) } );
 	}
 }
 
@@ -760,7 +754,7 @@ void vk2d::_internal::glfwWindowSizeCallback(
 	impl->extent					= { uint32_t( x ), uint32_t( y ) };
 	impl->should_reconstruct		= true;
 	if( impl->event_handler ) {
-		impl->event_handler->EventWindowSize( impl->window_parent, { uint32_t( x ), uint32_t( y ) } );
+		impl->event_handler->EventWindowSize( impl->my_interface, { uint32_t( x ), uint32_t( y ) } );
 	}
 }
 
@@ -773,7 +767,7 @@ void vk2d::_internal::glfwWindowCloseCallback(
 	impl->should_close			= true;
 //	glfwHideWindow( impl->glfw_window );
 	if( impl->event_handler ) {
-		impl->event_handler->EventWindowClose( impl->window_parent );
+		impl->event_handler->EventWindowClose( impl->my_interface );
 	}
 }
 
@@ -785,7 +779,7 @@ void vk2d::_internal::glfwWindowRefreshCallback(
 
 	impl->should_reconstruct		= true;
 	if( impl->event_handler ) {
-		impl->event_handler->EventWindowRefresh( impl->window_parent );
+		impl->event_handler->EventWindowRefresh( impl->my_interface );
 	}
 }
 
@@ -797,7 +791,7 @@ void vk2d::_internal::glfwWindowFocusCallback(
 	auto impl = reinterpret_cast<vk2d::_internal::WindowImpl*>( glfwGetWindowUserPointer( glfwWindow ) );
 
 	if( impl->event_handler ) {
-		impl->event_handler->EventWindowFocus( impl->window_parent, bool( focus ) );
+		impl->event_handler->EventWindowFocus( impl->my_interface, bool( focus ) );
 	}
 }
 
@@ -815,7 +809,7 @@ void vk2d::_internal::glfwWindowIconifyCallback(
 		impl->should_reconstruct	= true;
 	}
 	if( impl->event_handler ) {
-		impl->event_handler->EventWindowIconify( impl->window_parent, bool( iconify ) );
+		impl->event_handler->EventWindowIconify( impl->my_interface, bool( iconify ) );
 	}
 }
 
@@ -830,7 +824,7 @@ void vk2d::_internal::glfwFramebufferSizeCallback(
 	impl->extent					= { uint32_t( x ), uint32_t( y ) };
 	impl->should_reconstruct		= true;
 	if( impl->event_handler ) {
-		impl->event_handler->EventWindowSize( impl->window_parent, { uint32_t( x ), uint32_t( y ) } );
+		impl->event_handler->EventWindowSize( impl->my_interface, { uint32_t( x ), uint32_t( y ) } );
 	}
 }
 
@@ -845,7 +839,7 @@ void vk2d::_internal::glfwMouseButtonCallback(
 {
 	auto impl = reinterpret_cast<vk2d::_internal::WindowImpl*>( glfwGetWindowUserPointer( glfwWindow ) );
 	if( impl->event_handler ) {
-		impl->event_handler->EventMouseButton( impl->window_parent, vk2d::MouseButton( button ), vk2d::ButtonAction( action ), vk2d::ModifierKeyFlags( mods ) );
+		impl->event_handler->EventMouseButton( impl->my_interface, vk2d::MouseButton( button ), vk2d::ButtonAction( action ), vk2d::ModifierKeyFlags( mods ) );
 	}
 }
 
@@ -857,7 +851,7 @@ void vk2d::_internal::glfwCursorPosCallback(
 {
 	auto impl = reinterpret_cast<vk2d::_internal::WindowImpl*>( glfwGetWindowUserPointer( glfwWindow ) );
 	if( impl->event_handler ) {
-		impl->event_handler->EventCursorPosition( impl->window_parent, { x, y } );
+		impl->event_handler->EventCursorPosition( impl->my_interface, { x, y } );
 	}
 }
 
@@ -868,7 +862,7 @@ void vk2d::_internal::glfwCursorEnterCallback(
 {
 	auto impl = reinterpret_cast<vk2d::_internal::WindowImpl*>( glfwGetWindowUserPointer( glfwWindow ) );
 	if( impl->event_handler ) {
-		impl->event_handler->EventCursorEnter( impl->window_parent, bool( enter ) );
+		impl->event_handler->EventCursorEnter( impl->my_interface, bool( enter ) );
 	}
 }
 
@@ -880,7 +874,7 @@ void vk2d::_internal::glfwScrollCallback(
 {
 	auto impl = reinterpret_cast<vk2d::_internal::WindowImpl*>( glfwGetWindowUserPointer( glfwWindow ) );
 	if( impl->event_handler ) {
-		impl->event_handler->EventScroll( impl->window_parent, { x, y } );
+		impl->event_handler->EventScroll( impl->my_interface, { x, y } );
 	}
 }
 
@@ -894,7 +888,7 @@ void vk2d::_internal::glfwKeyCallback(
 {
 	auto impl = reinterpret_cast<vk2d::_internal::WindowImpl*>( glfwGetWindowUserPointer( glfwWindow ) );
 	if( impl->event_handler ) {
-		impl->event_handler->EventKeyboard( impl->window_parent, vk2d::KeyboardButton( key ), scancode, vk2d::ButtonAction( action ), vk2d::ModifierKeyFlags( mods ) );
+		impl->event_handler->EventKeyboard( impl->my_interface, vk2d::KeyboardButton( key ), scancode, vk2d::ButtonAction( action ), vk2d::ModifierKeyFlags( mods ) );
 	}
 }
 
@@ -906,7 +900,7 @@ void vk2d::_internal::glfwCharModsCallback(
 {
 	auto impl = reinterpret_cast<vk2d::_internal::WindowImpl*>( glfwGetWindowUserPointer( glfwWindow ) );
 	if( impl->event_handler ) {
-		impl->event_handler->EventCharacter( impl->window_parent, codepoint, vk2d::ModifierKeyFlags( mods ) );
+		impl->event_handler->EventCharacter( impl->my_interface, codepoint, vk2d::ModifierKeyFlags( mods ) );
 	}
 }
 
@@ -922,7 +916,7 @@ void vk2d::_internal::glfwFileDropCallback(
 		for( int i = 0; i < fileCount; ++i ) {
 			files[ i ]		= filePaths[ i ];
 		}
-		impl->event_handler->EventFileDrop( impl->window_parent, files );
+		impl->event_handler->EventFileDrop( impl->my_interface, files );
 	}
 }
 
@@ -948,7 +942,7 @@ vk2d::_internal::WindowImpl::WindowImpl(
 	this->primary_compute_queue		= instance->GetPrimaryComputeQueue();
 
 	this->create_info_copy			= window_create_info;
-	this->window_parent				= window;
+	this->my_interface				= window;
 	this->instance					= instance;
 	this->report_function			= instance->GetReportFunction();
 	this->window_title				= create_info_copy.title;
@@ -2076,6 +2070,9 @@ void vk2d::_internal::WindowImpl::DrawTriangleList(
 	if( !texture ) {
 		texture = instance->GetDefaultTexture();
 	}
+	if( !texture->IsTextureDataReady() ) {
+		texture = instance->GetDefaultTexture();
+	}
 	if( !sampler ) {
 		sampler = instance->GetDefaultSampler();
 	}
@@ -2217,6 +2214,9 @@ void vk2d::_internal::WindowImpl::DrawLineList(
 	if( !texture ) {
 		texture = instance->GetDefaultTexture();
 	}
+	if( !texture->IsTextureDataReady() ) {
+		texture = instance->GetDefaultTexture();
+	}
 	if( !sampler ) {
 		sampler = instance->GetDefaultSampler();
 	}
@@ -2311,6 +2311,9 @@ void vk2d::_internal::WindowImpl::DrawPointList(
 	auto vertex_count	= uint32_t( vertices.size() );
 
 	if( !texture ) {
+		texture = instance->GetDefaultTexture();
+	}
+	if( !texture->IsTextureDataReady() ) {
 		texture = instance->GetDefaultTexture();
 	}
 	if( !sampler ) {
@@ -3694,7 +3697,7 @@ void vk2d::_internal::WindowImpl::HandleScreenshotEvent()
 	if( event_handler ) {
 		if( !screenshot_save_path.empty() ) {
 			event_handler->EventScreenshot(
-				window_parent,
+				my_interface,
 				screenshot_save_path,
 				{},
 				!screenshot_event_error,
@@ -3702,7 +3705,7 @@ void vk2d::_internal::WindowImpl::HandleScreenshotEvent()
 			);
 		} else {
 			event_handler->EventScreenshot(
-				window_parent,
+				my_interface,
 				{},
 				screenshot_save_data,
 				!screenshot_event_error,
@@ -3734,90 +3737,6 @@ void vk2d::_internal::WindowImpl::CmdBindGraphicsPipelineIfDifferent(
 		previous_pipeline_settings	= pipeline_settings;
 	}
 }
-
-/*
-void vk2d::_internal::WindowImpl::CmdBindTextureSamplerIfDifferent(
-	VkCommandBuffer						command_buffer,
-	vk2d::Sampler					*	sampler,
-	vk2d::Texture					*	texture
-)
-{
-	if( !sampler ) {
-		sampler		= instance->GetDefaultSampler();
-	}
-	if( !texture ) {
-		texture		= instance->GetDefaultTexture();
-	}
-
-	// if sampler or texture changed since previous call, bind a different descriptor set.
-	if( sampler != previous_sampler || texture != previous_texture ) {
-		auto & set = sampler_texture_descriptor_sets[ sampler ][ texture ];
-
-		// If this descriptor set doesn't exist yet for this
-		// sampler texture combo, create one and update it.
-		if( set.descriptor_set.descriptorSet == VK_NULL_HANDLE ) {
-			set.descriptor_set = instance->AllocateDescriptorSet(
-				instance->GetSamplerTextureDescriptorSetLayout()
-			);
-
-			if( !texture->WaitUntilLoaded() ) {
-				texture = instance->GetDefaultTexture();
-			}
-
-			VkDescriptorImageInfo image_info {};
-			image_info.sampler						= sampler->impl->GetVulkanSampler();
-			image_info.imageView					= texture->texture_impl->GetVulkanImageView();
-			image_info.imageLayout					= texture->texture_impl->GetVulkanImageLayout();
-
-			VkDescriptorBufferInfo buffer_info {};
-			buffer_info.buffer						= sampler->impl->GetVulkanBufferForSamplerData();
-			buffer_info.offset						= 0;
-			buffer_info.range						= sizeof( vk2d::_internal::SamplerImpl::BufferData );
-
-			std::array<VkWriteDescriptorSet, 2> descriptor_write {};
-			descriptor_write[ 0 ].sType				= VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-			descriptor_write[ 0 ].pNext				= nullptr;
-			descriptor_write[ 0 ].dstSet			= set.descriptor_set.descriptorSet;
-			descriptor_write[ 0 ].dstBinding		= 0;
-			descriptor_write[ 0 ].dstArrayElement	= 0;
-			descriptor_write[ 0 ].descriptorCount	= 1;
-			descriptor_write[ 0 ].descriptorType	= VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-			descriptor_write[ 0 ].pImageInfo		= &image_info;
-			descriptor_write[ 0 ].pBufferInfo		= nullptr;
-			descriptor_write[ 0 ].pTexelBufferView	= nullptr;
-
-			descriptor_write[ 1 ].sType				= VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-			descriptor_write[ 1 ].pNext				= nullptr;
-			descriptor_write[ 1 ].dstSet			= set.descriptor_set.descriptorSet;
-			descriptor_write[ 1 ].dstBinding		= 1;
-			descriptor_write[ 1 ].dstArrayElement	= 0;
-			descriptor_write[ 1 ].descriptorCount	= 1;
-			descriptor_write[ 1 ].descriptorType	= VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-			descriptor_write[ 1 ].pImageInfo		= nullptr;
-			descriptor_write[ 1 ].pBufferInfo		= &buffer_info;
-			descriptor_write[ 1 ].pTexelBufferView	= nullptr;
-
-			vkUpdateDescriptorSets(
-				vk_device,
-				uint32_t( descriptor_write.size() ), descriptor_write.data(),
-				0, nullptr );
-		}
-		set.previous_access_time = std::chrono::steady_clock::now();
-
-		vkCmdBindDescriptorSets(
-			command_buffer,
-			VK_PIPELINE_BIND_POINT_GRAPHICS,
-			instance->GetGraphicsPipelineLayout(),
-			DESCRIPTOR_SET_ALLOCATION_TEXTURE_AND_SAMPLER,
-			1, &set.descriptor_set.descriptorSet,
-			0, nullptr
-		);
-
-		previous_sampler		= sampler;
-		previous_texture		= texture;
-	}
-}
-*/
 
 void vk2d::_internal::WindowImpl::CmdBindSamplerIfDifferent(
 	VkCommandBuffer			command_buffer,
@@ -3908,10 +3827,6 @@ void vk2d::_internal::WindowImpl::CmdBindTextureIfDifferent(
 			set.descriptor_set = instance->AllocateDescriptorSet(
 				instance->GetGraphicsTextureDescriptorSetLayout()
 			);
-
-			if( !texture->WaitUntilLoaded() ) {
-				texture = instance->GetDefaultTexture();
-			}
 
 			VkDescriptorImageInfo image_info {};
 			image_info.sampler						= VK_NULL_HANDLE;

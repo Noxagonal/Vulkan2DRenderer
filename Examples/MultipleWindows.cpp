@@ -11,8 +11,8 @@
 // In this example we'll create a simple program to create new windows on the fly
 // and destroy them either individually or all of them at once.
 // Running this program will show a green and a red rectangle on a primary window,
-// clicking on the green box with the cursor will spawn a new window, clicking on the
-// red box will destroy all child windows. Closing the primary window closes the
+// clicking on the green rectangle with the cursor will spawn a new window, clicking on the
+// red rectangle will destroy all child windows. Closing the primary window closes the
 // application. You can also destroy the child windows individually by pressing their
 // "X" button.
 
@@ -132,16 +132,14 @@ int main()
 
 		if( !primary_window->BeginRender() ) return -1;
 
-		primary_window->DrawBox(
-			create_button.top_left,
-			create_button.bottom_right,
+		primary_window->DrawRectangle(
+			create_button,
 			true,
 			{ 0.2f, 1.0f, 0.3f, 1.0f }
 		);
 
-		primary_window->DrawBox(
-			destroy_button.top_left,
-			destroy_button.bottom_right,
+		primary_window->DrawRectangle(
+			destroy_button,
 			true,
 			{ 1.0f, 0.3f, 0.2f, 1.0f }
 		);
@@ -152,8 +150,8 @@ int main()
 			w->BeginRender();
 
 			w->DrawEllipse(
-				{ 50.0f, 50.0f },
-				{ 350.0f, 350.0f },
+				{ 50.0f, 50.0f,
+				350.0f, 350.0f },
 				true,
 				64.0f,
 				{ 0.3f, 0.6f, 1.0f, 1.0f }

@@ -39,7 +39,10 @@ VK2D_API vk2d::ResourceManager::ResourceManager(
 	vk2d::_internal::InstanceImpl		*	parent_instance
 )
 {
-	impl = std::make_unique<vk2d::_internal::ResourceManagerImpl>( parent_instance );
+	impl = std::make_unique<vk2d::_internal::ResourceManagerImpl>(
+		this,
+		parent_instance
+	);
 	if( !impl || !impl->IsGood() ) {
 		impl	= nullptr;
 		parent_instance->Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot create resource manager implementation!" );
@@ -156,11 +159,15 @@ void vk2d::_internal::ResourceThreadLoadTask::operator()(
 	vk2d::_internal::ThreadPrivateResource	*	thread_resource
 )
 {
+	// Because Vulkan often needs to do more processing afterwards resource status
+	// is not set to "LOADED" here, it'll be determined by the resource itself.
+	// However we can set resource status to "FAILED_TO_LOAD" at any time.
+
 	if( !resource->resource_impl->MTLoad( thread_resource ) ) {
-		resource->resource_impl->failed_to_load	= true;
+		resource->resource_impl->status = vk2d::ResourceStatus::FAILED_TO_LOAD;
 		resource_manager->GetInstance()->Report( vk2d::ReportSeverity::WARNING, "Resource loading failed!" );
 	}
-	resource->resource_impl->load_function_ran		= true;
+	resource->resource_impl->load_function_run_fence.Set();
 }
 
 
@@ -183,19 +190,21 @@ void vk2d::_internal::ResourceThreadUnloadTask::operator()(
 
 
 vk2d::_internal::ResourceManagerImpl::ResourceManagerImpl(
+	vk2d::ResourceManager			*	my_interface,
 	vk2d::_internal::InstanceImpl	*	parent_instance
 )
 {
-	instance			= parent_instance;
-	assert( instance );
+	this->my_interface		= my_interface;
+	this->instance			= parent_instance;
+	this->vk_device			= instance->GetVulkanDevice();
+	this->thread_pool		= instance->GetThreadPool();
+	this->loader_threads	= instance->GetLoaderThreads();
 
-	vk_device		= instance->GetVulkanDevice();
-	assert( vk_device );
-
-	thread_pool		= instance->GetThreadPool();
-	assert( thread_pool );
-
-	loader_threads	= instance->GetLoaderThreads();
+	assert( this->my_interface );
+	assert( this->instance );
+	assert( this->vk_device );
+	assert( this->thread_pool );
+	assert( std::size( this->loader_threads ) );
 
 	is_good		= true;
 }
@@ -204,22 +213,20 @@ vk2d::_internal::ResourceManagerImpl::~ResourceManagerImpl()
 {
 	// Wait for all resources to finish loading, giving time to finish.
 	while( true ) {
-		bool loaded = true;
+		bool all_resources_status_determined = true;
 		{
 			std::unique_lock<std::recursive_mutex> unique_lock( resources_mutex );
 
 			auto it = resources.begin();
 			while( it != resources.end() ) {
-				if( !( *it )->IsLoaded() ) {
-					if( !( *it )->FailedToLoad() ) {
-						// Not completely loaded yet
-						loaded = false;
-					}
+				if( ( *it )->GetStatus() == vk2d::ResourceStatus::UNDETERMINED ) {
+					// Resource status is still undetermined
+					all_resources_status_determined = false;
 				}
 				// Okay to continue
 				++it;
 			}
-			if( loaded ) break;
+			if( all_resources_status_determined ) break;
 		}
 		std::this_thread::sleep_for( std::chrono::microseconds( 10 ) );
 	}

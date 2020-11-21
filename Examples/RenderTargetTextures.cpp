@@ -60,8 +60,8 @@ int main()
 
 	// This is just to make it more obvious that we're indeed drawing into a texture.
 	auto mesh = vk2d::GenerateLatticeMesh(
-		{ -300.0f, -300.0f },
-		{ 300.0f, 300.0f },
+		{ -300.0f, -300.0f,
+		300.0f, 300.0f },
 		{ 32.0f, 32.0f }
 	);
 
@@ -86,9 +86,9 @@ int main()
 		// inside other render target textures.
 		render_target_texture->BeginRender();
 
-		render_target_texture->DrawPie(
-			{ -250.0f, -250.0f },
-			{ 250.0f, 250.0f },
+		render_target_texture->DrawEllipsePie(
+			{ -250.0f, -250.0f,
+			250.0f, 250.0f },
 			( std::sin( seconds_from_launch / 2.0f ) * 0.5f + 0.5f ) * 3.14f * 2.0f,
 			std::sin( seconds_from_launch / 4.0f ) * 0.5f + 0.5f,
 			true,

@@ -15,7 +15,6 @@
 
 namespace vk2d {
 
-class Instance;
 class Window;
 class Monitor;
 class Cursor;
@@ -47,6 +46,7 @@ public:
 	/// @param[in]	instance_create_info 
 	///				Reference to InstanceCreateInfo object.
 	InstanceImpl(
+		vk2d::Instance									*	my_interface,
 		const vk2d::InstanceCreateInfo					&	instance_create_info );
 
 	/// @note		Multithreading: Main thread only.
@@ -383,6 +383,8 @@ private:
 
 	std::vector<VkPhysicalDevice>							EnumeratePhysicalDevices();
 	VkPhysicalDevice										PickBestVulkanPhysicalDevice();
+
+	vk2d::Instance										*	my_interface							= {};
 
 	vk2d::MonitorUpdateCallbackFun							monitor_update_callback					= nullptr;
 
