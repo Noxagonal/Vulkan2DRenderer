@@ -9,6 +9,7 @@
 
 namespace vk2d {
 
+class ResourceManager;
 class Resource;
 class TextureResource;
 class FontResource;
@@ -57,6 +58,7 @@ private:
 class ResourceManagerImpl {
 public:
 	ResourceManagerImpl(
+		vk2d::ResourceManager							*	my_interface,
 		vk2d::_internal::InstanceImpl					*	parent_instance
 	);
 	~ResourceManagerImpl();
@@ -124,7 +126,8 @@ private:
 		return resource_ptr;
 	}
 
-	vk2d::_internal::InstanceImpl						*	instance						= {};
+	vk2d::ResourceManager								*	my_interface						= {};
+	vk2d::_internal::InstanceImpl						*	instance							= {};
 	VkDevice												vk_device							= {};
 
 	vk2d::_internal::ThreadPool							*	thread_pool							= {};

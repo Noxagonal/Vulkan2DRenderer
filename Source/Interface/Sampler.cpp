@@ -72,14 +72,14 @@ VK2D_API bool VK2D_APIENTRY vk2d::Sampler::IsGood() const
 
 
 vk2d::_internal::SamplerImpl::SamplerImpl(
-	vk2d::Sampler					*	sampler_parent,
+	vk2d::Sampler					*	my_interface,
 	vk2d::_internal::InstanceImpl	*	instance,
 	const vk2d::SamplerCreateInfo	&	create_info
 )
 {
-	this->sampler_parent		= sampler_parent;
+	this->my_interface		= my_interface;
 	this->instance		= instance;
-	assert( this->sampler_parent );
+	assert( this->my_interface );
 	assert( this->instance );
 
 	vk_device					= instance->GetVulkanDevice();

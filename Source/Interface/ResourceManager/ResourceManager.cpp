@@ -39,7 +39,10 @@ VK2D_API vk2d::ResourceManager::ResourceManager(
 	vk2d::_internal::InstanceImpl		*	parent_instance
 )
 {
-	impl = std::make_unique<vk2d::_internal::ResourceManagerImpl>( parent_instance );
+	impl = std::make_unique<vk2d::_internal::ResourceManagerImpl>(
+		this,
+		parent_instance
+	);
 	if( !impl || !impl->IsGood() ) {
 		impl	= nullptr;
 		parent_instance->Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot create resource manager implementation!" );
@@ -183,19 +186,21 @@ void vk2d::_internal::ResourceThreadUnloadTask::operator()(
 
 
 vk2d::_internal::ResourceManagerImpl::ResourceManagerImpl(
+	vk2d::ResourceManager			*	my_interface,
 	vk2d::_internal::InstanceImpl	*	parent_instance
 )
 {
-	instance			= parent_instance;
-	assert( instance );
+	this->my_interface		= my_interface;
+	this->instance			= parent_instance;
+	this->vk_device			= instance->GetVulkanDevice();
+	this->thread_pool		= instance->GetThreadPool();
+	this->loader_threads	= instance->GetLoaderThreads();
 
-	vk_device		= instance->GetVulkanDevice();
-	assert( vk_device );
-
-	thread_pool		= instance->GetThreadPool();
-	assert( thread_pool );
-
-	loader_threads	= instance->GetLoaderThreads();
+	assert( this->my_interface );
+	assert( this->instance );
+	assert( this->vk_device );
+	assert( this->thread_pool );
+	assert( std::size( this->loader_threads ) );
 
 	is_good		= true;
 }

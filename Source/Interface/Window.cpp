@@ -739,7 +739,7 @@ void vk2d::_internal::glfwWindowPosCallback(
 	auto impl = reinterpret_cast<vk2d::_internal::WindowImpl*>( glfwGetWindowUserPointer( glfwWindow ) );
 	impl->position = { int32_t( x ), int32_t( y ) };
 	if( impl->event_handler ) {
-		impl->event_handler->EventWindowPosition( impl->window_parent, { int32_t( x ), int32_t( y ) } );
+		impl->event_handler->EventWindowPosition( impl->my_interface, { int32_t( x ), int32_t( y ) } );
 	}
 }
 
@@ -754,7 +754,7 @@ void vk2d::_internal::glfwWindowSizeCallback(
 	impl->extent					= { uint32_t( x ), uint32_t( y ) };
 	impl->should_reconstruct		= true;
 	if( impl->event_handler ) {
-		impl->event_handler->EventWindowSize( impl->window_parent, { uint32_t( x ), uint32_t( y ) } );
+		impl->event_handler->EventWindowSize( impl->my_interface, { uint32_t( x ), uint32_t( y ) } );
 	}
 }
 
@@ -767,7 +767,7 @@ void vk2d::_internal::glfwWindowCloseCallback(
 	impl->should_close			= true;
 //	glfwHideWindow( impl->glfw_window );
 	if( impl->event_handler ) {
-		impl->event_handler->EventWindowClose( impl->window_parent );
+		impl->event_handler->EventWindowClose( impl->my_interface );
 	}
 }
 
@@ -779,7 +779,7 @@ void vk2d::_internal::glfwWindowRefreshCallback(
 
 	impl->should_reconstruct		= true;
 	if( impl->event_handler ) {
-		impl->event_handler->EventWindowRefresh( impl->window_parent );
+		impl->event_handler->EventWindowRefresh( impl->my_interface );
 	}
 }
 
@@ -791,7 +791,7 @@ void vk2d::_internal::glfwWindowFocusCallback(
 	auto impl = reinterpret_cast<vk2d::_internal::WindowImpl*>( glfwGetWindowUserPointer( glfwWindow ) );
 
 	if( impl->event_handler ) {
-		impl->event_handler->EventWindowFocus( impl->window_parent, bool( focus ) );
+		impl->event_handler->EventWindowFocus( impl->my_interface, bool( focus ) );
 	}
 }
 
@@ -809,7 +809,7 @@ void vk2d::_internal::glfwWindowIconifyCallback(
 		impl->should_reconstruct	= true;
 	}
 	if( impl->event_handler ) {
-		impl->event_handler->EventWindowIconify( impl->window_parent, bool( iconify ) );
+		impl->event_handler->EventWindowIconify( impl->my_interface, bool( iconify ) );
 	}
 }
 
@@ -824,7 +824,7 @@ void vk2d::_internal::glfwFramebufferSizeCallback(
 	impl->extent					= { uint32_t( x ), uint32_t( y ) };
 	impl->should_reconstruct		= true;
 	if( impl->event_handler ) {
-		impl->event_handler->EventWindowSize( impl->window_parent, { uint32_t( x ), uint32_t( y ) } );
+		impl->event_handler->EventWindowSize( impl->my_interface, { uint32_t( x ), uint32_t( y ) } );
 	}
 }
 
@@ -839,7 +839,7 @@ void vk2d::_internal::glfwMouseButtonCallback(
 {
 	auto impl = reinterpret_cast<vk2d::_internal::WindowImpl*>( glfwGetWindowUserPointer( glfwWindow ) );
 	if( impl->event_handler ) {
-		impl->event_handler->EventMouseButton( impl->window_parent, vk2d::MouseButton( button ), vk2d::ButtonAction( action ), vk2d::ModifierKeyFlags( mods ) );
+		impl->event_handler->EventMouseButton( impl->my_interface, vk2d::MouseButton( button ), vk2d::ButtonAction( action ), vk2d::ModifierKeyFlags( mods ) );
 	}
 }
 
@@ -851,7 +851,7 @@ void vk2d::_internal::glfwCursorPosCallback(
 {
 	auto impl = reinterpret_cast<vk2d::_internal::WindowImpl*>( glfwGetWindowUserPointer( glfwWindow ) );
 	if( impl->event_handler ) {
-		impl->event_handler->EventCursorPosition( impl->window_parent, { x, y } );
+		impl->event_handler->EventCursorPosition( impl->my_interface, { x, y } );
 	}
 }
 
@@ -862,7 +862,7 @@ void vk2d::_internal::glfwCursorEnterCallback(
 {
 	auto impl = reinterpret_cast<vk2d::_internal::WindowImpl*>( glfwGetWindowUserPointer( glfwWindow ) );
 	if( impl->event_handler ) {
-		impl->event_handler->EventCursorEnter( impl->window_parent, bool( enter ) );
+		impl->event_handler->EventCursorEnter( impl->my_interface, bool( enter ) );
 	}
 }
 
@@ -874,7 +874,7 @@ void vk2d::_internal::glfwScrollCallback(
 {
 	auto impl = reinterpret_cast<vk2d::_internal::WindowImpl*>( glfwGetWindowUserPointer( glfwWindow ) );
 	if( impl->event_handler ) {
-		impl->event_handler->EventScroll( impl->window_parent, { x, y } );
+		impl->event_handler->EventScroll( impl->my_interface, { x, y } );
 	}
 }
 
@@ -888,7 +888,7 @@ void vk2d::_internal::glfwKeyCallback(
 {
 	auto impl = reinterpret_cast<vk2d::_internal::WindowImpl*>( glfwGetWindowUserPointer( glfwWindow ) );
 	if( impl->event_handler ) {
-		impl->event_handler->EventKeyboard( impl->window_parent, vk2d::KeyboardButton( key ), scancode, vk2d::ButtonAction( action ), vk2d::ModifierKeyFlags( mods ) );
+		impl->event_handler->EventKeyboard( impl->my_interface, vk2d::KeyboardButton( key ), scancode, vk2d::ButtonAction( action ), vk2d::ModifierKeyFlags( mods ) );
 	}
 }
 
@@ -900,7 +900,7 @@ void vk2d::_internal::glfwCharModsCallback(
 {
 	auto impl = reinterpret_cast<vk2d::_internal::WindowImpl*>( glfwGetWindowUserPointer( glfwWindow ) );
 	if( impl->event_handler ) {
-		impl->event_handler->EventCharacter( impl->window_parent, codepoint, vk2d::ModifierKeyFlags( mods ) );
+		impl->event_handler->EventCharacter( impl->my_interface, codepoint, vk2d::ModifierKeyFlags( mods ) );
 	}
 }
 
@@ -916,7 +916,7 @@ void vk2d::_internal::glfwFileDropCallback(
 		for( int i = 0; i < fileCount; ++i ) {
 			files[ i ]		= filePaths[ i ];
 		}
-		impl->event_handler->EventFileDrop( impl->window_parent, files );
+		impl->event_handler->EventFileDrop( impl->my_interface, files );
 	}
 }
 
@@ -942,7 +942,7 @@ vk2d::_internal::WindowImpl::WindowImpl(
 	this->primary_compute_queue		= instance->GetPrimaryComputeQueue();
 
 	this->create_info_copy			= window_create_info;
-	this->window_parent				= window;
+	this->my_interface				= window;
 	this->instance					= instance;
 	this->report_function			= instance->GetReportFunction();
 	this->window_title				= create_info_copy.title;
@@ -3688,7 +3688,7 @@ void vk2d::_internal::WindowImpl::HandleScreenshotEvent()
 	if( event_handler ) {
 		if( !screenshot_save_path.empty() ) {
 			event_handler->EventScreenshot(
-				window_parent,
+				my_interface,
 				screenshot_save_path,
 				{},
 				!screenshot_event_error,
@@ -3696,7 +3696,7 @@ void vk2d::_internal::WindowImpl::HandleScreenshotEvent()
 			);
 		} else {
 			event_handler->EventScreenshot(
-				window_parent,
+				my_interface,
 				{},
 				screenshot_save_data,
 				!screenshot_event_error,

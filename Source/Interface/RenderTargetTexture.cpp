@@ -48,6 +48,7 @@ VK2D_API vk2d::RenderTargetTexture::RenderTargetTexture(
 )
 {
 	impl = std::make_unique<vk2d::_internal::RenderTargetTextureImpl>(
+		this,
 		instance,
 		create_info
 	);
@@ -301,6 +302,7 @@ VK2D_API bool VK2D_APIENTRY vk2d::RenderTargetTexture::IsGood() const
 
 
 vk2d::_internal::RenderTargetTextureImpl::RenderTargetTextureImpl(
+	vk2d::RenderTargetTexture					*	my_interface,
 	vk2d::_internal::InstanceImpl				*	instance,
 	const vk2d::RenderTargetTextureCreateInfo	&	create_info
 )
@@ -311,6 +313,7 @@ vk2d::_internal::RenderTargetTextureImpl::RenderTargetTextureImpl(
 		return;
 	}
 
+	this->my_interface		= my_interface;
 	this->instance			= instance;
 	this->create_info_copy	= create_info;
 	this->surface_format	= VK_FORMAT_R8G8B8A8_UNORM;
@@ -333,7 +336,7 @@ vk2d::_internal::RenderTargetTextureImpl::RenderTargetTextureImpl(
 		instance->GetDeviceMemoryPool()
 		);
 
-		// Initial final image layouts, change later if implementing mipmapless render target texture.
+	// Initial final image layouts, change later if implementing mipmapless render target texture.
 	vk_attachment_image_final_layout	= VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
 	vk_sampled_image_final_layout		= VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 	vk_sampled_image_final_access_mask	= VK_ACCESS_SHADER_READ_BIT;
