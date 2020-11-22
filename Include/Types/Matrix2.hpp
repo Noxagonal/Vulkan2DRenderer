@@ -24,7 +24,7 @@ public:
 	Matrix2Base()											= default;
 	Matrix2Base( const vk2d::Matrix2Base<T> & other )		= default;
 	Matrix2Base( vk2d::Matrix2Base<T> && other )			= default;
-	Matrix2Base( float identity )
+	Matrix2Base( T identity )
 	{
 		row_1	= { identity, 0.0f };
 		row_2	= { 0.0f, identity };
@@ -39,8 +39,8 @@ public:
 		if( e ) row_2.y = *e++;
 	}
 	Matrix2Base(
-		float r1_c1, float r1_c2,
-		float r2_c1, float r2_c2
+		T r1_c1, T r1_c2,
+		T r2_c1, T r2_c2
 	)
 	{
 		row_1	= { r1_c1, r1_c2 };

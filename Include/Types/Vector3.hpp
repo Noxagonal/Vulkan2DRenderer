@@ -109,6 +109,21 @@ public:
 	{
 		return x != other.x || y != other.y || z != other.z;
 	}
+
+
+
+	T CalculateDistanceFrom( vk2d::Vector3Base<T> other )
+	{
+		vk2d::Vector3Base<T> temp = *this - other;
+		return std::sqrt( temp.x * temp.x + temp.y * temp.y );
+	}
+
+	vk2d::Vector3Base<T> CalculateNormalized()
+	{
+		auto distance = CalculateDistanceFrom( {} );
+		if( distance < T( 0.001 ) ) return vk2d::Vector3Base<T>( T( 1.0 ), T( 0.0 ), T( 0.0 ) );
+		return *this / distance;
+	}
 };
 
 using Vector3f			= vk2d::Vector3Base<float>;

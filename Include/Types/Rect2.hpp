@@ -49,16 +49,6 @@ public:
 		if( e ) bottom_right.y	= *e++;
 	}
 
-	template<typename PointT>
-	bool IsPointInside( vk2d::Vector2Base<PointT> point )
-	{
-		if( T( point.x ) > top_left.x && T( point.x ) < bottom_right.x &&
-			T( point.y ) > top_left.y && T( point.y ) < bottom_right.y ) {
-			return true;
-		}
-		return false;
-	}
-
 	vk2d::Rect2Base<T> & operator=( const vk2d::Rect2Base<T> & other )	= default;
 	vk2d::Rect2Base<T> & operator=( vk2d::Rect2Base<T> && other )		= default;
 
@@ -89,6 +79,18 @@ public:
 	bool operator!=( vk2d::Rect2Base<T> other )
 	{
 		return top_left != other.top_left || bottom_right != other.bottom_right;
+	}
+
+
+
+	template<typename PointT>
+	bool IsPointInside( vk2d::Vector2Base<PointT> point )
+	{
+		if( T( point.x ) > top_left.x && T( point.x ) < bottom_right.x &&
+			T( point.y ) > top_left.y && T( point.y ) < bottom_right.y ) {
+			return true;
+		}
+		return false;
 	}
 };
 

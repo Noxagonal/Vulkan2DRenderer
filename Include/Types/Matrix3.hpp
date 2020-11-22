@@ -25,7 +25,7 @@ public:
 	Matrix3Base()											= default;
 	Matrix3Base( const vk2d::Matrix3Base<T> & other )		= default;
 	Matrix3Base( vk2d::Matrix3Base<T> && other )			= default;
-	Matrix3Base( float identity )
+	Matrix3Base( T identity )
 	{
 		row_1	= { identity, 0.0f, 0.0f };
 		row_2	= { 0.0f, identity, 0.0f };
@@ -46,9 +46,9 @@ public:
 		if( e ) row_3.z = *e++;
 	}
 	Matrix3Base(
-		float r1_c1, float r1_c2, float r1_c3,
-		float r2_c1, float r2_c2, float r2_c3,
-		float r3_c1, float r3_c2, float r3_c3
+		T r1_c1, T r1_c2, T r1_c3,
+		T r2_c1, T r2_c2, T r2_c3,
+		T r3_c1, T r3_c2, T r3_c3
 	)
 	{
 		row_1	= { r1_c1, r1_c2, r1_c3 };
@@ -126,9 +126,9 @@ vk2d::Matrix3Base<T> CreateRotationMatrix3(
 	auto x = T( std::cos( rotation ) );
 	auto y = T( std::sin( rotation ) );
 	return vk2d::Matrix3Base<T>(
-		+x, -y, 0,
-		+y, +x, 0,
-		0,  0,  1
+		+x,		-y,		T( 0 ),
+		+y,		+x,		T( 0 ),
+		T( 0 ),	T( 0 ),	T( 1 )
 	);
 }
 
