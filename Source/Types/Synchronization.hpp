@@ -39,7 +39,7 @@ public:
 
 private:
 	std::mutex										condition_variable_mutex;
-	std::condition_variable							condition;
+	std::condition_variable							condition_variable;
 	std::atomic_bool								is_set					= {};
 };
 

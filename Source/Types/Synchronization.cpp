@@ -2,11 +2,17 @@
 #include "../Core/SourceCommon.h"
 #include "Synchronization.hpp"
 
+
+
+
+
+
+
 void vk2d::_internal::Fence::Set()
 {
 	std::lock_guard<std::mutex> lock_guard( condition_variable_mutex );
 	is_set = true;
-	condition.notify_all();
+	condition_variable.notify_all();
 }
 
 bool vk2d::_internal::Fence::IsSet()
@@ -33,7 +39,8 @@ bool vk2d::_internal::Fence::Wait(
 
 	while( !is_set.load() ) {
 		std::unique_lock<std::mutex> unique_lock( condition_variable_mutex );
-		condition.wait_until( unique_lock, timeout );
+		if( is_set.load() ) return true;
+		condition_variable.wait_until( unique_lock, timeout );
 		if( std::chrono::steady_clock::now() >= timeout ) {
 			return is_set.load();
 		}
