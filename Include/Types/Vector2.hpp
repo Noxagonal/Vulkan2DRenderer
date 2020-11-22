@@ -11,8 +11,10 @@ namespace vk2d {
 
 
 template<typename T>
-struct Vector2Base
+class Vector2Base
 {
+public:
+
 	T x		= {};
 	T y		= {};
 

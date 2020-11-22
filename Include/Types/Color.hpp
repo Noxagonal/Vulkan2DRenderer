@@ -11,8 +11,10 @@ namespace vk2d {
 
 
 template<typename T>
-struct ColorBase
+class ColorBase
 {
+public:
+
 	T r			= {};
 	T g			= {};
 	T b			= {};

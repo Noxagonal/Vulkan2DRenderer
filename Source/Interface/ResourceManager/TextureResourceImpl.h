@@ -2,8 +2,8 @@
 
 #include "../../Core/SourceCommon.h"
 
-#include "../../../Include/Types/Vector2.h"
-#include "../../../Include/Types/Color.h"
+#include "../../../Include/Types/Vector2.hpp"
+#include "../../../Include/Types/Color.hpp"
 
 #include "../../System/VulkanMemoryManagement.h"
 

@@ -3,9 +3,9 @@
 #include "../Core/Common.h"
 
 #include "MeshPrimitives.hpp"
-#include "Vector2.h"
-#include "Rect2.h"
-#include "Color.h"
+#include "Vector2.hpp"
+#include "Rect2.hpp"
+#include "Color.hpp"
 
 #include <vector>
 #include <string>

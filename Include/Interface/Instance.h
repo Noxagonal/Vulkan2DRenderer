@@ -3,6 +3,9 @@
 #include "../Core/Common.h"
 #include "../Core/Version.hpp"
 
+#include "../Types/Vector2.hpp"
+#include "../Types/Color.hpp"
+
 #include "Window.h"
 #include "RenderTargetTexture.h"
 #include "Sampler.h"

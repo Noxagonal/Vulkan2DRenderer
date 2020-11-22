@@ -2,7 +2,7 @@
 
 #include "../Core/Common.h"
 
-#include "Vector2.h"
+#include "Vector2.hpp"
 
 #include <initializer_list>
 #include <cmath>
@@ -14,8 +14,10 @@ namespace vk2d {
 
 
 template<typename T>
-struct Matrix2Base
+class Matrix2Base
 {
+public:
+
 	vk2d::Vector2Base<T>	row_1	= {};
 	vk2d::Vector2Base<T>	row_2	= {};
 
@@ -68,7 +70,7 @@ struct Matrix2Base
 
 	vk2d::Vector2Base<T> operator*( const vk2d::Vector2Base<T> & other )
 	{
-		vk2d::Vector2f ret = {};
+		vk2d::Vector2Base<T> ret = {};
 		ret.x			= row_1.x * other.x + row_1.y * other.y;
 		ret.y			= row_2.x * other.x + row_2.y * other.y;
 		return ret;
@@ -101,13 +103,13 @@ using Matrix2u			= vk2d::Matrix2Base<uint32_t>;
 
 
 
-inline vk2d::Matrix2f CreateRotationMatrix(
-	float rotation
-)
+template<typename T>
+vk2d::Matrix2Base<T> CreateRotationMatrix2(
+	T rotation )
 {
-	auto x = std::cos( rotation );
-	auto y = std::sin( rotation );
-	return vk2d::Matrix2f(
+	auto x = T( std::cos( rotation ) );
+	auto y = T( std::sin( rotation ) );
+	return vk2d::Matrix2Base<T>(
 		+x, -y,
 		+y, +x
 	);

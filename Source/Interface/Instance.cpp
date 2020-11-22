@@ -1,6 +1,9 @@
 
 #include "../Core/SourceCommon.h"
 
+#include "../../Include/Types/Vector2.hpp"
+#include "../../Include/Types/Color.hpp"
+
 #include "../System/QueueResolver.h"
 #include "../System/ThreadPool.h"
 #include "../System/ThreadPrivateResources.h"

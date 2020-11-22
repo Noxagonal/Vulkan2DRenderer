@@ -2,7 +2,7 @@
 
 #include "../Core/Common.h"
 
-#include "Vector2.h"
+#include "Vector2.hpp"
 
 #include <initializer_list>
 
@@ -13,8 +13,10 @@ namespace vk2d {
 
 
 template<typename T>
-struct Rect2Base
+class Rect2Base
 {
+public:
+
 	vk2d::Vector2Base<T>		top_left			= {};
 	vk2d::Vector2Base<T>		bottom_right		= {};
 

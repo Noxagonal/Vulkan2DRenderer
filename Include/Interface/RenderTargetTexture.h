@@ -2,9 +2,9 @@
 
 #include "../Core/Common.h"
 
-#include "../Types/Vector2.h"
-#include "../Types/Rect2.h"
-#include "../Types/Color.h"
+#include "../Types/Vector2.hpp"
+#include "../Types/Rect2.hpp"
+#include "../Types/Color.hpp"
 #include "../Types/Multisamples.h"
 #include "../Types/RenderCoordinateSpace.hpp"
 

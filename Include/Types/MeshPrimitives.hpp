@@ -2,8 +2,8 @@
 
 #include "../Core/Common.h"
 
-#include "Vector2.h"
-#include "Color.h"
+#include "Vector2.hpp"
+#include "Color.hpp"
 
 #include <array>
 #include <vector>
