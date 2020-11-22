@@ -1603,17 +1603,9 @@ bool vk2d::_internal::InstanceImpl::CreateInstance()
 	std::vector<VkValidationFeatureDisableEXT> disabled_validation_features {
 	};
 
-	VkValidationFeaturesEXT validation_features {};
-	validation_features.sType							= VK_STRUCTURE_TYPE_VALIDATION_FEATURES_EXT;
-	validation_features.pNext							= nullptr;
-	validation_features.enabledValidationFeatureCount	= uint32_t( enabled_validation_features.size() );
-	validation_features.pEnabledValidationFeatures		= enabled_validation_features.data();
-	validation_features.disabledValidationFeatureCount	= uint32_t( disabled_validation_features.size() );
-	validation_features.pDisabledValidationFeatures		= disabled_validation_features.data();
-
 	VkDebugUtilsMessengerCreateInfoEXT			debug_utils_create_info {};
 	debug_utils_create_info.sType				= VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
-	debug_utils_create_info.pNext				= &validation_features;
+	debug_utils_create_info.pNext				= nullptr;
 	debug_utils_create_info.flags				= 0;
 	debug_utils_create_info.messageSeverity		= severity_flags;
 	debug_utils_create_info.messageType			=
@@ -1622,6 +1614,15 @@ bool vk2d::_internal::InstanceImpl::CreateInstance()
 		VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
 	debug_utils_create_info.pfnUserCallback		= vk2d::_internal::DebugMessenger;
 	debug_utils_create_info.pUserData			= this;
+
+	VkValidationFeaturesEXT validation_features {};
+	validation_features.sType							= VK_STRUCTURE_TYPE_VALIDATION_FEATURES_EXT;
+	validation_features.pNext							= &debug_utils_create_info;
+	validation_features.enabledValidationFeatureCount	= uint32_t( enabled_validation_features.size() );
+	validation_features.pEnabledValidationFeatures		= enabled_validation_features.data();
+	validation_features.disabledValidationFeatureCount	= uint32_t( disabled_validation_features.size() );
+	validation_features.pDisabledValidationFeatures		= disabled_validation_features.data();
+
 	#endif
 
 	{
@@ -1639,7 +1640,7 @@ bool vk2d::_internal::InstanceImpl::CreateInstance()
 		VkInstanceCreateInfo instance_create_info {};
 		instance_create_info.sType						= VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
 		#if VK2D_BUILD_OPTION_VULKAN_VALIDATION && VK2D_DEBUG_ENABLE
-		instance_create_info.pNext						= &debug_utils_create_info;
+		instance_create_info.pNext						= &validation_features;
 		#else
 		instance_create_info.pNext						= nullptr;
 		#endif
