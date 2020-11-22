@@ -4,6 +4,7 @@
 
 void vk2d::_internal::Fence::Set()
 {
+	std::lock_guard<std::mutex> lock_guard( condition_variable_mutex );
 	is_set = true;
 	condition.notify_all();
 }
@@ -27,18 +28,14 @@ bool vk2d::_internal::Fence::Wait(
 	std::chrono::steady_clock::time_point timeout
 )
 {
+	// In theory, using atomic variables is faster than using mutex, so we'll do some
+	// maneuvering here to only use atomic variables whenever "is_set" is true.
+
 	while( !is_set.load() ) {
-		constexpr auto spinlock_period	= std::chrono::microseconds( 100 );
-		auto time_left					= timeout - std::chrono::steady_clock::now();
-		auto lock_wait_period			= ( time_left > spinlock_period ) ? spinlock_period : time_left;
-		std::unique_lock<std::mutex> unique_lock( mutex );
-		condition.wait_for( unique_lock, lock_wait_period );
+		std::unique_lock<std::mutex> unique_lock( condition_variable_mutex );
+		condition.wait_until( unique_lock, timeout );
 		if( std::chrono::steady_clock::now() >= timeout ) {
-			if( is_set.load() ) {
-				return true;
-			} else {
-				return false;
-			}
+			return is_set.load();
 		}
 	}
 	return true;

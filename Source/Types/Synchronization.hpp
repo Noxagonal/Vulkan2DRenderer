@@ -38,7 +38,7 @@ public:
 		std::chrono::steady_clock::time_point		timeout );
 
 private:
-	std::mutex										mutex;
+	std::mutex										condition_variable_mutex;
 	std::condition_variable							condition;
 	std::atomic_bool								is_set					= {};
 };
