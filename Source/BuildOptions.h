@@ -14,7 +14,7 @@
 
 // Use Vulkan validation.
 // Used only if VK2D_DEBUG_ENABLE == 1
-#define VK2D_BUILD_OPTION_VULKAN_VALIDATION								0
+#define VK2D_BUILD_OPTION_VULKAN_VALIDATION								1
 
 // Dump Vulkan API calls
 #define VK2D_BUILD_OPTION_VULKAN_VALIDATION_API_DUMP					0
