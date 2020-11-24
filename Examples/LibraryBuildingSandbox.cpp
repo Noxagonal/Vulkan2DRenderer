@@ -184,7 +184,7 @@ int main()
 				draw_rect_size * vk2d::Vector2f( 0, 0.5 ) }
 			);
 			textured_box.SetTexture( render_target_texture2 );
-			window1->DrawMesh( textured_box );
+			window1->DrawMesh( textured_box, { vk2d::Matrix4f( 1.0f ) } );
 
 			auto grid = vk2d::GenerateLatticeMesh(
 				{ draw_rect_size * vk2d::Vector2f( 0, -0.5 ),
@@ -199,12 +199,19 @@ int main()
 				animation_counter,
 				vk2d::Vector2f( 30, 30 )
 			);
-			window1->DrawMesh( grid );
+
+			auto t = vk2d::Transform(
+				{ 50.0f, -10.0f },
+				{ 1.0f, 1.0f },
+				0.5f
+			);
+
+			window1->DrawMesh( grid, { t.CalculateTransformationMatrix() } );
 
 			grid.SetTexture( nullptr );
 			grid.SetMeshType( vk2d::MeshType::TRIANGLE_WIREFRAME );
 			grid.SetVertexColor( vk2d::Colorf( 0.1f, 1.0f, 0.3f, 1.0f ) );
-			window1->DrawMesh( grid );
+			window1->DrawMesh( grid, { t.CalculateTransformationMatrix() } );
 
 			window1->DrawTexture(
 				{ -400.0f, 200.0f },
@@ -258,7 +265,7 @@ void DrawRenderTargetTextureContent1(
 		);
 		textured_box.SetTexture( texture_resource );
 		textured_box.SetVertexColor( vk2d::Colorf( 1, 1, 1, 1 ) );
-		render_target_texture->DrawMesh( textured_box );
+		render_target_texture->DrawMesh( textured_box, { vk2d::Matrix4f( 1.0f ) } );
 
 
 		render_target_texture->DrawRectanglePie(
@@ -339,7 +346,7 @@ void DrawRenderTargetTextureContent2(
 			vk2d::Vector2f( 20, 20 )
 		);
 
-		render_target_texture->DrawMesh( lattice_mesh );
+		render_target_texture->DrawMesh( lattice_mesh, { vk2d::Matrix4f( 1.0f ) } );
 
 		render_target_texture->EndRender( { blur_test_value, blur_test_value } );
 	}
@@ -378,14 +385,14 @@ void DrawTextRenderTargetTextureContent(
 	);
 
 	text_layer_2->BeginRender();
-	text_layer_2->DrawMesh( line1 );
-	text_layer_2->DrawMesh( line2 );
+	text_layer_2->DrawMesh( line1, { vk2d::Matrix4f( 1.0f ) } );
+	text_layer_2->DrawMesh( line2, { vk2d::Matrix4f( 1.0f ) } );
 	text_layer_2->EndRender();
 
 	line1.SetVertexColor( { 0.0f, 0.0f, 0.0f, 1.0f } );
 	line2.SetVertexColor( { 0.0f, 0.0f, 0.0f, 1.0f } );
 	text_layer_1->BeginRender();
-	text_layer_1->DrawMesh( line1 );
-	text_layer_1->DrawMesh( line2 );
+	text_layer_1->DrawMesh( line1, { vk2d::Matrix4f( 1.0f ) } );
+	text_layer_1->DrawMesh( line2, { vk2d::Matrix4f( 1.0f ) } );
 	text_layer_1->EndRender( { 30.0f, 30.0f } );
 }

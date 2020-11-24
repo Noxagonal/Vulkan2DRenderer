@@ -2257,14 +2257,18 @@ bool vk2d::_internal::InstanceImpl::CreatePipelineLayouts()
 {
 	// Graphics primary render pipeline layout.
 	{
+		// TODO: We're currently using a lot of individual descriptor sets for primary render, should combine some of these.
+		// Might look more into automating the descriptor set layout creation on the fly.
+
 		// This must match shader layout.
 		std::vector<VkDescriptorSetLayout> set_layouts {
 			graphics_uniform_buffer_descriptor_set_layout->GetVulkanDescriptorSetLayout(),	// Pipeline set 0 is FrameData.
-			graphics_storage_buffer_descriptor_set_layout->GetVulkanDescriptorSetLayout(),	// Pipeline set 1 is vertex index buffer as storage buffer.
-			graphics_storage_buffer_descriptor_set_layout->GetVulkanDescriptorSetLayout(),	// Pipeline set 2 is vertex buffer as storage buffer.
-			graphics_sampler_descriptor_set_layout->GetVulkanDescriptorSetLayout(),			// Pipeline set 3 is sampler and it's data uniform.
-			graphics_texture_descriptor_set_layout->GetVulkanDescriptorSetLayout(),			// Pipeline set 4 is texture.
-			graphics_storage_buffer_descriptor_set_layout->GetVulkanDescriptorSetLayout()	// Pipeline set 5 is texture channel weight data.
+			graphics_storage_buffer_descriptor_set_layout->GetVulkanDescriptorSetLayout(),	// Pipeline set 1 is Transformation data.
+			graphics_storage_buffer_descriptor_set_layout->GetVulkanDescriptorSetLayout(),	// Pipeline set 2 is index buffer as storage buffer.
+			graphics_storage_buffer_descriptor_set_layout->GetVulkanDescriptorSetLayout(),	// Pipeline set 3 is vertex buffer as storage buffer.
+			graphics_sampler_descriptor_set_layout->GetVulkanDescriptorSetLayout(),			// Pipeline set 4 is sampler and it's data uniform.
+			graphics_texture_descriptor_set_layout->GetVulkanDescriptorSetLayout(),			// Pipeline set 5 is texture.
+			graphics_storage_buffer_descriptor_set_layout->GetVulkanDescriptorSetLayout()	// Pipeline set 6 is texture channel weight data.
 		};
 
 		std::array<VkPushConstantRange, 1> push_constant_ranges {};

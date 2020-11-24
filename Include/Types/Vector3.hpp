@@ -3,6 +3,8 @@
 #include "../Core/Common.h"
 
 #include <initializer_list>
+#include <cmath>
+#include <assert.h>
 
 
 
@@ -115,7 +117,7 @@ public:
 	T CalculateDistanceFrom( vk2d::Vector3Base<T> other )
 	{
 		vk2d::Vector3Base<T> temp = *this - other;
-		return std::sqrt( temp.x * temp.x + temp.y * temp.y );
+		return std::sqrt( temp.x * temp.x + temp.y * temp.y, temp.z * temp.z );
 	}
 
 	vk2d::Vector3Base<T> CalculateNormalized()

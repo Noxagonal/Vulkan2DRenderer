@@ -6,6 +6,7 @@
 
 #include <initializer_list>
 #include <cmath>
+#include <assert.h>
 
 
 
@@ -18,42 +19,42 @@ class Matrix3Base
 {
 public:
 
-	vk2d::Vector3Base<T>	row_1	= {};
-	vk2d::Vector3Base<T>	row_2	= {};
-	vk2d::Vector3Base<T>	row_3	= {};
+	vk2d::Vector3Base<T>	column_1	= {};
+	vk2d::Vector3Base<T>	column_2	= {};
+	vk2d::Vector3Base<T>	column_3	= {};
 
 	Matrix3Base()											= default;
 	Matrix3Base( const vk2d::Matrix3Base<T> & other )		= default;
 	Matrix3Base( vk2d::Matrix3Base<T> && other )			= default;
 	Matrix3Base( T identity )
 	{
-		row_1	= { identity, 0.0f, 0.0f };
-		row_2	= { 0.0f, identity, 0.0f };
-		row_3	= { 0.0f, 0.0f, identity };
+		column_1	= { identity, 0.0f, 0.0f };
+		column_2	= { 0.0f, identity, 0.0f };
+		column_3	= { 0.0f, 0.0f, identity };
 	}
 	Matrix3Base( const std::initializer_list<T> & elements )
 	{
 		assert( elements.size() <= 9 );
 		auto e = elements.begin();
-		if( e ) row_1.x = *e++;
-		if( e ) row_1.y = *e++;
-		if( e ) row_1.z = *e++;
-		if( e ) row_2.x = *e++;
-		if( e ) row_2.y = *e++;
-		if( e ) row_2.z = *e++;
-		if( e ) row_3.x = *e++;
-		if( e ) row_3.y = *e++;
-		if( e ) row_3.z = *e++;
+		if( e ) column_1.x = *e++;
+		if( e ) column_2.x = *e++;
+		if( e ) column_3.x = *e++;
+		if( e ) column_1.y = *e++;
+		if( e ) column_2.y = *e++;
+		if( e ) column_3.y = *e++;
+		if( e ) column_1.z = *e++;
+		if( e ) column_2.z = *e++;
+		if( e ) column_3.z = *e++;
 	}
 	Matrix3Base(
-		T r1_c1, T r1_c2, T r1_c3,
-		T r2_c1, T r2_c2, T r2_c3,
-		T r3_c1, T r3_c2, T r3_c3
+		T c1_r1, T c2_r1, T c3_r1,
+		T c1_r2, T c2_r2, T c3_r2,
+		T c1_r3, T c2_r3, T c3_r3
 	)
 	{
-		row_1	= { r1_c1, r1_c2, r1_c3 };
-		row_2	= { r2_c1, r2_c2, r2_c3 };
-		row_3	= { r3_c1, r3_c2, r3_c3 };
+		column_1	= { c1_r1, c1_r2, c1_r3 };
+		column_2	= { c2_r1, c2_r2, c2_r3 };
+		column_3	= { c3_r1, c3_r2, c3_r3 };
 	}
 
 	vk2d::Matrix3Base<T> & operator=( const vk2d::Matrix3Base<T> & other )		= default;
@@ -62,33 +63,41 @@ public:
 	vk2d::Matrix3Base<T> operator*( T multiplier )
 	{
 		vk2d::Matrix3Base<T> ret = {};
-		ret.row_1		= row_1 * multiplier;
-		ret.row_2		= row_2 * multiplier;
-		ret.row_3		= row_3 * multiplier;
+		ret.column_1		= column_1 * multiplier;
+		ret.column_2		= column_2 * multiplier;
+		ret.column_3		= column_3 * multiplier;
 		return ret;
 	}
 
 	vk2d::Matrix3Base<T> operator*( const vk2d::Matrix3Base<T> & other )
 	{
-		vk2d::Matrix3Base<T> ret = *this;
-		ret.row_1.x		= row_1.x * other.row_1.x + row_1.y * other.row_2.x + row_1.z * other.row_3.x;
-		ret.row_1.y		= row_1.x * other.row_1.y + row_1.y * other.row_2.y + row_1.z * other.row_3.y;
-		ret.row_1.z		= row_1.x * other.row_1.z + row_1.y * other.row_2.z + row_1.z * other.row_3.z;
-		ret.row_2.x		= row_2.x * other.row_1.x + row_2.y * other.row_2.x + row_2.z * other.row_3.x;
-		ret.row_2.y		= row_2.x * other.row_1.y + row_2.y * other.row_2.y + row_2.z * other.row_3.y;
-		ret.row_2.z		= row_2.x * other.row_1.z + row_2.y * other.row_2.z + row_2.z * other.row_3.z;
-		ret.row_3.x		= row_3.x * other.row_1.x + row_3.y * other.row_2.x + row_3.z * other.row_3.x;
-		ret.row_3.y		= row_3.x * other.row_1.y + row_3.y * other.row_2.y + row_3.z * other.row_3.y;
-		ret.row_3.z		= row_3.x * other.row_1.z + row_3.y * other.row_2.z + row_3.z * other.row_3.z;
+		vk2d::Matrix3Base<T> ret;
+
+		// Cheat sheet...
+		//    c1              c2              c3                   c1   c2   c3      c1   c2   c3
+		//	[ aj + bm + cp ][ ak + bn + cq ][ al + bo + cr ]  	= [ a ][ b ][ c ] * [ j ][ k ][ l ]  x
+		//	[ dj + em + fp ][ dk + en + fq ][ dl + eo + fr ]  	= [ d ][ e ][ f ] * [ m ][ n ][ o ]  y
+		//	[ gj + hm + ip ][ gk + hn + iq ][ gl + ho + ir ]  	= [ g ][ h ][ i ] * [ p ][ q ][ r ]  z
+
+		ret.column_1.x	= column_1.x * other.column_1.x + column_2.x * other.column_1.y + column_3.x * other.column_1.z;
+		ret.column_2.x	= column_1.x * other.column_2.x + column_2.x * other.column_2.y + column_3.x * other.column_2.z;
+		ret.column_3.x	= column_1.x * other.column_3.x + column_2.x * other.column_3.y + column_3.x * other.column_3.z;
+		ret.column_1.y	= column_1.y * other.column_1.x + column_2.y * other.column_1.y + column_3.y * other.column_1.z;
+		ret.column_2.y	= column_1.y * other.column_2.x + column_2.y * other.column_2.y + column_3.y * other.column_2.z;
+		ret.column_3.y	= column_1.y * other.column_3.x + column_2.y * other.column_3.y + column_3.y * other.column_3.z;
+		ret.column_1.z	= column_1.z * other.column_1.x + column_2.z * other.column_1.y + column_3.z * other.column_1.z;
+		ret.column_2.z	= column_1.z * other.column_2.x + column_2.z * other.column_2.y + column_3.z * other.column_2.z;
+		ret.column_3.z	= column_1.z * other.column_3.x + column_2.z * other.column_3.y + column_3.z * other.column_3.z;
+
 		return ret;
 	}
 
 	vk2d::Vector3Base<T> operator*( const vk2d::Vector3Base<T> & other )
 	{
-		vk2d::Vector3Base<T> ret = {};
-		ret.x			= row_1.x * other.x + row_1.y * other.y + row_1.z * other.z;
-		ret.y			= row_2.x * other.x + row_2.y * other.y + row_2.z * other.z;
-		ret.z			= row_3.x * other.x + row_3.y * other.y + row_3.z * other.z;
+		vk2d::Vector3Base<T> ret;
+		ret.x			= column_1.x * other.x + column_2.x * other.y + column_3.x * other.z;
+		ret.y			= column_1.y * other.x + column_2.y * other.y + column_3.y * other.z;
+		ret.z			= column_1.z * other.x + column_2.z * other.y + column_3.z * other.z;
 		return ret;
 	}
 
@@ -104,11 +113,11 @@ public:
 	}
 	bool operator==( vk2d::Matrix3Base<T> other )
 	{
-		return row_1 == other.row_1 && row_2 == other.row_2 && row_3 == other.row_3;
+		return column_1 == other.column_1 && column_2 == other.column_2 && column_3 == other.column_3;
 	}
 	bool operator!=( vk2d::Matrix3Base<T> other )
 	{
-		return row_1 != other.row_1 || row_2 != other.row_2 || row_3 != other.row_3;
+		return column_1 != other.column_1 || column_2 != other.column_2 || column_3 != other.column_3;
 	}
 };
 

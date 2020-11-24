@@ -3,15 +3,6 @@
 
 
 
-////////////////////////////////////////////////////////////////
-// Shader program interface.
-////////////////////////////////////////////////////////////////
-
-// Set 1: Index buffer as storage buffer.
-layout(std430, set=1, binding=0) readonly buffer	IndexBuffer{
-	uint		ssbo[];
-} index_buffer;
-
 // Vertex.
 struct			Vertex {
 	vec2		coords;
@@ -20,22 +11,35 @@ struct			Vertex {
 	float		point_size;
 	uint		single_texture_channel;
 };
-layout(std430, set=2, binding=0) readonly buffer	VertexBuffer {
+
+
+
+////////////////////////////////////////////////////////////////
+// Shader program interface.
+////////////////////////////////////////////////////////////////
+
+// Set 2: Index buffer as storage buffer.
+layout(std430, set=2, binding=0) readonly buffer	IndexBuffer{
+	uint		ssbo[];
+} index_buffer;
+
+// Set 3: Vertex buffer.
+layout(std430, set=3, binding=0) readonly buffer	VertexBuffer {
 	Vertex		ssbo[];
 } vertex_buffer;
 
-// Set 3: Sampler
-layout(set=3, binding=0) uniform sampler			image_sampler;
-layout(std140, set=3, binding=1) uniform			image_sampler_data {
+// Set 4: Sampler
+layout(set=4, binding=0) uniform sampler			image_sampler;
+layout(std140, set=4, binding=1) uniform			image_sampler_data {
 	vec4		border_color;
 	uvec2		border_color_enable;
 } sampler_data;
 
-// Set 4: Texture
-layout(set=4, binding=0) uniform texture2DArray		sampled_image;
+// Set 5: Texture
+layout(set=5, binding=0) uniform texture2DArray		sampled_image;
 
-// Set 5: Texture channel weights
-layout(std430, set=5, binding=0) readonly buffer	TextureChannelWeights {
+// Set 6: Texture channel weights
+layout(std430, set=6, binding=0) readonly buffer	TextureChannelWeights {
 	float		ssbo[];
 } texture_channel_weights;
 

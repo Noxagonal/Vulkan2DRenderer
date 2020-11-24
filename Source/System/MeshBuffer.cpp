@@ -1,6 +1,7 @@
 
 #include "../Core/SourceCommon.h"
 
+#include "../../Include/Types/Matrix4.hpp"
 #include "../../Include/Types/MeshPrimitives.hpp"
 
 #include "VulkanMemoryManagement.h"
@@ -30,19 +31,19 @@ vk2d::_internal::MeshBuffer::MeshBuffer(
 	first_draw							= true;
 }
 
-vk2d::_internal::MeshBuffer::~MeshBuffer()
-{}
-
 vk2d::_internal::MeshBuffer::PushResult vk2d::_internal::MeshBuffer::CmdPushMesh(
-	VkCommandBuffer						command_buffer,
-	const std::vector<uint32_t>		&	new_indices,
-	const std::vector<vk2d::Vertex>	&	new_vertices,
-	const std::vector<float>			new_texture_channels )
+	VkCommandBuffer							command_buffer,
+	const std::vector<uint32_t>			&	new_indices,
+	const std::vector<vk2d::Vertex>		&	new_vertices,
+	const std::vector<float>			&	new_texture_channels,
+	const std::vector<vk2d::Matrix4f>	&	new_transformations
+)
 {
 	auto reserve_result			= ReserveSpaceForMesh(
 		uint32_t( new_indices.size() ),
 		uint32_t( new_vertices.size() ),
-		uint32_t( new_texture_channels.size() )
+		uint32_t( new_texture_channels.size() ),
+		uint32_t( new_transformations.size() )
 	);
 
 	if( !reserve_result.success ) return {};
@@ -103,20 +104,41 @@ vk2d::_internal::MeshBuffer::PushResult vk2d::_internal::MeshBuffer::CmdPushMesh
 		);
 		bound_texture_channel_buffer_block	= reserve_result.texture_channel_block;
 	}
+	if( bound_transformation_buffer_block != reserve_result.transformation_block ) {
+
+		vk2d::_internal::CmdInsertCommandBufferCheckpoint(
+			command_buffer,
+			"MeshBuffer",
+			vk2d::_internal::CommandBufferCheckpointType::BIND_DESCRIPTOR_SET
+		);
+		vkCmdBindDescriptorSets(
+			command_buffer,
+			VK_PIPELINE_BIND_POINT_GRAPHICS,
+			instance->GetGraphicsPrimaryRenderPipelineLayout(),
+			GRAPHICS_DESCRIPTOR_SET_ALLOCATION_TRANSFORMATION,
+			1, &reserve_result.transformation_block->descriptor_set.descriptorSet,
+			0, nullptr
+		);
+		bound_transformation_buffer_block	= reserve_result.transformation_block;
+	}
 
 	{
-		auto & ib = reserve_result.index_block->host_data;
-		auto & vb = reserve_result.vertex_block->host_data;
-		auto & tb = reserve_result.texture_channel_block->host_data;
+		auto & index_block_data				= reserve_result.index_block->host_data;
+		auto & vertex_block_data			= reserve_result.vertex_block->host_data;
+		auto & texture_channel_block_data	= reserve_result.texture_channel_block->host_data;
+		auto & transformation_block_data	= reserve_result.transformation_block->host_data;
 
 		if( new_indices.size() ) {
-			ib.insert( ib.end(), new_indices.begin(), new_indices.end() );
+			index_block_data.insert( index_block_data.end(), new_indices.begin(), new_indices.end() );
 		}
 		if( new_vertices.size() ) {
-			vb.insert( vb.end(), new_vertices.begin(), new_vertices.end() );
+			vertex_block_data.insert( vertex_block_data.end(), new_vertices.begin(), new_vertices.end() );
 		}
 		if( new_texture_channels.size() ) {
-			tb.insert( tb.end(), new_texture_channels.begin(), new_texture_channels.end() );
+			texture_channel_block_data.insert( texture_channel_block_data.end(), new_texture_channels.begin(), new_texture_channels.end() );
+		}
+		if( new_transformations.size() ) {
+			transformation_block_data.insert( transformation_block_data.end(), new_transformations.begin(), new_transformations.end() );
 		}
 	}
 
@@ -130,6 +152,7 @@ vk2d::_internal::MeshBuffer::PushResult vk2d::_internal::MeshBuffer::CmdPushMesh
 	pushed_index_count				+= uint32_t( new_indices.size() );
 	pushed_vertex_count				+= uint32_t( new_vertices.size() );
 	pushed_texture_channel_count	+= uint32_t( new_texture_channels.size() );
+	pushed_transformation_count		+= uint32_t( new_transformations.size() );
 
 	return ret;
 }
@@ -201,13 +224,36 @@ bool vk2d::_internal::MeshBuffer::CmdUploadMeshDataToGPU(
 		}
 	}
 
+	// Transformations buffer
+	for( auto & b : transformation_buffer_blocks ) {
+		auto bb = b.get();
+		if( bb->used_byte_size ) {
+			bb->CopyVectorsToStagingBuffers();
+
+			std::array<VkBufferCopy, 1> copy_regions {};
+			copy_regions[ 0 ].srcOffset		= 0;
+			copy_regions[ 0 ].dstOffset		= 0;
+			copy_regions[ 0 ].size			= bb->used_byte_size;
+			vkCmdCopyBuffer(
+				command_buffer,
+				bb->staging_buffer.buffer,
+				bb->device_buffer.buffer,
+				uint32_t( copy_regions.size() ),
+				copy_regions.data()
+			);
+			bb->used_byte_size				= 0;
+		}
+	}
+
 	pushed_mesh_count					= 0;
 	pushed_index_count					= 0;
 	pushed_vertex_count					= 0;
 	pushed_texture_channel_count		= 0;
+	pushed_transformation_count			= 0;
 	bound_index_buffer_block			= nullptr;
 	bound_vertex_buffer_block			= nullptr;
 	bound_texture_channel_buffer_block	= nullptr;
+	bound_transformation_buffer_block	= nullptr;
 	first_draw							= true;
 
 	return true;
@@ -233,19 +279,27 @@ uint32_t vk2d::_internal::MeshBuffer::GetTotalTextureChannelCount()
 	return pushed_texture_channel_count;
 }
 
+uint32_t vk2d::_internal::MeshBuffer::GetTotalTransformationCount()
+{
+	return pushed_transformation_count;
+}
+
 vk2d::_internal::MeshBuffer::MeshBlockLocationInfo vk2d::_internal::MeshBuffer::ReserveSpaceForMesh(
 	uint32_t		index_count,
 	uint32_t		vertex_count,
-	uint32_t		texture_channel_count
+	uint32_t		texture_channel_count,
+	uint32_t		transformation_count
 )
 {
-	vk2d::_internal::MeshBufferBlock<uint32_t>		*	index_buffer_block				= nullptr;
-	vk2d::_internal::MeshBufferBlock<vk2d::Vertex>	*	vertex_buffer_block				= nullptr;
-	vk2d::_internal::MeshBufferBlock<float>			*	texture_channel_buffer_block	= nullptr;
+	vk2d::_internal::MeshBufferBlock<uint32_t>			*	index_buffer_block				= nullptr;
+	vk2d::_internal::MeshBufferBlock<vk2d::Vertex>		*	vertex_buffer_block				= nullptr;
+	vk2d::_internal::MeshBufferBlock<float>				*	texture_channel_buffer_block	= nullptr;
+	vk2d::_internal::MeshBufferBlock<vk2d::Matrix4f>	*	transformation_buffer_block		= nullptr;
 
-	VkDeviceSize										index_buffer_position			= 0;
-	VkDeviceSize										vertex_buffer_position			= 0;
-	VkDeviceSize										texture_channel_buffer_position	= 0;
+	VkDeviceSize											index_buffer_position			= 0;
+	VkDeviceSize											vertex_buffer_position			= 0;
+	VkDeviceSize											texture_channel_buffer_position	= 0;
+	VkDeviceSize											transformation_buffer_position	= 0;
 
 	{
 		// Index buffer block
@@ -271,12 +325,21 @@ vk2d::_internal::MeshBuffer::MeshBlockLocationInfo vk2d::_internal::MeshBuffer::
 			return {};
 		}
 		texture_channel_buffer_position		= texture_channel_buffer_block->ReserveSpace( texture_channel_count );
+
+		// Transformation buffer block
+		transformation_buffer_block			= FindTransformationBufferWithEnoughSpace( transformation_count );
+		if( !transformation_buffer_block ) {
+			instance->Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot reserve space for mesh in MeshBuffer, cannot find or create transformation MeshBufferBlock with enough free space!" );
+			return {};
+		}
+		transformation_buffer_position		= transformation_buffer_block->ReserveSpace( transformation_count );
 	}
 
 	vk2d::_internal::MeshBuffer::MeshBlockLocationInfo location_info {};
 	location_info.index_block					= index_buffer_block;
 	location_info.vertex_block					= vertex_buffer_block;
 	location_info.texture_channel_block			= texture_channel_buffer_block;
+	location_info.transformation_block			= transformation_buffer_block;
 
 	location_info.index_size					= index_count;
 	location_info.index_byte_size				= index_count * sizeof( index_buffer_block->host_data.front() );
@@ -292,6 +355,11 @@ vk2d::_internal::MeshBuffer::MeshBlockLocationInfo vk2d::_internal::MeshBuffer::
 	location_info.texture_channel_byte_size		= texture_channel_count * sizeof( texture_channel_buffer_block->host_data.front() );
 	location_info.texture_channel_offset		= uint32_t( texture_channel_buffer_position / sizeof( texture_channel_buffer_block->host_data.front() ) );
 	location_info.texture_channel_byte_offset	= texture_channel_buffer_position;
+
+	location_info.transformation_size			= transformation_count;
+	location_info.transformation_byte_size		= transformation_count * sizeof( transformation_buffer_block->host_data.front() );
+	location_info.transformation_offset			= uint32_t( transformation_buffer_position / sizeof( transformation_buffer_block->host_data.front() ) );
+	location_info.transformation_byte_offset	= transformation_buffer_position;
 
 	location_info.success						= true;
 
@@ -385,6 +453,35 @@ vk2d::_internal::MeshBufferBlock<float>* vk2d::_internal::MeshBuffer::FindTextur
 	return nullptr;
 }
 
+vk2d::_internal::MeshBufferBlock<vk2d::Matrix4f>* vk2d::_internal::MeshBuffer::FindTransformationBufferWithEnoughSpace(
+	uint32_t count
+)
+{
+	for( auto & i : transformation_buffer_blocks ) {
+		if( i->CheckDataFits( count ) ) {
+			return i.get();
+		}
+	}
+	// Not found in existing blocks, create new
+	{
+		auto new_block = AllocateTransformationBufferBlockAndStore(
+			std::max(
+				VkDeviceSize( count ) * sizeof( transformation_buffer_blocks.front()->host_data.front() ),
+				VkDeviceSize( VK2D_BUILD_OPTION_MESH_BUFFER_BLOCK_TRANSFORMATION_SIZE )
+			)
+		);
+
+		if( new_block && new_block->IsGood() ) {
+			assert( new_block->CheckDataFits( count ) );
+			return new_block;
+		} else {
+			instance->Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot create new transformation MeshBufferBlock!" );
+			return nullptr;
+		}
+	}
+	return nullptr;
+}
+
 vk2d::_internal::MeshBufferBlock<uint32_t>* vk2d::_internal::MeshBuffer::AllocateIndexBufferBlockAndStore(
 	VkDeviceSize byte_size
 )
@@ -442,6 +539,25 @@ vk2d::_internal::MeshBufferBlock<float>* vk2d::_internal::MeshBuffer::AllocateTe
 	}
 }
 
+vk2d::_internal::MeshBufferBlock<vk2d::Matrix4f>* vk2d::_internal::MeshBuffer::AllocateTransformationBufferBlockAndStore(
+	VkDeviceSize byte_size
+)
+{
+	auto buffer_block	= std::make_unique<vk2d::_internal::MeshBufferBlock<vk2d::Matrix4f>>(
+		this,
+		byte_size,
+		VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
+		vk2d::_internal::MeshBufferDescriptorSetType::STORAGE
+		);
+	if( buffer_block && buffer_block->IsGood() ) {
+		auto ret		= buffer_block.get();
+		transformation_buffer_blocks.push_back( std::move( buffer_block ) );
+		return ret;
+	} else {
+		return nullptr;
+	}
+}
+
 void vk2d::_internal::MeshBuffer::FreeBufferBlockFromStorage(
 	vk2d::_internal::MeshBufferBlock<uint32_t>		*	buffer_block
 )
@@ -483,6 +599,22 @@ void vk2d::_internal::MeshBuffer::FreeBufferBlockFromStorage(
 		while( it != texture_channel_buffer_blocks.end() ) {
 			if( it->get() == buffer_block ) {
 				texture_channel_buffer_blocks.erase( it );
+				return;
+			}
+			++it;
+		}
+	}
+}
+
+void vk2d::_internal::MeshBuffer::FreeBufferBlockFromStorage(
+	vk2d::_internal::MeshBufferBlock<vk2d::Matrix4f>	*	buffer_block
+)
+{
+	if( transformation_buffer_blocks.size() ) {
+		auto it = transformation_buffer_blocks.begin();
+		while( it != transformation_buffer_blocks.end() ) {
+			if( it->get() == buffer_block ) {
+				transformation_buffer_blocks.erase( it );
 				return;
 			}
 			++it;

@@ -3,6 +3,8 @@
 #include "../Core/Common.h"
 
 #include <initializer_list>
+#include <cmath>
+#include <assert.h>
 
 
 

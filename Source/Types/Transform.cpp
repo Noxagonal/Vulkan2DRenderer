@@ -3,8 +3,7 @@
 
 #include "../../Include/Types/Transform.h"
 #include "../../Include/Types/Vector2.hpp"
-#include "../../Include/Types/Matrix2.hpp"
-#include "../../Include/Types/Matrix3.hpp"
+#include "../../Include/Types/Matrix4.hpp"
 
 
 vk2d::Transform::Transform(
@@ -38,21 +37,21 @@ VK2D_API void VK2D_APIENTRY vk2d::Transform::Rotate(
 	this->rotation += rotation;
 }
 
-VK2D_API vk2d::Matrix3f VK2D_APIENTRY vk2d::Transform::CalculateTransformationMatrix()
+VK2D_API vk2d::Matrix4f VK2D_APIENTRY vk2d::Transform::CalculateTransformationMatrix()
 {
-	auto position_matrix_3 = vk2d::Matrix3f( 1.0f );
+	auto position_matrix = vk2d::Matrix4f( 1.0f );
 	{
-		position_matrix_3.row_1.z = position.x;
-		position_matrix_3.row_2.z = position.y;
+		position_matrix.column_4.x = position.x;
+		position_matrix.column_4.y = position.y;
 	}
 
-	auto scale_matrix_3 = vk2d::Matrix3f( 1.0f );
+	auto scale_matrix = vk2d::Matrix4f( 1.0f );
 	{
-		scale_matrix_3.row_1.x = scale.x;
-		scale_matrix_3.row_2.y = scale.y;
+		scale_matrix.column_1.x = scale.x;
+		scale_matrix.column_2.y = scale.y;
 	}
 
-	auto rotation_matrix_3 = vk2d::CreateRotationMatrix3( rotation );
+	auto rotation_matrix = vk2d::CreateRotationMatrix4( rotation );
 
-	return position_matrix_3 * scale_matrix_3 * rotation_matrix_3;
+	return position_matrix * scale_matrix * rotation_matrix;
 }

@@ -3,6 +3,7 @@
 
 #include "../../Include/Types/Vector2.hpp"
 #include "../../Include/Types/Rect2.hpp"
+#include "../../Include/Types/Matrix4.hpp"
 #include "../../Include/Types/Color.hpp"
 #include "../../Include/Types/Mesh.h"
 
@@ -281,6 +282,7 @@ VK2D_API void VK2D_APIENTRY vk2d::Window::DrawTriangleList(
 	const std::vector<vk2d::VertexIndex_3>	&	indices,
 	const std::vector<vk2d::Vertex>			&	vertices,
 	const std::vector<float>				&	texture_channel_weights,
+	const std::vector<vk2d::Matrix4f>		&	transformations,
 	bool										solid,
 	vk2d::Texture							*	texture,
 	vk2d::Sampler							*	sampler
@@ -290,6 +292,7 @@ VK2D_API void VK2D_APIENTRY vk2d::Window::DrawTriangleList(
 		indices,
 		vertices,
 		texture_channel_weights,
+		transformations,
 		solid,
 		texture
 	);
@@ -299,6 +302,7 @@ VK2D_API void VK2D_APIENTRY vk2d::Window::DrawLineList(
 	const std::vector<vk2d::VertexIndex_2>	&	indices,
 	const std::vector<vk2d::Vertex>			&	vertices,
 	const std::vector<float>				&	texture_channel_weights,
+	const std::vector<vk2d::Matrix4f>		&	transformations,
 	vk2d::Texture							*	texture,
 	vk2d::Sampler							*	sampler
 )
@@ -307,6 +311,7 @@ VK2D_API void VK2D_APIENTRY vk2d::Window::DrawLineList(
 		indices,
 		vertices,
 		texture_channel_weights,
+		transformations,
 		texture
 	);
 }
@@ -314,6 +319,7 @@ VK2D_API void VK2D_APIENTRY vk2d::Window::DrawLineList(
 VK2D_API void VK2D_APIENTRY vk2d::Window::DrawPointList(
 	const std::vector<vk2d::Vertex>			&	vertices,
 	const std::vector<float>				&	texture_channel_weights,
+	const std::vector<vk2d::Matrix4f>		&	transformations,
 	vk2d::Texture							*	texture,
 	vk2d::Sampler							*	sampler
 )
@@ -321,6 +327,7 @@ VK2D_API void VK2D_APIENTRY vk2d::Window::DrawPointList(
 	impl->DrawPointList(
 		vertices,
 		texture_channel_weights,
+		transformations,
 		texture
 	);
 }
@@ -336,7 +343,7 @@ VK2D_API void VK2D_APIENTRY vk2d::Window::DrawPoint(
 	);
 	mesh.SetVertexColor( color );
 	mesh.SetPointSize( size );
-	impl->DrawMesh( mesh );
+	impl->DrawMesh( mesh, { vk2d::Matrix4f( 1.0f ) } );
 }
 
 VK2D_API void VK2D_APIENTRY vk2d::Window::DrawLine(
@@ -350,7 +357,7 @@ VK2D_API void VK2D_APIENTRY vk2d::Window::DrawLine(
 		{ { 0, 1 } }
 	);
 	mesh.SetVertexColor( color );
-	impl->DrawMesh( mesh );
+	impl->DrawMesh( mesh, { vk2d::Matrix4f( 1.0f ) } );
 }
 
 VK2D_API void VK2D_APIENTRY vk2d::Window::DrawRectangle(
@@ -364,7 +371,7 @@ VK2D_API void VK2D_APIENTRY vk2d::Window::DrawRectangle(
 		solid
 	);
 	mesh.SetVertexColor( color );
-	impl->DrawMesh( mesh );
+	impl->DrawMesh( mesh, { vk2d::Matrix4f( 1.0f ) } );
 }
 
 VK2D_API void VK2D_APIENTRY vk2d::Window::DrawEllipse(
@@ -380,7 +387,7 @@ VK2D_API void VK2D_APIENTRY vk2d::Window::DrawEllipse(
 		edge_count
 	);
 	mesh.SetVertexColor( color );
-	impl->DrawMesh( mesh );
+	impl->DrawMesh( mesh, { vk2d::Matrix4f( 1.0f ) } );
 }
 
 VK2D_API void VK2D_APIENTRY vk2d::Window::DrawEllipsePie(
@@ -400,7 +407,7 @@ VK2D_API void VK2D_APIENTRY vk2d::Window::DrawEllipsePie(
 		edge_count
 	);
 	mesh.SetVertexColor( color );
-	impl->DrawMesh( mesh );
+	impl->DrawMesh( mesh, { vk2d::Matrix4f( 1.0f ) } );
 }
 
 VK2D_API void VK2D_APIENTRY vk2d::Window::DrawRectanglePie(
@@ -418,7 +425,7 @@ VK2D_API void VK2D_APIENTRY vk2d::Window::DrawRectanglePie(
 		solid
 	);
 	mesh.SetVertexColor( color );
-	impl->DrawMesh( mesh );
+	impl->DrawMesh( mesh, { vk2d::Matrix4f( 1.0f ) } );
 }
 
 VK2D_API void VK2D_APIENTRY vk2d::Window::DrawTexture(
@@ -436,16 +443,18 @@ VK2D_API void VK2D_APIENTRY vk2d::Window::DrawTexture(
 		);
 		mesh.SetTexture( texture );
 		mesh.SetVertexColor( color );
-		impl->DrawMesh( mesh );
+		impl->DrawMesh( mesh, { vk2d::Matrix4f( 1.0f ) } );
 	}
 }
 
 VK2D_API void VK2D_APIENTRY vk2d::Window::DrawMesh(
-	const vk2d::Mesh	&	mesh
+	const vk2d::Mesh						&	mesh,
+	const std::vector<vk2d::Matrix4f>		&	transformations
 )
 {
 	impl->DrawMesh(
-		mesh
+		mesh,
+		transformations
 	);
 }
 
@@ -2029,11 +2038,14 @@ void vk2d::_internal::WindowImpl::DrawTriangleList(
 	const std::vector<vk2d::VertexIndex_3>	&	indices,
 	const std::vector<vk2d::Vertex>			&	vertices,
 	const std::vector<float>				&	texture_channel_weights,
+	const std::vector<vk2d::Matrix4f>		&	transformations,
 	bool										solid,
 	vk2d::Texture							*	texture,
 	vk2d::Sampler							*	sampler
 )
 {
+	assert( std::size( transformations ) );
+
 	auto index_count	= uint32_t( indices.size() * 3 );
 	std::vector<uint32_t> raw_indices;
 	raw_indices.resize( index_count );
@@ -2047,6 +2059,7 @@ void vk2d::_internal::WindowImpl::DrawTriangleList(
 		raw_indices,
 		vertices,
 		texture_channel_weights,
+		transformations,
 		solid,
 		texture,
 		sampler
@@ -2057,11 +2070,14 @@ void vk2d::_internal::WindowImpl::DrawTriangleList(
 	const std::vector<uint32_t>				&	raw_indices,
 	const std::vector<vk2d::Vertex>			&	vertices,
 	const std::vector<float>				&	texture_channel_weights,
+	const std::vector<vk2d::Matrix4f>		&	transformations,
 	bool										solid,
 	vk2d::Texture							*	texture,
 	vk2d::Sampler							*	sampler
 )
 {
+	assert( std::size( transformations ) );
+
 	auto command_buffer					= vk_render_command_buffers[ next_image ];
 
 	auto vertex_count	= uint32_t( vertices.size() );
@@ -2117,11 +2133,14 @@ void vk2d::_internal::WindowImpl::DrawTriangleList(
 		command_buffer,
 		raw_indices,
 		vertices,
-		texture_channel_weights );
+		texture_channel_weights,
+		transformations
+	);
 
 	if( push_result.success ) {
 		{
 			vk2d::_internal::GraphicsPrimaryRenderPushConstants pc {};
+			pc.transformation_offset	= push_result.location_info.transformation_offset;
 			pc.index_offset				= push_result.location_info.index_offset;
 			pc.index_count				= 3;
 			pc.vertex_offset			= push_result.location_info.vertex_offset;
@@ -2145,7 +2164,7 @@ void vk2d::_internal::WindowImpl::DrawTriangleList(
 		vkCmdDrawIndexed(
 			command_buffer,
 			index_count,
-			1,
+			uint32_t( std::size( transformations ) ),
 			push_result.location_info.index_offset,
 			int32_t( push_result.location_info.vertex_offset ),
 			0
@@ -2174,11 +2193,14 @@ void vk2d::_internal::WindowImpl::DrawLineList(
 	const std::vector<vk2d::VertexIndex_2>	&	indices,
 	const std::vector<vk2d::Vertex>			&	vertices,
 	const std::vector<float>				&	texture_channel_weights,
+	const std::vector<vk2d::Matrix4f>		&	transformations,
 	vk2d::Texture							*	texture,
 	vk2d::Sampler							*	sampler,
 	float										line_width
 )
 {
+	assert( std::size( transformations ) );
+
 	auto index_count	= uint32_t( indices.size() * 2 );
 	std::vector<uint32_t> raw_indices;
 	raw_indices.resize( index_count );
@@ -2191,6 +2213,7 @@ void vk2d::_internal::WindowImpl::DrawLineList(
 		raw_indices,
 		vertices,
 		texture_channel_weights,
+		transformations,
 		texture,
 		sampler,
 		line_width
@@ -2201,11 +2224,14 @@ void vk2d::_internal::WindowImpl::DrawLineList(
 	const std::vector<uint32_t>				&	raw_indices,
 	const std::vector<vk2d::Vertex>			&	vertices,
 	const std::vector<float>				&	texture_channel_weights,
+	const std::vector<vk2d::Matrix4f>		&	transformations,
 	vk2d::Texture							*	texture,
 	vk2d::Sampler							*	sampler,
 	float										line_width
 )
 {
+	assert( std::size( transformations ) );
+
 	auto command_buffer					= vk_render_command_buffers[ next_image ];
 
 	auto vertex_count	= uint32_t( vertices.size() );
@@ -2261,11 +2287,14 @@ void vk2d::_internal::WindowImpl::DrawLineList(
 		command_buffer,
 		raw_indices,
 		vertices,
-		texture_channel_weights );
+		texture_channel_weights,
+		transformations
+	);
 
 	if( push_result.success ) {
 		{
 			vk2d::_internal::GraphicsPrimaryRenderPushConstants pc {};
+			pc.transformation_offset	= push_result.location_info.transformation_offset;
 			pc.index_offset				= push_result.location_info.index_offset;
 			pc.index_count				= 2;
 			pc.vertex_offset			= push_result.location_info.vertex_offset;
@@ -2289,7 +2318,7 @@ void vk2d::_internal::WindowImpl::DrawLineList(
 		vkCmdDrawIndexed(
 			command_buffer,
 			index_count,
-			1,
+			uint32_t( std::size( transformations ) ),
 			push_result.location_info.index_offset,
 			int32_t( push_result.location_info.vertex_offset ),
 			0
@@ -2302,10 +2331,13 @@ void vk2d::_internal::WindowImpl::DrawLineList(
 void vk2d::_internal::WindowImpl::DrawPointList(
 	const std::vector<vk2d::Vertex>			&	vertices,
 	const std::vector<float>				&	texture_channel_weights,
+	const std::vector<vk2d::Matrix4f>		&	transformations,
 	vk2d::Texture							*	texture,
 	vk2d::Sampler							*	sampler
 )
 {
+	assert( std::size( transformations ) );
+
 	auto command_buffer					= vk_render_command_buffers[ next_image ];
 
 	auto vertex_count	= uint32_t( vertices.size() );
@@ -2360,11 +2392,14 @@ void vk2d::_internal::WindowImpl::DrawPointList(
 		command_buffer,
 		{},
 		vertices,
-		texture_channel_weights );
+		texture_channel_weights,
+		transformations
+	);
 
 	if( push_result.success ) {
 		{
 			vk2d::_internal::GraphicsPrimaryRenderPushConstants pc {};
+			pc.transformation_offset	= push_result.location_info.transformation_offset;
 			pc.index_offset				= push_result.location_info.index_offset;
 			pc.index_count				= 1;
 			pc.vertex_offset			= push_result.location_info.vertex_offset;
@@ -2388,7 +2423,7 @@ void vk2d::_internal::WindowImpl::DrawPointList(
 		vkCmdDraw(
 			command_buffer,
 			vertex_count,
-			1,
+			uint32_t( std::size( transformations ) ),
 			push_result.location_info.vertex_offset,
 			0
 		);
@@ -2398,8 +2433,11 @@ void vk2d::_internal::WindowImpl::DrawPointList(
 }
 
 void vk2d::_internal::WindowImpl::DrawMesh(
-	const vk2d::Mesh		&	mesh )
+	const vk2d::Mesh						&	mesh,
+	const std::vector<vk2d::Matrix4f>		&	transformations )
 {
+	assert( std::size( transformations ) );
+
 	if( mesh.vertices.size() == 0 ) return;
 
 	switch( mesh.mesh_type ) {
@@ -2408,6 +2446,7 @@ void vk2d::_internal::WindowImpl::DrawMesh(
 				mesh.indices,
 				mesh.vertices,
 				mesh.texture_channel_weights,
+				transformations,
 				true,
 				mesh.texture,
 				mesh.sampler
@@ -2418,6 +2457,7 @@ void vk2d::_internal::WindowImpl::DrawMesh(
 				mesh.indices,
 				mesh.vertices,
 				mesh.texture_channel_weights,
+				transformations,
 				false,
 				mesh.texture,
 				mesh.sampler
@@ -2428,6 +2468,7 @@ void vk2d::_internal::WindowImpl::DrawMesh(
 				mesh.indices,
 				mesh.vertices,
 				mesh.texture_channel_weights,
+				transformations,
 				mesh.texture,
 				mesh.sampler,
 				mesh.line_width
@@ -2437,6 +2478,7 @@ void vk2d::_internal::WindowImpl::DrawMesh(
 			DrawPointList(
 				mesh.vertices,
 				mesh.texture_channel_weights,
+				transformations,
 				mesh.texture,
 				mesh.sampler
 			);

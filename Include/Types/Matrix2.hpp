@@ -6,6 +6,7 @@
 
 #include <initializer_list>
 #include <cmath>
+#include <assert.h>
 
 
 
@@ -18,33 +19,33 @@ class Matrix2Base
 {
 public:
 
-	vk2d::Vector2Base<T>	row_1	= {};
-	vk2d::Vector2Base<T>	row_2	= {};
+	vk2d::Vector2Base<T>	column_1	= {};
+	vk2d::Vector2Base<T>	column_2	= {};
 
 	Matrix2Base()											= default;
 	Matrix2Base( const vk2d::Matrix2Base<T> & other )		= default;
 	Matrix2Base( vk2d::Matrix2Base<T> && other )			= default;
 	Matrix2Base( T identity )
 	{
-		row_1	= { identity, 0.0f };
-		row_2	= { 0.0f, identity };
+		column_1	= { identity, 0.0f };
+		column_2	= { 0.0f, identity };
 	}
-	Matrix2Base( const std::initializer_list<T> & elements )
+	Matrix2Base( const std::initializer_list<T> & elements_in_row_major_order )
 	{
-		assert( elements.size() <= 4 );
-		auto e = elements.begin();
-		if( e ) row_1.x = *e++;
-		if( e ) row_1.y = *e++;
-		if( e ) row_2.x = *e++;
-		if( e ) row_2.y = *e++;
+		assert( elements_in_row_major_order.size() <= 4 );
+		auto e = elements_in_row_major_order.begin();
+		if( e ) column_1.x = *e++;
+		if( e ) column_2.x = *e++;
+		if( e ) column_1.y = *e++;
+		if( e ) column_2.y = *e++;
 	}
 	Matrix2Base(
-		T r1_c1, T r1_c2,
-		T r2_c1, T r2_c2
+		T c1_r1, T c2_r1,
+		T c1_r2, T c2_r2
 	)
 	{
-		row_1	= { r1_c1, r1_c2 };
-		row_2	= { r2_c1, r2_c2 };
+		column_1	= { c1_r1, c1_r2 };
+		column_2	= { c2_r1, c2_r2 };
 	}
 
 	vk2d::Matrix2Base<T> & operator=( const vk2d::Matrix2Base<T> & other )		= default;
@@ -53,26 +54,33 @@ public:
 	vk2d::Matrix2Base<T> operator*( T multiplier )
 	{
 		vk2d::Matrix2Base<T> ret = {};
-		ret.row_1		= row_1 * multiplier;
-		ret.row_2		= row_2 * multiplier;
+		ret.column_1	= column_1 * multiplier;
+		ret.column_2	= column_2 * multiplier;
 		return ret;
 	}
 
 	vk2d::Matrix2Base<T> operator*( const vk2d::Matrix2Base<T> & other )
 	{
-		vk2d::Matrix2Base<T> ret = *this;
-		ret.row_1.x		= row_1.x * other.row_1.x + row_1.y * other.row_2.x;
-		ret.row_1.y		= row_1.x * other.row_1.y + row_1.y * other.row_2.y;
-		ret.row_2.x		= row_2.x * other.row_1.x + row_2.y * other.row_2.x;
-		ret.row_2.y		= row_2.x * other.row_1.y + row_2.y * other.row_2.y;
+		vk2d::Matrix2Base<T> ret;
+
+		// Cheat sheet...
+		//   c1         c2               c1   c2      c1   c2
+		//	[ ae + bg ][ af + bh ]	=	[ a ][ b ] * [ e ][ f ]  x
+		//	[ ce + dg ][ cf + dh ]	=	[ c ][ d ] * [ g ][ h ]  y
+
+		ret.column_1.x	= column_1.x * other.column_1.x + column_2.x * other.column_1.y;
+		ret.column_2.x	= column_1.x * other.column_2.x + column_2.x * other.column_2.y;
+		ret.column_1.y	= column_1.y * other.column_1.x + column_2.y * other.column_1.y;
+		ret.column_2.y	= column_1.y * other.column_2.x + column_2.y * other.column_2.y;
+
 		return ret;
 	}
 
 	vk2d::Vector2Base<T> operator*( const vk2d::Vector2Base<T> & other )
 	{
-		vk2d::Vector2Base<T> ret = {};
-		ret.x			= row_1.x * other.x + row_1.y * other.y;
-		ret.y			= row_2.x * other.x + row_2.y * other.y;
+		vk2d::Vector2Base<T> ret;
+		ret.x			= column_1.x * other.x + column_2.x * other.y;
+		ret.y			= column_1.y * other.x + column_2.y * other.y;
 		return ret;
 	}
 
@@ -88,11 +96,11 @@ public:
 	}
 	bool operator==( vk2d::Matrix2Base<T> other )
 	{
-		return row_1 == other.row_1 && row_2 == other.row_2;
+		return column_1 == other.column_1 && column_2 == other.column_2;
 	}
 	bool operator!=( vk2d::Matrix2Base<T> other )
 	{
-		return row_1 != other.row_1 || row_2 != other.row_2;
+		return column_1 != other.column_1 || column_2 != other.column_2;
 	}
 };
 
