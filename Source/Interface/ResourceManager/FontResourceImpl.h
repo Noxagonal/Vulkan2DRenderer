@@ -2,8 +2,8 @@
 
 #include "../../Core/SourceCommon.h"
 
-#include "../../../Include/Types/Rect2.h"
-#include "../../../Include/Types/Color.h"
+#include "../../../Include/Types/Rect2.hpp"
+#include "../../../Include/Types/Color.hpp"
 
 #include "ResourceImpl.h"
 

@@ -3,6 +3,8 @@
 #include "../Core/Common.h"
 
 #include <initializer_list>
+#include <cmath>
+#include <assert.h>
 
 
 
@@ -11,8 +13,10 @@ namespace vk2d {
 
 
 template<typename T>
-struct Vector2Base
+class Vector2Base
 {
+public:
+
 	T x		= {};
 	T y		= {};
 
@@ -98,6 +102,21 @@ struct Vector2Base
 	bool operator!=( vk2d::Vector2Base<T> other )
 	{
 		return x != other.x || y != other.y;
+	}
+
+
+
+	T CalculateDistanceFrom( vk2d::Vector2Base<T> other )
+	{
+		vk2d::Vector2Base<T> temp = *this - other;
+		return std::sqrt( temp.x * temp.x + temp.y * temp.y );
+	}
+
+	vk2d::Vector2Base<T> CalculateNormalized()
+	{
+		auto distance = CalculateDistanceFrom( {} );
+		if( distance < T( 0.001 ) ) return vk2d::Vector2Base<T>( T( 1.0 ), T( 0.0 ) );
+		return *this / distance;
 	}
 };
 

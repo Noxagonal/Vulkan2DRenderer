@@ -2,9 +2,11 @@
 
 #include "../Core/Common.h"
 
-#include "../Types/Vector2.h"
-#include "../Types/Rect2.h"
-#include "../Types/Color.h"
+#include "../Types/Vector2.hpp"
+#include "../Types/Rect2.hpp"
+#include "../Types/Matrix4.hpp"
+#include "../Types/Transform.h"
+#include "../Types/Color.hpp"
 #include "../Types/Multisamples.h"
 #include "../Types/RenderCoordinateSpace.hpp"
 
@@ -76,7 +78,8 @@ public:
 	VK2D_API void												VK2D_APIENTRY				DrawTriangleList(
 		const std::vector<vk2d::VertexIndex_3>				&	indices,
 		const std::vector<vk2d::Vertex>						&	vertices,
-		const std::vector<float>							&	texture_channels,
+		const std::vector<float>							&	texture_channel_weights,
+		const std::vector<vk2d::Matrix4f>					&	transformations,
 		bool													filled						= true,
 		vk2d::Texture										*	texture						= nullptr,
 		vk2d::Sampler										*	sampler						= nullptr );
@@ -84,13 +87,15 @@ public:
 	VK2D_API void												VK2D_APIENTRY				DrawLineList(
 		const std::vector<vk2d::VertexIndex_2>				&	indices,
 		const std::vector<vk2d::Vertex>						&	vertices,
-		const std::vector<float>							&	texture_channels,
+		const std::vector<float>							&	texture_channel_weights,
+		const std::vector<vk2d::Matrix4f>					&	transformations,
 		vk2d::Texture										*	texture						= nullptr,
 		vk2d::Sampler										*	sampler						= nullptr );
 
 	VK2D_API void												VK2D_APIENTRY				DrawPointList(
 		const std::vector<vk2d::Vertex>						&	vertices,
-		const std::vector<float>							&	texture_channels,
+		const std::vector<float>							&	texture_channel_weights,
+		const std::vector<vk2d::Matrix4f>					&	transformations,
 		vk2d::Texture										*	texture						= nullptr,
 		vk2d::Sampler										*	sampler						= nullptr );
 
@@ -136,7 +141,16 @@ public:
 		vk2d::Colorf											color						= { 1.0f, 1.0f, 1.0f, 1.0f } );
 
 	VK2D_API void												VK2D_APIENTRY				DrawMesh(
-		const vk2d::Mesh									&	mesh );
+		const vk2d::Mesh									&	mesh,
+		const vk2d::Transform								&	transformations				= {} );
+
+	VK2D_API void												VK2D_APIENTRY				DrawMesh(
+		const vk2d::Mesh									&	mesh,
+		const std::vector<vk2d::Transform>					&	transformations );
+
+	VK2D_API void												VK2D_APIENTRY				DrawMesh(
+		const vk2d::Mesh									&	mesh,
+		const std::vector<vk2d::Matrix4f>					&	transformations );
 
 	VK2D_API bool												VK2D_APIENTRY				IsGood() const;
 

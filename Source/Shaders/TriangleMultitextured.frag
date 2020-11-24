@@ -3,15 +3,6 @@
 
 
 
-////////////////////////////////////////////////////////////////
-// Shader program interface.
-////////////////////////////////////////////////////////////////
-
-// Set 1: Index buffer as storage buffer.
-layout(std430, set=1, binding=0) readonly buffer	IndexBuffer{
-	uint		ssbo[];
-} index_buffer;
-
 // Vertex.
 struct			Vertex {
 	vec2		coords;
@@ -20,32 +11,46 @@ struct			Vertex {
 	float		point_size;
 	uint		single_texture_channel;
 };
-layout(std430, set=2, binding=0) readonly buffer	VertexBuffer {
+
+
+
+////////////////////////////////////////////////////////////////
+// Shader program interface.
+////////////////////////////////////////////////////////////////
+
+// Set 2: Index buffer as storage buffer.
+layout(std430, set=2, binding=0) readonly buffer	IndexBuffer{
+	uint		ssbo[];
+} index_buffer;
+
+// Set 3: Vertex buffer.
+layout(std430, set=3, binding=0) readonly buffer	VertexBuffer {
 	Vertex		ssbo[];
 } vertex_buffer;
 
-// Set 3: Sampler
-layout(set=3, binding=0) uniform sampler			image_sampler;
-layout(std140, set=3, binding=1) uniform			image_sampler_data {
+// Set 4: Sampler
+layout(set=4, binding=0) uniform sampler			image_sampler;
+layout(std140, set=4, binding=1) uniform			image_sampler_data {
 	vec4		border_color;
 	uvec2		border_color_enable;
 } sampler_data;
 
-// Set 4: Texture
-layout(set=4, binding=0) uniform texture2DArray		sampled_image;
+// Set 5: Texture
+layout(set=5, binding=0) uniform texture2DArray		sampled_image;
 
-// Set 5: Texture channel weights
-layout(std430, set=5, binding=0) readonly buffer	TextureChannelWeights {
+// Set 6: Texture channel weights
+layout(std430, set=6, binding=0) readonly buffer	TextureChannelWeights {
 	float		ssbo[];
 } texture_channel_weights;
 
 // Push constants.
 layout(std140, push_constant) uniform PushConstants {
-	uint		index_offset;				// Offset into the index buffer.
-	uint		index_count;				// Amount of indices this shader should handle.
-	uint		vertex_offset;				// Offset to first vertex in vertex buffer.
-	uint		texture_channel_offset;		// Location of the texture channels in the texture channel weights ssbo.
-	uint		texture_channel_count;		// Just the amount of texture channels.
+	uint		transformation_offset;			// Offset into the transformation buffer.
+	uint		index_offset;					// Offset into the index buffer.
+	uint		index_count;					// Amount of indices this shader should handle.
+	uint		vertex_offset;					// Offset to first vertex in vertex buffer.
+	uint		texture_channel_weight_offset;	// Location of the texture channels in the texture channel weights ssbo.
+	uint		texture_channel_weight_count;	// Just the amount of texture channels.
 } push_constants;
 
 // From vertex shader.
@@ -174,11 +179,11 @@ vec4 CalculateTriangleWeightedTextureColor( uvec3 indices, vec3 vertex_weights )
 {
 	// Loop through texture channels and apply color value as needed.
 	vec4 weighted_texture_color = vec4( 0.0 );
-	for( uint i = 0; i < push_constants.texture_channel_count; ++i ) {
+	for( uint i = 0; i < push_constants.texture_channel_weight_count; ++i ) {
 		vec3 vertex_texture_channel_weights;
-		vertex_texture_channel_weights[ 0 ]		= texture_channel_weights.ssbo[ indices[ 0 ] * push_constants.texture_channel_count + i ];
-		vertex_texture_channel_weights[ 1 ]		= texture_channel_weights.ssbo[ indices[ 1 ] * push_constants.texture_channel_count + i ];
-		vertex_texture_channel_weights[ 2 ]		= texture_channel_weights.ssbo[ indices[ 2 ] * push_constants.texture_channel_count + i ];
+		vertex_texture_channel_weights[ 0 ]		= texture_channel_weights.ssbo[ indices[ 0 ] * push_constants.texture_channel_weight_count + i ];
+		vertex_texture_channel_weights[ 1 ]		= texture_channel_weights.ssbo[ indices[ 1 ] * push_constants.texture_channel_weight_count + i ];
+		vertex_texture_channel_weights[ 2 ]		= texture_channel_weights.ssbo[ indices[ 2 ] * push_constants.texture_channel_weight_count + i ];
 
 		vec3 vertex_combined_channel_weights	= vertex_texture_channel_weights * vertex_weights;
 		float total_pixel_weight				= vertex_combined_channel_weights[ 0 ] + vertex_combined_channel_weights[ 1 ] + vertex_combined_channel_weights[ 2 ];
@@ -196,10 +201,10 @@ vec4 CalculateLineWeightedTextureColor( uvec2 indices, vec2 vertex_weights )
 {
 	// Loop through texture channels and apply color value as needed.
 	vec4 weighted_texture_color = vec4( 0.0 );
-	for( uint i = 0; i < push_constants.texture_channel_count; ++i ) {
+	for( uint i = 0; i < push_constants.texture_channel_weight_count; ++i ) {
 		vec2 vertex_texture_channel_weights;
-		vertex_texture_channel_weights[ 0 ]		= texture_channel_weights.ssbo[ indices[ 0 ] * push_constants.texture_channel_count + i ];
-		vertex_texture_channel_weights[ 1 ]		= texture_channel_weights.ssbo[ indices[ 1 ] * push_constants.texture_channel_count + i ];
+		vertex_texture_channel_weights[ 0 ]		= texture_channel_weights.ssbo[ indices[ 0 ] * push_constants.texture_channel_weight_count + i ];
+		vertex_texture_channel_weights[ 1 ]		= texture_channel_weights.ssbo[ indices[ 1 ] * push_constants.texture_channel_weight_count + i ];
 
 		vec2 vertex_combined_channel_weights	= vertex_texture_channel_weights * vertex_weights;
 		float total_pixel_weight				= vertex_combined_channel_weights[ 0 ] + vertex_combined_channel_weights[ 1 ];
@@ -217,8 +222,8 @@ vec4 CalculatePointWeightedTextureColor()
 {
 	// Loop through texture channels and apply color value as needed.
 	vec4 weighted_texture_color = vec4( 0.0 );
-	for( uint i = 0; i < push_constants.texture_channel_count; ++i ) {
-		float total_pixel_weight		= texture_channel_weights.ssbo[ fragment_input_vertex_index * push_constants.texture_channel_count + i ];
+	for( uint i = 0; i < push_constants.texture_channel_weight_count; ++i ) {
+		float total_pixel_weight		= texture_channel_weights.ssbo[ fragment_input_vertex_index * push_constants.texture_channel_weight_count + i ];
 
 		if( total_pixel_weight > 0.0 ) {
 			vec4 tc = texture( sampler2DArray( sampled_image, image_sampler ), vec3( fragment_input_UV, float( i ) ) );

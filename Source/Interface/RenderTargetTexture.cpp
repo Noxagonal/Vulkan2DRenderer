@@ -1,9 +1,9 @@
 
 #include "../Core/SourceCommon.h"
 
-#include "../../Include/Types/Vector2.h"
-#include "../../Include/Types/Rect2.h"
-#include "../../Include/Types/Color.h"
+#include "../../Include/Types/Vector2.hpp"
+#include "../../Include/Types/Rect2.hpp"
+#include "../../Include/Types/Color.hpp"
 #include "../../Include/Types/Mesh.h"
 
 #include "../System/RenderTargetTextureDependecyGraphInfo.hpp"
@@ -103,7 +103,8 @@ VK2D_API bool VK2D_APIENTRY vk2d::RenderTargetTexture::EndRender(
 VK2D_API void VK2D_APIENTRY vk2d::RenderTargetTexture::DrawTriangleList(
 	const std::vector<vk2d::VertexIndex_3>	&	indices,
 	const std::vector<vk2d::Vertex>			&	vertices,
-	const std::vector<float>				&	texture_channels,
+	const std::vector<float>				&	texture_channel_weights,
+	const std::vector<vk2d::Matrix4f>		&	transformations,
 	bool										filled,
 	vk2d::Texture							*	texture,
 	vk2d::Sampler							*	sampler
@@ -112,7 +113,8 @@ VK2D_API void VK2D_APIENTRY vk2d::RenderTargetTexture::DrawTriangleList(
 	impl->DrawTriangleList(
 		indices,
 		vertices,
-		texture_channels,
+		texture_channel_weights,
+		transformations,
 		filled,
 		texture
 	);
@@ -121,7 +123,8 @@ VK2D_API void VK2D_APIENTRY vk2d::RenderTargetTexture::DrawTriangleList(
 VK2D_API void VK2D_APIENTRY vk2d::RenderTargetTexture::DrawLineList(
 	const std::vector<vk2d::VertexIndex_2>	&	indices,
 	const std::vector<vk2d::Vertex>			&	vertices,
-	const std::vector<float>				&	texture_channels,
+	const std::vector<float>				&	texture_channel_weights,
+	const std::vector<vk2d::Matrix4f>		&	transformations,
 	vk2d::Texture							*	texture,
 	vk2d::Sampler							*	sampler
 )
@@ -129,21 +132,24 @@ VK2D_API void VK2D_APIENTRY vk2d::RenderTargetTexture::DrawLineList(
 	impl->DrawLineList(
 		indices,
 		vertices,
-		texture_channels,
+		texture_channel_weights,
+		transformations,
 		texture
 	);
 }
 
 VK2D_API void VK2D_APIENTRY vk2d::RenderTargetTexture::DrawPointList(
 	const std::vector<vk2d::Vertex>			&	vertices,
-	const std::vector<float>				&	texture_channels,
+	const std::vector<float>				&	texture_channel_weights,
+	const std::vector<vk2d::Matrix4f>		&	transformations,
 	vk2d::Texture							*	texture,
 	vk2d::Sampler							*	sampler
 )
 {
 	impl->DrawPointList(
 		vertices,
-		texture_channels,
+		texture_channel_weights,
+		transformations,
 		texture
 	);
 }
@@ -159,7 +165,7 @@ VK2D_API void VK2D_APIENTRY vk2d::RenderTargetTexture::DrawPoint(
 	);
 	mesh.SetVertexColor( color );
 	mesh.SetPointSize( size );
-	impl->DrawMesh( mesh );
+	impl->DrawMesh( mesh, { vk2d::Matrix4f( 1.0f ) } );
 }
 
 VK2D_API void VK2D_APIENTRY vk2d::RenderTargetTexture::DrawLine(
@@ -173,7 +179,7 @@ VK2D_API void VK2D_APIENTRY vk2d::RenderTargetTexture::DrawLine(
 		{ { 0, 1 } }
 	);
 	mesh.SetVertexColor( color );
-	impl->DrawMesh( mesh );
+	impl->DrawMesh( mesh, { vk2d::Matrix4f( 1.0f ) } );
 }
 
 VK2D_API void VK2D_APIENTRY vk2d::RenderTargetTexture::DrawRectangle(
@@ -187,7 +193,7 @@ VK2D_API void VK2D_APIENTRY vk2d::RenderTargetTexture::DrawRectangle(
 		filled
 	);
 	mesh.SetVertexColor( color );
-	impl->DrawMesh( mesh );
+	impl->DrawMesh( mesh, { vk2d::Matrix4f( 1.0f ) } );
 }
 
 VK2D_API void VK2D_APIENTRY vk2d::RenderTargetTexture::DrawEllipse(
@@ -203,7 +209,7 @@ VK2D_API void VK2D_APIENTRY vk2d::RenderTargetTexture::DrawEllipse(
 		edge_count
 	);
 	mesh.SetVertexColor( color );
-	impl->DrawMesh( mesh );
+	impl->DrawMesh( mesh, { vk2d::Matrix4f( 1.0f ) } );
 }
 
 VK2D_API void VK2D_APIENTRY vk2d::RenderTargetTexture::DrawEllipsePie(
@@ -223,7 +229,7 @@ VK2D_API void VK2D_APIENTRY vk2d::RenderTargetTexture::DrawEllipsePie(
 		edge_count
 	);
 	mesh.SetVertexColor( color );
-	impl->DrawMesh( mesh );
+	impl->DrawMesh( mesh, { vk2d::Matrix4f( 1.0f ) } );
 }
 
 VK2D_API void VK2D_APIENTRY vk2d::RenderTargetTexture::DrawRectanglePie(
@@ -241,7 +247,7 @@ VK2D_API void VK2D_APIENTRY vk2d::RenderTargetTexture::DrawRectanglePie(
 		filled
 	);
 	mesh.SetVertexColor( color );
-	impl->DrawMesh( mesh );
+	impl->DrawMesh( mesh, { vk2d::Matrix4f( 1.0f ) } );
 }
 
 VK2D_API void VK2D_APIENTRY vk2d::RenderTargetTexture::DrawTexture(
@@ -258,16 +264,45 @@ VK2D_API void VK2D_APIENTRY vk2d::RenderTargetTexture::DrawTexture(
 		);
 		mesh.SetTexture( texture );
 		mesh.SetVertexColor( color );
-		impl->DrawMesh( mesh );
+		impl->DrawMesh( mesh, { vk2d::Matrix4f( 1.0f ) } );
 	}
 }
 
 VK2D_API void VK2D_APIENTRY vk2d::RenderTargetTexture::DrawMesh(
-	const vk2d::Mesh	&	mesh
+	const vk2d::Mesh						&	mesh,
+	const vk2d::Transform					&	transformation
 )
 {
 	impl->DrawMesh(
-		mesh
+		mesh,
+		{ transformation.CalculateTransformationMatrix() }
+	);
+}
+
+VK2D_API void VK2D_APIENTRY vk2d::RenderTargetTexture::DrawMesh(
+	const vk2d::Mesh						&	mesh,
+	const std::vector<vk2d::Transform>		&	transformations
+)
+{
+	std::vector<vk2d::Matrix4f> transformation_matrices( std::size( transformations ) );
+	for( size_t i = 0; i < std::size( transformations ); ++i ) {
+		transformation_matrices[ i ]	= transformations[ i ].CalculateTransformationMatrix();
+	}
+
+	impl->DrawMesh(
+		mesh,
+		transformation_matrices
+	);
+}
+
+VK2D_API void VK2D_APIENTRY vk2d::RenderTargetTexture::DrawMesh(
+	const vk2d::Mesh						&	mesh,
+	const std::vector<vk2d::Matrix4f>		&	transformations
+)
+{
+	impl->DrawMesh(
+		mesh,
+		transformations
 	);
 }
 
@@ -866,11 +901,14 @@ void vk2d::_internal::RenderTargetTextureImpl::DrawTriangleList(
 	const std::vector<vk2d::VertexIndex_3>	&	indices,
 	const std::vector<vk2d::Vertex>			&	vertices,
 	const std::vector<float>				&	texture_channel_weights,
+	const std::vector<vk2d::Matrix4f>		&	transformations,
 	bool										filled,
 	vk2d::Texture							*	texture,
 	vk2d::Sampler							*	sampler
 )
 {
+	assert( std::size( transformations ) );
+
 	auto index_count	= uint32_t( indices.size() * 3 );
 	std::vector<uint32_t> raw_indices;
 	raw_indices.resize( index_count );
@@ -884,6 +922,7 @@ void vk2d::_internal::RenderTargetTextureImpl::DrawTriangleList(
 		raw_indices,
 		vertices,
 		texture_channel_weights,
+		transformations,
 		filled,
 		texture,
 		sampler
@@ -894,11 +933,14 @@ void vk2d::_internal::RenderTargetTextureImpl::DrawTriangleList(
 	const std::vector<uint32_t>				&	raw_indices,
 	const std::vector<vk2d::Vertex>			&	vertices,
 	const std::vector<float>				&	texture_channel_weights,
+	const std::vector<vk2d::Matrix4f>		&	transformations,
 	bool										solid,
 	vk2d::Texture							*	texture,
 	vk2d::Sampler							*	sampler
 )
 {
+	assert( std::size( transformations ) );
+
 	auto & swap				= swap_buffers[ current_swap_buffer ];
 	auto command_buffer		= swap.vk_render_command_buffer;
 
@@ -956,21 +998,26 @@ void vk2d::_internal::RenderTargetTextureImpl::DrawTriangleList(
 		instance->GetGraphicsPrimaryRenderPipelineLayout()
 	);
 
+	//TODO, Transformations...;
+	// TODO: Transformations. Data path to the shader is done, just need to modify the actual shaders and add the data here.
+	// TODO: Matrix4f might not play nice with the alignment, might need to use Matrix4f, make sure alignment actually works on all GPUs.
 	auto push_result = mesh_buffer->CmdPushMesh(
 		command_buffer,
 		raw_indices,
 		vertices,
-		texture_channel_weights
+		texture_channel_weights,
+		transformations
 	);
 
 	if( push_result.success ) {
 		{
 			vk2d::_internal::GraphicsPrimaryRenderPushConstants pc {};
+			pc.transformation_offset	= push_result.location_info.transformation_offset;
 			pc.index_offset				= push_result.location_info.index_offset;
 			pc.index_count				= 3;
 			pc.vertex_offset			= push_result.location_info.vertex_offset;
-			pc.texture_channel_offset	= push_result.location_info.texture_channel_offset;
-			pc.texture_channel_count	= texture->GetLayerCount();
+			pc.texture_channel_weight_offset	= push_result.location_info.texture_channel_weight_offset;
+			pc.texture_channel_weight_count	= texture->GetLayerCount();
 
 			vkCmdPushConstants(
 				command_buffer,
@@ -989,7 +1036,7 @@ void vk2d::_internal::RenderTargetTextureImpl::DrawTriangleList(
 		vkCmdDrawIndexed(
 			command_buffer,
 			index_count,
-			1,
+			uint32_t( std::size( transformations ) ),
 			push_result.location_info.index_offset,
 			int32_t( push_result.location_info.vertex_offset ),
 			0
@@ -1018,11 +1065,14 @@ void vk2d::_internal::RenderTargetTextureImpl::DrawLineList(
 	const std::vector<vk2d::VertexIndex_2>	&	indices,
 	const std::vector<vk2d::Vertex>			&	vertices,
 	const std::vector<float>				&	texture_channel_weights,
+	const std::vector<vk2d::Matrix4f>		&	transformations,
 	vk2d::Texture							*	texture,
 	vk2d::Sampler							*	sampler,
 	float										line_width
 )
 {
+	assert( std::size( transformations ) );
+
 	auto index_count	= uint32_t( indices.size() * 2 );
 	std::vector<uint32_t> raw_indices;
 	raw_indices.resize( index_count );
@@ -1035,6 +1085,7 @@ void vk2d::_internal::RenderTargetTextureImpl::DrawLineList(
 		raw_indices,
 		vertices,
 		texture_channel_weights,
+		transformations,
 		texture,
 		sampler,
 		line_width
@@ -1045,11 +1096,14 @@ void vk2d::_internal::RenderTargetTextureImpl::DrawLineList(
 	const std::vector<uint32_t>				&	raw_indices,
 	const std::vector<vk2d::Vertex>			&	vertices,
 	const std::vector<float>				&	texture_channel_weights,
+	const std::vector<vk2d::Matrix4f>		&	transformations,
 	vk2d::Texture							*	texture,
 	vk2d::Sampler							*	sampler,
 	float										line_width
 )
 {
+	assert( std::size( transformations ) );
+
 	auto & swap			= swap_buffers[ current_swap_buffer ];
 	auto command_buffer	= swap.vk_render_command_buffer;
 
@@ -1111,17 +1165,19 @@ void vk2d::_internal::RenderTargetTextureImpl::DrawLineList(
 		command_buffer,
 		raw_indices,
 		vertices,
-		texture_channel_weights
+		texture_channel_weights,
+		transformations
 	);
 
 	if( push_result.success ) {
 		{
 			vk2d::_internal::GraphicsPrimaryRenderPushConstants pc {};
+			pc.transformation_offset	= push_result.location_info.transformation_offset;
 			pc.index_offset				= push_result.location_info.index_offset;
 			pc.index_count				= 2;
 			pc.vertex_offset			= push_result.location_info.vertex_offset;
-			pc.texture_channel_offset	= push_result.location_info.texture_channel_offset;
-			pc.texture_channel_count	= texture->GetLayerCount();
+			pc.texture_channel_weight_offset	= push_result.location_info.texture_channel_weight_offset;
+			pc.texture_channel_weight_count	= texture->GetLayerCount();
 
 			vkCmdPushConstants(
 				command_buffer,
@@ -1140,7 +1196,7 @@ void vk2d::_internal::RenderTargetTextureImpl::DrawLineList(
 		vkCmdDrawIndexed(
 			command_buffer,
 			index_count,
-			1,
+			uint32_t( std::size( transformations ) ),
 			push_result.location_info.index_offset,
 			int32_t( push_result.location_info.vertex_offset ),
 			0
@@ -1153,10 +1209,13 @@ void vk2d::_internal::RenderTargetTextureImpl::DrawLineList(
 void vk2d::_internal::RenderTargetTextureImpl::DrawPointList(
 	const std::vector<vk2d::Vertex>			&	vertices,
 	const std::vector<float>				&	texture_channel_weights,
+	const std::vector<vk2d::Matrix4f>		&	transformations,
 	vk2d::Texture							*	texture,
 	vk2d::Sampler							*	sampler
 )
 {
+	assert( std::size( transformations ) );
+
 	auto & swap			= swap_buffers[ current_swap_buffer ];
 	auto command_buffer	= swap.vk_render_command_buffer;
 
@@ -1217,17 +1276,19 @@ void vk2d::_internal::RenderTargetTextureImpl::DrawPointList(
 		command_buffer,
 		{},
 		vertices,
-		texture_channel_weights
+		texture_channel_weights,
+		transformations
 	);
 
 	if( push_result.success ) {
 		{
 			vk2d::_internal::GraphicsPrimaryRenderPushConstants pc {};
+			pc.transformation_offset	= push_result.location_info.transformation_offset;
 			pc.index_offset				= push_result.location_info.index_offset;
 			pc.index_count				= 1;
 			pc.vertex_offset			= push_result.location_info.vertex_offset;
-			pc.texture_channel_offset	= push_result.location_info.texture_channel_offset;
-			pc.texture_channel_count	= texture->GetLayerCount();
+			pc.texture_channel_weight_offset	= push_result.location_info.texture_channel_weight_offset;
+			pc.texture_channel_weight_count	= texture->GetLayerCount();
 
 			vkCmdPushConstants(
 				command_buffer,
@@ -1246,7 +1307,7 @@ void vk2d::_internal::RenderTargetTextureImpl::DrawPointList(
 		vkCmdDraw(
 			command_buffer,
 			vertex_count,
-			1,
+			uint32_t( std::size( transformations ) ),
 			push_result.location_info.vertex_offset,
 			0
 		);
@@ -1256,9 +1317,12 @@ void vk2d::_internal::RenderTargetTextureImpl::DrawPointList(
 }
 
 void vk2d::_internal::RenderTargetTextureImpl::DrawMesh(
-	const vk2d::Mesh	&	mesh
+	const vk2d::Mesh						&	mesh,
+	const std::vector<vk2d::Matrix4f>		&	transformations
 )
 {
+	assert( std::size( transformations ) );
+
 	if( mesh.vertices.size() == 0 ) return;
 
 	switch( mesh.mesh_type ) {
@@ -1267,6 +1331,7 @@ void vk2d::_internal::RenderTargetTextureImpl::DrawMesh(
 				mesh.indices,
 				mesh.vertices,
 				mesh.texture_channel_weights,
+				transformations,
 				true,
 				mesh.texture,
 				mesh.sampler
@@ -1277,6 +1342,7 @@ void vk2d::_internal::RenderTargetTextureImpl::DrawMesh(
 				mesh.indices,
 				mesh.vertices,
 				mesh.texture_channel_weights,
+				transformations,
 				false,
 				mesh.texture,
 				mesh.sampler
@@ -1287,6 +1353,7 @@ void vk2d::_internal::RenderTargetTextureImpl::DrawMesh(
 				mesh.indices,
 				mesh.vertices,
 				mesh.texture_channel_weights,
+				transformations,
 				mesh.texture,
 				mesh.sampler,
 				mesh.line_width
@@ -1296,6 +1363,7 @@ void vk2d::_internal::RenderTargetTextureImpl::DrawMesh(
 			DrawPointList(
 				mesh.vertices,
 				mesh.texture_channel_weights,
+				transformations,
 				mesh.texture,
 				mesh.sampler
 			);

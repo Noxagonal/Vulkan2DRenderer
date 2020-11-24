@@ -7,23 +7,24 @@
 // Shader program interface.
 ////////////////////////////////////////////////////////////////
 
-// Set 3: Sampler
-layout(set=3, binding=0) uniform sampler			image_sampler;
-layout(std140, set=3, binding=1) uniform			image_sampler_data {
+// Set 4: Sampler
+layout(set=4, binding=0) uniform sampler			image_sampler;
+layout(std140, set=4, binding=1) uniform			image_sampler_data {
 	vec4		border_color;
 	uvec2		border_color_enable;
 } sampler_data;
 
-// Set 4: Texture
-layout(set=4, binding=0) uniform texture2DArray		sampled_image;
+// Set 5: Texture
+layout(set=5, binding=0) uniform texture2DArray		sampled_image;
 
 // Push constants.
 layout(std140, push_constant) uniform PushConstants {
-	uint		index_offset;				// Offset into the index buffer.
-	uint		index_count;				// Amount of indices this shader should handle.
-	uint		vertex_offset;				// Offset to first vertex in vertex buffer.
-	uint		texture_channel_offset;		// Location of the texture channels in the texture channel weights ssbo.
-	uint		texture_channel_count;		// Just the amount of texture channels.
+	uint		transformation_offset;			// Offset into the transformation buffer.
+	uint		index_offset;					// Offset into the index buffer.
+	uint		index_count;					// Amount of indices this shader should handle.
+	uint		vertex_offset;					// Offset to first vertex in vertex buffer.
+	uint		texture_channel_weight_offset;	// Location of the texture channels in the texture channel weights ssbo.
+	uint		texture_channel_weight_count;	// Just the amount of texture channels.
 } push_constants;
 
 // From vertex shader.

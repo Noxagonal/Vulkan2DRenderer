@@ -3,7 +3,7 @@
 #include "../../Core/Common.h"
 
 #include "Resource.h"
-#include "../../Types/Vector2.h"
+#include "../../Types/Vector2.hpp"
 
 #include <filesystem>
 

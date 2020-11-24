@@ -2,8 +2,8 @@
 
 #include "../../Core/Common.h"
 
-#include "../../Types/Vector2.h"
-#include "../../Types/Color.h"
+#include "../../Types/Vector2.hpp"
+#include "../../Types/Color.hpp"
 
 #include "Resource.h"
 #include "../Texture.h"

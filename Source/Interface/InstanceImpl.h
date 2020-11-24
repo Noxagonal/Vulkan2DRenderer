@@ -3,13 +3,15 @@
 #include "../Core/SourceCommon.h"
 #include "../../Include/Interface/Instance.h"
 
+#include "../../Include/Types/Vector2.hpp"
+#include "../../Include/Types/Color.hpp"
+
 #include "../System/QueueResolver.h"
 #include "../System/DescriptorSet.h"
 #include "../System/ShaderInterface.h"
 
 #define GLFW_INCLUDE_NONE
 #include <GLFW/glfw3.h>
-
 
 
 

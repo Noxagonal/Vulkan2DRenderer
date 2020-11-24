@@ -1,10 +1,10 @@
 
 #include "../Core/SourceCommon.h"
 
-#include "../../Include/Types/Vector2.h"
-#include "../../Include/Types/Rect2.h"
-#include "../../Include/Types/Matrix2.h"
-#include "../../Include/Types/Color.h"
+#include "../../Include/Types/Vector2.hpp"
+#include "../../Include/Types/Rect2.hpp"
+#include "../../Include/Types/Matrix2.hpp"
+#include "../../Include/Types/Color.hpp"
 
 #include "../../Include/Interface/ResourceManager/FontResource.h"
 #include "../Interface/ResourceManager/FontResourceImpl.h"
@@ -85,7 +85,7 @@ VK2D_API void VK2D_APIENTRY vk2d::Mesh::Rotate(
 	float						rotation_amount_radians,
 	vk2d::Vector2f				origin )
 {
-	auto rotation_matrix	= vk2d::CreateRotationMatrix( rotation_amount_radians );
+	auto rotation_matrix	= vk2d::CreateRotationMatrix2( rotation_amount_radians );
 
 	for( auto & i : vertices ) {
 		i.vertex_coords		-= origin;
@@ -171,7 +171,7 @@ VK2D_API void VK2D_APIENTRY vk2d::Mesh::RotateUV(
 	vk2d::Vector2f				origin
 )
 {
-	auto rotation_matrix	= vk2d::CreateRotationMatrix( rotation_amount_radians );
+	auto rotation_matrix	= vk2d::CreateRotationMatrix2( rotation_amount_radians );
 
 	for( auto & i : vertices ) {
 		i.uv_coords		-= origin;

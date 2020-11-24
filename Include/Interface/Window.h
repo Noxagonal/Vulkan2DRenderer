@@ -2,9 +2,11 @@
 
 #include "../Core/Common.h"
 
-#include "../Types/Vector2.h"
-#include "../Types/Rect2.h"
-#include "../Types/Color.h"
+#include "../Types/Vector2.hpp"
+#include "../Types/Rect2.hpp"
+#include "../Types/Matrix4.hpp"
+#include "../Types/Transform.h"
+#include "../Types/Color.hpp"
 #include "../Types/MeshPrimitives.hpp"
 #include "../Types/Multisamples.h"
 #include "../Types/RenderCoordinateSpace.hpp"
@@ -624,7 +626,7 @@ public:
 	///				List of indices telling how to form triangles between vertices.
 	/// @param[in]	vertices
 	///				List of vertices that define the shape.
-	/// @param[in]	texture_channels
+	/// @param[in]	texture_channel_weights
 	///				Only has effect if provided texture has more than 1 layer.
 	///				This tell how much weight each texture layer has on each vertex.
 	///				TODO: Need to check formatting... Yank Niko, he forgot...
@@ -640,6 +642,7 @@ public:
 		const std::vector<vk2d::VertexIndex_3>		&	indices,
 		const std::vector<vk2d::Vertex>				&	vertices,
 		const std::vector<float>					&	texture_channel_weights,
+		const std::vector<vk2d::Matrix4f>			&	transformations,
 		bool											solid						= true,
 		vk2d::Texture								*	texture						= nullptr,
 		vk2d::Sampler								*	sampler						= nullptr );
@@ -665,6 +668,7 @@ public:
 		const std::vector<vk2d::VertexIndex_2>		&	indices,
 		const std::vector<vk2d::Vertex>				&	vertices,
 		const std::vector<float>					&	texture_channel_weights,
+		const std::vector<vk2d::Matrix4f>			&	transformations,
 		vk2d::Texture								*	texture						= nullptr,
 		vk2d::Sampler								*	sampler						= nullptr );
 
@@ -686,6 +690,7 @@ public:
 	VK2D_API void										VK2D_APIENTRY				DrawPointList(
 		const std::vector<vk2d::Vertex>				&	vertices,
 		const std::vector<float>					&	texture_channel_weights,
+		const std::vector<vk2d::Matrix4f>			&	transformations,
 		vk2d::Texture								*	texture						= nullptr,
 		vk2d::Sampler								*	sampler						= nullptr );
 
@@ -816,8 +821,37 @@ public:
 	/// @see		vk2d::Mesh
 	/// @param[in]	mesh
 	///				Mesh object to draw.
+	/// @param[in]	transformation
+	///				Draw using transformation.
 	VK2D_API void										VK2D_APIENTRY				DrawMesh(
-		const vk2d::Mesh							&	mesh );
+		const vk2d::Mesh							&	mesh,
+		const vk2d::Transform						&	transformations				= {} );
+
+	/// @brief		The most useful drawing method. Draws vk2d::Mesh which contains all information needed for the render.
+	/// @note		Multithreading: Main thread only.
+	/// @see		vk2d::Mesh
+	/// @param[in]	mesh
+	///				Mesh object to draw.
+	/// @param[in]	transformations
+	///				Draw using transformation. This is a std::vector where each element equals one draw.
+	///				Using multiple transformations results the mesh being drawn multiple times using
+	///				different transformations. This is also called instanced drawing.
+	VK2D_API void										VK2D_APIENTRY				DrawMesh(
+		const vk2d::Mesh							&	mesh,
+		const std::vector<vk2d::Transform>			&	transformation );
+
+	/// @brief		The most useful drawing method. Draws vk2d::Mesh which contains all information needed for the render.
+	/// @note		Multithreading: Main thread only.
+	/// @see		vk2d::Mesh
+	/// @param[in]	mesh
+	///				Mesh object to draw.
+	/// @param[in]	transformations
+	///				Draw using transformation. This is a std::vector where each element equals one draw.
+	///				Using multiple transformations results the mesh being drawn multiple times using
+	///				different transformations. This is also called instanced drawing.
+	VK2D_API void										VK2D_APIENTRY				DrawMesh(
+		const vk2d::Mesh							&	mesh,
+		const std::vector<vk2d::Matrix4f>			&	transformations );
 
 	VK2D_API bool										VK2D_APIENTRY				IsGood() const;
 

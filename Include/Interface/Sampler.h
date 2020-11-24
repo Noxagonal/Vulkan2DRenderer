@@ -2,7 +2,7 @@
 
 #include "../Core/Common.h"
 
-#include "../Types/Color.h"
+#include "../Types/Color.hpp"
 
 #include <memory>
 

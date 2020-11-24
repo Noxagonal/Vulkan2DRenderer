@@ -2,7 +2,8 @@
 
 #include "../Core/SourceCommon.h"
 
-#include "../../Include/Types/Vector2.h"
+#include "../../Include/Types/Vector2.hpp"
+
 
 
 namespace vk2d {
@@ -11,11 +12,12 @@ namespace _internal {
 
 // Descriptor set allocations.
 constexpr uint32_t GRAPHICS_DESCRIPTOR_SET_ALLOCATION_WINDOW_FRAME_DATA					= 0;
-constexpr uint32_t GRAPHICS_DESCRIPTOR_SET_ALLOCATION_INDEX_BUFFER_AS_STORAGE_BUFFER	= 1;
-constexpr uint32_t GRAPHICS_DESCRIPTOR_SET_ALLOCATION_VERTEX_BUFFER_AS_STORAGE_BUFFER	= 2;
-constexpr uint32_t GRAPHICS_DESCRIPTOR_SET_ALLOCATION_SAMPLER_AND_SAMPLER_DATA			= 3;
-constexpr uint32_t GRAPHICS_DESCRIPTOR_SET_ALLOCATION_TEXTURE							= 4;
-constexpr uint32_t GRAPHICS_DESCRIPTOR_SET_ALLOCATION_TEXTURE_CHANNEL_WEIGHTS			= 5;
+constexpr uint32_t GRAPHICS_DESCRIPTOR_SET_ALLOCATION_TRANSFORMATION					= 1;
+constexpr uint32_t GRAPHICS_DESCRIPTOR_SET_ALLOCATION_INDEX_BUFFER_AS_STORAGE_BUFFER	= 2;
+constexpr uint32_t GRAPHICS_DESCRIPTOR_SET_ALLOCATION_VERTEX_BUFFER_AS_STORAGE_BUFFER	= 3;
+constexpr uint32_t GRAPHICS_DESCRIPTOR_SET_ALLOCATION_SAMPLER_AND_SAMPLER_DATA			= 4;
+constexpr uint32_t GRAPHICS_DESCRIPTOR_SET_ALLOCATION_TEXTURE							= 5;
+constexpr uint32_t GRAPHICS_DESCRIPTOR_SET_ALLOCATION_texture_channel_weights			= 6;
 
 
 
@@ -29,11 +31,12 @@ struct FrameData {
 };
 
 struct GraphicsPrimaryRenderPushConstants {
+	alignas( 4 )	uint32_t					transformation_offset	= {};	// Offset into transformations buffer.
 	alignas( 4 )	uint32_t					index_offset			= {};	// Offset into the index buffer.
 	alignas( 4 )	uint32_t					index_count				= {};	// Amount of indices this shader should handle.
 	alignas( 4 )	uint32_t					vertex_offset			= {};	// Offset to first vertex in vertex buffer.
-	alignas( 4 )	uint32_t					texture_channel_offset	= {};	// Location of the texture channels in the texture channel weights ssbo.
-	alignas( 4 )	uint32_t					texture_channel_count	= {};	// Just the amount of texture channels.
+	alignas( 4 )	uint32_t					texture_channel_weight_offset	= {};	// Location of the texture channels in the texture channel weights ssbo.
+	alignas( 4 )	uint32_t					texture_channel_weight_count	= {};	// Just the amount of texture channels.
 };
 
 struct GraphicsBlurPushConstants
