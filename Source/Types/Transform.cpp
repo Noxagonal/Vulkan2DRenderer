@@ -37,7 +37,7 @@ VK2D_API void VK2D_APIENTRY vk2d::Transform::Rotate(
 	this->rotation += rotation;
 }
 
-VK2D_API vk2d::Matrix4f VK2D_APIENTRY vk2d::Transform::CalculateTransformationMatrix()
+VK2D_API vk2d::Matrix4f VK2D_APIENTRY vk2d::Transform::CalculateTransformationMatrix() const
 {
 	auto position_matrix = vk2d::Matrix4f( 1.0f );
 	{

@@ -37,7 +37,7 @@ public:
 	VK2D_API void				VK2D_APIENTRY		Rotate(
 		float					rotation );
 
-	VK2D_API vk2d::Matrix4f		VK2D_APIENTRY		CalculateTransformationMatrix();
+	VK2D_API vk2d::Matrix4f		VK2D_APIENTRY		CalculateTransformationMatrix() const;
 };
 
 

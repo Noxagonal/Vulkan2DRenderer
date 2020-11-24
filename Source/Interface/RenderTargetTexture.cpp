@@ -270,6 +270,33 @@ VK2D_API void VK2D_APIENTRY vk2d::RenderTargetTexture::DrawTexture(
 
 VK2D_API void VK2D_APIENTRY vk2d::RenderTargetTexture::DrawMesh(
 	const vk2d::Mesh						&	mesh,
+	const vk2d::Transform					&	transformation
+)
+{
+	impl->DrawMesh(
+		mesh,
+		{ transformation.CalculateTransformationMatrix() }
+	);
+}
+
+VK2D_API void VK2D_APIENTRY vk2d::RenderTargetTexture::DrawMesh(
+	const vk2d::Mesh						&	mesh,
+	const std::vector<vk2d::Transform>		&	transformations
+)
+{
+	std::vector<vk2d::Matrix4f> transformation_matrices( std::size( transformations ) );
+	for( size_t i = 0; i < std::size( transformations ); ++i ) {
+		transformation_matrices[ i ]	= transformations[ i ].CalculateTransformationMatrix();
+	}
+
+	impl->DrawMesh(
+		mesh,
+		transformation_matrices
+	);
+}
+
+VK2D_API void VK2D_APIENTRY vk2d::RenderTargetTexture::DrawMesh(
+	const vk2d::Mesh						&	mesh,
 	const std::vector<vk2d::Matrix4f>		&	transformations
 )
 {

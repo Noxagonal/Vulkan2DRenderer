@@ -5,6 +5,7 @@
 #include "../Types/Vector2.hpp"
 #include "../Types/Rect2.hpp"
 #include "../Types/Matrix4.hpp"
+#include "../Types/Transform.h"
 #include "../Types/Color.hpp"
 #include "../Types/Multisamples.h"
 #include "../Types/RenderCoordinateSpace.hpp"
@@ -138,6 +139,14 @@ public:
 		vk2d::Vector2f											top_left,
 		vk2d::Texture										*	texture,
 		vk2d::Colorf											color						= { 1.0f, 1.0f, 1.0f, 1.0f } );
+
+	VK2D_API void												VK2D_APIENTRY				DrawMesh(
+		const vk2d::Mesh									&	mesh,
+		const vk2d::Transform								&	transformations				= {} );
+
+	VK2D_API void												VK2D_APIENTRY				DrawMesh(
+		const vk2d::Mesh									&	mesh,
+		const std::vector<vk2d::Transform>					&	transformations );
 
 	VK2D_API void												VK2D_APIENTRY				DrawMesh(
 		const vk2d::Mesh									&	mesh,

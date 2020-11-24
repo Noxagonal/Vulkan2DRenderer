@@ -5,6 +5,7 @@
 #include "../Types/Vector2.hpp"
 #include "../Types/Rect2.hpp"
 #include "../Types/Matrix4.hpp"
+#include "../Types/Transform.h"
 #include "../Types/Color.hpp"
 #include "../Types/MeshPrimitives.hpp"
 #include "../Types/Multisamples.h"
@@ -820,6 +821,34 @@ public:
 	/// @see		vk2d::Mesh
 	/// @param[in]	mesh
 	///				Mesh object to draw.
+	/// @param[in]	transformation
+	///				Draw using transformation.
+	VK2D_API void										VK2D_APIENTRY				DrawMesh(
+		const vk2d::Mesh							&	mesh,
+		const vk2d::Transform						&	transformations				= {} );
+
+	/// @brief		The most useful drawing method. Draws vk2d::Mesh which contains all information needed for the render.
+	/// @note		Multithreading: Main thread only.
+	/// @see		vk2d::Mesh
+	/// @param[in]	mesh
+	///				Mesh object to draw.
+	/// @param[in]	transformations
+	///				Draw using transformation. This is a std::vector where each element equals one draw.
+	///				Using multiple transformations results the mesh being drawn multiple times using
+	///				different transformations. This is also called instanced drawing.
+	VK2D_API void										VK2D_APIENTRY				DrawMesh(
+		const vk2d::Mesh							&	mesh,
+		const std::vector<vk2d::Transform>			&	transformation );
+
+	/// @brief		The most useful drawing method. Draws vk2d::Mesh which contains all information needed for the render.
+	/// @note		Multithreading: Main thread only.
+	/// @see		vk2d::Mesh
+	/// @param[in]	mesh
+	///				Mesh object to draw.
+	/// @param[in]	transformations
+	///				Draw using transformation. This is a std::vector where each element equals one draw.
+	///				Using multiple transformations results the mesh being drawn multiple times using
+	///				different transformations. This is also called instanced drawing.
 	VK2D_API void										VK2D_APIENTRY				DrawMesh(
 		const vk2d::Mesh							&	mesh,
 		const std::vector<vk2d::Matrix4f>			&	transformations );
