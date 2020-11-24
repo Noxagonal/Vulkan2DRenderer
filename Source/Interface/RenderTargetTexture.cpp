@@ -103,7 +103,7 @@ VK2D_API bool VK2D_APIENTRY vk2d::RenderTargetTexture::EndRender(
 VK2D_API void VK2D_APIENTRY vk2d::RenderTargetTexture::DrawTriangleList(
 	const std::vector<vk2d::VertexIndex_3>	&	indices,
 	const std::vector<vk2d::Vertex>			&	vertices,
-	const std::vector<float>				&	texture_channels,
+	const std::vector<float>				&	texture_channel_weights,
 	const std::vector<vk2d::Matrix4f>		&	transformations,
 	bool										filled,
 	vk2d::Texture							*	texture,
@@ -113,7 +113,7 @@ VK2D_API void VK2D_APIENTRY vk2d::RenderTargetTexture::DrawTriangleList(
 	impl->DrawTriangleList(
 		indices,
 		vertices,
-		texture_channels,
+		texture_channel_weights,
 		transformations,
 		filled,
 		texture
@@ -123,7 +123,7 @@ VK2D_API void VK2D_APIENTRY vk2d::RenderTargetTexture::DrawTriangleList(
 VK2D_API void VK2D_APIENTRY vk2d::RenderTargetTexture::DrawLineList(
 	const std::vector<vk2d::VertexIndex_2>	&	indices,
 	const std::vector<vk2d::Vertex>			&	vertices,
-	const std::vector<float>				&	texture_channels,
+	const std::vector<float>				&	texture_channel_weights,
 	const std::vector<vk2d::Matrix4f>		&	transformations,
 	vk2d::Texture							*	texture,
 	vk2d::Sampler							*	sampler
@@ -132,7 +132,7 @@ VK2D_API void VK2D_APIENTRY vk2d::RenderTargetTexture::DrawLineList(
 	impl->DrawLineList(
 		indices,
 		vertices,
-		texture_channels,
+		texture_channel_weights,
 		transformations,
 		texture
 	);
@@ -140,7 +140,7 @@ VK2D_API void VK2D_APIENTRY vk2d::RenderTargetTexture::DrawLineList(
 
 VK2D_API void VK2D_APIENTRY vk2d::RenderTargetTexture::DrawPointList(
 	const std::vector<vk2d::Vertex>			&	vertices,
-	const std::vector<float>				&	texture_channels,
+	const std::vector<float>				&	texture_channel_weights,
 	const std::vector<vk2d::Matrix4f>		&	transformations,
 	vk2d::Texture							*	texture,
 	vk2d::Sampler							*	sampler
@@ -148,7 +148,7 @@ VK2D_API void VK2D_APIENTRY vk2d::RenderTargetTexture::DrawPointList(
 {
 	impl->DrawPointList(
 		vertices,
-		texture_channels,
+		texture_channel_weights,
 		transformations,
 		texture
 	);
@@ -989,8 +989,8 @@ void vk2d::_internal::RenderTargetTextureImpl::DrawTriangleList(
 			pc.index_offset				= push_result.location_info.index_offset;
 			pc.index_count				= 3;
 			pc.vertex_offset			= push_result.location_info.vertex_offset;
-			pc.texture_channel_offset	= push_result.location_info.texture_channel_offset;
-			pc.texture_channel_count	= texture->GetLayerCount();
+			pc.texture_channel_weight_offset	= push_result.location_info.texture_channel_weight_offset;
+			pc.texture_channel_weight_count	= texture->GetLayerCount();
 
 			vkCmdPushConstants(
 				command_buffer,
@@ -1149,8 +1149,8 @@ void vk2d::_internal::RenderTargetTextureImpl::DrawLineList(
 			pc.index_offset				= push_result.location_info.index_offset;
 			pc.index_count				= 2;
 			pc.vertex_offset			= push_result.location_info.vertex_offset;
-			pc.texture_channel_offset	= push_result.location_info.texture_channel_offset;
-			pc.texture_channel_count	= texture->GetLayerCount();
+			pc.texture_channel_weight_offset	= push_result.location_info.texture_channel_weight_offset;
+			pc.texture_channel_weight_count	= texture->GetLayerCount();
 
 			vkCmdPushConstants(
 				command_buffer,
@@ -1260,8 +1260,8 @@ void vk2d::_internal::RenderTargetTextureImpl::DrawPointList(
 			pc.index_offset				= push_result.location_info.index_offset;
 			pc.index_count				= 1;
 			pc.vertex_offset			= push_result.location_info.vertex_offset;
-			pc.texture_channel_offset	= push_result.location_info.texture_channel_offset;
-			pc.texture_channel_count	= texture->GetLayerCount();
+			pc.texture_channel_weight_offset	= push_result.location_info.texture_channel_weight_offset;
+			pc.texture_channel_weight_count	= texture->GetLayerCount();
 
 			vkCmdPushConstants(
 				command_buffer,

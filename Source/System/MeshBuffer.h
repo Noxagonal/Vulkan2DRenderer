@@ -40,32 +40,32 @@ class MeshBuffer {
 	friend class vk2d::_internal::MeshBufferBlock;
 public:
 	struct MeshBlockLocationInfo {
-		bool													success						= {};
+		bool													success								= {};
 
-		vk2d::_internal::MeshBufferBlock<uint32_t>			*	index_block					= {};
-		vk2d::_internal::MeshBufferBlock<vk2d::Vertex>		*	vertex_block				= {};
-		vk2d::_internal::MeshBufferBlock<float>				*	texture_channel_block		= {};
-		vk2d::_internal::MeshBufferBlock<vk2d::Matrix4f>	*	transformation_block		= {};
+		vk2d::_internal::MeshBufferBlock<uint32_t>			*	index_block							= {};
+		vk2d::_internal::MeshBufferBlock<vk2d::Vertex>		*	vertex_block						= {};
+		vk2d::_internal::MeshBufferBlock<float>				*	texture_channel_weight_block		= {};
+		vk2d::_internal::MeshBufferBlock<vk2d::Matrix4f>	*	transformation_block				= {};
 
-		uint32_t												index_size					= {};	// size of data.
-		VkDeviceSize											index_byte_size				= {};	// size of data in bytes.
-		uint32_t												index_offset				= {};	// offset into buffer.
-		VkDeviceSize											index_byte_offset			= {};	// offset into buffer in bytes.
+		uint32_t												index_size							= {};	// size of data.
+		VkDeviceSize											index_byte_size						= {};	// size of data in bytes.
+		uint32_t												index_offset						= {};	// offset into buffer.
+		VkDeviceSize											index_byte_offset					= {};	// offset into buffer in bytes.
 
-		uint32_t												vertex_size					= {};	// size of data.
-		VkDeviceSize											vertex_byte_size			= {};	// size of data in bytes.
-		uint32_t												vertex_offset				= {};	// offset into buffer.
-		VkDeviceSize											vertex_byte_offset			= {};	// offset into buffer in bytes.
+		uint32_t												vertex_size							= {};	// size of data.
+		VkDeviceSize											vertex_byte_size					= {};	// size of data in bytes.
+		uint32_t												vertex_offset						= {};	// offset into buffer.
+		VkDeviceSize											vertex_byte_offset					= {};	// offset into buffer in bytes.
 
-		uint32_t												texture_channel_size		= {};	// size of data.
-		VkDeviceSize											texture_channel_byte_size	= {};	// size of data in bytes.
-		uint32_t												texture_channel_offset		= {};	// offset into buffer.
-		VkDeviceSize											texture_channel_byte_offset	= {};	// offset into buffer in bytes.
+		uint32_t												texture_channel_weight_size			= {};	// size of data.
+		VkDeviceSize											texture_channel_weight_byte_size	= {};	// size of data in bytes.
+		uint32_t												texture_channel_weight_offset		= {};	// offset into buffer.
+		VkDeviceSize											texture_channel_weight_byte_offset	= {};	// offset into buffer in bytes.
 
-		uint32_t												transformation_size			= {};	// size of data.
-		VkDeviceSize											transformation_byte_size	= {};	// size of data in bytes.
-		uint32_t												transformation_offset		= {};	// offset into buffer.
-		VkDeviceSize											transformation_byte_offset	= {};	// offset into buffer in bytes.
+		uint32_t												transformation_size					= {};	// size of data.
+		VkDeviceSize											transformation_byte_size			= {};	// size of data in bytes.
+		uint32_t												transformation_offset				= {};	// offset into buffer.
+		VkDeviceSize											transformation_byte_offset			= {};	// offset into buffer in bytes.
 	};
 
 	struct PushResult {
@@ -92,7 +92,7 @@ public:
 		VkCommandBuffer											command_buffer,
 		const std::vector<uint32_t>							&	new_indices,
 		const std::vector<vk2d::Vertex>						&	new_vertices,
-		const std::vector<float>							&	new_texture_channels,
+		const std::vector<float>							&	new_texture_channel_weights,
 		const std::vector<vk2d::Matrix4f>					&	new_transformations );
 
 	bool														CmdUploadMeshDataToGPU(
@@ -117,7 +117,7 @@ private:
 	vk2d::_internal::MeshBuffer::MeshBlockLocationInfo			ReserveSpaceForMesh(
 		uint32_t												index_count,
 		uint32_t												vertex_count,
-		uint32_t												texture_channel_count,
+		uint32_t												texture_channel_weight_count,
 		uint32_t												transformation_count );
 
 	// Find an index buffer with enough space to hold the data, if none found
@@ -180,33 +180,33 @@ private:
 	void														FreeBufferBlockFromStorage(
 		vk2d::_internal::MeshBufferBlock<vk2d::Matrix4f>	*	buffer_block );
 
-	vk2d::_internal::InstanceImpl							*	instance								= {};
-	VkDevice													device									= {};
-	VkPhysicalDeviceLimits										physicald_device_limits					= {};
-	vk2d::_internal::DeviceMemoryPool						*	device_memory_pool						= {};
+	vk2d::_internal::InstanceImpl							*	instance									= {};
+	VkDevice													device										= {};
+	VkPhysicalDeviceLimits										physicald_device_limits						= {};
+	vk2d::_internal::DeviceMemoryPool						*	device_memory_pool							= {};
 
-	bool														first_draw								= {};
+	bool														first_draw									= {};
 
-	uint32_t													pushed_mesh_count						= {};
-	uint32_t													pushed_index_count						= {};
-	uint32_t													pushed_vertex_count						= {};
-	uint32_t													pushed_texture_channel_count			= {};
-	uint32_t													pushed_transformation_count				= {};
+	uint32_t													pushed_mesh_count							= {};
+	uint32_t													pushed_index_count							= {};
+	uint32_t													pushed_vertex_count							= {};
+	uint32_t													pushed_texture_channel_weight_count			= {};
+	uint32_t													pushed_transformation_count					= {};
 
-	vk2d::_internal::MeshBufferBlock<uint32_t>				*	bound_index_buffer_block				= {};
-	vk2d::_internal::MeshBufferBlock<vk2d::Vertex>			*	bound_vertex_buffer_block				= {};
-	vk2d::_internal::MeshBufferBlock<float>					*	bound_texture_channel_buffer_block		= {};
-	vk2d::_internal::MeshBufferBlock<vk2d::Matrix4f>		*	bound_transformation_buffer_block		= {};
+	vk2d::_internal::MeshBufferBlock<uint32_t>				*	bound_index_buffer_block					= {};
+	vk2d::_internal::MeshBufferBlock<vk2d::Vertex>			*	bound_vertex_buffer_block					= {};
+	vk2d::_internal::MeshBufferBlock<float>					*	bound_texture_channel_weight_buffer_block		= {};
+	vk2d::_internal::MeshBufferBlock<vk2d::Matrix4f>		*	bound_transformation_buffer_block			= {};
 
-	vk2d::_internal::IndexBufferBlocks							index_buffer_blocks						= {};
-	vk2d::_internal::VertexBufferBlocks							vertex_buffer_blocks					= {};
-	vk2d::_internal::TextureChannelBufferBlocks					texture_channel_buffer_blocks			= {};
-	vk2d::_internal::TransformationBufferBlocks					transformation_buffer_blocks			= {};
+	vk2d::_internal::IndexBufferBlocks							index_buffer_blocks							= {};
+	vk2d::_internal::VertexBufferBlocks							vertex_buffer_blocks						= {};
+	vk2d::_internal::TextureChannelBufferBlocks					texture_channel_weight_buffer_blocks		= {};
+	vk2d::_internal::TransformationBufferBlocks					transformation_buffer_blocks				= {};
 
-	vk2d::_internal::IndexBufferBlocks::iterator				current_index_buffer_block				= {};
-	vk2d::_internal::VertexBufferBlocks::iterator				current_vertex_buffer_block				= {};
-	vk2d::_internal::TextureChannelBufferBlocks::iterator		current_texture_channel_buffer_block	= {};
-	vk2d::_internal::TransformationBufferBlocks					current_transformation_buffer_block		= {};
+	vk2d::_internal::IndexBufferBlocks::iterator				current_index_buffer_block					= {};
+	vk2d::_internal::VertexBufferBlocks::iterator				current_vertex_buffer_block					= {};
+	vk2d::_internal::TextureChannelBufferBlocks::iterator		current_texture_channel_weight_buffer_block	= {};
+	vk2d::_internal::TransformationBufferBlocks					current_transformation_buffer_block			= {};
 };
 
 

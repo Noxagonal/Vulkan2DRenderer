@@ -19,11 +19,12 @@ layout(set=5, binding=0) uniform texture2DArray		sampled_image;
 
 // Push constants.
 layout(std140, push_constant) uniform PushConstants {
-	uint		index_offset;				// Offset into the index buffer.
-	uint		index_count;				// Amount of indices this shader should handle.
-	uint		vertex_offset;				// Offset to first vertex in vertex buffer.
-	uint		texture_channel_offset;		// Location of the texture channels in the texture channel weights ssbo.
-	uint		texture_channel_count;		// Just the amount of texture channels.
+	uint		transformation_offset;			// Offset into the transformation buffer.
+	uint		index_offset;					// Offset into the index buffer.
+	uint		index_count;					// Amount of indices this shader should handle.
+	uint		vertex_offset;					// Offset to first vertex in vertex buffer.
+	uint		texture_channel_weight_offset;	// Location of the texture channels in the texture channel weights ssbo.
+	uint		texture_channel_weight_count;	// Just the amount of texture channels.
 } push_constants;
 
 // From vertex shader.

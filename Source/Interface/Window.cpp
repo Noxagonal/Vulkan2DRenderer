@@ -2144,8 +2144,8 @@ void vk2d::_internal::WindowImpl::DrawTriangleList(
 			pc.index_offset				= push_result.location_info.index_offset;
 			pc.index_count				= 3;
 			pc.vertex_offset			= push_result.location_info.vertex_offset;
-			pc.texture_channel_offset	= push_result.location_info.texture_channel_offset;
-			pc.texture_channel_count	= texture->GetLayerCount();
+			pc.texture_channel_weight_offset	= push_result.location_info.texture_channel_weight_offset;
+			pc.texture_channel_weight_count	= texture->GetLayerCount();
 
 			vkCmdPushConstants(
 				command_buffer,
@@ -2298,8 +2298,8 @@ void vk2d::_internal::WindowImpl::DrawLineList(
 			pc.index_offset				= push_result.location_info.index_offset;
 			pc.index_count				= 2;
 			pc.vertex_offset			= push_result.location_info.vertex_offset;
-			pc.texture_channel_offset	= push_result.location_info.texture_channel_offset;
-			pc.texture_channel_count	= texture->GetLayerCount();
+			pc.texture_channel_weight_offset	= push_result.location_info.texture_channel_weight_offset;
+			pc.texture_channel_weight_count	= texture->GetLayerCount();
 
 			vkCmdPushConstants(
 				command_buffer,
@@ -2403,8 +2403,8 @@ void vk2d::_internal::WindowImpl::DrawPointList(
 			pc.index_offset				= push_result.location_info.index_offset;
 			pc.index_count				= 1;
 			pc.vertex_offset			= push_result.location_info.vertex_offset;
-			pc.texture_channel_offset	= push_result.location_info.texture_channel_offset;
-			pc.texture_channel_count	= texture->GetLayerCount();
+			pc.texture_channel_weight_offset	= push_result.location_info.texture_channel_weight_offset;
+			pc.texture_channel_weight_count	= texture->GetLayerCount();
 
 			vkCmdPushConstants(
 				command_buffer,

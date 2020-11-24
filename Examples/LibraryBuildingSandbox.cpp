@@ -211,7 +211,7 @@ int main()
 			grid.SetTexture( nullptr );
 			grid.SetMeshType( vk2d::MeshType::TRIANGLE_WIREFRAME );
 			grid.SetVertexColor( vk2d::Colorf( 0.1f, 1.0f, 0.3f, 1.0f ) );
-			window1->DrawMesh( grid, { t.CalculateTransformationMatrix() } );
+			window1->DrawMesh( grid, { t.CalculateTransformationMatrix(), vk2d::Matrix4f( 1.0f ) } );
 
 			window1->DrawTexture(
 				{ -400.0f, 200.0f },

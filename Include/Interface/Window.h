@@ -625,7 +625,7 @@ public:
 	///				List of indices telling how to form triangles between vertices.
 	/// @param[in]	vertices
 	///				List of vertices that define the shape.
-	/// @param[in]	texture_channels
+	/// @param[in]	texture_channel_weights
 	///				Only has effect if provided texture has more than 1 layer.
 	///				This tell how much weight each texture layer has on each vertex.
 	///				TODO: Need to check formatting... Yank Niko, he forgot...

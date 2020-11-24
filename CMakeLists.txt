@@ -183,9 +183,14 @@ else()
 			VK2D_DEBUG_ENABLE=0)
 endif()
 
+# Custom tools to run before building VK2D
+
+# Unfortunately this always runs as the tool is created
+# from source and must run before VK2D is compiled.
+# So running is sandwitched between the tool's compilation
+# and VK2D compilation. Ideas of how to make make running
+# of this tool depend on shader files are welcome.
 add_custom_target(RunTool_CompileGLSLShaderToSpirV
-	DEPENDS
-		"${CMAKE_SOURCE_DIR}/Source/Shaders/*.*"
 	COMMAND
 		CompileGLSLShadersToSpirV
 		"-shaderpath" "${CMAKE_SOURCE_DIR}/Source/Shaders"

@@ -77,7 +77,7 @@ public:
 	VK2D_API void												VK2D_APIENTRY				DrawTriangleList(
 		const std::vector<vk2d::VertexIndex_3>				&	indices,
 		const std::vector<vk2d::Vertex>						&	vertices,
-		const std::vector<float>							&	texture_channels,
+		const std::vector<float>							&	texture_channel_weights,
 		const std::vector<vk2d::Matrix4f>					&	transformations,
 		bool													filled						= true,
 		vk2d::Texture										*	texture						= nullptr,
@@ -86,14 +86,14 @@ public:
 	VK2D_API void												VK2D_APIENTRY				DrawLineList(
 		const std::vector<vk2d::VertexIndex_2>				&	indices,
 		const std::vector<vk2d::Vertex>						&	vertices,
-		const std::vector<float>							&	texture_channels,
+		const std::vector<float>							&	texture_channel_weights,
 		const std::vector<vk2d::Matrix4f>					&	transformations,
 		vk2d::Texture										*	texture						= nullptr,
 		vk2d::Sampler										*	sampler						= nullptr );
 
 	VK2D_API void												VK2D_APIENTRY				DrawPointList(
 		const std::vector<vk2d::Vertex>						&	vertices,
-		const std::vector<float>							&	texture_channels,
+		const std::vector<float>							&	texture_channel_weights,
 		const std::vector<vk2d::Matrix4f>					&	transformations,
 		vk2d::Texture										*	texture						= nullptr,
 		vk2d::Sampler										*	sampler						= nullptr );
