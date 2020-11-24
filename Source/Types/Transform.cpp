@@ -45,13 +45,13 @@ VK2D_API vk2d::Matrix4f VK2D_APIENTRY vk2d::Transform::CalculateTransformationMa
 		position_matrix.column_4.y = position.y;
 	}
 
+	auto rotation_matrix = vk2d::CreateRotationMatrix4( rotation );
+
 	auto scale_matrix = vk2d::Matrix4f( 1.0f );
 	{
 		scale_matrix.column_1.x = scale.x;
 		scale_matrix.column_2.y = scale.y;
 	}
 
-	auto rotation_matrix = vk2d::CreateRotationMatrix4( rotation );
-
-	return position_matrix * scale_matrix * rotation_matrix;
+	return position_matrix * rotation_matrix * scale_matrix;
 }
