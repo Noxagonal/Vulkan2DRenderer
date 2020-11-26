@@ -1,35 +1,60 @@
 
 #include "../Core/SourceCommon.h"
 
-#include "../../Include/Core/Common.h"
+#include "../../Include/Core/SystemConsole.h"
 
-namespace vk2d{
+#include <iostream>
 
 
 
-bool operator<( vk2d::ConsoleColor c1, vk2d::ConsoleColor c2 ){
-	return uint8_t( c1 ) < uint8_t( c2 );
-};
+// Mutex needed to make sense of messages if multiple
+// threads are printing messages at the same time.
+std::mutex print_mutex;
 
 
 
 #if defined( VK2D_PLATFORM_WINDOWS )
 
-void SetConsoleColor(
+#include <Windows.h>
+
+
+
+VK2D_API void VK2D_APIENTRY vk2d::ConsolePrint(
+	std::string_view		text,
 	vk2d::ConsoleColor		text_color,
 	vk2d::ConsoleColor		background_color
 )
 {
-	auto tc		= uint8_t( text_color );
-	auto bc		= uint8_t( background_color );
-	if( tc == uint8_t( vk2d::ConsoleColor::DEFAULT ) ) tc = uint8_t( vk2d::ConsoleColor::GRAY );
-	if( bc == uint8_t( vk2d::ConsoleColor::DEFAULT ) ) bc = uint8_t( vk2d::ConsoleColor::BLACK );
-	unsigned short attributes = ( (unsigned)bc << 4 ) | (unsigned)tc;
+	std::lock_guard<std::mutex> lock_guard( print_mutex );
+
 	HANDLE std_out_handle = GetStdHandle( STD_OUTPUT_HANDLE );
-	SetConsoleTextAttribute( std_out_handle, attributes );
+
+	// Get old attributes.
+	WORD old_attributes {};
+	{
+		CONSOLE_SCREEN_BUFFER_INFO console_screen_buffer_info {};
+		if( GetConsoleScreenBufferInfo( std_out_handle, &console_screen_buffer_info ) ) {
+			old_attributes = console_screen_buffer_info.wAttributes;
+		} else {
+			old_attributes = 7;		// Black background, Gray color text.
+		}
+	}
+
+	WORD text_color_as_int			= ( text_color			== vk2d::ConsoleColor::DEFAULT ) ? ( ( old_attributes & WORD( 0x000F ) ) ) : ( WORD( text_color ) );
+	WORD background_color_as_int	= ( background_color	== vk2d::ConsoleColor::DEFAULT ) ? ( ( old_attributes & WORD( 0x00F0 ) ) ) : ( WORD( background_color ) << 4 );
+	WORD new_attributes				= background_color_as_int | text_color_as_int;
+
+
+	SetConsoleTextAttribute( std_out_handle, new_attributes );
+	std::cout << text;
+	SetConsoleTextAttribute( std_out_handle, old_attributes );
 }
 
 #elif defined( VK2D_PLATFORM_LINUX )
+
+#include <map>
+
+
 
 std::map<vk2d::ConsoleColor, const char*> text_color_map {
 	{ vk2d::ConsoleColor::DEFAULT, "39" },
@@ -71,12 +96,19 @@ std::map<vk2d::ConsoleColor, const char*> background_color_map {
 	{ vk2d::ConsoleColor::WHITE, "107" }
 };
 
-void SetConsoleColor(
-	ConsoleColor		text_color,
-	ConsoleColor		background_color
+void vk2d::ConsolePrint(
+	std::string_view		text,
+	vk2d::ConsoleColor		text_color,
+	vk2d::ConsoleColor		background_color
 )
 {
-	std::cout << "\003[0;" << text_color_map[ text_color ] << ";" << background_color_map[ background_color ] << ";m";
+	// TODO: Test ConsolePrint on Linux machine.
+
+	std::lock_guard<std::mutex> lock_guard( print_mutex );
+
+	std::cout << "\033[" << text_color_map[ text_color ] << ";" << background_color_map[ background_color ] << "m"
+		<< text
+		<< "\033[0m";
 }
 
 #else
@@ -84,8 +116,3 @@ void SetConsoleColor(
 #error "Please add platform support!"
 
 #endif
-
-
-
-
-} // vk2d

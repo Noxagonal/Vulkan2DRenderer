@@ -4,6 +4,8 @@
 #include "../../Include/Types/Vector2.hpp"
 #include "../../Include/Types/Color.hpp"
 
+#include "../../Include/Core/SystemConsole.h"
+
 #include "../System/QueueResolver.h"
 #include "../System/ThreadPool.h"
 #include "../System/ThreadPrivateResources.h"
@@ -2692,52 +2694,59 @@ void VK2D_APIENTRY VK2D_default_ReportFunction(
 {
 	VK2D_ASSERT_SINGLE_THREAD_ACCESS_SCOPE();
 
+	auto text_color			= vk2d::ConsoleColor::DEFAULT;
+	auto background_color	= vk2d::ConsoleColor::DEFAULT;
+
 	switch( severity ) {
 		case vk2d::ReportSeverity::NONE:
-			vk2d::SetConsoleColor();
 			break;
 		case vk2d::ReportSeverity::VERBOSE:
-			vk2d::SetConsoleColor( vk2d::ConsoleColor::DARK_GRAY );
+			text_color = vk2d::ConsoleColor::DARK_GRAY;
 			break;
 		case vk2d::ReportSeverity::INFO:
-			vk2d::SetConsoleColor( vk2d::ConsoleColor::DARK_GREEN );
+			text_color = vk2d::ConsoleColor::DARK_GREEN;
 			break;
 		case vk2d::ReportSeverity::PERFORMANCE_WARNING:
-			vk2d::SetConsoleColor( vk2d::ConsoleColor::BLUE );
+			text_color = vk2d::ConsoleColor::BLUE;
 			break;
 		case vk2d::ReportSeverity::WARNING:
-			vk2d::SetConsoleColor( vk2d::ConsoleColor::DARK_YELLOW );
+			text_color = vk2d::ConsoleColor::DARK_YELLOW;
 			break;
 		case vk2d::ReportSeverity::NON_CRITICAL_ERROR:
-			vk2d::SetConsoleColor( vk2d::ConsoleColor::RED );
+			text_color = vk2d::ConsoleColor::RED;
 			break;
 		case vk2d::ReportSeverity::CRITICAL_ERROR:
 		case vk2d::ReportSeverity::DEVICE_LOST:
-			vk2d::SetConsoleColor( vk2d::ConsoleColor::WHITE, vk2d::ConsoleColor::DARK_RED );
+			text_color			= vk2d::ConsoleColor::WHITE;
+			background_color	= vk2d::ConsoleColor::DARK_RED;
 			break;
 		default:
-			vk2d::SetConsoleColor();
 			break;
 	}
 
-	std::cout << message << "\n";
-	vk2d::SetConsoleColor();
+	message += "\n";
+	vk2d::ConsolePrint( message, text_color, background_color );
 
 	#if VK2D_BUILD_OPTION_VULKAN_COMMAND_BUFFER_CHECKMARKS && VK2D_BUILD_OPTION_VULKAN_VALIDATION && VK2D_DEBUG_ENABLE
 	if( severity == vk2d::ReportSeverity::DEVICE_LOST ) {
 
 		auto checkpoints = vk2d::_internal::GetCommandBufferCheckpoints();
 		if( checkpoints.size() ) {
-			std::cout << "\n\nLatest command buffer checkpoint marker stages: " << checkpoints.size() << "\n";
+			{
+				std::stringstream ss;
+				ss << "\n\nLatest command buffer checkpoint marker stages: " << checkpoints.size() << "\n";
+				vk2d::ConsolePrint( ss.str() );
+			}
 			for( auto & c : checkpoints ) {
 				auto data = reinterpret_cast<vk2d::_internal::CommandBufferCheckpointData*>( c.pCheckpointMarker );
 				std::stringstream ss;
 				ss << vk2d::_internal::CommandBufferCheckpointTypeToString( data->type )
 					<< " : " << data->name
-					<< vk2d::_internal::VkPipelineStageFlagBitsToString( c.stage );
-				std::cout << ss.str() << "\n";
+					<< vk2d::_internal::VkPipelineStageFlagBitsToString( c.stage )
+					<< "\n";
+				vk2d::ConsolePrint( ss.str() );
 			}
-			std::cout << "\nCommand buffer checkmark trail:\n";
+			vk2d::ConsolePrint( "\nCommand buffer checkmark trail:\n" );
 			auto c = reinterpret_cast<CommandBufferCheckpointData*>( checkpoints[ 0 ].pCheckpointMarker )->previous;
 			while( c ) {
 				auto current = c;
@@ -2747,7 +2756,7 @@ void VK2D_APIENTRY VK2D_default_ReportFunction(
 				std::stringstream ss;
 				ss << vk2d::_internal::CommandBufferCheckpointTypeToString( current->type )
 					<< " : " << current->name << "\n";
-				std::cout << ss.str();
+				vk2d::ConsolePrint( ss.str() );
 
 				delete current;
 			}

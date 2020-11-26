@@ -83,7 +83,7 @@ int main()
 	vk2d::WindowCreateInfo					window_create_info {};
 	window_create_info.size					= { 800, 600 };
 	window_create_info.coordinate_space		= vk2d::RenderCoordinateSpace::TEXEL_SPACE_CENTERED;
-	window_create_info.samples				= vk2d::Multisamples::SAMPLE_COUNT_8;
+	window_create_info.samples				= vk2d::Multisamples::SAMPLE_COUNT_16;
 	window_create_info.event_handler		= &event_handler;
 	auto window1 = instance->CreateOutputWindow( window_create_info );
 	if( !window1 ) return -1;

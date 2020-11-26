@@ -2138,7 +2138,7 @@ void vk2d::_internal::WindowImpl::DrawTriangleList(
 		pipeline_settings.primitive_topology	= VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
 		pipeline_settings.polygon_mode			= solid ? VK_POLYGON_MODE_FILL : VK_POLYGON_MODE_LINE;
 		pipeline_settings.shader_programs		= graphics_shader_programs;
-		pipeline_settings.samples				= VkSampleCountFlags( create_info_copy.samples );
+		pipeline_settings.samples				= VkSampleCountFlags( samples );
 		pipeline_settings.enable_blending		= VK_TRUE;
 
 		CmdBindGraphicsPipelineIfDifferent(
@@ -2292,7 +2292,7 @@ void vk2d::_internal::WindowImpl::DrawLineList(
 		pipeline_settings.primitive_topology	= VK_PRIMITIVE_TOPOLOGY_LINE_LIST;
 		pipeline_settings.polygon_mode			= VK_POLYGON_MODE_LINE;
 		pipeline_settings.shader_programs		= graphics_shader_programs;
-		pipeline_settings.samples				= VkSampleCountFlags( create_info_copy.samples );
+		pipeline_settings.samples				= VkSampleCountFlags( samples );
 		pipeline_settings.enable_blending		= VK_TRUE;
 
 		CmdBindGraphicsPipelineIfDifferent(
@@ -2397,7 +2397,7 @@ void vk2d::_internal::WindowImpl::DrawPointList(
 		pipeline_settings.primitive_topology	= VK_PRIMITIVE_TOPOLOGY_POINT_LIST;
 		pipeline_settings.polygon_mode			= VK_POLYGON_MODE_POINT;
 		pipeline_settings.shader_programs		= graphics_shader_programs;
-		pipeline_settings.samples				= VkSampleCountFlags( create_info_copy.samples );
+		pipeline_settings.samples				= VkSampleCountFlags( samples );
 		pipeline_settings.enable_blending		= VK_TRUE;
 
 		CmdBindGraphicsPipelineIfDifferent(
