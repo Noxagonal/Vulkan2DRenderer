@@ -7,6 +7,12 @@
 
 
 
+// Mutex needed to make sense of messages if multiple
+// threads are printing messages at the same time.
+std::mutex print_mutex;
+
+
+
 #if defined( VK2D_PLATFORM_WINDOWS )
 
 #include <Windows.h>
@@ -19,6 +25,8 @@ VK2D_API void VK2D_APIENTRY vk2d::ConsolePrint(
 	vk2d::ConsoleColor		background_color
 )
 {
+	std::lock_guard<std::mutex> lock_guard( print_mutex );
+
 	HANDLE std_out_handle = GetStdHandle( STD_OUTPUT_HANDLE );
 
 	// Get old attributes.
@@ -95,6 +103,9 @@ void vk2d::ConsolePrint(
 )
 {
 	// TODO: Test ConsolePrint on Linux machine.
+
+	std::lock_guard<std::mutex> lock_guard( print_mutex );
+
 	std::cout << "\033[" << text_color_map[ text_color ] << ";" << background_color_map[ background_color ] << "m"
 		<< text
 		<< "\033[0m";

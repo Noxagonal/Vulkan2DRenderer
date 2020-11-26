@@ -10,6 +10,8 @@ namespace vk2d {
 
 
 
+/// @brief		Text or background color used when printing stuff to the console.
+/// @see		vk2d::ConsolePrint()
 enum class ConsoleColor : uint8_t
 {
 	BLACK			= 0,
@@ -31,6 +33,15 @@ enum class ConsoleColor : uint8_t
 	DEFAULT			= 255
 };
 
+/// @brief		Print a message to the console, usually used for debugging only as
+///				in the final application the console is not usually visible.
+/// @note		Multithreading: Any thread.
+/// @param[in]	text
+///				Message you wish to print to the console window.
+/// @param[in]	text_color
+///				Color of the message.
+/// @param[in]	background_color
+///				Color of the background of the letters you wish to print. ( not entire console window )
 VK2D_API void VK2D_APIENTRY ConsolePrint(
 	std::string_view		text,
 	vk2d::ConsoleColor		text_color				= vk2d::ConsoleColor::DEFAULT,

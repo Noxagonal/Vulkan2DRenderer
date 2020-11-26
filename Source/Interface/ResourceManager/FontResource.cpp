@@ -53,7 +53,7 @@ uint32_t RoundToCeilingPowerOfTwo(
 
 VK2D_API vk2d::FontResource::FontResource(
 	vk2d::_internal::ResourceManagerImpl	*	resource_manager,
-	uint32_t									loader_thread,
+	uint32_t									loader_thread_index,
 	vk2d::Resource							*	parent_resource,
 	const std::filesystem::path				&	file_path,
 	uint32_t									glyph_texel_size,
@@ -65,7 +65,7 @@ VK2D_API vk2d::FontResource::FontResource(
 	impl = std::make_unique<vk2d::_internal::FontResourceImpl>(
 		this,
 		resource_manager,
-		loader_thread,
+		loader_thread_index,
 		parent_resource,
 		file_path,
 		glyph_texel_size,
@@ -109,7 +109,7 @@ VK2D_API vk2d::TextureResource *VK2D_APIENTRY vk2d::FontResource::GetTextureReso
 	return impl->GetTextureResource();
 }
 
-VK2D_API bool VK2D_APIENTRY vk2d::FontResource::IsGood()
+VK2D_API bool VK2D_APIENTRY vk2d::FontResource::IsGood() const
 {
 	return !!impl;
 }
@@ -137,7 +137,7 @@ VK2D_API bool VK2D_APIENTRY vk2d::FontResource::IsGood()
 vk2d::_internal::FontResourceImpl::FontResourceImpl(
 	vk2d::FontResource						*	my_interface,
 	vk2d::_internal::ResourceManagerImpl	*	resource_manager,
-	uint32_t									loader_thread,
+	uint32_t									loader_thread_index,
 	vk2d::Resource							*	parent_resource,
 	const std::filesystem::path				&	file_path,
 	uint32_t									glyph_texel_size,
@@ -147,7 +147,7 @@ vk2d::_internal::FontResourceImpl::FontResourceImpl(
 ) :
 	vk2d::_internal::ResourceImpl(
 		my_interface,
-		loader_thread,
+		loader_thread_index,
 		resource_manager,
 		parent_resource,
 		{ file_path }
