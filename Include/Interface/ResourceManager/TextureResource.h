@@ -39,21 +39,13 @@ class TextureResource :
 		vk2d::Resource										*	parent_resource,
 		std::vector<std::filesystem::path>						file_paths_listing );
 
-	// Texture from data constructor.
-	VK2D_API																				TextureResource(
-		vk2d::_internal::ResourceManagerImpl				*	resource_manager,
-		uint32_t												loader_thread,
-		vk2d::Resource										*	parent_resource,
-		vk2d::Vector2u											size,
-		const std::vector<vk2d::Color8>						&	texels );
-
 	// Array texture from data constructor.
 	VK2D_API																				TextureResource(
 		vk2d::_internal::ResourceManagerImpl				*	resource_manager,
 		uint32_t												loader_thread,
 		vk2d::Resource										*	parent_resource,
 		vk2d::Vector2u											size,
-		const std::vector<std::vector<vk2d::Color8>*>		&	texels_listing );
+		const std::vector<const std::vector<vk2d::Color8>*>	&	texels_listing );
 
 public:
 	VK2D_API																				~TextureResource();

@@ -76,8 +76,8 @@ VK2D_API vk2d::TextureResource * VK2D_APIENTRY vk2d::ResourceManager::LoadTextur
 }
 
 VK2D_API vk2d::TextureResource * VK2D_APIENTRY vk2d::ResourceManager::CreateArrayTextureResource(
-	vk2d::Vector2u										size,
-	const std::vector<std::vector<vk2d::Color8>*>	&	texels_listing
+	vk2d::Vector2u											size,
+	const std::vector<const std::vector<vk2d::Color8>*>	&	texels_listing
 )
 {
 	return impl->CreateArrayTextureResource(
@@ -288,7 +288,7 @@ vk2d::TextureResource * vk2d::_internal::ResourceManagerImpl::CreateTextureResou
 			SelectLoaderThread(),
 			parent_resource,
 			size,
-			texture_data
+			{ &texture_data }
 		)
 		);
 	if( !resource || !resource->IsGood() ) {
@@ -323,9 +323,9 @@ vk2d::TextureResource * vk2d::_internal::ResourceManagerImpl::LoadArrayTextureRe
 }
 
 vk2d::TextureResource * vk2d::_internal::ResourceManagerImpl::CreateArrayTextureResource(
-	vk2d::Vector2u										size,
-	const std::vector<std::vector<vk2d::Color8>*>	&	texture_data_listings,
-	vk2d::Resource									*	parent_resource )
+	vk2d::Vector2u											size,
+	const std::vector<const std::vector<vk2d::Color8>*>	&	texture_data_listings,
+	vk2d::Resource										*	parent_resource )
 {
 	std::lock_guard<std::recursive_mutex>		resources_lock( resources_mutex );
 
