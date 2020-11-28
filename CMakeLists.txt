@@ -190,23 +190,38 @@ endif()
 # So running is sandwitched between the tool's compilation
 # and VK2D compilation. Ideas of how to make make running
 # of this tool depend on shader files are welcome.
-add_custom_target(RunTool_CompileGLSLShaderToSpirV
+#add_custom_target(RunTool_CompileGLSLShaderToSpirV
+#	COMMAND
+#		CompileGLSLShadersToSpirV
+#		"-shaderpath" "${CMAKE_SOURCE_DIR}/Source/Shaders"
+#)
+#add_dependencies(RunTool_CompileGLSLShaderToSpirV
+#	CompileGLSLShadersToSpirV
+#)
+#set_target_properties(RunTool_CompileGLSLShaderToSpirV
+#	PROPERTIES
+#		FOLDER						"Utilities"
+#)
+
+# Opted to use a custom command for the target instead.
+# This means that shaders only get recompiled to Spir-V
+# if VK2D is recompiled, however this does save me some
+# time building the library, just need to be careful to
+# recompile VK2D every time shader source changes.
+# I'll likely go back to add_custom_target at some point.
+add_custom_command(
+	PRE_BUILD
+	TARGET
+		VK2D
 	COMMAND
 		CompileGLSLShadersToSpirV
 		"-shaderpath" "${CMAKE_SOURCE_DIR}/Source/Shaders"
-)
-add_dependencies(RunTool_CompileGLSLShaderToSpirV
-	CompileGLSLShadersToSpirV
-)
-set_target_properties(RunTool_CompileGLSLShaderToSpirV
-	PROPERTIES
-		FOLDER						"Utilities"
 )
 
 add_dependencies(VK2D
 	freetype
 	glfw
-	RunTool_CompileGLSLShaderToSpirV
+#	RunTool_CompileGLSLShaderToSpirV
 )
 
 
