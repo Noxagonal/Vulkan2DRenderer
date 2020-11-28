@@ -38,10 +38,10 @@
 
 
 VK2D_API vk2d::TextureResource::TextureResource(
-	vk2d::_internal::ResourceManagerImpl	*	resource_manager,
-	uint32_t									loader_thread,
-	vk2d::Resource							*	parent_resource,
-	std::vector<std::filesystem::path>			file_paths_listing
+	vk2d::_internal::ResourceManagerImpl		*	resource_manager,
+	uint32_t										loader_thread,
+	vk2d::Resource								*	parent_resource,
+	const std::vector<std::filesystem::path>	&	file_paths_listing
 )
 {
 	impl = std::make_unique<vk2d::_internal::TextureResourceImpl>(

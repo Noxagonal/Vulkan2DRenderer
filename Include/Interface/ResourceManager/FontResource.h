@@ -36,7 +36,7 @@ class FontResourceImpl;
 
 
 
-/// @brief		Font resource is a resource that can be loaded with vk2d::ResourceManager.
+/// @brief		vk2d::FontResource is a resource that can be loaded with vk2d::ResourceManager.
 ///				It is needed for printing text in the realtime scene / window.
 ///				To use a font to print text in the window you'll first need to load the
 ///				font from a disk, then generate text mesh using the font resource, then
@@ -59,7 +59,7 @@ class FontResource
 
 	/// @brief		This constructor is meant for internal use only. All resources are
 	///				created from vk2d::ResourceManager only.
-	/// @note		Multithreading: Main thread only.
+	/// @note		Multithreading: Any thread, selected managed by vk2d::ResourceManager.
 	/// @param[in]	resource_manager
 	///				Pointer to resource manager implementation object responsible for
 	///				creating this resource.
