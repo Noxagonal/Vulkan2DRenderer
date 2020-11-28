@@ -119,7 +119,7 @@ public:
 	///				continuing execution. For as long as the resource status is
 	///				undetermined or timeout hasn't been met this function will block.
 	///				As soon as the resource state becomes determined this function
-	///				return and code execution can continue.
+	///				will return and code execution can continue.
 	/// @note		Multithreading: Any thread.
 	/// @param[in]	timeout
 	///				Maximum time to wait. If resource is still in undetermined state
@@ -136,7 +136,7 @@ public:
 	///				continuing execution. For as long as the resource status is
 	///				undetermined or timeout hasn't been met this function will block.
 	///				As soon as the resource state becomes determined this function
-	///				return and code execution can continue.
+	///				will return and code execution can continue.
 	/// @note		Multithreading: Any thread.
 	/// @param[in]	timeout
 	///				Maximum time to wait. If resource is still in undetermined state
