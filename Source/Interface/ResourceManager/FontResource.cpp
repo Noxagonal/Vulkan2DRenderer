@@ -104,11 +104,6 @@ VK2D_API vk2d::ResourceStatus VK2D_APIENTRY vk2d::FontResource::WaitUntilLoaded(
 	return impl->WaitUntilLoaded( timeout );
 }
 
-VK2D_API vk2d::TextureResource *VK2D_APIENTRY vk2d::FontResource::GetTextureResource()
-{
-	return impl->GetTextureResource();
-}
-
 VK2D_API bool VK2D_APIENTRY vk2d::FontResource::IsGood() const
 {
 	return !!impl;

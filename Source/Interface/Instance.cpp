@@ -2390,9 +2390,9 @@ bool vk2d::_internal::InstanceImpl::CreateThreadPool()
 
 bool vk2d::_internal::InstanceImpl::CreateResourceManager()
 {
-	resource_manager		= std::make_unique<vk2d::ResourceManager>(
+	resource_manager		= std::unique_ptr<vk2d::ResourceManager>( new vk2d::ResourceManager(
 		this
-		);
+	) );
 	if( resource_manager && resource_manager->IsGood() ) {
 		return true;
 	} else {

@@ -85,3 +85,10 @@ add_custom_command(
 add_dependencies(VK2D
 	VK2DDocumentation
 )
+
+install(
+	DIRECTORY
+		"${CMAKE_CURRENT_BINARY_DIR}/Docs/Doxygen/html/"
+	DESTINATION
+		"docs/"
+)

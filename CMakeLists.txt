@@ -239,12 +239,6 @@ install(
 		"include/"
 )
 install(
-	DIRECTORY
-		"${CMAKE_CURRENT_BINARY_DIR}/Docs/Docs/Doxygen/html/"
-	DESTINATION
-		"docs/"
-)
-install(
 	FILES
 		"${CMAKE_CURRENT_SOURCE_DIR}/README.md"
 		"${CMAKE_CURRENT_SOURCE_DIR}/LICENSE.md"
