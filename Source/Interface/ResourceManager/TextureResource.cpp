@@ -38,10 +38,10 @@
 
 
 VK2D_API vk2d::TextureResource::TextureResource(
-	vk2d::_internal::ResourceManagerImpl	*	resource_manager,
-	uint32_t									loader_thread,
-	vk2d::Resource							*	parent_resource,
-	std::vector<std::filesystem::path>			file_paths_listing
+	vk2d::_internal::ResourceManagerImpl		*	resource_manager,
+	uint32_t										loader_thread,
+	vk2d::Resource								*	parent_resource,
+	const std::vector<std::filesystem::path>	&	file_paths_listing
 )
 {
 	impl = std::make_unique<vk2d::_internal::TextureResourceImpl>(
@@ -62,37 +62,11 @@ VK2D_API vk2d::TextureResource::TextureResource(
 }
 
 VK2D_API vk2d::TextureResource::TextureResource(
-	vk2d::_internal::ResourceManagerImpl	*	resource_manager,
-	uint32_t									loader_thread,
-	vk2d::Resource							*	parent_resource,
-	vk2d::Vector2u								size,
-	const std::vector<vk2d::Color8>			&	texels
-)
-{
-	impl = std::make_unique<vk2d::_internal::TextureResourceImpl>(
-		this,
-		resource_manager,
-		loader_thread,
-		nullptr,
-		size,
-		texels
-	);
-	if( !impl || !impl->IsGood() ) {
-		impl	= nullptr;
-		resource_manager->GetInstance()->Report( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot create texture resource implementation!" );
-		return;
-	}
-
-	resource_impl	= impl.get();
-	texture_impl	= impl.get();
-}
-
-VK2D_API vk2d::TextureResource::TextureResource(
-	vk2d::_internal::ResourceManagerImpl			*	resource_manager,
-	uint32_t											loader_thread,
-	vk2d::Resource									*	parent_resource,
-	vk2d::Vector2u										size,
-	const std::vector<std::vector<vk2d::Color8>*>	&	texels_listing
+	vk2d::_internal::ResourceManagerImpl				*	resource_manager,
+	uint32_t												loader_thread,
+	vk2d::Resource										*	parent_resource,
+	vk2d::Vector2u											size,
+	const std::vector<const std::vector<vk2d::Color8>*>	&	texels_listing
 )
 {
 	impl = std::make_unique<vk2d::_internal::TextureResourceImpl>(
@@ -195,40 +169,12 @@ vk2d::_internal::TextureResourceImpl::TextureResourceImpl(
 }
 
 vk2d::_internal::TextureResourceImpl::TextureResourceImpl(
-	vk2d::TextureResource					*	my_interface,
-	vk2d::_internal::ResourceManagerImpl	*	resource_manager,
-	uint32_t									loader_thread,
-	vk2d::Resource							*	parent_resource,
-	vk2d::Vector2u								size,
-	const std::vector<vk2d::Color8>			&	texels
-) :
-	vk2d::_internal::ResourceImpl(
-		my_interface,
-		loader_thread,
-		resource_manager,
-		parent_resource
-	)
-{
-	assert( my_interface );
-	assert( resource_manager );
-
-	this->my_interface			= my_interface;
-	this->resource_manager		= resource_manager;
-
-	this->extent				= { size.x, size.y };
-	this->texture_data.resize( 1 );
-	this->texture_data[ 0 ]		= texels;
-
-	is_good						= true;
-}
-
-vk2d::_internal::TextureResourceImpl::TextureResourceImpl(
-	vk2d::TextureResource							*	my_interface,
-	vk2d::_internal::ResourceManagerImpl			*	resource_manager,
-	uint32_t											loader_thread,
-	vk2d::Resource									*	parent_resource,
-	vk2d::Vector2u										size,
-	const std::vector<std::vector<vk2d::Color8>*>	&	texels
+	vk2d::TextureResource								*	my_interface,
+	vk2d::_internal::ResourceManagerImpl				*	resource_manager,
+	uint32_t												loader_thread,
+	vk2d::Resource										*	parent_resource,
+	vk2d::Vector2u											size,
+	const std::vector<const std::vector<vk2d::Color8>*>	&	texels
 ) :
 	vk2d::_internal::ResourceImpl(
 		my_interface,

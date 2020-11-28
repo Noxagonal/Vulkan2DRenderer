@@ -47,9 +47,6 @@ public:
 	// TODO: Figure out how to get rid of Resource virtual destructor to improve ABI compatibility further.
 	VK2D_API virtual																			~Resource()						= default;
 
-	// Checks if the resource is ready to be used.
-	// Returns true if resource is loaded, false otherwise.
-
 	/// @brief		Checks if the resource has been loaded, failed to load or is yet
 	///				to be loaded / determined. This function will not wait but returns
 	///				immediately with the result.

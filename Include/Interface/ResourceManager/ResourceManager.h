@@ -111,7 +111,7 @@ public:
 	/// @return		Handle to newly created texture resource you can use when rendering.
 	VK2D_API TextureResource								*	VK2D_APIENTRY				CreateArrayTextureResource(
 		vk2d::Vector2u											size,
-		const std::vector<std::vector<vk2d::Color8>*>		&	texels_listing );
+		const std::vector<const std::vector<vk2d::Color8>*>	&	texels_listing );
 
 	/// @brief		Load a multi-layer texture resource from files.
 	/// @note		Multithreading: Any thread.

@@ -574,7 +574,7 @@ bool vk2d::_internal::FontResourceImpl::MTLoad(
 
 	// Everything is baked into the atlas, create texture resource to store it.
 	{
-		std::vector<std::vector<vk2d::Color8>*>		texture_data_array( atlas_textures.size() );
+		std::vector<const std::vector<vk2d::Color8>*>		texture_data_array( atlas_textures.size() );
 		for( size_t i = 0; i < atlas_textures.size(); ++i ) {
 			texture_data_array[ i ]		= &atlas_textures[ i ]->data;
 		}
