@@ -75,11 +75,17 @@ class FontResource
 	/// @param[in]	file_path
 	///				File path where to load the font resource from.
 	/// @param[in]	glyph_texel_size
-	///				Glyph texel size tells the desired maximum height of a single
-	///				letter in pixels/texels. Since it's easy to scale the text at render time,
-	///				this could be used as the quality of the letters, though for the perfect
-	///				results you should use the actual texel size on the window where you
-	///				want the letters to be rendered to.
+	///				Glyph texel size tells the desired nominal height of a single letter
+	///				in pixels/texels, however you should keep in mind that this value is
+	///				only a guideline, the actual size will vary from font to font and a
+	///				lot depends on what the font creator decided. Testing is the only way
+	///				to know for sure.
+	///				Since it's easy to scale the text at render time, this could be used
+	///				as the quality of the letters, though for the perfect results you
+	///				should use 1:1 texel mapping from the font to the window where you
+	///				want the letters to be rendered to. ( that is to say, for perfect
+	///				results use scale 1.0, 1.0 when rendering the text and use this
+	///				parameter to control the size. )
 	/// @param[in]	use_alpha
 	///				Use alpha channel instead of color on edge of the letters when rendering.
 	/// @param[in]	fallback_character
@@ -91,7 +97,7 @@ class FontResource
 	///				a texture atlas for efficiency, however if you render the text much
 	///				smaller than the actual size of the glyphs in the texture atlas,
 	///				mipmapping is often used to make text appear less grainy. However
-	///				if mipmapping is used, then the glyphs may eventualy start to mix
+	///				if mipmapping is used, then the glyphs may eventually start to mix
 	///				together in the final render, to decrease the amount of this
 	///				"UV bleeding" you can increase the gap between glyphs in the texture
 	///				atlas here.
