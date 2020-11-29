@@ -31,7 +31,7 @@ Internally workloads are automatically grouped to create more efficient submissi
 - Multi-threaded resource loading and saving.
 - Multi-window support.
 - Multisampling.
-- keyboard, mouse and gamepad input.
+- Keyboard, mouse and gamepad input.
 
 ------
 
@@ -57,7 +57,7 @@ Prior to building this library on any platform you will need:
 
 ##### Windows Visual Studio 2019
 1. Open PowerShell and navigate to a folder where you would like to download the VK2D project sources.
-2. copy and paste the following commands to the PowerShell window and press enter, this will also download everything for you (Don't close PowerShell even if it appears stuck, this can take a few minutes).
+2. Copy and paste the following commands to the PowerShell window and press enter, this will also download everything for you (Don't close PowerShell even if it appears stuck, this can take a few minutes).
 ```
 git clone https://github.com/Noxagonal/Vulkan2DRenderer
 cd Vulkan2DRenderer
@@ -77,7 +77,7 @@ cmake --install .
 
 ##### Microsoft Visual Studio 2017
 1. Open PowerShell and navigate to a folder where you would like to download the VK2D project sources.
-2. copy and paste the following commands to the PowerShell window and press enter, this will also download everything for you (Don't close PowerShell even if it appears stuck, this can take a few minutes).
+2. Copy and paste the following commands to the PowerShell window and press enter, this will also download everything for you (Don't close PowerShell even if it appears stuck, this can take a few minutes).
 ```
 git clone https://github.com/Noxagonal/Vulkan2DRenderer
 cd Vulkan2DRenderer
@@ -106,9 +106,10 @@ VK2D_BUILD_DOCS                     = default OFF   -> Build documentation. Need
 VK2D_BUILD_DOCS_FOR_COMPLETE_SOURCE = default OFF   -> Build documentation for the entire source instead of just the interface.
 ```
 These can be set when you're generating the project files.
+
 For example:
 ```
-cmake -D VK2D_BUILD_TESTS=ON -G "Visual Studio 16 2019" -A "x64" ..
+cmake -D VK2D_BUILD_TESTS=ON -D VK2D_BUILD_EXAMPLES=OFF -G "Visual Studio 16 2019" -A "x64" ..
 ```
 
 ------
@@ -129,4 +130,3 @@ cmake -D VK2D_BUILD_TESTS=ON -G "Visual Studio 16 2019" -A "x64" ..
 Copyright (c) 2020 Niko Kauppi Noxagonal@gmail.com
 
 This software is released under [MIT license](LICENSE.md)
-
