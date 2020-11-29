@@ -40,8 +40,8 @@ int main()
 	if( !instance ) return -1;
 
 	vk2d::WindowCreateInfo window_create_info {};
-	window_create_info.size = { 800, 600 };
-	window_create_info.coordinate_space = vk2d::RenderCoordinateSpace::TEXEL_SPACE_CENTERED;
+	window_create_info.size					= { 800, 600 };
+	window_create_info.coordinate_space		= vk2d::RenderCoordinateSpace::TEXEL_SPACE_CENTERED;
 	auto window = instance->CreateOutputWindow( window_create_info );
 	if( !window ) return -1;
 
@@ -52,10 +52,13 @@ int main()
 	// real time blur.
 	// However you should only enable multisampling and blur if you need them as they will
 	// increase video memory consumption and performance requirements further.
+	// In here we purposfully use very low resolution render target texture, in real
+	// application you'd probably want to use larger size.
 	vk2d::RenderTargetTextureCreateInfo render_target_texture_create_info {};
-	render_target_texture_create_info.size = { 600, 600 };
-	render_target_texture_create_info.coordinate_space = vk2d::RenderCoordinateSpace::TEXEL_SPACE_CENTERED;
-	render_target_texture_create_info.enable_blur = false;
+	render_target_texture_create_info.size				= { 128, 128 };
+	render_target_texture_create_info.coordinate_space	= vk2d::RenderCoordinateSpace::NORMALIZED_SPACE_CENTERED;
+	render_target_texture_create_info.enable_blur		= false;
+	render_target_texture_create_info.samples			= vk2d::Multisamples::SAMPLE_COUNT_1;
 	auto render_target_texture = instance->CreateRenderTargetTexture( render_target_texture_create_info );
 
 	// This is just to make it more obvious that we're indeed drawing into a texture.
@@ -87,8 +90,8 @@ int main()
 		render_target_texture->BeginRender();
 
 		render_target_texture->DrawEllipsePie(
-			{ -250.0f, -250.0f,
-			250.0f, 250.0f },
+			{ -0.9f, -0.9f,
+			0.9f, 0.9f },
 			( std::sin( seconds_from_launch / 2.0f ) * 0.5f + 0.5f ) * 3.14f * 2.0f,
 			std::sin( seconds_from_launch / 4.0f ) * 0.5f + 0.5f,
 			true,
@@ -100,7 +103,7 @@ int main()
 		// the render target texture. RenderTargetTexture::EndRender() also takes in
 		// blur amount parameters if you have blur enabled, this is the only way to
 		// blur things in VK2D. Try enabling the blur and adjust the blur amount here.
-		render_target_texture->EndRender( { 30.0f, 30.0f } );
+		render_target_texture->EndRender( { 20.0f, 20.0f } );
 
 
 
@@ -120,9 +123,9 @@ int main()
 		// For illustration purposes we'll apply a wave modifier.
 		mesh_copy.Wave(
 			1.2f,
-			5.0f,
+			2.0f,
 			0.0f,
-			{ 10.0f, 10.0f }
+			{ 20.0f, 20.0f }
 		);
 
 		// Draw the mesh copy to window. Note that "mesh_copy" is a copy of "mesh"
