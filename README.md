@@ -84,8 +84,8 @@ VK2D_DEBUG                          = default OFF   -> Enable or disable library
 VK2D_BUILD_STATIC_LIBRARY           = default OFF   -> Build the library as static. DOES NOT WORK YET!
 VK2D_BUILD_TESTS                    = default OFF   -> Build tests.
 VK2D_BUILD_EXAMPLES                 = default ON    -> Build and include examples on how to use this library.
-VK2D_BUILD_DOCS                     = default OFF	-> Build documentation. Off by default as it needs Doxygen.
-VK2D_BUILD_DOCS_FOR_COMPLETE_SOURCE = default OFF 	-> Build documentation for the entire source instead of just the interface.
+VK2D_BUILD_DOCS                     = default OFF   -> Build documentation. Off by default as it needs Doxygen.
+VK2D_BUILD_DOCS_FOR_COMPLETE_SOURCE = default OFF   -> Build documentation for the entire source instead of just the interface.
 ```
 
 ------
