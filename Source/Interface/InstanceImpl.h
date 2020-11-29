@@ -76,7 +76,7 @@ public:
 	///				Function pointer to callback that will be called when monitor is added or
 	///				removed from the system.
 	void													SetMonitorUpdateCallback(
-		vk2d::MonitorUpdateCallbackFun						monitor_update_callback_funtion );
+		vk2d::PFN_MonitorUpdateCallback						monitor_update_callback_funtion );
 
 	///				Create a new cursor. Cursor object is needed to set hardware
 	///				cursor image. See Cursor class for more information.
@@ -105,11 +105,11 @@ public:
 		vk2d::Cursor									*	cursor );
 
 	// Any thread.
-	vk2d::GamepadEventCallbackFun							GetGamepadEventCallback() const;
+	vk2d::PFN_GamepadConnectionEventCallback							GetGamepadEventCallback() const;
 
 	// Main thread only.
 	void													SetGamepadEventCallback(
-		vk2d::GamepadEventCallbackFun						gamepad_event_callback_function );
+		vk2d::PFN_GamepadConnectionEventCallback						gamepad_event_callback_function );
 
 	// Main thread only.
 	bool													IsGamepadPresent(
@@ -388,7 +388,7 @@ private:
 
 	vk2d::Instance										*	my_interface							= {};
 
-	vk2d::MonitorUpdateCallbackFun							monitor_update_callback					= nullptr;
+	vk2d::PFN_MonitorUpdateCallback							monitor_update_callback					= nullptr;
 
 	static uint64_t											instance_count;		// used to keep track of Instance instances
 
@@ -462,7 +462,7 @@ private:
 	std::vector<std::unique_ptr<vk2d::Sampler>>				samplers;
 	std::vector<std::unique_ptr<vk2d::Cursor>>				cursors;
 
-	vk2d::GamepadEventCallbackFun							joystick_event_callback						= {};
+	vk2d::PFN_GamepadConnectionEventCallback							joystick_event_callback						= {};
 
 	std::thread::id											creator_thread_id							= {};
 
