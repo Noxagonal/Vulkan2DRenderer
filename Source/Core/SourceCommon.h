@@ -80,7 +80,7 @@ inline void								CmdInsertCommandBufferCheckpoint(
 
 
 
-#ifdef VK2D_DEBUG_ENABLE
+#if VK2D_DEBUG_ENABLE
 
 #define VK2D_ASSERT_MAIN_THREAD( m_p_instance ) assert( m_p_instance->IsThisThreadCreatorThread() );
 
@@ -98,6 +98,9 @@ public:
 #define VK2D_ASSERT_SINGLE_THREAD_ACCESS_SCOPE() ThreadAccessScopeTracker m_thread_scope_access_tracker_##__LINE__( __FILE__, __FUNCTION__, __LINE__ )
 
 #else
+
+#define VK2D_ASSERT_MAIN_THREAD( m_p_instance )
+#define VK2D_ASSERT_SINGLE_THREAD_ACCESS_SCOPE()
 
 #endif
 
