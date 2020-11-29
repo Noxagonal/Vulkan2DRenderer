@@ -221,6 +221,7 @@ add_custom_command(
 add_dependencies(VK2D
 	freetype
 	glfw
+	CompileGLSLShadersToSpirV
 #	RunTool_CompileGLSLShaderToSpirV
 )
 
