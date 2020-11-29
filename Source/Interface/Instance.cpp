@@ -354,11 +354,9 @@ vk2d::_internal::InstanceImpl::InstanceImpl(
 		return;
 	}
 
-	#if VK2D_DEBUG_ENABLE
 	if( report_function == nullptr ) {
 		report_function = VK2D_default_ReportFunction;
 	}
-	#endif
 
 	//	Introduce layers and extensions here
 	//	instance_layers;

@@ -254,7 +254,7 @@ std::string vk2d::_internal::CommandBufferCheckpointTypeToString( CommandBufferC
 
 
 
-#ifdef VK2D_DEBUG_ENABLE
+#if VK2D_DEBUG_ENABLE
 
 std::mutex						access_tracker_map_mutex;
 std::map<std::string, uint32_t>	access_tracker_map;
