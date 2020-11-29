@@ -60,7 +60,7 @@ uint64_t									instance_count				= {};
 // Private function declarations.
 void VK2D_APIENTRY VK2D_default_ReportFunction(
 	vk2d::ReportSeverity	severity,
-	std::string				message );
+	std::string_view		message );
 
 void UpdateMonitorLists(
 	bool					globals_locked		= false );
@@ -155,7 +155,7 @@ VK2D_API vk2d::Monitor *VK2D_APIENTRY vk2d::Instance::GetPrimaryMonitor()
 
 
 VK2D_API void VK2D_APIENTRY vk2d::Instance::SetMonitorUpdateCallback(
-	vk2d::MonitorUpdateCallbackFun			monitor_update_callback_funtion
+	vk2d::PFN_MonitorUpdateCallback			monitor_update_callback_funtion
 )
 {
 	impl->SetMonitorUpdateCallback(
@@ -193,8 +193,13 @@ VK2D_API void VK2D_APIENTRY vk2d::Instance::DestroyCursor(
 	impl->DestroyCursor( cursor );
 }
 
+VK2D_API vk2d::PFN_GamepadConnectionEventCallback VK2D_APIENTRY vk2d::Instance::GetGamepadEventCallback() const
+{
+	return impl->GetGamepadEventCallback();
+}
+
 VK2D_API void VK2D_APIENTRY vk2d::Instance::SetGamepadEventCallback(
-	vk2d::GamepadEventCallbackFun		gamepad_event_callback_function
+	vk2d::PFN_GamepadConnectionEventCallback		gamepad_event_callback_function
 )
 {
 	impl->SetGamepadEventCallback( gamepad_event_callback_function );
@@ -451,7 +456,7 @@ bool vk2d::_internal::InstanceImpl::Run()
 }
 
 void vk2d::_internal::InstanceImpl::SetMonitorUpdateCallback(
-	vk2d::MonitorUpdateCallbackFun		monitor_update_callback_funtion
+	vk2d::PFN_MonitorUpdateCallback		monitor_update_callback_funtion
 )
 {
 	if( !IsThisThreadCreatorThread() ) {
@@ -534,13 +539,13 @@ void vk2d::_internal::InstanceImpl::DestroyCursor(
 	}
 }
 
-vk2d::GamepadEventCallbackFun vk2d::_internal::InstanceImpl::GetGamepadEventCallback() const
+vk2d::PFN_GamepadConnectionEventCallback vk2d::_internal::InstanceImpl::GetGamepadEventCallback() const
 {
 	return joystick_event_callback;
 }
 
 void vk2d::_internal::InstanceImpl::SetGamepadEventCallback(
-	vk2d::GamepadEventCallbackFun		joystick_event_callback_function
+	vk2d::PFN_GamepadConnectionEventCallback		joystick_event_callback_function
 )
 {
 	if( !IsThisThreadCreatorThread() ) {
@@ -2689,7 +2694,7 @@ namespace _internal {
 
 void VK2D_APIENTRY VK2D_default_ReportFunction(
 	vk2d::ReportSeverity			severity,
-	std::string						message
+	std::string_view				message
 )
 {
 	VK2D_ASSERT_SINGLE_THREAD_ACCESS_SCOPE();
@@ -2724,8 +2729,10 @@ void VK2D_APIENTRY VK2D_default_ReportFunction(
 			break;
 	}
 
-	message += "\n";
-	vk2d::ConsolePrint( message, text_color, background_color );
+	std::string message_editable;
+	message_editable.append( message );
+	message_editable += "\n";
+	vk2d::ConsolePrint( message_editable, text_color, background_color );
 
 	#if VK2D_BUILD_OPTION_VULKAN_COMMAND_BUFFER_CHECKMARKS && VK2D_BUILD_OPTION_VULKAN_VALIDATION && VK2D_DEBUG_ENABLE
 	if( severity == vk2d::ReportSeverity::DEVICE_LOST ) {
@@ -2767,7 +2774,7 @@ void VK2D_APIENTRY VK2D_default_ReportFunction(
 
 	if( severity >= vk2d::ReportSeverity::NON_CRITICAL_ERROR ) {
 		#ifdef _WIN32
-		MessageBox( NULL, message.c_str(), "Critical error!", MB_OK | MB_ICONERROR );
+		MessageBox( NULL, message_editable.c_str(), "Critical error!", MB_OK | MB_ICONERROR );
 		#endif
 		if( severity >= vk2d::ReportSeverity::CRITICAL_ERROR ) {
 			std::exit( -1 );
@@ -2881,13 +2888,13 @@ void glfwJoystickEventCallback( int joystick, int event )
 
 		for( auto l : vk2d::_internal::instance_listeners ) {
 			if( l->GetGamepadEventCallback() ) {
-				l->GetGamepadEventCallback()( vk2d::Gamepad( joystick ), vk2d::GamepadEvent::CONNECTED, joystic_name );
+				l->GetGamepadEventCallback()( vk2d::Gamepad( joystick ), vk2d::GamepadConnectionEvent::CONNECTED, joystic_name );
 			}
 		}
 	} else {
 		for( auto l : vk2d::_internal::instance_listeners ) {
 			if( l->GetGamepadEventCallback() ) {
-				l->GetGamepadEventCallback()( vk2d::Gamepad( joystick ), vk2d::GamepadEvent::DISCONNECTED, std::string( "" ) );
+				l->GetGamepadEventCallback()( vk2d::Gamepad( joystick ), vk2d::GamepadConnectionEvent::DISCONNECTED, std::string( "" ) );
 			}
 		}
 	}
