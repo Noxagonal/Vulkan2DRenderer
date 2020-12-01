@@ -4,6 +4,8 @@
 
 #include "../../Include/Interface/RenderTargetTexture.h"
 
+#include "../../Include/Types/BlurType.h"
+
 #include "../System/CommonTools.h"
 #include "../System/ShaderInterface.h"
 #include "../System/MeshBuffer.h"
@@ -149,7 +151,7 @@ public:
 	// Ends the rendering operations. You must call this after you're done drawing.
 	// This will display the results on screen.
 	bool																EndRender(
-		vk2d::RenderTargetTextureBlurType								blur_type,
+		vk2d::BlurType													blur_type,
 		vk2d::Vector2f													blur_amount );
 
 	bool																SynchronizeFrame();
@@ -291,7 +293,7 @@ private:
 	///				Reference to internal structure which contains all the information about the current frame.
 	void																CmdFinalizeRender(
 		vk2d::_internal::RenderTargetTextureImpl::SwapBuffer		&	swap,
-		vk2d::RenderTargetTextureBlurType								blur_type,
+		vk2d::BlurType													blur_type,
 		vk2d::Vector2f													blur_amount );
 
 	/// @brief		Record commands to copy an image to the final sampled image, then generate mipmaps for it.
@@ -320,7 +322,7 @@ private:
 	bool																CmdRecordBlurCommands(
 		vk2d::_internal::RenderTargetTextureImpl::SwapBuffer		&	swap,
 		VkCommandBuffer													command_buffer,
-		vk2d::RenderTargetTextureBlurType								blur_type,
+		vk2d::BlurType													blur_type,
 		vk2d::Vector2f													blur_amount,
 		vk2d::_internal::CompleteImageResource						&	source_image,
 		VkImageLayout													source_image_layout,

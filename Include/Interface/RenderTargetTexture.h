@@ -2,6 +2,7 @@
 
 #include "../Core/Common.h"
 
+#include "../Types/BlurType.h"
 #include "../Types/Vector2.hpp"
 #include "../Types/Rect2.hpp"
 #include "../Types/Matrix4.hpp"
@@ -27,12 +28,6 @@ class RenderTargetTextureImpl;
 } // _internal
 
 
-
-enum class RenderTargetTextureBlurType
-{
-	BOX,
-	GAUSSIAN,
-};
 
 struct RenderTargetTextureCreateInfo
 {
@@ -73,7 +68,7 @@ public:
 	// This will display the results on screen.
 	VK2D_API bool												VK2D_APIENTRY				EndRender(
 		vk2d::Vector2f											blur_amount					= {},
-		vk2d::RenderTargetTextureBlurType						blur_type					= vk2d::RenderTargetTextureBlurType::GAUSSIAN );
+		vk2d::BlurType											blur_type					= vk2d::BlurType::GAUSSIAN );
 
 	VK2D_API void												VK2D_APIENTRY				DrawTriangleList(
 		const std::vector<vk2d::VertexIndex_3>				&	indices,
