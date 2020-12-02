@@ -5,15 +5,23 @@ cmake_minimum_required(VERSION 3.16)
 
 project(VK2D CXX)
 
+message("========== VK2D ==========")
+
 if(POLICY CMP0077)
 	cmake_policy(SET CMP0077 NEW)
 endif()
 
+#message("WIN32: " ${WIN32})
+#message("VULKAN_SDK: " $ENV{VULKAN_SDK})
+#set(ENV{VULKAN_SDK} "D:/Program Files/VulkanSDK/Lib")
+#message("VULKAN_SDK: " $ENV{VULKAN_SDK})
 
+#set(WIN32 1)
+#set(WIN32 0)
 
+if(NOT Vulkan_FOUND)
 find_package(Vulkan REQUIRED)
-
-
+endif()
 
 # Update library submodules with git.
 find_package(Git REQUIRED QUIET)
@@ -109,7 +117,7 @@ file(GLOB_RECURSE FILES_SOURCE
 	"${CMAKE_CURRENT_SOURCE_DIR}/Source/*.*"
 )
 
-source_group(TREE "${CMAKE_SOURCE_DIR}"
+source_group(TREE "${PROJECT_SOURCE_DIR}"
 	FILES
 		${FILES_INCLUDE}
 		${FILES_SOURCE}
@@ -134,21 +142,21 @@ endif()
 set_target_properties(VK2D
 	PROPERTIES
 		CXX_STANDARD				17
-		ARCHIVE_OUTPUT_DIRECTORY	"${CMAKE_BINARY_DIR}/Lib"
-		LIBRARY_OUTPUT_DIRECTORY	"${CMAKE_BINARY_DIR}/Lib"
-		RUNTIME_OUTPUT_DIRECTORY	"${CMAKE_BINARY_DIR}/Bin"
+		ARCHIVE_OUTPUT_DIRECTORY	"${PROJECT_BINARY_DIR}/Lib"
+		LIBRARY_OUTPUT_DIRECTORY	"${PROJECT_BINARY_DIR}/Lib"
+		RUNTIME_OUTPUT_DIRECTORY	"${PROJECT_BINARY_DIR}/Bin"
 )
 
 target_precompile_headers(VK2D
 	PRIVATE
-		"${CMAKE_SOURCE_DIR}/Source/Core/PreCompiledHeader.h"
+		"${PROJECT_SOURCE_DIR}/Source/Core/PreCompiledHeader.h"
 )
 
 set(EXTERNAL_INCLUDES_PATH
-	"${CMAKE_SOURCE_DIR}/ExternalLibraries"
+	"${PROJECT_SOURCE_DIR}/ExternalLibraries"
 )
 set(EXTERNAL_LIBRARY_PATH
-	"${CMAKE_BINARY_DIR}/ExternalLibraries"
+	"${PROJECT_BINARY_DIR}/ExternalLibraries"
 )
 
 set(EXTERNAL_INCLUDES
@@ -193,7 +201,7 @@ endif()
 #add_custom_target(RunTool_CompileGLSLShaderToSpirV
 #	COMMAND
 #		CompileGLSLShadersToSpirV
-#		"-shaderpath" "${CMAKE_SOURCE_DIR}/Source/Shaders"
+#		"-shaderpath" "${PROJECT_SOURCE_DIR}/Source/Shaders"
 #)
 #add_dependencies(RunTool_CompileGLSLShaderToSpirV
 #	CompileGLSLShadersToSpirV
@@ -215,7 +223,7 @@ add_custom_command(
 		VK2D
 	COMMAND
 		CompileGLSLShadersToSpirV
-		"-shaderpath" "${CMAKE_SOURCE_DIR}/Source/Shaders"
+		"-shaderpath" "${PROJECT_SOURCE_DIR}/Source/Shaders"
 )
 
 add_dependencies(VK2D
