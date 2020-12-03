@@ -11,14 +11,6 @@ if(POLICY CMP0077)
 	cmake_policy(SET CMP0077 NEW)
 endif()
 
-#message("WIN32: " ${WIN32})
-#message("VULKAN_SDK: " $ENV{VULKAN_SDK})
-#set(ENV{VULKAN_SDK} "D:/Program Files/VulkanSDK/Lib")
-#message("VULKAN_SDK: " $ENV{VULKAN_SDK})
-
-#set(WIN32 1)
-#set(WIN32 0)
-
 if(NOT Vulkan_FOUND)
 find_package(Vulkan REQUIRED)
 endif()
