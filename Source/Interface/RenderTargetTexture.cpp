@@ -117,7 +117,8 @@ VK2D_API void VK2D_APIENTRY vk2d::RenderTargetTexture::DrawTriangleList(
 		texture_channel_weights,
 		transformations,
 		filled,
-		texture
+		texture,
+		sampler
 	);
 }
 
@@ -127,7 +128,8 @@ VK2D_API void VK2D_APIENTRY vk2d::RenderTargetTexture::DrawLineList(
 	const std::vector<float>				&	texture_channel_weights,
 	const std::vector<vk2d::Matrix4f>		&	transformations,
 	vk2d::Texture							*	texture,
-	vk2d::Sampler							*	sampler
+	vk2d::Sampler							*	sampler,
+	float										line_width
 )
 {
 	impl->DrawLineList(
@@ -135,7 +137,9 @@ VK2D_API void VK2D_APIENTRY vk2d::RenderTargetTexture::DrawLineList(
 		vertices,
 		texture_channel_weights,
 		transformations,
-		texture
+		texture,
+		sampler,
+		line_width
 	);
 }
 
@@ -151,7 +155,8 @@ VK2D_API void VK2D_APIENTRY vk2d::RenderTargetTexture::DrawPointList(
 		vertices,
 		texture_channel_weights,
 		transformations,
-		texture
+		texture,
+		sampler
 	);
 }
 
@@ -172,7 +177,8 @@ VK2D_API void VK2D_APIENTRY vk2d::RenderTargetTexture::DrawPoint(
 VK2D_API void VK2D_APIENTRY vk2d::RenderTargetTexture::DrawLine(
 	vk2d::Vector2f					point_1,
 	vk2d::Vector2f					point_2,
-	vk2d::Colorf					color
+	vk2d::Colorf					color,
+	float							line_width
 )
 {
 	auto mesh = vk2d::GenerateLineMeshFromList(
@@ -180,6 +186,7 @@ VK2D_API void VK2D_APIENTRY vk2d::RenderTargetTexture::DrawLine(
 		{ { 0, 1 } }
 	);
 	mesh.SetVertexColor( color );
+	mesh.SetLineWidth( line_width );
 	impl->DrawMesh( mesh, { vk2d::Matrix4f( 1.0f ) } );
 }
 
@@ -1151,6 +1158,10 @@ void vk2d::_internal::RenderTargetTextureImpl::DrawLineList(
 		);
 	}
 
+	CmdSetLineWidthIfDifferent(
+		command_buffer,
+		line_width
+	);
 	CmdBindSamplerIfDifferent(
 		command_buffer,
 		sampler,
@@ -3310,6 +3321,7 @@ void vk2d::_internal::RenderTargetTextureImpl::CmdBindTextureIfDifferent(
 	}
 }
 
+// TODO: Render target texture line width never used anywhere, we should enable it.
 void vk2d::_internal::RenderTargetTextureImpl::CmdSetLineWidthIfDifferent(
 	VkCommandBuffer						command_buffer,
 	float								line_width

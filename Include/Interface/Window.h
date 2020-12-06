@@ -212,6 +212,7 @@ enum class KeyboardButton : int32_t {
 	KEY_LAST			= KEY_MENU,
 };
 
+/// @brief		Creation parameters for the vk2d::Window.
 struct WindowCreateInfo {
 	bool								resizeable					= true;											///< Can we use the cursor to resize the window.
 	bool								visible						= true;											///< Is the window visible when created.
@@ -219,14 +220,14 @@ struct WindowCreateInfo {
 	bool								focused						= true;											///< Is the window focused and brought forth when created.
 	bool								maximized					= false;										///< Is the window maximized to fill the screen when created.
 	bool								transparent_framebuffer		= false;										///< Is the alpha value of the render interpreted as a transparent window background.
-	vk2d::RenderCoordinateSpace			coordinate_space			= vk2d::RenderCoordinateSpace::TEXEL_SPACE;		///< Window coordinate system to be used, see RenderCoordinateSpace.
+	vk2d::RenderCoordinateSpace			coordinate_space			= vk2d::RenderCoordinateSpace::TEXEL_SPACE;		///< Coordinate system to be used, see vk2d::RenderCoordinateSpace.
 	vk2d::Vector2u						size						= { 800, 600 };									///< Window framebuffer initial size
 	vk2d::Vector2u						min_size					= { 32, 32 };									///< Minimum size of the window, will be adjusted to suit the hardware.
 	vk2d::Vector2u						max_size					= { UINT32_MAX, UINT32_MAX };					///< Maximum size of the window, will be adjusted to suit the hardware.
 	vk2d::Monitor					*	fullscreen_monitor			= {};											///< Fullscreen monitor pointer, nullptr is windowed, use Instance::GetPrimaryMonitor() to use primary monitor for fullscreen.
 	uint32_t							fullscreen_refresh_rate		= UINT32_MAX;									///< Refresh rate in fullscreen mode, UINT32_MAX uses maximum refresh rate available.
 	bool								vsync						= true;											///< Vertical synchronization, works in both windowed and fullscreen modes, usually best left on for 2d graphics.
-	vk2d::Multisamples					samples						= vk2d::Multisamples::SAMPLE_COUNT_1;			///< Multisampling, must be a single value in vk2d::Multisamples enum.
+	vk2d::Multisamples					samples						= vk2d::Multisamples::SAMPLE_COUNT_1;			///< Multisampling, must be a singular value, see vk2d::Multisamples. Uses more GPU resources if higher than 1.
 	std::string							title						= "";											///< Window title.
 	vk2d::WindowEventHandler		*	event_handler				= nullptr;										///< Pointer to a custom event handler that will be used with this window. See vk2d::WindowEventHandler.
 };
@@ -603,7 +604,8 @@ public:
 	// current state of the cursor. See vk2d::CursorState for more information.
 	VK2D_API vk2d::CursorState							VK2D_APIENTRY				GetCursorState();
 
-	/// @brief		Begins the render operations. You must call this before using any drawing commands.
+	/// @brief		Begins the render operations. This signals the beginning of the render block and
+	///				you must call this before using any drawing commands.
 	///				For best performance you should calculate game logic first, when you're ready to draw
 	///				call this function just before your first draw command. Every draw call must be
 	///				between this and vk2d::Window::EndRender().
@@ -612,8 +614,9 @@ public:
 	/// @return		true if operation was successful, false on error and if you should quit.
 	VK2D_API bool										VK2D_APIENTRY				BeginRender();
 
-	/// @brief		Ends the rendering operations. You must call this after you're done drawing
-	///				everything in order to display the results on the window surface.
+	/// @brief		Ends the rendering operations. This signals the end of the render block and you must
+	///				call this after you're done drawing everything in order to display the results on the
+	///				window surface.
 	/// @see		vk2d::Window::BeginRender()
 	/// @note		Multithreading: Main thread only.
 	/// @return		true if operation was successful, false on error and if you should quit.
@@ -670,7 +673,8 @@ public:
 		const std::vector<float>					&	texture_channel_weights,
 		const std::vector<vk2d::Matrix4f>			&	transformations,
 		vk2d::Texture								*	texture						= nullptr,
-		vk2d::Sampler								*	sampler						= nullptr );
+		vk2d::Sampler								*	sampler						= nullptr,
+		float											line_width					= 1.0f );
 
 	/// @brief		Draws points directly.
 	///				Best used if you want to manipulate and draw vertices directly.
@@ -722,7 +726,8 @@ public:
 	VK2D_API void										VK2D_APIENTRY				DrawLine(
 		vk2d::Vector2f									point_1,
 		vk2d::Vector2f									point_2,
-		vk2d::Colorf									color						= { 1.0f, 1.0f, 1.0f, 1.0f } );
+		vk2d::Colorf									color						= { 1.0f, 1.0f, 1.0f, 1.0f },
+		float											line_width					= 1.0f );
 
 	/// @brief		Draws a rectangle.
 	/// @note		Multithreading: Main thread only.

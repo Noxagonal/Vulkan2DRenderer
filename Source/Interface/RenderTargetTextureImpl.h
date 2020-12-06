@@ -194,43 +194,43 @@ public:
 		const std::vector<vk2d::Vertex>								&	vertices,
 		const std::vector<float>									&	texture_channel_weights,
 		const std::vector<vk2d::Matrix4f>							&	transformations,
-		bool															filled						= true,
-		vk2d::Texture												*	texture						= nullptr,
-		vk2d::Sampler												*	sampler						= nullptr );
+		bool															filled,
+		vk2d::Texture												*	texture,
+		vk2d::Sampler												*	sampler );
 
 	void																DrawTriangleList(
 		const std::vector<uint32_t>									&	raw_indices,
 		const std::vector<vk2d::Vertex>								&	vertices,
 		const std::vector<float>									&	texture_channel_weights,
 		const std::vector<vk2d::Matrix4f>							&	transformations,
-		bool															filled						= true,
-		vk2d::Texture												*	texture						= nullptr,
-		vk2d::Sampler												*	sampler						= nullptr );
+		bool															filled,
+		vk2d::Texture												*	texture,
+		vk2d::Sampler												*	sampler );
 
 	void																DrawLineList(
 		const std::vector<vk2d::VertexIndex_2>						&	indices,
 		const std::vector<vk2d::Vertex>								&	vertices,
 		const std::vector<float>									&	texture_channel_weights,
 		const std::vector<vk2d::Matrix4f>							&	transformations,
-		vk2d::Texture												*	texture						= nullptr,
-		vk2d::Sampler												*	sampler						= nullptr,
-		float															line_width					= 1.0f );
+		vk2d::Texture												*	texture,
+		vk2d::Sampler												*	sampler,
+		float															line_width );
 
 	void																DrawLineList(
 		const std::vector<uint32_t>									&	raw_indices,
 		const std::vector<vk2d::Vertex>								&	vertices,
 		const std::vector<float>									&	texture_channel_weights,
 		const std::vector<vk2d::Matrix4f>							&	transformations,
-		vk2d::Texture												*	texture						= nullptr,
-		vk2d::Sampler												*	sampler						= nullptr,
-		float															line_width					= 1.0f );
+		vk2d::Texture												*	texture,
+		vk2d::Sampler												*	sampler,
+		float															line_width );
 
 	void																DrawPointList(
 		const std::vector<vk2d::Vertex>								&	vertices,
 		const std::vector<float>									&	texture_channel_weights,
 		const std::vector<vk2d::Matrix4f>							&	transformations,
-		vk2d::Texture												*	texture						= nullptr,
-		vk2d::Sampler												*	sampler						= nullptr );
+		vk2d::Texture												*	texture,
+		vk2d::Sampler												*	sampler );
 
 	void																DrawMesh(
 		const vk2d::Mesh											&	mesh,
