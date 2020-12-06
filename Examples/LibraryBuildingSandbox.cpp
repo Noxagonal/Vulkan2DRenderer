@@ -91,10 +91,18 @@ int main()
 	auto resource_manager		= instance->GetResourceManager();
 	auto texture_resource		= resource_manager->LoadTextureResource( "../../Data/GrafGear_128.png" );
 
+	vk2d::SamplerCreateInfo		sampler_create_info {};
+	sampler_create_info.magnification_filter	= vk2d::SamplerFilter::LINEAR;
+	sampler_create_info.minification_filter		= vk2d::SamplerFilter::LINEAR;
+	sampler_create_info.mipmap_enable			= false;
+	auto sampler				= instance->CreateSampler( sampler_create_info );
+
 	auto box					= vk2d::GenerateRectangleMesh(
-		{ -50.0f, -50.0f, 50.0f, 50.0f },
-		false
+		{ -250.0f, -250.0f, 250.0f, 250.0f },
+		true
 	);
+	box.SetTexture( texture_resource );
+	box.SetSampler( sampler );
 	box.SetLineWidth( 10.0f );
 
 	auto delta_time_counter		= DeltaTimeCounter();
@@ -107,32 +115,7 @@ int main()
 
 		if( !window1->BeginRender() ) return -1;
 
-		auto origin = vk2d::Transform(
-			{ 0.0f, 0.0f },
-			{ std::sin( seconds_since_start ) * 0.5f + 1.0f, 1.0f },
-			seconds_since_start / 3.0f
-		);
-		auto origin_matrix = origin.CalculateTransformationMatrix();
-
-		auto child = vk2d::Transform(
-			{ 150.0f, 0.0f },
-			{ 1.0f, 1.0f },
-			0.0f
-		);
-		auto child_matrix = child.CalculateTransformationMatrix();
-
-		auto sub_child = vk2d::Transform(
-			{ 0.0f, std::sin( seconds_since_start / 2.0f ) * 150.0f },
-			{ 1.0f, 1.0f },
-			std::sin( seconds_since_start )
-		);
-		auto sub_child_matrix = sub_child.CalculateTransformationMatrix();
-
-		auto child_transform		= origin_matrix * child_matrix;
-		auto sub_child_transform	= origin_matrix * child_matrix * sub_child_matrix;
-
-		window1->DrawMesh( box, origin );
-		window1->DrawMesh( box, { child_transform, sub_child_transform } );
+		window1->DrawMesh( box );
 
 		if( !window1->EndRender() ) return -1;
 	}

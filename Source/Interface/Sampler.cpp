@@ -95,9 +95,9 @@ vk2d::_internal::SamplerImpl::SamplerImpl(
 		case vk2d::SamplerFilter::LINEAR:
 			magFilter	= VkFilter::VK_FILTER_LINEAR;
 			break;
-		case vk2d::SamplerFilter::CUBIC:
-			magFilter	= VkFilter::VK_FILTER_CUBIC_EXT;
-			break;
+//		case vk2d::SamplerFilter::CUBIC:
+//			magFilter	= VkFilter::VK_FILTER_CUBIC_EXT;
+//			break;
 		default:
 			instance->Report(
 				vk2d::ReportSeverity::WARNING,
@@ -116,9 +116,9 @@ vk2d::_internal::SamplerImpl::SamplerImpl(
 		case vk2d::SamplerFilter::LINEAR:
 			minFilter	= VkFilter::VK_FILTER_LINEAR;
 			break;
-		case vk2d::SamplerFilter::CUBIC:
-			minFilter	= VkFilter::VK_FILTER_CUBIC_EXT;
-			break;
+//		case vk2d::SamplerFilter::CUBIC:
+//			minFilter	= VkFilter::VK_FILTER_CUBIC_EXT;
+//			break;
 		default:
 			instance->Report(
 				vk2d::ReportSeverity::WARNING,
@@ -204,6 +204,8 @@ vk2d::_internal::SamplerImpl::SamplerImpl(
 	}
 
 	VkBool32 anisotropyEnable = create_info.mipmap_enable;
+	/*
+	// TODO: Sampler cubic filtering is disabled for now. Consider implementing this in shader later.
 	if( anisotropyEnable ) {
 		if( create_info.minification_filter == vk2d::SamplerFilter::CUBIC ||
 			create_info.magnification_filter == vk2d::SamplerFilter::CUBIC ) {
@@ -218,6 +220,7 @@ vk2d::_internal::SamplerImpl::SamplerImpl(
 			anisotropyEnable	= false;
 		}
 	}
+	*/
 
 	float maxAnisotropy = std::min(
 		create_info.mipmap_max_anisotropy,

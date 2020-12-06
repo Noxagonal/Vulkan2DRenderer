@@ -18,11 +18,15 @@ class SamplerImpl;
 class Instance;
 
 
-
+/// @brief		Tells which filter to use when fetching the texel from a texture at given
+///				UV coordinates, this is needed when texture is smaller or larger than the
+///				output, eg. small texture is used on a shape that that fills most of the
+///				window surface has an appearance of a blurry texture, this 
 enum class SamplerFilter {
 	NEAREST,
 	LINEAR,
-	CUBIC,
+
+//	CUBIC, // disabled for now, not enough hardware support. This is doable in shader though so I might "software" implement this later.
 };
 
 enum class SamplerMipmapMode {
@@ -39,17 +43,17 @@ enum class SamplerAddressMode {
 };
 
 struct SamplerCreateInfo {
-	vk2d::SamplerFilter					minification_filter				= vk2d::SamplerFilter::LINEAR;
-	vk2d::SamplerFilter					magnification_filter			= vk2d::SamplerFilter::LINEAR;
-	vk2d::SamplerMipmapMode				mipmap_mode						= vk2d::SamplerMipmapMode::LINEAR;
-	vk2d::SamplerAddressMode			address_mode_u					= vk2d::SamplerAddressMode::REPEAT;
-	vk2d::SamplerAddressMode			address_mode_v					= vk2d::SamplerAddressMode::REPEAT;
-	vk2d::Colorf						border_color					= { 0.0f, 0.0f, 0.0f, 1.0f };
-	bool								mipmap_enable					= true;
-	float								mipmap_max_anisotropy			= 16.0f;
-	float								mipmap_level_of_detail_bias		= 0.0f;
-	float								mipmap_min_level_of_detail		= 0.0f;
-	float								mipmap_max_level_of_detail		= 128.0f;
+	vk2d::SamplerFilter					minification_filter				= vk2d::SamplerFilter::LINEAR;		///< 
+	vk2d::SamplerFilter					magnification_filter			= vk2d::SamplerFilter::LINEAR;		///< 
+	vk2d::SamplerMipmapMode				mipmap_mode						= vk2d::SamplerMipmapMode::LINEAR;	///< 
+	vk2d::SamplerAddressMode			address_mode_u					= vk2d::SamplerAddressMode::REPEAT;	///< 
+	vk2d::SamplerAddressMode			address_mode_v					= vk2d::SamplerAddressMode::REPEAT;	///< 
+	vk2d::Colorf						border_color					= { 0.0f, 0.0f, 0.0f, 1.0f };		///< 
+	bool								mipmap_enable					= true;								///< 
+	float								mipmap_max_anisotropy			= 16.0f;							///< 
+	float								mipmap_level_of_detail_bias		= 0.0f;								///< 
+	float								mipmap_min_level_of_detail		= 0.0f;								///< 
+	float								mipmap_max_level_of_detail		= 128.0f;							///< 
 };
 
 
