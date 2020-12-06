@@ -95,6 +95,7 @@ int main()
 		{ -50.0f, -50.0f, 50.0f, 50.0f },
 		false
 	);
+	box.SetLineWidth( 10.0f );
 
 	auto delta_time_counter		= DeltaTimeCounter();
 	auto delta_time				= 0.0f;

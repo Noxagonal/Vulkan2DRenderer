@@ -141,7 +141,7 @@ public:
 	VK2D_API void									VK2D_APIENTRY					SetPointSize(
 		float										point_size );
 
-	VK2D_API void									VK2D_APIENTRY					SetLineSize(
+	VK2D_API void									VK2D_APIENTRY					SetLineWidth(
 		float										line_width );
 
 	VK2D_API void									VK2D_APIENTRY					SetMeshType(

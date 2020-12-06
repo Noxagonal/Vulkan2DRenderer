@@ -23,12 +23,12 @@ vk2d::_internal::MeshBuffer::MeshBuffer(
 	assert( device );
 	assert( device_memory_pool );
 
-	this->instance				= instance;
+	this->instance						= instance;
 	this->device						= device;
 	this->physicald_device_limits		= physicald_device_limits;
 	this->device_memory_pool			= device_memory_pool;
 
-	first_draw							= true;
+	this->first_draw					= true;
 }
 
 vk2d::_internal::MeshBuffer::PushResult vk2d::_internal::MeshBuffer::CmdPushMesh(
@@ -39,11 +39,18 @@ vk2d::_internal::MeshBuffer::PushResult vk2d::_internal::MeshBuffer::CmdPushMesh
 	const std::vector<vk2d::Matrix4f>	&	new_transformations
 )
 {
-	auto reserve_result			= ReserveSpaceForMesh(
+	// TODO: Could save some memory when calling CmdPushMesh with empty new_transformations, could just point to an identity matrix stored on the first index.
+	// Whenever new_transformations is empty, just submit the render once and have the transformation point to the first index.
+
+	std::vector<vk2d::Matrix4f>				default_transformation		= { vk2d::Matrix4f( 1.0f ) };
+	const std::vector<vk2d::Matrix4f>	*	new_transformations_actual	= &default_transformation;
+	if( new_transformations.size() )		new_transformations_actual	= &new_transformations;
+
+	auto reserve_result = ReserveSpaceForMesh(
 		uint32_t( new_indices.size() ),
 		uint32_t( new_vertices.size() ),
 		uint32_t( new_texture_channel_weights.size() ),
-		uint32_t( new_transformations.size() )
+		uint32_t( new_transformations_actual->size() )
 	);
 
 	if( !reserve_result.success ) return {};
@@ -137,22 +144,22 @@ vk2d::_internal::MeshBuffer::PushResult vk2d::_internal::MeshBuffer::CmdPushMesh
 		if( new_texture_channel_weights.size() ) {
 			texture_channel_weight_block_data.insert( texture_channel_weight_block_data.end(), new_texture_channel_weights.begin(), new_texture_channel_weights.end() );
 		}
-		if( new_transformations.size() ) {
-			transformation_block_data.insert( transformation_block_data.end(), new_transformations.begin(), new_transformations.end() );
+		if( new_transformations_actual->size() ) {
+			transformation_block_data.insert( transformation_block_data.end(), new_transformations_actual->begin(), new_transformations_actual->end() );
 		}
 	}
 
-	first_draw						= false;
+	first_draw							= false;
 
 	vk2d::_internal::MeshBuffer::PushResult ret {};
-	ret.location_info				= reserve_result;
-	ret.success						= true;
+	ret.location_info					= reserve_result;
+	ret.success							= true;
 
-	pushed_mesh_count				+= 1;
-	pushed_index_count				+= uint32_t( new_indices.size() );
-	pushed_vertex_count				+= uint32_t( new_vertices.size() );
+	pushed_mesh_count					+= 1;
+	pushed_index_count					+= uint32_t( new_indices.size() );
+	pushed_vertex_count					+= uint32_t( new_vertices.size() );
 	pushed_texture_channel_weight_count	+= uint32_t( new_texture_channel_weights.size() );
-	pushed_transformation_count		+= uint32_t( new_transformations.size() );
+	pushed_transformation_count			+= uint32_t( new_transformations_actual->size() );
 
 	return ret;
 }

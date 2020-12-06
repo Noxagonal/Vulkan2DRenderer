@@ -1,6 +1,7 @@
 
 #include "../Core/SourceCommon.h"
 
+#include "../../Include/Types/BlurType.h"
 #include "../../Include/Types/Vector2.hpp"
 #include "../../Include/Types/Rect2.hpp"
 #include "../../Include/Types/Color.hpp"
@@ -93,8 +94,8 @@ VK2D_API bool VK2D_APIENTRY vk2d::RenderTargetTexture::BeginRender()
 }
 
 VK2D_API bool VK2D_APIENTRY vk2d::RenderTargetTexture::EndRender(
-	vk2d::Vector2f						blur_amount,
-	vk2d::RenderTargetTextureBlurType	blur_type
+	vk2d::Vector2f	blur_amount,
+	vk2d::BlurType	blur_type
 )
 {
 	return impl->EndRender( blur_type, blur_amount );
@@ -116,7 +117,8 @@ VK2D_API void VK2D_APIENTRY vk2d::RenderTargetTexture::DrawTriangleList(
 		texture_channel_weights,
 		transformations,
 		filled,
-		texture
+		texture,
+		sampler
 	);
 }
 
@@ -126,7 +128,8 @@ VK2D_API void VK2D_APIENTRY vk2d::RenderTargetTexture::DrawLineList(
 	const std::vector<float>				&	texture_channel_weights,
 	const std::vector<vk2d::Matrix4f>		&	transformations,
 	vk2d::Texture							*	texture,
-	vk2d::Sampler							*	sampler
+	vk2d::Sampler							*	sampler,
+	float										line_width
 )
 {
 	impl->DrawLineList(
@@ -134,7 +137,9 @@ VK2D_API void VK2D_APIENTRY vk2d::RenderTargetTexture::DrawLineList(
 		vertices,
 		texture_channel_weights,
 		transformations,
-		texture
+		texture,
+		sampler,
+		line_width
 	);
 }
 
@@ -150,7 +155,8 @@ VK2D_API void VK2D_APIENTRY vk2d::RenderTargetTexture::DrawPointList(
 		vertices,
 		texture_channel_weights,
 		transformations,
-		texture
+		texture,
+		sampler
 	);
 }
 
@@ -171,7 +177,8 @@ VK2D_API void VK2D_APIENTRY vk2d::RenderTargetTexture::DrawPoint(
 VK2D_API void VK2D_APIENTRY vk2d::RenderTargetTexture::DrawLine(
 	vk2d::Vector2f					point_1,
 	vk2d::Vector2f					point_2,
-	vk2d::Colorf					color
+	vk2d::Colorf					color,
+	float							line_width
 )
 {
 	auto mesh = vk2d::GenerateLineMeshFromList(
@@ -179,6 +186,7 @@ VK2D_API void VK2D_APIENTRY vk2d::RenderTargetTexture::DrawLine(
 		{ { 0, 1 } }
 	);
 	mesh.SetVertexColor( color );
+	mesh.SetLineWidth( line_width );
 	impl->DrawMesh( mesh, { vk2d::Matrix4f( 1.0f ) } );
 }
 
@@ -620,8 +628,8 @@ bool vk2d::_internal::RenderTargetTextureImpl::BeginRender()
 }
 
 bool vk2d::_internal::RenderTargetTextureImpl::EndRender(
-	vk2d::RenderTargetTextureBlurType	blur_type,
-	vk2d::Vector2f						blur_amount
+	vk2d::BlurType	blur_type,
+	vk2d::Vector2f	blur_amount
 )
 {
 	auto & swap									= swap_buffers[ current_swap_buffer ];
@@ -907,8 +915,6 @@ void vk2d::_internal::RenderTargetTextureImpl::DrawTriangleList(
 	vk2d::Sampler							*	sampler
 )
 {
-	assert( std::size( transformations ) );
-
 	auto index_count	= uint32_t( indices.size() * 3 );
 	std::vector<uint32_t> raw_indices;
 	raw_indices.resize( index_count );
@@ -939,8 +945,6 @@ void vk2d::_internal::RenderTargetTextureImpl::DrawTriangleList(
 	vk2d::Sampler							*	sampler
 )
 {
-	assert( std::size( transformations ) );
-
 	auto & swap				= swap_buffers[ current_swap_buffer ];
 	auto command_buffer		= swap.vk_render_command_buffer;
 
@@ -1071,8 +1075,6 @@ void vk2d::_internal::RenderTargetTextureImpl::DrawLineList(
 	float										line_width
 )
 {
-	assert( std::size( transformations ) );
-
 	auto index_count	= uint32_t( indices.size() * 2 );
 	std::vector<uint32_t> raw_indices;
 	raw_indices.resize( index_count );
@@ -1102,8 +1104,6 @@ void vk2d::_internal::RenderTargetTextureImpl::DrawLineList(
 	float										line_width
 )
 {
-	assert( std::size( transformations ) );
-
 	auto & swap			= swap_buffers[ current_swap_buffer ];
 	auto command_buffer	= swap.vk_render_command_buffer;
 
@@ -1150,6 +1150,10 @@ void vk2d::_internal::RenderTargetTextureImpl::DrawLineList(
 		);
 	}
 
+	CmdSetLineWidthIfDifferent(
+		command_buffer,
+		line_width
+	);
 	CmdBindSamplerIfDifferent(
 		command_buffer,
 		sampler,
@@ -1214,8 +1218,6 @@ void vk2d::_internal::RenderTargetTextureImpl::DrawPointList(
 	vk2d::Sampler							*	sampler
 )
 {
-	assert( std::size( transformations ) );
-
 	auto & swap			= swap_buffers[ current_swap_buffer ];
 	auto command_buffer	= swap.vk_render_command_buffer;
 
@@ -1321,8 +1323,6 @@ void vk2d::_internal::RenderTargetTextureImpl::DrawMesh(
 	const std::vector<vk2d::Matrix4f>		&	transformations
 )
 {
-	assert( std::size( transformations ) );
-
 	if( mesh.vertices.size() == 0 ) return;
 
 	switch( mesh.mesh_type ) {
@@ -2514,7 +2514,7 @@ void vk2d::_internal::RenderTargetTextureImpl::CmdPushBlurTextureDescriptorWrite
 
 void vk2d::_internal::RenderTargetTextureImpl::CmdFinalizeRender(
 	vk2d::_internal::RenderTargetTextureImpl::SwapBuffer		&	swap,
-	vk2d::RenderTargetTextureBlurType								blur_type,
+	vk2d::BlurType													blur_type,
 	vk2d::Vector2f													blur_amount
 )
 {
@@ -2976,7 +2976,7 @@ std::array<float, 4> CalculateBlurShaderInfo(
 bool vk2d::_internal::RenderTargetTextureImpl::CmdRecordBlurCommands(
 	vk2d::_internal::RenderTargetTextureImpl::SwapBuffer	&	swap,
 	VkCommandBuffer												command_buffer,
-	vk2d::RenderTargetTextureBlurType							blur_type,
+	vk2d::BlurType												blur_type,
 	vk2d::Vector2f												blur_amount,
 	vk2d::_internal::CompleteImageResource					&	source_image,
 	VkImageLayout												source_image_layout,
@@ -3162,10 +3162,10 @@ bool vk2d::_internal::RenderTargetTextureImpl::CmdRecordBlurCommands(
 	{
 		vk2d::_internal::GraphicsShaderProgram shader_program;
 		switch( blur_type ) {
-			case vk2d::RenderTargetTextureBlurType::BOX:
+			case vk2d::BlurType::BOX:
 				shader_program = instance->GetGraphicsShaderModules( vk2d::_internal::GraphicsShaderProgramID::RENDER_TARGET_BOX_BLUR_HORISONTAL );
 				break;
-			case vk2d::RenderTargetTextureBlurType::GAUSSIAN:
+			case vk2d::BlurType::GAUSSIAN:
 				shader_program = instance->GetGraphicsShaderModules( vk2d::_internal::GraphicsShaderProgramID::RENDER_TARGET_GAUSSIAN_BLUR_HORISONTAL );
 				break;
 			default:
@@ -3215,10 +3215,10 @@ bool vk2d::_internal::RenderTargetTextureImpl::CmdRecordBlurCommands(
 	{
 		vk2d::_internal::GraphicsShaderProgram shader_program;
 		switch( blur_type ) {
-			case vk2d::RenderTargetTextureBlurType::BOX:
+			case vk2d::BlurType::BOX:
 				shader_program = instance->GetGraphicsShaderModules( vk2d::_internal::GraphicsShaderProgramID::RENDER_TARGET_BOX_BLUR_VERTICAL );
 				break;
-			case vk2d::RenderTargetTextureBlurType::GAUSSIAN:
+			case vk2d::BlurType::GAUSSIAN:
 				shader_program = instance->GetGraphicsShaderModules( vk2d::_internal::GraphicsShaderProgramID::RENDER_TARGET_GAUSSIAN_BLUR_VERTICAL );
 				break;
 			default:
@@ -3309,6 +3309,7 @@ void vk2d::_internal::RenderTargetTextureImpl::CmdBindTextureIfDifferent(
 	}
 }
 
+// TODO: Render target texture line width never used anywhere, we should enable it.
 void vk2d::_internal::RenderTargetTextureImpl::CmdSetLineWidthIfDifferent(
 	VkCommandBuffer						command_buffer,
 	float								line_width

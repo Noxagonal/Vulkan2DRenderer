@@ -105,11 +105,11 @@ public:
 		vk2d::Cursor									*	cursor );
 
 	// Any thread.
-	vk2d::PFN_GamepadConnectionEventCallback							GetGamepadEventCallback() const;
+	vk2d::PFN_GamepadConnectionEventCallback				GetGamepadEventCallback() const;
 
 	// Main thread only.
 	void													SetGamepadEventCallback(
-		vk2d::PFN_GamepadConnectionEventCallback						gamepad_event_callback_function );
+		vk2d::PFN_GamepadConnectionEventCallback			gamepad_event_callback_function );
 
 	// Main thread only.
 	bool													IsGamepadPresent(
@@ -462,7 +462,7 @@ private:
 	std::vector<std::unique_ptr<vk2d::Sampler>>				samplers;
 	std::vector<std::unique_ptr<vk2d::Cursor>>				cursors;
 
-	vk2d::PFN_GamepadConnectionEventCallback							joystick_event_callback						= {};
+	vk2d::PFN_GamepadConnectionEventCallback				joystick_event_callback						= {};
 
 	std::thread::id											creator_thread_id							= {};
 

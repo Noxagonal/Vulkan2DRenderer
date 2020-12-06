@@ -4,6 +4,8 @@
 
 #include "../../Include/Interface/RenderTargetTexture.h"
 
+#include "../../Include/Types/BlurType.h"
+
 #include "../System/CommonTools.h"
 #include "../System/ShaderInterface.h"
 #include "../System/MeshBuffer.h"
@@ -149,7 +151,7 @@ public:
 	// Ends the rendering operations. You must call this after you're done drawing.
 	// This will display the results on screen.
 	bool																EndRender(
-		vk2d::RenderTargetTextureBlurType								blur_type,
+		vk2d::BlurType													blur_type,
 		vk2d::Vector2f													blur_amount );
 
 	bool																SynchronizeFrame();
@@ -192,43 +194,43 @@ public:
 		const std::vector<vk2d::Vertex>								&	vertices,
 		const std::vector<float>									&	texture_channel_weights,
 		const std::vector<vk2d::Matrix4f>							&	transformations,
-		bool															filled						= true,
-		vk2d::Texture												*	texture						= nullptr,
-		vk2d::Sampler												*	sampler						= nullptr );
+		bool															filled,
+		vk2d::Texture												*	texture,
+		vk2d::Sampler												*	sampler );
 
 	void																DrawTriangleList(
 		const std::vector<uint32_t>									&	raw_indices,
 		const std::vector<vk2d::Vertex>								&	vertices,
 		const std::vector<float>									&	texture_channel_weights,
 		const std::vector<vk2d::Matrix4f>							&	transformations,
-		bool															filled						= true,
-		vk2d::Texture												*	texture						= nullptr,
-		vk2d::Sampler												*	sampler						= nullptr );
+		bool															filled,
+		vk2d::Texture												*	texture,
+		vk2d::Sampler												*	sampler );
 
 	void																DrawLineList(
 		const std::vector<vk2d::VertexIndex_2>						&	indices,
 		const std::vector<vk2d::Vertex>								&	vertices,
 		const std::vector<float>									&	texture_channel_weights,
 		const std::vector<vk2d::Matrix4f>							&	transformations,
-		vk2d::Texture												*	texture						= nullptr,
-		vk2d::Sampler												*	sampler						= nullptr,
-		float															line_width					= 1.0f );
+		vk2d::Texture												*	texture,
+		vk2d::Sampler												*	sampler,
+		float															line_width );
 
 	void																DrawLineList(
 		const std::vector<uint32_t>									&	raw_indices,
 		const std::vector<vk2d::Vertex>								&	vertices,
 		const std::vector<float>									&	texture_channel_weights,
 		const std::vector<vk2d::Matrix4f>							&	transformations,
-		vk2d::Texture												*	texture						= nullptr,
-		vk2d::Sampler												*	sampler						= nullptr,
-		float															line_width					= 1.0f );
+		vk2d::Texture												*	texture,
+		vk2d::Sampler												*	sampler,
+		float															line_width );
 
 	void																DrawPointList(
 		const std::vector<vk2d::Vertex>								&	vertices,
 		const std::vector<float>									&	texture_channel_weights,
 		const std::vector<vk2d::Matrix4f>							&	transformations,
-		vk2d::Texture												*	texture						= nullptr,
-		vk2d::Sampler												*	sampler						= nullptr );
+		vk2d::Texture												*	texture,
+		vk2d::Sampler												*	sampler );
 
 	void																DrawMesh(
 		const vk2d::Mesh											&	mesh,
@@ -291,7 +293,7 @@ private:
 	///				Reference to internal structure which contains all the information about the current frame.
 	void																CmdFinalizeRender(
 		vk2d::_internal::RenderTargetTextureImpl::SwapBuffer		&	swap,
-		vk2d::RenderTargetTextureBlurType								blur_type,
+		vk2d::BlurType													blur_type,
 		vk2d::Vector2f													blur_amount );
 
 	/// @brief		Record commands to copy an image to the final sampled image, then generate mipmaps for it.
@@ -320,7 +322,7 @@ private:
 	bool																CmdRecordBlurCommands(
 		vk2d::_internal::RenderTargetTextureImpl::SwapBuffer		&	swap,
 		VkCommandBuffer													command_buffer,
-		vk2d::RenderTargetTextureBlurType								blur_type,
+		vk2d::BlurType													blur_type,
 		vk2d::Vector2f													blur_amount,
 		vk2d::_internal::CompleteImageResource						&	source_image,
 		VkImageLayout													source_image_layout,

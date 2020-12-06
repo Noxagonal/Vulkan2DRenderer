@@ -332,7 +332,7 @@ VK2D_API void VK2D_APIENTRY vk2d::Mesh::SetPointSize(
 	}
 }
 
-VK2D_API void VK2D_APIENTRY vk2d::Mesh::SetLineSize(
+VK2D_API void VK2D_APIENTRY vk2d::Mesh::SetLineWidth(
 	float line_width
 )
 {

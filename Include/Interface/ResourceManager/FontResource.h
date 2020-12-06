@@ -41,7 +41,7 @@ class FontResourceImpl;
 ///				To use a font to print text in the window you'll first need to load the
 ///				font from a disk, then generate text mesh using the font resource, then
 ///				finally render the text mesh to a window or render target texture using
-///				either Window::DrawMesh() or RenderTargetTexture::DrawMesh() functions.
+///				either vk2d::Window::DrawMesh() or vk2d::RenderTargetTexture::DrawMesh() functions.
 class FontResource
 	: public vk2d::Resource
 {
