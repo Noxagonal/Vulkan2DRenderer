@@ -183,7 +183,7 @@ public:
 		const std::vector<vk2d::VertexIndex_3>				&	indices,
 		const std::vector<vk2d::Vertex>						&	vertices,
 		const std::vector<float>							&	texture_channel_weights,
-		const std::vector<vk2d::Matrix4f>					&	transformations				= { vk2d::Matrix4f( 1.0f ) },
+		const std::vector<vk2d::Matrix4f>					&	transformations				= {},
 		bool													filled						= true,
 		vk2d::Texture										*	texture						= nullptr,
 		vk2d::Sampler										*	sampler						= nullptr );
@@ -225,7 +225,7 @@ public:
 		const std::vector<vk2d::VertexIndex_2>				&	indices,
 		const std::vector<vk2d::Vertex>						&	vertices,
 		const std::vector<float>							&	texture_channel_weights,
-		const std::vector<vk2d::Matrix4f>					&	transformations				= { vk2d::Matrix4f( 1.0f ) },
+		const std::vector<vk2d::Matrix4f>					&	transformations				= {},
 		vk2d::Texture										*	texture						= nullptr,
 		vk2d::Sampler										*	sampler						= nullptr,
 		float													line_width					= 1.0f );
@@ -262,7 +262,7 @@ public:
 	VK2D_API void												VK2D_APIENTRY				DrawPointList(
 		const std::vector<vk2d::Vertex>						&	vertices,
 		const std::vector<float>							&	texture_channel_weights,
-		const std::vector<vk2d::Matrix4f>					&	transformations				= { vk2d::Matrix4f( 1.0f ) },
+		const std::vector<vk2d::Matrix4f>					&	transformations				= {},
 		vk2d::Texture										*	texture						= nullptr,
 		vk2d::Sampler										*	sampler						= nullptr );
 
@@ -301,17 +301,66 @@ public:
 		vk2d::Colorf											color						= { 1.0f, 1.0f, 1.0f, 1.0f },
 		float													line_width					= 1.0f );
 
+	/// @brief		Draw a rectangle directly into the render target texture.
+	/// @note		Multithreading: Main thread only.
+	/// @param[in]	area
+	///				Defines the top-left and bottom-right coordinates of the rectangle.
+	/// @param[in]	filled
+	///				Tells if the inside of the shape is filled, true if filled, false to draw the
+	///				edges only.
+	/// @param[in]	color
+	///				Color of the rectangle.
 	VK2D_API void												VK2D_APIENTRY				DrawRectangle(
 		vk2d::Rect2f											area,
 		bool													filled						= true,
 		vk2d::Colorf											color						= { 1.0f, 1.0f, 1.0f, 1.0f } );
 
+	/// @brief		Draw an ellipse/circle directly into the render target texture.
+	/// @note		Multithreading: Main thread only.
+	/// @param[in]	area
+	///				Defines the top-left and bottom-right coordinates of a rectangle bounding
+	///				box of the ellipse.
+	/// @param[in]	filled
+	///				Tells if the inside of the shape is filled, true if filled, false to draw the
+	///				edges only.
+	/// @param[in]	edge_count
+	///				Determines the number of sides of the ellipse. This is a floating point
+	///				value where whole numbers determine the complete edges, the fractional
+	///				is used to make transition from one whole number to another smoother,
+	///				eg. value 3.5 would draw 3 complete edges and 1 edge that's half the size
+	///				of the previous 3.
+	/// @param[in]	color
+	///				Color of the ellipse.
 	VK2D_API void												VK2D_APIENTRY				DrawEllipse(
 		vk2d::Rect2f											area,
 		bool													filled						= true,
 		float													edge_count					= 64.0f,
 		vk2d::Colorf											color						= { 1.0f, 1.0f, 1.0f, 1.0f } );
 
+	/// @brief		Draw an ellipse/circle pie directly into the render target texture.
+	/// @note		Multithreading: Main thread only.
+	/// @param[in]	area
+	///				Defines the top-left and bottom-right coordinates of a rectangle bounding
+	///				box of the complete ellipse.
+	/// @param[in]	begin_angle_radians
+	///				Angle that tells where the pie cut into the ellipse should start.
+	/// @param[in]	coverage
+	///				Value in range from 0.0 to 1.0 telling how much of the ellipse is "whole"
+	///				eg. 0.0 is nothing visible, 0.75 quarter of the ellipse is cut out, 1.0 is
+	///				just a complete ellipse. Note that this is not a percentage of the visible
+	///				area but a percentage of the angle (PI*2*coverage).
+	/// @param[in]	filled
+	///				Tells if the inside of the shape is filled, true if filled, false to draw the
+	///				edges only.
+	/// @param[in]	edge_count
+	///				Determines the number of sides of the ellipse. This is a floating point
+	///				value where whole numbers determine the complete edges, the fractional
+	///				is used to make transition from one whole number to another smoother,
+	///				eg. value 3.5 would draw 3 complete edges and 1 edge that's half the size
+	///				of the previous 3. In this case this value applies to the complete
+	///				elliptical shape and not just the visible shape.
+	/// @param[in]	color
+	///				Color of the ellipse pie.
 	VK2D_API void												VK2D_APIENTRY				DrawEllipsePie(
 		vk2d::Rect2f											area,
 		float													begin_angle_radians,
@@ -320,6 +369,23 @@ public:
 		float													edge_count					= 64.0f,
 		vk2d::Colorf											color						= { 1.0f, 1.0f, 1.0f, 1.0f } );
 
+	/// @brief		Draw a rectangular pie directly into the render target texture.
+	///				This is a rectangle shape that can have a cake slice cut in it.
+	/// @note		Multithreading: Main thread only.
+	/// @param[in]	area
+	///				Defines the top-left and bottom-right coordinates of the rectangle.
+	/// @param[in]	begin_angle_radians
+	///				Angle that tells where the pie cut into the rectangle should start.
+	/// @param[in]	coverage
+	///				Value in range from 0.0 to 1.0 telling how much of the rectangle is "whole"
+	///				eg. 0.0 is nothing visible, 0.75 quarter of the rectangle is cut out, 1.0 is
+	///				just a complete rectangle. Note that this is not a percentage of the visible
+	///				area but a percentage of the angle (PI*2*coverage).
+	/// @param[in]	filled
+	///				Tells if the inside of the shape is filled, true if filled, false to draw the
+	///				edges only.
+	/// @param[in]	color
+	///				Color of the rectangle pie.
 	VK2D_API void												VK2D_APIENTRY				DrawRectanglePie(
 		vk2d::Rect2f											area,
 		float													begin_angle_radians,
@@ -327,23 +393,65 @@ public:
 		bool													filled						= true,
 		vk2d::Colorf											color						= { 1.0f, 1.0f, 1.0f, 1.0f } );
 
+	/// @brief		Draw texture into the render target texture using the actual size of the texture.
+	///				Mostly useful for debugging, for final application prefer to use something else
+	///				as the render size depends on the size of the texture.
+	/// @note		Multithreading: Main thread only.
+	/// @warning	Draw size is determined by texel size of the image, render target texture coordinate
+	///				space must be either vk2d::RenderCoordinateSpace::TEXEL_SPACE or
+	///				vk2d::RenderCoordinateSpace::TEXEL_SPACE_CENTERED, othervise rendered image will not
+	///				be displayed correctly.
+	/// @param[in]	top_left
+	///				Texture origin is the the top left corner.
+	///				Bottom left coordinates are determined by the texture size.
+	/// @param[in]	texture
+	///				A pointer to the texture to draw, if the texture is multi-layer then only the first
+	///				layer is drawn.
+	/// @param[in]	color
+	///				Multiplier for the the texture colors, eg. { 1.0, 0.0, 0.0, 1.0 } only renders the
+	///				red channel of the texture, { 1.0, 1.0, 1.0, 0.5 } renders the texture half
+	///				transparent, { 10.0, 10.0, 10.0, 1.0 } will render the texture overexposed.
 	VK2D_API void												VK2D_APIENTRY				DrawTexture(
 		vk2d::Vector2f											top_left,
 		vk2d::Texture										*	texture,
 		vk2d::Colorf											color						= { 1.0f, 1.0f, 1.0f, 1.0f } );
 
+	/// @brief		Draw a mesh object with single optional transform.
+	/// @note		Multithreading: Main thread only.
+	/// @param[in]	mesh
+	///				Reference to a mesh object to draw.
+	/// @param[in]	transformations
+	///				Optional transformations to use when drawing the mesh.
 	VK2D_API void												VK2D_APIENTRY				DrawMesh(
 		const vk2d::Mesh									&	mesh,
 		const vk2d::Transform								&	transformations				= {} );
 
+	/// @brief		Draw one or more instances of a single mesh object using transforms.
+	/// @note		Multithreading: Main thread only.
+	/// @param[in]	mesh
+	///				Reference to a mesh object to draw.
+	/// @param[in]	transformations
+	///				An array of transformations to use when drawing the mesh. Number of transformations
+	///				tells how many times to draw this mesh using each transformation.
 	VK2D_API void												VK2D_APIENTRY				DrawMesh(
 		const vk2d::Mesh									&	mesh,
 		const std::vector<vk2d::Transform>					&	transformations );
 
+	/// @brief		Draw one or more instances of a single mesh object using transformation matrices.
+	/// @note		Multithreading: Main thread only.
+	/// @param[in]	mesh
+	///				Reference to a mesh object to draw.
+	/// @param[in]	transformations
+	///				An array of transformation matrices to use when drawing the mesh. Number of
+	///				transformations tells how many times to draw this mesh using each transformation.
 	VK2D_API void												VK2D_APIENTRY				DrawMesh(
 		const vk2d::Mesh									&	mesh,
 		const std::vector<vk2d::Matrix4f>					&	transformations );
 
+	/// @brief		VK2D class object checker function.
+	/// @note		Multithreading: Any thread.
+	/// @return		true if class object was created successfully,
+	///				false if something went wrong
 	VK2D_API bool												VK2D_APIENTRY				IsGood() const;
 
 private:

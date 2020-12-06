@@ -2078,8 +2078,6 @@ void vk2d::_internal::WindowImpl::DrawTriangleList(
 	vk2d::Sampler							*	sampler
 )
 {
-	assert( std::size( transformations ) );
-
 	auto index_count	= uint32_t( indices.size() * 3 );
 	std::vector<uint32_t> raw_indices;
 	raw_indices.resize( index_count );
@@ -2110,8 +2108,6 @@ void vk2d::_internal::WindowImpl::DrawTriangleList(
 	vk2d::Sampler							*	sampler
 )
 {
-	assert( std::size( transformations ) );
-
 	auto command_buffer					= vk_render_command_buffers[ next_image ];
 
 	auto vertex_count	= uint32_t( vertices.size() );
@@ -2233,8 +2229,6 @@ void vk2d::_internal::WindowImpl::DrawLineList(
 	float										line_width
 )
 {
-	assert( std::size( transformations ) );
-
 	auto index_count	= uint32_t( indices.size() * 2 );
 	std::vector<uint32_t> raw_indices;
 	raw_indices.resize( index_count );
@@ -2264,8 +2258,6 @@ void vk2d::_internal::WindowImpl::DrawLineList(
 	float										line_width
 )
 {
-	assert( std::size( transformations ) );
-
 	auto command_buffer					= vk_render_command_buffers[ next_image ];
 
 	auto vertex_count	= uint32_t( vertices.size() );
@@ -2374,8 +2366,6 @@ void vk2d::_internal::WindowImpl::DrawPointList(
 	vk2d::Sampler							*	sampler
 )
 {
-	assert( std::size( transformations ) );
-
 	auto command_buffer					= vk_render_command_buffers[ next_image ];
 
 	auto vertex_count	= uint32_t( vertices.size() );
@@ -2474,8 +2464,6 @@ void vk2d::_internal::WindowImpl::DrawMesh(
 	const vk2d::Mesh						&	mesh,
 	const std::vector<vk2d::Matrix4f>		&	transformations )
 {
-	assert( std::size( transformations ) );
-
 	if( mesh.vertices.size() == 0 ) return;
 
 	switch( mesh.mesh_type ) {

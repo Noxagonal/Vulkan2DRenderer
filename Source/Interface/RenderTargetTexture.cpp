@@ -915,8 +915,6 @@ void vk2d::_internal::RenderTargetTextureImpl::DrawTriangleList(
 	vk2d::Sampler							*	sampler
 )
 {
-	assert( std::size( transformations ) );
-
 	auto index_count	= uint32_t( indices.size() * 3 );
 	std::vector<uint32_t> raw_indices;
 	raw_indices.resize( index_count );
@@ -947,8 +945,6 @@ void vk2d::_internal::RenderTargetTextureImpl::DrawTriangleList(
 	vk2d::Sampler							*	sampler
 )
 {
-	assert( std::size( transformations ) );
-
 	auto & swap				= swap_buffers[ current_swap_buffer ];
 	auto command_buffer		= swap.vk_render_command_buffer;
 
@@ -1079,8 +1075,6 @@ void vk2d::_internal::RenderTargetTextureImpl::DrawLineList(
 	float										line_width
 )
 {
-	assert( std::size( transformations ) );
-
 	auto index_count	= uint32_t( indices.size() * 2 );
 	std::vector<uint32_t> raw_indices;
 	raw_indices.resize( index_count );
@@ -1110,8 +1104,6 @@ void vk2d::_internal::RenderTargetTextureImpl::DrawLineList(
 	float										line_width
 )
 {
-	assert( std::size( transformations ) );
-
 	auto & swap			= swap_buffers[ current_swap_buffer ];
 	auto command_buffer	= swap.vk_render_command_buffer;
 
@@ -1226,8 +1218,6 @@ void vk2d::_internal::RenderTargetTextureImpl::DrawPointList(
 	vk2d::Sampler							*	sampler
 )
 {
-	assert( std::size( transformations ) );
-
 	auto & swap			= swap_buffers[ current_swap_buffer ];
 	auto command_buffer	= swap.vk_render_command_buffer;
 
@@ -1333,8 +1323,6 @@ void vk2d::_internal::RenderTargetTextureImpl::DrawMesh(
 	const std::vector<vk2d::Matrix4f>		&	transformations
 )
 {
-	assert( std::size( transformations ) );
-
 	if( mesh.vertices.size() == 0 ) return;
 
 	switch( mesh.mesh_type ) {

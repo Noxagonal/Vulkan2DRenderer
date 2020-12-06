@@ -645,7 +645,7 @@ public:
 		const std::vector<vk2d::VertexIndex_3>		&	indices,
 		const std::vector<vk2d::Vertex>				&	vertices,
 		const std::vector<float>					&	texture_channel_weights,
-		const std::vector<vk2d::Matrix4f>			&	transformations,
+		const std::vector<vk2d::Matrix4f>			&	transformations				= {},
 		bool											solid						= true,
 		vk2d::Texture								*	texture						= nullptr,
 		vk2d::Sampler								*	sampler						= nullptr );
@@ -671,7 +671,7 @@ public:
 		const std::vector<vk2d::VertexIndex_2>		&	indices,
 		const std::vector<vk2d::Vertex>				&	vertices,
 		const std::vector<float>					&	texture_channel_weights,
-		const std::vector<vk2d::Matrix4f>			&	transformations,
+		const std::vector<vk2d::Matrix4f>			&	transformations				= {},
 		vk2d::Texture								*	texture						= nullptr,
 		vk2d::Sampler								*	sampler						= nullptr,
 		float											line_width					= 1.0f );
@@ -694,7 +694,7 @@ public:
 	VK2D_API void										VK2D_APIENTRY				DrawPointList(
 		const std::vector<vk2d::Vertex>				&	vertices,
 		const std::vector<float>					&	texture_channel_weights,
-		const std::vector<vk2d::Matrix4f>			&	transformations,
+		const std::vector<vk2d::Matrix4f>			&	transformations				= {},
 		vk2d::Texture								*	texture						= nullptr,
 		vk2d::Sampler								*	sampler						= nullptr );
 
