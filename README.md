@@ -15,32 +15,37 @@ Internally workloads are automatically grouped to create more efficient submissi
 ### Motivation
 
 - This project is primarily a passion project.
-- Vulkan 2D rendering engines are not common and I didn't find any fitting my needs.
-- This should also work pretty well as an example for people wanting to see concrete Vulkan API use.
+- Vulkan 2D rendering engines/libraries are not common.
+- I didn't find any easy to use 2D rendering libraries with multi-window support.
+- This should work pretty well as an example for people wanting to see concrete Vulkan API use. (Feel free to message me if you have any questions about anything)
 
 ------
 
 ### Capabilities
 
-- Generate and draw simple 2D shapes. ( Box, Circle, Pie... )
-- Draw direcly from vertex and index lists. ( Useful for GUI rendering and for more complex stuff )
+- Easily generate and draw simple shapes. ( Box, Circle, Pie... )
+- For more control you can also draw custom shapes direcly from vertex and index lists.
+- Transformations and transformation hierarchy.
+- Instanced rendering.
+- Multi-window support.
 - Mesh modifiers to warp and distort shapes.
 - Textures, Samplers, Color and alpha blending.
-- Render target textures.
-- Gaussian blur.
-- Multi-threaded resource loading and saving.
-- Multi-window support.
+- Render target textures with blurring.
 - Multisampling.
+- Multi-threaded resource loading and saving.
 - Keyboard, mouse and gamepad input.
 
 ------
 
 ### Limitations
 
-- Does not draw 3D, this is meant to be a simple library to use.
+- Does not render 3D, this is meant to be a simple library to use.
+- This is not a game engine, the purpose of this library is to aid in 2D drawing.
 - No HDRI image support. Didn't find any use for this in a 2D application.
+- No scene management, although transformation hierarchy is implemented so you can create your own.
+- No custom shaders, might implement these later if there's any need for these.
 - Work in progress. We'll know more about limitations later.
-- Crashes will likely happen frequently.
+- Crashes and garbage renders will likely happen frequently.
 
 ------
 
@@ -49,15 +54,17 @@ Internally workloads are automatically grouped to create more efficient submissi
 :exclamation: You will need to use Git, direct download from GitHub will not work because of dependencies. :exclamation:
 
 Prior to building this library on any platform you will need:
-- Git
+- Git 2.28 or newer
 - CMake 3.16 or newer
-- Vulkan SDK, Version 1.2
-- Doxygen ( optional, only needed if you're building the documentation )
+- Vulkan SDK 1.2 or newer
+
+If you're building the documentation you will also need these (disabled by default):
+- Doxygen 1.8.20 or newer
 
 
 ##### Windows Visual Studio 2019
 1. Open PowerShell and navigate to a folder where you would like to download the VK2D project sources.
-2. Copy and paste the following commands to the PowerShell window and press enter, this will also download everything for you (Don't close PowerShell even if it appears stuck, this can take a few minutes).
+2. Copy and paste the following commands to the PowerShell window and press enter, this will also download everything for you (PowerShell may appear stuck for a couple of minutes).
 ```
 git clone https://github.com/Noxagonal/Vulkan2DRenderer
 cd Vulkan2DRenderer
@@ -77,7 +84,7 @@ cmake --install .
 
 ##### Microsoft Visual Studio 2017
 1. Open PowerShell and navigate to a folder where you would like to download the VK2D project sources.
-2. Copy and paste the following commands to the PowerShell window and press enter, this will also download everything for you (Don't close PowerShell even if it appears stuck, this can take a few minutes).
+2. Copy and paste the following commands to the PowerShell window and press enter, this will also download everything for you (PowerShell may appear stuck for a couple of minutes).
 ```
 git clone https://github.com/Noxagonal/Vulkan2DRenderer
 cd Vulkan2DRenderer
