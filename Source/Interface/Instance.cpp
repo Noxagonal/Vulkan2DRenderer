@@ -1831,7 +1831,7 @@ bool vk2d::_internal::InstanceImpl::CreateDefaultSampler()
 	sampler_create_info.address_mode_u					= vk2d::SamplerAddressMode::REPEAT;
 	sampler_create_info.address_mode_v					= vk2d::SamplerAddressMode::REPEAT;
 	sampler_create_info.border_color					= { 0.0f, 0.0f, 0.0f, 1.0f };
-	sampler_create_info.mipmap_enable					= true;
+	sampler_create_info.anisotropy_enable				= true;
 	sampler_create_info.mipmap_max_anisotropy			= 16.0f;
 	sampler_create_info.mipmap_level_of_detail_bias		= 0.0f;
 	sampler_create_info.mipmap_min_level_of_detail		= 0.0f;
@@ -1856,7 +1856,7 @@ bool vk2d::_internal::InstanceImpl::CreateBlurSampler()
 		sampler_create_info.address_mode_u					= vk2d::SamplerAddressMode::CLAMP_TO_EDGE;
 		sampler_create_info.address_mode_v					= vk2d::SamplerAddressMode::CLAMP_TO_EDGE;
 		sampler_create_info.border_color					= { 0.0f, 0.0f, 0.0f, 1.0f };
-		sampler_create_info.mipmap_enable					= false;
+		sampler_create_info.anisotropy_enable				= false;
 		sampler_create_info.mipmap_max_anisotropy			= 1.0f;
 		sampler_create_info.mipmap_level_of_detail_bias		= 0.0f;
 		sampler_create_info.mipmap_min_level_of_detail		= 0.0f;

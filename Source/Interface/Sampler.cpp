@@ -203,9 +203,10 @@ vk2d::_internal::SamplerImpl::SamplerImpl(
 			break;
 	}
 
-	VkBool32 anisotropyEnable = create_info.mipmap_enable;
+	VkBool32 anisotropyEnable = create_info.anisotropy_enable;
 	/*
 	// TODO: Sampler cubic filtering is disabled for now. Consider implementing this in shader later.
+	// TODO: Consider making more custom sampler filters.
 	if( anisotropyEnable ) {
 		if( create_info.minification_filter == vk2d::SamplerFilter::CUBIC ||
 			create_info.magnification_filter == vk2d::SamplerFilter::CUBIC ) {
