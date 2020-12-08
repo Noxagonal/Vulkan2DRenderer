@@ -261,13 +261,6 @@ private:
 		VkCommandBuffer											command_buffer,
 		const vk2d::_internal::GraphicsPipelineSettings		&	pipeline_settings );
 
-	/*
-	void														CmdBindTextureSamplerIfDifferent(
-		VkCommandBuffer											command_buffer,
-		vk2d::Sampler										*	sampler,
-		vk2d::Texture										*	texture );
-	*/
-
 	void														CmdBindSamplerIfDifferent(
 		VkCommandBuffer											command_buffer,
 		vk2d::Sampler										*	sampler );
@@ -364,25 +357,28 @@ private:
 																render_target_texture_dependencies			= {};
 
 	enum class ScreenshotState : uint32_t {
-		IDLE					= 0,	// doing nothing
-		REQUESTED,						// screenshot requested but nothing done yet
-		WAITING_RENDER,					// waiting for rendering to happen
-		WAITING_FILE_WRITE,				// waiting for file to be written
-		WAITING_EVENT_REPORT,			// waiting for system to report event in main thread after saving
+		IDLE					= 0,			// doing nothing
+		REQUESTED,								// screenshot requested but nothing done yet
+		WAITING_RENDER,							// waiting for rendering to happen
+		WAITING_FILE_WRITE,						// waiting for file to be written
+		WAITING_EVENT_REPORT,					// waiting for system to report event in main thread after saving
 		IDLE_ERROR				= UINT32_MAX,	// error state, screenshots disabled
 	};
-	std::atomic<vk2d::_internal::WindowImpl::ScreenshotState>	screenshot_state						= {};
-	std::filesystem::path										screenshot_save_path					= {};
-	vk2d::ImageData												screenshot_save_data					= {};
-	bool														screenshot_alpha						= {};
-	vk2d::_internal::CompleteImageResource						screenshot_image						= {};
-	vk2d::_internal::CompleteBufferResource						screenshot_buffer						= {};
-	uint32_t													screenshot_swapchain_id					= {};
-	std::atomic_bool											screenshot_being_saved					= {};
-	bool														screenshot_event_error					= {};
-	std::string													screenshot_event_message				= {};
 
-	bool														is_good									= {};
+	// Saving screenshots require memory access from multiple threads, means there's a conflict in memory access in vulkan even
+	// if technically we won't be reading and writing to a memory pool.... todo...
+//	std::unique_ptr<vk2d::_internal::DeviceMemoryPool>			screenshot_memory_pool						= {};
+	std::atomic<vk2d::_internal::WindowImpl::ScreenshotState>	screenshot_state							= {};
+	std::filesystem::path										screenshot_save_path						= {};
+	vk2d::ImageData												screenshot_save_data						= {};
+	bool														screenshot_alpha							= {};
+	vk2d::_internal::CompleteImageResource						screenshot_image							= {};
+	vk2d::_internal::CompleteBufferResource						screenshot_buffer							= {};
+	uint32_t													screenshot_swapchain_id						= {};
+	bool														screenshot_event_error						= {};
+	std::string													screenshot_event_message					= {};
+
+	bool														is_good										= {};
 };
 
 

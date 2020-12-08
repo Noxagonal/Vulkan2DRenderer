@@ -79,7 +79,6 @@ private:
 	bool											isAllocated							= false;
 
 public:
-
 	// Can only map this memory if the memory is host visible
 	template<typename T>
 	inline T *										Map()

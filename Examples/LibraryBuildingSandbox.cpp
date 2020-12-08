@@ -11,8 +11,7 @@
 constexpr double PI		= 3.14159265358979323846;
 constexpr double RAD	= PI * 2.0;
 
-float blur_test_value_direction		= 0.0f;
-float blur_test_value				= 0.0f;
+uint32_t frame = 0;
 
 
 class EventHandler : public vk2d::WindowEventHandler {
@@ -30,19 +29,14 @@ public:
 			if( button == vk2d::KeyboardButton::KEY_ESCAPE ) {
 				window->CloseWindow();
 			}
-		}
-		if( button == vk2d::KeyboardButton::KEY_UP ) {
-			if( action == vk2d::ButtonAction::PRESS ) {
-				blur_test_value_direction = 1.0f;
-			} else if( action == vk2d::ButtonAction::RELEASE ) {
-				blur_test_value_direction = 0.0f;
-			}
-		}
-		if( button == vk2d::KeyboardButton::KEY_DOWN ) {
-			if( action == vk2d::ButtonAction::PRESS ) {
-				blur_test_value_direction = -1.0f;
-			} else if( action == vk2d::ButtonAction::RELEASE ) {
-				blur_test_value_direction = 0.0f;
+			if( button == vk2d::KeyboardButton::KEY_PRINT_SCREEN ) {
+				/*
+				std::stringstream ss;
+				ss << "../../Docs/Images/SamplerLODBias_";
+				ss << std::setfill( '0' ) << std::setw( 2 ) << frame;
+				ss << ".png";
+				window->TakeScreenshotToFile( ss.str() );
+				*/
 			}
 		}
 	};
@@ -81,21 +75,60 @@ int main()
 
 	EventHandler event_handler;
 	vk2d::WindowCreateInfo					window_create_info {};
-	window_create_info.size					= { 800, 600 };
-	window_create_info.coordinate_space		= vk2d::RenderCoordinateSpace::TEXEL_SPACE_CENTERED;
-	window_create_info.samples				= vk2d::Multisamples::SAMPLE_COUNT_16;
+	window_create_info.size					= { 256, 256 };
+	window_create_info.coordinate_space		= vk2d::RenderCoordinateSpace::NORMALIZED_SPACE_CENTERED;
+	window_create_info.samples				= vk2d::Multisamples::SAMPLE_COUNT_1;
 	window_create_info.event_handler		= &event_handler;
 	auto window1 = instance->CreateOutputWindow( window_create_info );
 	if( !window1 ) return -1;
 
 	auto resource_manager		= instance->GetResourceManager();
-	auto texture_resource		= resource_manager->LoadTextureResource( "../../Data/GrafGear_128.png" );
+	auto texture_resource		= resource_manager->LoadTextureResource( "../../Docs/Images/SamplerAddressMode_MirrorClampToEdge.png" );
 
-	auto box					= vk2d::GenerateRectangleMesh(
-		{ -50.0f, -50.0f, 50.0f, 50.0f },
-		false
+	vk2d::SamplerCreateInfo		sampler_create_info {};
+	sampler_create_info.magnification_filter		= vk2d::SamplerFilter::LINEAR;
+	sampler_create_info.minification_filter			= vk2d::SamplerFilter::LINEAR;
+	sampler_create_info.mipmap_mode					= vk2d::SamplerMipmapMode::LINEAR;
+	sampler_create_info.anisotropy_enable			= true;
+	sampler_create_info.mipmap_max_anisotropy		= 16.0f;
+	sampler_create_info.mipmap_level_of_detail_bias	= frame / 3.0f - 3.0f;
+	sampler_create_info.mipmap_min_level_of_detail	= 0.0f;
+	sampler_create_info.mipmap_max_level_of_detail	= 128.0f;
+	auto sampler_linear			= instance->CreateSampler( sampler_create_info );
+
+	sampler_create_info.magnification_filter		= vk2d::SamplerFilter::LINEAR;
+	sampler_create_info.minification_filter			= vk2d::SamplerFilter::LINEAR;
+	sampler_create_info.mipmap_level_of_detail_bias	= 0.0f;
+	auto sampler_nearest		= instance->CreateSampler( sampler_create_info );
+
+	auto box					= vk2d::GenerateLatticeMesh(
+		{ -1.0f, -1.0f, 1.0f, 1.0f },
+		{ 50.0f, 50.0f },
+		true
 	);
+	/*
+	for( size_t y = 0; y < 2; ++y ) {
+		for( size_t x = 0; x < 27; ++x ) {
+			auto & vx = box.vertices[ y * 27 + x ].vertex_coords.x;
+			vx += 1.0f;
+			vx *= x * 0.168f;
+			vx -= 1.0f;
+
+			vx = -std::cos( ( x / 27.0f ) * vk2d::PI / 2.0 ) * 2.0;
+		}
+	}
+	*/
+	/*
+	box.Wave(
+		1.12f,
+		2.0f,
+		0.0f,
+		{ 0.12f, 0.12f }
+	);
+	*/
+	box.SetTexture( texture_resource );
 	box.SetLineWidth( 10.0f );
+//	box.SetMeshType( vk2d::MeshType::TRIANGLE_WIREFRAME );
 
 	auto delta_time_counter		= DeltaTimeCounter();
 	auto delta_time				= 0.0f;
@@ -107,32 +140,17 @@ int main()
 
 		if( !window1->BeginRender() ) return -1;
 
-		auto origin = vk2d::Transform(
-			{ 0.0f, 0.0f },
-			{ std::sin( seconds_since_start ) * 0.5f + 1.0f, 1.0f },
-			seconds_since_start / 3.0f
-		);
-		auto origin_matrix = origin.CalculateTransformationMatrix();
+		vk2d::Transform t1, t2;
+		t1.Rotate( 0.2f );
+		t1.Translate( { 0.0f, 0.0f } );
+//		t1.Translate( { -1.0f, 0.0f } );
+//		t2.Translate( { +1.0f, 0.0f } );
 
-		auto child = vk2d::Transform(
-			{ 150.0f, 0.0f },
-			{ 1.0f, 1.0f },
-			0.0f
-		);
-		auto child_matrix = child.CalculateTransformationMatrix();
+		box.SetSampler( sampler_linear );
+		window1->DrawMesh( box, t1 );
 
-		auto sub_child = vk2d::Transform(
-			{ 0.0f, std::sin( seconds_since_start / 2.0f ) * 150.0f },
-			{ 1.0f, 1.0f },
-			std::sin( seconds_since_start )
-		);
-		auto sub_child_matrix = sub_child.CalculateTransformationMatrix();
-
-		auto child_transform		= origin_matrix * child_matrix;
-		auto sub_child_transform	= origin_matrix * child_matrix * sub_child_matrix;
-
-		window1->DrawMesh( box, origin );
-		window1->DrawMesh( box, { child_transform, sub_child_transform } );
+//		box.SetSampler( sampler_nearest );
+//		window1->DrawMesh( box, t2 );
 
 		if( !window1->EndRender() ) return -1;
 	}
