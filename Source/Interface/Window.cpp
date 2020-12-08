@@ -1062,7 +1062,7 @@ vk2d::_internal::WindowImpl::~WindowImpl()
 {
 	vkDeviceWaitIdle( vk_device );
 
-	while( screenshot_being_saved ) {
+	while( screenshot_state == vk2d::_internal::WindowImpl::ScreenshotState::WAITING_FILE_WRITE ) {
 		std::this_thread::sleep_for( std::chrono::microseconds( 500 ) );
 	};
 	if( screenshot_state == vk2d::_internal::WindowImpl::ScreenshotState::WAITING_EVENT_REPORT ) {
@@ -1787,6 +1787,8 @@ void vk2d::_internal::WindowImpl::TakeScreenshotToFile(
 		screenshot_save_path	= save_path;
 		screenshot_state		= vk2d::_internal::WindowImpl::ScreenshotState::REQUESTED;
 		screenshot_alpha		= include_alpha;
+	} else {
+		instance->Report( vk2d::ReportSeverity::INFO, "Screenshot request ignored: Previous screenshot has not yet been processed." );
 	}
 }
 
@@ -1795,8 +1797,11 @@ void vk2d::_internal::WindowImpl::TakeScreenshotToData(
 )
 {
 	if( screenshot_state == vk2d::_internal::WindowImpl::ScreenshotState::IDLE ) {
+		screenshot_save_path	= "";
 		screenshot_state		= vk2d::_internal::WindowImpl::ScreenshotState::REQUESTED;
 		screenshot_alpha		= include_alpha;
+	} else {
+		instance->Report( vk2d::ReportSeverity::INFO, "Screenshot request ignored: Previous screenshot has not yet been processed." );
 	}
 }
 
@@ -2537,112 +2542,95 @@ public:
 		assert( window->screenshot_state == vk2d::_internal::WindowImpl::ScreenshotState::WAITING_FILE_WRITE );
 
 		auto path				= window->screenshot_save_path;
-		auto pixel_count		= VkDeviceSize( window->extent.width ) * VkDeviceSize( window->extent.height );
+		auto extent				= window->screenshot_save_data.size;
+		auto pixel_count		= VkDeviceSize( extent.x ) * VkDeviceSize( extent.y );
 
-		// Try to map the memory for screenshot buffer data.
-		auto pixel_rgba_data = window->screenshot_buffer.memory.Map<uint8_t>();
-		if( !pixel_rgba_data ) {
-			window->instance->Report( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot save screenshot, cannot map screenshot buffer memory!" );
-			window->screenshot_event_error			= true;
-			window->screenshot_event_message		= "Internal error: Cannot map buffer data.";
-			window->screenshot_state				= vk2d::_internal::WindowImpl::ScreenshotState::WAITING_EVENT_REPORT;
-			window->screenshot_being_saved			= false;
-			return;
-		}
-		auto screenshot_data	= pixel_rgba_data;
+		auto screenshot_data	= reinterpret_cast<uint8_t*>( window->screenshot_save_data.data.data() );
 		int pixel_channels		= 4;
 
-		if( !path.empty() ) {
-			// Prepare for if we don't want to save the alpha channel.
-			std::vector<uint8_t> pixel_rgb_data;
-			if( !window->screenshot_alpha ) {
-				pixel_rgb_data.resize( pixel_count * 3 );
-				for( VkDeviceSize i = 0; i < pixel_count; ++i ) {
-					auto pixel_rgba_offset = 4 * i;
-					auto pixel_rgb_offset = 3 * i;
-					pixel_rgb_data[ pixel_rgb_offset + 0 ] = pixel_rgba_data[ pixel_rgba_offset + 0 ];
-					pixel_rgb_data[ pixel_rgb_offset + 1 ] = pixel_rgba_data[ pixel_rgba_offset + 1 ];
-					pixel_rgb_data[ pixel_rgb_offset + 2 ] = pixel_rgba_data[ pixel_rgba_offset + 2 ];
-				}
-				screenshot_data = pixel_rgb_data.data();
-				pixel_channels = 3;
+		// Prepare for if we don't want to save the alpha channel.
+		std::vector<uint8_t> pixel_rgb_data;
+		if( !window->screenshot_alpha ) {
+			pixel_rgb_data.resize( pixel_count * 3 );
+			for( VkDeviceSize i = 0; i < pixel_count; ++i ) {
+//				auto pixel_rgba_offset = 4 * i;
+				auto pixel_rgb_offset = 3 * i;
+				pixel_rgb_data[ pixel_rgb_offset + 0 ] = window->screenshot_save_data.data[ i ].r;
+				pixel_rgb_data[ pixel_rgb_offset + 1 ] = window->screenshot_save_data.data[ i ].g;
+				pixel_rgb_data[ pixel_rgb_offset + 2 ] = window->screenshot_save_data.data[ i ].b;
 			}
-
-			int stbi_write_success = 0;
-			auto extension = path.extension();
-			if( extension == ".png" ) {
-				stbi_write_success = stbi_write_png(
-					path.string().c_str(),
-					int( window->extent.width ),
-					int( window->extent.height ),
-					pixel_channels,
-					screenshot_data,
-					0
-				);
-			} else if( extension == ".bmp" ) {
-				stbi_write_success = stbi_write_bmp(
-					path.string().c_str(),
-					int( window->extent.width ),
-					int( window->extent.height ),
-					pixel_channels,
-					screenshot_data
-				);
-			} else if( extension == ".tga" ) {
-				stbi_write_success = stbi_write_tga(
-					path.string().c_str(),
-					int( window->extent.width ),
-					int( window->extent.height ),
-					pixel_channels,
-					screenshot_data
-				);
-			} else if( extension == ".jpg" ) {
-				stbi_write_success = stbi_write_jpg(
-					path.string().c_str(),
-					int( window->extent.width ),
-					int( window->extent.height ),
-					pixel_channels,
-					screenshot_data,
-					90
-				);
-			} else if( extension == ".jpeg" ) {
-				stbi_write_success = stbi_write_jpg(
-					path.string().c_str(),
-					int( window->extent.width ),
-					int( window->extent.height ),
-					pixel_channels,
-					screenshot_data,
-					90
-				);
-			} else {
-				window->instance->Report( vk2d::ReportSeverity::INFO, "Screenshot extension was not known, saving screenshot as .png" );
-				path += ".png";
-				stbi_write_success = stbi_write_png(
-					path.string().c_str(),
-					int( window->extent.width ),
-					int( window->extent.height ),
-					pixel_channels,
-					screenshot_data,
-					0
-				);
-			}
-
-			if( stbi_write_success ) {
-				window->screenshot_event_error = false;
-				window->screenshot_event_message = std::string( "Screenshot successfully saved at: " ) + path.string();
-			} else {
-				window->instance->Report( vk2d::ReportSeverity::WARNING, std::string( "Cannot save screenshot: '" ) + path.string() + "'" );
-				window->screenshot_event_error = true;
-				window->screenshot_event_message = std::string( "Cannot save screenshot '" ) + path.string() + "'";
-			}
-		} else {
-			window->screenshot_save_data.size		= window->GetSize();
-			window->screenshot_save_data.data.resize( window->GetSize().x * window->GetSize().y * sizeof( vk2d::Color8 ) );
-			std::memcpy( window->screenshot_save_data.data.data(), pixel_rgba_data, pixel_count * pixel_channels );
+			screenshot_data = pixel_rgb_data.data();
+			pixel_channels = 3;
 		}
 
-		window->screenshot_buffer.memory.Unmap();
+		int stbi_write_success = 0;
+		auto extension = path.extension();
+		if( extension == ".png" ) {
+			stbi_write_success = stbi_write_png(
+				path.string().c_str(),
+				int( extent.x ),
+				int( extent.y ),
+				pixel_channels,
+				screenshot_data,
+				0
+			);
+		} else if( extension == ".bmp" ) {
+			stbi_write_success = stbi_write_bmp(
+				path.string().c_str(),
+				int( extent.x ),
+				int( extent.y ),
+				pixel_channels,
+				screenshot_data
+			);
+		} else if( extension == ".tga" ) {
+			stbi_write_success = stbi_write_tga(
+				path.string().c_str(),
+				int( extent.x ),
+				int( extent.y ),
+				pixel_channels,
+				screenshot_data
+			);
+		} else if( extension == ".jpg" ) {
+			stbi_write_success = stbi_write_jpg(
+				path.string().c_str(),
+				int( extent.x ),
+				int( extent.y ),
+				pixel_channels,
+				screenshot_data,
+				90
+			);
+		} else if( extension == ".jpeg" ) {
+			stbi_write_success = stbi_write_jpg(
+				path.string().c_str(),
+				int( extent.x ),
+				int( extent.y ),
+				pixel_channels,
+				screenshot_data,
+				90
+			);
+		} else {
+			window->instance->Report( vk2d::ReportSeverity::INFO, "Screenshot extension was not known, saving screenshot as .png" );
+			path += ".png";
+			stbi_write_success = stbi_write_png(
+				path.string().c_str(),
+				int( extent.x ),
+				int( extent.y ),
+				pixel_channels,
+				screenshot_data,
+				0
+			);
+		}
+
+		if( stbi_write_success ) {
+			window->screenshot_event_error = false;
+			window->screenshot_event_message = std::string( "Screenshot successfully saved at: " ) + path.string();
+		} else {
+			window->instance->Report( vk2d::ReportSeverity::WARNING, std::string( "Cannot save screenshot: '" ) + path.string() + "'" );
+			window->screenshot_event_error = true;
+			window->screenshot_event_message = std::string( "Cannot save screenshot '" ) + path.string() + "'";
+		}
+
 		window->screenshot_state					= vk2d::_internal::WindowImpl::ScreenshotState::WAITING_EVENT_REPORT;
-		window->screenshot_being_saved				= false;
 	}
 
 	vk2d::_internal::WindowImpl			*	window			= {};
@@ -2691,13 +2679,30 @@ bool vk2d::_internal::WindowImpl::SynchronizeFrame()
 		{
 			if( screenshot_state			== vk2d::_internal::WindowImpl::ScreenshotState::WAITING_RENDER &&
 				screenshot_swapchain_id		== previous_image ) {
+				// Can get the screenshot data now.
+				{
+					screenshot_save_data.size = { extent.width, extent.height };
+					screenshot_save_data.data.resize( extent.width * extent.height );
+					auto mapped_data = screenshot_buffer.memory.Map<vk2d::Color8>();
+					if( mapped_data ) {
+						std::memcpy( screenshot_save_data.data.data(), mapped_data, screenshot_save_data.data.size() * sizeof( vk2d::Color8 ) );
+						screenshot_buffer.memory.Unmap();
 
-				screenshot_state			= vk2d::_internal::WindowImpl::ScreenshotState::WAITING_FILE_WRITE;
-				screenshot_being_saved		= true;
-
-				instance->GetThreadPool()->ScheduleTask(
-					std::make_unique<vk2d::_internal::ScreenshotSaverTask>( this ),
-					instance->GetGeneralThreads() );
+						if( screenshot_save_path.empty() ) {
+							screenshot_state		= vk2d::_internal::WindowImpl::ScreenshotState::WAITING_EVENT_REPORT;
+						} else {
+							screenshot_state		= vk2d::_internal::WindowImpl::ScreenshotState::WAITING_FILE_WRITE;
+							instance->GetThreadPool()->ScheduleTask(
+								std::make_unique<vk2d::_internal::ScreenshotSaverTask>( this ),
+								instance->GetGeneralThreads() );
+						}
+					} else {
+						instance->Report( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot save screenshot, cannot map screenshot buffer memory!" );
+						screenshot_event_error		= true;
+						screenshot_event_message	= "Internal error: Cannot map buffer data.";
+						screenshot_state			= vk2d::_internal::WindowImpl::ScreenshotState::WAITING_EVENT_REPORT;
+					}
+				}
 			}
 
 			if( screenshot_state == vk2d::_internal::WindowImpl::ScreenshotState::WAITING_EVENT_REPORT ) {
@@ -3363,7 +3368,7 @@ bool vk2d::_internal::WindowImpl::ReCreateSwapchain()
 
 bool vk2d::_internal::WindowImpl::ReCreateScreenshotResources()
 {
-	while( screenshot_being_saved ) {
+	while( screenshot_state == vk2d::_internal::WindowImpl::ScreenshotState::WAITING_FILE_WRITE ) {
 		std::this_thread::sleep_for( std::chrono::microseconds( 10 ) );
 	}
 
@@ -3783,7 +3788,6 @@ void vk2d::_internal::WindowImpl::HandleScreenshotEvent()
 	}
 
 	screenshot_save_path			= "";
-	screenshot_save_data			= {};
 	screenshot_event_error			= false;
 	screenshot_event_message		= "";
 	screenshot_state				= vk2d::_internal::WindowImpl::ScreenshotState::IDLE;

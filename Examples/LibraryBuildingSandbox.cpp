@@ -11,7 +11,7 @@
 constexpr double PI		= 3.14159265358979323846;
 constexpr double RAD	= PI * 2.0;
 
-uint32_t frame = 20;
+uint32_t frame = 0;
 
 
 class EventHandler : public vk2d::WindowEventHandler {
@@ -30,13 +30,13 @@ public:
 				window->CloseWindow();
 			}
 			if( button == vk2d::KeyboardButton::KEY_PRINT_SCREEN ) {
+				/*
 				std::stringstream ss;
 				ss << "../../Docs/Images/SamplerLODBias_";
 				ss << std::setfill( '0' ) << std::setw( 2 ) << frame;
 				ss << ".png";
 				window->TakeScreenshotToFile( ss.str() );
-
-				// TODO: Taking screenshots crashes. Figure out why before merging into master.
+				*/
 			}
 		}
 	};
@@ -83,7 +83,7 @@ int main()
 	if( !window1 ) return -1;
 
 	auto resource_manager		= instance->GetResourceManager();
-	auto texture_resource		= resource_manager->LoadTextureResource( "../../Docs/Images/sampler_filter_example_source_2.png" );
+	auto texture_resource		= resource_manager->LoadTextureResource( "../../Docs/Images/SamplerAddressMode_MirrorClampToEdge.png" );
 
 	vk2d::SamplerCreateInfo		sampler_create_info {};
 	sampler_create_info.magnification_filter		= vk2d::SamplerFilter::LINEAR;
