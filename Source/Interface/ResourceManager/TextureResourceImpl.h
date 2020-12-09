@@ -1,14 +1,14 @@
 #pragma once
 
-#include "../../Core/SourceCommon.h"
+#include "Core/SourceCommon.h"
 
-#include "../../../Include/Types/Vector2.hpp"
-#include "../../../Include/Types/Color.hpp"
+#include "Types/Vector2.hpp"
+#include "Types/Color.hpp"
 
-#include "../../System/VulkanMemoryManagement.h"
+#include "System/VulkanMemoryManagement.h"
 
-#include "ResourceImpl.h"
-#include "../TextureImpl.h"
+#include "Interface/ResourceManager/ResourceImpl.h"
+#include "Interface/TextureImpl.h"
 
 
 namespace vk2d {

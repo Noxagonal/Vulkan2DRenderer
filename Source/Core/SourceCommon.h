@@ -2,9 +2,10 @@
 
 #define VK2D_LIBRARY_EXPORT				1
 
-#include "../BuildOptions.h"
-#include "PreCompiledHeader.h"
-#include "../../Include/Core/Common.h"
+#include "BuildOptions.h"
+
+#include "Core/PreCompiledHeader.h"
+#include "Core/Common.h"
 
 #include <vulkan/vulkan.h>
 

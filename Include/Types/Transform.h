@@ -1,9 +1,9 @@
 #pragma once
 
-#include "../Core/Common.h"
+#include "Core/Common.h"
 
-#include "Vector2.hpp"
-#include "Matrix4.hpp"
+#include "Types/Vector2.hpp"
+#include "Types/Matrix4.hpp"
 
 #include <initializer_list>
 

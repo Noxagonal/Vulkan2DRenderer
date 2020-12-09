@@ -1,7 +1,7 @@
 #pragma once
 
-#include "../Core/SourceCommon.h"
-#include "../../Include/Types/Vector2.hpp"
+#include "Core/SourceCommon.h"
+#include "Types/Vector2.hpp"
 
 
 

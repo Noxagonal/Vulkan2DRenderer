@@ -1,7 +1,7 @@
 
-#include "../Core/SourceCommon.h"
+#include "Core/SourceCommon.h"
 
-#include "VulkanMemoryManagement.h"
+#include "System/VulkanMemoryManagement.h"
 
 
 

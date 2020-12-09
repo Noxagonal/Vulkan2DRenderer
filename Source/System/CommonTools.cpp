@@ -1,9 +1,9 @@
 
-#include "../Core/SourceCommon.h"
+#include "Core/SourceCommon.h"
 
-#include "../../Include/Types/Vector2.hpp"
+#include "Types/Vector2.hpp"
 
-#include "CommonTools.h"
+#include "System/CommonTools.h"
 
 std::vector<VkExtent2D> vk2d::_internal::GenerateMipSizes(
 	vk2d::Vector2u		full_size

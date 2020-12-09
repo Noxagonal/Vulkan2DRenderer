@@ -1,9 +1,9 @@
 
-#include "../Core/SourceCommon.h"
+#include "Core/SourceCommon.h"
 
-#include "../Interface/InstanceImpl.h"
+#include "Interface/InstanceImpl.h"
 
-#include "DescriptorSet.h"
+#include "System/DescriptorSet.h"
 
 namespace vk2d {
 namespace _internal {

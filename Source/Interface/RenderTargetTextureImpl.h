@@ -1,22 +1,22 @@
 #pragma once
 
-#include "../Core/SourceCommon.h"
+#include "Core/SourceCommon.h"
 
-#include "../../Include/Interface/RenderTargetTexture.h"
+#include "Interface/RenderTargetTexture.h"
 
-#include "../System/CommonTools.h"
-#include "../System/ShaderInterface.h"
-#include "../System/MeshBuffer.h"
-#include "../System/VulkanMemoryManagement.h"
-#include "../System/DescriptorSet.h"
-#include "../System/RenderTargetTextureDependecyGraphInfo.hpp"
+#include "System/CommonTools.h"
+#include "System/ShaderInterface.h"
+#include "System/MeshBuffer.h"
+#include "System/VulkanMemoryManagement.h"
+#include "System/DescriptorSet.h"
+#include "System/RenderTargetTextureDependecyGraphInfo.hpp"
 
-#include "InstanceImpl.h"
+#include "Interface/InstanceImpl.h"
 
-#include "SamplerImpl.h"
+#include "Interface/SamplerImpl.h"
 
-#include "../../Include/Interface/Texture.h"
-#include "TextureImpl.h"
+#include "Interface/Texture.h"
+#include "Interface/TextureImpl.h"
 
 
 

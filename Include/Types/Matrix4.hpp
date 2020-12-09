@@ -1,8 +1,8 @@
 #pragma once
 
-#include "../Core/Common.h"
+#include "Core/Common.h"
 
-#include "Vector4.hpp"
+#include "Types/Vector4.hpp"
 
 #include <initializer_list>
 #include <cmath>

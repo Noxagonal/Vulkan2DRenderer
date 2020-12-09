@@ -1,12 +1,12 @@
 
-#include "../../Core/SourceCommon.h"
+#include "Core/SourceCommon.h"
 
-#include "../../../Include/Interface/ResourceManager/Resource.h"
-#include "ResourceImpl.h"
+#include "Interface/ResourceManager/Resource.h"
+#include "Interface/ResourceManager/ResourceImpl.h"
 
-#include "../InstanceImpl.h"
+#include "Interface/InstanceImpl.h"
 
-#include "ResourceManagerImpl.h"
+#include "Interface/ResourceManager/ResourceManagerImpl.h"
 
 
 
