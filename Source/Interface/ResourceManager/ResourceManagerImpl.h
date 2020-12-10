@@ -1,11 +1,11 @@
 #pragma once
 
-#include "../../Core/SourceCommon.h"
+#include "Core/SourceCommon.h"
 
- #include "../../System/ThreadPool.h"
+#include "System/ThreadPool.h"
 
-#include "../../../Include/Types/Vector2.hpp"
-#include "../../../Include/Types/Color.hpp"
+#include "Types/Vector2.hpp"
+#include "Types/Color.hpp"
 
 namespace vk2d {
 

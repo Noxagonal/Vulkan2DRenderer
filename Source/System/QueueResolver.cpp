@@ -1,7 +1,7 @@
 
-#include "../Core/SourceCommon.h"
+#include "Core/SourceCommon.h"
 
-#include "QueueResolver.h"
+#include "System/QueueResolver.h"
 
 #define GLFW_INCLUDE_NONE
 #include <GLFW/glfw3.h>

@@ -1,8 +1,8 @@
 
-#include "../Core/SourceCommon.h"
+#include "Core/SourceCommon.h"
 
-#include "../../Include/Interface/Texture.h"
-#include "TextureImpl.h"
+#include "Interface/Texture.h"
+#include "Interface/TextureImpl.h"
 
 
 

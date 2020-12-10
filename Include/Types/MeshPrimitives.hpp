@@ -1,9 +1,9 @@
 #pragma once
 
-#include "../Core/Common.h"
+#include "Core/Common.h"
 
-#include "Vector2.hpp"
-#include "Color.hpp"
+#include "Types/Vector2.hpp"
+#include "Types/Color.hpp"
 
 #include <array>
 #include <vector>

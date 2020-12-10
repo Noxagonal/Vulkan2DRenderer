@@ -1,12 +1,12 @@
 #pragma once
 
-#include "../../Core/Common.h"
+#include "Core/Common.h"
 
-#include "../../Types/Vector2.hpp"
-#include "../../Types/Color.hpp"
+#include "Types/Vector2.hpp"
+#include "Types/Color.hpp"
 
-#include "Resource.h"
-#include "../Texture.h"
+#include "Interface/ResourceManager/Resource.h"
+#include "Interface/Texture.h"
 
 #include <memory>
 

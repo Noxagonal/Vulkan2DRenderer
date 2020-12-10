@@ -1,8 +1,8 @@
 #pragma once
 
-#include "../Core/Common.h"
+#include "Core/Common.h"
 
-#include "../Types/Vector2.hpp"
+#include "Types/Vector2.hpp"
 
 
 

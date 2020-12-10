@@ -1,32 +1,32 @@
 
-#include "../Core/SourceCommon.h"
+#include "Core/SourceCommon.h"
 
-#include "../../Include/Types/Vector2.hpp"
-#include "../../Include/Types/Color.hpp"
+#include "Types/Vector2.hpp"
+#include "Types/Color.hpp"
 
-#include "../../Include/Core/SystemConsole.h"
+#include "Core/SystemConsole.h"
 
-#include "../System/QueueResolver.h"
-#include "../System/ThreadPool.h"
-#include "../System/ThreadPrivateResources.h"
-#include "../System/DescriptorSet.h"
+#include "System/QueueResolver.h"
+#include "System/ThreadPool.h"
+#include "System/ThreadPrivateResources.h"
+#include "System/DescriptorSet.h"
 
-#include "../../Include/Interface/Instance.h"
-#include "InstanceImpl.h"
+#include "Interface/Instance.h"
+#include "Interface/InstanceImpl.h"
 
-#include "../../Include/Interface/ResourceManager/ResourceManager.h"
-#include "ResourceManager/ResourceManagerImpl.h"
+#include "Interface/ResourceManager/ResourceManager.h"
+#include "Interface/ResourceManager/ResourceManagerImpl.h"
 
-#include "../../Include/Interface/Window.h"
-#include "WindowImpl.h"
+#include "Interface/Window.h"
+#include "Interface/WindowImpl.h"
 
-#include "../../Include/Interface/Sampler.h"
-#include "SamplerImpl.h"
+#include "Interface/Sampler.h"
+#include "Interface/SamplerImpl.h"
 
-#include "../../Include/Interface/ResourceManager/TextureResource.h"
-#include "ResourceManager/TextureResourceImpl.h"
+#include "Interface/ResourceManager/TextureResource.h"
+#include "Interface/ResourceManager/TextureResourceImpl.h"
 
-#include "../Shaders/Spir-V/IncludeAllShaders.h"
+#include "Shaders/Spir-V/IncludeAllShaders.h"
 
 #define GLFW_INCLUDE_NONE
 #include <GLFW/glfw3.h>

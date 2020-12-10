@@ -179,6 +179,10 @@ set(EXTERNAL_LIBRARIES
 	"${EXTERNAL_LIBRARY_PATH}/glfw/src"
 )
 
+target_include_directories(VK2D PRIVATE Source)
+
+target_include_directories(VK2D PUBLIC Include)
+
 target_include_directories(VK2D
 	PUBLIC
 		Vulkan::Vulkan

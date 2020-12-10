@@ -1,9 +1,9 @@
 
-#include "../Core/SourceCommon.h"
+#include "Core/SourceCommon.h"
 
-#include "RenderTargetTextureDependecyGraphInfo.hpp"
+#include "System/RenderTargetTextureDependecyGraphInfo.hpp"
 
-#include "../Interface/InstanceImpl.h"
+#include "Interface/InstanceImpl.h"
 
 void vk2d::_internal::RenderTargetTextureRenderCollector::Append(
 	VkSubmitInfo	*	transfer_submit_info,

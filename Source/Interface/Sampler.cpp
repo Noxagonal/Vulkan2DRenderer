@@ -1,10 +1,10 @@
 
-#include "../Core/SourceCommon.h"
+#include "Core/SourceCommon.h"
 
-#include "InstanceImpl.h"
+#include "Interface/InstanceImpl.h"
 
-#include "../../Include/Interface/Sampler.h"
-#include "SamplerImpl.h"
+#include "Interface/Sampler.h"
+#include "Interface/SamplerImpl.h"
 
 
 

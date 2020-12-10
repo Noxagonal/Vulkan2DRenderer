@@ -1,9 +1,9 @@
 #pragma once
 
-#include "../../Core/Common.h"
+#include "Core/Common.h"
 
-#include "Resource.h"
-#include "../../Types/Vector2.hpp"
+#include "Interface/ResourceManager/Resource.h"
+#include "Types/Vector2.hpp"
 
 #include <filesystem>
 
