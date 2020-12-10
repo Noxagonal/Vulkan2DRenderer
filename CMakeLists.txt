@@ -1,7 +1,7 @@
 
 # VK2D library root
 
-cmake_minimum_required(VERSION 3.16) 
+cmake_minimum_required(VERSION 3.16)
 
 project(VK2D CXX)
 
@@ -11,23 +11,6 @@ if(POLICY CMP0077)
 	cmake_policy(SET CMP0077 NEW)
 endif()
 
-if(CYGWIN)
-	set(GIT_SUBMODULE OFF CACHE BOOL "" FORCE)
-	set(Vulkan_FOUND 1)
-	set(Vulkan_INCLUDE_DIR "D:/Program Files/VulkanSDK/Include")
-	set(Vulkan_LIBRARY "D:/Program Files/VulkanSDK/Lib")
-	set(Vulkan_LIBRARIES ${Vulkan_LIBRARY})
-	set(Vulkan_INCLUDE_DIRS ${Vulkan_INCLUDE_DIR})
-	mark_as_advanced(Vulkan_INCLUDE_DIR Vulkan_LIBRARY)
-	add_library(Vulkan::Vulkan UNKNOWN IMPORTED)
-	set_target_properties(Vulkan::Vulkan PROPERTIES IMPORTED_LOCATION "${Vulkan_LIBRARIES}" INTERFACE_INCLUDE_DIRECTORIES "${Vulkan_INCLUDE_DIRS}")
-	
-	#message("WIN32: " ${WIN32})
-	#message("VULKAN_SDK: " $ENV{VULKAN_SDK})
-	#set(ENV{VULKAN_SDK} "D:/Program Files/VulkanSDK/Lib")
-	set(WIN32 1)
-	add_compile_definitions(VK_USE_PLATFORM_WIN32_KHR=1)
-endif()
 
 if(NOT Vulkan_FOUND)
 find_package(Vulkan REQUIRED)
