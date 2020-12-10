@@ -2936,7 +2936,7 @@ std::array<float, 4> CalculateBlurShaderInfo(
 	float		coverage
 )
 {
-	constexpr double M_PI = 3.1415926535897932384626433832795;
+//	constexpr double M_PI = 3.1415926535897932384626433832795;
 
 	std::array<float, 4> ret {};
 
