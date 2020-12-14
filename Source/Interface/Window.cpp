@@ -1211,6 +1211,7 @@ bool vk2d::_internal::AquireImage(
 				impl->instance->Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot aquire next image for window!" );
 				return false;
 			}
+			return true;
 		} else {
 			impl->instance->Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot aquire next swapchain image!" );
 
