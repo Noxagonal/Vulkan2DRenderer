@@ -26,7 +26,7 @@
 #include "Interface/ResourceManager/TextureResource.h"
 #include "Interface/ResourceManager/TextureResourceImpl.h"
 
-#include "Shaders/Spir-V/IncludeAllShaders.h"
+#include "Spir-V/IncludeAllShaders.h"
 
 #define GLFW_INCLUDE_NONE
 #include <GLFW/glfw3.h>
