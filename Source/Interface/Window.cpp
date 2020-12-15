@@ -1179,6 +1179,9 @@ bool vk2d::_internal::AquireImage(
 	vk2d::_internal::ResolvedQueue	&	primary_render_queue,
 	uint32_t							nested_counter				= 0 )
 {
+	// TODO: Rewrite vk2d::_internal::AquireImage() using lambdas.
+	// It's calling itself recursively, this is not really the right place for that.
+
 	auto result = vkAcquireNextImageKHR(
 		device,
 		impl->vk_swapchain,
