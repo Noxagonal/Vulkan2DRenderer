@@ -282,7 +282,7 @@ private:
 
 	vk2d::WindowEventHandler								*	event_handler								= {};
 	VkOffset2D													position									= {};
-	bool														is_minimized								= {};
+	bool														is_iconified								= {};
 
 	struct IconData {
 		std::vector<uint8_t>									image_data									= {};
