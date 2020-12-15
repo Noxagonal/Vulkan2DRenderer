@@ -75,60 +75,45 @@ int main()
 
 	EventHandler event_handler;
 	vk2d::WindowCreateInfo					window_create_info {};
-	window_create_info.size					= { 256, 256 };
-	window_create_info.coordinate_space		= vk2d::RenderCoordinateSpace::NORMALIZED_SPACE_CENTERED;
+	window_create_info.size					= { 1200, 600 };
+	window_create_info.coordinate_space		= vk2d::RenderCoordinateSpace::TEXEL_SPACE_CENTERED;
 	window_create_info.samples				= vk2d::Multisamples::SAMPLE_COUNT_1;
 	window_create_info.event_handler		= &event_handler;
 	auto window1 = instance->CreateOutputWindow( window_create_info );
 	if( !window1 ) return -1;
 
+	instance->GetPrimaryMonitor()->GetGammaRamp();
+
+	std::vector<vk2d::GammaRampNode> ramp;
+	ramp.push_back( { 0.1f, 0.0f, 0.0f } );
+	ramp.push_back( { 0.5f, 0.5f, 0.5f } );
+	ramp.push_back( { 1.0f, 1.0f, 1.0f } );
+	instance->GetPrimaryMonitor()->SetGammaRamp( ramp );
+
 	auto resource_manager		= instance->GetResourceManager();
-	auto texture_resource		= resource_manager->LoadTextureResource( "../../Docs/Images/SamplerAddressMode_MirrorClampToEdge.png" );
 
-	vk2d::SamplerCreateInfo		sampler_create_info {};
-	sampler_create_info.magnification_filter		= vk2d::SamplerFilter::LINEAR;
-	sampler_create_info.minification_filter			= vk2d::SamplerFilter::LINEAR;
-	sampler_create_info.mipmap_mode					= vk2d::SamplerMipmapMode::LINEAR;
-	sampler_create_info.anisotropy_enable			= true;
-	sampler_create_info.mipmap_max_anisotropy		= 16.0f;
-	sampler_create_info.mipmap_level_of_detail_bias	= frame / 3.0f - 3.0f;
-	sampler_create_info.mipmap_min_level_of_detail	= 0.0f;
-	sampler_create_info.mipmap_max_level_of_detail	= 128.0f;
-	auto sampler_linear			= instance->CreateSampler( sampler_create_info );
 
-	sampler_create_info.magnification_filter		= vk2d::SamplerFilter::LINEAR;
-	sampler_create_info.minification_filter			= vk2d::SamplerFilter::LINEAR;
-	sampler_create_info.mipmap_level_of_detail_bias	= 0.0f;
-	auto sampler_nearest		= instance->CreateSampler( sampler_create_info );
-
-	auto box					= vk2d::GenerateLatticeMesh(
-		{ -1.0f, -1.0f, 1.0f, 1.0f },
-		{ 50.0f, 50.0f },
-		true
+	auto blue_circle			= vk2d::GenerateEllipseMesh(
+		{ -4, -4, 4, 4 }
 	);
-	/*
-	for( size_t y = 0; y < 2; ++y ) {
-		for( size_t x = 0; x < 27; ++x ) {
-			auto & vx = box.vertices[ y * 27 + x ].vertex_coords.x;
-			vx += 1.0f;
-			vx *= x * 0.168f;
-			vx -= 1.0f;
-
-			vx = -std::cos( ( x / 27.0f ) * vk2d::PI / 2.0 ) * 2.0;
-		}
-	}
-	*/
-	/*
-	box.Wave(
-		1.12f,
-		2.0f,
-		0.0f,
-		{ 0.12f, 0.12f }
+	auto blue_line				= vk2d::GenerateLineMeshFromList(
+		{ { 0, -5000 }, { 0, 5000 } },
+		{ { 0, 1 } }
 	);
-	*/
-	box.SetTexture( texture_resource );
-	box.SetLineWidth( 10.0f );
-//	box.SetMeshType( vk2d::MeshType::TRIANGLE_WIREFRAME );
+	blue_circle.SetVertexColor( { 0.0f, 0.3f, 1.0f, 1.0f } );
+	blue_line.SetVertexColor( { 0.0f, 0.3f, 1.0f, 0.05f } );
+
+
+	auto red_circle			= vk2d::GenerateEllipseMesh(
+		{ -7, -7, 7, 7 }
+	);
+	auto red_line				= vk2d::GenerateLineMeshFromList(
+		{ { 0, -5000 }, { 0, 5000 } },
+		{ { 0, 1 } }
+	);
+	red_circle.SetVertexColor( { 1.0f, 0.4f, 0.3f, 1.0f } );
+	red_line.SetVertexColor( { 1.0f, 0.4f, 0.3f, 0.05f } );
+
 
 	auto delta_time_counter		= DeltaTimeCounter();
 	auto delta_time				= 0.0f;
@@ -140,17 +125,67 @@ int main()
 
 		if( !window1->BeginRender() ) return -1;
 
-		vk2d::Transform t1, t2;
-		t1.Rotate( 0.2f );
-		t1.Translate( { 0.0f, 0.0f } );
-//		t1.Translate( { -1.0f, 0.0f } );
-//		t2.Translate( { +1.0f, 0.0f } );
 
-		box.SetSampler( sampler_linear );
-		window1->DrawMesh( box, t1 );
 
-//		box.SetSampler( sampler_nearest );
-//		window1->DrawMesh( box, t2 );
+		{
+			float pc1 = ( std::cos( seconds_since_start * 0.414f ) * 0.5f + 0.5f ) * 30.0f + 3.0f;
+			float pc2 = ( std::sin( seconds_since_start * 0.231f ) * 0.5f + 0.5f ) * 30.0f + 3.0f;
+
+			float pc1_scale = window1->GetSize().x / ( pc1 - 1.0f );
+			float pc2_scale = window1->GetSize().x / ( pc2 - 1.0f );
+
+			std::vector<float> pc1_values( std::ceil( pc1 ) + 1 );
+			std::vector<float> pc2_values( std::ceil( pc2 ) );
+
+			for( size_t i = 0; i < std::size( pc1_values ); ++i ) {
+				pc1_values[ i ] = std::sin( seconds_since_start + i * pc1_scale * 0.01f );
+			}
+
+			float s = ( pc1 - 1.0f ) / ( pc2 - 1.0f );
+			for( int32_t i = 0; i < std::size( pc2_values ); ++i ) {
+				float	pc1_total_offset	= i * s;
+				size_t	pc1_index			= size_t( std::floor( pc1_total_offset ) );
+				float	pc1_offset			= pc1_total_offset - float( pc1_index );
+
+				auto pc1_value1				= ( pc1_index < std::size( pc1_values ) ) ? pc1_values[ pc1_index ] : pc1_values.back();
+				auto pc1_value2				= ( pc1_index + 1 < std::size( pc1_values ) ) ? pc1_values[ pc1_index + 1 ] : pc1_values.back();
+
+				pc2_values[ i ] = pc1_value1 * ( 1.0f - pc1_offset ) + pc1_value2 * pc1_offset;
+			}
+			//pc2_values.back() = pc1_values.back();
+
+			std::vector<vk2d::Matrix4f> pc1_point_transformations( size_t( std::ceil( pc1 ) ) );
+			std::vector<vk2d::Matrix4f> pc2_point_transformations( std::size( pc2_values ) );
+
+			for( int32_t i = 0; i < std::size( pc1_point_transformations ); ++i ) {
+				vk2d::Transform t;
+				t.Translate( { i * pc1_scale - window1->GetSize().x / 2, pc1_values[ i ] * 300.0f } );
+				pc1_point_transformations[ i ] = t.CalculateTransformationMatrix();
+			}
+			for( int32_t i = 0; i < std::size( pc2_point_transformations ); ++i ) {
+				vk2d::Transform t;
+				t.Translate( { i * pc2_scale - window1->GetSize().x / 2, pc2_values[ i ] * 300.0f } );
+				pc2_point_transformations[ i ] = t.CalculateTransformationMatrix();
+			}
+
+			window1->DrawMesh(
+				blue_line,
+				pc1_point_transformations
+			);
+			window1->DrawMesh(
+				blue_circle,
+				pc1_point_transformations
+			);
+
+			window1->DrawMesh(
+				red_line,
+				pc2_point_transformations
+			);
+			window1->DrawMesh(
+				red_circle,
+				pc2_point_transformations
+			);
+		}
 
 		if( !window1->EndRender() ) return -1;
 	}

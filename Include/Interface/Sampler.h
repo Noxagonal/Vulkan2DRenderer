@@ -160,8 +160,7 @@ enum class SamplerAddressMode : uint32_t
 ///				us 10 mip levels. The higher the resolution of the texture the more mip levels we have.
 ///				This value cuts use of the lower resolution mip levels at a specific level.
 
-/// @brief		Creating a sampler requires somewhat alot of parameters so we'll pass those
-///				parameters to the create function via a create info struct.
+/// @brief		Parameters to construct a vk2d::Sampler.
 struct SamplerCreateInfo {
 	vk2d::SamplerFilter					minification_filter				= vk2d::SamplerFilter::LINEAR;
 	vk2d::SamplerFilter					magnification_filter			= vk2d::SamplerFilter::LINEAR;

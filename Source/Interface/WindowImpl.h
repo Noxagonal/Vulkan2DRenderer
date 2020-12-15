@@ -365,9 +365,6 @@ private:
 		IDLE_ERROR				= UINT32_MAX,	// error state, screenshots disabled
 	};
 
-	// Saving screenshots require memory access from multiple threads, means there's a conflict in memory access in vulkan even
-	// if technically we won't be reading and writing to a memory pool.... todo...
-//	std::unique_ptr<vk2d::_internal::DeviceMemoryPool>			screenshot_memory_pool						= {};
 	std::atomic<vk2d::_internal::WindowImpl::ScreenshotState>	screenshot_state							= {};
 	std::filesystem::path										screenshot_save_path						= {};
 	vk2d::ImageData												screenshot_save_data						= {};
@@ -432,7 +429,7 @@ public:
 	bool										IsGood();
 
 	vk2d::_internal::InstanceImpl			*	GetInstance();
-	const std::vector<vk2d::Color8>			&	GetPixelData();
+	const std::vector<vk2d::Color8>			&	GetTexelData();
 	GLFWcursor								*	GetGLFWcursor();
 	vk2d::Vector2u								GetSize();
 	vk2d::Vector2i								GetHotSpot();
@@ -485,10 +482,10 @@ public:
 	void												SetGamma(
 		float											gamma );
 
-	vk2d::GammaRamp										GetGammaRamp();
+	std::vector<vk2d::GammaRampNode>					GetGammaRamp();
 
 	void												SetGammaRamp(
-		const vk2d::GammaRamp						&	ramp );
+		const std::vector<vk2d::GammaRampNode>		&	ramp );
 
 	vk2d::_internal::MonitorImpl					&	operator=(
 		const vk2d::_internal::MonitorImpl			&	other )								= default;

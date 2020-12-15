@@ -2813,12 +2813,12 @@ void UpdateMonitorLists(
 		std::string					name					= glfwGetMonitorName( monitor );
 		vk2d::MonitorVideoMode		current_video_mode		= {};
 		{
-			auto glfw_current_video_mode	= glfwGetVideoMode( monitor );
-			current_video_mode.size			= { uint32_t( glfw_current_video_mode->width ), uint32_t( glfw_current_video_mode->height ) };
-			current_video_mode.redBits		= uint32_t( glfw_current_video_mode->redBits );
-			current_video_mode.greenBits	= uint32_t( glfw_current_video_mode->greenBits );
-			current_video_mode.blueBits		= uint32_t( glfw_current_video_mode->blueBits );
-			current_video_mode.refreshRate	= uint32_t( glfw_current_video_mode->refreshRate );
+			auto glfw_current_video_mode		= glfwGetVideoMode( monitor );
+			current_video_mode.resolution		= { uint32_t( glfw_current_video_mode->width ), uint32_t( glfw_current_video_mode->height ) };
+			current_video_mode.red_bit_count	= uint32_t( glfw_current_video_mode->redBits );
+			current_video_mode.green_bit_count	= uint32_t( glfw_current_video_mode->greenBits );
+			current_video_mode.blue_bit_count	= uint32_t( glfw_current_video_mode->blueBits );
+			current_video_mode.refresh_rate		= uint32_t( glfw_current_video_mode->refreshRate );
 		}
 
 		std::vector<vk2d::MonitorVideoMode> video_modes		= {};
@@ -2827,11 +2827,11 @@ void UpdateMonitorLists(
 			auto glfw_video_modes = glfwGetVideoModes( monitor, &vidModeCount );
 			video_modes.resize( vidModeCount );
 			for( int i = 0; i < vidModeCount; ++i ) {
-				video_modes[ i ].size			= { uint32_t( glfw_video_modes[ i ].width ), uint32_t( glfw_video_modes[ i ].height ) };
-				video_modes[ i ].redBits		= glfw_video_modes[ i ].redBits;
-				video_modes[ i ].greenBits		= glfw_video_modes[ i ].greenBits;
-				video_modes[ i ].blueBits		= glfw_video_modes[ i ].blueBits;
-				video_modes[ i ].refreshRate	= glfw_video_modes[ i ].refreshRate;
+				video_modes[ i ].resolution			= { uint32_t( glfw_video_modes[ i ].width ), uint32_t( glfw_video_modes[ i ].height ) };
+				video_modes[ i ].red_bit_count		= glfw_video_modes[ i ].redBits;
+				video_modes[ i ].green_bit_count	= glfw_video_modes[ i ].greenBits;
+				video_modes[ i ].blue_bit_count		= glfw_video_modes[ i ].blueBits;
+				video_modes[ i ].refresh_rate		= glfw_video_modes[ i ].refreshRate;
 			};
 		}
 
