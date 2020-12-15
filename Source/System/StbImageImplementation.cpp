@@ -1,5 +1,5 @@
 
-#include "../Core/SourceCommon.h"
+#include "Core/SourceCommon.h"
 
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>

@@ -1,18 +1,18 @@
 #pragma once
 
-#include "../Core/SourceCommon.h"
+#include "Core/SourceCommon.h"
 
-#include "../Types/Synchronization.hpp"
+#include "Types/Synchronization.hpp"
 
-#include "../System/MeshBuffer.h"
-#include "../System/QueueResolver.h"
-#include "../System/VulkanMemoryManagement.h"
-#include "../System/DescriptorSet.h"
-#include "../System/ShaderInterface.h"
-#include "../System/RenderTargetTextureDependecyGraphInfo.hpp"
+#include "System/MeshBuffer.h"
+#include "System/QueueResolver.h"
+#include "System/VulkanMemoryManagement.h"
+#include "System/DescriptorSet.h"
+#include "System/ShaderInterface.h"
+#include "System/RenderTargetTextureDependecyGraphInfo.hpp"
 
-#include "../../../Include/Interface/Instance.h"
-#include "InstanceImpl.h"
+#include "Interface/Instance.h"
+#include "Interface/InstanceImpl.h"
 
 #define GLFW_INCLUDE_NONE
 #include <GLFW/glfw3.h>

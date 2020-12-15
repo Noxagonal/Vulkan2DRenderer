@@ -1,11 +1,11 @@
 
-#include "../Core/SourceCommon.h"
+#include "Core/SourceCommon.h"
 
-#include "ThreadPrivateResources.h"
-#include "DescriptorSet.h"
-#include "VulkanMemoryManagement.h"
+#include "System/ThreadPrivateResources.h"
+#include "System/DescriptorSet.h"
+#include "System/VulkanMemoryManagement.h"
 
-#include "../Interface/InstanceImpl.h"
+#include "Interface/InstanceImpl.h"
 
 
 

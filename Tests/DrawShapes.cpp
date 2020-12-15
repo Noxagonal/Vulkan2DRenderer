@@ -65,7 +65,7 @@ int main()
 	auto window = instance->CreateOutputWindow(window_create_info);
 	if (!window) ExitWithCode( ExitCodes::CANNOT_CREATE_WINDOW );
 
-	window->TakeScreenshotToData( true );
+//	window->TakeScreenshotToData( true );
 
 	CoordGrid grid(
 		window->GetSize(),
@@ -73,7 +73,7 @@ int main()
 	);
 
 	size_t frame_counter = 500;
-	while( frame_counter ) {
+	while( true ) {
 
 		if( !window->BeginRender() ) ExitWithCode( ExitCodes::CANNOT_BEGIN_RENDER );
 

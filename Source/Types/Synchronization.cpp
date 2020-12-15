@@ -1,6 +1,6 @@
 
-#include "../Core/SourceCommon.h"
-#include "Synchronization.hpp"
+#include "Core/SourceCommon.h"
+#include "Types/Synchronization.hpp"
 
 
 

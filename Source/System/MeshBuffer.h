@@ -1,15 +1,15 @@
 #pragma once
 
-#include "../Core/SourceCommon.h"
+#include "Core/SourceCommon.h"
 
-#include "../../Include/Types/Matrix4.hpp"
-#include "../../Include/Types/MeshPrimitives.hpp"
+#include "Types/Matrix4.hpp"
+#include "Types/MeshPrimitives.hpp"
 
-#include "VulkanMemoryManagement.h"
-#include "DescriptorSet.h"
+#include "System/VulkanMemoryManagement.h"
+#include "System/DescriptorSet.h"
 
-#include "../Interface/WindowImpl.h"
-#include "../Interface/InstanceImpl.h"
+#include "Interface/WindowImpl.h"
+#include "Interface/InstanceImpl.h"
 
 
 

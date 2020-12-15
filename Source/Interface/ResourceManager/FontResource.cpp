@@ -1,17 +1,17 @@
 
-#include "../../Core/SourceCommon.h"
+#include "Core/SourceCommon.h"
 
-#include "../../System/ThreadPrivateResources.h"
+#include "System/ThreadPrivateResources.h"
 
-#include "../InstanceImpl.h"
+#include "Interface/InstanceImpl.h"
 
-#include "../../../Include/Interface/ResourceManager/ResourceManager.h"
-#include "ResourceManagerImpl.h"
+#include "Interface/ResourceManager/ResourceManager.h"
+#include "Interface/ResourceManager/ResourceManagerImpl.h"
 
-#include "../../../Include/Interface/ResourceManager/FontResource.h"
-#include "FontResourceImpl.h"
+#include "Interface/ResourceManager/FontResource.h"
+#include "Interface/ResourceManager/FontResourceImpl.h"
 
-#include "../../../Include/Interface/ResourceManager/TextureResource.h"
+#include "Interface/ResourceManager/TextureResource.h"
 
 #include <stb_image_write.h>
 

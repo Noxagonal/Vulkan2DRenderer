@@ -1,9 +1,9 @@
 
-#include "../Core/SourceCommon.h"
+#include "Core/SourceCommon.h"
 
-#include "../../Include/Types/Transform.h"
-#include "../../Include/Types/Vector2.hpp"
-#include "../../Include/Types/Matrix4.hpp"
+#include "Types/Transform.h"
+#include "Types/Vector2.hpp"
+#include "Types/Matrix4.hpp"
 
 
 vk2d::Transform::Transform(

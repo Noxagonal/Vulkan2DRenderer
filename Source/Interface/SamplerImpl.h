@@ -1,9 +1,9 @@
 #pragma once
 
-#include "../Core/SourceCommon.h"
+#include "Core/SourceCommon.h"
 
-#include "../System/DescriptorSet.h"
-#include "../System/VulkanMemoryManagement.h"
+#include "System/DescriptorSet.h"
+#include "System/VulkanMemoryManagement.h"
 
 namespace vk2d {
 
