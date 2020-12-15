@@ -41,7 +41,7 @@ class TextureResourceImpl;
 class ScreenshotSaverTask;
 class GraphicsShaderProgram;
 
-bool											AquireImage(
+bool											AcquireImage(
 	vk2d::_internal::WindowImpl				*	data,
 	VkPhysicalDevice							physical_device,
 	VkDevice									device,
@@ -56,7 +56,7 @@ enum class NextRenderCallFunction : uint32_t {
 class WindowImpl {
 	friend class vk2d::Window;
 	friend class vk2d::_internal::ScreenshotSaverTask;
-	friend bool										vk2d::_internal::AquireImage(
+	friend bool										vk2d::_internal::AcquireImage(
 		vk2d::_internal::WindowImpl				*	data,
 		VkPhysicalDevice							physical_device,
 		VkDevice									device,
@@ -327,7 +327,7 @@ private:
 
 	uint32_t													next_image									= {};
 	uint32_t													previous_image								= {};
-	VkFence														vk_aquire_image_fence						= {};
+	VkFence														vk_acquire_image_fence						= {};
 	std::vector<VkSemaphore>									vk_submit_to_present_semaphores				= {};
 	std::vector<VkFence>										vk_gpu_to_cpu_frame_fences					= {};
 	bool														previous_frame_need_synchronization			= {};
