@@ -4270,7 +4270,7 @@ void vk2d::_internal::MonitorImpl::SetGammaRamp(
 	}
 
 	GLFWgammaramp glfw_gamma_ramp {};
-	glfw_gamma_ramp.size	= unsigned int( glfw_ramp_node_count );
+	glfw_gamma_ramp.size	= (unsigned int)glfw_ramp_node_count;
 	glfw_gamma_ramp.red		= glfw_ramp_red.data();
 	glfw_gamma_ramp.green	= glfw_ramp_green.data();
 	glfw_gamma_ramp.blue	= glfw_ramp_blue.data();
