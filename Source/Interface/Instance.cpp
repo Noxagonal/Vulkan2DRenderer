@@ -54,9 +54,7 @@
 
 //Depricated?
 #ifndef VK_ERROR_INCOMPATIBLE_VERSION_KHR
-	typedef enum MissingVkResult {
-		VK_ERROR_INCOMPATIBLE_VERSION_KHR = -1000150000
-	} MissingVkResult;
+	#define	VK_ERROR_INCOMPATIBLE_VERSION_KHR = -1000150000
 #endif
 
 
