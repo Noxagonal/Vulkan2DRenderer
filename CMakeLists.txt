@@ -12,30 +12,36 @@ if(POLICY CMP0077)
 endif()
 
 
+
+################################################################
+# Check required packages available
+################################################################
 if(NOT Vulkan_FOUND)
 find_package(Vulkan REQUIRED)
 endif()
 
-# Update library submodules with git.
+if(NOT Git_FOUND)
 find_package(Git REQUIRED QUIET)
-if(GIT_FOUND)
-	if(EXISTS "${PROJECT_SOURCE_DIR}/.git")
-	# Update submodules as needed
-		option(GIT_SUBMODULE "Check submodules during build" ON)
-		if(GIT_SUBMODULE)
-			message(STATUS "Submodule update")
-			execute_process(COMMAND ${GIT_EXECUTABLE} submodule update --init --recursive
-				WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-				RESULT_VARIABLE GIT_SUBMOD_RESULT)
-			if(NOT GIT_SUBMOD_RESULT EQUAL "0")
-				message(FATAL_ERROR "git submodule update --init failed with ${GIT_SUBMOD_RESULT}, please checkout submodules")
-			endif()
+endif()
+
+
+
+################################################################
+# Update library submodules.
+################################################################
+if(EXISTS "${PROJECT_SOURCE_DIR}/.git")
+	option(GIT_SUBMODULE "Check submodules during build" ON)
+	if(GIT_SUBMODULE)
+		message(STATUS "Submodule update")
+		execute_process(COMMAND ${GIT_EXECUTABLE} submodule update --init --recursive
+			WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+			RESULT_VARIABLE GIT_SUBMOD_RESULT)
+		if(NOT GIT_SUBMOD_RESULT EQUAL "0")
+			message(FATAL_ERROR "git submodule update --init failed with ${GIT_SUBMOD_RESULT}, please checkout submodules")
 		endif()
-	else()
-		message(FATAL_ERROR "You must download this repository via Git")
 	endif()
 else()
-	message(FATAL_ERROR "Git not found")
+	message(FATAL_ERROR "You must download this repository via Git")
 endif()
 
 if(NOT EXISTS "${PROJECT_SOURCE_DIR}/ExternalLibraries/glfw/CMakeLists.txt")
@@ -53,7 +59,11 @@ endif()
 
 
 
-# No reason not to compile using multiple cores.
+################################################################
+# Set global project settings.
+################################################################
+# Use multiple cores when compiling, not automatically
+# enabled in Visual Studio. 
 if(MSVC)
 	add_compile_options(
 		"/MP"
@@ -68,10 +78,9 @@ set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
 
 
-add_subdirectory("ExternalLibraries" EXCLUDE_FROM_ALL)
-
-
-
+################################################################
+# Options, variables, lists, files.
+################################################################
 option(VK2D_DEBUG
 	"This enables debug printing, Vulkan validation and extra checks to make sure VK2D is performing correctly, this does not help with library usage debugging."
 	OFF
@@ -97,7 +106,22 @@ option(VK2D_BUILD_DOCS_FOR_COMPLETE_SOURCE
 	OFF
 )
 
-add_subdirectory("Tools")
+set(EXTERNAL_INCLUDES_PATH
+	"${PROJECT_SOURCE_DIR}/ExternalLibraries/"
+)
+set(EXTERNAL_LIBRARY_PATH
+	"${PROJECT_BINARY_DIR}/ExternalLibraries/"
+)
+
+set(EXTERNAL_INCLUDES
+	"${EXTERNAL_INCLUDES_PATH}/freetype2/include/"
+	"${EXTERNAL_INCLUDES_PATH}/glfw/include/"
+	"${EXTERNAL_INCLUDES_PATH}/stb/"
+)
+set(EXTERNAL_LIBRARIES
+	"${EXTERNAL_LIBRARY_PATH}/freetype2"
+	"${EXTERNAL_LIBRARY_PATH}/glfw/src"
+)
 
 # All files in Include folder
 file(GLOB_RECURSE FILES_INCLUDE
@@ -117,14 +141,30 @@ file(GLOB FILES_GLSL_SHADERS
 	CONFIGURE_DEPENDS
 	"${CMAKE_CURRENT_SOURCE_DIR}/Shaders/*"
 )
+# Compiled shaders, only really need the "IncludeAllShaders.h",
+set(FILES_COMPILED_SHADERS
+	"${CMAKE_CURRENT_SOURCE_DIR}/Shaders/Spir-V/IncludeAllShaders.h"
+)
 
-list(APPEND FILES_SOURCE "${CMAKE_CURRENT_SOURCE_DIR}/Shaders/Spir-V/IncludeAllShaders.h")
 
+
+################################################################
+# Project prerequisites
+################################################################
+add_subdirectory("ExternalLibraries" EXCLUDE_FROM_ALL)
+add_subdirectory("Tools")
+
+
+
+################################################################
+# VK2D
+################################################################
 source_group(TREE "${PROJECT_SOURCE_DIR}"
 	FILES
 		${FILES_INCLUDE}
 		${FILES_SOURCE}
 		${FILES_GLSL_SHADERS}
+		${FILES_COMPILED_SHADERS}
 )
 
 if(VK2D_BUILD_STATIC_LIBRARY)
@@ -133,6 +173,7 @@ if(VK2D_BUILD_STATIC_LIBRARY)
 			${FILES_INCLUDE}
 			${FILES_SOURCE}
 			${FILES_GLSL_SHADERS}
+			${FILES_COMPILED_SHADERS}
 	)
 else()
 	add_library(VK2D
@@ -140,49 +181,38 @@ else()
 			${FILES_INCLUDE}
 			${FILES_SOURCE}
 			${FILES_GLSL_SHADERS}
+			${FILES_COMPILED_SHADERS}
 	)
 endif()
-
-set_target_properties(VK2D
-	PROPERTIES
-		CXX_STANDARD				17
-		ARCHIVE_OUTPUT_DIRECTORY	"${PROJECT_BINARY_DIR}/Lib"
-		LIBRARY_OUTPUT_DIRECTORY	"${PROJECT_BINARY_DIR}/Lib"
-		RUNTIME_OUTPUT_DIRECTORY	"${PROJECT_BINARY_DIR}/Bin"
-)
 
 target_precompile_headers(VK2D
 	PRIVATE
 		"${PROJECT_SOURCE_DIR}/Source/Core/PreCompiledHeader.h"
 )
 
-target_include_directories(VK2D PUBLIC "${PROJECT_SOURCE_DIR}/Shaders/")
-
-set(EXTERNAL_INCLUDES_PATH
-	"${PROJECT_SOURCE_DIR}/ExternalLibraries"
-)
-set(EXTERNAL_LIBRARY_PATH
-	"${PROJECT_BINARY_DIR}/ExternalLibraries"
+add_dependencies(VK2D
+	freetype
+	glfw
 )
 
-set(EXTERNAL_INCLUDES
-	"${EXTERNAL_INCLUDES_PATH}/freetype2/include"
-	"${EXTERNAL_INCLUDES_PATH}/glfw/include"
-	"${EXTERNAL_INCLUDES_PATH}/stb"
-)
-set(EXTERNAL_LIBRARIES
-	"${EXTERNAL_LIBRARY_PATH}/freetype2"
-	"${EXTERNAL_LIBRARY_PATH}/glfw/src"
+set_target_properties(VK2D
+	PROPERTIES
+		CXX_STANDARD				17
+		ARCHIVE_OUTPUT_DIRECTORY	"${PROJECT_BINARY_DIR}/Lib/"
+		LIBRARY_OUTPUT_DIRECTORY	"${PROJECT_BINARY_DIR}/Lib/"
+		RUNTIME_OUTPUT_DIRECTORY	"${PROJECT_BINARY_DIR}/Bin/"
 )
 
-target_include_directories(VK2D PRIVATE Source)
+# Internal includes
+target_include_directories(VK2D PRIVATE "${PROJECT_SOURCE_DIR}/Source/")
+target_include_directories(VK2D PUBLIC "${PROJECT_SOURCE_DIR}/Include/")
+target_include_directories(VK2D PRIVATE "${PROJECT_SOURCE_DIR}/Shaders/")
 
-target_include_directories(VK2D PUBLIC Include)
-
+# External includes
 target_include_directories(VK2D
-	PUBLIC
+	PRIVATE
 		Vulkan::Vulkan
-		"${EXTERNAL_INCLUDES}"
+		${EXTERNAL_INCLUDES}
 )
 
 target_link_libraries(VK2D
@@ -201,7 +231,11 @@ else()
 			VK2D_DEBUG_ENABLE=0)
 endif()
 
-# Custom tools to run before building VK2D
+
+
+################################################################
+# Tools to run before building VK2D
+################################################################
 if(MSVC)
 	# This tool is supposed to run only when any of the glsl shader
 	# files have changed. Unfortunately it looks like Visual Studio
@@ -211,7 +245,7 @@ if(MSVC)
 	#add_custom_target(RunTool_CompileGLSLShaderToSpirV
 	#	COMMAND
 	#		CompileGLSLShadersToSpirV
-	#		"-shaderpath" "${PROJECT_SOURCE_DIR}/Source/Shaders"
+	#		"-shaderpath" "${CMAKE_CURRENT_SOURCE_DIR}/Source/Shaders/"
 	#)
 	#add_dependencies(RunTool_CompileGLSLShaderToSpirV
 	#	CompileGLSLShadersToSpirV
@@ -225,7 +259,7 @@ if(MSVC)
 		TARGET VK2D
 		PRE_BUILD
 		COMMAND CompileGLSLShadersToSpirV
-			"-shaderpath" "${PROJECT_SOURCE_DIR}/Shaders"
+			"-shaderpath" "${CMAKE_CURRENT_SOURCE_DIR}/Shaders/"
 		WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/Shaders/"
 	)
 	add_dependencies(VK2D
@@ -243,13 +277,11 @@ else()
 	)
 endif()
 
-add_dependencies(VK2D
-	freetype
-	glfw
-)
 
 
-
+################################################################
+# Additionals
+################################################################
 if(VK2D_BUILD_TESTS)
 	add_subdirectory("Tests")
 endif()
@@ -264,12 +296,15 @@ endif()
 
 
 
+################################################################
+# Install target
+################################################################
 install(
 	TARGETS
 		VK2D
-	LIBRARY DESTINATION "lib"
-	ARCHIVE DESTINATION "lib"
-	RUNTIME DESTINATION "bin"
+	LIBRARY DESTINATION "lib/"
+	ARCHIVE DESTINATION "lib/"
+	RUNTIME DESTINATION "bin/"
 )
 install(
 	DIRECTORY
