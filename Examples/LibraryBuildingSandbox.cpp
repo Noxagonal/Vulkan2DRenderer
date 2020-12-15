@@ -8,9 +8,6 @@
 
 
 
-constexpr double PI		= 3.14159265358979323846;
-constexpr double RAD	= PI * 2.0;
-
 uint32_t frame = 0;
 
 

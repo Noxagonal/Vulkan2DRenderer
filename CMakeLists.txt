@@ -109,6 +109,11 @@ file(GLOB_RECURSE FILES_SOURCE
 	CONFIGURE_DEPENDS
 	"${CMAKE_CURRENT_SOURCE_DIR}/Source/*.cpp"
 )
+file(GLOB FILES_SHADERS
+	RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}"
+	CONFIGURE_DEPENDS
+	"${CMAKE_CURRENT_SOURCE_DIR}/Shaders/*"
+)
 
 list(APPEND FILES_INCLUDE "${CMAKE_CURRENT_SOURCE_DIR}/Shaders/Spir-V/IncludeAllShaders.h")
 
@@ -116,22 +121,43 @@ source_group(TREE "${PROJECT_SOURCE_DIR}"
 	FILES
 		${FILES_INCLUDE}
 		${FILES_SOURCE}
+		${FILES_SHADERS}
 )
 
 
 
-if(VK2D_BUILD_STATIC_LIBRARY)
-	add_library(VK2D
-		STATIC
-			${FILES_INCLUDE}
-			${FILES_SOURCE}
-	)
+if(MSVC)
+	# Adding shader files to the library project for Visual Studio
+	# as it allows editing from within the IDE itself.
+	if(VK2D_BUILD_STATIC_LIBRARY)
+		add_library(VK2D
+			STATIC
+				${FILES_INCLUDE}
+				${FILES_SOURCE}
+				${FILES_SHADERS}
+		)
+	else()
+		add_library(VK2D
+			SHARED
+				${FILES_INCLUDE}
+				${FILES_SOURCE}
+				${FILES_SHADERS}
+		)
+	endif()
 else()
-	add_library(VK2D
-		SHARED
-			${FILES_INCLUDE}
-			${FILES_SOURCE}
-	)
+	if(VK2D_BUILD_STATIC_LIBRARY)
+		add_library(VK2D
+			STATIC
+				${FILES_INCLUDE}
+				${FILES_SOURCE}
+		)
+	else()
+		add_library(VK2D
+			SHARED
+				${FILES_INCLUDE}
+				${FILES_SOURCE}
+		)
+	endif()
 endif()
 
 set_target_properties(VK2D
@@ -192,18 +218,47 @@ else()
 			VK2D_DEBUG_ENABLE=0)
 endif()
 
-file(GLOB FILES_SHADERS
-	RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}"
-	CONFIGURE_DEPENDS
-	"${CMAKE_CURRENT_SOURCE_DIR}/Shaders/*"
-)
+# Custom tools to run before building VK2D
+if(MSVC)
+	# This tool is supposed to run only when any of the glsl shader
+	# files have changed. Unfortunately it looks like Visual Studio
+	# ignores file dependencies. Shaders are only compiled when the
+	# library is built, and every time the library is built.
+	
+	#add_custom_target(RunTool_CompileGLSLShaderToSpirV
+	#	COMMAND
+	#		CompileGLSLShadersToSpirV
+	#		"-shaderpath" "${PROJECT_SOURCE_DIR}/Source/Shaders"
+	#)
+	#add_dependencies(RunTool_CompileGLSLShaderToSpirV
+	#	CompileGLSLShadersToSpirV
+	#)
+	#set_target_properties(RunTool_CompileGLSLShaderToSpirV
+	#	PROPERTIES
+	#		FOLDER						"Utilities"
+	#)
+	
+	add_custom_command(
+		TARGET VK2D
+		PRE_BUILD
+		COMMAND CompileGLSLShadersToSpirV
+			"-shaderpath" "${PROJECT_SOURCE_DIR}/Shaders"
+		WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/Shaders/"
+	)
+	add_dependencies(VK2D
+		CompileGLSLShadersToSpirV
+	)
 
-add_custom_command(
-	OUTPUT "${CMAKE_CURRENT_SOURCE_DIR}/Shaders/Spir-V/IncludeAllShaders.h"
-	COMMAND CompileGLSLShadersToSpirV
-	WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/Shaders/"
-	DEPENDS ${FILES_SHADERS}
-)
+else()
+	# Other than Visual Studio compilers.
+
+	add_custom_command(
+		OUTPUT "${CMAKE_CURRENT_SOURCE_DIR}/Shaders/Spir-V/IncludeAllShaders.h"
+		COMMAND CompileGLSLShadersToSpirV
+		WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/Shaders/"
+		DEPENDS ${FILES_SHADERS}
+	)
+endif()
 
 add_dependencies(VK2D
 	freetype
