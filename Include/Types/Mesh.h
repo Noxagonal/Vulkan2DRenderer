@@ -1,11 +1,11 @@
 #pragma once
 
-#include "../Core/Common.h"
+#include "Core/Common.h"
 
-#include "MeshPrimitives.hpp"
-#include "Vector2.hpp"
-#include "Rect2.hpp"
-#include "Color.hpp"
+#include "Types/MeshPrimitives.hpp"
+#include "Types/Vector2.hpp"
+#include "Types/Rect2.hpp"
+#include "Types/Color.hpp"
 
 #include <vector>
 #include <string>

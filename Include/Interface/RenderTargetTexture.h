@@ -1,17 +1,17 @@
 #pragma once
 
-#include "../Core/Common.h"
+#include "Core/Common.h"
 
-#include "../Types/BlurType.h"
-#include "../Types/Vector2.hpp"
-#include "../Types/Rect2.hpp"
-#include "../Types/Matrix4.hpp"
-#include "../Types/Transform.h"
-#include "../Types/Color.hpp"
-#include "../Types/Multisamples.h"
-#include "../Types/RenderCoordinateSpace.hpp"
+#include "Types/BlurType.h"
+#include "Types/Vector2.hpp"
+#include "Types/Rect2.hpp"
+#include "Types/Matrix4.hpp"
+#include "Types/Transform.h"
+#include "Types/Color.hpp"
+#include "Types/Multisamples.h"
+#include "Types/RenderCoordinateSpace.hpp"
 
-#include "Texture.h"
+#include "Interface/Texture.h"
 
 #include <memory>
 

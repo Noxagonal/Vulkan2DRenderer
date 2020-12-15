@@ -1,10 +1,10 @@
 #pragma once
 
-#include "../Core/SourceCommon.h"
+#include "Core/SourceCommon.h"
 
-#include "ThreadPool.h"
-#include "DescriptorSet.h"
-#include "VulkanMemoryManagement.h"
+#include "System/ThreadPool.h"
+#include "System/DescriptorSet.h"
+#include "System/VulkanMemoryManagement.h"
 
 #include <ft2build.h>
 #include FT_FREETYPE_H

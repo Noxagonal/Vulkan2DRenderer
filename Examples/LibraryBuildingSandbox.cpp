@@ -8,9 +8,6 @@
 
 
 
-constexpr double PI		= 3.14159265358979323846;
-constexpr double RAD	= PI * 2.0;
-
 uint32_t frame = 0;
 
 
@@ -82,16 +79,7 @@ int main()
 	auto window1 = instance->CreateOutputWindow( window_create_info );
 	if( !window1 ) return -1;
 
-	instance->GetPrimaryMonitor()->GetGammaRamp();
-
-	std::vector<vk2d::GammaRampNode> ramp;
-	ramp.push_back( { 0.1f, 0.0f, 0.0f } );
-	ramp.push_back( { 0.5f, 0.5f, 0.5f } );
-	ramp.push_back( { 1.0f, 1.0f, 1.0f } );
-	instance->GetPrimaryMonitor()->SetGammaRamp( ramp );
-
 	auto resource_manager		= instance->GetResourceManager();
-
 
 	auto blue_circle			= vk2d::GenerateEllipseMesh(
 		{ -4, -4, 4, 4 }
