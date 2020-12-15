@@ -99,29 +99,33 @@ option(VK2D_BUILD_DOCS_FOR_COMPLETE_SOURCE
 
 add_subdirectory("Tools")
 
+# All files in Include folder
 file(GLOB_RECURSE FILES_INCLUDE
 	RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}"
 	CONFIGURE_DEPENDS
-	"${CMAKE_CURRENT_SOURCE_DIR}/Include/*.h"
+	"${CMAKE_CURRENT_SOURCE_DIR}/Include/*"
 )
+# All files in source folder
 file(GLOB_RECURSE FILES_SOURCE
 	RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}"
 	CONFIGURE_DEPENDS
-	"${CMAKE_CURRENT_SOURCE_DIR}/Source/*.cpp"
+	"${CMAKE_CURRENT_SOURCE_DIR}/Source/*"
 )
-file(GLOB FILES_SHADERS
+# GLSL shaders
+file(GLOB FILES_GLSL_SHADERS
 	RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}"
 	CONFIGURE_DEPENDS
 	"${CMAKE_CURRENT_SOURCE_DIR}/Shaders/*"
 )
 
-list(APPEND FILES_INCLUDE "${CMAKE_CURRENT_SOURCE_DIR}/Shaders/Spir-V/IncludeAllShaders.h")
+
+list(APPEND FILES_SOURCE "${CMAKE_CURRENT_SOURCE_DIR}/Shaders/Spir-V/IncludeAllShaders.h")
 
 source_group(TREE "${PROJECT_SOURCE_DIR}"
 	FILES
 		${FILES_INCLUDE}
 		${FILES_SOURCE}
-		${FILES_SHADERS}
+		${FILES_GLSL_SHADERS}
 )
 
 
@@ -134,17 +138,19 @@ if(MSVC)
 			STATIC
 				${FILES_INCLUDE}
 				${FILES_SOURCE}
-				${FILES_SHADERS}
+				${FILES_GLSL_SHADERS}
 		)
 	else()
 		add_library(VK2D
 			SHARED
 				${FILES_INCLUDE}
 				${FILES_SOURCE}
-				${FILES_SHADERS}
+				${FILES_GLSL_SHADERS}
 		)
 	endif()
 else()
+	# I'd prefer including GLSL shader files here as well if that
+	# is no problem to other IDEs.
 	if(VK2D_BUILD_STATIC_LIBRARY)
 		add_library(VK2D
 			STATIC
@@ -256,7 +262,7 @@ else()
 		OUTPUT "${CMAKE_CURRENT_SOURCE_DIR}/Shaders/Spir-V/IncludeAllShaders.h"
 		COMMAND CompileGLSLShadersToSpirV
 		WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/Shaders/"
-		DEPENDS ${FILES_SHADERS}
+		DEPENDS ${FILES_GLSL_SHADERS}
 	)
 endif()
 
