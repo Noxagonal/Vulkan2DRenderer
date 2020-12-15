@@ -39,6 +39,25 @@
 #endif
 
 
+//Missing constants in header version 131, added in 141
+#if (VK_HEADER_VERSION == 131)
+	typedef enum MissingVkResult {
+		VK_THREAD_IDLE_KHR = 1000268000,
+		VK_THREAD_DONE_KHR = 1000268001,
+		VK_OPERATION_DEFERRED_KHR = 1000268002,
+		VK_OPERATION_NOT_DEFERRED_KHR = 1000268003,
+		VK_PIPELINE_COMPILE_REQUIRED_EXT = 1000297000
+	} MissingVkResult;
+
+	#define VK_HEADER_VERSION_COMPLETE VK_MAKE_VERSION(1, 2, VK_HEADER_VERSION)
+#endif
+
+//Depricated?
+#ifndef VK_ERROR_INCOMPATIBLE_VERSION_KHR
+	typedef enum MissingVkResult {
+		VK_ERROR_INCOMPATIBLE_VERSION_KHR = -1000150000
+	} MissingVkResult;
+#endif
 
 
 
