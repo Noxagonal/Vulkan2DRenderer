@@ -1,11 +1,11 @@
 #pragma once
 
-#include "../../Core/SourceCommon.h"
+#include "Core/SourceCommon.h"
 
-#include "../../../Include/Types/Rect2.hpp"
-#include "../../../Include/Types/Color.hpp"
+#include "Types/Rect2.hpp"
+#include "Types/Color.hpp"
 
-#include "ResourceImpl.h"
+#include "Interface/ResourceManager/ResourceImpl.h"
 
 #include <ft2build.h>
 #include FT_FREETYPE_H

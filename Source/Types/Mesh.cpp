@@ -1,18 +1,18 @@
 
-#include "../Core/SourceCommon.h"
+#include "Core/SourceCommon.h"
 
-#include "../../Include/Types/Vector2.hpp"
-#include "../../Include/Types/Rect2.hpp"
-#include "../../Include/Types/Matrix2.hpp"
-#include "../../Include/Types/Color.hpp"
+#include "Types/Vector2.hpp"
+#include "Types/Rect2.hpp"
+#include "Types/Matrix2.hpp"
+#include "Types/Color.hpp"
 
-#include "../../Include/Interface/ResourceManager/FontResource.h"
-#include "../Interface/ResourceManager/FontResourceImpl.h"
+#include "Interface/ResourceManager/FontResource.h"
+#include "Interface/ResourceManager/FontResourceImpl.h"
 
-#include "../../Include/Interface/ResourceManager/TextureResource.h"
-#include "../../Include/Interface/Texture.h"
+#include "Interface/ResourceManager/TextureResource.h"
+#include "Interface/Texture.h"
 
-#include "../../Include/Types/Mesh.h"
+#include "Types/Mesh.h"
 
 
 
