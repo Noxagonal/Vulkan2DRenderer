@@ -429,7 +429,7 @@ public:
 	bool										IsGood();
 
 	vk2d::_internal::InstanceImpl			*	GetInstance();
-	const std::vector<vk2d::Color8>			&	GetPixelData();
+	const std::vector<vk2d::Color8>			&	GetTexelData();
 	GLFWcursor								*	GetGLFWcursor();
 	vk2d::Vector2u								GetSize();
 	vk2d::Vector2i								GetHotSpot();
@@ -482,10 +482,10 @@ public:
 	void												SetGamma(
 		float											gamma );
 
-	vk2d::GammaRamp										GetGammaRamp();
+	std::vector<vk2d::GammaRampNode>					GetGammaRamp();
 
 	void												SetGammaRamp(
-		const vk2d::GammaRamp						&	ramp );
+		const std::vector<vk2d::GammaRampNode>		&	ramp );
 
 	vk2d::_internal::MonitorImpl					&	operator=(
 		const vk2d::_internal::MonitorImpl			&	other )								= default;

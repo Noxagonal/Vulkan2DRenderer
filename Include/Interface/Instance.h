@@ -199,8 +199,8 @@ using PFN_GamepadConnectionEventCallback	= void ( VK2D_APIENTRY* )(
 	const std::string					&	gamepad_name );
 
 
-/// @brief		Creating instance requires somewhat lot of parameters so
-///				we'll use a create info for that.
+
+/// @brief		Parameters to construct a vk2d::Instance.
 struct InstanceCreateInfo {
 	std::string								application_name				= {};			///< Name of your application, can be left empty.
 	vk2d::Version							application_version				= {};			///< Version of your application, can be left empty.

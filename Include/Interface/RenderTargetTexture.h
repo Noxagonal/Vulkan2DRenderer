@@ -29,7 +29,7 @@ class RenderTargetTextureImpl;
 
 
 
-/// @brief		Creation parameters for the vk2d::RenderTargetTexture.
+/// @brief		Parameters to construct a vk2d::RenderTargetTexture.
 struct RenderTargetTextureCreateInfo
 {
 	vk2d::RenderCoordinateSpace				coordinate_space			= vk2d::RenderCoordinateSpace::TEXEL_SPACE;	///< Coordinate system to be used, see vk2d::RenderCoordinateSpace.

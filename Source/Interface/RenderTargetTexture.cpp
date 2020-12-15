@@ -2931,21 +2931,28 @@ void vk2d::_internal::RenderTargetTextureImpl::CmdBlitMipmapsToSampledImage(
 
 
 
-// [ 0 ] = sigma, [ 1 ] = precomputed normalizer, [ 2 ] = initial coefficient, [ 3 ] = initial natural exponentation.
+/// @brief		Our blur shader needs a bit more info than just a simple coverage value
+///				so we need to calculate those in advance, this saves some time on the GPU.
+/// @param		texel_coverage
+///				Floating point value that tells how many of the texels are sampled.
+///				For example value 10 would effect 5 texels on each side of the center texel.
+/// @return		A floating point array of size 4 where:
+///				- [ 0 ] sigma
+///				- [ 1 ] precomputed normalizer
+///				- [ 2 ] initial coefficient ( at the center texel )
+///				- [ 3 ] initial natural exponentation ( at the center texel )
 std::array<float, 4> CalculateBlurShaderInfo(
-	float		coverage
+	float		texel_coverage
 )
 {
-	constexpr double M_PI = 3.1415926535897932384626433832795;
-
 	std::array<float, 4> ret {};
 
 	float	delta		= 1.0f;
-	float	sigma		= coverage / 3.0f;
-	int		support		= int( sigma * 3.0f );	// Tuncation. Rounding hazard, calculate from sigma to be exact with the shader.
+	float	sigma		= texel_coverage / 3.0f;
+	int		support		= int( sigma * 3.0f );	// Tuncation. Rounding hazard, calculate from sigma instead of taking directly from texel_coverage to be exact with the shader.
 	float	norm		= 0.0f;
 
-	float	g0			= 1.0f / float( sqrt( 2.0 * M_PI ) * sigma );
+	float	g0			= 1.0f / float( sqrt( 2.0 * vk2d::PI ) * sigma );
 	float	g1			= std::exp( -0.5f * delta * delta / ( sigma * sigma ) );
 	float	g2			= g1 * g1;
 
@@ -2953,6 +2960,10 @@ std::array<float, 4> CalculateBlurShaderInfo(
 	ret[ 2 ]			= g0;
 	ret[ 3 ]			= g1;
 
+	// Precomputed normalizer is used to make the brightness intensity of the
+	// final image consistent, usually this is done in shader after sampling
+	// all texels but in our case we can't use that, so we do the exact same
+	// steps here as the shader does on the GPU and precompute it from here.
 	norm	+= g0;
 	g0		*= g1;
 	g1		*= g2;
