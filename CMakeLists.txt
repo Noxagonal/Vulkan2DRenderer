@@ -118,7 +118,6 @@ file(GLOB FILES_GLSL_SHADERS
 	"${CMAKE_CURRENT_SOURCE_DIR}/Shaders/*"
 )
 
-
 list(APPEND FILES_SOURCE "${CMAKE_CURRENT_SOURCE_DIR}/Shaders/Spir-V/IncludeAllShaders.h")
 
 source_group(TREE "${PROJECT_SOURCE_DIR}"
@@ -128,42 +127,20 @@ source_group(TREE "${PROJECT_SOURCE_DIR}"
 		${FILES_GLSL_SHADERS}
 )
 
-
-
-if(MSVC)
-	# Adding shader files to the library project for Visual Studio
-	# as it allows editing from within the IDE itself.
-	if(VK2D_BUILD_STATIC_LIBRARY)
-		add_library(VK2D
-			STATIC
-				${FILES_INCLUDE}
-				${FILES_SOURCE}
-				${FILES_GLSL_SHADERS}
-		)
-	else()
-		add_library(VK2D
-			SHARED
-				${FILES_INCLUDE}
-				${FILES_SOURCE}
-				${FILES_GLSL_SHADERS}
-		)
-	endif()
+if(VK2D_BUILD_STATIC_LIBRARY)
+	add_library(VK2D
+		STATIC
+			${FILES_INCLUDE}
+			${FILES_SOURCE}
+			${FILES_GLSL_SHADERS}
+	)
 else()
-	# I'd prefer including GLSL shader files here as well if that
-	# is no problem to other IDEs.
-	if(VK2D_BUILD_STATIC_LIBRARY)
-		add_library(VK2D
-			STATIC
-				${FILES_INCLUDE}
-				${FILES_SOURCE}
-		)
-	else()
-		add_library(VK2D
-			SHARED
-				${FILES_INCLUDE}
-				${FILES_SOURCE}
-		)
-	endif()
+	add_library(VK2D
+		SHARED
+			${FILES_INCLUDE}
+			${FILES_SOURCE}
+			${FILES_GLSL_SHADERS}
+	)
 endif()
 
 set_target_properties(VK2D
