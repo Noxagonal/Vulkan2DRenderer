@@ -10,6 +10,9 @@ namespace vk2d {
 
 
 
+/// @brief		This is a collection of 4 color channels in order of RGBA.
+/// @tparam		T
+///				Data type per color channel.
 template<typename T>
 class ColorBase
 {
@@ -43,10 +46,19 @@ public:
 	vk2d::ColorBase<T> & operator=( vk2d::ColorBase<T> && other )		= default;
 };
 
+/// @brief		float per color channel.
 using Colorf			= vk2d::ColorBase<float>;
+
+/// @brief		double per color channel.
 using Colord			= vk2d::ColorBase<double>;
+
+/// @brief		uint8_t per color channel.
 using Color8			= vk2d::ColorBase<uint8_t>;
+
+/// @brief		uint16_t per color channel.
 using Color16			= vk2d::ColorBase<uint16_t>;
+
+/// @brief		uint32_t per color channel.
 using Color32			= vk2d::ColorBase<uint32_t>;
 
 } // vk2d

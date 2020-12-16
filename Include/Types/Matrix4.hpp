@@ -14,6 +14,9 @@ namespace vk2d {
 
 
 
+/// @brief		Column based 3*3 matrix.
+/// @tparam		T
+///				Matrix precision.
 template<typename T>
 class Matrix4Base
 {
@@ -152,13 +155,20 @@ public:
 	}
 };
 
+/// @brief		Single precision 4*4 matrix.
 using Matrix4f			= vk2d::Matrix4Base<float>;
+
+/// @brief		Double precision 4*4 matrix.
 using Matrix4d			= vk2d::Matrix4Base<double>;
-using Matrix4i			= vk2d::Matrix4Base<int32_t>;
-using Matrix4u			= vk2d::Matrix4Base<uint32_t>;
 
 
 
+/// @brief		Create 4*4 rotation matrix.
+/// @tparam		T
+///				Matrix precision.
+/// @param		rotation
+///				Rotation in radians.
+/// @return		Rotation matrix.
 template<typename T>
 vk2d::Matrix4Base<T> CreateRotationMatrix4(
 	T rotation )

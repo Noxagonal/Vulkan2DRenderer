@@ -119,7 +119,7 @@ VK2D_API void VK2D_APIENTRY vk2d::Mesh::Scew(
 	}
 }
 
-VK2D_API void VK2D_APIENTRY vk2d::Mesh::Wave(
+VK2D_API void VK2D_APIENTRY vk2d::Mesh::DirectionalWave(
 	float						direction_radians,
 	float						frequency,
 	float						animation,
@@ -147,7 +147,7 @@ VK2D_API void VK2D_APIENTRY vk2d::Mesh::Wave(
 		auto c		= i.vertex_coords - origin;
 		c			= backward_rotation_matrix * c;
 
-		auto d		= animation + float( frequency * ( c.x / size.x ) * RAD );
+		auto d		= float( animation / vk2d::RAD ) + float( frequency * ( ( c.x / size.x + c.y / size.y ) / 2.0f ) * RAD );
 		i.vertex_coords		= {
 			std::cos( d ) * intensity.x + c.x,
 			std::sin( d ) * intensity.y + c.y };
@@ -205,7 +205,7 @@ VK2D_API void VK2D_APIENTRY vk2d::Mesh::ScewUV(
 	}
 }
 
-VK2D_API void VK2D_APIENTRY vk2d::Mesh::WaveUV(
+VK2D_API void VK2D_APIENTRY vk2d::Mesh::DirectionalWaveUV(
 	float						direction_radians,
 	float						frequency,
 	float						animation,
@@ -230,7 +230,7 @@ VK2D_API void VK2D_APIENTRY vk2d::Mesh::WaveUV(
 		auto c				= i.uv_coords - origin;
 		c					= backward_rotation_matrix * c;
 
-		auto d				= animation + float( frequency * c.x * RAD );
+		auto d				= float( animation / vk2d::RAD ) + float( frequency * ( ( c.x + c.y ) / 2.0f ) * RAD );
 		i.uv_coords			= {
 			std::cos( d ) * intensity.x + c.x,
 			std::sin( d ) * intensity.y + c.y };
@@ -299,7 +299,7 @@ VK2D_API void VK2D_APIENTRY vk2d::Mesh::SetVertexColorGradient(
 	}
 }
 
-VK2D_API void VK2D_APIENTRY vk2d::Mesh::ConfineUVToBoundingBox()
+VK2D_API void VK2D_APIENTRY vk2d::Mesh::RecalculateUVsToBoundingBox()
 {
 	auto aabb = vk2d::_internal::CalculateAABBFromVertexList( vertices );
 	auto size = aabb.bottom_right - aabb.top_left;
@@ -310,10 +310,10 @@ VK2D_API void VK2D_APIENTRY vk2d::Mesh::ConfineUVToBoundingBox()
 }
 
 VK2D_API void VK2D_APIENTRY vk2d::Mesh::SetTexture(
-	vk2d::Texture			*	texture_resource_pointer
+	vk2d::Texture			*	texture_pointer
 )
 {
-	texture		= texture_resource_pointer;
+	texture		= texture_pointer;
 }
 
 VK2D_API void VK2D_APIENTRY vk2d::Mesh::SetSampler(

@@ -14,6 +14,9 @@ namespace vk2d {
 
 
 
+/// @brief		Column based 4*4 matrix.
+/// @tparam		T
+///				Matrix precision.
 template<typename T>
 class Matrix3Base
 {
@@ -71,23 +74,30 @@ public:
 
 	vk2d::Matrix3Base<T> operator*( const vk2d::Matrix3Base<T> & other )
 	{
-		vk2d::Matrix3Base<T> ret;
+		// a = *this, b = other. number is column first, row second.
+		auto & a11 = column_1.x; auto & a21 = column_2.x; auto & a31 = column_3.x;
+		auto & a12 = column_1.y; auto & a22 = column_2.y; auto & a32 = column_3.y;
+		auto & a13 = column_1.z; auto & a23 = column_2.z; auto & a33 = column_3.z;
 
-		// Cheat sheet...
-		//    c1              c2              c3                   c1   c2   c3      c1   c2   c3
-		//	[ aj + bm + cp ][ ak + bn + cq ][ al + bo + cr ]  	= [ a ][ b ][ c ] * [ j ][ k ][ l ]  x
-		//	[ dj + em + fp ][ dk + en + fq ][ dl + eo + fr ]  	= [ d ][ e ][ f ] * [ m ][ n ][ o ]  y
-		//	[ gj + hm + ip ][ gk + hn + iq ][ gl + ho + ir ]  	= [ g ][ h ][ i ] * [ p ][ q ][ r ]  z
+		auto & b11 = other.column_1.x; auto & b21 = other.column_2.x; auto & b31 = other.column_3.x;
+		auto & b12 = other.column_1.y; auto & b22 = other.column_2.y; auto & b32 = other.column_3.y;
+		auto & b13 = other.column_1.z; auto & b23 = other.column_2.z; auto & b33 = other.column_3.z;
 
-		ret.column_1.x	= column_1.x * other.column_1.x + column_2.x * other.column_1.y + column_3.x * other.column_1.z;
-		ret.column_2.x	= column_1.x * other.column_2.x + column_2.x * other.column_2.y + column_3.x * other.column_2.z;
-		ret.column_3.x	= column_1.x * other.column_3.x + column_2.x * other.column_3.y + column_3.x * other.column_3.z;
-		ret.column_1.y	= column_1.y * other.column_1.x + column_2.y * other.column_1.y + column_3.y * other.column_1.z;
-		ret.column_2.y	= column_1.y * other.column_2.x + column_2.y * other.column_2.y + column_3.y * other.column_2.z;
-		ret.column_3.y	= column_1.y * other.column_3.x + column_2.y * other.column_3.y + column_3.y * other.column_3.z;
-		ret.column_1.z	= column_1.z * other.column_1.x + column_2.z * other.column_1.y + column_3.z * other.column_1.z;
-		ret.column_2.z	= column_1.z * other.column_2.x + column_2.z * other.column_2.y + column_3.z * other.column_2.z;
-		ret.column_3.z	= column_1.z * other.column_3.x + column_2.z * other.column_3.y + column_3.z * other.column_3.z;
+		vk2d::Matrix4Base<T> ret;
+		// Row 1
+		ret.column_1.x	= a11*b11 + a21*b12 + a31*b13;
+		ret.column_2.x	= a11*b21 + a21*b22 + a31*b23;
+		ret.column_3.x	= a11*b31 + a21*b32 + a31*b33;
+
+		// Row 2
+		ret.column_1.y	= a12*b11 + a22*b12 + a32*b13;
+		ret.column_2.y	= a12*b21 + a22*b22 + a32*b23;
+		ret.column_3.y	= a12*b31 + a22*b32 + a32*b33;
+
+		// Row 3
+		ret.column_1.z	= a13*b11 + a23*b12 + a33*b13;
+		ret.column_2.z	= a13*b21 + a23*b22 + a33*b23;
+		ret.column_3.z	= a13*b31 + a23*b32 + a33*b33;
 
 		return ret;
 	}
@@ -121,13 +131,20 @@ public:
 	}
 };
 
+/// @brief		Single precision 3*3 matrix.
 using Matrix3f			= vk2d::Matrix3Base<float>;
+
+/// @brief		Double precision 3*3 matrix.
 using Matrix3d			= vk2d::Matrix3Base<double>;
-using Matrix3i			= vk2d::Matrix3Base<int32_t>;
-using Matrix3u			= vk2d::Matrix3Base<uint32_t>;
 
 
 
+/// @brief		Create 3*3 rotation matrix.
+/// @tparam		T
+///				Matrix precision.
+/// @param		rotation
+///				Rotation in radians.
+/// @return		Rotation matrix.
 template<typename T>
 vk2d::Matrix3Base<T> CreateRotationMatrix3(
 	T rotation )

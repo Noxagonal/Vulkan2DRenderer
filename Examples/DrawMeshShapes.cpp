@@ -102,8 +102,8 @@ int main()
 		// a copy of the original and only modify the copy.
 		auto lattice_mesh_copy = lattice_mesh;
 
-		// Wave modifier, applies a simple wave animation to any mesh.
-		lattice_mesh_copy.Wave(
+		// DirectionalWave modifier, applies a simple wave animation to any mesh.
+		lattice_mesh_copy.DirectionalWave(
 			1.10f,
 			2.0f,
 			seconds_from_launch,
