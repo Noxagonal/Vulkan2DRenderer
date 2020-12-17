@@ -104,7 +104,7 @@ VK2D_API bool VK2D_APIENTRY vk2d::RenderTargetTexture::EndRender(
 VK2D_API void VK2D_APIENTRY vk2d::RenderTargetTexture::DrawTriangleList(
 	const std::vector<vk2d::VertexIndex_3>	&	indices,
 	const std::vector<vk2d::Vertex>			&	vertices,
-	const std::vector<float>				&	texture_channel_weights,
+	const std::vector<float>				&	texture_layer_weights,
 	const std::vector<vk2d::Matrix4f>		&	transformations,
 	bool										filled,
 	vk2d::Texture							*	texture,
@@ -114,7 +114,7 @@ VK2D_API void VK2D_APIENTRY vk2d::RenderTargetTexture::DrawTriangleList(
 	impl->DrawTriangleList(
 		indices,
 		vertices,
-		texture_channel_weights,
+		texture_layer_weights,
 		transformations,
 		filled,
 		texture,
@@ -125,7 +125,7 @@ VK2D_API void VK2D_APIENTRY vk2d::RenderTargetTexture::DrawTriangleList(
 VK2D_API void VK2D_APIENTRY vk2d::RenderTargetTexture::DrawLineList(
 	const std::vector<vk2d::VertexIndex_2>	&	indices,
 	const std::vector<vk2d::Vertex>			&	vertices,
-	const std::vector<float>				&	texture_channel_weights,
+	const std::vector<float>				&	texture_layer_weights,
 	const std::vector<vk2d::Matrix4f>		&	transformations,
 	vk2d::Texture							*	texture,
 	vk2d::Sampler							*	sampler,
@@ -135,7 +135,7 @@ VK2D_API void VK2D_APIENTRY vk2d::RenderTargetTexture::DrawLineList(
 	impl->DrawLineList(
 		indices,
 		vertices,
-		texture_channel_weights,
+		texture_layer_weights,
 		transformations,
 		texture,
 		sampler,
@@ -145,7 +145,7 @@ VK2D_API void VK2D_APIENTRY vk2d::RenderTargetTexture::DrawLineList(
 
 VK2D_API void VK2D_APIENTRY vk2d::RenderTargetTexture::DrawPointList(
 	const std::vector<vk2d::Vertex>			&	vertices,
-	const std::vector<float>				&	texture_channel_weights,
+	const std::vector<float>				&	texture_layer_weights,
 	const std::vector<vk2d::Matrix4f>		&	transformations,
 	vk2d::Texture							*	texture,
 	vk2d::Sampler							*	sampler
@@ -153,7 +153,7 @@ VK2D_API void VK2D_APIENTRY vk2d::RenderTargetTexture::DrawPointList(
 {
 	impl->DrawPointList(
 		vertices,
-		texture_channel_weights,
+		texture_layer_weights,
 		transformations,
 		texture,
 		sampler
@@ -908,7 +908,7 @@ vk2d::_internal::RenderTargetTextureDependencyInfo vk2d::_internal::RenderTarget
 void vk2d::_internal::RenderTargetTextureImpl::DrawTriangleList(
 	const std::vector<vk2d::VertexIndex_3>	&	indices,
 	const std::vector<vk2d::Vertex>			&	vertices,
-	const std::vector<float>				&	texture_channel_weights,
+	const std::vector<float>				&	texture_layer_weights,
 	const std::vector<vk2d::Matrix4f>		&	transformations,
 	bool										filled,
 	vk2d::Texture							*	texture,
@@ -927,7 +927,7 @@ void vk2d::_internal::RenderTargetTextureImpl::DrawTriangleList(
 	DrawTriangleList(
 		raw_indices,
 		vertices,
-		texture_channel_weights,
+		texture_layer_weights,
 		transformations,
 		filled,
 		texture,
@@ -938,7 +938,7 @@ void vk2d::_internal::RenderTargetTextureImpl::DrawTriangleList(
 void vk2d::_internal::RenderTargetTextureImpl::DrawTriangleList(
 	const std::vector<uint32_t>				&	raw_indices,
 	const std::vector<vk2d::Vertex>			&	vertices,
-	const std::vector<float>				&	texture_channel_weights,
+	const std::vector<float>				&	texture_layer_weights,
 	const std::vector<vk2d::Matrix4f>		&	transformations,
 	bool										solid,
 	vk2d::Texture							*	texture,
@@ -968,7 +968,7 @@ void vk2d::_internal::RenderTargetTextureImpl::DrawTriangleList(
 
 	{
 		bool multitextured = texture->GetLayerCount() > 1 &&
-			texture_channel_weights.size() >= texture->GetLayerCount() * vertices.size();
+			texture_layer_weights.size() >= texture->GetLayerCount() * vertices.size();
 
 		auto graphics_shader_programs = instance->GetCompatibleGraphicsShaderModules(
 			multitextured,
@@ -1009,7 +1009,7 @@ void vk2d::_internal::RenderTargetTextureImpl::DrawTriangleList(
 		command_buffer,
 		raw_indices,
 		vertices,
-		texture_channel_weights,
+		texture_layer_weights,
 		transformations
 	);
 
@@ -1068,7 +1068,7 @@ void vk2d::_internal::RenderTargetTextureImpl::DrawTriangleList(
 void vk2d::_internal::RenderTargetTextureImpl::DrawLineList(
 	const std::vector<vk2d::VertexIndex_2>	&	indices,
 	const std::vector<vk2d::Vertex>			&	vertices,
-	const std::vector<float>				&	texture_channel_weights,
+	const std::vector<float>				&	texture_layer_weights,
 	const std::vector<vk2d::Matrix4f>		&	transformations,
 	vk2d::Texture							*	texture,
 	vk2d::Sampler							*	sampler,
@@ -1086,7 +1086,7 @@ void vk2d::_internal::RenderTargetTextureImpl::DrawLineList(
 	DrawLineList(
 		raw_indices,
 		vertices,
-		texture_channel_weights,
+		texture_layer_weights,
 		transformations,
 		texture,
 		sampler,
@@ -1097,7 +1097,7 @@ void vk2d::_internal::RenderTargetTextureImpl::DrawLineList(
 void vk2d::_internal::RenderTargetTextureImpl::DrawLineList(
 	const std::vector<uint32_t>				&	raw_indices,
 	const std::vector<vk2d::Vertex>			&	vertices,
-	const std::vector<float>				&	texture_channel_weights,
+	const std::vector<float>				&	texture_layer_weights,
 	const std::vector<vk2d::Matrix4f>		&	transformations,
 	vk2d::Texture							*	texture,
 	vk2d::Sampler							*	sampler,
@@ -1127,7 +1127,7 @@ void vk2d::_internal::RenderTargetTextureImpl::DrawLineList(
 
 	{
 		bool multitextured = texture->GetLayerCount() > 1 &&
-			texture_channel_weights.size() >= texture->GetLayerCount() * vertices.size();
+			texture_layer_weights.size() >= texture->GetLayerCount() * vertices.size();
 
 		auto graphics_shader_programs = instance->GetCompatibleGraphicsShaderModules(
 			multitextured,
@@ -1169,7 +1169,7 @@ void vk2d::_internal::RenderTargetTextureImpl::DrawLineList(
 		command_buffer,
 		raw_indices,
 		vertices,
-		texture_channel_weights,
+		texture_layer_weights,
 		transformations
 	);
 
@@ -1212,7 +1212,7 @@ void vk2d::_internal::RenderTargetTextureImpl::DrawLineList(
 
 void vk2d::_internal::RenderTargetTextureImpl::DrawPointList(
 	const std::vector<vk2d::Vertex>			&	vertices,
-	const std::vector<float>				&	texture_channel_weights,
+	const std::vector<float>				&	texture_layer_weights,
 	const std::vector<vk2d::Matrix4f>		&	transformations,
 	vk2d::Texture							*	texture,
 	vk2d::Sampler							*	sampler
@@ -1240,7 +1240,7 @@ void vk2d::_internal::RenderTargetTextureImpl::DrawPointList(
 
 	{
 		bool multitextured = texture->GetLayerCount() > 1 &&
-			texture_channel_weights.size() >= texture->GetLayerCount() * vertices.size();
+			texture_layer_weights.size() >= texture->GetLayerCount() * vertices.size();
 
 		auto graphics_shader_programs = instance->GetCompatibleGraphicsShaderModules(
 			multitextured,
@@ -1278,7 +1278,7 @@ void vk2d::_internal::RenderTargetTextureImpl::DrawPointList(
 		command_buffer,
 		{},
 		vertices,
-		texture_channel_weights,
+		texture_layer_weights,
 		transformations
 	);
 
@@ -1330,7 +1330,7 @@ void vk2d::_internal::RenderTargetTextureImpl::DrawMesh(
 			DrawTriangleList(
 				mesh.indices,
 				mesh.vertices,
-				mesh.texture_channel_weights,
+				mesh.texture_layer_weights,
 				transformations,
 				true,
 				mesh.texture,
@@ -1341,7 +1341,7 @@ void vk2d::_internal::RenderTargetTextureImpl::DrawMesh(
 			DrawTriangleList(
 				mesh.indices,
 				mesh.vertices,
-				mesh.texture_channel_weights,
+				mesh.texture_layer_weights,
 				transformations,
 				false,
 				mesh.texture,
@@ -1352,7 +1352,7 @@ void vk2d::_internal::RenderTargetTextureImpl::DrawMesh(
 			DrawLineList(
 				mesh.indices,
 				mesh.vertices,
-				mesh.texture_channel_weights,
+				mesh.texture_layer_weights,
 				transformations,
 				mesh.texture,
 				mesh.sampler,
@@ -1362,7 +1362,7 @@ void vk2d::_internal::RenderTargetTextureImpl::DrawMesh(
 		case vk2d::MeshType::POINT:
 			DrawPointList(
 				mesh.vertices,
-				mesh.texture_channel_weights,
+				mesh.texture_layer_weights,
 				transformations,
 				mesh.texture,
 				mesh.sampler

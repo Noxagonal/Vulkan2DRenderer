@@ -786,12 +786,12 @@ public:
 	///				List of indices telling how to form triangles between vertices.
 	/// @param[in]	vertices
 	///				List of vertices that define the shape.
-	/// @param[in]	texture_channel_weights
+	/// @param[in]	texture_layer_weights
 	///				Only has effect if provided texture has more than 1 layer.
 	///				This tell how much weight each texture layer has on each vertex.
 	///				TODO: Need to check formatting... Yank Niko, he forgot...
-	/// @param[in]	solid
-	///				If true, renders solid polygons, if false renders as wireframe.
+	/// @param[in]	filled
+	///				If true, renders filled polygons, if false renders as wireframe.
 	/// @param[in]	texture
 	///				Pointer to texture, see vk2d::Vertex for UV mapping details.
 	///				Can be nullptr in which case a white texture is used (vertex colors only).
@@ -801,9 +801,9 @@ public:
 	VK2D_API void										VK2D_APIENTRY				DrawTriangleList(
 		const std::vector<vk2d::VertexIndex_3>		&	indices,
 		const std::vector<vk2d::Vertex>				&	vertices,
-		const std::vector<float>					&	texture_channel_weights,
+		const std::vector<float>					&	texture_layer_weights,
 		const std::vector<vk2d::Matrix4f>			&	transformations				= {},
-		bool											solid						= true,
+		bool											filled						= true,
 		vk2d::Texture								*	texture						= nullptr,
 		vk2d::Sampler								*	sampler						= nullptr );
 
@@ -814,7 +814,7 @@ public:
 	///				List of indices telling how to form lines between vertices.
 	/// @param[in]	vertices 
 	///				List of vertices that define the shape.
-	/// @param[in]	texture_channel_weights 
+	/// @param[in]	texture_layer_weights 
 	///				Only has effect if provided texture has more than 1 layer.
 	///				This tell how much weight each texture layer has on each vertex.
 	///				TODO: Need to check formatting... Yank Niko, he forgot...
@@ -827,7 +827,7 @@ public:
 	VK2D_API void										VK2D_APIENTRY				DrawLineList(
 		const std::vector<vk2d::VertexIndex_2>		&	indices,
 		const std::vector<vk2d::Vertex>				&	vertices,
-		const std::vector<float>					&	texture_channel_weights,
+		const std::vector<float>					&	texture_layer_weights,
 		const std::vector<vk2d::Matrix4f>			&	transformations				= {},
 		vk2d::Texture								*	texture						= nullptr,
 		vk2d::Sampler								*	sampler						= nullptr,
@@ -838,7 +838,7 @@ public:
 	/// @note		Multithreading: Main thread only.
 	/// @param[in]	vertices 
 	///				List of vertices that define where and how points are drawn.
-	/// @param[in]	texture_channel_weights 
+	/// @param[in]	texture_layer_weights 
 	///				Only has effect if provided texture has more than 1 layer.
 	///				This tell how much weight each texture layer has on each vertex.
 	///				TODO: Need to check formatting... Yank Niko, he forgot...
@@ -850,7 +850,7 @@ public:
 	///				Can be nullptr in which case the default sampler is used.
 	VK2D_API void										VK2D_APIENTRY				DrawPointList(
 		const std::vector<vk2d::Vertex>				&	vertices,
-		const std::vector<float>					&	texture_channel_weights,
+		const std::vector<float>					&	texture_layer_weights,
 		const std::vector<vk2d::Matrix4f>			&	transformations				= {},
 		vk2d::Texture								*	texture						= nullptr,
 		vk2d::Sampler								*	sampler						= nullptr );
@@ -890,22 +890,22 @@ public:
 	/// @note		Multithreading: Main thread only.
 	/// @param[in]	area
 	///				Area of the rectangle that will be covered, depends on the coordinate system. See
-	///				vk2d::RenderCoordinateSpace for more info about what values should be used.
-	/// @param[in]	solid
+	///				vk2d::RenderCoordinateSpace for more info about what scale is used.
+	/// @param[in]	filled
 	///				true if the inside of the rectangle is drawn, false for the outline only.
 	/// @param[in]	color
 	///				Color of the rectangle to be drawn.
 	VK2D_API void										VK2D_APIENTRY				DrawRectangle(
 		vk2d::Rect2f									area,
-		bool											solid						= true,
+		bool											filled						= true,
 		vk2d::Colorf									color						= { 1.0f, 1.0f, 1.0f, 1.0f } );
 
 	/// @brief		Draws an ellipse or a circle.
 	/// @note		Multithreading: Main thread only.
 	/// @param[in]	area
 	///				Rectangle area in which the ellipse must fit. See vk2d::RenderCoordinateSpace for
-	///				more info about what values should be used.
-	/// @param[in]	solid
+	///				more info about what scale is used.
+	/// @param[in]	filled
 	///				true to draw the inside of the ellipse/circle, false to draw the outline only.
 	/// @param[in]	edge_count
 	///				How many corners this ellipse should have, or quality if you prefer. This is a float value for
@@ -914,7 +914,7 @@ public:
 	///				Color of the ellipse/circle to be drawn.
 	VK2D_API void										VK2D_APIENTRY				DrawEllipse(
 		vk2d::Rect2f									area,
-		bool											solid						= true,
+		bool											filled						= true,
 		float											edge_count					= 64.0f,
 		vk2d::Colorf									color						= { 1.0f, 1.0f, 1.0f, 1.0f } );
 
@@ -922,23 +922,26 @@ public:
 	/// @note		Multithreading: Main thread only.
 	/// @param[in]	area
 	///				Rectangle area in which the ellipse must fit. See vk2d::RenderCoordinateSpace for
-	///				more info about what values should be used.
+	///				more info about what scale is be used.
 	/// @param[in]	begin_angle_radians
-	///				Angle (in radians) where the slice cut should start.
+	///				Angle (in radians) where the slice cut should start. (towards positive is clockwise direction)
 	/// @param[in]	coverage
-	///				Size of the slice, value is between 0 to 1 where 0 is not visible and 1 draws the full ellipse.
-	/// @param[in]	solid
+	///				Size of the slice, value is between 0 to 1 where 0 is not visible and 1 draws the
+	///				full ellipse. Moving value from 0 to 1 makes "whole" pie visible in clockwise
+	///				direction.
+	/// @param[in]	filled
 	///				true to draw the inside of the pie, false to draw the outline only.
 	/// @param[in]	edge_count 
-	///				How many corners the complete ellipse should have, or quality if you prefer. This is a float value for
-	///				"smoother" transitions between amount of corners, in case this value is animated.
+	///				How many corners the complete ellipse should have, or quality if you prefer.
+	///				This is a float value for "smoother" transitions between amount of corners,
+	///				in case this value is animated.
 	/// @param[in]	color 
 	///				Color of the pie to be drawn.
 	VK2D_API void										VK2D_APIENTRY				DrawEllipsePie(
 		vk2d::Rect2f									area,
 		float											begin_angle_radians,
 		float											coverage,
-		bool											solid						= true,
+		bool											filled						= true,
 		float											edge_count					= 64.0f,
 		vk2d::Colorf									color						= { 1.0f, 1.0f, 1.0f, 1.0f } );
 
@@ -946,12 +949,14 @@ public:
 	/// @note		Multithreading: Main thread only.
 	/// @param[in]	area
 	///				Area of the rectangle to be drawn. See vk2d::RenderCoordinateSpace for
-	///				more info about what values should be used.
+	///				more info about what scale is used.
 	/// @param[in]	begin_angle_radians
-	///				Angle (in radians) where the slice cut should start.
+	///				Angle (in radians) where the slice cut should start. (towards positive is clockwise direction)
 	/// @param[in]	coverage 
-	///				Size of the slice, value is between 0 to 1 where 0 is not visible and 1 draws the full rectangle.
-	/// @param[in]	solid
+	///				Size of the slice, value is between 0 to 1 where 0 is not visible and 1 draws the
+	///				full rectangle. Moving value from 0 to 1 makes "whole" pie visible in clockwise
+	///				direction.
+	/// @param[in]	filled
 	///				true to draw the inside of the pie rectangle, false to draw the outline only.
 	/// @param[in]	color 
 	///				Color of the pie rectangle to be drawn.
@@ -959,7 +964,7 @@ public:
 		vk2d::Rect2f									area,
 		float											begin_angle_radians,
 		float											coverage,
-		bool											solid						= true,
+		bool											filled						= true,
 		vk2d::Colorf									color						= { 1.0f, 1.0f, 1.0f, 1.0f } );
 
 	/// @brief		Draws a rectangle with texture and use the size of the texture to determine size of the rectangle.

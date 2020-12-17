@@ -55,7 +55,7 @@ inline vk2d::Vertex CreateDefaultValueVertex()
 	v.uv_coords					= {};
 	v.color						= { 1.0f, 1.0f, 1.0f, 1.0f };
 	v.point_size				= 1.0f;
-	v.single_texture_channel	= 0;
+	v.single_texture_layer	= 0;
 	return v;
 }
 
@@ -1148,25 +1148,25 @@ VK2D_API vk2d::Mesh VK2D_APIENTRY vk2d::GenerateTextMesh(
 		mesh.vertices[ vertex_offset + 0 ].uv_coords				= vk2d::Vector2f( uv_coords.top_left.x, uv_coords.top_left.y );
 		mesh.vertices[ vertex_offset + 0 ].color					= vk2d::Colorf( 1.0f, 1.0f, 1.0f, 1.0f );
 		mesh.vertices[ vertex_offset + 0 ].point_size				= 1;
-		mesh.vertices[ vertex_offset + 0 ].single_texture_channel	= texture_channel;
+		mesh.vertices[ vertex_offset + 0 ].single_texture_layer	= texture_channel;
 
 		mesh.vertices[ vertex_offset + 1 ].vertex_coords			= vk2d::Vector2f( tcoords.bottom_right.x, tcoords.top_left.y );
 		mesh.vertices[ vertex_offset + 1 ].uv_coords				= vk2d::Vector2f( uv_coords.bottom_right.x, uv_coords.top_left.y );
 		mesh.vertices[ vertex_offset + 1 ].color					= vk2d::Colorf( 1.0f, 1.0f, 1.0f, 1.0f );
 		mesh.vertices[ vertex_offset + 1 ].point_size				= 1;
-		mesh.vertices[ vertex_offset + 1 ].single_texture_channel	= texture_channel;
+		mesh.vertices[ vertex_offset + 1 ].single_texture_layer	= texture_channel;
 
 		mesh.vertices[ vertex_offset + 2 ].vertex_coords			= vk2d::Vector2f( tcoords.top_left.x, tcoords.bottom_right.y );
 		mesh.vertices[ vertex_offset + 2 ].uv_coords				= vk2d::Vector2f( uv_coords.top_left.x, uv_coords.bottom_right.y );
 		mesh.vertices[ vertex_offset + 2 ].color					= vk2d::Colorf( 1.0f, 1.0f, 1.0f, 1.0f );
 		mesh.vertices[ vertex_offset + 2 ].point_size				= 1;
-		mesh.vertices[ vertex_offset + 2 ].single_texture_channel	= texture_channel;
+		mesh.vertices[ vertex_offset + 2 ].single_texture_layer	= texture_channel;
 
 		mesh.vertices[ vertex_offset + 3 ].vertex_coords			= vk2d::Vector2f( tcoords.bottom_right.x, tcoords.bottom_right.y );
 		mesh.vertices[ vertex_offset + 3 ].uv_coords				= vk2d::Vector2f( uv_coords.bottom_right.x, uv_coords.bottom_right.y );
 		mesh.vertices[ vertex_offset + 3 ].color					= vk2d::Colorf( 1.0f, 1.0f, 1.0f, 1.0f );
 		mesh.vertices[ vertex_offset + 3 ].point_size				= 1;
-		mesh.vertices[ vertex_offset + 3 ].single_texture_channel	= texture_channel;
+		mesh.vertices[ vertex_offset + 3 ].single_texture_layer	= texture_channel;
 
 		mesh.indices.resize( index_offset + 6 );
 		mesh.indices[ index_offset + 0 ]	= uint32_t( vertex_offset + 0 );

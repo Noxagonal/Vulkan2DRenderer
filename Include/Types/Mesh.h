@@ -320,50 +320,116 @@ public:
 	///				- For points indices are not used.
 	std::vector<uint32_t>							indices							= {};
 
-	// TODO: Documentation...
-	// Texture channel weights are used to mix between different texture's arrays per vertex,
-	// the group size varies per amount of texture's arrays.
-	// For example if a texture with 3 arrays is used with this mesh then texture_channel_weights
-	// group size should be 3 floats per vertex. The sum of values per group should be 1.0 for
-	// coherent visuals. If weights { 1.0, 0.0, 0.0 } are used on vertex then that vertex will
-	// have only one active texture array layer effecting it, if weights { 0.0, 0.5, 0.5 } are
-	// used then texture's array 0 has no effect, array 1 and 2 are mixed together 50% each for
-	// that particular vertex, fragments inbetween vertices have different layers mixed smoothly.
-	// If this is left at size 0 then only texture array layer of 0 is used for all vertices.
-	std::vector<float>								texture_channel_weights			= {};
+	/// @brief		Texture channel weights are used to mix between differet texture arrays per vertex.
+	///
+	///				The size of this list should be either 0, or the amount of vertices and the amount
+	///				of layers in the used texture multiplied together. <br>
+	///				For example if a texture with 3 layers is used then the first 3 indices of this
+	///				list tells how much weight each texture layer has on the first vertex (in same order
+	///				as texture layers are used). The next 3 indices of this list tells how much each
+	///				texture layer effects the second vertex and so on. <br>
+	///				For another example if a texture with 5 layers is used then the first 5 indices of
+	///				this list tells how much each texture layer effects the first vertex, and the next
+	///				5 after that tells how much weight each texture layer has on the second vertex and
+	///				so on until we cover all vertices. <br>
+	///				Texture layer weights multiply the color from the texture, for example if a 2
+	///				layer texture is used then weights {0.0, 0.0} would result black transparent vertex,
+	///				{1.0, 0.0} would show the first texture layer, {0.5, 0.5} would blend both texture
+	///				layers together, {1.0, 1.0} would add colors of both layers together. <br>
+	///				If this list is not large enough to contain all weights of all texture channels for
+	///				all vertices then these values are ignored and the texture layers is chosen based
+	///				on what was set to the vertex. <br>
+	///				Texture layer weights between vertices are linearly interpolated so that if one
+	///				texture layer weight is high for one vertex and low for the neighbouring vertex,
+	///				the inbetween regions are smoothly transitioned between the two.
+	std::vector<float>								texture_layer_weights			= {};
 
 private:
-	bool											generated						= false;
-	vk2d::MeshType									generated_mesh_type				= vk2d::MeshType::TRIANGLE_FILLED;
-	vk2d::MeshType									mesh_type						= vk2d::MeshType::TRIANGLE_FILLED;
-	float											line_width						= 1.0f;		// Only considered when rendering lines
-	vk2d::Texture								*	texture							= nullptr;	// Texture resource to be used when rendering, can be used in all modes
-	vk2d::Sampler								*	sampler							= nullptr;
+	bool											generated						= false;							///< Tells if this mesh was created by a mesh generator.
+	vk2d::MeshType									generated_mesh_type				= vk2d::MeshType::TRIANGLE_FILLED;	///< Tells the original mesh type if it was created by a mesh generator.
+	vk2d::MeshType									mesh_type						= vk2d::MeshType::TRIANGLE_FILLED;	///< Current mesh type.
+	float											line_width						= 1.0f;								///< Line width when rendering lines.
+	vk2d::Texture								*	texture							= nullptr;							///< Texture resource to be used when rendering. Can be used in all modes. Can be nullptr.
+	vk2d::Sampler								*	sampler							= nullptr;							///< Texture sampler to be used when rendering. Can be used in all modes. Can be nullptr for default sampler.
 };
 
 
 
+/// @brief		Generate point mesh from point list.
+/// @param[in]	points
+///				A list of coordinates representing point locations.
+/// @return		A new mesh object.
 VK2D_API vk2d::Mesh									VK2D_APIENTRY					GeneratePointMeshFromList(
 	const std::vector<vk2d::Vector2f>			&	points );
 
+/// @brief		Generate line mesh from points and connections.
+/// @param[in]	points
+///				A list of coordinates representing end points of lines.
+/// @param[in]	indices
+///				Indices defining which points should be connected with a line.
+/// @return		A new mesh object.
 VK2D_API vk2d::Mesh									VK2D_APIENTRY					GenerateLineMeshFromList(
 	const std::vector<vk2d::Vector2f>			&	points,
 	const std::vector<vk2d::VertexIndex_2>		&	indices );
 
+/// @brief		Generate triangle mesh from points and connections.
+/// @param[in]	points
+///				A list of coordinates representing corners of triangles.
+/// @param[in]	indices
+///				Indices defining which points should form a triangle.
+/// @param[in]	filled
+///				true if triangle mesh is filled, false for wireframe.
+/// @return		A new mesh object.
 VK2D_API vk2d::Mesh									VK2D_APIENTRY					GenerateTriangleMeshFromList(
 	const std::vector<vk2d::Vector2f>			&	points,
 	const std::vector<vk2d::VertexIndex_3>		&	indices,
 	bool											filled							= true );
 
+/// @brief		Generate rectangular mesh from rectangle coordinates.
+/// @param[in]	area
+///				Area of the rectangle that will be covered, depends on the coordinate system. See
+///				vk2d::RenderCoordinateSpace for more info about what scale is used.
+/// @param[in]	filled
+///				true for filled mesh, false to generate line mesh of the outline.
+/// @return		A new mesh object.
 VK2D_API vk2d::Mesh									VK2D_APIENTRY					GenerateRectangleMesh(
 	vk2d::Rect2f									area,
 	bool											filled							= true );
 
+/// @brief		Generate ellipse mesh from rectangle area and edge count.
+/// @param[in]	area
+///				Rectangle area in which the ellipse must fit. See vk2d::RenderCoordinateSpace for
+///				more info about what scale is used.
+/// @param[in]	filled
+///				true for filled mesh, false to generate line mesh of the outline.
+/// @param[in]	edge_count
+///				Number of outer edges, this is a floating point value to prevent
+///				popping in case it's animated.
+/// @return		A new mesh object.
 VK2D_API vk2d::Mesh									VK2D_APIENTRY					GenerateEllipseMesh(
 	vk2d::Rect2f									area,
 	bool											filled							= true,
 	float											edge_count						= 64.0f );
 
+/// @brief		Generate an ellipse or a circle that has a "slice" cut out, similar to usual pie
+///				graphs.
+/// @note		Multithreading: Any thread.
+/// @param[in]	area
+///				Rectangle area in which the ellipse must fit. See vk2d::RenderCoordinateSpace for
+///				more info about what scale is be used.
+/// @param[in]	begin_angle_radians
+///				Angle (in radians) where the slice cut should start. (towards positive is clockwise direction)
+/// @param[in]	coverage
+///				Size of the slice, value is between 0 to 1 where 0 is not visible and 1 draws the
+///				full ellipse. Moving value from 0 to 1 makes "whole" pie visible in clockwise
+///				direction.
+/// @param[in]	filled
+///				true to draw the inside of the pie, false to draw the outline only.
+/// @param[in]	edge_count 
+///				How many corners the complete ellipse should have, or quality if you prefer.
+///				This is a float value for "smoother" transitions between amount of corners,
+///				in case this value is animated.
+/// @return		A new mesh object.
 VK2D_API vk2d::Mesh									VK2D_APIENTRY					GenerateEllipsePieMesh(
 	vk2d::Rect2f									area,
 	float											begin_angle_radians,
@@ -371,17 +437,75 @@ VK2D_API vk2d::Mesh									VK2D_APIENTRY					GenerateEllipsePieMesh(
 	bool											filled							= true,
 	float											edge_count						= 64.0f );
 
+/// @brief		Generate a rectangular pie, similar to drawing a rectangle but which has a pie slice cut out.
+/// @note		Multithreading: Any thread.
+/// @param[in]	area
+///				Area of the rectangle. See vk2d::RenderCoordinateSpace for more info about what scale is used.
+/// @param[in]	begin_angle_radians
+///				Angle (in radians) where the slice cut should start. (towards positive is clockwise direction)
+/// @param[in]	coverage 
+///				Size of the slice, value is between 0 to 1 where 0 is not visible and 1 draws the
+///				full rectangle. Moving value from 0 to 1 makes "whole" pie visible in clockwise
+///				direction.
+/// @param[in]	filled
+///				true to draw the inside of the pie rectangle, false to draw the outline only.
+/// @return		A new mesh object.
 VK2D_API vk2d::Mesh									VK2D_APIENTRY					GenerateRectanglePieMesh(
 	vk2d::Rect2f									area,
 	float											begin_angle_radians,
 	float											coverage,
 	bool											filled							= true );
 
+/// @brief		Generate a lattice mesh, this is useful for distortions.
+/// @note		Multithreading: Any thread.
+/// @param[in]	area
+///				Area of the rectangle. See vk2d::RenderCoordinateSpace for more info about what scale is used.
+/// @param[in]	subdivisions
+///				Number of inside subdivisions, eg. 2*2 will generate lattice with 4*4 rectangles.
+///				If fractional values are used then inside subdivisions are moved inward from the
+///				bottom right direction, this is to prevent popping in case this value is animated.
+/// @param[in]	filled
+///				true if the inside is filled, false to generate a lattice line mesh.
+/// @return		A new mesh object.
 VK2D_API vk2d::Mesh									VK2D_APIENTRY					GenerateLatticeMesh(
 	vk2d::Rect2f									area,
 	vk2d::Vector2f									subdivisions,
 	bool											filled							= true );
 
+/// @brief		Generate a text mesh that can be used to render text.
+/// @param[in]	font
+///				A pointer to font resource to use.
+/// @param[in]	origin
+///				Left or top coordinate of what is considered the starting point for the text.
+///				- For horisontal text origin is left side beginning of text and vertical
+///				origin is the baseline.
+///				- For vertical text origin is top beginning of text and horisontal offset is
+///				middle of the symbols.
+/// @param[in]	text
+///				Text characters to generate.
+/// @param[in]	kerning
+///				Spacing between letters. Positive values are farther apart. Value is based on
+///				size of the font texel size.
+/// @param[in]	scale
+///				Scale of the mesh to be generated. Value 1.0*1.0 will map 1:1 to the font size
+///				when render target texture or window coordinate space is either
+///				vk2d::RenderCoordinateSpace::TEXEL_SPACE
+///				or vk2d::RenderCoordinateSpace::TEXEL_SPACE_CENTERED.
+/// @param[in]	vertical
+///				true if text is generated vertically, false if horisontally.
+/// @param[in]	font_face
+///				Certain fonts may contain multiple font faces, this allows you to select which
+///				one to use.
+/// @param[in]	wait_for_resource_load
+///				When generating text mesh you usually want it to be available right away.
+///				Setting this option to true will wait for the font resource to load before
+///				allowing execution to continue. If you're in a time critical situation
+///				where you are generating the text every frame and you cannot afford a few
+///				millisecond wait for the font to load up you can set this value to false. <br>
+///				This function cannot generate text until the font has been loaded so
+///				setting this to false will return an empty mesh until the font has been
+///				fully loaded by the resource manager.
+/// @return		A new mesh object.
 VK2D_API vk2d::Mesh									VK2D_APIENTRY					GenerateTextMesh(
 	vk2d::FontResource							*	font,
 	vk2d::Vector2f									origin,

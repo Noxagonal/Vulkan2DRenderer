@@ -192,7 +192,7 @@ public:
 	void																DrawTriangleList(
 		const std::vector<vk2d::VertexIndex_3>						&	indices,
 		const std::vector<vk2d::Vertex>								&	vertices,
-		const std::vector<float>									&	texture_channel_weights,
+		const std::vector<float>									&	texture_layer_weights,
 		const std::vector<vk2d::Matrix4f>							&	transformations,
 		bool															filled,
 		vk2d::Texture												*	texture,
@@ -201,7 +201,7 @@ public:
 	void																DrawTriangleList(
 		const std::vector<uint32_t>									&	raw_indices,
 		const std::vector<vk2d::Vertex>								&	vertices,
-		const std::vector<float>									&	texture_channel_weights,
+		const std::vector<float>									&	texture_layer_weights,
 		const std::vector<vk2d::Matrix4f>							&	transformations,
 		bool															filled,
 		vk2d::Texture												*	texture,
@@ -210,7 +210,7 @@ public:
 	void																DrawLineList(
 		const std::vector<vk2d::VertexIndex_2>						&	indices,
 		const std::vector<vk2d::Vertex>								&	vertices,
-		const std::vector<float>									&	texture_channel_weights,
+		const std::vector<float>									&	texture_layer_weights,
 		const std::vector<vk2d::Matrix4f>							&	transformations,
 		vk2d::Texture												*	texture,
 		vk2d::Sampler												*	sampler,
@@ -219,7 +219,7 @@ public:
 	void																DrawLineList(
 		const std::vector<uint32_t>									&	raw_indices,
 		const std::vector<vk2d::Vertex>								&	vertices,
-		const std::vector<float>									&	texture_channel_weights,
+		const std::vector<float>									&	texture_layer_weights,
 		const std::vector<vk2d::Matrix4f>							&	transformations,
 		vk2d::Texture												*	texture,
 		vk2d::Sampler												*	sampler,
@@ -227,7 +227,7 @@ public:
 
 	void																DrawPointList(
 		const std::vector<vk2d::Vertex>								&	vertices,
-		const std::vector<float>									&	texture_channel_weights,
+		const std::vector<float>									&	texture_layer_weights,
 		const std::vector<vk2d::Matrix4f>							&	transformations,
 		vk2d::Texture												*	texture,
 		vk2d::Sampler												*	sampler );
