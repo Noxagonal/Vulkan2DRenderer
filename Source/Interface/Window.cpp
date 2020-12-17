@@ -281,9 +281,9 @@ VK2D_API bool VK2D_APIENTRY vk2d::Window::EndRender()
 VK2D_API void VK2D_APIENTRY vk2d::Window::DrawTriangleList(
 	const std::vector<vk2d::VertexIndex_3>	&	indices,
 	const std::vector<vk2d::Vertex>			&	vertices,
-	const std::vector<float>				&	texture_channel_weights,
+	const std::vector<float>				&	texture_layer_weights,
 	const std::vector<vk2d::Matrix4f>		&	transformations,
-	bool										solid,
+	bool										filled,
 	vk2d::Texture							*	texture,
 	vk2d::Sampler							*	sampler
 )
@@ -291,9 +291,9 @@ VK2D_API void VK2D_APIENTRY vk2d::Window::DrawTriangleList(
 	impl->DrawTriangleList(
 		indices,
 		vertices,
-		texture_channel_weights,
+		texture_layer_weights,
 		transformations,
-		solid,
+		filled,
 		texture,
 		sampler
 	);
@@ -302,7 +302,7 @@ VK2D_API void VK2D_APIENTRY vk2d::Window::DrawTriangleList(
 VK2D_API void VK2D_APIENTRY vk2d::Window::DrawLineList(
 	const std::vector<vk2d::VertexIndex_2>	&	indices,
 	const std::vector<vk2d::Vertex>			&	vertices,
-	const std::vector<float>				&	texture_channel_weights,
+	const std::vector<float>				&	texture_layer_weights,
 	const std::vector<vk2d::Matrix4f>		&	transformations,
 	vk2d::Texture							*	texture,
 	vk2d::Sampler							*	sampler,
@@ -312,7 +312,7 @@ VK2D_API void VK2D_APIENTRY vk2d::Window::DrawLineList(
 	impl->DrawLineList(
 		indices,
 		vertices,
-		texture_channel_weights,
+		texture_layer_weights,
 		transformations,
 		texture,
 		sampler,
@@ -322,7 +322,7 @@ VK2D_API void VK2D_APIENTRY vk2d::Window::DrawLineList(
 
 VK2D_API void VK2D_APIENTRY vk2d::Window::DrawPointList(
 	const std::vector<vk2d::Vertex>			&	vertices,
-	const std::vector<float>				&	texture_channel_weights,
+	const std::vector<float>				&	texture_layer_weights,
 	const std::vector<vk2d::Matrix4f>		&	transformations,
 	vk2d::Texture							*	texture,
 	vk2d::Sampler							*	sampler
@@ -330,7 +330,7 @@ VK2D_API void VK2D_APIENTRY vk2d::Window::DrawPointList(
 {
 	impl->DrawPointList(
 		vertices,
-		texture_channel_weights,
+		texture_layer_weights,
 		transformations,
 		texture,
 		sampler
@@ -369,13 +369,13 @@ VK2D_API void VK2D_APIENTRY vk2d::Window::DrawLine(
 
 VK2D_API void VK2D_APIENTRY vk2d::Window::DrawRectangle(
 	vk2d::Rect2f					area,
-	bool							solid,
+	bool							filled,
 	vk2d::Colorf					color
 )
 {
 	auto mesh = vk2d::GenerateRectangleMesh(
 		area,
-		solid
+		filled
 	);
 	mesh.SetVertexColor( color );
 	impl->DrawMesh( mesh, { vk2d::Matrix4f( 1.0f ) } );
@@ -383,14 +383,14 @@ VK2D_API void VK2D_APIENTRY vk2d::Window::DrawRectangle(
 
 VK2D_API void VK2D_APIENTRY vk2d::Window::DrawEllipse(
 	vk2d::Rect2f					area,
-	bool							solid,
+	bool							filled,
 	float							edge_count,
 	vk2d::Colorf					color
 )
 {
 	auto mesh = vk2d::GenerateEllipseMesh(
 		area,
-		solid,
+		filled,
 		edge_count
 	);
 	mesh.SetVertexColor( color );
@@ -401,7 +401,7 @@ VK2D_API void VK2D_APIENTRY vk2d::Window::DrawEllipsePie(
 	vk2d::Rect2f					area,
 	float							begin_angle_radians,
 	float							coverage,
-	bool							solid,
+	bool							filled,
 	float							edge_count,
 	vk2d::Colorf					color
 )
@@ -410,7 +410,7 @@ VK2D_API void VK2D_APIENTRY vk2d::Window::DrawEllipsePie(
 		area,
 		begin_angle_radians,
 		coverage,
-		solid,
+		filled,
 		edge_count
 	);
 	mesh.SetVertexColor( color );
@@ -421,7 +421,7 @@ VK2D_API void VK2D_APIENTRY vk2d::Window::DrawRectanglePie(
 	vk2d::Rect2f					area,
 	float							begin_angle_radians,
 	float							coverage,
-	bool							solid,
+	bool							filled,
 	vk2d::Colorf					color
 )
 {
@@ -429,7 +429,7 @@ VK2D_API void VK2D_APIENTRY vk2d::Window::DrawRectanglePie(
 		area,
 		begin_angle_radians,
 		coverage,
-		solid
+		filled
 	);
 	mesh.SetVertexColor( color );
 	impl->DrawMesh( mesh, { vk2d::Matrix4f( 1.0f ) } );
@@ -2120,9 +2120,9 @@ vk2d::CursorState vk2d::_internal::WindowImpl::GetCursorState()
 void vk2d::_internal::WindowImpl::DrawTriangleList(
 	const std::vector<vk2d::VertexIndex_3>	&	indices,
 	const std::vector<vk2d::Vertex>			&	vertices,
-	const std::vector<float>				&	texture_channel_weights,
+	const std::vector<float>				&	texture_layer_weights,
 	const std::vector<vk2d::Matrix4f>		&	transformations,
-	bool										solid,
+	bool										filled,
 	vk2d::Texture							*	texture,
 	vk2d::Sampler							*	sampler
 )
@@ -2139,9 +2139,9 @@ void vk2d::_internal::WindowImpl::DrawTriangleList(
 	DrawTriangleList(
 		raw_indices,
 		vertices,
-		texture_channel_weights,
+		texture_layer_weights,
 		transformations,
-		solid,
+		filled,
 		texture,
 		sampler
 	);
@@ -2150,9 +2150,9 @@ void vk2d::_internal::WindowImpl::DrawTriangleList(
 void vk2d::_internal::WindowImpl::DrawTriangleList(
 	const std::vector<uint32_t>				&	raw_indices,
 	const std::vector<vk2d::Vertex>			&	vertices,
-	const std::vector<float>				&	texture_channel_weights,
+	const std::vector<float>				&	texture_layer_weights,
 	const std::vector<vk2d::Matrix4f>		&	transformations,
-	bool										solid,
+	bool										filled,
 	vk2d::Texture							*	texture,
 	vk2d::Sampler							*	sampler
 )
@@ -2179,7 +2179,7 @@ void vk2d::_internal::WindowImpl::DrawTriangleList(
 
 	{
 		bool multitextured = texture->GetLayerCount() > 1 &&
-			texture_channel_weights.size() >= texture->GetLayerCount() * vertices.size();
+			texture_layer_weights.size() >= texture->GetLayerCount() * vertices.size();
 
 		auto graphics_shader_programs = instance->GetCompatibleGraphicsShaderModules(
 			multitextured,
@@ -2191,7 +2191,7 @@ void vk2d::_internal::WindowImpl::DrawTriangleList(
 		pipeline_settings.vk_pipeline_layout	= instance->GetGraphicsPrimaryRenderPipelineLayout();
 		pipeline_settings.vk_render_pass		= vk_render_pass;
 		pipeline_settings.primitive_topology	= VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
-		pipeline_settings.polygon_mode			= solid ? VK_POLYGON_MODE_FILL : VK_POLYGON_MODE_LINE;
+		pipeline_settings.polygon_mode			= filled ? VK_POLYGON_MODE_FILL : VK_POLYGON_MODE_LINE;
 		pipeline_settings.shader_programs		= graphics_shader_programs;
 		pipeline_settings.samples				= VkSampleCountFlags( samples );
 		pipeline_settings.enable_blending		= VK_TRUE;
@@ -2215,7 +2215,7 @@ void vk2d::_internal::WindowImpl::DrawTriangleList(
 		command_buffer,
 		raw_indices,
 		vertices,
-		texture_channel_weights,
+		texture_layer_weights,
 		transformations
 	);
 
@@ -2256,7 +2256,7 @@ void vk2d::_internal::WindowImpl::DrawTriangleList(
 	}
 
 	#if VK2D_BUILD_OPTION_DEBUG_ALWAYS_DRAW_TRIANGLES_WIREFRAME
-	if( solid ) {
+	if( filled ) {
 		auto vertices_copy = vertices;
 		for( auto & v : vertices_copy ) {
 			v.color = vk2d::Colorf( 0.2f, 1.0f, 0.4f, 0.25f );
@@ -2274,7 +2274,7 @@ void vk2d::_internal::WindowImpl::DrawTriangleList(
 void vk2d::_internal::WindowImpl::DrawLineList(
 	const std::vector<vk2d::VertexIndex_2>	&	indices,
 	const std::vector<vk2d::Vertex>			&	vertices,
-	const std::vector<float>				&	texture_channel_weights,
+	const std::vector<float>				&	texture_layer_weights,
 	const std::vector<vk2d::Matrix4f>		&	transformations,
 	vk2d::Texture							*	texture,
 	vk2d::Sampler							*	sampler,
@@ -2292,7 +2292,7 @@ void vk2d::_internal::WindowImpl::DrawLineList(
 	DrawLineList(
 		raw_indices,
 		vertices,
-		texture_channel_weights,
+		texture_layer_weights,
 		transformations,
 		texture,
 		sampler,
@@ -2303,7 +2303,7 @@ void vk2d::_internal::WindowImpl::DrawLineList(
 void vk2d::_internal::WindowImpl::DrawLineList(
 	const std::vector<uint32_t>				&	raw_indices,
 	const std::vector<vk2d::Vertex>			&	vertices,
-	const std::vector<float>				&	texture_channel_weights,
+	const std::vector<float>				&	texture_layer_weights,
 	const std::vector<vk2d::Matrix4f>		&	transformations,
 	vk2d::Texture							*	texture,
 	vk2d::Sampler							*	sampler,
@@ -2332,7 +2332,7 @@ void vk2d::_internal::WindowImpl::DrawLineList(
 
 	{
 		bool multitextured = texture->GetLayerCount() > 1 &&
-			texture_channel_weights.size() >= texture->GetLayerCount() * vertices.size();
+			texture_layer_weights.size() >= texture->GetLayerCount() * vertices.size();
 
 		auto graphics_shader_programs = instance->GetCompatibleGraphicsShaderModules(
 			multitextured,
@@ -2372,7 +2372,7 @@ void vk2d::_internal::WindowImpl::DrawLineList(
 		command_buffer,
 		raw_indices,
 		vertices,
-		texture_channel_weights,
+		texture_layer_weights,
 		transformations
 	);
 
@@ -2415,7 +2415,7 @@ void vk2d::_internal::WindowImpl::DrawLineList(
 
 void vk2d::_internal::WindowImpl::DrawPointList(
 	const std::vector<vk2d::Vertex>			&	vertices,
-	const std::vector<float>				&	texture_channel_weights,
+	const std::vector<float>				&	texture_layer_weights,
 	const std::vector<vk2d::Matrix4f>		&	transformations,
 	vk2d::Texture							*	texture,
 	vk2d::Sampler							*	sampler
@@ -2442,7 +2442,7 @@ void vk2d::_internal::WindowImpl::DrawPointList(
 
 	{
 		bool multitextured = texture->GetLayerCount() > 1 &&
-			texture_channel_weights.size() >= texture->GetLayerCount() * vertices.size();
+			texture_layer_weights.size() >= texture->GetLayerCount() * vertices.size();
 
 		auto graphics_shader_programs = instance->GetCompatibleGraphicsShaderModules(
 			multitextured,
@@ -2478,7 +2478,7 @@ void vk2d::_internal::WindowImpl::DrawPointList(
 		command_buffer,
 		{},
 		vertices,
-		texture_channel_weights,
+		texture_layer_weights,
 		transformations
 	);
 
@@ -2529,7 +2529,7 @@ void vk2d::_internal::WindowImpl::DrawMesh(
 			DrawTriangleList(
 				mesh.indices,
 				mesh.vertices,
-				mesh.texture_channel_weights,
+				mesh.texture_layer_weights,
 				transformations,
 				true,
 				mesh.texture,
@@ -2540,7 +2540,7 @@ void vk2d::_internal::WindowImpl::DrawMesh(
 			DrawTriangleList(
 				mesh.indices,
 				mesh.vertices,
-				mesh.texture_channel_weights,
+				mesh.texture_layer_weights,
 				transformations,
 				false,
 				mesh.texture,
@@ -2551,7 +2551,7 @@ void vk2d::_internal::WindowImpl::DrawMesh(
 			DrawLineList(
 				mesh.indices,
 				mesh.vertices,
-				mesh.texture_channel_weights,
+				mesh.texture_layer_weights,
 				transformations,
 				mesh.texture,
 				mesh.sampler,
@@ -2561,7 +2561,7 @@ void vk2d::_internal::WindowImpl::DrawMesh(
 		case vk2d::MeshType::POINT:
 			DrawPointList(
 				mesh.vertices,
-				mesh.texture_channel_weights,
+				mesh.texture_layer_weights,
 				transformations,
 				mesh.texture,
 				mesh.sampler

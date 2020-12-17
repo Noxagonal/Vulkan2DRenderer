@@ -157,7 +157,7 @@ public:
 	/// @param[in]	vertices
 	///				Vertices are the corners of a triangle. A vertex also defines more data related to that
 	///				corner and that data gets interpolated inside the triangle.
-	/// @param[in]	texture_channel_weights
+	/// @param[in]	texture_layer_weights
 	///				If you're using multi-layer-textures, here you can define how much weight each of those
 	///				texture layers have per vertex. The size of this vector parameter should be the number
 	///				of texture layers multiplied by number of vertices. Data should be formatted so that for
@@ -182,7 +182,7 @@ public:
 	VK2D_API void												VK2D_APIENTRY				DrawTriangleList(
 		const std::vector<vk2d::VertexIndex_3>				&	indices,
 		const std::vector<vk2d::Vertex>						&	vertices,
-		const std::vector<float>							&	texture_channel_weights,
+		const std::vector<float>							&	texture_layer_weights,
 		const std::vector<vk2d::Matrix4f>					&	transformations				= {},
 		bool													filled						= true,
 		vk2d::Texture										*	texture						= nullptr,
@@ -198,7 +198,7 @@ public:
 	/// @param[in]	vertices
 	///				Vertices are the end points of a line. A vertex also defines more data related to that
 	///				end point and that data gets interpolated for each point along the line.
-	/// @param[in]	texture_channel_weights
+	/// @param[in]	texture_layer_weights
 	///				If you're using multi-layer-textures, here you can define how much weight each of those
 	///				texture layers have per vertex. The size of this vector parameter should be the number
 	///				of texture layers multiplied by number of vertices. Data should be formatted so that for
@@ -224,7 +224,7 @@ public:
 	VK2D_API void												VK2D_APIENTRY				DrawLineList(
 		const std::vector<vk2d::VertexIndex_2>				&	indices,
 		const std::vector<vk2d::Vertex>						&	vertices,
-		const std::vector<float>							&	texture_channel_weights,
+		const std::vector<float>							&	texture_layer_weights,
 		const std::vector<vk2d::Matrix4f>					&	transformations				= {},
 		vk2d::Texture										*	texture						= nullptr,
 		vk2d::Sampler										*	sampler						= nullptr,
@@ -237,7 +237,7 @@ public:
 	/// @note		Multithreading: Main thread only.
 	/// @param[in]	vertices
 	///				Vertices are the points to draw.
-	/// @param[in]	texture_channel_weights
+	/// @param[in]	texture_layer_weights
 	///				If you're using multi-layer-textures, here you can define how much weight each of those
 	///				texture layers have per vertex. The size of this vector parameter should be the number
 	///				of texture layers multiplied by number of vertices. Data should be formatted so that for
@@ -261,7 +261,7 @@ public:
 	///				Pointer to a sampler object that tells how to read the texture.
 	VK2D_API void												VK2D_APIENTRY				DrawPointList(
 		const std::vector<vk2d::Vertex>						&	vertices,
-		const std::vector<float>							&	texture_channel_weights,
+		const std::vector<float>							&	texture_layer_weights,
 		const std::vector<vk2d::Matrix4f>					&	transformations				= {},
 		vk2d::Texture										*	texture						= nullptr,
 		vk2d::Sampler										*	sampler						= nullptr );

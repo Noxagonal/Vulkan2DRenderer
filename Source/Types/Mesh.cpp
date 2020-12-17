@@ -55,7 +55,7 @@ inline vk2d::Vertex CreateDefaultValueVertex()
 	v.uv_coords					= {};
 	v.color						= { 1.0f, 1.0f, 1.0f, 1.0f };
 	v.point_size				= 1.0f;
-	v.single_texture_channel	= 0;
+	v.single_texture_layer	= 0;
 	return v;
 }
 
@@ -119,7 +119,7 @@ VK2D_API void VK2D_APIENTRY vk2d::Mesh::Scew(
 	}
 }
 
-VK2D_API void VK2D_APIENTRY vk2d::Mesh::Wave(
+VK2D_API void VK2D_APIENTRY vk2d::Mesh::DirectionalWave(
 	float						direction_radians,
 	float						frequency,
 	float						animation,
@@ -147,7 +147,7 @@ VK2D_API void VK2D_APIENTRY vk2d::Mesh::Wave(
 		auto c		= i.vertex_coords - origin;
 		c			= backward_rotation_matrix * c;
 
-		auto d		= animation + float( frequency * ( c.x / size.x ) * RAD );
+		auto d		= float( animation / vk2d::RAD ) + float( frequency * ( ( c.x / size.x + c.y / size.y ) / 2.0f ) * RAD );
 		i.vertex_coords		= {
 			std::cos( d ) * intensity.x + c.x,
 			std::sin( d ) * intensity.y + c.y };
@@ -205,7 +205,7 @@ VK2D_API void VK2D_APIENTRY vk2d::Mesh::ScewUV(
 	}
 }
 
-VK2D_API void VK2D_APIENTRY vk2d::Mesh::WaveUV(
+VK2D_API void VK2D_APIENTRY vk2d::Mesh::DirectionalWaveUV(
 	float						direction_radians,
 	float						frequency,
 	float						animation,
@@ -230,7 +230,7 @@ VK2D_API void VK2D_APIENTRY vk2d::Mesh::WaveUV(
 		auto c				= i.uv_coords - origin;
 		c					= backward_rotation_matrix * c;
 
-		auto d				= animation + float( frequency * c.x * RAD );
+		auto d				= float( animation / vk2d::RAD ) + float( frequency * ( ( c.x + c.y ) / 2.0f ) * RAD );
 		i.uv_coords			= {
 			std::cos( d ) * intensity.x + c.x,
 			std::sin( d ) * intensity.y + c.y };
@@ -299,7 +299,7 @@ VK2D_API void VK2D_APIENTRY vk2d::Mesh::SetVertexColorGradient(
 	}
 }
 
-VK2D_API void VK2D_APIENTRY vk2d::Mesh::ConfineUVToBoundingBox()
+VK2D_API void VK2D_APIENTRY vk2d::Mesh::RecalculateUVsToBoundingBox()
 {
 	auto aabb = vk2d::_internal::CalculateAABBFromVertexList( vertices );
 	auto size = aabb.bottom_right - aabb.top_left;
@@ -310,10 +310,10 @@ VK2D_API void VK2D_APIENTRY vk2d::Mesh::ConfineUVToBoundingBox()
 }
 
 VK2D_API void VK2D_APIENTRY vk2d::Mesh::SetTexture(
-	vk2d::Texture			*	texture_resource_pointer
+	vk2d::Texture			*	texture_pointer
 )
 {
-	texture		= texture_resource_pointer;
+	texture		= texture_pointer;
 }
 
 VK2D_API void VK2D_APIENTRY vk2d::Mesh::SetSampler(
@@ -1148,25 +1148,25 @@ VK2D_API vk2d::Mesh VK2D_APIENTRY vk2d::GenerateTextMesh(
 		mesh.vertices[ vertex_offset + 0 ].uv_coords				= vk2d::Vector2f( uv_coords.top_left.x, uv_coords.top_left.y );
 		mesh.vertices[ vertex_offset + 0 ].color					= vk2d::Colorf( 1.0f, 1.0f, 1.0f, 1.0f );
 		mesh.vertices[ vertex_offset + 0 ].point_size				= 1;
-		mesh.vertices[ vertex_offset + 0 ].single_texture_channel	= texture_channel;
+		mesh.vertices[ vertex_offset + 0 ].single_texture_layer	= texture_channel;
 
 		mesh.vertices[ vertex_offset + 1 ].vertex_coords			= vk2d::Vector2f( tcoords.bottom_right.x, tcoords.top_left.y );
 		mesh.vertices[ vertex_offset + 1 ].uv_coords				= vk2d::Vector2f( uv_coords.bottom_right.x, uv_coords.top_left.y );
 		mesh.vertices[ vertex_offset + 1 ].color					= vk2d::Colorf( 1.0f, 1.0f, 1.0f, 1.0f );
 		mesh.vertices[ vertex_offset + 1 ].point_size				= 1;
-		mesh.vertices[ vertex_offset + 1 ].single_texture_channel	= texture_channel;
+		mesh.vertices[ vertex_offset + 1 ].single_texture_layer	= texture_channel;
 
 		mesh.vertices[ vertex_offset + 2 ].vertex_coords			= vk2d::Vector2f( tcoords.top_left.x, tcoords.bottom_right.y );
 		mesh.vertices[ vertex_offset + 2 ].uv_coords				= vk2d::Vector2f( uv_coords.top_left.x, uv_coords.bottom_right.y );
 		mesh.vertices[ vertex_offset + 2 ].color					= vk2d::Colorf( 1.0f, 1.0f, 1.0f, 1.0f );
 		mesh.vertices[ vertex_offset + 2 ].point_size				= 1;
-		mesh.vertices[ vertex_offset + 2 ].single_texture_channel	= texture_channel;
+		mesh.vertices[ vertex_offset + 2 ].single_texture_layer	= texture_channel;
 
 		mesh.vertices[ vertex_offset + 3 ].vertex_coords			= vk2d::Vector2f( tcoords.bottom_right.x, tcoords.bottom_right.y );
 		mesh.vertices[ vertex_offset + 3 ].uv_coords				= vk2d::Vector2f( uv_coords.bottom_right.x, uv_coords.bottom_right.y );
 		mesh.vertices[ vertex_offset + 3 ].color					= vk2d::Colorf( 1.0f, 1.0f, 1.0f, 1.0f );
 		mesh.vertices[ vertex_offset + 3 ].point_size				= 1;
-		mesh.vertices[ vertex_offset + 3 ].single_texture_channel	= texture_channel;
+		mesh.vertices[ vertex_offset + 3 ].single_texture_layer	= texture_channel;
 
 		mesh.indices.resize( index_offset + 6 );
 		mesh.indices[ index_offset + 0 ]	= uint32_t( vertex_offset + 0 );

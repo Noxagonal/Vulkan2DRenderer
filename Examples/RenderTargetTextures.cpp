@@ -121,7 +121,7 @@ int main()
 		auto mesh_copy = mesh;
 
 		// For illustration purposes we'll apply a wave modifier.
-		mesh_copy.Wave(
+		mesh_copy.DirectionalWave(
 			1.2f,
 			2.0f,
 			0.0f,

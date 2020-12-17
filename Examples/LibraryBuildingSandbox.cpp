@@ -103,6 +103,13 @@ int main()
 	red_line.SetVertexColor( { 1.0f, 0.4f, 0.3f, 0.05f } );
 
 
+	auto lattice = vk2d::GenerateLatticeMesh(
+		{ -150, -150, 150, 150 },
+		{ 2, 2 },
+		false
+	);
+	lattice.Rotate( 0.3f );
+
 	auto delta_time_counter		= DeltaTimeCounter();
 	auto delta_time				= 0.0f;
 	auto seconds_since_start	= 0.0f;
@@ -173,6 +180,8 @@ int main()
 				red_circle,
 				pc2_point_transformations
 			);
+
+			window1->DrawMesh( lattice );
 		}
 
 		if( !window1->EndRender() ) return -1;

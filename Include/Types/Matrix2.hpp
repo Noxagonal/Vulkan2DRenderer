@@ -14,6 +14,9 @@ namespace vk2d {
 
 
 
+/// @brief		Column based 2*2 matrix.
+/// @tparam		T
+///				Matrix precision.
 template<typename T>
 class Matrix2Base
 {
@@ -61,17 +64,21 @@ public:
 
 	vk2d::Matrix2Base<T> operator*( const vk2d::Matrix2Base<T> & other )
 	{
-		vk2d::Matrix2Base<T> ret;
+		// a = *this, b = other. number is column first, row second.
+		auto & a11 = column_1.x; auto & a21 = column_2.x;
+		auto & a12 = column_1.y; auto & a22 = column_2.y;
 
-		// Cheat sheet...
-		//   c1         c2               c1   c2      c1   c2
-		//	[ ae + bg ][ af + bh ]	=	[ a ][ b ] * [ e ][ f ]  x
-		//	[ ce + dg ][ cf + dh ]	=	[ c ][ d ] * [ g ][ h ]  y
+		auto & b11 = other.column_1.x; auto & b21 = other.column_2.x;
+		auto & b12 = other.column_1.y; auto & b22 = other.column_2.y;
 
-		ret.column_1.x	= column_1.x * other.column_1.x + column_2.x * other.column_1.y;
-		ret.column_2.x	= column_1.x * other.column_2.x + column_2.x * other.column_2.y;
-		ret.column_1.y	= column_1.y * other.column_1.x + column_2.y * other.column_1.y;
-		ret.column_2.y	= column_1.y * other.column_2.x + column_2.y * other.column_2.y;
+		vk2d::Matrix4Base<T> ret;
+		// Row 1
+		ret.column_1.x	= a11*b11 + a21*b12;
+		ret.column_2.x	= a11*b21 + a21*b22;
+
+		// Row 2
+		ret.column_1.y	= a12*b11 + a22*b12;
+		ret.column_2.y	= a12*b21 + a22*b22;
 
 		return ret;
 	}
@@ -104,13 +111,20 @@ public:
 	}
 };
 
+/// @brief		Single precision 2*2 matrix.
 using Matrix2f			= vk2d::Matrix2Base<float>;
+
+/// @brief		Double precision 2*2 matrix.
 using Matrix2d			= vk2d::Matrix2Base<double>;
-using Matrix2i			= vk2d::Matrix2Base<int32_t>;
-using Matrix2u			= vk2d::Matrix2Base<uint32_t>;
 
 
 
+/// @brief		Create 2*2 rotation matrix.
+/// @tparam		T
+///				Matrix precision.
+/// @param		rotation
+///				Rotation in radians.
+/// @return		Rotation matrix.
 template<typename T>
 vk2d::Matrix2Base<T> CreateRotationMatrix2(
 	T rotation )
