@@ -90,6 +90,7 @@ int main()
 	);
 	blue_circle.SetVertexColor( { 0.0f, 0.3f, 1.0f, 1.0f } );
 	blue_line.SetVertexColor( { 0.0f, 0.3f, 1.0f, 0.05f } );
+	blue_circle.SetVertexColor( vk2d::Colorf::WHITE() );
 
 
 	auto red_circle			= vk2d::GenerateEllipseMesh(

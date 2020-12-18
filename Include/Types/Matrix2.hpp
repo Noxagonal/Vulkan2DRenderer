@@ -71,7 +71,7 @@ public:
 		auto & b11 = other.column_1.x; auto & b21 = other.column_2.x;
 		auto & b12 = other.column_1.y; auto & b22 = other.column_2.y;
 
-		vk2d::Matrix4Base<T> ret;
+		vk2d::Matrix2Base<T> ret;
 		// Row 1
 		ret.column_1.x	= a11*b11 + a21*b12;
 		ret.column_2.x	= a11*b21 + a21*b22;
