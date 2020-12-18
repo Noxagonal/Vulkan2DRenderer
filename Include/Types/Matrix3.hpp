@@ -83,7 +83,7 @@ public:
 		auto & b12 = other.column_1.y; auto & b22 = other.column_2.y; auto & b32 = other.column_3.y;
 		auto & b13 = other.column_1.z; auto & b23 = other.column_2.z; auto & b33 = other.column_3.z;
 
-		vk2d::Matrix4Base<T> ret;
+		vk2d::Matrix3Base<T> ret;
 		// Row 1
 		ret.column_1.x	= a11*b11 + a21*b12 + a31*b13;
 		ret.column_2.x	= a11*b21 + a21*b22 + a31*b23;
