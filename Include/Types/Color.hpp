@@ -44,11 +44,7 @@ public:
 
 	vk2d::ColorBase<T> & operator=( const vk2d::ColorBase<T> & other )	= default;
 	vk2d::ColorBase<T> & operator=( vk2d::ColorBase<T> && other )		= default;
-	
-	static constexpr ColorBase<T> TRANSPARENT() {
-		return ColorBase<T>{ 0, 0, 0, 0 };
-	};
-	
+
 	static constexpr ColorBase<T> WHITE() {
 		if constexpr (std::is_integral_v<T>) {
 			T max = std::numeric_limits<T>::max();
