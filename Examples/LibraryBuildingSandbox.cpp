@@ -90,7 +90,18 @@ int main()
 	);
 	blue_circle.SetVertexColor( { 0.0f, 0.3f, 1.0f, 1.0f } );
 	blue_line.SetVertexColor( { 0.0f, 0.3f, 1.0f, 0.05f } );
-	blue_circle.SetVertexColor( vk2d::Colorf::WHITE() );
+	blue_circle.SetVertexColor( vk2d::Colorf::BLUE() );
+
+	vk2d::Colord::VIOLET();
+	vk2d::Colorf::VIOLET();
+	vk2d::Color8::VIOLET();
+	vk2d::Color16::VIOLET();
+	vk2d::Color32::VIOLET();
+
+	auto color1 = vk2d::Colorf( 0.25f, 1.0f, 0.5f, 0.5f );
+	auto color2 = vk2d::Colorf( 1.0f, 0.25f, 0.8f, 0.8f );
+	auto colorf = color1.BlendUsingAlpha( color2 );
+	std::cout << colorf.r << ", " << colorf.g << ", " << colorf.b << ", " << colorf.a << "\n";
 
 
 	auto red_circle			= vk2d::GenerateEllipseMesh(
