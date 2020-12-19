@@ -191,9 +191,9 @@ public:
 
 		if constexpr( std::is_integral_v<T> ) {
 			T t_max = std::numeric_limits<T>::max();
-			return vk2d::ColorBase<T>( T( final_r * t_max ), T( final_g * t_max ), T( final_b * t_max ), T( final_a * t_max ) );
+			return vk2d::ColorBase<T>{ T( final_r * t_max ), T( final_g * t_max ), T( final_b * t_max ), T( final_a * t_max ) };
 		} else {
-			return vk2d::ColorBase<T>( T( final_r ), T( final_g ), T( final_b ), T( final_a ) );
+			return vk2d::ColorBase<T>{ T( final_r ), T( final_g ), T( final_b ), T( final_a ) };
 		}
 	}
 
@@ -266,9 +266,9 @@ public:
 
 		if constexpr( std::is_integral_v<T> ) {
 			T t_max = std::numeric_limits<T>::max();
-			return vk2d::ColorBase<T>( T( final_r * t_max ), T( final_g * t_max ), T( final_b * t_max ), T( final_a * t_max ) );
+			return vk2d::ColorBase<T>{ T( final_r * t_max ), T( final_g * t_max ), T( final_b * t_max ), T( final_a * t_max ) };
 		} else {
-			return vk2d::ColorBase<T>( T( final_r ), T( final_g ), T( final_b ), T( final_a ) );
+			return vk2d::ColorBase<T>{ T( final_r ), T( final_g ), T( final_b ), T( final_a ) };
 		}
 	}
 
@@ -276,9 +276,9 @@ public:
 	{
 		if constexpr( std::is_integral_v<T> ) {
 			T max = std::numeric_limits<T>::max();
-			return ColorBase<T>{ max, max, max, max };
+			return ColorBase<T>{ T( 1.0 * max ), T( 1.0 * max ), T( 1.0 * max ), T( 1.0 * max ) };
 		} else {
-			return ColorBase<T>{ 1.0, 1.0, 1.0, 1.0 };
+			return ColorBase<T>{ T( 1.0 ), T( 1.0 ), T( 1.0 ), T( 1.0 ) };
 		}
 	};
 
@@ -286,9 +286,9 @@ public:
 	{
 		if constexpr( std::is_integral_v<T> ) {
 			T max = std::numeric_limits<T>::max();
-			return ColorBase<T>{ 0, 0, 0, max };
+			return ColorBase<T>{ T( 0.0 * max ), T( 0.0 * max ), T( 0.0 * max ), T( 1.0 * max ) };
 		} else {
-			return ColorBase<T>{ 0.0, 0.0, 0.0, 1.0 };
+			return ColorBase<T>{ T( 0.0 ), T( 0.0 ), T( 0.0 ), T( 1.0 ) };
 		}
 	};
 
@@ -296,9 +296,9 @@ public:
 	{
 		if constexpr( std::is_integral_v<T> ) {
 			T max = std::numeric_limits<T>::max();
-			return ColorBase<T>{ max / 2, max / 2, max / 2, max };
+			return ColorBase<T>{ T( 0.5 * max ), T( 0.5 * max ), T( 0.5 * max ), T( 1.0 * max ) };
 		} else {
-			return ColorBase<T>{ 0.5, 0.5, 0.5, 1.0 };
+			return ColorBase<T>{ T( 0.5 ), T( 0.5 ), T( 0.5 ), T( 1.0 ) };
 		}
 	};
 
@@ -306,9 +306,9 @@ public:
 	{
 		if constexpr( std::is_integral_v<T> ) {
 			T max = std::numeric_limits<T>::max();
-			return ColorBase<T>{ max, 0, 0, max };
+			return ColorBase<T>{ T( 1.0 * max ), T( 0.0 * max ), T( 0.0 * max ), T( 1.0 * max ) };
 		} else {
-			return ColorBase<T>{ 1.0, 0.0, 0.0, 1.0 };
+			return ColorBase<T>{ T( 1.0 ), T( 0.0 ), T( 0.0 ), T( 1.0 ) };
 		}
 	};
 
@@ -316,10 +316,9 @@ public:
 	{
 		if constexpr( std::is_integral_v<T> ) {
 			T max = std::numeric_limits<T>::max();
-			// TODO: These potentially overflow, also VS complains: conversion from 'int' to 'T' requires a narrowing conversion.
-			return ColorBase<T>{ max, ( 52 * max ) / 255, ( 28 * max ) / 255, max };
+			return ColorBase<T>{ T( 1.0 * max ), T( 0.203 * max ), T( 0.109 * max ), T( 1.0 * max ) };
 		} else {
-			return ColorBase<T>{ 1.0, 0.203, 0.109, 1.0 };
+			return ColorBase<T>{ T( 1.0 ), T( 0.203 ), T( 0.109 ), T( 1.0 ) };
 		}
 	};
 
@@ -327,9 +326,9 @@ public:
 	{
 		if constexpr( std::is_integral_v<T> ) {
 			T max = std::numeric_limits<T>::max();
-			return ColorBase<T>{ max, ( 105 * max ) / 255, ( 180 * max ) / 255, max };
+			return ColorBase<T>{ T( 1.0 * max ), T( 0.411 * max ), T( 0.705 * max ), T( 1.0 * max ) };
 		} else {
-			return ColorBase<T>{ 1.0, 0.411, 0.705, 1.0 };
+			return ColorBase<T>{ T( 1.0 ), T( 0.411 ), T( 0.705 ), T( 1.0 ) };
 		}
 	};
 
@@ -337,9 +336,9 @@ public:
 	{
 		if constexpr( std::is_integral_v<T> ) {
 			T max = std::numeric_limits<T>::max();
-			return ColorBase<T>{ max, 0, max, max };
+			return ColorBase<T>{ T( 1.0 * max ), T( 0.0 * max ), T( 1.0 * max ), T( 1.0 * max ) };
 		} else {
-			return ColorBase<T>{ 1.0, 0.0, 1.0, 1.0 };
+			return ColorBase<T>{ T( 1.0 ), T( 0.0 ), T( 1.0 ), T( 1.0 ) };
 		}
 	};
 
@@ -347,9 +346,9 @@ public:
 	{
 		if constexpr( std::is_integral_v<T> ) {
 			T max = std::numeric_limits<T>::max();
-			return ColorBase<T>{ ( 160 * max ) / 255, ( 32 * max ) / 255, ( 240 * max ) / 255, max };
+			return ColorBase<T>{ T( 0.627 * max ), T( 0.125 * max ), T( 0.941 * max ), T( 1.0 * max ) };
 		} else {
-			return ColorBase<T>{ 0.627, 0.125, 0.941, 1.0 };
+			return ColorBase<T>{ T( 0.627 ), T( 0.125 ), T( 0.941 ), T( 1.0 ) };
 		}
 	};
 
@@ -357,9 +356,9 @@ public:
 	{
 		if constexpr( std::is_integral_v<T> ) {
 			T max = std::numeric_limits<T>::max();
-			return ColorBase<T>{ ( 238 * max ) / 255, ( 130 * max ) / 255, ( 238 * max ) / 255, max };
+			return ColorBase<T>{ T( 0.933 * max ), T( 0.509 * max ), T( 0.933 * max ), T( 1.0 * max ) };
 		} else {
-			return ColorBase<T>{ 0.933, 0.509, 0.933, 1.0 };
+			return ColorBase<T>{ T( 0.933 ), T( 0.509 ), T( 0.933 ), T( 1.0 ) };
 		}
 	};
 
@@ -367,9 +366,9 @@ public:
 	{
 		if constexpr( std::is_integral_v<T> ) {
 			T max = std::numeric_limits<T>::max();
-			return ColorBase<T>{ 0, max, 0, max };
+			return ColorBase<T>{ T( 0.0 * max ), T( 1.0 * max ), T( 0.0 * max ), T( 1.0 * max ) };
 		} else {
-			return ColorBase<T>{ 0.0, 1.0, 0.0, 1.0 };
+			return ColorBase<T>{ T( 0.0 ), T( 1.0 ), T( 0.0 ), T( 1.0 ) };
 		}
 	};
 
@@ -377,9 +376,9 @@ public:
 	{
 		if constexpr( std::is_integral_v<T> ) {
 			T max = std::numeric_limits<T>::max();
-			return ColorBase<T>{ ( 50 * max ) / 255, ( 205 * max ) / 255, ( 50 * max ) / 255, max };
+			return ColorBase<T>{ T( 0.196 * max ), T( 0.803 * max ), T( 0.196 * max ), T( 1.0 * max ) };
 		} else {
-			return ColorBase<T>{ 0.196, 0.803, 0.196, 1.0 };
+			return ColorBase<T>{ T( 0.196 ), T( 0.803 ), T( 0.196 ), T( 1.0 ) };
 		}
 	};
 
@@ -387,9 +386,9 @@ public:
 	{
 		if constexpr( std::is_integral_v<T> ) {
 			T max = std::numeric_limits<T>::max();
-			return ColorBase<T>{ ( 107 * max ) / 255, ( 142 * max ) / 255, ( 35 * max ) / 255, max };
+			return ColorBase<T>{ T( 0.419 * max ), T( 0.556 * max ), T( 0.137 * max ), T( 1.0 * max ) };
 		} else {
-			return ColorBase<T>{ 0.419, 0.556, 0.137, 1.0 };
+			return ColorBase<T>{ T( 0.419 ), T( 0.556 ), T( 0.137 ), T( 1.0 ) };
 		}
 	};
 
@@ -397,9 +396,9 @@ public:
 	{
 		if constexpr( std::is_integral_v<T> ) {
 			T max = std::numeric_limits<T>::max();
-			return ColorBase<T>{ 0, 0, max, max };
+			return ColorBase<T>{ T( 0.0 * max ), T( 0.0 * max ), T( 1.0 * max ), T( 1.0 * max ) };
 		} else {
-			return ColorBase<T>{ 0.0, 0.0, 1.0, 1.0 };
+			return ColorBase<T>{ T( 0.0 ), T( 0.0 ), T( 1.0 ), T( 1.0 ) };
 		}
 	};
 
@@ -407,9 +406,9 @@ public:
 	{
 		if constexpr( std::is_integral_v<T> ) {
 			T max = std::numeric_limits<T>::max();
-			return ColorBase<T>{ 0, 0, max / 2, max };
+			return ColorBase<T>{ T( 0.0 * max ), T( 0.0 * max ), T( 0.5 * max ), T( 1.0 * max ) };
 		} else {
-			return ColorBase<T>{ 0.0, 0.0, 0.5, 1.0 };
+			return ColorBase<T>{ T( 0.0 ), T( 0.0 ), T( 0.5 ), T( 1.0 ) };
 		}
 	};
 
@@ -417,9 +416,9 @@ public:
 	{
 		if constexpr( std::is_integral_v<T> ) {
 			T max = std::numeric_limits<T>::max();
-			return ColorBase<T>{ 0, max, max, max };
+			return ColorBase<T>{ T( 0.0 * max ), T( 1.0 * max ), T( 1.0 * max ), T( 1.0 * max ) };
 		} else {
-			return ColorBase<T>{ 0.0, 1.0, 1.0, 1.0 };
+			return ColorBase<T>{ T( 0.0 ), T( 1.0 ), T( 1.0 ), T( 1.0 ) };
 		}
 	};
 
@@ -427,9 +426,9 @@ public:
 	{
 		if constexpr( std::is_integral_v<T> ) {
 			T max = std::numeric_limits<T>::max();
-			return ColorBase<T>{ 0, max / 2, max / 2, max };
+			return ColorBase<T>{ T( 0.0 * max ), T( 0.5 * max ), T( 0.5 * max ), T( 1.0 * max ) };
 		} else {
-			return ColorBase<T>{ 0.0, 0.5, 0.5, 1.0 };
+			return ColorBase<T>{ T( 0.0 ), T( 0.5 ), T( 0.5 ), T( 1.0 ) };
 		}
 	};
 
@@ -437,9 +436,9 @@ public:
 	{
 		if constexpr( std::is_integral_v<T> ) {
 			T max = std::numeric_limits<T>::max();
-			return ColorBase<T>{ max, max, 0, max };
+			return ColorBase<T>{ T( 1.0 * max ), T( 1.0 * max ), T( 0.0 * max ), T( 1.0 * max ) };
 		} else {
-			return ColorBase<T>{ 1.0, 1.0, 0.0, 1.0 };
+			return ColorBase<T>{ T( 1.0 ), T( 1.0 ), T( 0.0 ), T( 1.0 ) };
 		}
 	};
 };
