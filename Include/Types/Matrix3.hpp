@@ -14,7 +14,7 @@ namespace vk2d {
 
 
 
-/// @brief		Column based 4*4 matrix.
+/// @brief		Column based 3*3 matrix.
 /// @tparam		T
 ///				Matrix precision.
 template<typename T>
