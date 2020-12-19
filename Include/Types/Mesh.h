@@ -413,7 +413,6 @@ VK2D_API vk2d::Mesh									VK2D_APIENTRY					GenerateEllipseMesh(
 
 /// @brief		Generate an ellipse or a circle that has a "slice" cut out, similar to usual pie
 ///				graphs.
-/// @note		Multithreading: Any thread.
 /// @param[in]	area
 ///				Rectangle area in which the ellipse must fit. See vk2d::RenderCoordinateSpace for
 ///				more info about what scale is be used.
@@ -438,7 +437,6 @@ VK2D_API vk2d::Mesh									VK2D_APIENTRY					GenerateEllipsePieMesh(
 	float											edge_count						= 64.0f );
 
 /// @brief		Generate a rectangular pie, similar to drawing a rectangle but which has a pie slice cut out.
-/// @note		Multithreading: Any thread.
 /// @param[in]	area
 ///				Area of the rectangle. See vk2d::RenderCoordinateSpace for more info about what scale is used.
 /// @param[in]	begin_angle_radians
@@ -457,7 +455,6 @@ VK2D_API vk2d::Mesh									VK2D_APIENTRY					GenerateRectanglePieMesh(
 	bool											filled							= true );
 
 /// @brief		Generate a lattice mesh, this is useful for distortions.
-/// @note		Multithreading: Any thread.
 /// @param[in]	area
 ///				Area of the rectangle. See vk2d::RenderCoordinateSpace for more info about what scale is used.
 /// @param[in]	subdivisions

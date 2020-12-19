@@ -48,7 +48,6 @@ public:
 	/// @brief		Add color channels directly by another color and apply to itself. eg. when using
 	///				vk2d::Colorf {1.0, 1.0, 0.5, 0.5} + {0.0, 2.0, 0.5, 0.5} will result in
 	///				{1.0, 3.0, 1.0, 1.0} color.
-	/// @note		Multithreading: Any thread.
 	/// @tparam		OtherT
 	///				Another type can be used for the other parameter. No extra operations are done to
 	///				types when added together, eg. Add 0.5 float to 128 integral value will result in
@@ -70,7 +69,6 @@ public:
 	///				useful when you wish to disable some color channels or intensify them. For example,
 	///				when using vk2d::Colorf, {1.0, 0.0, 5.0, 1.0} * {1.0, 5.0, 2.0, 2.0} will result in
 	///				{1.0, 0.0, 10.0, 2.0}.
-	/// @note		Multithreading: Any thread.
 	/// @tparam		OtherT
 	///				Another type can be used for the other parameter. Useful if primary color is integer
 	///				type and you wish to multiply it with float or double value.
@@ -89,7 +87,6 @@ public:
 	///	@brief		Add color channels directly by another color. eg.when using vk2d::Colorf
 	///				{1.0, 1.0, 0.5, 0.5} + {0.0, 2.0, 0.5, 0.5} will result in {1.0, 3.0, 1.0, 1.0}
 	///				color.
-	/// @note		Multithreading: Any thread.
 	/// @tparam		OtherT
 	///				Another type can be used for the other parameter. No extra operations are done to
 	///				types when added together, eg. Add 0.5 float to 128 integral value will result in
@@ -109,7 +106,6 @@ public:
 	/// @brief		Multiply color channels directly by another color. This is useful when you with to
 	///				disable some color channels or intensify them. For example, when using vk2d::Colorf,
 	///				{1.0, 0.0, 5.0, 1.0} * {1.0, 5.0, 2.0, 2.0} will result in {1.0, 0.0, 10.0, 2.0}.
-	/// @note		Multithreading: Any thread.
 	/// @tparam		OtherT
 	///				Another type can be used for the other parameter. Useful if primary color is integer
 	///				type and you wish to multiply it with float or double value.
@@ -138,7 +134,6 @@ public:
 	///				Blending works for integer types as well, for example vk2d::Color8 channel value 128
 	///				is considered equal to vk2d::Colorf channel value 0.5 by this function. This makes
 	///				blending between integer colors easy.
-	/// @note		Multithreading: Any thread.
 	/// @tparam		OtherT
 	///				Another type can be used for the other parameter. Useful when you want to mix integer
 	///				colors with a float for example.
@@ -198,8 +193,6 @@ public:
 	}
 
 	/// @brief		Linear color blending on all channels using single value.
-	/// 
-	/// @note		Multithreading: Any thread.
 	/// @tparam		OtherT
 	///				Another type can be used for the other parameter. Useful when you want to mix integer
 	///				colors with a float for example.
