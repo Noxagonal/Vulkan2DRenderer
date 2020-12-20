@@ -19,29 +19,39 @@ set(CMAKE_MODULE_PATH
 
 
 
-###########################
+################################################################
 # Doxygen
-###########################
+################################################################
 
 find_package(Doxygen REQUIRED)
 
-set(DOXYGEN_INPUT_SOURCE_DIR
-	"${PROJECT_SOURCE_DIR}/Source"
+################################################################
+# Settings and files that will be placed in Doxyfile
+################################################################
+set(DOXYFILE_STRIP_FROM_PATH
+	${PROJECT_SOURCE_DIR}
+)
+set(DOXYFILE_SOURCE_DIR
+	"${PROJECT_SOURCE_DIR}/Source/"
 )
 if(NOT VK2D_BUILD_DOCS_FOR_COMPLETE_SOURCE)
-set(DOXYGEN_INPUT_SOURCE_DIR
+set(DOXYFILE_SOURCE_DIR
 	""
 )
 endif()
 
-set(DOXYGEN_INPUT_INCLUDE_DIR
-	"${PROJECT_SOURCE_DIR}/Include" 
+set(DOXYFILE_INCLUDE_DIR
+	"${PROJECT_SOURCE_DIR}/Include/" 
 )
+set(DOXYFILE_PAGES_DIR
+	"${CMAKE_CURRENT_SOURCE_DIR}/Pages/"
+)
+
+################################################################
+# General settings
+################################################################
 set(DOXYGEN_OUTPUT_DIR
 	"${CMAKE_CURRENT_BINARY_DIR}/Docs/Doxygen"
-)
-set(DOXYGEN_STRIP_FROM_PATH
-	${PROJECT_SOURCE_DIR}
 )
 set(DOXYGEN_INDEX_FILE
 	"${DOXYGEN_OUTPUT_DIR}/xml/index.xml"
@@ -53,6 +63,9 @@ set(DOXYFILE_OUT
 	"${CMAKE_CURRENT_BINARY_DIR}/Doxygen/vk2d.Doxyfile"
 )
 
+################################################################
+# Create doxygen project
+################################################################
 #Replace variables inside @@ with the current values
 configure_file(
 	${DOXYFILE_IN}
@@ -64,6 +77,10 @@ file(MAKE_DIRECTORY
 	${DOXYGEN_OUTPUT_DIR}
 )
 
+file(GLOB_RECURSE DOXYFILE_PAGES
+	CONFIGURE_DEPENDS
+	"${DOXYFILE_PAGES_DIR}/*.md"
+)
 add_custom_target(VK2DDocumentation)
 add_custom_command(
 	TARGET
@@ -72,6 +89,7 @@ add_custom_command(
 	DEPENDS
 		${FILES_INCLUDE}
 		${FILES_SOURCE}
+		${DOXYFILE_PAGES}
 	COMMAND
 		${DOXYGEN_EXECUTABLE}
 		${DOXYFILE_OUT}
@@ -86,6 +104,9 @@ add_dependencies(VK2D
 	VK2DDocumentation
 )
 
+################################################################
+# Documentation install
+################################################################
 install(
 	DIRECTORY
 		"${CMAKE_CURRENT_BINARY_DIR}/Docs/Doxygen/html/"
