@@ -3,7 +3,7 @@
 
 :exclamation: This project is a work in progress (pre-alpha). Frequent API changes, ABI changes, crashes... :exclamation:
 
-Vulkan 2D Renderer is a C++17 library, it is designed to be easy to use, high performance 2D rendering backend for realtime applications.
+Vulkan 2D Renderer is a C++17 library designed to be easy to use, high performance 2D rendering backend for realtime applications.
 You only need a few lines of code to create a window and display simple shapes.
 On the other hand you can create a variety of different effects using meshes and applying different modifiers to them.
 Internally workloads are automatically grouped to create more efficient submissions to the GPU and all resource loading and saving is multithreaded.
@@ -40,7 +40,7 @@ Internally workloads are automatically grouped to create more efficient submissi
 ### Limitations
 
 - Does not render 3D, this is meant to be a simple library to use.
-- This is not a game engine, the purpose of this library is to aid in 2D drawing.
+- This is not a game engine, the purpose of this library is strictly limited to 2D drawing.
 - No HDRI image support. Didn't find any use for this in a 2D application.
 - No scene management, although transformation hierarchy is implemented so you can create your own.
 - No custom shaders, might implement these later if there's any need for these.
