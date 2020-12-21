@@ -99,7 +99,7 @@ public:
 	/// @param[in]	scalar
 	///				Divide this vector with scalar.
 	/// @return		A new vector.
-	vk2d::Vector4Base<T> operator/( T other ) const
+	vk2d::Vector4Base<T> operator/( T scalar ) const
 	{
 		return { x / scalar, y / scalar, z / scalar, w / scalar };
 	}
@@ -232,7 +232,7 @@ public:
 	vk2d::Vector4Base<T> CalculateNormalized()
 	{
 		auto distance = CalculateDistanceTo( {} );
-		if( distance <= T( vk2d::_internal::KINDA_SMALL_VALUE ) ) return vk2d::Vector4Base<T>{ T( 1.0 ), T( 0.0 ), T( 0.0 ), T( 0.0 ) };
+		if( distance <= T( vk2d::KINDA_SMALL_VALUE ) ) return vk2d::Vector4Base<T>{ T( 1.0 ), T( 0.0 ), T( 0.0 ), T( 0.0 ) };
 		return *this / distance;
 	}
 };

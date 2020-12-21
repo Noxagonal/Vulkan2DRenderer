@@ -153,7 +153,7 @@ def ConfigureAndBuildProjectMenu( quick_setup = False ):
     call_parameters.append( "." )
     call_parameters.append( "-B" )
     call_parameters.append( "build" )
-
+    
     if not os.path.exists( "build" ):
         os.mkdir( "build" )
 

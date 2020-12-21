@@ -222,7 +222,7 @@ public:
 	vk2d::Vector3Base<T> CalculateNormalized()
 	{
 		auto distance = CalculateDistanceTo( {} );
-		if( distance <= T( vk2d::_internal::KINDA_SMALL_VALUE ) ) return vk2d::Vector3Base<T>{ T( 1.0 ), T( 0.0 ), T( 0.0 ) };
+		if( distance <= T( vk2d::KINDA_SMALL_VALUE ) ) return vk2d::Vector3Base<T>{ T( 1.0 ), T( 0.0 ), T( 0.0 ) };
 		return *this / distance;
 	}
 };
