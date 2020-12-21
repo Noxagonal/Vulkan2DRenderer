@@ -27,8 +27,9 @@
 
 namespace vk2d {
 
-constexpr double PI				= 3.14159265358979323846;
-constexpr double RAD			= vk2d::PI * 2.0;
+constexpr double PI					= 3.14159265358979323846;
+constexpr double RAD				= vk2d::PI * 2.0;
+constexpr double KINDA_SMALL_VALUE	= 0.001;
 
 } // vk2d
 

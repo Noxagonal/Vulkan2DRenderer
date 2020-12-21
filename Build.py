@@ -149,13 +149,9 @@ def ConfigureAndBuildProjectMenu( quick_setup = False ):
         call_parameters += build_sys[ 1 ]
     call_parameters.append( "-Wno-dev" )
     call_parameters += build_opt[ 1 ]
-    call_parameters.append( "-S" )
-    call_parameters.append( "." )
-    call_parameters.append( "-B" )
-    call_parameters.append( "build" )
+    call_parameters.append( ".." )
 
-    if not os.path.exists( "build" ):
-        os.mkdir( "build" )
+    print( call_parameters )
 
     subprocess.run( call_parameters )
     if not quick_setup:
@@ -190,7 +186,7 @@ def BuildMenu( quick_setup = False ):
             version = "Debug"
             break
 
-    subprocess.run( [ "cmake", "--build", "build", "--config", version ] )
+    subprocess.run( [ "cmake", "--build", ".", "--config", version ] )
     if not quick_setup:
         print( "\n\nDone." )
         input( "Press enter..." )
@@ -224,7 +220,7 @@ def InstallMenu( quick_setup = False ):
             version = "Debug"
             break
 
-    subprocess.run( [ "cmake", "--install", "build", "--config", version ] )
+    subprocess.run( [ "cmake", "--install", ".", "--config", version ] )
     if not quick_setup:
         print( "\n\nDone." )
         input( "Press enter..." )
@@ -265,4 +261,8 @@ def MainMenu():
 
 
 if __name__ == "__main__":
+    if not os.path.exists( "build" ):
+        os.mkdir( "build" )
+    os.chdir( "build" )
+
     MainMenu()

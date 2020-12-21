@@ -261,7 +261,7 @@ VK2D_API void VK2D_APIENTRY vk2d::Mesh::SetVertexColorGradient(
 	if( coord_lenght > 0.0f ) {
 		coord_dir					= coord_vector / coord_lenght;
 	} else {
-		coord_lenght				= vk2d::_internal::KINDA_SMALL_VALUE;
+		coord_lenght				= vk2d::KINDA_SMALL_VALUE;
 		coord_dir					= { 1.0f, 0.0f };
 	}
 
@@ -857,8 +857,8 @@ VK2D_API vk2d::Mesh VK2D_APIENTRY vk2d::GenerateRectanglePieMesh(
 		Vector2f			point_2
 		) -> bool
 	{
-		if( point_1.y < point_2.y + vk2d::_internal::KINDA_SMALL_VALUE &&
-			point_1.y > point_2.y - vk2d::_internal::KINDA_SMALL_VALUE ) {
+		if( point_1.y < point_2.y + vk2d::KINDA_SMALL_VALUE &&
+			point_1.y > point_2.y - vk2d::KINDA_SMALL_VALUE ) {
 			return true;
 		}
 		return false;
@@ -869,8 +869,8 @@ VK2D_API vk2d::Mesh VK2D_APIENTRY vk2d::GenerateRectanglePieMesh(
 		Vector2f			point_2
 		) -> bool
 	{
-		if( point_1.x < point_2.x + vk2d::_internal::KINDA_SMALL_VALUE &&
-			point_1.x > point_2.x - vk2d::_internal::KINDA_SMALL_VALUE ) {
+		if( point_1.x < point_2.x + vk2d::KINDA_SMALL_VALUE &&
+			point_1.x > point_2.x - vk2d::KINDA_SMALL_VALUE ) {
 			return true;
 		}
 		return false;

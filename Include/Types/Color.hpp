@@ -3,6 +3,7 @@
 #include "Core/Common.h"
 
 #include <initializer_list>
+#include <algorithm>
 
 
 
