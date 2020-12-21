@@ -25,6 +25,8 @@ set(CMAKE_MODULE_PATH
 
 find_package(Doxygen REQUIRED)
 
+
+
 ################################################################
 # Settings and files that will be placed in Doxyfile
 ################################################################
@@ -43,9 +45,14 @@ endif()
 set(DOXYFILE_INCLUDE_DIR
 	"${PROJECT_SOURCE_DIR}/Include/" 
 )
+set(DOXYFILE_EXAMPLES_DIR
+	"${PROJECT_SOURCE_DIR}/Examples/"
+)
 set(DOXYFILE_PAGES_DIR
 	"${CMAKE_CURRENT_SOURCE_DIR}/Pages/"
 )
+
+
 
 ################################################################
 # General settings
@@ -103,6 +110,8 @@ add_custom_command(
 add_dependencies(VK2D
 	VK2DDocumentation
 )
+
+
 
 ################################################################
 # Documentation install

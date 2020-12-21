@@ -3,7 +3,7 @@
 
 :exclamation: This project is a work in progress (pre-alpha). Frequent API changes, ABI changes, crashes... :exclamation:
 
-Vulkan 2D Renderer is a C++17 library, it is designed to be easy to use, high performance 2D rendering backend for realtime applications.
+Vulkan 2D Renderer is a C++17 library designed to be easy to use, high performance 2D rendering backend for realtime applications.
 You only need a few lines of code to create a window and display simple shapes.
 On the other hand you can create a variety of different effects using meshes and applying different modifiers to them.
 Internally workloads are automatically grouped to create more efficient submissions to the GPU and all resource loading and saving is multithreaded.
@@ -40,7 +40,7 @@ Internally workloads are automatically grouped to create more efficient submissi
 ### Limitations
 
 - Does not render 3D, this is meant to be a simple library to use.
-- This is not a game engine, the purpose of this library is to aid in 2D drawing.
+- This is not a game engine, the purpose of this library is strictly limited to 2D drawing.
 - No HDRI image support. Didn't find any use for this in a 2D application.
 - No scene management, although transformation hierarchy is implemented so you can create your own.
 - No custom shaders, might implement these later if there's any need for these.
@@ -49,7 +49,7 @@ Internally workloads are automatically grouped to create more efficient submissi
 
 ------
 
-### Building project files
+## Building from source
 
 :exclamation: You will need to use Git, direct download from GitHub will not work because of dependencies. :exclamation:
 
@@ -57,67 +57,30 @@ Prior to building this library on any platform you will need:
 - Git 2.28 or newer
 - CMake 3.16 or newer
 - Vulkan SDK 1.2 or newer
+- Python 3.8 or newer
 
 If you're building the documentation you will also need these (disabled by default):
 - Doxygen 1.8.20 or newer
 
+------
 
-##### Windows Visual Studio 2019
-1. Open PowerShell and navigate to a folder where you would like to download the VK2D project sources.
-2. Copy and paste the following commands to the PowerShell window and press enter, this will also download everything for you (PowerShell may appear stuck for a couple of minutes).
+#### Getting the sources
+
+Getting the sources is the same process on all platforms. On your command line or terminal, navigate to the folder where you
+wish to download the sources and copy-paste this line.
 ```
 git clone https://github.com/Noxagonal/Vulkan2DRenderer
-cd Vulkan2DRenderer
-mkdir build
-cd build
-cmake -G "Visual Studio 16 2019" -A "x64" ..
 ```
-( Generated solution file is located in `build/VK2D.sln` )
 
-3. If you wish to create an easier to use package without extra sources you can also run these commands in the PowerShell after you've created the project and solution files above.
-```
-cmake --build . --config Release
-cmake --install .
-```
-( Install package is located in `build/install` )
+#### Compiling the sources
 
+Python script is provided to help compile the project. Navigate to the `Vulkan2DRenderer` folder and simply run
+`Build.bat` on Windows or `Build.sh` on Linux.
+To get started quickly, hit "Q" and press enter, this will generate project files in `build` folder, compile
+the project and on Windows it will also create an `install` folder which will contain everything you need
+to use this library on your project.
 
-##### Microsoft Visual Studio 2017
-1. Open PowerShell and navigate to a folder where you would like to download the VK2D project sources.
-2. Copy and paste the following commands to the PowerShell window and press enter, this will also download everything for you (PowerShell may appear stuck for a couple of minutes).
-```
-git clone https://github.com/Noxagonal/Vulkan2DRenderer
-cd Vulkan2DRenderer
-mkdir build
-cd build
-cmake -G "Visual Studio 15 2017 Win64" ..
-```
-( Generated solution file is located in `build/VK2D.sln` )
-
-3. If you wish to create an easier to use package without extra sources you can also run these commands in the PowerShell after you've created the project and solution files above.
-```
-cmake --build . --config Release
-cmake --install .
-```
-( Install package is located in `build/install` )
-
-
-
-#### Available CMake options:
-```
-VK2D_DEBUG                          = default OFF   -> Enable or disable library debug features, used only for the library development.
-VK2D_BUILD_STATIC_LIBRARY           = default OFF   -> Build the library as static. DOES NOT WORK YET!
-VK2D_BUILD_TESTS                    = default OFF   -> Build tests.
-VK2D_BUILD_EXAMPLES                 = default ON    -> Build and include examples on how to use this library.
-VK2D_BUILD_DOCS                     = default OFF   -> Build documentation. Needs Doxygen so it's off by default.
-VK2D_BUILD_DOCS_FOR_COMPLETE_SOURCE = default OFF   -> Build documentation for the entire source instead of just the interface.
-```
-These can be set when you're generating the project files.
-
-For example:
-```
-cmake -D VK2D_BUILD_TESTS=ON -D VK2D_BUILD_EXAMPLES=OFF -G "Visual Studio 16 2019" -A "x64" ..
-```
+Creating project files and compiling the sources manually is of course possible via CMake if you prefer.
 
 ------
 

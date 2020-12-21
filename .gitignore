@@ -1,6 +1,7 @@
 
-#build folder
-/build*
+#build and install folders
+/build/*
+/install/*
 
 # Prerequisites
 *.d
