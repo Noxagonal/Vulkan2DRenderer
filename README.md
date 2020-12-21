@@ -68,7 +68,7 @@ git clone https://github.com/Noxagonal/Vulkan2DRenderer
 
 Python script is provided to help compile the project. Navigate to the `Vulkan2DRenderer` folder and simply run
 `Build.bat` on Windows or `Build.sh` on Linux.
-To get started quickly, hit "Q" and press enter, this will generate project files in `build` folder, compile
+To get started quickly, hit `Q` and press enter, this will generate project files in `build` folder, compile
 the project and on Windows it will also create an `install` folder which will contain everything you need
 to use this library on your project.
 
