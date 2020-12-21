@@ -10,16 +10,12 @@ Internally workloads are automatically grouped to create more efficient submissi
 
 ![latest screenshot](/Screenshots/GaussianBlur.png)
 
-------
-
 ### Motivation
 
 - This project is primarily a passion project.
 - Vulkan 2D rendering engines/libraries are not common.
 - I didn't find any easy to use 2D rendering libraries with multi-window support.
 - This should work pretty well as an example for people wanting to see concrete Vulkan API use. (Feel free to message me if you have any questions about anything)
-
-------
 
 ### Capabilities
 
@@ -34,8 +30,6 @@ Internally workloads are automatically grouped to create more efficient submissi
 - Multisampling.
 - Multi-threaded resource loading and saving.
 - Keyboard, mouse and gamepad input.
-
-------
 
 ### Limitations
 
@@ -62,9 +56,7 @@ Prior to building this library on any platform you will need:
 If you're building the documentation you will also need these (disabled by default):
 - Doxygen 1.8.20 or newer
 
-------
-
-#### Getting the sources
+### Getting the sources
 
 Getting the sources is the same process on all platforms. On your command line or terminal, navigate to the folder where you
 wish to download the sources and copy-paste this line.
@@ -72,7 +64,7 @@ wish to download the sources and copy-paste this line.
 git clone https://github.com/Noxagonal/Vulkan2DRenderer
 ```
 
-#### Compiling the sources
+### Compiling the sources
 
 Python script is provided to help compile the project. Navigate to the `Vulkan2DRenderer` folder and simply run
 `Build.bat` on Windows or `Build.sh` on Linux.
@@ -84,7 +76,7 @@ Creating project files and compiling the sources manually is of course possible 
 
 ------
 
-### External libraries used in this project
+## External libraries used in this project
 
 | Library | License | Web page |
 | --- | --- | --- |
@@ -95,7 +87,7 @@ Creating project files and compiling the sources manually is of course possible 
 
 ------
 
-### License
+## License
 
 Copyright (c) 2020 Niko Kauppi Noxagonal@gmail.com
 
