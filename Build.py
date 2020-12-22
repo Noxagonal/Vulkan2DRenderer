@@ -42,9 +42,11 @@ build_options = []
 
 
 # Add build systems here.        ( Description,                                     CMake generator name,                   Add -A "x64"
-build_systems.append( BuildSystem( "Default",                                       "",                                     True ))
-build_systems.append( BuildSystem( "Microsoft Visual Studio 2019",                  "Visual Studio 16 2019",                True ))
-build_systems.append( BuildSystem( "Microsoft Visual Studio 2017",                  "Visual Studio 15 2017 Win64",          False ))
+build_systems.append( BuildSystem( "CMake default",                                 "",                                     False ) )
+build_systems.append( BuildSystem( "Microsoft Visual Studio 2019",                  "Visual Studio 16 2019",                True ) )
+build_systems.append( BuildSystem( "Microsoft Visual Studio 2017",                  "Visual Studio 15 2017 Win64",          False ) )
+build_systems.append( BuildSystem( "CodeBlocks - Ninja",                            "CodeBlocks - Ninja",                   False ) )
+build_systems.append( BuildSystem( "CodeBlocks - Unix Makefiles",                   "CodeBlocks - Unix Makefiles",          False ) )
 default_build_system_index = 0
 
 # Add build options here.        ( Description,                                     CMake option name,                      On by default
@@ -114,7 +116,7 @@ def SelectBuildOptions( quick_setup ):
             bo = build_options_copy[ i ]
             print( "* [ " + str( i + 1 ) + " ] " + bo.description + ":", bo.value )
         print( "* " )
-        print( "* [ b ] Build with current options" )
+        print( "* [ b ] Continue" )
         print( "* [ x ] Back" )
         print( "* " )
         print( "************************************************************" )
@@ -135,35 +137,73 @@ def SelectBuildOptions( quick_setup ):
             if option_index < len( build_options_copy ):
                 build_options_copy[ option_index ].Toggle()
 
+def SelectBuildType():
+    while True:
+        cls()
+        print( "************************************************************" )
+        print( "* Configure and build project files:" )
+        print( "* " )
+        print( "* Select build type." )
+        print( "* " )
+        print( "* [ 1 ] Build release" )
+        print( "* [ 2 ] Build debug" )
+        print( "* " )
+        print( "* [ x ] Cancel" )
+        print( "* " )
+        print( "************************************************************" )
+        print( "" )
+        option = input( "Selection: " )
+        option = option.lower()
+
+        if option == "1":
+            return [ True, "Release" ]
+        elif option == "2":
+            return [ True, "Debug" ]
+        elif option == "x":
+            return [ False, [] ]
+
 
 def ConfigureAndBuildProjectMenu( quick_setup = False ):
     build_sys = SelectBuildSystem( quick_setup )
     if not build_sys[ 0 ]:
         return
+
     build_opt = SelectBuildOptions( quick_setup )
     if not build_opt[ 0 ]:
         return
+
+    build_type = [ True, "Release" ]
+    if not quick_setup:
+        build_type = SelectBuildType()
+    if not build_type[ 0 ]:
+        return
+        
+    build_path = "build/" + build_type[ 1 ]
 
     call_parameters = [ "cmake" ]
     if build_sys:
         call_parameters += build_sys[ 1 ]
     call_parameters.append( "-Wno-dev" )
     call_parameters += build_opt[ 1 ]
+    call_parameters.append( "-D" )
+    call_parameters.append( "CMAKE_BUILD_TYPE=" + build_type[ 1 ] )
     call_parameters.append( "-S" )
     call_parameters.append( "." )
     call_parameters.append( "-B" )
-    call_parameters.append( "build" )
+    call_parameters.append( build_path )
     
     if not os.path.exists( "build" ):
         os.mkdir( "build" )
+    if not os.path.exists( build_path ):
+        os.mkdir( build_path )
 
     subprocess.run( call_parameters )
     if not quick_setup:
         print( "\n\nDone." )
         input( "Press enter..." )
 
-def BuildMenu( quick_setup = False ):
-    version = "Release"
+def CompileMenu( quick_setup = False ):
+    build_type = "Release"
     while not quick_setup:
         cls()
         print( "************************************************************" )
@@ -171,8 +211,8 @@ def BuildMenu( quick_setup = False ):
         print( "* " )
         print( "* Select task." )
         print( "* " )
-        print( "* [ 1 ] Compile release version." )
-        print( "* [ 2 ] Compile debug version." )
+        print( "* [ 1 ] Compile release" )
+        print( "* [ 2 ] Compile debug" )
         print( "* " )
         print( "* [ x ] Back" )
         print( "* " )
@@ -184,20 +224,20 @@ def BuildMenu( quick_setup = False ):
         if option == "x":
             return
         elif option == "1":
-            version = "Release"
+            build_type = "Release"
             break
         elif option == "2":
-            version = "Debug"
+            build_type = "Debug"
             break
 
-    subprocess.run( [ "cmake", "--build", "build", "--config", version ] )
+    subprocess.run( [ "cmake", "--build", "build/" + build_type, "--config", build_type ] )
     if not quick_setup:
         print( "\n\nDone." )
         input( "Press enter..." )
 
     
 def InstallMenu( quick_setup = False ):
-    version = "Release"
+    build_type = "Release"
     while not quick_setup:
         cls()
         print( "************************************************************" )
@@ -205,8 +245,8 @@ def InstallMenu( quick_setup = False ):
         print( "* " )
         print( "* Select task." )
         print( "* " )
-        print( "* [ 1 ] Install release version." )
-        print( "* [ 2 ] Install debug version." )
+        print( "* [ 1 ] Install release" )
+        print( "* [ 2 ] Install debug" )
         print( "* " )
         print( "* [ x ] Back" )
         print( "* " )
@@ -218,13 +258,13 @@ def InstallMenu( quick_setup = False ):
         if option == "x":
             return
         elif option == "1":
-            version = "Release"
+            build_type = "Release"
             break
         elif option == "2":
-            version = "Debug"
+            build_type = "Debug"
             break
 
-    subprocess.run( [ "cmake", "--install", "build", "--config", version ] )
+    subprocess.run( [ "cmake", "--install", "build/" + build_type, "--config", build_type ] )
     if not quick_setup:
         print( "\n\nDone." )
         input( "Press enter..." )
@@ -253,16 +293,17 @@ def MainMenu():
             return
         elif option == "q":
             ConfigureAndBuildProjectMenu( True )
-            BuildMenu( True )
+            CompileMenu( True )
             InstallMenu( True )
             return
         elif option == "1":
             ConfigureAndBuildProjectMenu()
         elif option == "2":
-            BuildMenu()
+            CompileMenu()
         elif option == "3":
             InstallMenu()
 
 
 if __name__ == "__main__":
     MainMenu()
+
