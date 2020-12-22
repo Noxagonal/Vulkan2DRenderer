@@ -1176,8 +1176,7 @@ bool vk2d::_internal::AcquireImage(
 	vk2d::_internal::WindowImpl		*	impl,
 	VkPhysicalDevice					physical_device,
 	VkDevice							device,
-	vk2d::_internal::ResolvedQueue	&	primary_render_queue,
-	uint32_t							nested_counter				= 0 )
+	vk2d::_internal::ResolvedQueue	&	primary_render_queue )
 {
 	auto instance = impl->instance;
 
@@ -2101,13 +2100,13 @@ vk2d::CursorState vk2d::_internal::WindowImpl::GetCursorState()
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// 
+//
 // WindowImpl::Draw_TriangleList()
-// 
+//
 // - Records commands to bind a pipeline, draw triangle list to the swapchain image
 // - Pushes vertices and indices to mesh buffer that will get uploaded to the GPU prior
 //   to submitting the command buffer that these drawing commands were recorded to.
-// 
+//
 // - Returns:		void
 // - Parameters:
 //   filled			=: true -> polygons will be filled, false -> polygons will be rendered as wireframe
@@ -2115,7 +2114,7 @@ vk2d::CursorState vk2d::_internal::WindowImpl::GetCursorState()
 //   indices		=: A vector of <VertexIndex_3> defining the surface of the polygon, each VertexIndex_3 defines a single polygon,
 //						VertexIndex_3 contains an array of 3 uint32_t, these correspond to the index number in the vertices vector,
 //						of between which the polygon will be drawn.
-// 
+//
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void vk2d::_internal::WindowImpl::DrawTriangleList(
 	const std::vector<vk2d::VertexIndex_3>	&	indices,

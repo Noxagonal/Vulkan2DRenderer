@@ -1,3 +1,4 @@
 #!/bin/bash
 
-python Build.py
+python3 Build.py
+

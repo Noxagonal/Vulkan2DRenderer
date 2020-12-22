@@ -48,7 +48,7 @@ Internally workloads are automatically grouped to create more efficient submissi
 :exclamation: You will need to use Git, direct download from GitHub will not work because of dependencies. :exclamation:
 
 Prior to building this library on any platform you will need:
-- Git 2.28 or newer
+- Git 2.20 or newer
 - CMake 3.16 or newer
 - Vulkan SDK 1.2 or newer
 - Python 3.8 or newer
@@ -66,13 +66,25 @@ git clone https://github.com/Noxagonal/Vulkan2DRenderer
 
 ### Compiling the sources
 
-Python script is provided to help compile the project. Navigate to the `Vulkan2DRenderer` folder and simply run
-`Build.bat` on Windows or `Build.sh` on Linux.
-To get started quickly, hit `Q` and press enter, this will generate project files in `build` folder, compile
-the project and on Windows it will also create an `install` folder which will contain everything you need
-to use this library on your project.
+VK2D features an interactive build tool. Navigate to the `Vulkan2DRenderer` folder and simply run `Build.bat` on
+Windows or `Build.sh` on Linux.
+To get started quickly, you can select the quick build option, this will generate a release version of the project in
+`build/Release` folder, compiles the project and installs it.
 
-Creating project files and compiling the sources manually is of course possible via CMake if you prefer.
+Creating project files and compiling the sources manually is of course possible via CMake if you prefer. However you
+should note that the included build tool generates a `build/Release` and `build/Debug` folders so you should avoid
+those paths. 
+
+##### Windows specifics
+
+On Windows installing will create an `install` folder which will contain everything you need to use this library on
+your project. You will have to manually link it to your project and move the VK2D.dll file somewhere where your
+executable can see it.
+
+##### Linux specifics
+
+On Linux installing requires using `sudo` so this includes running the build script with `sudo ./Build.sh`.
+If you do not plan to install or use the "quick build" then you can run the build script as regular user.
 
 ------
 

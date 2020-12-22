@@ -45,8 +45,7 @@ bool											AcquireImage(
 	vk2d::_internal::WindowImpl				*	data,
 	VkPhysicalDevice							physical_device,
 	VkDevice									device,
-	vk2d::_internal::ResolvedQueue			&	primary_render_queue,
-	uint32_t									nested_counter );
+	vk2d::_internal::ResolvedQueue			&	primary_render_queue );
 
 enum class NextRenderCallFunction : uint32_t {
 	BEGIN		= 0,
@@ -60,8 +59,7 @@ class WindowImpl {
 		vk2d::_internal::WindowImpl				*	data,
 		VkPhysicalDevice							physical_device,
 		VkDevice									device,
-		vk2d::_internal::ResolvedQueue			&	primary_render_queue,
-		uint32_t									nested_counter );
+		vk2d::_internal::ResolvedQueue			&	primary_render_queue );
 
 	friend void glfwWindowPosCallback( GLFWwindow * glfwWindow, int x, int y );
 	friend void glfwWindowSizeCallback( GLFWwindow * glfwWindow, int x, int y );

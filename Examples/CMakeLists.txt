@@ -32,7 +32,10 @@ endfunction()
 
 
 # Create project/executable for each .cpp file in this directory.
-file(GLOB ExampleFiles "*.cpp")
+file(GLOB ExampleFiles
+	CONFIGURE_DEPENDS
+	"*.cpp"
+)
 foreach(ExampleFile ${ExampleFiles})
 	get_filename_component(ExampleFileName ${ExampleFile} NAME_WE)
 	BuildExample(${ExampleFileName})
