@@ -71,6 +71,7 @@ import copy
 
 is_windows = os.name == 'nt'
 cls = lambda: os.system('cls' if is_windows else 'clear')
+tool_build_folder = "tool_build"
 
 
 
@@ -157,8 +158,8 @@ def SelectBuildType():
         print( "* " )
         print( "* Select build type." )
         print( "* " )
-        print( "* [ 1 ] Build release" )
-        print( "* [ 2 ] Build debug" )
+        print( "* [ 1 ] Release" )
+        print( "* [ 2 ] Debug" )
         print( "* " )
         print( "* [ x ] Cancel" )
         print( "* " )
@@ -197,11 +198,11 @@ def ConfigureAndBuildProjectMenu( quick_setup = False ):
     if not build_opt[ 0 ]:
         return
 
-    if not os.path.exists( "build" ):
-        os.mkdir( "build" )
+    if not os.path.exists( tool_build_folder ):
+        os.mkdir( tool_build_folder )
 
     for bt in build_type[ 1 ]:
-        build_path = "build/" + bt
+        build_path = tool_build_folder + "/" + bt
 
         call_parameters = [ "cmake" ]
         if build_sys:
@@ -234,11 +235,11 @@ def CompileMenu( quick_setup = False ):
     if quick_setup:
         if is_windows:
             # Build both release and debug versions for Windows.
-            subprocess.run( [ "cmake", "--build", "build/Release", "--config", "Release" ] )
-            subprocess.run( [ "cmake", "--build", "build/Debug", "--config", "Debug" ] )
+            subprocess.run( [ "cmake", "--build", tool_build_folder + "/Release", "--config", "Release" ] )
+            subprocess.run( [ "cmake", "--build", tool_build_folder + "/Debug", "--config", "Debug" ] )
         else:
             # Build only release version for Linux.
-            subprocess.run( [ "cmake", "--build", "build/Release", "--config", "Release" ] )
+            subprocess.run( [ "cmake", "--build", tool_build_folder + "/Release", "--config", "Release" ] )
     else:
         build_type = ""
         while True:
@@ -268,7 +269,7 @@ def CompileMenu( quick_setup = False ):
                 break
 
         call_parameters = [ "cmake" ]
-        call_parameters += [ "--build", "build/" + build_type ]
+        call_parameters += [ "--build", tool_build_folder + "/" + build_type ]
         call_parameters += [ "--config", build_type ]
         subprocess.run(  )
         print( "\n\nDone." )
@@ -287,11 +288,11 @@ def InstallMenu( quick_setup = False ):
     if quick_setup:
         if is_windows:
             # Build both release and debug versions for Windows.
-            subprocess.run( [ "cmake", "--install", "build/Release", "--config", "Release" ] )
-            subprocess.run( [ "cmake", "--install", "build/Debug", "--config", "Debug" ] )
+            subprocess.run( [ "cmake", "--install", tool_build_folder + "/Release", "--config", "Release" ] )
+            subprocess.run( [ "cmake", "--install", tool_build_folder + "/Debug", "--config", "Debug" ] )
         else:
             # Build only release version for Linux.
-            subprocess.run( [ "cmake", "--install", "build/Release", "--config", "Release" ] )
+            subprocess.run( [ "cmake", "--install", tool_build_folder + "/Release", "--config", "Release" ] )
     else:
         build_type = ""
         while not quick_setup:
@@ -321,7 +322,7 @@ def InstallMenu( quick_setup = False ):
                 break
 
         call_parameters = [ "cmake" ]
-        call_parameters += [ "--install", "build/" + build_type ]
+        call_parameters += [ "--install", tool_build_folder + "/" + build_type ]
         call_parameters += [ "--config", build_type ]
         subprocess.run( call_parameters )
         print( "\n\nDone." )
