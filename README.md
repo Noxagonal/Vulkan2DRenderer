@@ -68,25 +68,28 @@ git clone https://github.com/Noxagonal/Vulkan2DRenderer
 
 ### Compiling the sources
 
-VK2D features an interactive build tool. Navigate to the `Vulkan2DRenderer` folder and simply run `Build.bat` on
-Windows or `Build.py` on Linux.
+There are couple of ways to compile this library, you can use standard CMake or you can use the provided build tool.
+
+#### Using the build tool
+
+Navigate to the `Vulkan2DRenderer` folder and simply run `Build.bat` on Windows or `Build.py` on Linux.
 To get started quickly, you can select the quick build option, this will generate the project files in `build/Release`
-and `build/Debug` folders, compiles the project and installs it.
+and `build/Debug` folders and compiles the project, on windows it's also installed into a ready-to-use folder.
 
 Creating project files and compiling the sources manually is of course possible via CMake if you prefer. However you
 should note that the included build tool generates a `build/Release` and `build/Debug` folders so you should avoid
-those paths. 
+those paths.
 
 ##### Windows specifics
 
 On Windows installing will create an `install` folder which will contain everything you need to use this library on
-your project. You will have to manually link it to your project and move the VK2D.dll file somewhere where your
-executable can see it.
+your project. You will have to manually link it to your project and move the `VK2D.dll` and `VK2D_d.dll` file somewhere
+where your executable can see it, usually to your project's working directory.
 
 ##### Linux specifics
 
-On Linux installing requires superuser priviledges so you need to do this separately, the build tool will not install
-this library for you.
+On Linux installing requires superuser priviledges so you need to do this separately, the build tool will build the project
+files and compile but it will not install this library for you.
 
 ------
 

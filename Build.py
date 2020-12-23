@@ -280,6 +280,10 @@ def CompileMenu( quick_setup = False ):
 ### Install menu
 ################################################################
 def InstallMenu( quick_setup = False ):
+    if not is_windows:
+        # No installing on Linux for now. TODO for later...
+        return
+
     if quick_setup:
         if is_windows:
             # Build both release and debug versions for Windows.
@@ -340,7 +344,9 @@ def MainMenu():
         print( "* " )
         print( "* [ 1 ] Configure and build project files." )
         print( "* [ 2 ] Compile." )
-        print( "* [ 3 ] Install." )
+        if is_windows:
+            # No installing on Linux for now. TODO for later...
+            print( "* [ 3 ] Install." )
         print( "* " )
         print( "* [ x ] Exit" )
         print( "* " )
