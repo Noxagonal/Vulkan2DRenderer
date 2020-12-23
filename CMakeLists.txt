@@ -4,6 +4,12 @@
 cmake_minimum_required(VERSION 3.16)
 
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+	# Need both Release and Debug versions on VS, I want to put these
+	# into the same folder for ease of use on the user application,
+	# renaming the .dll and .lib files won't work so I'm just changing
+	# the name of the entire project based on build type.
+	# If this causes any problems on other platforms I'll have to rethink
+	# this, for now I'll just leave it as is.
 	set(VK2D_NAME VK2D_d)
 else()
 	set(VK2D_NAME VK2D)
@@ -305,64 +311,6 @@ endif()
 ################################################################
 # Install target
 ################################################################
-# Testing...
-#if(WIN32)
-#	# Windows requires debug version of the library to be used with
-#	# a debug version of the user application, so we include both
-#	# release and debug versions of the library.
-#	install(
-#		FILES
-#			$<TARGET_FILE:${VK2D_NAME}>
-#		CONFIGURATIONS Debug
-#		DESTINATION "bin/"
-#	)
-#	install(
-#		FILES
-#			$<TARGET_LINKER_FILE:${VK2D_NAME}>
-#		CONFIGURATIONS Debug
-#		DESTINATION "lib/"
-#	)
-#	install(
-#		FILES
-#			$<TARGET_FILE:${VK2D_NAME}>
-#		CONFIGURATIONS Release
-#		DESTINATION "bin/"
-#	)
-#	install(
-#		FILES
-#			$<TARGET_LINKER_FILE:${VK2D_NAME}>
-#		CONFIGURATIONS Release
-#		DESTINATION "lib/"
-#	)
-#	
-#	#install(
-#	#	TARGETS
-#	#		${VK2D_NAME}
-#	#	CONFIGURATIONS Debug
-#	#	LIBRARY DESTINATION "lib/Debug/"
-#	#	ARCHIVE DESTINATION "lib/Debug/"
-#	#	RUNTIME DESTINATION "bin/Debug/"
-#	#)
-#	#install(
-#	#	TARGETS
-#	#		${VK2D_NAME}
-#	#	CONFIGURATIONS Release
-#	#	LIBRARY DESTINATION "lib/Release/"
-#	#	ARCHIVE DESTINATION "lib/Release/"
-#	#	RUNTIME DESTINATION "bin/Release/"
-#	#)
-#else()
-#	# On other platforms building only the release version should be enough
-#	# so we can use the standard paths. (Correct me if I'm wrong.)
-#	install(
-#		TARGETS
-#			${VK2D_NAME}
-#		LIBRARY DESTINATION "lib/"
-#		ARCHIVE DESTINATION "lib/"
-#		RUNTIME DESTINATION "bin/"
-#	)
-#endif()
-
 install(
 	TARGETS
 		${VK2D_NAME}
@@ -383,8 +331,3 @@ install(
 	DESTINATION
 		"./"
 )
-
-#install(
-#	SCRIPT
-#	"${CMAKE_CURRENT_SOURCE_DIR}/PostInstall.cmake"
-#)
