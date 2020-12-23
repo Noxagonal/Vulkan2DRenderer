@@ -3,7 +3,13 @@
 
 cmake_minimum_required(VERSION 3.16)
 
-project(VK2D CXX)
+if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+	set(VK2D_NAME VK2D_d)
+else()
+	set(VK2D_NAME VK2D)
+endif()
+
+project(${VK2D_NAME} CXX)
 
 message("========== VK2D ==========")
 
@@ -168,7 +174,7 @@ source_group(TREE "${PROJECT_SOURCE_DIR}"
 )
 
 if(VK2D_BUILD_STATIC_LIBRARY)
-	add_library(VK2D
+	add_library(${VK2D_NAME}
 		STATIC
 			${FILES_INCLUDE}
 			${FILES_SOURCE}
@@ -176,7 +182,7 @@ if(VK2D_BUILD_STATIC_LIBRARY)
 			${FILES_COMPILED_SHADERS}
 	)
 else()
-	add_library(VK2D
+	add_library(${VK2D_NAME}
 		SHARED
 			${FILES_INCLUDE}
 			${FILES_SOURCE}
@@ -185,17 +191,17 @@ else()
 	)
 endif()
 
-target_precompile_headers(VK2D
+target_precompile_headers(${VK2D_NAME}
 	PRIVATE
 		"${PROJECT_SOURCE_DIR}/Source/Core/PreCompiledHeader.h"
 )
 
-add_dependencies(VK2D
+add_dependencies(${VK2D_NAME}
 	freetype
 	glfw
 )
 
-set_target_properties(VK2D
+set_target_properties(${VK2D_NAME}
 	PROPERTIES
 		CXX_STANDARD				17
 		ARCHIVE_OUTPUT_DIRECTORY	"${PROJECT_BINARY_DIR}/Lib/"
@@ -204,29 +210,29 @@ set_target_properties(VK2D
 )
 
 # Internal includes
-target_include_directories(VK2D PRIVATE "${PROJECT_SOURCE_DIR}/Source/")
-target_include_directories(VK2D PUBLIC "${PROJECT_SOURCE_DIR}/Include/")
-target_include_directories(VK2D PRIVATE "${PROJECT_SOURCE_DIR}/Shaders/")
+target_include_directories(${VK2D_NAME} PRIVATE "${PROJECT_SOURCE_DIR}/Source/")
+target_include_directories(${VK2D_NAME} PUBLIC "${PROJECT_SOURCE_DIR}/Include/")
+target_include_directories(${VK2D_NAME} PRIVATE "${PROJECT_SOURCE_DIR}/Shaders/")
 
 # External includes
-target_include_directories(VK2D
+target_include_directories(${VK2D_NAME}
 	PRIVATE
 		Vulkan::Vulkan
 		${EXTERNAL_INCLUDES}
 )
 
-target_link_libraries(VK2D
+target_link_libraries(${VK2D_NAME}
 	Vulkan::Vulkan
 	freetype
 	glfw
 )
 
 if(${VK2D_DEBUG})
-	target_compile_definitions(VK2D
+	target_compile_definitions(${VK2D_NAME}
 		PRIVATE
 			VK2D_DEBUG_ENABLE=1)
 else()
-	target_compile_definitions(VK2D
+	target_compile_definitions(${VK2D_NAME}
 		PRIVATE
 			VK2D_DEBUG_ENABLE=0)
 endif()
@@ -256,13 +262,13 @@ if(MSVC)
 	#)
 	
 	add_custom_command(
-		TARGET VK2D
+		TARGET ${VK2D_NAME}
 		PRE_BUILD
 		COMMAND CompileGLSLShadersToSpirV
 			"-shaderpath" "${CMAKE_CURRENT_SOURCE_DIR}/Shaders/"
 		WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/Shaders/"
 	)
-	add_dependencies(VK2D
+	add_dependencies(${VK2D_NAME}
 		CompileGLSLShadersToSpirV
 	)
 
@@ -299,9 +305,67 @@ endif()
 ################################################################
 # Install target
 ################################################################
+# Testing...
+#if(WIN32)
+#	# Windows requires debug version of the library to be used with
+#	# a debug version of the user application, so we include both
+#	# release and debug versions of the library.
+#	install(
+#		FILES
+#			$<TARGET_FILE:${VK2D_NAME}>
+#		CONFIGURATIONS Debug
+#		DESTINATION "bin/"
+#	)
+#	install(
+#		FILES
+#			$<TARGET_LINKER_FILE:${VK2D_NAME}>
+#		CONFIGURATIONS Debug
+#		DESTINATION "lib/"
+#	)
+#	install(
+#		FILES
+#			$<TARGET_FILE:${VK2D_NAME}>
+#		CONFIGURATIONS Release
+#		DESTINATION "bin/"
+#	)
+#	install(
+#		FILES
+#			$<TARGET_LINKER_FILE:${VK2D_NAME}>
+#		CONFIGURATIONS Release
+#		DESTINATION "lib/"
+#	)
+#	
+#	#install(
+#	#	TARGETS
+#	#		${VK2D_NAME}
+#	#	CONFIGURATIONS Debug
+#	#	LIBRARY DESTINATION "lib/Debug/"
+#	#	ARCHIVE DESTINATION "lib/Debug/"
+#	#	RUNTIME DESTINATION "bin/Debug/"
+#	#)
+#	#install(
+#	#	TARGETS
+#	#		${VK2D_NAME}
+#	#	CONFIGURATIONS Release
+#	#	LIBRARY DESTINATION "lib/Release/"
+#	#	ARCHIVE DESTINATION "lib/Release/"
+#	#	RUNTIME DESTINATION "bin/Release/"
+#	#)
+#else()
+#	# On other platforms building only the release version should be enough
+#	# so we can use the standard paths. (Correct me if I'm wrong.)
+#	install(
+#		TARGETS
+#			${VK2D_NAME}
+#		LIBRARY DESTINATION "lib/"
+#		ARCHIVE DESTINATION "lib/"
+#		RUNTIME DESTINATION "bin/"
+#	)
+#endif()
+
 install(
 	TARGETS
-		VK2D
+		${VK2D_NAME}
 	LIBRARY DESTINATION "lib/"
 	ARCHIVE DESTINATION "lib/"
 	RUNTIME DESTINATION "bin/"
@@ -310,7 +374,7 @@ install(
 	DIRECTORY
 		"${CMAKE_CURRENT_SOURCE_DIR}/Include/"
 	DESTINATION
-		"include/"
+		"include/VK2D/"
 )
 install(
 	FILES
@@ -319,3 +383,8 @@ install(
 	DESTINATION
 		"./"
 )
+
+#install(
+#	SCRIPT
+#	"${CMAKE_CURRENT_SOURCE_DIR}/PostInstall.cmake"
+#)

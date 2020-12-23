@@ -107,7 +107,7 @@ add_custom_command(
 		"Generating Doxygen docs"
 	VERBATIM
 )
-add_dependencies(VK2D
+add_dependencies(${VK2D_NAME}
 	VK2DDocumentation
 )
 

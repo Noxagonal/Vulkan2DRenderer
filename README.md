@@ -51,6 +51,8 @@ Prior to building this library on any platform you will need:
 - Git 2.20 or newer
 - CMake 3.16 or newer
 - Vulkan SDK 1.2 or newer
+
+If using the build tool you will need (recommended for new users):
 - Python 3.8 or newer
 
 If you're building the documentation you will also need these (disabled by default):
@@ -67,9 +69,9 @@ git clone https://github.com/Noxagonal/Vulkan2DRenderer
 ### Compiling the sources
 
 VK2D features an interactive build tool. Navigate to the `Vulkan2DRenderer` folder and simply run `Build.bat` on
-Windows or `Build.sh` on Linux.
-To get started quickly, you can select the quick build option, this will generate a release version of the project in
-`build/Release` folder, compiles the project and installs it.
+Windows or `Build.py` on Linux.
+To get started quickly, you can select the quick build option, this will generate the project files in `build/Release`
+and `build/Debug` folders, compiles the project and installs it.
 
 Creating project files and compiling the sources manually is of course possible via CMake if you prefer. However you
 should note that the included build tool generates a `build/Release` and `build/Debug` folders so you should avoid
@@ -83,8 +85,8 @@ executable can see it.
 
 ##### Linux specifics
 
-On Linux installing requires using `sudo` so this includes running the build script with `sudo ./Build.sh`.
-If you do not plan to install or use the "quick build" then you can run the build script as regular user.
+On Linux installing requires superuser priviledges so you need to do this separately, the build tool will not install
+this library for you.
 
 ------
 
