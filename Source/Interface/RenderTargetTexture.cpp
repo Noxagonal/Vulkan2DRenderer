@@ -345,6 +345,8 @@ vk2d::_internal::RenderTargetTextureImpl::RenderTargetTextureImpl(
 	const vk2d::RenderTargetTextureCreateInfo	&	create_info
 )
 {
+	VK2D_ASSERT_MAIN_THREAD( instance );
+
 	assert( instance );
 	if( !instance->IsThisThreadCreatorThread() ) {
 		instance->Report( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Cannot create render target texture, this needs to be created from the main thread." );
@@ -385,6 +387,8 @@ vk2d::_internal::RenderTargetTextureImpl::RenderTargetTextureImpl(
 
 vk2d::_internal::RenderTargetTextureImpl::~RenderTargetTextureImpl()
 {
+	VK2D_ASSERT_MAIN_THREAD( instance );
+
 	WaitIdle();
 
 	DestroySynchronizationPrimitives();
@@ -399,6 +403,8 @@ void vk2d::_internal::RenderTargetTextureImpl::SetSize(
 	vk2d::Vector2u			new_size
 )
 {
+	VK2D_ASSERT_MAIN_THREAD( instance );
+
 	if( size != new_size ) {
 		// TODO: Consider a better synchronization for RenderTargetTextureImpl::SetSize().
 		// Consider making surfaces their own unit and when changing size, next render would
@@ -445,31 +451,43 @@ void vk2d::_internal::RenderTargetTextureImpl::SetSize(
 
 vk2d::Vector2u vk2d::_internal::RenderTargetTextureImpl::GetSize() const
 {
+	VK2D_ASSERT_MAIN_THREAD( instance );
+
 	return size;
 }
 
 uint32_t vk2d::_internal::RenderTargetTextureImpl::GetLayerCount() const
 {
+	VK2D_ASSERT_MAIN_THREAD( instance );
+
 	return 1;
 }
 
 uint32_t vk2d::_internal::RenderTargetTextureImpl::GetCurrentSwapBuffer() const
 {
+	VK2D_ASSERT_MAIN_THREAD( instance );
+
 	return current_swap_buffer;
 }
 
 VkImage vk2d::_internal::RenderTargetTextureImpl::GetVulkanImage() const
 {
+	VK2D_ASSERT_MAIN_THREAD( instance );
+
 	return swap_buffers[ current_swap_buffer ].sampled_image.image;
 }
 
 VkImageView vk2d::_internal::RenderTargetTextureImpl::GetVulkanImageView() const
 {
+	VK2D_ASSERT_MAIN_THREAD( instance );
+
 	return swap_buffers[ current_swap_buffer ].sampled_image.view;
 }
 
 VkImageLayout vk2d::_internal::RenderTargetTextureImpl::GetVulkanImageLayout() const
 {
+	VK2D_ASSERT_MAIN_THREAD( instance );
+
 	return vk_sampled_image_final_layout;
 }
 
@@ -477,6 +495,8 @@ VkFramebuffer vk2d::_internal::RenderTargetTextureImpl::GetFramebuffer(
 	vk2d::_internal::RenderTargetTextureDependencyInfo			&	dependency_info
 ) const
 {
+	VK2D_ASSERT_MAIN_THREAD( instance );
+
 	assert( dependency_info.render_target == this );
 	return swap_buffers[ dependency_info.swap_buffer_index ].vk_render_framebuffer;
 }
@@ -485,6 +505,8 @@ VkSemaphore vk2d::_internal::RenderTargetTextureImpl::GetAllCompleteSemaphore(
 	vk2d::_internal::RenderTargetTextureDependencyInfo		&	dependency_info
 ) const
 {
+	VK2D_ASSERT_MAIN_THREAD( instance );
+
 	assert( dependency_info.render_target == this );
 	return swap_buffers[ dependency_info.swap_buffer_index ].vk_render_complete_semaphore;
 }
@@ -493,17 +515,23 @@ uint64_t vk2d::_internal::RenderTargetTextureImpl::GetRenderCounter(
 	vk2d::_internal::RenderTargetTextureDependencyInfo			&	dependency_info
 ) const
 {
+	VK2D_ASSERT_MAIN_THREAD( instance );
+
 	assert( dependency_info.render_target == this );
 	return swap_buffers[ dependency_info.swap_buffer_index ].render_counter;
 }
 
 bool vk2d::_internal::RenderTargetTextureImpl::IsTextureDataReady()
 {
+	VK2D_ASSERT_MAIN_THREAD( instance );
+
 	return true;
 }
 
 bool vk2d::_internal::RenderTargetTextureImpl::BeginRender()
 {
+	VK2D_ASSERT_MAIN_THREAD( instance );
+
 	auto result = VK_SUCCESS;
 
 	++current_swap_buffer;
@@ -632,6 +660,8 @@ bool vk2d::_internal::RenderTargetTextureImpl::EndRender(
 	vk2d::Vector2f	blur_amount
 )
 {
+	VK2D_ASSERT_MAIN_THREAD( instance );
+
 	auto & swap									= swap_buffers[ current_swap_buffer ];
 	VkCommandBuffer		render_command_buffer	= swap.vk_render_command_buffer;
 	VkCommandBuffer		transfer_command_buffer	= swap.vk_transfer_command_buffer;
@@ -676,6 +706,8 @@ bool vk2d::_internal::RenderTargetTextureImpl::EndRender(
 
 bool vk2d::_internal::RenderTargetTextureImpl::SynchronizeFrame()
 {
+	VK2D_ASSERT_MAIN_THREAD( instance );
+
 	auto result = VK_SUCCESS;
 
 	using namespace std::chrono;
@@ -709,6 +741,8 @@ bool vk2d::_internal::RenderTargetTextureImpl::SynchronizeFrame()
 
 bool vk2d::_internal::RenderTargetTextureImpl::WaitIdle()
 {
+	VK2D_ASSERT_MAIN_THREAD( instance );
+
 	std::vector<VkSemaphore>	semaphores;
 	std::vector<uint64_t>		semaphore_values;
 	semaphores.reserve( std::size( swap_buffers ) );
@@ -752,6 +786,8 @@ bool vk2d::_internal::RenderTargetTextureImpl::CommitRenderTargetTextureRender(
 	vk2d::_internal::RenderTargetTextureRenderCollector	&	collector
 )
 {
+	VK2D_ASSERT_MAIN_THREAD( instance );
+
 	assert( dependency_info.render_target == this );
 
 	auto & swap = swap_buffers[ dependency_info.swap_buffer_index ];
@@ -811,6 +847,8 @@ void vk2d::_internal::RenderTargetTextureImpl::ConfirmRenderTargetTextureRenderS
 	vk2d::_internal::RenderTargetTextureDependencyInfo	&	dependency_info
 )
 {
+	VK2D_ASSERT_MAIN_THREAD( instance );
+
 	assert( dependency_info.render_target == this );
 
 	auto & swap = swap_buffers[ dependency_info.swap_buffer_index ];
@@ -825,6 +863,8 @@ void vk2d::_internal::RenderTargetTextureImpl::ConfirmRenderTargetTextureRenderF
 	vk2d::_internal::RenderTargetTextureDependencyInfo	&	dependency_info
 )
 {
+	VK2D_ASSERT_MAIN_THREAD( instance );
+
 	assert( dependency_info.render_target == this );
 	auto & swap = swap_buffers[ dependency_info.swap_buffer_index ];
 
@@ -839,6 +879,8 @@ void vk2d::_internal::RenderTargetTextureImpl::AbortRenderTargetTextureRender(
 	vk2d::_internal::RenderTargetTextureDependencyInfo	&	dependency_info
 )
 {
+	VK2D_ASSERT_MAIN_THREAD( instance );
+
 	assert( dependency_info.render_target == this );
 
 	auto & swap = swap_buffers[ dependency_info.swap_buffer_index ];
@@ -861,6 +903,8 @@ void vk2d::_internal::RenderTargetTextureImpl::ResetRenderTargetTextureRenderDep
 	uint32_t				swap_buffer_index
 )
 {
+	VK2D_ASSERT_MAIN_THREAD( instance );
+
 	auto & swap = swap_buffers[ swap_buffer_index ];
 
 	//std::lock_guard<std::mutex> lock_guard( swap.render_commitment_request_mutex );
@@ -877,6 +921,8 @@ void vk2d::_internal::RenderTargetTextureImpl::CheckAndAddRenderTargetTextureDep
 	vk2d::Texture		*	texture
 )
 {
+	VK2D_ASSERT_MAIN_THREAD( instance );
+
 	auto & swap		= swap_buffers[ swap_buffer_index ];
 
 	// TODO: Investigate a need for reference count of some sort. Render target can have dependencies to multiple different parents.
@@ -899,6 +945,8 @@ void vk2d::_internal::RenderTargetTextureImpl::CheckAndAddRenderTargetTextureDep
 
 vk2d::_internal::RenderTargetTextureDependencyInfo vk2d::_internal::RenderTargetTextureImpl::GetDependencyInfo()
 {
+	VK2D_ASSERT_MAIN_THREAD( instance );
+
 	vk2d::_internal::RenderTargetTextureDependencyInfo dependency_info {};
 	dependency_info.render_target		= this;
 	dependency_info.swap_buffer_index	= current_swap_buffer;
@@ -915,6 +963,8 @@ void vk2d::_internal::RenderTargetTextureImpl::DrawTriangleList(
 	vk2d::Sampler							*	sampler
 )
 {
+	VK2D_ASSERT_MAIN_THREAD( instance );
+
 	auto index_count	= uint32_t( indices.size() * 3 );
 	std::vector<uint32_t> raw_indices;
 	raw_indices.resize( index_count );
@@ -945,6 +995,8 @@ void vk2d::_internal::RenderTargetTextureImpl::DrawTriangleList(
 	vk2d::Sampler							*	sampler
 )
 {
+	VK2D_ASSERT_MAIN_THREAD( instance );
+
 	auto & swap				= swap_buffers[ current_swap_buffer ];
 	auto command_buffer		= swap.vk_render_command_buffer;
 
@@ -1075,6 +1127,8 @@ void vk2d::_internal::RenderTargetTextureImpl::DrawLineList(
 	float										line_width
 )
 {
+	VK2D_ASSERT_MAIN_THREAD( instance );
+
 	auto index_count	= uint32_t( indices.size() * 2 );
 	std::vector<uint32_t> raw_indices;
 	raw_indices.resize( index_count );
@@ -1104,6 +1158,8 @@ void vk2d::_internal::RenderTargetTextureImpl::DrawLineList(
 	float										line_width
 )
 {
+	VK2D_ASSERT_MAIN_THREAD( instance );
+
 	auto & swap			= swap_buffers[ current_swap_buffer ];
 	auto command_buffer	= swap.vk_render_command_buffer;
 
@@ -1218,6 +1274,8 @@ void vk2d::_internal::RenderTargetTextureImpl::DrawPointList(
 	vk2d::Sampler							*	sampler
 )
 {
+	VK2D_ASSERT_MAIN_THREAD( instance );
+
 	auto & swap			= swap_buffers[ current_swap_buffer ];
 	auto command_buffer	= swap.vk_render_command_buffer;
 
@@ -1323,6 +1381,8 @@ void vk2d::_internal::RenderTargetTextureImpl::DrawMesh(
 	const std::vector<vk2d::Matrix4f>		&	transformations
 )
 {
+	VK2D_ASSERT_MAIN_THREAD( instance );
+
 	if( mesh.vertices.size() == 0 ) return;
 
 	switch( mesh.mesh_type ) {
@@ -1380,6 +1440,8 @@ bool vk2d::_internal::RenderTargetTextureImpl::IsGood() const
 
 bool vk2d::_internal::RenderTargetTextureImpl::DetermineType()
 {
+	VK2D_ASSERT_MAIN_THREAD( instance );
+
 	assert( instance );
 	if( samples == vk2d::Multisamples( 0 ) ) {
 		instance->Report( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Cannot create RenderTargetTexture, multisamples was set to 0, must be 1 or higher!" );

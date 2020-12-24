@@ -11,6 +11,7 @@
 uint32_t frame = 0;
 
 
+
 class EventHandler : public vk2d::WindowEventHandler {
 public:
 	// Keyboard button was pressed, released or kept down ( repeating ).
@@ -98,7 +99,7 @@ int main()
 	std::cout << colorf.r << ", " << colorf.g << ", " << colorf.b << ", " << colorf.a << "\n";
 
 
-	auto red_circle			= vk2d::GenerateEllipseMesh(
+	auto red_circle				= vk2d::GenerateEllipseMesh(
 		{ -7, -7, 7, 7 }
 	);
 	auto red_line				= vk2d::GenerateLineMeshFromList(

@@ -160,6 +160,7 @@ public:
 ///					std::string_view						message
 ///				) {}
 /// @endcode
+/// @note		Multithreading: Single thread at a time per instance.
 /// @param[in]	severity
 ///				Tells how severe the report was, this can range from being informative,
 ///				to being a critical error. See vk2d::ReportSeverity for more info.
@@ -175,6 +176,7 @@ using PFN_VK2D_ReportFunction				= void( VK2D_APIENTRY* )(
 /// @code
 ///				void VK2D_APIENTRY MonitorUpdateCallback () {}
 /// @endcode
+/// @note		Multithreading: Single thread at a time per instance.
 using PFN_MonitorUpdateCallback				= void ( VK2D_APIENTRY* )( void );
 
 /// @brief		Function pointer type for gamepad connection events.
@@ -187,6 +189,7 @@ using PFN_MonitorUpdateCallback				= void ( VK2D_APIENTRY* )( void );
 ///					const std::string				&	gamepad_name
 ///				) {}
 /// @endcode
+/// @note		Multithreading: Single thread at a time per instance.
 /// @param[in]	gamepad
 ///				Which gamepad was plugged in or removed.
 /// @param[in]	event
@@ -252,6 +255,9 @@ public:
 	/// @return		true when instance can be kept running, false if instance should be shut down.
 	VK2D_API bool										VK2D_APIENTRY						Run();
 
+	/// @brief		Gets the resource manager needed to load textures, fonts and other resources.
+	/// @note		Multithreading: Any thread.
+	/// @return		Resource loader created by the instance.
 	VK2D_API vk2d::ResourceManager					*	VK2D_APIENTRY						GetResourceManager();
 
 	///	@brief		Get a list of monitors connected to the system, this will be
@@ -263,7 +269,7 @@ public:
 
 	/// @brief		Gets the primary monitor of the system, this will be needed
 	///				later if the vk2d application is ran fullscreen mode.
-	/// @note		Multithreading: Any thread.
+	/// @note		Multithreading: Main thread only.
 	/// @see		vk2d::Instance::SetMonitorUpdateCallback()
 	/// @return		A handle to the primary monitor attached to the system.
 	VK2D_API vk2d::Monitor							*	VK2D_APIENTRY						GetPrimaryMonitor();
