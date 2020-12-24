@@ -50,7 +50,7 @@ Just follow the instructions of the build tool.
 
 ## Installing on Microsoft Windows
 
-Installing can be done via the build tool, in this case everything is moved into a folder called `install`.
+Installing can be done via the build tool, in this case everything is moved into a `build_tool/install` folder.
 This folder contains everything you need to use VK2D in your own project.
 
 ## Installing on Linux
@@ -58,5 +58,5 @@ This folder contains everything you need to use VK2D in your own project.
 Installing via this build tool is disabled on Linux as this requires superuser rights.
 For now you'll have to install separately with:
 ```
-sudo cmake --install tool_build/Release
+sudo cmake --install build_tool/Release
 ```

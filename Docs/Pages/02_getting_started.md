@@ -6,11 +6,11 @@ Currently the only way to get this library is from github and compiling it yours
 For now take a look at [compiling the package yourself](@ref compiling_using_build_tool).
 
 On Microsoft Windows: <br>
-After compiling and installing the library you should have a dynamic library version compiled at `build/install/`, this is
-a self contained package now that you can move anywhere you wish.
+After compiling and installing the library you should have a dynamic library version compiled at `build_tool/install/`, this is
+a self contained package that you can move anywhere you wish.
 
 On other platforms: <br>
-You should be all set.
+You will need to install manually for now.
 
 
 
@@ -29,7 +29,7 @@ version. <br>
 
 ## Linux
 
-TODO...
+Once you compile and install VK2D release version you should be able to use it anywhere in your system.
 
 
 
