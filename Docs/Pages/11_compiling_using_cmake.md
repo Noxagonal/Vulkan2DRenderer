@@ -1,29 +1,34 @@
-Compiling							{#compiling}
-=========
+Compiling using CMake				{#compiling_using_cmake}
+=====================
 
-Compiling the library typically involves these steps in order:
+Compiling manually is usually required for library development only, in most cases you can just use the
+[build tool](@ref compiling_using_build_tool) instead.
+
+Compiling the library manually typically involves these steps in order:
 - [Install required programs and libraries.](@ref build_requirements)
 - [Build project files.](@ref build_project_files)
 - [Compile VK2D.](@ref compile_vk2d)
 - [Install VK2D package.](@ref install_vk2d)
 
+Or use CMake project in your IDE directly.
 
+------
 
-# Build Requirements				{#build_requirements}
+# Build Requirements				{#build_cmake_requirements}
 
 <span style="color:red">! You will need to use Git, direct download from GitHub will not work because of dependencies !</span>.
 
 Prior to building this library on any platform you will need:
-- Git 2.28 or newer
+- Git 2.20 or newer
 - CMake 3.16 or newer
 - Vulkan SDK 1.2 or newer
 
 If you're building the documentation you will also need (disabled by default):
 - Doxygen 1.8.20 or newer
 
+------
 
-
-# Build project files				{#build_project_files}
+# Build project files				{#build_cmake_project_files}
 
 ## Microsoft Visual Studio 2019
 
@@ -70,7 +75,7 @@ cmake -D VK2D_BUILD_TESTS=ON -D VK2D_BUILD_EXAMPLES=OFF -G "Visual Studio 16 201
 
 
 
-# Compile VK2D						{#compile_vk2d}
+# Compile VK2D						{#build_cmake_compile_vk2d}
 
 You can compile the VK2D library on any platform using this CMake command.
 ```
@@ -84,7 +89,7 @@ cmake --build . --config Debug
 
 
 
-# Install VK2D						{#install_vk2d}
+# Install VK2D						{#build_cmake_install_vk2d}
 
 Installing is done by this command, which also works on all platforms.
 ```
