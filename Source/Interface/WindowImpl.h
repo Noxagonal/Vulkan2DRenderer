@@ -249,7 +249,6 @@ private:
 	// In case something goes wrong, allows cancelling render commitment.
 	void														AbortRenderTargetTextureRender();
 
-//	void														ClearRenderTargetTextureDepencies();
 	void														CheckAndAddRenderTargetTextureDependency(
 		vk2d::Texture										*	texture );
 

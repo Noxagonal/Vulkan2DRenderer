@@ -975,6 +975,8 @@ vk2d::_internal::WindowImpl::WindowImpl(
 	const vk2d::WindowCreateInfo	&	window_create_info
 )
 {
+	VK2D_ASSERT_MAIN_THREAD( instance );
+
 	assert( window );
 	assert( instance );
 
@@ -1060,6 +1062,8 @@ vk2d::_internal::WindowImpl::WindowImpl(
 
 vk2d::_internal::WindowImpl::~WindowImpl()
 {
+	VK2D_ASSERT_MAIN_THREAD( instance );
+
 	vkDeviceWaitIdle( vk_device );
 
 	while( screenshot_state == vk2d::_internal::WindowImpl::ScreenshotState::WAITING_FILE_WRITE ) {
@@ -1163,11 +1167,15 @@ vk2d::_internal::WindowImpl::~WindowImpl()
 
 void vk2d::_internal::WindowImpl::CloseWindow()
 {
+	VK2D_ASSERT_MAIN_THREAD( instance );
+
 	should_close = true;
 }
 
 bool vk2d::_internal::WindowImpl::ShouldClose()
 {
+	VK2D_ASSERT_MAIN_THREAD( instance );
+
 	return should_close;
 }
 
@@ -1277,6 +1285,8 @@ bool vk2d::_internal::AcquireImage(
 
 bool vk2d::_internal::WindowImpl::BeginRender()
 {
+	VK2D_ASSERT_MAIN_THREAD( instance );
+
 	// Skip if the window is iconified, swapchain images might not be available.
 	if( is_iconified ) return true;
 
@@ -1428,6 +1438,8 @@ bool vk2d::_internal::WindowImpl::BeginRender()
 
 bool vk2d::_internal::WindowImpl::EndRender()
 {
+	VK2D_ASSERT_MAIN_THREAD( instance );
+
 	// Skip if the window is iconified, swapchain images might not be available.
 	if( is_iconified ) return true;
 
@@ -1772,17 +1784,6 @@ bool vk2d::_internal::WindowImpl::EndRender()
 		ConfirmRenderTargetTextureRenderSubmission();
 	}
 
-	// DEBUGGING ONLY:
-	#if 0
-	{
-		auto result = vkDeviceWaitIdle( instance->GetVulkanDevice() );
-		if( result != VK_SUCCESS ) {
-			instance->Report( result, vk2d::_internal::VkResultToString( result ) );
-			return false;
-		}
-	}
-	#endif
-
 	// Present swapchain image
 	{
 		VkResult present_result				= VK_SUCCESS;
@@ -1826,6 +1827,8 @@ void vk2d::_internal::WindowImpl::TakeScreenshotToFile(
 	bool								include_alpha
 )
 {
+	VK2D_ASSERT_MAIN_THREAD( instance );
+
 	if( screenshot_state == vk2d::_internal::WindowImpl::ScreenshotState::IDLE ) {
 		screenshot_save_path	= save_path;
 		screenshot_state		= vk2d::_internal::WindowImpl::ScreenshotState::REQUESTED;
@@ -1839,6 +1842,8 @@ void vk2d::_internal::WindowImpl::TakeScreenshotToData(
 	bool		include_alpha
 )
 {
+	VK2D_ASSERT_MAIN_THREAD( instance );
+
 	if( screenshot_state == vk2d::_internal::WindowImpl::ScreenshotState::IDLE ) {
 		screenshot_save_path	= "";
 		screenshot_state		= vk2d::_internal::WindowImpl::ScreenshotState::REQUESTED;
@@ -1850,21 +1855,29 @@ void vk2d::_internal::WindowImpl::TakeScreenshotToData(
 
 void vk2d::_internal::WindowImpl::Focus()
 {
+	VK2D_ASSERT_MAIN_THREAD( instance );
+
 	glfwFocusWindow( glfw_window );
 }
 
 void vk2d::_internal::WindowImpl::SetOpacity( float opacity )
 {
+	VK2D_ASSERT_MAIN_THREAD( instance );
+
 	glfwSetWindowOpacity( glfw_window, opacity );
 }
 
 float vk2d::_internal::WindowImpl::GetOpacity()
 {
+	VK2D_ASSERT_MAIN_THREAD( instance );
+
 	return glfwGetWindowOpacity( glfw_window );
 }
 
 void vk2d::_internal::WindowImpl::Hide( bool hidden )
 {
+	VK2D_ASSERT_MAIN_THREAD( instance );
+
 	if( hidden ) {
 		glfwHideWindow( glfw_window );
 	} else {
@@ -1874,6 +1887,8 @@ void vk2d::_internal::WindowImpl::Hide( bool hidden )
 
 bool vk2d::_internal::WindowImpl::IsHidden()
 {
+	VK2D_ASSERT_MAIN_THREAD( instance );
+
 	return !glfwGetWindowAttrib( glfw_window, GLFW_VISIBLE );
 }
 
@@ -1881,6 +1896,8 @@ void vk2d::_internal::WindowImpl::DisableEvents(
 	bool		disable_events
 )
 {
+	VK2D_ASSERT_MAIN_THREAD( instance );
+
 	if( disable_events ) {
 		event_handler	= nullptr;
 	} else {
@@ -1890,6 +1907,8 @@ void vk2d::_internal::WindowImpl::DisableEvents(
 
 bool vk2d::_internal::WindowImpl::AreEventsDisabled()
 {
+	VK2D_ASSERT_MAIN_THREAD( instance );
+
 	return !!event_handler;
 }
 
@@ -1897,6 +1916,8 @@ void vk2d::_internal::WindowImpl::SetFullscreen(
 	vk2d::Monitor		*	monitor,
 	uint32_t				frequency )
 {
+	VK2D_ASSERT_MAIN_THREAD( instance );
+
 	if( monitor ) {
 		glfwSetWindowMonitor( glfw_window, monitor->impl->monitor, 0, 0, extent.width, extent.height, frequency );
 		if( !glfwGetWindowMonitor( glfw_window ) ) {
@@ -1909,11 +1930,15 @@ void vk2d::_internal::WindowImpl::SetFullscreen(
 
 bool vk2d::_internal::WindowImpl::IsFullscreen()
 {
+	VK2D_ASSERT_MAIN_THREAD( instance );
+
 	return !!glfwGetWindowMonitor( glfw_window );
 }
 
 vk2d::Vector2d vk2d::_internal::WindowImpl::GetCursorPosition()
 {
+	VK2D_ASSERT_MAIN_THREAD( instance );
+
 	double x = 0, y = 0;
 	glfwGetCursorPos( glfw_window, &x, &y );
 	return { x, y };
@@ -1923,11 +1948,15 @@ void vk2d::_internal::WindowImpl::SetCursorPosition(
 	vk2d::Vector2d		new_position
 )
 {
+	VK2D_ASSERT_MAIN_THREAD( instance );
+
 	glfwSetCursorPos( glfw_window, new_position.x, new_position.y );
 }
 
 void vk2d::_internal::WindowImpl::SetCursor( vk2d::Cursor * cursor )
 {
+	VK2D_ASSERT_MAIN_THREAD( instance );
+
 	if( cursor ) {
 		glfwSetCursor( glfw_window, cursor->impl->cursor );
 	} else {
@@ -1937,11 +1966,15 @@ void vk2d::_internal::WindowImpl::SetCursor( vk2d::Cursor * cursor )
 
 std::string vk2d::_internal::WindowImpl::GetClipboardString()
 {
+	VK2D_ASSERT_MAIN_THREAD( instance );
+
 	return glfwGetClipboardString( glfw_window );
 }
 
 void vk2d::_internal::WindowImpl::SetClipboardString( const std::string & str )
 {
+	VK2D_ASSERT_MAIN_THREAD( instance );
+
 	glfwSetClipboardString( glfw_window, str.c_str() );
 }
 
@@ -1949,12 +1982,16 @@ void vk2d::_internal::WindowImpl::SetTitle(
 	const std::string		&	title
 )
 {
+	VK2D_ASSERT_MAIN_THREAD( instance );
+
 	window_title	= title;
 	glfwSetWindowTitle( glfw_window, window_title.c_str() );
 }
 
 std::string vk2d::_internal::WindowImpl::GetTitle()
 {
+	VK2D_ASSERT_MAIN_THREAD( instance );
+
 	return window_title;
 }
 
@@ -1962,6 +1999,8 @@ void vk2d::_internal::WindowImpl::SetIcon(
 	const std::vector<std::filesystem::path>	&	image_paths
 )
 {
+	VK2D_ASSERT_MAIN_THREAD( instance );
+
 	icon_data.resize( image_paths.size() );
 	for( size_t i = 0; i < image_paths.size(); ++i ) {
 		auto & ic = icon_data[ i ];
@@ -1996,11 +2035,15 @@ void vk2d::_internal::WindowImpl::SetPosition(
 	vk2d::Vector2i		new_position
 )
 {
+	VK2D_ASSERT_MAIN_THREAD( instance );
+
 	glfwSetWindowPos( glfw_window, new_position.x, new_position.y );
 }
 
 vk2d::Vector2i vk2d::_internal::WindowImpl::GetPosition()
 {
+	VK2D_ASSERT_MAIN_THREAD( instance );
+
 	int x = 0, y = 0;
 	glfwGetWindowPos( glfw_window, &x, &y );
 	return { int32_t( x ), int32_t( y ) };
@@ -2010,12 +2053,16 @@ void vk2d::_internal::WindowImpl::SetSize(
 	vk2d::Vector2u			new_size
 )
 {
+	VK2D_ASSERT_MAIN_THREAD( instance );
+
 	extent					= { uint32_t( new_size.x ), uint32_t( new_size.y ) };
 	should_reconstruct		= true;
 }
 
 vk2d::Vector2u vk2d::_internal::WindowImpl::GetSize()
 {
+	VK2D_ASSERT_MAIN_THREAD( instance );
+
 	return { extent.width, extent.height };
 }
 
@@ -2023,6 +2070,8 @@ void vk2d::_internal::WindowImpl::Iconify(
 	bool			iconified
 )
 {
+	VK2D_ASSERT_MAIN_THREAD( instance );
+
 	if( iconified ) {
 		glfwIconifyWindow( glfw_window );
 	} else {
@@ -2032,6 +2081,8 @@ void vk2d::_internal::WindowImpl::Iconify(
 
 bool vk2d::_internal::WindowImpl::IsIconified()
 {
+	VK2D_ASSERT_MAIN_THREAD( instance );
+
 	return glfwGetWindowAttrib( glfw_window, GLFW_ICONIFIED );
 }
 
@@ -2039,6 +2090,8 @@ void vk2d::_internal::WindowImpl::SetMaximized(
 	bool			maximized
 )
 {
+	VK2D_ASSERT_MAIN_THREAD( instance );
+
 	if( maximized ) {
 		glfwMaximizeWindow( glfw_window );
 	} else {
@@ -2048,6 +2101,8 @@ void vk2d::_internal::WindowImpl::SetMaximized(
 
 bool vk2d::_internal::WindowImpl::GetMaximized()
 {
+	VK2D_ASSERT_MAIN_THREAD( instance );
+
 	return glfwGetWindowAttrib( glfw_window, GLFW_MAXIMIZED );
 }
 
@@ -2055,6 +2110,8 @@ void vk2d::_internal::WindowImpl::SetCursorState(
 	vk2d::CursorState		new_state
 )
 {
+	VK2D_ASSERT_MAIN_THREAD( instance );
+
 	switch( new_state ) {
 		case vk2d::CursorState::NORMAL:
 			glfwSetInputMode( glfw_window, GLFW_CURSOR, GLFW_CURSOR_NORMAL );
@@ -2078,6 +2135,8 @@ void vk2d::_internal::WindowImpl::SetCursorState(
 
 vk2d::CursorState vk2d::_internal::WindowImpl::GetCursorState()
 {
+	VK2D_ASSERT_MAIN_THREAD( instance );
+
 	auto state = glfwGetInputMode( glfw_window, GLFW_CURSOR );
 	switch( state ) {
 		case GLFW_CURSOR_NORMAL:
@@ -2099,23 +2158,7 @@ vk2d::CursorState vk2d::_internal::WindowImpl::GetCursorState()
 
 
 
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//
-// WindowImpl::Draw_TriangleList()
-//
-// - Records commands to bind a pipeline, draw triangle list to the swapchain image
-// - Pushes vertices and indices to mesh buffer that will get uploaded to the GPU prior
-//   to submitting the command buffer that these drawing commands were recorded to.
-//
-// - Returns:		void
-// - Parameters:
-//   filled			=: true -> polygons will be filled, false -> polygons will be rendered as wireframe
-//   vertices		=: A vector of <Vertex> defining the end points of the polygons
-//   indices		=: A vector of <VertexIndex_3> defining the surface of the polygon, each VertexIndex_3 defines a single polygon,
-//						VertexIndex_3 contains an array of 3 uint32_t, these correspond to the index number in the vertices vector,
-//						of between which the polygon will be drawn.
-//
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 void vk2d::_internal::WindowImpl::DrawTriangleList(
 	const std::vector<vk2d::VertexIndex_3>	&	indices,
 	const std::vector<vk2d::Vertex>			&	vertices,
@@ -2126,6 +2169,8 @@ void vk2d::_internal::WindowImpl::DrawTriangleList(
 	vk2d::Sampler							*	sampler
 )
 {
+	VK2D_ASSERT_MAIN_THREAD( instance );
+
 	auto index_count	= uint32_t( indices.size() * 3 );
 	std::vector<uint32_t> raw_indices;
 	raw_indices.resize( index_count );
@@ -2156,6 +2201,8 @@ void vk2d::_internal::WindowImpl::DrawTriangleList(
 	vk2d::Sampler							*	sampler
 )
 {
+	VK2D_ASSERT_MAIN_THREAD( instance );
+
 	// Skip if the window is iconified, swapchain images might not be available.
 	if( is_iconified ) return;
 
@@ -2280,6 +2327,8 @@ void vk2d::_internal::WindowImpl::DrawLineList(
 	float										line_width
 )
 {
+	VK2D_ASSERT_MAIN_THREAD( instance );
+
 	auto index_count	= uint32_t( indices.size() * 2 );
 	std::vector<uint32_t> raw_indices;
 	raw_indices.resize( index_count );
@@ -2309,6 +2358,8 @@ void vk2d::_internal::WindowImpl::DrawLineList(
 	float										line_width
 )
 {
+	VK2D_ASSERT_MAIN_THREAD( instance );
+
 	// Skip if the window is iconified, swapchain images might not be available.
 	if( is_iconified ) return;
 
@@ -2420,6 +2471,8 @@ void vk2d::_internal::WindowImpl::DrawPointList(
 	vk2d::Sampler							*	sampler
 )
 {
+	VK2D_ASSERT_MAIN_THREAD( instance );
+
 	// Skip if the window is iconified, swapchain images might not be available.
 	if( is_iconified ) return;
 
@@ -2521,6 +2574,8 @@ void vk2d::_internal::WindowImpl::DrawMesh(
 	const vk2d::Mesh						&	mesh,
 	const std::vector<vk2d::Matrix4f>		&	transformations )
 {
+	VK2D_ASSERT_MAIN_THREAD( instance );
+
 	if( mesh.vertices.size() == 0 ) return;
 
 	switch( mesh.mesh_type ) {
@@ -2696,6 +2751,8 @@ public:
 
 bool vk2d::_internal::WindowImpl::SynchronizeFrame()
 {
+	VK2D_ASSERT_MAIN_THREAD( instance );
+
 	auto result = VK_SUCCESS;
 
 	if( previous_frame_need_synchronization ) {

@@ -429,6 +429,8 @@ vk2d::_internal::InstanceImpl::InstanceImpl(
 
 vk2d::_internal::InstanceImpl::~InstanceImpl()
 {
+	VK2D_ASSERT_MAIN_THREAD( this );
+
 	std::lock_guard<std::mutex> lock_guard( instance_globals_mutex );
 	vk2d::_internal::instance_listeners.push_back( this );
 
@@ -463,6 +465,8 @@ vk2d::_internal::InstanceImpl::~InstanceImpl()
 
 bool vk2d::_internal::InstanceImpl::Run()
 {
+	VK2D_ASSERT_MAIN_THREAD( this );
+
 	glfwPollEvents();
 
 	// TODO: Schedule cleanup tasks at vk2d::_internal::InstanceImpl::Run().
@@ -474,6 +478,8 @@ void vk2d::_internal::InstanceImpl::SetMonitorUpdateCallback(
 	vk2d::PFN_MonitorUpdateCallback		monitor_update_callback_funtion
 )
 {
+	VK2D_ASSERT_MAIN_THREAD( this );
+
 	if( !IsThisThreadCreatorThread() ) {
 		Report( vk2d::ReportSeverity::WARNING, "Instance::SetMonitorUpdateCallback() must be called from main thread only!" );
 		return;
@@ -487,6 +493,8 @@ vk2d::Cursor * vk2d::_internal::InstanceImpl::CreateCursor(
 	vk2d::Vector2i							hot_spot
 )
 {
+	VK2D_ASSERT_MAIN_THREAD( this );
+
 	if( !IsThisThreadCreatorThread() ) {
 		Report( vk2d::ReportSeverity::WARNING, "Instance::CreateCursor() must be called from main thread only!" );
 		return {};
@@ -513,6 +521,8 @@ vk2d::Cursor * vk2d::_internal::InstanceImpl::CreateCursor(
 	vk2d::Vector2i							hot_spot
 )
 {
+	VK2D_ASSERT_MAIN_THREAD( this );
+
 	if( !IsThisThreadCreatorThread() ) {
 		Report( vk2d::ReportSeverity::WARNING, "Instance::CreateCursor() must be called from main thread only!" );
 		return {};
@@ -538,6 +548,8 @@ void vk2d::_internal::InstanceImpl::DestroyCursor(
 	vk2d::Cursor		*	cursor
 )
 {
+	VK2D_ASSERT_MAIN_THREAD( this );
+
 	if( !IsThisThreadCreatorThread() ) {
 		Report( vk2d::ReportSeverity::WARNING, "Instance::DestroyCursor() must be called from main thread only!" );
 		return;
@@ -556,6 +568,8 @@ void vk2d::_internal::InstanceImpl::DestroyCursor(
 
 vk2d::PFN_GamepadConnectionEventCallback vk2d::_internal::InstanceImpl::GetGamepadEventCallback() const
 {
+	VK2D_ASSERT_MAIN_THREAD( this );
+
 	return joystick_event_callback;
 }
 
@@ -563,6 +577,8 @@ void vk2d::_internal::InstanceImpl::SetGamepadEventCallback(
 	vk2d::PFN_GamepadConnectionEventCallback		joystick_event_callback_function
 )
 {
+	VK2D_ASSERT_MAIN_THREAD( this );
+
 	if( !IsThisThreadCreatorThread() ) {
 		Report( vk2d::ReportSeverity::WARNING, "Instance::SetGamepadEventCallback() must be called from main thread only!" );
 		return;
@@ -573,6 +589,8 @@ void vk2d::_internal::InstanceImpl::SetGamepadEventCallback(
 
 bool vk2d::_internal::InstanceImpl::IsGamepadPresent( vk2d::Gamepad joystick )
 {
+	VK2D_ASSERT_MAIN_THREAD( this );
+
 	if( !IsThisThreadCreatorThread() ) {
 		Report( vk2d::ReportSeverity::WARNING, "Instance::IsGamepadPresent() must be called from main thread only!" );
 		return {};
@@ -587,6 +605,8 @@ bool vk2d::_internal::InstanceImpl::IsGamepadPresent( vk2d::Gamepad joystick )
 
 std::string vk2d::_internal::InstanceImpl::GetGamepadName( vk2d::Gamepad gamepad )
 {
+	VK2D_ASSERT_MAIN_THREAD( this );
+
 	if( !IsThisThreadCreatorThread() ) {
 		Report( vk2d::ReportSeverity::WARNING, "Instance::GetGamepadName() must be called from main thread only!" );
 		return {};
@@ -598,6 +618,8 @@ std::string vk2d::_internal::InstanceImpl::GetGamepadName( vk2d::Gamepad gamepad
 vk2d::GamepadState vk2d::_internal::InstanceImpl::QueryGamepadState(
 	vk2d::Gamepad			gamepad )
 {
+	VK2D_ASSERT_MAIN_THREAD( this );
+
 	if( !IsThisThreadCreatorThread() ) {
 		Report( vk2d::ReportSeverity::WARNING, "Instance::QueryGamepadState() must be called from main thread only!" );
 		return {};
@@ -633,6 +655,8 @@ vk2d::Window * vk2d::_internal::InstanceImpl::CreateOutputWindow(
 	const vk2d::WindowCreateInfo	&	window_create_info
 )
 {
+	VK2D_ASSERT_MAIN_THREAD( this );
+
 	if( !IsThisThreadCreatorThread() ) {
 		Report( vk2d::ReportSeverity::WARNING, "Instance::CreateOutputWindow() must be called from main thread only!" );
 		return {};
@@ -651,6 +675,8 @@ void vk2d::_internal::InstanceImpl::DestroyOutputWindow(
 	vk2d::Window				*	window
 )
 {
+	VK2D_ASSERT_MAIN_THREAD( this );
+
 	if( !IsThisThreadCreatorThread() ) {
 		Report( vk2d::ReportSeverity::WARNING, "Instance::DestroyOutputWindow() must be called from main thread only!" );
 		return;
@@ -673,6 +699,8 @@ vk2d::RenderTargetTexture * vk2d::_internal::InstanceImpl::CreateRenderTargetTex
 	const vk2d::RenderTargetTextureCreateInfo		&	render_target_texture_create_info
 )
 {
+	VK2D_ASSERT_MAIN_THREAD( this );
+
 	if( !IsThisThreadCreatorThread() ) {
 		Report( vk2d::ReportSeverity::WARNING, "Instance::CreateRenderTargetTexture() must be called from main thread only!" );
 		return {};
@@ -695,6 +723,8 @@ void vk2d::_internal::InstanceImpl::DestroyRenderTargetTexture(
 	vk2d::RenderTargetTexture						*	render_target_texture
 )
 {
+	VK2D_ASSERT_MAIN_THREAD( this );
+
 	if( !IsThisThreadCreatorThread() ) {
 		Report( vk2d::ReportSeverity::WARNING, "Instance::DestroyRenderTargetTexture() must be called from main thread only!" );
 		return;
@@ -741,18 +771,13 @@ void vk2d::_internal::InstanceImpl::FreeDescriptorSet(
 }
 
 
-/*
-vk2d::_internal::DescriptorAutoPool * vk2d::_internal::InstanceImpl::GetDescriptorPool()
-{
-	return descriptor_pool.get();
-}
-*/
-
 
 vk2d::Sampler * vk2d::_internal::InstanceImpl::CreateSampler(
 	const vk2d::SamplerCreateInfo	&	sampler_create_info
 )
 {
+	VK2D_ASSERT_MAIN_THREAD( this );
+
 	if( !IsThisThreadCreatorThread() ) {
 		Report( vk2d::ReportSeverity::WARNING, "Instance::CreateSampler() must be called from main thread only!" );
 		return {};
@@ -775,6 +800,8 @@ void vk2d::_internal::InstanceImpl::DestroySampler(
 	vk2d::Sampler					*	sampler
 )
 {
+	VK2D_ASSERT_MAIN_THREAD( this );
+
 	if( !IsThisThreadCreatorThread() ) {
 		Report( vk2d::ReportSeverity::WARNING, "Instance::DestroySampler() must be called from main thread only!" );
 		return;
@@ -800,6 +827,8 @@ void vk2d::_internal::InstanceImpl::DestroySampler(
 
 vk2d::Multisamples vk2d::_internal::InstanceImpl::GetMaximumSupportedMultisampling() const
 {
+	VK2D_ASSERT_MAIN_THREAD( this );
+
 	vk2d::Multisamples max_samples	= vk2d::Multisamples( vk_physical_device_properties.limits.framebufferColorSampleCounts );
 	if( uint32_t( max_samples )			& uint32_t( vk2d::Multisamples::SAMPLE_COUNT_64 ) )	return vk2d::Multisamples::SAMPLE_COUNT_64;
 	else if( uint32_t( max_samples )	& uint32_t( vk2d::Multisamples::SAMPLE_COUNT_32 ) )	return vk2d::Multisamples::SAMPLE_COUNT_32;
@@ -813,11 +842,15 @@ vk2d::Multisamples vk2d::_internal::InstanceImpl::GetMaximumSupportedMultisampli
 
 vk2d::Multisamples vk2d::_internal::InstanceImpl::GetAllSupportedMultisampling() const
 {
+	VK2D_ASSERT_MAIN_THREAD( this );
+
 	return vk2d::Multisamples( vk_physical_device_properties.limits.framebufferColorSampleCounts );
 }
 
 vk2d::PFN_VK2D_ReportFunction vk2d::_internal::InstanceImpl::GetReportFunction() const
 {
+	VK2D_ASSERT_MAIN_THREAD( this );
+
 	return report_function;
 }
 
@@ -1073,6 +1106,8 @@ VkPipeline vk2d::_internal::InstanceImpl::GetGraphicsPipeline(
 	const vk2d::_internal::GraphicsPipelineSettings		&	settings
 )
 {
+	VK2D_ASSERT_SINGLE_THREAD_ACCESS_SCOPE();
+
 	// TODO: Potential multithreaded access conflict, don't know if this will be a requirement at this point.
 	// Need mutex here as this function can be called from multiple threads.
 	// Alternatively we could create vulkan pipelines per window and render
@@ -1094,6 +1129,8 @@ VkPipeline vk2d::_internal::InstanceImpl::GetComputePipeline(
 	const vk2d::_internal::ComputePipelineSettings		&	settings
 )
 {
+	VK2D_ASSERT_SINGLE_THREAD_ACCESS_SCOPE();
+
 	// TODO: Potential multithreaded access conflict, don't know if this will be a requirement at this point.
 	// Need mutex here as this function can be called from multiple threads.
 	// Alternatively we could create vulkan pipelines per window and render
@@ -1115,6 +1152,8 @@ VkPipeline vk2d::_internal::InstanceImpl::CreateGraphicsPipeline(
 	const vk2d::_internal::GraphicsPipelineSettings		&	settings
 )
 {
+	VK2D_ASSERT_MAIN_THREAD( this );
+
 	std::array<VkPipelineShaderStageCreateInfo, 2> shader_stage_create_infos {};
 	shader_stage_create_infos[ 0 ].sType				= VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
 	shader_stage_create_infos[ 0 ].pNext				= nullptr;
@@ -1324,6 +1363,8 @@ VkPipeline vk2d::_internal::InstanceImpl::CreateGraphicsPipeline(
 
 VkPipeline vk2d::_internal::InstanceImpl::CreateComputePipeline( const vk2d::_internal::ComputePipelineSettings & settings )
 {
+	VK2D_ASSERT_MAIN_THREAD( this );
+
 	VkPipelineShaderStageCreateInfo stage_create_info {};
 	stage_create_info.sType						= VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
 	stage_create_info.pNext						= nullptr;
@@ -1577,7 +1618,6 @@ VkBool32 VKAPI_PTR DebugMessenger(
 
 bool vk2d::_internal::InstanceImpl::CreateInstance()
 {
-
 	#if VK2D_BUILD_OPTION_VULKAN_VALIDATION && VK2D_DEBUG_ENABLE
 
 	instance_layers.push_back( "VK_LAYER_KHRONOS_validation" );
@@ -2803,6 +2843,8 @@ void UpdateMonitorLists(
 	bool		globals_locked
 )
 {
+	VK2D_ASSERT_SINGLE_THREAD_ACCESS_SCOPE();
+
 	// Lock globals if not already locked.
 	std::unique_lock<std::mutex> unique_lock;
 	if( !globals_locked ) {

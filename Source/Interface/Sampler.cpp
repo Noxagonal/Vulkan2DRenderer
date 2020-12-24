@@ -77,6 +77,8 @@ vk2d::_internal::SamplerImpl::SamplerImpl(
 	const vk2d::SamplerCreateInfo	&	create_info
 )
 {
+	VK2D_ASSERT_MAIN_THREAD( instance );
+
 	this->my_interface		= my_interface;
 	this->instance		= instance;
 	assert( this->my_interface );
@@ -290,6 +292,8 @@ vk2d::_internal::SamplerImpl::SamplerImpl(
 
 vk2d::_internal::SamplerImpl::~SamplerImpl()
 {
+	VK2D_ASSERT_MAIN_THREAD( instance );
+
 	instance->GetDeviceMemoryPool()->FreeCompleteResource( sampler_data );
 	vkDestroySampler(
 		vk_device,
@@ -301,26 +305,29 @@ vk2d::_internal::SamplerImpl::~SamplerImpl()
 
 VkSampler vk2d::_internal::SamplerImpl::GetVulkanSampler() const
 {
+	VK2D_ASSERT_MAIN_THREAD( instance );
+
 	return vk_sampler;
 }
 
-//VkDescriptorSet vk2d::_internal::SamplerImpl::GetVulkanDescriptorSet()
-//{
-//	return descriptor_set.descriptorSet;
-//}
-
 VkBuffer vk2d::_internal::SamplerImpl::GetVulkanBufferForSamplerData() const
 {
+	VK2D_ASSERT_MAIN_THREAD( instance );
+
 	return sampler_data.buffer;
 }
 
 vk2d::Vector2u vk2d::_internal::SamplerImpl::GetBorderColorEnable() const
 {
+	VK2D_ASSERT_MAIN_THREAD( instance );
+
 	return border_color_enable;
 }
 
 bool vk2d::_internal::SamplerImpl::IsAnyBorderColorEnabled() const
 {
+	VK2D_ASSERT_MAIN_THREAD( instance );
+
 	return bool( border_color_enable.x || border_color_enable.y );
 }
 
