@@ -322,7 +322,7 @@ install(
 	DIRECTORY
 		"${CMAKE_CURRENT_SOURCE_DIR}/Include/"
 	DESTINATION
-		"include/VK2D/"
+		"include/"
 )
 install(
 	FILES

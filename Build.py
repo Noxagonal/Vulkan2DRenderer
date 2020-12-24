@@ -371,8 +371,6 @@ def CreatePackageMenu():
     if is_windows:
         # On windows, make sure we're copying package into a folder.
         # Might expand this to Linux as well in the future when creating packages.
-        fixed_path = os.getcwd() + "/" + tool_build_install_path
-        print( "FIXED PATH:", fixed_path )
         build_parameters += [ "-D", "CMAKE_INSTALL_PREFIX=./" + tool_build_install_path ]
     #call_parameters += [ "-D", 'CMAKE_BUILD_TYPE=Release' ]
     build_parameters += [ "-S", packaging_source_path ]
