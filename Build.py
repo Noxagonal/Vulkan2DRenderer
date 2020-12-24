@@ -91,7 +91,7 @@ def SelectBuildSystem( quick_setup ):
         print( "************************************************************" )
         print( "* Configure and build project files:" )
         print( "* " )
-        print( "* Select build system." )
+        print( "* Select build system:" )
         print( "* " )
         for i in range( 0, len( build_systems_copy ) ):
             bs = build_systems_copy[ i ]
@@ -125,7 +125,7 @@ def SelectBuildOptions( quick_setup ):
         print( "************************************************************" )
         print( "* Configure and build project files:" )
         print( "* " )
-        print( "* Select build options." )
+        print( "* Select build options:" )
         print( "* " )
         for i in range( 0, len( build_options_copy ) ):
             bo = build_options_copy[ i ]
@@ -158,10 +158,12 @@ def SelectBuildType():
         print( "************************************************************" )
         print( "* Configure and build project files:" )
         print( "* " )
-        print( "* Select build type." )
+        print( "* Select build type:" )
         print( "* " )
         print( "* [ 1 ] Release" )
         print( "* [ 2 ] Debug" )
+        print( "* " )
+        print( "* [ d ] Library development (in \"build\" directory)" )
         print( "* " )
         print( "* [ x ] Cancel" )
         print( "* " )
@@ -174,6 +176,8 @@ def SelectBuildType():
             return [ True, [ "Release" ] ]
         elif option == "2":
             return [ True, [ "Debug" ] ]
+        elif option == "d":
+            return [ True, [ "dev" ] ]
         elif option == "x":
             return [ False, [] ]
 
@@ -200,11 +204,18 @@ def ConfigureAndBuildProjectMenu( quick_setup = False ):
     if not build_opt[ 0 ]:
         return
 
-    if not os.path.exists( tool_build_folder ):
-        os.mkdir( tool_build_folder )
-
     for bt in build_type[ 1 ]:
         build_path = tool_build_folder + "/" + bt
+        is_dev_build = False
+
+        # If this is a build branch, use a different build path
+        if bt == "dev":
+            is_dev_build = True
+            build_path = "build"
+        else:
+            if not os.path.exists( tool_build_folder ):
+                os.mkdir( tool_build_folder )
+
 
         call_parameters = [ "cmake" ]
         if build_sys:
@@ -214,8 +225,12 @@ def ConfigureAndBuildProjectMenu( quick_setup = False ):
         if is_windows:
             # On windows, make sure we're installing into a folder.
             # Might expand this to Linux as well in the future when creating packages.
-            call_parameters += [ "-D", "CMAKE_INSTALL_PREFIX=./" + tool_build_install_path ]
-        call_parameters += [ "-D", 'CMAKE_BUILD_TYPE=' + bt ]
+            if is_dev_build:
+                call_parameters += [ "-D", "CMAKE_INSTALL_PREFIX=./install/" ]
+            else:
+                call_parameters += [ "-D", "CMAKE_INSTALL_PREFIX=./" + tool_build_install_path ]
+        if not is_dev_build:
+            call_parameters += [ "-D", 'CMAKE_BUILD_TYPE=' + bt ]
         call_parameters += [ "-S", "." ]
         call_parameters += [ "-B", build_path ]
 
