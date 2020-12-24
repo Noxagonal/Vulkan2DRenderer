@@ -68,10 +68,12 @@ import sys
 import os
 import subprocess
 import copy
+import shutil
 
 is_windows = os.name == 'nt'
 cls = lambda: os.system('cls' if is_windows else 'clear')
-tool_build_folder = "tool_build"
+tool_build_folder = "build_tool"
+tool_build_install_path = tool_build_folder + "/install"
 
 
 
@@ -129,7 +131,7 @@ def SelectBuildOptions( quick_setup ):
             bo = build_options_copy[ i ]
             print( "* [ " + str( i + 1 ) + " ] " + bo.description + ":", bo.value )
         print( "* " )
-        print( "* [ b ] Continue" )
+        print( "* [ b ] Build" )
         print( "* [ x ] Cancel" )
         print( "* " )
         print( "************************************************************" )
@@ -212,7 +214,7 @@ def ConfigureAndBuildProjectMenu( quick_setup = False ):
         if is_windows:
             # On windows, make sure we're installing into a folder.
             # Might expand this to Linux as well in the future when creating packages.
-            call_parameters += [ "-D", "CMAKE_INSTALL_PREFIX=./install/" ]
+            call_parameters += [ "-D", "CMAKE_INSTALL_PREFIX=./" + tool_build_install_path ]
         call_parameters += [ "-D", 'CMAKE_BUILD_TYPE=' + bt ]
         call_parameters += [ "-S", "." ]
         call_parameters += [ "-B", build_path ]
@@ -331,6 +333,72 @@ def InstallMenu( quick_setup = False ):
 
 
 ################################################################
+### Create package menu
+################################################################
+def CreatePackageMenu():
+    if not is_windows:
+        # No installing on Linux for now. TODO for later...
+        return
+
+    package_type = ""
+    while True:
+        cls()
+        print( "************************************************************" )
+        print( "* Main menu:" )
+        print( "* " )
+        print( "* Select task" )
+        print( "* " )
+        print( "* [ 1 ] Create 7zip package" )
+        print( "* " )
+        print( "* [ x ] Back" )
+        print( "* " )
+        print( "************************************************************" )
+        print( "" )
+        option = input( "Selection: " )
+        option = option.lower()
+
+        if option == "x":
+            return
+        elif option == "1":
+            package_type = "7Z"
+            break
+
+    packaging_source_path = "Packaging"
+    packaging_build_path = tool_build_folder + "/" + packaging_source_path
+
+    build_parameters = [ "cmake" ]
+    build_parameters += [ "-Wno-dev" ]
+    if is_windows:
+        # On windows, make sure we're copying package into a folder.
+        # Might expand this to Linux as well in the future when creating packages.
+        fixed_path = os.getcwd() + "/" + tool_build_install_path
+        print( "FIXED PATH:", fixed_path )
+        build_parameters += [ "-D", "CMAKE_INSTALL_PREFIX=./" + tool_build_install_path ]
+    #call_parameters += [ "-D", 'CMAKE_BUILD_TYPE=Release' ]
+    build_parameters += [ "-S", packaging_source_path ]
+    build_parameters += [ "-B", packaging_build_path ]
+    subprocess.run( build_parameters )
+
+    install_parameters = [ "cmake" ]
+    install_parameters += [ "--install", packaging_build_path ]
+    install_parameters += [ "--config", "Release" ]
+    subprocess.run( install_parameters )
+
+    # This is a bit hacky, remporarily changing working directory for cpack.
+    current_dir = os.getcwd()
+    os.chdir( packaging_build_path )
+    cpack_parameters = [ "cpack" ]
+    cpack_parameters += [ "-G", package_type ]
+    cpack_parameters += [ "-B", "../install_packages" ]
+    subprocess.run( cpack_parameters )
+    os.chdir( current_dir )
+
+    print( "\n\nDone." )
+    input( "Press enter..." )
+
+
+
+################################################################
 ### Main menu
 ################################################################
 def MainMenu():
@@ -339,15 +407,17 @@ def MainMenu():
         print( "************************************************************" )
         print( "* Main menu:" )
         print( "* " )
-        print( "* Select task." )
+        print( "* Select task" )
         print( "* " )
-        print( "* [ q ] Quick build and install using default settings." )
+        print( "* [ q ] Quick build and install using default settings" )
         print( "* " )
-        print( "* [ 1 ] Configure and build project files." )
-        print( "* [ 2 ] Compile." )
+        print( "* [ 1 ] Configure and build project files" )
+        print( "* [ 2 ] Compile" )
         if is_windows:
             # No installing on Linux for now. TODO for later...
-            print( "* [ 3 ] Install." )
+            print( "* [ 3 ] Install" )
+            print( "* " )
+            print( "* [ p ] Create install package" )
         print( "* " )
         print( "* [ x ] Exit" )
         print( "* " )
@@ -362,7 +432,11 @@ def MainMenu():
             ConfigureAndBuildProjectMenu( True )
             CompileMenu( True )
             InstallMenu( True )
+            print( "Done." )
+            input( "Press enter..." )
             return
+        elif option == "p":
+            CreatePackageMenu()
         elif option == "1":
             ConfigureAndBuildProjectMenu()
         elif option == "2":
