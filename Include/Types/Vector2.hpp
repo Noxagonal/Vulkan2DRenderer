@@ -217,6 +217,11 @@ public:
 	}
 };
 
+template<typename T>
+std::ostream& operator<<(std::ostream& os, const Vector2Base<T>& v) {
+	return os << v.x << "," << v.y;
+}
+
 /// @brief		2D vector with float precision.
 using Vector2f			= vk2d::Vector2Base<float>;
 
