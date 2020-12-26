@@ -33,12 +33,13 @@ public:
 	Vector4Base( vk2d::Vector4Base<T> && other )								= default;
 	Vector4Base( const std::initializer_list<T> & elements )
 	{
-		assert( elements.size() <= 4 );
+		auto s = elements.size();
+		assert( s <= 4 );
 		auto e = elements.begin();
-		if( e ) x = *e++;
-		if( e ) y = *e++;
-		if( e ) z = *e++;
-		if( e ) w = *e++;
+		( s >= 1 ) ? x = *e++ : x = T( 0 );
+		( s >= 2 ) ? y = *e++ : y = T( 0 );
+		( s >= 3 ) ? z = *e++ : z = T( 0 );
+		( s >= 4 ) ? w = *e++ : w = T( 0 );
 	}
 
 	vk2d::Vector4Base<T> & operator=( const vk2d::Vector4Base<T> & other )		= default;
@@ -236,6 +237,11 @@ public:
 		return *this / distance;
 	}
 };
+
+template<typename T>
+std::ostream& operator<<(std::ostream& os, const Vector4Base<T>& v) {
+	return os << "[" << v.x << ", " << v.y << ", " << v.z << ", " << v.w << "]";
+}
 
 /// @brief		4D vector with float precision.
 using Vector4f			= vk2d::Vector4Base<float>;

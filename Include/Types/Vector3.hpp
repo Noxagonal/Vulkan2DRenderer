@@ -32,11 +32,12 @@ public:
 	Vector3Base( vk2d::Vector3Base<T> && other )								= default;
 	Vector3Base( const std::initializer_list<T> & elements )
 	{
-		assert( elements.size() <= 3 );
+		auto s = elements.size();
+		assert( s <= 4 );
 		auto e = elements.begin();
-		if( e ) x = *e++;
-		if( e ) y = *e++;
-		if( e ) z = *e++;
+		( s >= 1 ) ? x = *e++ : x = T( 0 );
+		( s >= 2 ) ? y = *e++ : y = T( 0 );
+		( s >= 3 ) ? z = *e++ : z = T( 0 );
 	}
 
 	vk2d::Vector3Base<T> & operator=( const vk2d::Vector3Base<T> & other )		= default;
@@ -226,6 +227,11 @@ public:
 		return *this / distance;
 	}
 };
+
+template<typename T>
+std::ostream& operator<<(std::ostream& os, const Vector3Base<T>& v) {
+	return os << "[" << v.x << ", " << v.y << ", " << v.z << "]";
+}
 
 /// @brief		3D vector with float precision.
 using Vector3f			= vk2d::Vector3Base<float>;
