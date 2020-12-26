@@ -55,7 +55,7 @@ build_systems.append( BuildSystem( "Code::Blocks - Unix Makefiles",             
 default_build_system_index = 0
 
 # Add build options here.        ( Description,                                     CMake option name,                      On by default
-build_options.append( BuildOption( "Enable library debugging options",              "VK2D_DEBUG",                           False ) )
+build_options.append( BuildOption( "Enable library debugging features",             "VK2D_ENABLE_LIBRARY_DEBUG_FEATURES",   False ) )
 build_options.append( BuildOption( "Build static library (EXPERIMENTAL)",           "VK2D_BUILD_STATIC_LIBRARY",            False ) )
 build_options.append( BuildOption( "Build tests",                                   "VK2D_BUILD_TESTS",                     False ) )
 build_options.append( BuildOption( "Build examples",                                "VK2D_BUILD_EXAMPLES",                  True  ) )
@@ -231,6 +231,7 @@ def ConfigureAndBuildProjectMenu( quick_setup = False ):
                 call_parameters += [ "-D", "CMAKE_INSTALL_PREFIX=./" + tool_build_install_path ]
         if not is_dev_build:
             call_parameters += [ "-D", 'CMAKE_BUILD_TYPE=' + bt ]
+        call_parameters += [ "-D", "VK2D_SEPARATE_DEBUG_NAME=ON" ]
         call_parameters += [ "-S", "." ]
         call_parameters += [ "-B", build_path ]
 

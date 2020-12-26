@@ -3,16 +3,21 @@
 
 cmake_minimum_required(VERSION 3.16)
 
-if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-	# Need both Release and Debug versions on VS, I want to put these
-	# into the same folder for ease of use on the user application,
-	# renaming the .dll and .lib files won't work so I'm just changing
-	# the name of the entire project based on build type.
-	# If this causes any problems on other platforms I'll have to rethink
-	# this, for now I'll just leave it as is.
-	set(VK2D_NAME VK2D_d)
+option(VK2D_SEPARATE_DEBUG_NAME
+	"Set project name to VK2D_d for Debug builds"
+	OFF
+)
+
+if(VK2D_SEPARATE_DEBUG_NAME AND CMAKE_BUILD_TYPE STREQUAL "Debug")
+	# Allows building both Release and Debug with different names and putting
+	# resulting library files into the same folders without name conflicts.
+	set(VK2D_NAME
+		VK2D_d
+	)
 else()
-	set(VK2D_NAME VK2D)
+	set(VK2D_NAME
+		VK2D
+	)
 endif()
 
 project(${VK2D_NAME} CXX)
@@ -93,8 +98,8 @@ set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 ################################################################
 # Options, variables, lists, files.
 ################################################################
-option(VK2D_DEBUG
-	"This enables debug printing, Vulkan validation and extra checks to make sure VK2D is performing correctly, this does not help with library usage debugging."
+option(VK2D_ENABLE_LIBRARY_DEBUG_FEATURES
+	"This enables debug printing, Vulkan validation and extra checks to make sure VK2D is performing correctly, this is meant only for the developers of this library."
 	OFF
 )
 option(VK2D_BUILD_STATIC_LIBRARY
@@ -233,7 +238,7 @@ target_link_libraries(${VK2D_NAME}
 	glfw
 )
 
-if(${VK2D_DEBUG})
+if(${VK2D_ENABLE_LIBRARY_DEBUG_FEATURES})
 	target_compile_definitions(${VK2D_NAME}
 		PRIVATE
 			VK2D_DEBUG_ENABLE=1)
