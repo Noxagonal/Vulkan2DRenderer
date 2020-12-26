@@ -121,6 +121,36 @@ public:
 	/// @return		Status of the resource, see vk2d::ResourceStatus.
 	VK2D_API vk2d::ResourceStatus							VK2D_APIENTRY						GetStatus();
 
+	/// @brief		Calculate how much space a given text string would occupy if it was rendered.
+	/// @note		Multithreading: Any thread.
+	/// @param[in]	text
+	///				Text to get area size for.
+	/// @param[in]	kerning
+	///				Spacing between letters. Positive values are farther apart. Value is based on
+	///				size of the font texel size.
+	/// @param[in]	scale
+	///				Value {1.0, 1.0} will map 1:1 to the font texel size.
+	/// @param[in]	vertical
+	///				true if text should be rendered vertical, false if horisontal.
+	/// @param[in]	font_face
+	///				Certain fonts may contain multiple font faces, this allows you to select which
+	///				one to use.
+	/// @param[in]	wait_for_resource_load
+	///				Setting this option to true will wait for the font resource to load before
+	///				allowing execution to continue. If you're in a time critical situation
+	///				where you are generating the text every frame and you cannot afford a few
+	///				millisecond wait for the font to load up you can set this value to false. <br>
+	///				This function will return empty rectangle area {} until the font has been fully
+	///				loaded by the resource manager.
+	/// @return		Area the text would occupy if rendered.
+	VK2D_API vk2d::Rect2f									VK2D_APIENTRY						CalculateRenderedSize(
+		std::string_view									text,
+		float												kerning								= 0.0f,
+		vk2d::Vector2f										scale								= vk2d::Vector2f( 1.0f, 1.0f ),
+		bool												vertical							= false,
+		uint32_t											font_face							= 0,
+		bool												wait_for_resource_load				= true );
+
 	/// @brief		Waits for the resource to load on the calling thread before
 	///				continuing execution. For as long as the resource status is
 	///				undetermined or timeout hasn't been met this function will block.

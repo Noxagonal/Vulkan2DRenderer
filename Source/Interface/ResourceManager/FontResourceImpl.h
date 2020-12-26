@@ -65,6 +65,14 @@ public:
 	void																					MTUnload(
 		vk2d::_internal::ThreadPrivateResource		*	thread_resource );
 
+	vk2d::Rect2f																			CalculateRenderedSize(
+		std::string_view								text,
+		float											kerning								= 0.0f,
+		vk2d::Vector2f									scale								= vk2d::Vector2f( 1.0f, 1.0f ),
+		bool											vertical							= false,
+		uint32_t										font_face							= 0,
+		bool											wait_for_resource_load				= true );
+
 	bool																					FaceExists(
 		uint32_t										font_face ) const;
 
@@ -92,7 +100,7 @@ private:
 	struct FaceInfo {
 		FT_Face											face								= {};
 		std::vector<vk2d::_internal::GlyphInfo>			glyph_infos							= {};
-		std::map<uint32_t, uint32_t>					charmap								= {};	// link character to a GlyphInfo vector
+		std::map<int32_t, int32_t>						charmap								= {};	// link character to a GlyphInfo vector
 		uint32_t										fallback_glyph_index				= {};
 	};
 
