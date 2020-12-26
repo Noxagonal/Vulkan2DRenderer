@@ -237,6 +237,11 @@ public:
 	}
 };
 
+template<typename T>
+std::ostream& operator<<(std::ostream& os, const Vector4Base<T>& v) {
+	return os << v.x << "," << v.y << "," << v.z << "," << v.w;
+}
+
 /// @brief		4D vector with float precision.
 using Vector4f			= vk2d::Vector4Base<float>;
 

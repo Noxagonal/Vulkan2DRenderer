@@ -227,6 +227,11 @@ public:
 	}
 };
 
+template<typename T>
+std::ostream& operator<<(std::ostream& os, const Vector3Base<T>& v) {
+	return os << v.x << "," << v.y << "," << v.z;
+}
+
 /// @brief		3D vector with float precision.
 using Vector3f			= vk2d::Vector3Base<float>;
 
