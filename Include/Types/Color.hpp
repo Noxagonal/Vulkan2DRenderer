@@ -268,91 +268,91 @@ public:
 
 	static constexpr ColorBase<T> WHITE()
 	{
-		return _PREDEFINED_COLOR(1.0, 1.0, 1.0);
+		return PREDEFINED_COLOR(1.0, 1.0, 1.0);
 	};
 
 	static constexpr ColorBase<T> BLACK()
 	{
-		return _PREDEFINED_COLOR(0.0, 0.0, 0.0);
+		return PREDEFINED_COLOR(0.0, 0.0, 0.0);
 	};
 
 	static constexpr ColorBase<T> GREY()
 	{
-		return _PREDEFINED_COLOR(0.5, 0.5, 0.5);
+		return PREDEFINED_COLOR(0.5, 0.5, 0.5);
 	};
 
 	static constexpr ColorBase<T> RED()
 	{
-		return _PREDEFINED_COLOR(1.0, 0.0, 0.0);
+		return PREDEFINED_COLOR(1.0, 0.0, 0.0);
 	};
 
 	static constexpr ColorBase<T> SCARLET()
 	{
-		return _PREDEFINED_COLOR(1.0, 0.203, 0.109);
+		return PREDEFINED_COLOR(1.0, 0.203, 0.109);
 	};
 
 	static constexpr ColorBase<T> PINK()
 	{
-		return _PREDEFINED_COLOR(1.0, 0.411, 0.705);
+		return PREDEFINED_COLOR(1.0, 0.411, 0.705);
 	};
 
 	static constexpr ColorBase<T> MAGENTA()
 	{
-		return _PREDEFINED_COLOR(1.0, 0.0, 1.0);
+		return PREDEFINED_COLOR(1.0, 0.0, 1.0);
 	};
 
 	static constexpr ColorBase<T> PURPLE()
 	{
-		return _PREDEFINED_COLOR(0.627, 0.125, 0.941);
+		return PREDEFINED_COLOR(0.627, 0.125, 0.941);
 	};
 
 	static constexpr ColorBase<T> VIOLET()
 	{
-		return _PREDEFINED_COLOR(0.933, 0.509, 0.933);
+		return PREDEFINED_COLOR(0.933, 0.509, 0.933);
 	};
 
 	static constexpr ColorBase<T> GREEN()
 	{
-		return _PREDEFINED_COLOR(0.0, 1.0, 0.0);
+		return PREDEFINED_COLOR(0.0, 1.0, 0.0);
 	};
 
 	static constexpr ColorBase<T> LIME()
 	{
-		return _PREDEFINED_COLOR(0.196, 0.803, 0.196);
+		return PREDEFINED_COLOR(0.196, 0.803, 0.196);
 	};
 
 	static constexpr ColorBase<T> OLIVE()
 	{
-		return _PREDEFINED_COLOR(0.419, 0.556, 0.137);
+		return PREDEFINED_COLOR(0.419, 0.556, 0.137);
 	};
 
 	static constexpr ColorBase<T> BLUE()
 	{
-		return _PREDEFINED_COLOR(0.0, 0.0, 1.0);
+		return PREDEFINED_COLOR(0.0, 0.0, 1.0);
 	};
 
 	static constexpr ColorBase<T> NAVY()
 	{
-		return _PREDEFINED_COLOR(0.0, 0.0, 0.5);
+		return PREDEFINED_COLOR(0.0, 0.0, 0.5);
 	};
 
 	static constexpr ColorBase<T> CYAN()
 	{
-		return _PREDEFINED_COLOR(0.0, 1.0, 1.0);
+		return PREDEFINED_COLOR(0.0, 1.0, 1.0);
 	};
 
 	static constexpr ColorBase<T> TEAL()
 	{
-		return _PREDEFINED_COLOR(0.0, 0.5, 0.5);
+		return PREDEFINED_COLOR(0.0, 0.5, 0.5);
 	};
 
 	static constexpr ColorBase<T> YELLOW()
 	{
-		return _PREDEFINED_COLOR(1.0, 1.0, 0.0);
+		return PREDEFINED_COLOR(1.0, 1.0, 0.0);
 	};
 
 private:
-	static constexpr ColorBase<T> _PREDEFINED_COLOR(double r, double g, double b)
+	static constexpr ColorBase<T> PREDEFINED_COLOR(double r, double g, double b)
 	{
 		if constexpr( std::is_integral_v<T> ) {
 			T max = std::numeric_limits<T>::max();
