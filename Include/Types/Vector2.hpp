@@ -31,10 +31,11 @@ public:
 	Vector2Base( vk2d::Vector2Base<T> && other )								= default;
 	Vector2Base( const std::initializer_list<T> & elements )
 	{
-		assert( elements.size() <= 2 );
+		auto s = elements.size();
+		assert( s <= 4 );
 		auto e = elements.begin();
-		if( e ) x = *e++;
-		if( e ) y = *e++;
+		( s >= 1 ) ? x = *e++ : x = T( 0 );
+		( s >= 2 ) ? y = *e++ : y = T( 0 );
 	}
 
 	vk2d::Vector2Base<T> & operator=( const vk2d::Vector2Base<T> & other )		= default;
@@ -219,7 +220,7 @@ public:
 
 template<typename T>
 std::ostream& operator<<(std::ostream& os, const Vector2Base<T>& v) {
-	return os << v.x << "," << v.y;
+	return os << "[" << v.x << ", " << v.y << "]";
 }
 
 /// @brief		2D vector with float precision.
