@@ -304,6 +304,11 @@ public:
 	VK2D_API void									VK2D_APIENTRY					SetMeshType(
 		vk2d::MeshType								type );
 
+	/// @brief		Recalculates Axis Aligned Bounding Box from vertex coordinates.
+	///				Updates vk2d::Mesh::aabb variable and returns reference to it.
+	/// @return		Reference to the interal aabb variable.
+	VK2D_API vk2d::Rect2f						&	VK2D_APIENTRY					RecalculateAABBFromVertices();
+
 	/// @brief		Vertices are stored here, see vk2d::Vertex for details.
 	std::vector<vk2d::Vertex>						vertices						= {};
 
@@ -343,6 +348,14 @@ public:
 	///				texture layer weight is high for one vertex and low for the neighbouring vertex,
 	///				the inbetween regions are smoothly transitioned between the two.
 	std::vector<float>								texture_layer_weights			= {};
+
+	/// @brief		Axis aligned bounding box.
+	///
+	///				This tells the area of within all vertex coordinates reside. It can be set manually
+	///				or recalculated from vertices by calling vk2d::Mesh::RecalculateAABB().
+	///				It can be used to get size of the mesh, as a fast speed pleminiary check if two
+	///				shapes are overlapping or to check if shape should be rendered or not.
+	vk2d::Rect2f									aabb							= {};
 
 private:
 	bool											generated						= false;							///< Tells if this mesh was created by a mesh generator.

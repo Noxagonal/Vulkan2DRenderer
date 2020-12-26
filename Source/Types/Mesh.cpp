@@ -127,7 +127,6 @@ VK2D_API void VK2D_APIENTRY vk2d::Mesh::DirectionalWave(
 	vk2d::Vector2f				origin
 )
 {
-	auto aabb	= vk2d::_internal::CalculateAABBFromVertexList( vertices );
 	auto size	= aabb.bottom_right - aabb.top_left;
 
 	vk2d::Vector2f	dir {
@@ -301,7 +300,6 @@ VK2D_API void VK2D_APIENTRY vk2d::Mesh::SetVertexColorGradient(
 
 VK2D_API void VK2D_APIENTRY vk2d::Mesh::RecalculateUVsToBoundingBox()
 {
-	auto aabb = vk2d::_internal::CalculateAABBFromVertexList( vertices );
 	auto size = aabb.bottom_right - aabb.top_left;
 	for( auto & v : vertices ) {
 		auto vp = v.vertex_coords - aabb.top_left;
@@ -411,6 +409,15 @@ VK2D_API void VK2D_APIENTRY vk2d::Mesh::SetMeshType(
 	}
 }
 
+VK2D_API vk2d::Rect2f & VK2D_APIENTRY vk2d::Mesh::RecalculateAABBFromVertices()
+{
+	if( std::size( vertices ) > 0 ) {
+		return aabb = vk2d::_internal::CalculateAABBFromVertexList( vertices );
+	} else {
+		return aabb = {};
+	}
+}
+
 
 
 
@@ -435,6 +442,7 @@ VK2D_API vk2d::Mesh VK2D_APIENTRY vk2d::GeneratePointMeshFromList(
 
 	mesh.generated				= true;
 	mesh.generated_mesh_type	= vk2d::MeshType::POINT;
+	mesh.aabb					= aabb;
 	mesh.SetMeshType( mesh.generated_mesh_type );
 	return mesh;
 }
@@ -444,7 +452,7 @@ VK2D_API vk2d::Mesh VK2D_APIENTRY vk2d::GenerateLineMeshFromList(
 	const std::vector<vk2d::VertexIndex_2>	&	indices
 )
 {
-	auto mesh = GeneratePointMeshFromList( points );
+	auto mesh	= GeneratePointMeshFromList( points );
 	mesh.indices.resize( indices.size() * 2 );
 	for( size_t i = 0, d = 0; i < indices.size(); ++i, d += 2 ) {
 		mesh.indices[ d + 0 ] = indices[ i ].indices[ 0 ];
@@ -534,6 +542,7 @@ VK2D_API vk2d::Mesh VK2D_APIENTRY vk2d::GenerateRectangleMesh(
 		ret.SetMeshType( ret.generated_mesh_type );
 	}
 
+	ret.aabb = area;
 	return ret;
 }
 
@@ -607,6 +616,7 @@ VK2D_API vk2d::Mesh VK2D_APIENTRY vk2d::GenerateEllipseMesh(
 		ret.generated_mesh_type		= vk2d::MeshType::LINE;
 		ret.SetMeshType( ret.generated_mesh_type );
 	}
+	ret.RecalculateAABBFromVertices();
 	return ret;
 }
 
@@ -752,7 +762,7 @@ VK2D_API vk2d::Mesh VK2D_APIENTRY vk2d::GenerateEllipsePieMesh(
 		ret.generated_mesh_type		= vk2d::MeshType::LINE;
 		ret.SetMeshType( ret.generated_mesh_type );
 	}
-
+	ret.RecalculateAABBFromVertices();
 	return ret;
 }
 
@@ -1010,7 +1020,7 @@ VK2D_API vk2d::Mesh VK2D_APIENTRY vk2d::GenerateRectanglePieMesh(
 		ret.generated_mesh_type		= vk2d::MeshType::LINE;
 		ret.SetMeshType( ret.generated_mesh_type );
 	}
-
+	ret.RecalculateAABBFromVertices();
 	return ret;
 }
 
@@ -1101,7 +1111,7 @@ VK2D_API vk2d::Mesh VK2D_APIENTRY vk2d::GenerateLatticeMesh(
 		ret.generated_mesh_type		= vk2d::MeshType::LINE;
 		ret.SetMeshType( ret.generated_mesh_type );
 	}
-
+	ret.RecalculateAABBFromVertices();
 	return ret;
 }
 
@@ -1125,56 +1135,56 @@ VK2D_API vk2d::Mesh VK2D_APIENTRY vk2d::GenerateTextMesh(
 	}
 	if( !fi->FaceExists( font_face ) ) return {};
 	
-	vk2d::Mesh mesh;
-	mesh.vertices.reserve( text.size() * 4 );
-	mesh.indices.reserve( text.size() * 6 );
+	vk2d::Mesh ret;
+	ret.vertices.reserve( text.size() * 4 );
+	ret.indices.reserve( text.size() * 6 );
 
-	auto AppendBox =[ &mesh, scale ](
+	auto AppendBox =[ &ret, scale ](
 		const vk2d::Vector2f	&	location,
 		const vk2d::Rect2f		&	coords,
 		const vk2d::Rect2f		&	uv_coords,
 		uint32_t					texture_channel
 		)
 	{
-		auto vertex_offset		= mesh.vertices.size();
-		auto index_offset		= mesh.indices.size();
+		auto vertex_offset		= ret.vertices.size();
+		auto index_offset		= ret.indices.size();
 
 		auto tcoords			= ( coords + location );
 		tcoords.top_left		*= scale;
 		tcoords.bottom_right	*= scale;
 
-		mesh.vertices.resize( vertex_offset + 4 );
-		mesh.vertices[ vertex_offset + 0 ].vertex_coords			= vk2d::Vector2f( tcoords.top_left.x, tcoords.top_left.y );
-		mesh.vertices[ vertex_offset + 0 ].uv_coords				= vk2d::Vector2f( uv_coords.top_left.x, uv_coords.top_left.y );
-		mesh.vertices[ vertex_offset + 0 ].color					= vk2d::Colorf( 1.0f, 1.0f, 1.0f, 1.0f );
-		mesh.vertices[ vertex_offset + 0 ].point_size				= 1;
-		mesh.vertices[ vertex_offset + 0 ].single_texture_layer	= texture_channel;
+		ret.vertices.resize( vertex_offset + 4 );
+		ret.vertices[ vertex_offset + 0 ].vertex_coords			= vk2d::Vector2f( tcoords.top_left.x, tcoords.top_left.y );
+		ret.vertices[ vertex_offset + 0 ].uv_coords				= vk2d::Vector2f( uv_coords.top_left.x, uv_coords.top_left.y );
+		ret.vertices[ vertex_offset + 0 ].color					= vk2d::Colorf( 1.0f, 1.0f, 1.0f, 1.0f );
+		ret.vertices[ vertex_offset + 0 ].point_size				= 1;
+		ret.vertices[ vertex_offset + 0 ].single_texture_layer	= texture_channel;
 
-		mesh.vertices[ vertex_offset + 1 ].vertex_coords			= vk2d::Vector2f( tcoords.bottom_right.x, tcoords.top_left.y );
-		mesh.vertices[ vertex_offset + 1 ].uv_coords				= vk2d::Vector2f( uv_coords.bottom_right.x, uv_coords.top_left.y );
-		mesh.vertices[ vertex_offset + 1 ].color					= vk2d::Colorf( 1.0f, 1.0f, 1.0f, 1.0f );
-		mesh.vertices[ vertex_offset + 1 ].point_size				= 1;
-		mesh.vertices[ vertex_offset + 1 ].single_texture_layer	= texture_channel;
+		ret.vertices[ vertex_offset + 1 ].vertex_coords			= vk2d::Vector2f( tcoords.bottom_right.x, tcoords.top_left.y );
+		ret.vertices[ vertex_offset + 1 ].uv_coords				= vk2d::Vector2f( uv_coords.bottom_right.x, uv_coords.top_left.y );
+		ret.vertices[ vertex_offset + 1 ].color					= vk2d::Colorf( 1.0f, 1.0f, 1.0f, 1.0f );
+		ret.vertices[ vertex_offset + 1 ].point_size				= 1;
+		ret.vertices[ vertex_offset + 1 ].single_texture_layer	= texture_channel;
 
-		mesh.vertices[ vertex_offset + 2 ].vertex_coords			= vk2d::Vector2f( tcoords.top_left.x, tcoords.bottom_right.y );
-		mesh.vertices[ vertex_offset + 2 ].uv_coords				= vk2d::Vector2f( uv_coords.top_left.x, uv_coords.bottom_right.y );
-		mesh.vertices[ vertex_offset + 2 ].color					= vk2d::Colorf( 1.0f, 1.0f, 1.0f, 1.0f );
-		mesh.vertices[ vertex_offset + 2 ].point_size				= 1;
-		mesh.vertices[ vertex_offset + 2 ].single_texture_layer	= texture_channel;
+		ret.vertices[ vertex_offset + 2 ].vertex_coords			= vk2d::Vector2f( tcoords.top_left.x, tcoords.bottom_right.y );
+		ret.vertices[ vertex_offset + 2 ].uv_coords				= vk2d::Vector2f( uv_coords.top_left.x, uv_coords.bottom_right.y );
+		ret.vertices[ vertex_offset + 2 ].color					= vk2d::Colorf( 1.0f, 1.0f, 1.0f, 1.0f );
+		ret.vertices[ vertex_offset + 2 ].point_size				= 1;
+		ret.vertices[ vertex_offset + 2 ].single_texture_layer	= texture_channel;
 
-		mesh.vertices[ vertex_offset + 3 ].vertex_coords			= vk2d::Vector2f( tcoords.bottom_right.x, tcoords.bottom_right.y );
-		mesh.vertices[ vertex_offset + 3 ].uv_coords				= vk2d::Vector2f( uv_coords.bottom_right.x, uv_coords.bottom_right.y );
-		mesh.vertices[ vertex_offset + 3 ].color					= vk2d::Colorf( 1.0f, 1.0f, 1.0f, 1.0f );
-		mesh.vertices[ vertex_offset + 3 ].point_size				= 1;
-		mesh.vertices[ vertex_offset + 3 ].single_texture_layer	= texture_channel;
+		ret.vertices[ vertex_offset + 3 ].vertex_coords			= vk2d::Vector2f( tcoords.bottom_right.x, tcoords.bottom_right.y );
+		ret.vertices[ vertex_offset + 3 ].uv_coords				= vk2d::Vector2f( uv_coords.bottom_right.x, uv_coords.bottom_right.y );
+		ret.vertices[ vertex_offset + 3 ].color					= vk2d::Colorf( 1.0f, 1.0f, 1.0f, 1.0f );
+		ret.vertices[ vertex_offset + 3 ].point_size				= 1;
+		ret.vertices[ vertex_offset + 3 ].single_texture_layer	= texture_channel;
 
-		mesh.indices.resize( index_offset + 6 );
-		mesh.indices[ index_offset + 0 ]	= uint32_t( vertex_offset + 0 );
-		mesh.indices[ index_offset + 1 ]	= uint32_t( vertex_offset + 2 );
-		mesh.indices[ index_offset + 2 ]	= uint32_t( vertex_offset + 1 );
-		mesh.indices[ index_offset + 3 ]	= uint32_t( vertex_offset + 1 );
-		mesh.indices[ index_offset + 4 ]	= uint32_t( vertex_offset + 2 );
-		mesh.indices[ index_offset + 5 ]	= uint32_t( vertex_offset + 3 );
+		ret.indices.resize( index_offset + 6 );
+		ret.indices[ index_offset + 0 ]	= uint32_t( vertex_offset + 0 );
+		ret.indices[ index_offset + 1 ]	= uint32_t( vertex_offset + 2 );
+		ret.indices[ index_offset + 2 ]	= uint32_t( vertex_offset + 1 );
+		ret.indices[ index_offset + 3 ]	= uint32_t( vertex_offset + 1 );
+		ret.indices[ index_offset + 4 ]	= uint32_t( vertex_offset + 2 );
+		ret.indices[ index_offset + 5 ]	= uint32_t( vertex_offset + 3 );
 	};
 
 	auto location	= origin;
@@ -1194,6 +1204,7 @@ VK2D_API vk2d::Mesh VK2D_APIENTRY vk2d::GenerateTextMesh(
 		}
 	}
 
-	mesh.SetTexture( fi->GetTextureResource() );
-	return mesh;
+	ret.SetTexture( fi->GetTextureResource() );
+	ret.RecalculateAABBFromVertices();
+	return ret;
 }

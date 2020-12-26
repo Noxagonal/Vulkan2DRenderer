@@ -98,6 +98,14 @@ int main()
 	auto colorf = color1.BlendUsingAlpha( color2 );
 	std::cout << colorf.r << ", " << colorf.g << ", " << colorf.b << ", " << colorf.a << "\n";
 
+	auto font = resource_manager->LoadFontResource(
+		"../../Data/Fonts/Ethnocentric/ethnocentric rg.ttf"
+	);
+	auto text = vk2d::GenerateTextMesh(
+		font,
+		{ 0, 0 },
+		"TestText"
+	);
 
 	auto red_circle				= vk2d::GenerateEllipseMesh(
 		{ -7, -7, 7, 7 }
@@ -126,8 +134,6 @@ int main()
 		seconds_since_start		+= delta_time;
 
 		if( !window1->BeginRender() ) return -1;
-
-
 
 		{
 			float pc1 = ( std::cos( seconds_since_start * 0.414f ) * 0.5f + 0.5f ) * 30.0f + 3.0f;
@@ -189,6 +195,8 @@ int main()
 			);
 
 			window1->DrawMesh( lattice );
+			window1->DrawMesh( text );
+			window1->DrawRectangle( text.aabb, false );
 		}
 
 		if( !window1->EndRender() ) return -1;
