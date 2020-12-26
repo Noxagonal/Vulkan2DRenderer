@@ -96,15 +96,30 @@ int main()
 	auto color1 = vk2d::Colorf( 0.25f, 1.0f, 0.5f, 0.5f );
 	auto color2 = vk2d::Colorf( 1.0f, 0.25f, 0.8f, 0.8f );
 	auto colorf = color1.BlendUsingAlpha( color2 );
-	std::cout << colorf.r << ", " << colorf.g << ", " << colorf.b << ", " << colorf.a << "\n";
+	std::cout << "[" << colorf.r << ", " << colorf.g << ", " << colorf.b << ", " << colorf.a << "]\n";
 
 	auto font = resource_manager->LoadFontResource(
-		"../../Data/Fonts/Ethnocentric/ethnocentric rg.ttf"
+		"../../Data/Fonts/ubuntu-font-family-0.83/Ubuntu-M.ttf"
 	);
-	auto text = vk2d::GenerateTextMesh(
+
+	std::string text = "Testing...";
+	auto text_calculated_area = font->CalculateRenderedSize(
+		text,
+		0,
+		{ 2, 2 },
+		false,
+		0,
+		true
+	);
+	auto text_mesh = vk2d::GenerateTextMesh(
 		font,
 		{ 0, 0 },
-		"TestText"
+		text,
+		0,
+		{ 2, 2 },
+		false,
+		0,
+		true
 	);
 
 	auto red_circle				= vk2d::GenerateEllipseMesh(
@@ -195,8 +210,9 @@ int main()
 			);
 
 			window1->DrawMesh( lattice );
-			window1->DrawMesh( text );
-			window1->DrawRectangle( text.aabb, false );
+			window1->DrawMesh( text_mesh );
+			window1->DrawRectangle( text_mesh.aabb, false );
+			//window1->DrawRectangle( text_calculated_area, false );
 		}
 
 		if( !window1->EndRender() ) return -1;

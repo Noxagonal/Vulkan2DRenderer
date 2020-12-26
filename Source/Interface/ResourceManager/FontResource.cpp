@@ -90,6 +90,25 @@ VK2D_API vk2d::ResourceStatus VK2D_APIENTRY vk2d::FontResource::GetStatus()
 	return impl->GetStatus();
 }
 
+VK2D_API vk2d::Rect2f VK2D_APIENTRY vk2d::FontResource::CalculateRenderedSize(
+	std::string_view	text,
+	float				kerning,
+	vk2d::Vector2f		scale,
+	bool				vertical,
+	uint32_t			font_face,
+	bool				wait_for_resource_load
+)
+{
+	return impl->CalculateRenderedSize(
+		text,
+		kerning,
+		scale,
+		vertical,
+		font_face,
+		wait_for_resource_load
+	);
+}
+
 VK2D_API vk2d::ResourceStatus VK2D_APIENTRY vk2d::FontResource::WaitUntilLoaded(
 	std::chrono::nanoseconds				timeout
 )
@@ -553,7 +572,7 @@ bool vk2d::_internal::FontResourceImpl::MTLoad(
 			charcode				= FT_Get_First_Char( face.face, &gindex );
 			fallback_glyph_index	= gindex;
 			while( gindex != 0 ) {
-				face.charmap[ uint32_t( charcode ) ]	= uint32_t( gindex );
+				face.charmap[ uint32_t( charcode ) ] = uint32_t( gindex );
 
 				charcode = FT_Get_Next_Char( face.face, charcode, &gindex );
 			}
@@ -603,6 +622,77 @@ void vk2d::_internal::FontResourceImpl::MTUnload(
 	}
 	face_infos.clear();
 
+}
+
+vk2d::Rect2f vk2d::_internal::FontResourceImpl::CalculateRenderedSize(
+	std::string_view	text,
+	float				kerning,
+	vk2d::Vector2f		scale,
+	bool				vertical,
+	uint32_t			font_face,
+	bool				wait_for_resource_load
+)
+{
+	if( std::size( text ) <= 0 ) return {};
+
+	if( wait_for_resource_load ) {
+		WaitUntilLoaded( std::chrono::nanoseconds::max() );
+	} else {
+		if( GetStatus() == vk2d::ResourceStatus::UNDETERMINED ) return {};
+	}
+	if( !FaceExists( font_face ) ) return {};
+
+	vk2d::Rect2f ret {};
+	float advance {};
+	if( vertical ) {
+		// Vertical text
+		// First letter sets defaults
+		auto first_gi			= GetGlyphInfo( font_face, text[ 0 ] );
+		ret.top_left.x			= first_gi->vertical_coords.top_left.x;
+		ret.bottom_right.x		= first_gi->vertical_coords.bottom_right.x;
+		if( std::size( text ) > 1 ) {
+			advance					+= first_gi->vertical_advance;
+		}
+		for( size_t i = 1; i < std::size( text ) - 1; ++i ) {
+			// Middle letters are spaced by "advance" value
+			auto gi				= GetGlyphInfo( font_face, text[ i ] );
+			ret.top_left.x		= std::min( ret.top_left.x, gi->vertical_coords.top_left.x );
+			ret.bottom_right.x	= std::max( ret.bottom_right.x, gi->vertical_coords.bottom_right.x );
+			advance				+= kerning + gi->vertical_advance;
+		}
+		// Need to get the size of the last letter, not the "advance"
+		auto last_gi			= GetGlyphInfo( font_face, text.back() );
+		ret.top_left.x			= std::min( ret.top_left.x, last_gi->vertical_coords.top_left.x );
+		ret.bottom_right.x		= std::max( ret.bottom_right.x, last_gi->vertical_coords.bottom_right.x );
+		ret.top_left.y			= first_gi->vertical_coords.top_left.y;
+		ret.bottom_right.y		= advance + last_gi->vertical_coords.bottom_right.y;
+	} else {
+		// Horisontal text
+		// First letter sets defaults
+		auto first_gi			= GetGlyphInfo( font_face, text[ 0 ] );
+		ret.top_left.y			= first_gi->horisontal_coords.top_left.y;
+		ret.bottom_right.y		= first_gi->horisontal_coords.bottom_right.y;
+		if( std::size( text ) > 1 ) {
+			advance				+= first_gi->horisontal_advance;
+		}
+		for( size_t i = 1; i < std::size( text ) - 1; ++i ) {
+			// Middle letters are spaced by "advance" value
+			auto gi				= GetGlyphInfo( font_face, text[ i ] );
+			ret.top_left.y		= std::min( ret.top_left.y, gi->horisontal_coords.top_left.y );
+			ret.bottom_right.y	= std::max( ret.bottom_right.y, gi->horisontal_coords.bottom_right.y );
+			advance				+= kerning + gi->horisontal_advance;
+		}
+		// Need to get the size of the last letter, not the "advance"
+		auto last_gi			= GetGlyphInfo( font_face, text.back() );
+		ret.top_left.y			= std::min( ret.top_left.y, last_gi->horisontal_coords.top_left.y );
+		ret.bottom_right.y		= std::max( ret.bottom_right.y, last_gi->horisontal_coords.bottom_right.y );
+		ret.top_left.x			= first_gi->horisontal_coords.top_left.x;
+		ret.bottom_right.x		= advance + last_gi->horisontal_coords.bottom_right.x;
+	}
+
+	ret.top_left		*= scale;
+	ret.bottom_right	*= scale;
+	return ret;
 }
 
 bool vk2d::_internal::FontResourceImpl::FaceExists(

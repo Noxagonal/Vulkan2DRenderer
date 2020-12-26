@@ -1125,6 +1125,7 @@ VK2D_API vk2d::Mesh VK2D_APIENTRY vk2d::GenerateTextMesh(
 	uint32_t					font_face,
 	bool						wait_for_resource_load )
 {
+	if( std::size( text ) <= 0 ) return {};
 	if( !font ) return {};
 	if( !font->impl.get() ) return {};
 	auto fi = font->impl.get();
@@ -1152,30 +1153,34 @@ VK2D_API vk2d::Mesh VK2D_APIENTRY vk2d::GenerateTextMesh(
 		auto tcoords			= ( coords + location );
 		tcoords.top_left		*= scale;
 		tcoords.bottom_right	*= scale;
+		ret.aabb.top_left.x		= std::min( ret.aabb.top_left.x, tcoords.top_left.x );
+		ret.aabb.top_left.y		= std::min( ret.aabb.top_left.y, tcoords.top_left.y );
+		ret.aabb.bottom_right.x	= std::max( ret.aabb.bottom_right.x, tcoords.bottom_right.x );
+		ret.aabb.bottom_right.y	= std::max( ret.aabb.bottom_right.y, tcoords.bottom_right.y );
 
 		ret.vertices.resize( vertex_offset + 4 );
 		ret.vertices[ vertex_offset + 0 ].vertex_coords			= vk2d::Vector2f( tcoords.top_left.x, tcoords.top_left.y );
 		ret.vertices[ vertex_offset + 0 ].uv_coords				= vk2d::Vector2f( uv_coords.top_left.x, uv_coords.top_left.y );
 		ret.vertices[ vertex_offset + 0 ].color					= vk2d::Colorf( 1.0f, 1.0f, 1.0f, 1.0f );
-		ret.vertices[ vertex_offset + 0 ].point_size				= 1;
+		ret.vertices[ vertex_offset + 0 ].point_size			= 1;
 		ret.vertices[ vertex_offset + 0 ].single_texture_layer	= texture_channel;
 
 		ret.vertices[ vertex_offset + 1 ].vertex_coords			= vk2d::Vector2f( tcoords.bottom_right.x, tcoords.top_left.y );
 		ret.vertices[ vertex_offset + 1 ].uv_coords				= vk2d::Vector2f( uv_coords.bottom_right.x, uv_coords.top_left.y );
 		ret.vertices[ vertex_offset + 1 ].color					= vk2d::Colorf( 1.0f, 1.0f, 1.0f, 1.0f );
-		ret.vertices[ vertex_offset + 1 ].point_size				= 1;
+		ret.vertices[ vertex_offset + 1 ].point_size			= 1;
 		ret.vertices[ vertex_offset + 1 ].single_texture_layer	= texture_channel;
 
 		ret.vertices[ vertex_offset + 2 ].vertex_coords			= vk2d::Vector2f( tcoords.top_left.x, tcoords.bottom_right.y );
 		ret.vertices[ vertex_offset + 2 ].uv_coords				= vk2d::Vector2f( uv_coords.top_left.x, uv_coords.bottom_right.y );
 		ret.vertices[ vertex_offset + 2 ].color					= vk2d::Colorf( 1.0f, 1.0f, 1.0f, 1.0f );
-		ret.vertices[ vertex_offset + 2 ].point_size				= 1;
+		ret.vertices[ vertex_offset + 2 ].point_size			= 1;
 		ret.vertices[ vertex_offset + 2 ].single_texture_layer	= texture_channel;
 
 		ret.vertices[ vertex_offset + 3 ].vertex_coords			= vk2d::Vector2f( tcoords.bottom_right.x, tcoords.bottom_right.y );
 		ret.vertices[ vertex_offset + 3 ].uv_coords				= vk2d::Vector2f( uv_coords.bottom_right.x, uv_coords.bottom_right.y );
 		ret.vertices[ vertex_offset + 3 ].color					= vk2d::Colorf( 1.0f, 1.0f, 1.0f, 1.0f );
-		ret.vertices[ vertex_offset + 3 ].point_size				= 1;
+		ret.vertices[ vertex_offset + 3 ].point_size			= 1;
 		ret.vertices[ vertex_offset + 3 ].single_texture_layer	= texture_channel;
 
 		ret.indices.resize( index_offset + 6 );
@@ -1190,13 +1195,23 @@ VK2D_API vk2d::Mesh VK2D_APIENTRY vk2d::GenerateTextMesh(
 	auto location	= origin;
 	if( vertical ) {
 		// Writing vertical text
+		{
+			auto gi = fi->GetGlyphInfo( font_face, text[ 0 ] );
+			ret.aabb.top_left		= gi->vertical_coords.top_left;
+			ret.aabb.bottom_right	= gi->vertical_coords.bottom_right;
+		}
 		for( auto c : text ) {
 			auto gi = fi->GetGlyphInfo( font_face, c );
 			AppendBox( location, gi->vertical_coords, gi->uv_coords, gi->atlas_index );
-			location.y	+= gi->horisontal_advance + kerning;
+			location.y	+= gi->vertical_advance + kerning;
 		}
 	} else {
 		// Writing horisontal text
+		{
+			auto gi = fi->GetGlyphInfo( font_face, text[ 0 ] );
+			ret.aabb.top_left		= gi->horisontal_coords.top_left;
+			ret.aabb.bottom_right	= gi->horisontal_coords.bottom_right;
+		}
 		for( auto c : text ) {
 			auto gi = fi->GetGlyphInfo( font_face, c );
 			AppendBox( location, gi->horisontal_coords, gi->uv_coords, gi->atlas_index );
@@ -1205,6 +1220,5 @@ VK2D_API vk2d::Mesh VK2D_APIENTRY vk2d::GenerateTextMesh(
 	}
 
 	ret.SetTexture( fi->GetTextureResource() );
-	ret.RecalculateAABBFromVertices();
 	return ret;
 }

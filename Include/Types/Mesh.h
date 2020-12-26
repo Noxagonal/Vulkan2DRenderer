@@ -497,7 +497,7 @@ VK2D_API vk2d::Mesh									VK2D_APIENTRY					GenerateLatticeMesh(
 ///				Spacing between letters. Positive values are farther apart. Value is based on
 ///				size of the font texel size.
 /// @param[in]	scale
-///				Scale of the mesh to be generated. Value 1.0*1.0 will map 1:1 to the font size
+///				Scale of the mesh to be generated. Value {1.0, 1.0} will map 1:1 to the font size
 ///				when render target texture or window coordinate space is either
 ///				vk2d::RenderCoordinateSpace::TEXEL_SPACE
 ///				or vk2d::RenderCoordinateSpace::TEXEL_SPACE_CENTERED.
