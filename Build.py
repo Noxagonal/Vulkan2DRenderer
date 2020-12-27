@@ -37,8 +37,10 @@ class BuildOption:
         ret.append( self.cmake_name + "=" + self.value )
         return ret
 
-build_systems = []
-build_options = []
+build_systems       = []
+build_options       = []
+packages_windows    = []
+packages_linux      = []
 
 
 
@@ -61,6 +63,16 @@ build_options.append( BuildOption( "Build tests",                               
 build_options.append( BuildOption( "Build examples",                                "VK2D_BUILD_EXAMPLES",                  True  ) )
 build_options.append( BuildOption( "Build documentation (Requires Doxygen)",        "VK2D_BUILD_DOCS",                      False ) )
 build_options.append( BuildOption( "Build documentation for entire source code",    "VK2D_BUILD_DOCS_FOR_COMPLETE_SOURCE",  False ) )
+
+# Package build options here, per platform.
+# Windows              ( Description,                           CPack generator name
+packages_windows.append( [ "Create 7zip package",               "7Z" ] )
+
+# Linux (debian)     ( Description,                             CPack generator name
+packages_linux.append( [ "Create debian package",               "DEB" ] )
+packages_linux.append( [ "Create 7zip package",                 "7Z" ] )
+packages_linux.append( [ "Create .tar.bz2 package",             "TBZ2" ] )
+packages_linux.append( [ "Create .tar.gz package",              "TGZ" ] )
 
 
 
@@ -185,12 +197,7 @@ def SelectBuildType():
 def ConfigureAndBuildProjectMenu( quick_setup = False ):
     build_type = []
     if quick_setup:
-        if is_windows:
-            # On windows, build both release and debug by default
-            build_type = [ True, [ "Release", "Debug" ] ]
-        else:
-            # On linux, build only release by default
-            build_type = [ True, [ "Release" ] ]
+        build_type = [ True, [ "Release", "Debug" ] ]
     else:
         build_type = SelectBuildType()
         if not build_type[ 0 ]:
@@ -222,13 +229,10 @@ def ConfigureAndBuildProjectMenu( quick_setup = False ):
             call_parameters += build_sys[ 1 ]
         call_parameters += [ "-Wno-dev" ]
         call_parameters += build_opt[ 1 ]
-        if is_windows:
-            # On windows, make sure we're installing into a folder.
-            # Might expand this to Linux as well in the future when creating packages.
-            if is_dev_build:
-                call_parameters += [ "-D", "CMAKE_INSTALL_PREFIX=./install/" ]
-            else:
-                call_parameters += [ "-D", "CMAKE_INSTALL_PREFIX=./" + tool_build_install_path ]
+        if is_dev_build:
+            call_parameters += [ "-D", "CMAKE_INSTALL_PREFIX=./install/" ]
+        else:
+            call_parameters += [ "-D", "CMAKE_INSTALL_PREFIX=./" + tool_build_install_path ]
         if not is_dev_build:
             call_parameters += [ "-D", 'CMAKE_BUILD_TYPE=' + bt ]
         call_parameters += [ "-D", "VK2D_SEPARATE_DEBUG_NAME=ON" ]
@@ -251,13 +255,8 @@ def ConfigureAndBuildProjectMenu( quick_setup = False ):
 ################################################################
 def CompileMenu( quick_setup = False ):
     if quick_setup:
-        if is_windows:
-            # Build both release and debug versions for Windows.
-            subprocess.run( [ "cmake", "--build", tool_build_folder + "/Release", "--config", "Release" ] )
-            subprocess.run( [ "cmake", "--build", tool_build_folder + "/Debug", "--config", "Debug" ] )
-        else:
-            # Build only release version for Linux.
-            subprocess.run( [ "cmake", "--build", tool_build_folder + "/Release", "--config", "Release" ] )
+        subprocess.run( [ "cmake", "--build", tool_build_folder + "/Release", "--config", "Release" ] )
+        subprocess.run( [ "cmake", "--build", tool_build_folder + "/Debug", "--config", "Debug" ] )
     else:
         build_type = ""
         while True:
@@ -267,8 +266,8 @@ def CompileMenu( quick_setup = False ):
             print( "* " )
             print( "* Select task." )
             print( "* " )
-            print( "* [ 1 ] Compile release" )
-            print( "* [ 2 ] Compile debug" )
+            print( "* [ 1 ] Compile Release" )
+            print( "* [ 2 ] Compile Debug" )
             print( "* " )
             print( "* [ x ] Back" )
             print( "* " )
@@ -289,7 +288,7 @@ def CompileMenu( quick_setup = False ):
         call_parameters = [ "cmake" ]
         call_parameters += [ "--build", tool_build_folder + "/" + build_type ]
         call_parameters += [ "--config", build_type ]
-        subprocess.run(  )
+        subprocess.run( call_parameters )
         print( "\n\nDone." )
         input( "Press enter..." )
 
@@ -299,18 +298,9 @@ def CompileMenu( quick_setup = False ):
 ### Install menu
 ################################################################
 def InstallMenu( quick_setup = False ):
-    if not is_windows:
-        # No installing on Linux for now. TODO for later...
-        return
-
     if quick_setup:
-        if is_windows:
-            # Build both release and debug versions for Windows.
-            subprocess.run( [ "cmake", "--install", tool_build_folder + "/Release", "--config", "Release" ] )
-            subprocess.run( [ "cmake", "--install", tool_build_folder + "/Debug", "--config", "Debug" ] )
-        else:
-            # Build only release version for Linux.
-            subprocess.run( [ "cmake", "--install", tool_build_folder + "/Release", "--config", "Release" ] )
+        subprocess.run( [ "cmake", "--install", tool_build_folder + "/Release", "--config", "Release" ] )
+        subprocess.run( [ "cmake", "--install", tool_build_folder + "/Debug", "--config", "Debug" ] )
     else:
         build_type = ""
         while not quick_setup:
@@ -320,8 +310,8 @@ def InstallMenu( quick_setup = False ):
             print( "* " )
             print( "* Select task." )
             print( "* " )
-            print( "* [ 1 ] Install release" )
-            print( "* [ 2 ] Install debug" )
+            print( "* [ 1 ] Install Release" )
+            print( "* [ 2 ] Install Debug" )
             print( "* " )
             print( "* [ x ] Back" )
             print( "* " )
@@ -352,10 +342,12 @@ def InstallMenu( quick_setup = False ):
 ### Create package menu
 ################################################################
 def CreatePackageMenu():
-    if not is_windows:
-        # No installing on Linux for now. TODO for later...
-        return
-
+    package_options = []
+    if is_windows:
+        package_options = packages_windows
+    else:
+        package_options = packages_linux
+    
     package_type = ""
     while True:
         cls()
@@ -364,7 +356,9 @@ def CreatePackageMenu():
         print( "* " )
         print( "* Select task" )
         print( "* " )
-        print( "* [ 1 ] Create 7zip package" )
+        for i in range( 0, len( package_options ) ):
+            po = package_options[ i ]
+            print( "* [ " + str( i + 1 ) + " ] " + po[ 0 ] )
         print( "* " )
         print( "* [ x ] Back" )
         print( "* " )
@@ -375,20 +369,21 @@ def CreatePackageMenu():
 
         if option == "x":
             return
-        elif option == "1":
-            package_type = "7Z"
-            break
-
+        elif option.isdigit():
+            option_index = int( option ) - 1
+            if option_index < len( package_options ):
+                po = package_options[ option_index ]
+                package_type = po[ 1 ]
+                break
+    
     packaging_source_path = "Packaging"
     packaging_build_path = tool_build_folder + "/" + packaging_source_path
+    
+    #shutil.rmtree( tool_build_folder + "/" + packaging_source_path )
 
     build_parameters = [ "cmake" ]
     build_parameters += [ "-Wno-dev" ]
-    if is_windows:
-        # On windows, make sure we're copying package into a folder.
-        # Might expand this to Linux as well in the future when creating packages.
-        build_parameters += [ "-D", "CMAKE_INSTALL_PREFIX=./" + tool_build_install_path ]
-    #call_parameters += [ "-D", 'CMAKE_BUILD_TYPE=Release' ]
+    build_parameters += [ "-D", "CMAKE_INSTALL_PREFIX=./" + tool_build_install_path ]
     build_parameters += [ "-S", packaging_source_path ]
     build_parameters += [ "-B", packaging_build_path ]
     subprocess.run( build_parameters )
@@ -403,7 +398,7 @@ def CreatePackageMenu():
     os.chdir( packaging_build_path )
     cpack_parameters = [ "cpack" ]
     cpack_parameters += [ "-G", package_type ]
-    cpack_parameters += [ "-B", "../install_packages" ]
+    #cpack_parameters += [ "-B", "install_packages" ]
     subprocess.run( cpack_parameters )
     os.chdir( current_dir )
 
@@ -427,11 +422,9 @@ def MainMenu():
         print( "* " )
         print( "* [ 1 ] Configure and build project files" )
         print( "* [ 2 ] Compile" )
-        if is_windows:
-            # No installing on Linux for now. TODO for later...
-            print( "* [ 3 ] Install" )
-            print( "* " )
-            print( "* [ p ] Create install package" )
+        print( "* [ 3 ] Install (into local folder)" )
+        print( "* " )
+        print( "* [ p ] Create install package" )
         print( "* " )
         print( "* [ x ] Exit" )
         print( "* " )
@@ -448,7 +441,6 @@ def MainMenu():
             InstallMenu( True )
             print( "Done." )
             input( "Press enter..." )
-            return
         elif option == "p":
             CreatePackageMenu()
         elif option == "1":

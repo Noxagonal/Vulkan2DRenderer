@@ -1,0 +1,11 @@
+
+message(==== LINUX(debian) PACKAGE ====)
+
+install(
+	DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/../install/"
+	DESTINATION "."
+)
+set(CPACK_DEBIAN_PACKAGE_DEPENDS "")
+set(CPACK_DEBIAN_PACKAGE_HOMEPAGE "https://github.com/Noxagonal/Vulkan2DRenderer")
+set(CPACK_DEBIAN_PACKAGE_SECTION "devel")
+
