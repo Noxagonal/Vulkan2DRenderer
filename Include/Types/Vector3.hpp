@@ -5,6 +5,7 @@
 #include <initializer_list>
 #include <cmath>
 #include <assert.h>
+#include <ostream>
 
 
 

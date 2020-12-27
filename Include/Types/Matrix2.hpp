@@ -7,6 +7,8 @@
 #include <initializer_list>
 #include <cmath>
 #include <assert.h>
+#include <ostream>
+#include <iomanip>
 
 
 
@@ -150,7 +152,7 @@ public:
 template<typename T>
 std::ostream & operator<<( std::ostream & os, const Matrix2Base<T> & v )
 {
-	return os << "[" << column_1 << ", " << column_2 << "]";
+	return os << "[" << v.column_1 << ", " << v.column_2 << "]";
 }
 
 /// @brief		Single precision 2*2 matrix.
