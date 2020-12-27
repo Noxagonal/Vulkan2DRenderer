@@ -3250,6 +3250,7 @@ bool vk2d::_internal::WindowImpl::ReCreateSwapchain()
 	auto result = VK_SUCCESS;
 
 	if( !SynchronizeFrame() ) return false;
+	vkQueueWaitIdle( primary_render_queue.GetQueue() );
 
 	auto old_vk_swapchain		= vk_swapchain;
 

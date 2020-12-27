@@ -4,6 +4,9 @@
 /install/*
 /build_tool/*
 
+# VS Code
+/.vscode/*
+
 # Prerequisites
 *.d
 
