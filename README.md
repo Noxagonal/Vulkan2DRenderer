@@ -79,7 +79,7 @@ Please note that the included build tool generates a `build_tool` folder and is 
 
 ##### Windows specifics
 
-On Windows installing will create an `install` folder which will contain everything you need to use this library on
+On Windows installing will create an `build_tool/install` folder which will contain everything you need to use this library on
 your project. You will have to manually link it to your project and move the `VK2D.dll` and `VK2D_d.dll` files somewhere
 where your executable can see it, usually to your project's working directory. The `VK2D.dll` is the release version
 and the `VK2D_d.dll` is the debug version of this library.
