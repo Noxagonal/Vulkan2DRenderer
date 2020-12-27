@@ -152,7 +152,6 @@ int main()
 	red_circle.SetVertexColor( { 1.0f, 0.4f, 0.3f, 1.0f } );
 	red_line.SetVertexColor( { 1.0f, 0.4f, 0.3f, 0.05f } );
 
-
 	auto lattice = vk2d::GenerateLatticeMesh(
 		{ -150, -150, 150, 150 },
 		{ 2, 2 },

@@ -36,10 +36,10 @@ public:
 		auto s = elements.size();
 		assert( s <= 4 );
 		auto e = elements.begin();
-		( s >= 1 ) ? x = *e++ : x = T( 0 );
-		( s >= 2 ) ? y = *e++ : y = T( 0 );
-		( s >= 3 ) ? z = *e++ : z = T( 0 );
-		( s >= 4 ) ? w = *e++ : w = T( 0 );
+		x = ( s >= 1 ) ? *e++ : T{};
+		y = ( s >= 2 ) ? *e++ : T{};
+		z = ( s >= 3 ) ? *e++ : T{};
+		w = ( s >= 4 ) ? *e++ : T{};
 	}
 
 	vk2d::Vector4Base<T> & operator=( const vk2d::Vector4Base<T> & other )		= default;

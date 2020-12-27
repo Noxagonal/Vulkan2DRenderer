@@ -37,26 +37,27 @@ public:
 		column_3	= { 0.0f, 0.0f, identity, 0.0f };
 		column_4	= { 0.0f, 0.0f, 0.0f, identity };
 	}
-	Matrix4Base( const std::initializer_list<T> & elements )
+	Matrix4Base( const std::initializer_list<T> & elements_in_row_major_order )
 	{
-		assert( elements.size() <= 16 );
-		auto e = elements.begin();
-		if( e ) column_1.x = *e++;
-		if( e ) column_2.x = *e++;
-		if( e ) column_3.x = *e++;
-		if( e ) column_4.x = *e++;
-		if( e ) column_1.y = *e++;
-		if( e ) column_2.y = *e++;
-		if( e ) column_3.y = *e++;
-		if( e ) column_4.y = *e++;
-		if( e ) column_1.z = *e++;
-		if( e ) column_2.z = *e++;
-		if( e ) column_3.z = *e++;
-		if( e ) column_4.z = *e++;
-		if( e ) column_1.w = *e++;
-		if( e ) column_2.w = *e++;
-		if( e ) column_3.w = *e++;
-		if( e ) column_4.w = *e++;
+		auto s = elements_in_row_major_order.size();
+		assert( s <= 16 );
+		auto e = elements_in_row_major_order.begin();
+		column_1.x = ( s >= 1 )		? *e++ : T{};
+		column_2.x = ( s >= 2 )		? *e++ : T{};
+		column_3.x = ( s >= 3 )		? *e++ : T{};
+		column_4.x = ( s >= 4 )		? *e++ : T{};
+		column_1.y = ( s >= 5 )		? *e++ : T{};
+		column_2.y = ( s >= 6 )		? *e++ : T{};
+		column_3.y = ( s >= 7 )		? *e++ : T{};
+		column_4.y = ( s >= 8 )		? *e++ : T{};
+		column_1.z = ( s >= 9 )		? *e++ : T{};
+		column_2.z = ( s >= 10 )	? *e++ : T{};
+		column_3.z = ( s >= 11 )	? *e++ : T{};
+		column_4.z = ( s >= 12 )	? *e++ : T{};
+		column_1.w = ( s >= 13 )	? *e++ : T{};
+		column_2.w = ( s >= 14 )	? *e++ : T{};
+		column_3.w = ( s >= 15 )	? *e++ : T{};
+		column_4.w = ( s >= 16 )	? *e++ : T{};
 	}
 	Matrix4Base(
 		T c1_r1, T c2_r1, T c3_r1, T c4_r1,
@@ -153,7 +154,64 @@ public:
 	{
 		return column_1 != other.column_1 || column_2 != other.column_2 || column_3 != other.column_3 || column_4 != other.column_4;
 	}
+
+	/// @brief		Get matrix as formatted multi-line text.
+	/// @param[in]	field_lenght
+	///				Maximum number of string characters each field should occupy.
+	/// @return		Text representation of the matrix.
+	std::string AsFormattedText( uint32_t field_lenght )
+	{
+		auto value_str = [ field_lenght ]( T value ) -> std::string
+		{
+			std::stringstream tss;
+			tss << value;
+			auto str = tss.str().substr( 0, field_lenght );
+			if( str.back() == '.' ) str = str.substr( 0, field_lenght - 1 );
+			return str;
+		};
+
+		std::stringstream ss;
+		ss << "[";
+		ss << std::setw( field_lenght + 1 ) << value_str( column_1.x ) << ",";
+		ss << std::setw( field_lenght + 1 ) << value_str( column_2.x ) << ",";
+		ss << std::setw( field_lenght + 1 ) << value_str( column_3.x ) << ",";
+		ss << std::setw( field_lenght + 2 ) << value_str( column_4.x ) << " ]\n";
+
+		ss << "[";
+		ss << std::setw( field_lenght + 1 ) << value_str( column_1.y ) << ",";
+		ss << std::setw( field_lenght + 1 ) << value_str( column_2.y ) << ",";
+		ss << std::setw( field_lenght + 1 ) << value_str( column_3.y ) << ",";
+		ss << std::setw( field_lenght + 2 ) << value_str( column_4.y ) << " ]\n";
+
+		ss << "[";
+		ss << std::setw( field_lenght + 1 ) << value_str( column_1.z ) << ",";
+		ss << std::setw( field_lenght + 1 ) << value_str( column_2.z ) << ",";
+		ss << std::setw( field_lenght + 1 ) << value_str( column_3.z ) << ",";
+		ss << std::setw( field_lenght + 2 ) << value_str( column_4.z ) << " ]\n";
+
+		ss << "[";
+		ss << std::setw( field_lenght + 1 ) << value_str( column_1.w ) << ",";
+		ss << std::setw( field_lenght + 1 ) << value_str( column_2.w ) << ",";
+		ss << std::setw( field_lenght + 1 ) << value_str( column_3.w ) << ",";
+		ss << std::setw( field_lenght + 2 ) << value_str( column_4.w ) << " ]\n";
+
+		return ss.str();
+	}
 };
+
+/// @brief		C++ std::ostream<< operator, Column per column order.
+/// @tparam		T
+///				Matrix precision.
+/// @param[in,out]	os
+///				ostream.
+/// @param		m
+///				Reference to a matrix.
+/// @return		Reference to "os" parameter.
+template<typename T>
+std::ostream & operator<<( std::ostream & os, const Matrix4Base<T> & v )
+{
+	return os << "[" << column_1 << ", " << column_2 << ", " << column_3 << ", " << column_4 << "]";
+}
 
 /// @brief		Single precision 4*4 matrix.
 using Matrix4f			= vk2d::Matrix4Base<float>;
@@ -171,7 +229,8 @@ using Matrix4d			= vk2d::Matrix4Base<double>;
 /// @return		Rotation matrix.
 template<typename T>
 vk2d::Matrix4Base<T> CreateRotationMatrix4(
-	T rotation )
+	T rotation
+)
 {
 	auto x = T( std::cos( rotation ) );
 	auto y = T( std::sin( rotation ) );

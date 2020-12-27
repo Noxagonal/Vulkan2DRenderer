@@ -32,10 +32,10 @@ public:
 	Vector2Base( const std::initializer_list<T> & elements )
 	{
 		auto s = elements.size();
-		assert( s <= 4 );
+		assert( s <= 2 );
 		auto e = elements.begin();
-		( s >= 1 ) ? x = *e++ : x = T( 0 );
-		( s >= 2 ) ? y = *e++ : y = T( 0 );
+		x = ( s >= 1 ) ? *e++ : T{};
+		y = ( s >= 2 ) ? *e++ : T{};
 	}
 
 	vk2d::Vector2Base<T> & operator=( const vk2d::Vector2Base<T> & other )		= default;

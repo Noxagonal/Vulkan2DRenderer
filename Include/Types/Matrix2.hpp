@@ -35,12 +35,13 @@ public:
 	}
 	Matrix2Base( const std::initializer_list<T> & elements_in_row_major_order )
 	{
-		assert( elements_in_row_major_order.size() <= 4 );
+		auto s = elements_in_row_major_order.size();
+		assert( s <= 4 );
 		auto e = elements_in_row_major_order.begin();
-		if( e ) column_1.x = *e++;
-		if( e ) column_2.x = *e++;
-		if( e ) column_1.y = *e++;
-		if( e ) column_2.y = *e++;
+		column_1.x = ( s >= 1 ) ? *e++ : T{};
+		column_2.x = ( s >= 2 ) ? *e++ : T{};
+		column_1.y = ( s >= 3 ) ? *e++ : T{};
+		column_2.y = ( s >= 4 ) ? *e++ : T{};
 	}
 	Matrix2Base(
 		T c1_r1, T c2_r1,
@@ -109,7 +110,48 @@ public:
 	{
 		return column_1 != other.column_1 || column_2 != other.column_2;
 	}
+
+	/// @brief		Get matrix as formatted multi-line text.
+	/// @param[in]	field_lenght
+	///				Maximum number of string characters each field should occupy.
+	/// @return		Text representation of the matrix.
+	std::string AsFormattedText( uint32_t field_lenght )
+	{
+		auto value_str = [field_lenght]( T value ) -> std::string
+		{
+			std::stringstream tss;
+			tss << value;
+			auto str = tss.str().substr( 0, field_lenght );
+			if( str.back() == '.' ) str = str.substr( 0, field_lenght - 1 );
+			return str;
+		};
+
+		std::stringstream ss;
+		ss << "[";
+		ss << std::setw( field_lenght + 1 ) << value_str( column_1.x ) << ",";
+		ss << std::setw( field_lenght + 2 ) << value_str( column_2.x ) << " ]\n";
+
+		ss << "[";
+		ss << std::setw( field_lenght + 1 ) << value_str( column_1.y ) << ",";
+		ss << std::setw( field_lenght + 2 ) << value_str( column_2.y ) << " ]\n";
+
+		return ss.str();
+	}
 };
+
+/// @brief		C++ std::ostream<< operator, Column per column order.
+/// @tparam		T
+///				Matrix precision.
+/// @param[in,out]	os
+///				ostream.
+/// @param		m
+///				Reference to a matrix.
+/// @return		Reference to "os" parameter.
+template<typename T>
+std::ostream & operator<<( std::ostream & os, const Matrix2Base<T> & v )
+{
+	return os << "[" << column_1 << ", " << column_2 << "]";
+}
 
 /// @brief		Single precision 2*2 matrix.
 using Matrix2f			= vk2d::Matrix2Base<float>;

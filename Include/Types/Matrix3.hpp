@@ -35,19 +35,20 @@ public:
 		column_2	= { 0.0f, identity, 0.0f };
 		column_3	= { 0.0f, 0.0f, identity };
 	}
-	Matrix3Base( const std::initializer_list<T> & elements )
+	Matrix3Base( const std::initializer_list<T> & elements_in_row_major_order )
 	{
-		assert( elements.size() <= 9 );
-		auto e = elements.begin();
-		if( e ) column_1.x = *e++;
-		if( e ) column_2.x = *e++;
-		if( e ) column_3.x = *e++;
-		if( e ) column_1.y = *e++;
-		if( e ) column_2.y = *e++;
-		if( e ) column_3.y = *e++;
-		if( e ) column_1.z = *e++;
-		if( e ) column_2.z = *e++;
-		if( e ) column_3.z = *e++;
+		auto s = elements_in_row_major_order.size();
+		assert( s <= 9 );
+		auto e = elements_in_row_major_order.begin();
+		column_1.x = ( s >= 1 ) ? *e++ : T{};
+		column_2.x = ( s >= 2 ) ? *e++ : T{};
+		column_3.x = ( s >= 3 ) ? *e++ : T{};
+		column_1.y = ( s >= 4 ) ? *e++ : T{};
+		column_2.y = ( s >= 5 ) ? *e++ : T{};
+		column_3.y = ( s >= 6 ) ? *e++ : T{};
+		column_1.z = ( s >= 7 ) ? *e++ : T{};
+		column_2.z = ( s >= 8 ) ? *e++ : T{};
+		column_3.z = ( s >= 9 ) ? *e++ : T{};
 	}
 	Matrix3Base(
 		T c1_r1, T c2_r1, T c3_r1,
@@ -129,7 +130,55 @@ public:
 	{
 		return column_1 != other.column_1 || column_2 != other.column_2 || column_3 != other.column_3;
 	}
+
+	/// @brief		Get matrix as formatted multi-line text.
+	/// @param[in]	field_lenght
+	///				Maximum number of string characters each field should occupy.
+	/// @return		Text representation of the matrix.
+	std::string AsFormattedText( uint32_t field_lenght )
+	{
+		auto value_str = [field_lenght]( T value ) -> std::string
+		{
+			std::stringstream tss;
+			tss << value;
+			auto str = tss.str().substr( 0, field_lenght );
+			if( str.back() == '.' ) str = str.substr( 0, field_lenght - 1 );
+			return str;
+		};
+
+		std::stringstream ss;
+		ss << "[";
+		ss << std::setw( field_lenght + 1 ) << value_str( column_1.x ) << ",";
+		ss << std::setw( field_lenght + 1 ) << value_str( column_2.x ) << ",";
+		ss << std::setw( field_lenght + 2 ) << value_str( column_3.x ) << " ]\n";
+
+		ss << "[";
+		ss << std::setw( field_lenght + 1 ) << value_str( column_1.y ) << ",";
+		ss << std::setw( field_lenght + 1 ) << value_str( column_2.y ) << ",";
+		ss << std::setw( field_lenght + 2 ) << value_str( column_3.y ) << " ]\n";
+
+		ss << "[";
+		ss << std::setw( field_lenght + 1 ) << value_str( column_1.z ) << ",";
+		ss << std::setw( field_lenght + 1 ) << value_str( column_2.z ) << ",";
+		ss << std::setw( field_lenght + 2 ) << value_str( column_3.z ) << " ]\n";
+
+		return ss.str();
+	}
 };
+
+/// @brief		C++ std::ostream<< operator, Column per column order.
+/// @tparam		T
+///				Matrix precision.
+/// @param[in,out]	os
+///				ostream.
+/// @param		m
+///				Reference to a matrix.
+/// @return		Reference to "os" parameter.
+template<typename T>
+std::ostream & operator<<( std::ostream & os, const Matrix3Base<T> & v )
+{
+	return os << "[" << column_1 << ", " << column_2 << ", " << column_3 << "]";
+}
 
 /// @brief		Single precision 3*3 matrix.
 using Matrix3f			= vk2d::Matrix3Base<float>;

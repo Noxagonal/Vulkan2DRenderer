@@ -29,12 +29,13 @@ public:
 	ColorBase( vk2d::ColorBase<T> && other )		= default;
 	ColorBase( const std::initializer_list<T> & elements )
 	{
-		assert( elements.size() <= 4 );
+		auto s = elements.size();
+		assert( s <= 4 );
 		auto e = elements.begin();
-		if( e ) r = *e++;
-		if( e ) g = *e++;
-		if( e ) b = *e++;
-		if( e ) a = *e++;
+		r = ( s >= 1 ) ? *e++ : T{};
+		g = ( s >= 2 ) ? *e++ : T{};
+		b = ( s >= 3 ) ? *e++ : T{};
+		a = ( s >= 4 ) ? *e++ : T{};
 	}
 	ColorBase( T r, T g, T b, T a ) :
 		r( r ),
