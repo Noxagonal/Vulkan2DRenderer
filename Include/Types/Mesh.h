@@ -353,7 +353,7 @@ public:
 	///
 	///				This tells the area of within all vertex coordinates reside. It can be set manually
 	///				or recalculated from vertices by calling vk2d::Mesh::RecalculateAABB().
-	///				It can be used to get size of the mesh, as a fast speed pleminiary check if two
+	///				It can be used to get size of the mesh, as a fast speed preliminary check if two
 	///				shapes are overlapping or to check if shape should be rendered or not.
 	vk2d::Rect2f									aabb							= {};
 
