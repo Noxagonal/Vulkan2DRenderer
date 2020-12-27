@@ -140,6 +140,14 @@ public:
 
 
 
+	/// @brief		Get the size of the rectangle area. This value is the absolute size so
+	///				it's never negative.
+	/// @return		Size of the rectangle in 2 dimensions.
+	vk2d::Vector2Base<T> GetAreaSize()
+	{
+		return { std::abs( bottom_right.x - top_left.x ), std::abs( bottom_right.y - top_left.y ) };
+	}
+
 	/// @brief		Checks if a coordinate is inside this rectangle.
 	/// @tparam		PointT
 	///				Point can have different type than this rectangle.

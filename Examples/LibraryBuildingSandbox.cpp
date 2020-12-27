@@ -142,12 +142,6 @@ int main()
 	std::vector<vk2d::Vector4f> stl_vector { {}, { 10.0f, 10.4f, 10.04f }, { 50.1f, float( vk2d::PI ), 40.03f } };
 	std::cout << stl_vector << "\n";
 
-	auto test_mat = vk2d::Transform( { 10.0f, 20.0f }, { 1.0f, 2.0f }, 2.0f ).CalculateTransformationMatrix();
-	std::cout << test_mat.AsFormattedText( 3 ) << "\n";
-	std::cout << test_mat.AsFormattedText( 5 ) << "\n";
-	std::cout << test_mat.AsFormattedText( 7 ) << "\n";
-	std::cout << test_mat.AsFormattedText( 9 ) << "\n";
-
 	auto red_circle				= vk2d::GenerateEllipseMesh(
 		{ -7, -7, 7, 7 }
 	);
@@ -157,7 +151,6 @@ int main()
 	);
 	red_circle.SetVertexColor( { 1.0f, 0.4f, 0.3f, 1.0f } );
 	red_line.SetVertexColor( { 1.0f, 0.4f, 0.3f, 0.05f } );
-
 
 	auto lattice = vk2d::GenerateLatticeMesh(
 		{ -150, -150, 150, 150 },

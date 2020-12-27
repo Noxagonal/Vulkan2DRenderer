@@ -90,6 +90,20 @@ VK2D_API vk2d::ResourceStatus VK2D_APIENTRY vk2d::FontResource::GetStatus()
 	return impl->GetStatus();
 }
 
+VK2D_API vk2d::ResourceStatus VK2D_APIENTRY vk2d::FontResource::WaitUntilLoaded(
+	std::chrono::nanoseconds				timeout
+)
+{
+	return impl->WaitUntilLoaded( timeout );
+}
+
+VK2D_API vk2d::ResourceStatus VK2D_APIENTRY vk2d::FontResource::WaitUntilLoaded(
+	std::chrono::steady_clock::time_point	timeout
+)
+{
+	return impl->WaitUntilLoaded( timeout );
+}
+
 VK2D_API vk2d::Rect2f VK2D_APIENTRY vk2d::FontResource::CalculateRenderedSize(
 	std::string_view	text,
 	float				kerning,
@@ -107,20 +121,6 @@ VK2D_API vk2d::Rect2f VK2D_APIENTRY vk2d::FontResource::CalculateRenderedSize(
 		font_face,
 		wait_for_resource_load
 	);
-}
-
-VK2D_API vk2d::ResourceStatus VK2D_APIENTRY vk2d::FontResource::WaitUntilLoaded(
-	std::chrono::nanoseconds				timeout
-)
-{
-	return impl->WaitUntilLoaded( timeout );
-}
-
-VK2D_API vk2d::ResourceStatus VK2D_APIENTRY vk2d::FontResource::WaitUntilLoaded(
-	std::chrono::steady_clock::time_point	timeout
-)
-{
-	return impl->WaitUntilLoaded( timeout );
 }
 
 VK2D_API bool VK2D_APIENTRY vk2d::FontResource::IsGood() const
