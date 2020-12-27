@@ -10,6 +10,19 @@ namespace vk2d {
 
 
 
+// This is a stub of a class I'm thinking of maybe implementing.
+// Or I may throw it out.
+// Thoughts:
+// - If I implement this then I should also implement vk2d::Array to replace std::vector (I kinda like the idea).
+// - I'd have to reinvent the wheel that stl already does a really good job at.
+// - Performance will likely be worse than stl libraries unless I dedicate serious efforts to this.
+// - Optional memory pool as parameter? if so, maybe use stl polymorphic memory resources instead of implementing our own pool?
+// - If memory pooled, multithreading will be a concern although this would happen anyways.
+// - There might be more types I'd have to implement in the future (List, Map, Deque, Stack...).
+// - Allows more control, more operators without fear of name conflicts, eg. std::cout << vk2d_array_object;
+// - C++ expects some lower-case names like size() instead of Size(), or begin() instead of Begin(). This conflicts with my naming scheme.
+// - Users would have to learn custom, likely less competent, containers, could be mitigated by allowing stl containers as input.
+// - Would likely result more data copying between the library and the host application.
 class Text
 {
 public:
