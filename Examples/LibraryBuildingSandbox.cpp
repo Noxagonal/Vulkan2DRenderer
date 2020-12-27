@@ -98,6 +98,13 @@ int main()
 	auto window1 = instance->CreateOutputWindow( window_create_info );
 	if( !window1 ) return -1;
 
+	std::string s;
+	s.data();
+	s.begin();
+	s = "Testing";
+
+	vk2d::Text t = "Testing";
+
 	auto resource_manager		= instance->GetResourceManager();
 
 	auto blue_circle			= vk2d::GenerateEllipseMesh(
