@@ -73,9 +73,9 @@ There are couple of ways to compile this library, you can use standard CMake or 
 #### Using the build tool
 
 Navigate to the `Vulkan2DRenderer` folder and simply run `Build.bat` on Windows or `Build.py` on Linux.
-To get started quickly, you can select the quick build option, this will generate the project files in `tool_build/Release`
-and `tool_build/Debug` folders and compiles the project, on windows this library is also installed into a folder.
-Please note that the included build tool generates a `tool_build` folder and is reserved for the built tool itself.
+To get started quickly, you can select the quick build option, this will generate the project files in `build_tool/Release`
+and `build_tool/Debug` folders and compiles the project, on windows this library is also installed into a folder.
+Please note that the included build tool generates a `build_tool` folder and is reserved for the built tool itself.
 
 ##### Windows specifics
 
