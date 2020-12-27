@@ -33,11 +33,11 @@ public:
 	Vector3Base( const std::initializer_list<T> & elements )
 	{
 		auto s = elements.size();
-		assert( s <= 4 );
+		assert( s <= 3 );
 		auto e = elements.begin();
-		( s >= 1 ) ? x = *e++ : x = T( 0 );
-		( s >= 2 ) ? y = *e++ : y = T( 0 );
-		( s >= 3 ) ? z = *e++ : z = T( 0 );
+		x = ( s >= 1 ) ? *e++ : T{};
+		y = ( s >= 2 ) ? *e++ : T{};
+		z = ( s >= 3 ) ? *e++ : T{};
 	}
 
 	vk2d::Vector3Base<T> & operator=( const vk2d::Vector3Base<T> & other )		= default;

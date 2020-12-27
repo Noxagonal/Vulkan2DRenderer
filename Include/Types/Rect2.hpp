@@ -56,10 +56,11 @@ public:
 	///				{Top left, Bottom right}
 	Rect2Base( const std::initializer_list<vk2d::Vector2Base<T>> & elements )
 	{
-		assert( elements.size() <= 2 );
+		auto s = elements.size();
+		assert( s <= 2 );
 		auto e = elements.begin();
-		if( e ) top_left		= *e++;
-		if( e ) bottom_right	= *e++;
+		top_left		= ( s >= 1 ) ? *e++ : vk2d::Vector2Base<T>{};
+		bottom_right	= ( s >= 2 ) ? *e++ : vk2d::Vector2Base<T>{};
 	}
 
 	/// @param[in]	elements
@@ -67,12 +68,13 @@ public:
 	///				{Top left x, Top left y, Bottom right x, Bottom right y}
 	Rect2Base( const std::initializer_list<T> & elements )
 	{
-		assert( elements.size() <= 4 );
+		auto s = elements.size();
+		assert( s <= 4 );
 		auto e = elements.begin();
-		if( e ) top_left.x		= *e++;
-		if( e ) top_left.y		= *e++;
-		if( e ) bottom_right.x	= *e++;
-		if( e ) bottom_right.y	= *e++;
+		top_left.x		= ( s >= 1 ) ? *e++ : T{};
+		top_left.y		= ( s >= 2 ) ? *e++ : T{};
+		bottom_right.x	= ( s >= 3 ) ? *e++ : T{};
+		bottom_right.y	= ( s >= 4 ) ? *e++ : T{};
 	}
 
 	vk2d::Rect2Base<T> & operator=( const vk2d::Rect2Base<T> & other )	= default;
@@ -164,6 +166,12 @@ public:
 		if( ret.bottom_right.y < ret.top_left.y ) std::swap( ret.bottom_right.y, ret.top_left.y );
 	}
 };
+
+template<typename T>
+std::ostream& operator<<( std::ostream & os, const Rect2Base<T> & v )
+{
+	return os << "[" << v.top_left << ", " << v.bottom_right << "]";
+}
 
 /// @brief		2D rectangle with float precision.
 using Rect2f			= Rect2Base<float>;
