@@ -23,6 +23,7 @@ namespace vk2d {
 // - C++ expects some lower-case names like size() instead of Size(), or begin() instead of Begin(). This conflicts with my naming scheme.
 // - Users would have to learn custom, likely less competent, containers, could be mitigated by allowing stl containers as input.
 // - Would likely result more data copying between the library and the host application.
+// - Stl is standard and most people know it well, should at least stick to the naming convention used by stl.
 class Text
 {
 public:

@@ -1,5 +1,16 @@
 #!/bin/python3
 
+import sys
+import os
+import subprocess
+import copy
+import shutil
+
+is_windows = os.name == 'nt'
+cls = lambda: os.system('cls' if is_windows else 'clear')
+tool_build_folder = "build_tool"
+tool_build_install_path = tool_build_folder + "/install"
+
 class BuildSystem:
     def __init__( self, description, cmake_option, include_architecture ):
         self.description = description
@@ -74,18 +85,11 @@ packages_linux.append( [ "Create 7zip package",                 "7Z" ] )
 packages_linux.append( [ "Create .tar.bz2 package",             "TBZ2" ] )
 packages_linux.append( [ "Create .tar.gz package",              "TGZ" ] )
 
-
-
-import sys
-import os
-import subprocess
-import copy
-import shutil
-
-is_windows = os.name == 'nt'
-cls = lambda: os.system('cls' if is_windows else 'clear')
-tool_build_folder = "build_tool"
-tool_build_install_path = tool_build_folder + "/install"
+quick_setup_build_configurations = []
+if is_windows:
+    quick_setup_build_configurations = [ "Release", "Debug" ]
+else:
+    quick_setup_build_configurations = [ "Release" ]
 
 
 
@@ -197,7 +201,7 @@ def SelectBuildType():
 def ConfigureAndBuildProjectMenu( quick_setup = False ):
     build_type = []
     if quick_setup:
-        build_type = [ True, [ "Release", "Debug" ] ]
+        build_type = [ True, quick_setup_build_configurations ]
     else:
         build_type = SelectBuildType()
         if not build_type[ 0 ]:
@@ -255,8 +259,8 @@ def ConfigureAndBuildProjectMenu( quick_setup = False ):
 ################################################################
 def CompileMenu( quick_setup = False ):
     if quick_setup:
-        subprocess.run( [ "cmake", "--build", tool_build_folder + "/Release", "--config", "Release" ] )
-        subprocess.run( [ "cmake", "--build", tool_build_folder + "/Debug", "--config", "Debug" ] )
+        for c in quick_setup_build_configurations:
+            subprocess.run( [ "cmake", "--build", tool_build_folder + "/" + c, "--config", c] )
     else:
         build_type = ""
         while True:
@@ -299,8 +303,8 @@ def CompileMenu( quick_setup = False ):
 ################################################################
 def InstallMenu( quick_setup = False ):
     if quick_setup:
-        subprocess.run( [ "cmake", "--install", tool_build_folder + "/Release", "--config", "Release" ] )
-        subprocess.run( [ "cmake", "--install", tool_build_folder + "/Debug", "--config", "Debug" ] )
+        for c in quick_setup_build_configurations:
+            subprocess.run( [ "cmake", "--install", tool_build_folder + "/" + c, "--config", c] )
     else:
         build_type = ""
         while not quick_setup:
