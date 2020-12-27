@@ -5,6 +5,7 @@
 #include "Types/Vector2.hpp"
 
 #include <initializer_list>
+#include <ostream>
 
 
 

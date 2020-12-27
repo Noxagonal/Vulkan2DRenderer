@@ -7,6 +7,8 @@
 #include <initializer_list>
 #include <cmath>
 #include <assert.h>
+#include <ostream>
+#include <iomanip>
 
 
 
@@ -177,7 +179,7 @@ public:
 template<typename T>
 std::ostream & operator<<( std::ostream & os, const Matrix3Base<T> & v )
 {
-	return os << "[" << column_1 << ", " << column_2 << ", " << column_3 << "]";
+	return os << "[" << v.column_1 << ", " << v.column_2 << ", " << v.column_3 << "]";
 }
 
 /// @brief		Single precision 3*3 matrix.
