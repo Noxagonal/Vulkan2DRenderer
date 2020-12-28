@@ -99,11 +99,26 @@ int main()
 	if( !window1 ) return -1;
 
 	std::string s;
-	s.data();
-	s.begin();
 	s = "Testing";
 
 	vk2d::Text t = "Testing";
+	t = "Test2";
+	t = "Testing this thing even more...";
+
+	vk2d::Array<int32_t> arr1;
+	vk2d::Array<int32_t> arr2 { 5, 8 };
+	arr1 = arr2;
+	vk2d::Array<uint32_t> arr = { 0, 1, 2, 3, 4 };
+	std::cout << "Single array element: " << arr[ 0 ] << "\n";
+	std::cout << "Entire array: " << arr << "\n";
+	arr[ 4 ] = 1000;
+	std::cout << "Modified array: " << arr << "\n";
+	std::cout << "Array size: " << std::size( arr ) << "\n";
+
+	arr.PushBack( 50 );
+	std::cout << "Array appended: " << arr << "\n";
+
+	std::vector<uint32_t> vec = arr;
 
 	auto resource_manager		= instance->GetResourceManager();
 

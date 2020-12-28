@@ -5,6 +5,7 @@
 #include "Core/Version.hpp"
 #include "Core/SystemConsole.h"
 
+#include "Types/Array.hpp"
 #include "Types/Text.h"
 #include "Types/Vector2.hpp"
 #include "Types/Vector3.hpp"

@@ -67,16 +67,28 @@ public:
 	VK2D_API																		Text(
 		const wchar_t							*	str );
 
+	VK2D_API																		Text(
+		const vk2d::Text						&	other );
+
+	VK2D_API																		Text(
+		vk2d::Text								&&	other );
+
 	VK2D_API																		~Text();
+
+	VK2D_API vk2d::Text							&	VK2D_APIENTRY					operator=(
+		const vk2d::Text						&	other );
+
+	VK2D_API vk2d::Text							&	VK2D_APIENTRY					operator=(
+		vk2d::Text								&&	other );
 
 	VK2D_API void									VK2D_APIENTRY					FromUTF8(
 		std::string									str );
 
 	VK2D_API std::string							VK2D_APIENTRY					ToUTF8();
 
-	VK2D_API void									VK2D_APIENTRY					reserve(
-		size_t										new_size );
-	VK2D_API void									VK2D_APIENTRY					resize(
+	VK2D_API void									VK2D_APIENTRY					Reserve(
+		size_t										new_capacity );
+	VK2D_API void									VK2D_APIENTRY					Resize(
 		size_t										new_size );
 	VK2D_API size_t									VK2D_APIENTRY					size();
 	VK2D_API int32_t							*	VK2D_APIENTRY					data();
@@ -84,6 +96,11 @@ public:
 	VK2D_API int32_t							*	VK2D_APIENTRY					end();
 
 private:
+	VK2D_API void									VK2D_APIENTRY					CopyOther(
+		const vk2d::Text						&	other );
+	VK2D_API void									VK2D_APIENTRY					MoveOther(
+		vk2d::Text								&&	other );
+	VK2D_API void									VK2D_APIENTRY					Deallocate();
 	int32_t										*	str_data						= {};
 	size_t											str_size						= {};
 	size_t											str_capacity					= {};
