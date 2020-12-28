@@ -37,5 +37,7 @@ function(BuildTestcase EXECUTABLE_NAME)
 	
 endfunction()
 
+# TODO: Automate these based on the files found on disk...
+BuildTestcase("ContainerArray")
 BuildTestcase("BasicRender")
 BuildTestcase("DrawShapes")

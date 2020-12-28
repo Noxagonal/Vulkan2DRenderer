@@ -88,7 +88,7 @@ constexpr double KINDA_SMALL_VALUE	= 0.001;
 			#endif
 	
 			// Calling convension
-			#define VK2D_APIENTRY				// Default, change in the future if needed.
+			#define VK2D_APIENTRY				// Default calling convention for Linux, change in the future if needed.
 	
 		#else
 			#error "Please add compiler support here!"
