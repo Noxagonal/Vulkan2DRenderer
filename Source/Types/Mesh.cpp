@@ -1150,9 +1150,11 @@ VK2D_API vk2d::Mesh VK2D_APIENTRY vk2d::GenerateTextMesh(
 		auto vertex_offset		= ret.vertices.size();
 		auto index_offset		= ret.indices.size();
 
-		auto tcoords			= ( coords + location );
+		auto tcoords			= coords;
 		tcoords.top_left		*= scale;
 		tcoords.bottom_right	*= scale;
+		tcoords					+= location;
+
 		ret.aabb.top_left.x		= std::min( ret.aabb.top_left.x, tcoords.top_left.x );
 		ret.aabb.top_left.y		= std::min( ret.aabb.top_left.y, tcoords.top_left.y );
 		ret.aabb.bottom_right.x	= std::max( ret.aabb.bottom_right.x, tcoords.bottom_right.x );
@@ -1197,25 +1199,25 @@ VK2D_API vk2d::Mesh VK2D_APIENTRY vk2d::GenerateTextMesh(
 		// Writing vertical text
 		{
 			auto gi = fi->GetGlyphInfo( font_face, text[ 0 ] );
-			ret.aabb.top_left		= gi->vertical_coords.top_left;
-			ret.aabb.bottom_right	= gi->vertical_coords.bottom_right;
+			ret.aabb.top_left		= gi->vertical_coords.top_left * scale + location;
+			ret.aabb.bottom_right	= gi->vertical_coords.bottom_right * scale + location;
 		}
 		for( auto c : text ) {
 			auto gi = fi->GetGlyphInfo( font_face, c );
 			AppendBox( location, gi->vertical_coords, gi->uv_coords, gi->atlas_index );
-			location.y	+= gi->vertical_advance + kerning;
+			location.y	+= ( gi->vertical_advance + kerning ) * scale.y;
 		}
 	} else {
 		// Writing horisontal text
 		{
 			auto gi = fi->GetGlyphInfo( font_face, text[ 0 ] );
-			ret.aabb.top_left		= gi->horisontal_coords.top_left;
-			ret.aabb.bottom_right	= gi->horisontal_coords.bottom_right;
+			ret.aabb.top_left		= gi->horisontal_coords.top_left * scale + location;
+			ret.aabb.bottom_right	= gi->horisontal_coords.bottom_right * scale + location;
 		}
 		for( auto c : text ) {
 			auto gi = fi->GetGlyphInfo( font_face, c );
 			AppendBox( location, gi->horisontal_coords, gi->uv_coords, gi->atlas_index );
-			location.x	+= gi->horisontal_advance + kerning;
+			location.x	+= ( gi->horisontal_advance + kerning ) * scale.x;
 		}
 	}
 
