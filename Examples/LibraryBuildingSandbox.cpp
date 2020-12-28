@@ -122,64 +122,12 @@ int main()
 
 	auto resource_manager		= instance->GetResourceManager();
 
-	auto blue_circle			= vk2d::GenerateEllipseMesh(
-		{ -4, -4, 4, 4 }
-	);
-	auto blue_line				= vk2d::GenerateLineMeshFromList(
-		{ { 0, -5000 }, { 0, 5000 } },
-		{ { 0, 1 } }
-	);
-	blue_circle.SetVertexColor( { 0.0f, 0.3f, 1.0f, 1.0f } );
-	blue_line.SetVertexColor( { 0.0f, 0.3f, 1.0f, 0.05f } );
-	blue_circle.SetVertexColor( vk2d::Colorf::BLUE() );
-
-	auto color1 = vk2d::Colorf( 0.25f, 1.0f, 0.5f, 0.5f );
-	auto color2 = vk2d::Colorf( 1.0f, 0.25f, 0.8f, 0.8f );
-	auto colorf = color1.BlendUsingAlpha( color2 );
-
 	auto font = resource_manager->LoadFontResource(
 		"../../Data/Fonts/ubuntu-font-family-0.83/Ubuntu-M.ttf"
 	);
 
-	std::string text = "Testing...";
-	auto text_calculated_area = font->CalculateRenderedSize(
-		text,
-		0,
-		{ 2, 2 },
-		false,
-		0,
-		true
-	);
-	auto text_mesh = vk2d::GenerateTextMesh(
-		font,
-		{ 0, 0 },
-		text,
-		0,
-		{ 2, 2 },
-		false,
-		0,
-		true
-	);
-
 	std::vector<vk2d::Vector4f> stl_vector { {}, { 10.0f, 10.4f, 10.04f }, { 50.1f, float( vk2d::PI ), 40.03f } };
 	std::cout << stl_vector << "\n";
-
-	auto red_circle				= vk2d::GenerateEllipseMesh(
-		{ -7, -7, 7, 7 }
-	);
-	auto red_line				= vk2d::GenerateLineMeshFromList(
-		{ { 0, -5000 }, { 0, 5000 } },
-		{ { 0, 1 } }
-	);
-	red_circle.SetVertexColor( { 1.0f, 0.4f, 0.3f, 1.0f } );
-	red_line.SetVertexColor( { 1.0f, 0.4f, 0.3f, 0.05f } );
-
-	auto lattice = vk2d::GenerateLatticeMesh(
-		{ -150, -150, 150, 150 },
-		{ 2, 2 },
-		false
-	);
-	lattice.Rotate( 0.3f );
 
 	auto delta_time_counter		= DeltaTimeCounter();
 	auto delta_time				= 0.0f;
@@ -189,71 +137,45 @@ int main()
 		delta_time				= delta_time_counter.Tick();
 		seconds_since_start		+= delta_time;
 
+
+
+		std::string text = "Testing...";
+		vk2d::Vector2f text_location { std::cos( seconds_since_start / 3.0f ) * 300.0f, std::sin( seconds_since_start / 3.0f ) * 300.0f };
+		vk2d::Vector2f text_scale { std::cos( seconds_since_start * 5.0f ) * 0.5f + 1.5f, std::cos( seconds_since_start * 5.0f ) * 0.5f + 1.5f };
+
+		auto text_calculated_area = font->CalculateRenderedSize(
+			text,
+			0,
+			text_scale,
+			false,
+			0,
+			true
+		);
+		auto text_mesh = vk2d::GenerateTextMesh(
+			font,
+			text_location,
+			text,
+			0,
+			text_scale,
+			false,
+			0,
+			true
+		);
+
+
+
 		if( !window1->BeginRender() ) return -1;
 
 		{
-			float pc1 = ( std::cos( seconds_since_start * 0.414f ) * 0.5f + 0.5f ) * 30.0f + 3.0f;
-			float pc2 = ( std::sin( seconds_since_start * 0.231f ) * 0.5f + 0.5f ) * 30.0f + 3.0f;
-
-			float pc1_scale = window1->GetSize().x / ( pc1 - 1.0f );
-			float pc2_scale = window1->GetSize().x / ( pc2 - 1.0f );
-
-			std::vector<float> pc1_values( std::ceil( pc1 ) + 1 );
-			std::vector<float> pc2_values( std::ceil( pc2 ) );
-
-			for( size_t i = 0; i < std::size( pc1_values ); ++i ) {
-				pc1_values[ i ] = std::sin( seconds_since_start + i * pc1_scale * 0.01f );
-			}
-
-			float s = ( pc1 - 1.0f ) / ( pc2 - 1.0f );
-			for( int32_t i = 0; i < std::size( pc2_values ); ++i ) {
-				float	pc1_total_offset	= i * s;
-				size_t	pc1_index			= size_t( std::floor( pc1_total_offset ) );
-				float	pc1_offset			= pc1_total_offset - float( pc1_index );
-
-				auto pc1_value1				= ( pc1_index < std::size( pc1_values ) ) ? pc1_values[ pc1_index ] : pc1_values.back();
-				auto pc1_value2				= ( pc1_index + 1 < std::size( pc1_values ) ) ? pc1_values[ pc1_index + 1 ] : pc1_values.back();
-
-				pc2_values[ i ] = pc1_value1 * ( 1.0f - pc1_offset ) + pc1_value2 * pc1_offset;
-			}
-			//pc2_values.back() = pc1_values.back();
-
-			std::vector<vk2d::Matrix4f> pc1_point_transformations( size_t( std::ceil( pc1 ) ) );
-			std::vector<vk2d::Matrix4f> pc2_point_transformations( std::size( pc2_values ) );
-
-			for( int32_t i = 0; i < std::size( pc1_point_transformations ); ++i ) {
-				vk2d::Transform t;
-				t.Translate( { i * pc1_scale - window1->GetSize().x / 2, pc1_values[ i ] * 300.0f } );
-				pc1_point_transformations[ i ] = t.CalculateTransformationMatrix();
-			}
-			for( int32_t i = 0; i < std::size( pc2_point_transformations ); ++i ) {
-				vk2d::Transform t;
-				t.Translate( { i * pc2_scale - window1->GetSize().x / 2, pc2_values[ i ] * 300.0f } );
-				pc2_point_transformations[ i ] = t.CalculateTransformationMatrix();
-			}
-
-			window1->DrawMesh(
-				blue_line,
-				pc1_point_transformations
+			window1->DrawEllipse(
+				{ -300, -300, 300, 300 },
+				false,
+				64,
+				vk2d::Colorf::CYAN()
 			);
-			window1->DrawMesh(
-				blue_circle,
-				pc1_point_transformations
-			);
-
-			window1->DrawMesh(
-				red_line,
-				pc2_point_transformations
-			);
-			window1->DrawMesh(
-				red_circle,
-				pc2_point_transformations
-			);
-
-			window1->DrawMesh( lattice );
 			window1->DrawMesh( text_mesh );
 			window1->DrawRectangle( text_mesh.aabb, false );
-			//window1->DrawRectangle( text_calculated_area, false );
+			//window1->DrawRectangle( text_calculated_area + text_location, false );
 		}
 
 		if( !window1->EndRender() ) return -1;
