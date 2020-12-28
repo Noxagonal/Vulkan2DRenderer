@@ -50,6 +50,7 @@ VK2D_API void VK2D_APIENTRY vk2d::Text::FromUTF8(
 VK2D_API std::string VK2D_APIENTRY vk2d::Text::ToUTF8()
 {
 	// TODO...
+	return {};
 }
 
 VK2D_API void VK2D_APIENTRY vk2d::Text::reserve(
