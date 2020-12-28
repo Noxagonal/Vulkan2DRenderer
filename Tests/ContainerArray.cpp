@@ -78,6 +78,8 @@ void Test( LambdaT & lambda, bool should_throw, ReturnT expected_return )
 
 
 
+int32_t constructed_counter = 0;
+
 int main()
 {
 	cout << "Testing vk2d::Array container class.\n\n";
@@ -257,7 +259,6 @@ int main()
 	{
 		struct MoveableOnly
 		{
-			MoveableOnly() = default;
 			MoveableOnly( size_t value ) : v1( value ) {};
 			MoveableOnly( const MoveableOnly & other ) = delete;
 			MoveableOnly( MoveableOnly && other ) = default;
@@ -294,7 +295,7 @@ int main()
 	{
 		struct CopyableOnly
 		{
-			CopyableOnly( size_t value = 0 ) : v1( value ) {};
+			CopyableOnly( size_t value ) : v1( value ) {};
 			CopyableOnly( const CopyableOnly & other ) = default;
 			CopyableOnly( CopyableOnly && other ) = delete;
 			CopyableOnly & operator=( const CopyableOnly & other ) = default;
@@ -302,7 +303,7 @@ int main()
 			size_t v1;
 		};
 
-		cout << "Moveable only objects:\n";
+		cout << "Copyable only objects:\n";
 
 		Test( []()
 			{
@@ -327,8 +328,221 @@ int main()
 			}, false, vector<size_t>{ 3, 10, 11, 12 }
 		);
 	}
+	{
+		cout << "Construction/Destruction testing:\n\n";
 
-	// Need to test for object construction call counts when moving complex objects around in the array.
+		struct CtorDtorCounted
+		{
+			CtorDtorCounted()
+			{
+				++constructed_counter;
+				cout << " | Construct -> Default\n";
+			}
+			CtorDtorCounted( const CtorDtorCounted & other )
+			{
+				++constructed_counter;
+				cout << " | Construct -> Copy\n";
+			}
+			CtorDtorCounted( CtorDtorCounted && other )
+			{
+				++constructed_counter;
+				cout << " | Construct -> Move\n";
+			}
+			~CtorDtorCounted()
+			{
+				--constructed_counter;
+				cout << " / Destruct\n";
+			}
+			CtorDtorCounted & operator=( const CtorDtorCounted & other )
+			{
+				cout << " = Assign    -> Copy\n";
+				return *this;
+			}
+			CtorDtorCounted & operator=( CtorDtorCounted && other )
+			{
+				cout << " = Assign    -> Move\n";
+				return *this;
+			}
+		};
+
+		Test( []()
+			{
+				constructed_counter = 0;
+				{
+					using A = Array<CtorDtorCounted>;
+					A a;
+				}
+				cout << "\n";
+				return constructed_counter;
+			}, false, 0
+		);
+		Test( []()
+			{
+				constructed_counter = 0;
+				{
+					using A = Array<CtorDtorCounted>;
+					A a;
+					a.PushBack( CtorDtorCounted() );
+					a.PushBack( CtorDtorCounted() );
+					a.PushBack( CtorDtorCounted() );
+					a.PushBack( CtorDtorCounted() );
+				}
+				cout << "\n";
+				return constructed_counter;
+			}, false, 0
+		);
+		Test( []()
+			{
+				constructed_counter = 0;
+				{
+					using A = Array<CtorDtorCounted>;
+					A a;
+					a.PushFront( CtorDtorCounted() );
+					a.PushFront( CtorDtorCounted() );
+					a.PushFront( CtorDtorCounted() );
+					a.PushFront( CtorDtorCounted() );
+				}
+				cout << "\n";
+				return constructed_counter;
+			}, false, 0
+		);
+		Test( []()
+			{
+				constructed_counter = 0;
+				{
+					using A = Array<CtorDtorCounted>;
+					A a;
+					a.EmplaceBack();
+					a.EmplaceBack();
+					a.EmplaceBack();
+					a.EmplaceBack();
+				}
+				cout << "\n";
+				return constructed_counter;
+			}, false, 0
+		);
+		Test( []()
+			{
+				constructed_counter = 0;
+				{
+					using A = Array<CtorDtorCounted>;
+					A a;
+					a.EmplaceFront();
+					a.EmplaceFront();
+					a.EmplaceFront();
+					a.EmplaceFront();
+				}
+				cout << "\n";
+				return constructed_counter;
+			}, false, 0
+		);
+		Test( []()
+			{
+				constructed_counter = 0;
+				{
+					using A = Array<CtorDtorCounted>;
+					A a;
+					a.EmplaceBack();
+					a.EmplaceBack();
+					a.EmplaceBack();
+					A b = a;
+					A c;
+					c = b;
+				}
+				cout << "\n";
+				return constructed_counter;
+			}, false, 0
+		);
+		Test( []()
+			{
+				constructed_counter = 0;
+				{
+					using A = Array<CtorDtorCounted>;
+					A a;
+					a.EmplaceBack();
+					a.EmplaceBack();
+					a.EmplaceBack();
+					A b;
+					b += { a[ 0 ] };
+					b += {};
+					b += a;
+				}
+				cout << "\n";
+				return constructed_counter;
+			}, false, 0
+		);
+		Test( []()
+			{
+				constructed_counter = 0;
+				{
+					using A = Array<CtorDtorCounted>;
+					A a( 5 );
+				}
+				cout << "\n";
+				return constructed_counter;
+			}, false, 0
+		);
+		Test( []()
+			{
+				constructed_counter = 0;
+				{
+					using A = Array<CtorDtorCounted>;
+					A a { {}, {}, {} };
+				}
+				cout << "\n";
+				return constructed_counter;
+			}, false, 0
+		);
+		Test( []()
+			{
+				constructed_counter = 0;
+				{
+					using A = Array<CtorDtorCounted>;
+					A a( 10 );
+					a.PopBack();
+					a.PopBack();
+					a.PopFront();
+					a.PopFront();
+					a.PopFront();
+					a.PopBack();
+					a.PopFront();
+					a.PopBack();
+				}
+				cout << "\n";
+				return constructed_counter;
+			}, false, 0
+		);
+		Test( []()
+			{
+				constructed_counter = 0;
+				{
+					using A = Array<CtorDtorCounted>;
+					A a( 3 );
+					a.PopBack();
+					a.PopBack();
+					a.PopBack();
+				}
+				cout << "\n";
+				return constructed_counter;
+			}, false, 0
+		);
+		Test( []()
+			{
+				constructed_counter = 0;
+				{
+					using A = Array<CtorDtorCounted>;
+					A a( 3 );
+					a.PopFront();
+					a.PopFront();
+					a.PopFront();
+				}
+				cout << "\n";
+				return constructed_counter;
+			}, false, 0
+		);
+	}
+
+	cout << "\n";
 
 	return 0;
 }

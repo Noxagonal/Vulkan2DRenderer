@@ -15,13 +15,11 @@ namespace vk2d {
 
 
 // This works as a replacement of sorts to std::vector but with a few more features.
-// TODO: vk2d::Array is missing some features still...
-// - Need to check the rules when to construct and when to assign.
+// TODO: vk2d::Array is experimental at this point.
+// TODO: vk2d::Array key feature should be that the memory is allocated from a memory pool, this is not implemented yet.
 template<typename T>
 class Array
 {
-	static_assert( std::is_default_constructible_v<T>, "Array element must be default constructible." );
-
 public:
 	Array()										= default;
 	Array( const vk2d::Array<T> & other )
@@ -35,24 +33,33 @@ public:
 	Array( size_t initial_size )
 	{
 		Resize( initial_size );
-		ConstructRange( 0, data_size );
 	}
 	Array( std::initializer_list<T> initializer )
 	{
 		size_t size = initializer.size();
-		Resize( size );
-		size_t counter = 0;
-		auto it = initializer.begin();
-		while( it != initializer.end() ) {
-			data_ptr[ counter++ ] = *it++;
+		if( size ) {
+			ResizeNoConstruct( size );
+			size_t counter = 0;
+			auto it = initializer.begin();
+			while( it != initializer.end() ) {
+				if constexpr( std::is_move_constructible_v<T> ) {
+					new( &data_ptr[ counter++ ] ) T( std::move( *it++ ) );
+				} else {
+					new( &data_ptr[ counter++ ] ) T( *it++ );
+				}
+			}
 		}
 	}
 	Array( const std::vector<T> & vec )
 	{
-		Resize( std::size( vec ) );
-		if( data_size ) {
+		if( std::size( vec ) ) {
+			ResizeNoConstruct( std::size( vec ) );
 			for( size_t i = 0; i < data_size; ++i ) {
-				data_ptr[ i ] = vec[ i ];
+				if constexpr( std::is_move_constructible_v<T> ) {
+					new( &data_ptr[ i ] ) T( std::move( vec[ i ] ) );
+				} else {
+					new( &data_ptr[ i ] ) T( vec[ i ] );
+				}
 			}
 		}
 	}
@@ -63,9 +70,12 @@ public:
 	}
 	operator std::vector<T>()
 	{
-		std::vector<T> ret( data_size );
-		for( size_t i = 0; i < data_size; ++i ) {
-			ret[ i ] = data_ptr[ i ];
+		std::vector<T> ret;
+		if( data_size ) {
+			ret.reserve( data_size );
+			for( size_t i = 0; i < data_size; ++i ) {
+				ret.push_back( data_ptr[ i ] );
+			}
 		}
 		return ret;
 	};
@@ -89,11 +99,13 @@ public:
 	}
 	vk2d::Array<T> & operator+=( const vk2d::Array<T> & other )
 	{
-		auto old_size = data_size;
-		auto new_size = data_size + other.data_size;
-		Resize( data_size + other.data_size );
-		for( size_t i = 0; i < other.data_size; ++i ) {
-			data_ptr[ i + old_size ] = other.data_ptr[ i ];
+		if( other.data_size ) {
+			auto old_size = data_size;
+			auto new_size = data_size + other.data_size;
+			ResizeNoConstruct( data_size + other.data_size );
+			for( size_t i = 0; i < other.data_size; ++i ) {
+				new( &data_ptr[ i + old_size ] ) T( other.data_ptr[ i ] );
+			}
 		}
 		return *this;
 	}
@@ -101,43 +113,41 @@ public:
 	void PushFront( const T & value )
 	{
 		ShiftRight();
-		data_ptr[ 0 ] = value;
+		new( &data_ptr[ 0 ] ) T( value );
 	}
 	void PushBack( const T & value )
 	{
-		Resize( data_size + 1, DEFAULT_HEADROOM );
-		data_ptr[ data_size - 1 ] = value;
+		ResizeNoConstruct( data_size + 1, DEFAULT_HEADROOM );
+		new( &data_ptr[ data_size - 1 ] ) T( value );
 	}
 	void PushFront( T && value )
 	{
 		ShiftRight();
 		if constexpr( std::is_move_constructible_v<T> ) {
-			data_ptr[ 0 ] = std::move( value );
+			new( &data_ptr[ 0 ] ) T( std::move( value ) );
 		} else {
-			data_ptr[ 0 ] = value;
+			new( &data_ptr[ 0 ] ) T( value );
 		}
 	}
 	void PushBack( T && value )
 	{
-		Resize( data_size + 1, DEFAULT_HEADROOM );
+		ResizeNoConstruct( data_size + 1, DEFAULT_HEADROOM );
 		if constexpr( std::is_move_constructible_v<T> ) {
-			data_ptr[ data_size - 1 ] = std::move( value );
+			new( &data_ptr[ data_size - 1 ] ) T( std::move( value ) );
 		} else {
-			data_ptr[ data_size - 1 ] = value;
+			new( &data_ptr[ data_size - 1 ] ) T( value );
 		}
 	}
 	template<typename... Args>
 	void EmplaceFront( Args && ...args )
 	{
 		ShiftRight();
-		data_ptr[ 0 ].~T();
 		new( &data_ptr[ 0 ] ) T( std::forward<Args>( args )... );
 	}
+	template<typename... Args>
 	void EmplaceBack()
 	{
-		Resize( data_size + 1, DEFAULT_HEADROOM );
-
-		data_ptr[ data_size - 1 ].~T();
+		ResizeNoConstruct( data_size + 1, DEFAULT_HEADROOM );
 		new( &data_ptr[ data_size - 1 ] ) T( std::forward<Args>( args )... );
 	}
 	T PopFront()
@@ -155,7 +165,7 @@ public:
 		if( !data_size ) throw std::out_of_range( "Array is empty." );
 
 		T ret = std::move( data_ptr[ data_size - 1 ] );
-		Resize( data_size - 1 );
+		ResizeNoConstruct( data_size - 1 );
 		return ret;
 	}
 
@@ -173,24 +183,10 @@ public:
 
 	void Resize( size_t new_size, size_t headroom = 0 )
 	{
-		// TODO: Need a new internal resize so objects without default constructors can be used.
-		// Basically need a way of constructing objects with EmplaceBack and construct others
-		// with default constructor when created. All objects in range 0 to data_size should be
-		// constructed exactly once and be in constructed state every time any member function
-		// returns. Objects outside range 0 to data_size should not be in constructed state.
 		auto old_size = data_size;
-		Reserve( new_size, headroom );
-		if( data_ptr ) {
-			if( old_size < new_size ) {
-				// Growing
-				ConstructRange( old_size, new_size - old_size );
-			} else {
-				// Shrinking
-				DestructRange( new_size, old_size - new_size );
-			}
-			data_size = new_size;
-		} else {
-			data_size = 0;
+		ResizeNoConstruct( new_size, headroom );
+		if( old_size < new_size ) {
+			ConstructRange( old_size, new_size - old_size );
 		}
 	}
 
@@ -232,13 +228,30 @@ private:
 			data_ptr[ i ].~T();
 		}
 	}
+	void ResizeNoConstruct( size_t new_size, size_t headroom = 0 )
+	{
+		auto old_size = data_size;
+		Reserve( new_size, headroom );
+		if( old_size > new_size ) {
+			// Shrinking
+			DestructRange( new_size, old_size - new_size );
+		}
+		data_size = new_size;
+	}
+	void ResizeNoConstructNoDestruct( size_t new_size, size_t headroom = 0 )
+	{
+		Reserve( new_size, headroom );
+		data_size = new_size;
+	}
 	void CopyOther( const vk2d::Array<T> & other )
 	{
+		// Destruct everything in this array and copy construct from values on other array.
 		if( this != &other ) {
+			DestructRange( 0, data_size );
 			auto new_size = other.data_size;
-			Resize( new_size );
+			ResizeNoConstructNoDestruct( new_size );
 			for( size_t i = 0; i < new_size; ++i ) {
-				data_ptr[ i ] = other.data_ptr[ i ];
+				new( &data_ptr[ i ] ) T( other.data_ptr[ i ] );
 			}
 		}
 	}
@@ -250,30 +263,52 @@ private:
 			std::swap( data_capacity, other.data_capacity );
 		}
 	}
+	// Shifts everything right, expands the array, the first element is destructed.
 	void ShiftRight()
 	{
 		// TODO: Should combine shift and resize to the same copy-loop
 		// if new memory is being allocated at the same time.
-		Resize( data_size + 1, DEFAULT_HEADROOM );
-		for( size_t i = data_size - 1; i > 0; --i ) {
-			if constexpr( std::is_move_assignable_v<T> ) {
-				data_ptr[ i ] = std::move( data_ptr[ i - 1 ] );
+		ResizeNoConstruct( data_size + 1, DEFAULT_HEADROOM );
+		if( data_size >= 2 ) {
+			// Construct the last element from previous.
+			if constexpr( std::is_move_constructible_v<T> ) {
+				new( &data_ptr[ data_size - 1 ] ) T( std::move( data_ptr[ data_size - 2 ] ) );
 			} else {
-				data_ptr[ i ] = data_ptr[ i - 1 ];
+				new( &data_ptr[ data_size - 1 ] ) T( data_ptr[ data_size - 2 ] );
 			}
+			// For the rest we can assign.
+			for( size_t i = data_size - 2; i > 0; --i ) {
+				if constexpr( std::is_move_assignable_v<T> ) {
+					data_ptr[ i ] = std::move( data_ptr[ i - 1 ] );
+				} else {
+					data_ptr[ i ] = data_ptr[ i - 1 ];
+				}
+			}
+			// Destruct the first element.
+			DestructRange( 0, 1 );
 		}
 	}
+	// Shifts everything left, destructs the last element, shrinks the entire array.
 	void ShiftLeft()
 	{
 		if( data_size > 0 ) {
-			for( size_t i = 0; i < data_size; ++i ) {
+			// Destruct first element.
+			DestructRange( 0, 1 );
+			// Construct the first element from next.
+			if constexpr( std::is_move_constructible_v<T> ) {
+				new( &data_ptr[ 0 ] ) T( std::move( data_ptr[ 1 ] ) );
+			} else {
+				new( &data_ptr[ 0 ] ) T( data_ptr[ 1 ] );
+			}
+			// For the rest we can assign.
+			for( size_t i = 1; i < data_size; ++i ) {
 				if constexpr( std::is_move_assignable_v<T> ) {
 					data_ptr[ i ] = std::move( data_ptr[ i + 1 ] );
 				} else {
 					data_ptr[ i ] = data_ptr[ i + 1 ];
 				}
 			}
-			Resize( data_size - 1, DEFAULT_HEADROOM );
+			ResizeNoConstruct( data_size - 1, DEFAULT_HEADROOM );
 		}
 	}
 	T * DoAllocate( T * old_ptr, size_t old_size, size_t new_size )
