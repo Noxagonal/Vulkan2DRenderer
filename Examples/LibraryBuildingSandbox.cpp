@@ -95,6 +95,7 @@ int main()
 	window_create_info.coordinate_space		= vk2d::RenderCoordinateSpace::TEXEL_SPACE_CENTERED;
 	window_create_info.samples				= vk2d::Multisamples::SAMPLE_COUNT_1;
 	window_create_info.event_handler		= &event_handler;
+	window_create_info.vsync				= false;
 	auto window1 = instance->CreateOutputWindow( window_create_info );
 	if( !window1 ) return -1;
 
@@ -132,10 +133,20 @@ int main()
 	auto delta_time_counter		= DeltaTimeCounter();
 	auto delta_time				= 0.0f;
 	auto seconds_since_start	= 0.0f;
+	auto fps_time_counter		= 0.0f;
+	auto fps_counter			= 0;
 
 	while( instance->Run() && !window1->ShouldClose() ) {
 		delta_time				= delta_time_counter.Tick();
 		seconds_since_start		+= delta_time;
+
+		fps_time_counter		+= delta_time;
+		++fps_counter;
+		if( fps_time_counter >= 1.0f ) {
+			window1->SetTitle( std::to_string( fps_counter ) );
+			fps_time_counter -= 1.0f;
+			fps_counter = 0;
+		}
 
 
 

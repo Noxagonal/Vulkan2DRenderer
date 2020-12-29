@@ -33,13 +33,8 @@ endif()
 ################################################################
 # Check required packages available
 ################################################################
-if(NOT Vulkan_FOUND)
 find_package(Vulkan REQUIRED)
-endif()
-
-if(NOT Git_FOUND)
 find_package(Git REQUIRED QUIET)
-endif()
 
 
 
