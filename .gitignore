@@ -1,10 +1,13 @@
 
 #build and install folders
 /build/*
-/install/*
 /build_tool/*
+/install/*
 
-# VS Code
+# Visual Studio
+/.vs/*
+
+# Visual Studio Code
 /.vscode/*
 
 # Prerequisites
