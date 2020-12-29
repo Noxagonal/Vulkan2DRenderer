@@ -145,7 +145,7 @@ public:
 		new( &data_ptr[ 0 ] ) T( std::forward<Args>( args )... );
 	}
 	template<typename... Args>
-	void EmplaceBack()
+	void EmplaceBack( Args && ...args )
 	{
 		ResizeNoConstruct( data_size + 1, DEFAULT_HEADROOM );
 		new( &data_ptr[ data_size - 1 ] ) T( std::forward<Args>( args )... );
