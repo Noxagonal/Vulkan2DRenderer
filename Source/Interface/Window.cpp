@@ -3256,22 +3256,24 @@ bool vk2d::_internal::WindowImpl::ReCreateSwapchain()
 
 	// Create swapchain
 	{
-		// Figure out image count
+		// Figure out minimum image count
+		uint32_t swapchain_minimum_image_count = 0;
 		{
 			if( create_info_copy.vsync ) {
-				swapchain_image_count = 2;	// Vsync enabled, we only need 2 swapchain images
+				swapchain_minimum_image_count = 2;	// Vsync enabled, we only need 2 swapchain images
 			} else {
-				swapchain_image_count = 3;	// Vsync disabled, we should use at least 3 images
+				swapchain_minimum_image_count = 3;	// Vsync disabled, we should use at least 3 images
 			}
 			if( surface_capabilities.maxImageCount != 0 ) {
-				if( swapchain_image_count > surface_capabilities.maxImageCount ) {
-					swapchain_image_count = surface_capabilities.maxImageCount;
+				if( swapchain_minimum_image_count > surface_capabilities.maxImageCount ) {
+					swapchain_minimum_image_count = surface_capabilities.maxImageCount;
 				}
 			}
-			if( swapchain_image_count < surface_capabilities.minImageCount ) {
-				swapchain_image_count = surface_capabilities.minImageCount;
+			if( swapchain_minimum_image_count < surface_capabilities.minImageCount ) {
+				swapchain_minimum_image_count = surface_capabilities.minImageCount;
 			}
 		}
+		assert( swapchain_minimum_image_count > 0 );
 
 		// Figure out image dimensions and set window minimum and maximum sizes
 		{
@@ -3365,7 +3367,7 @@ bool vk2d::_internal::WindowImpl::ReCreateSwapchain()
 			swapchain_create_info.pNext						= nullptr;
 			swapchain_create_info.flags						= 0;
 			swapchain_create_info.surface					= vk_surface;
-			swapchain_create_info.minImageCount				= swapchain_image_count;
+			swapchain_create_info.minImageCount				= swapchain_minimum_image_count;
 			swapchain_create_info.imageFormat				= surface_format.format;
 			swapchain_create_info.imageColorSpace			= surface_format.colorSpace;
 			swapchain_create_info.imageExtent				= extent;
@@ -3394,7 +3396,7 @@ bool vk2d::_internal::WindowImpl::ReCreateSwapchain()
 
 		// Get swapchain images and create image views
 		{
-			uint32_t swapchain_image_count = 0;
+			swapchain_image_count = 0;
 			result = vkGetSwapchainImagesKHR(
 				vk_device,
 				vk_swapchain,
@@ -3405,6 +3407,7 @@ bool vk2d::_internal::WindowImpl::ReCreateSwapchain()
 				instance->Report( result, "Internal error: Cannot query Vulkan swapchain images!" );
 				return false;
 			}
+			assert( swapchain_image_count > 0 );
 			vk_swapchain_images.resize( swapchain_image_count );
 			result = vkGetSwapchainImagesKHR(
 				vk_device,
