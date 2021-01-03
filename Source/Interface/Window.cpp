@@ -276,6 +276,13 @@ VK2D_API bool VK2D_APIENTRY vk2d::Window::EndRender()
 	return impl->EndRender();
 }
 
+VK2D_API void VK2D_APIENTRY vk2d::Window::SetRenderCoordinateSpace(
+	vk2d::RenderCoordinateSpace coordinate_space
+)
+{
+	impl->SetRenderCoordinateSpace( coordinate_space );
+}
+
 
 
 VK2D_API void VK2D_APIENTRY vk2d::Window::DrawTriangleList(
@@ -993,6 +1000,7 @@ vk2d::_internal::WindowImpl::WindowImpl(
 	this->window_title				= create_info_copy.title;
 	this->event_handler				= create_info_copy.event_handler;
 
+	this->coordinate_space			= create_info_copy.coordinate_space;
 	this->samples					= CheckSupportedMultisampleCount( instance, create_info_copy.samples );
 
 	if( !CreateGLFWWindow() ) return;
@@ -2149,6 +2157,13 @@ vk2d::CursorState vk2d::_internal::WindowImpl::GetCursorState()
 			assert( 0 && "Should not happen" );
 			return vk2d::CursorState::NORMAL;
 	}
+}
+
+void vk2d::_internal::WindowImpl::SetRenderCoordinateSpace(
+	vk2d::RenderCoordinateSpace coordinate_space
+)
+{
+	this->coordinate_space = coordinate_space;
 }
 
 
@@ -4074,7 +4089,7 @@ bool vk2d::_internal::WindowImpl::CmdUpdateFrameData(
 	// Window coordinate system scaling
 	vk2d::_internal::WindowCoordinateScaling window_coordinate_scaling {};
 
-	switch( create_info_copy.coordinate_space ) {
+	switch( coordinate_space ) {
 		case vk2d::RenderCoordinateSpace::TEXEL_SPACE:
 			window_coordinate_scaling.multiplier	= { 1.0f / ( extent.width / 2.0f ), 1.0f / ( extent.height / 2.0f ) };
 			window_coordinate_scaling.offset		= { -1.0f, -1.0f };

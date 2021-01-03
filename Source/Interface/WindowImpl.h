@@ -166,6 +166,9 @@ public:
 
 	vk2d::CursorState											GetCursorState();
 
+	void														SetRenderCoordinateSpace(
+		vk2d::RenderCoordinateSpace								coordinate_space );
+
 	void														DrawTriangleList(
 		const std::vector<vk2d::VertexIndex_3>				&	indices,
 		const std::vector<vk2d::Vertex>						&	vertices,
@@ -299,6 +302,7 @@ private:
 	GLFWwindow												*	glfw_window									= {};
 	std::string													window_title								= {};
 
+	vk2d::RenderCoordinateSpace									coordinate_space							= {};
 	vk2d::Multisamples											samples										= {};
 
 	VkSurfaceKHR												vk_surface									= {};
