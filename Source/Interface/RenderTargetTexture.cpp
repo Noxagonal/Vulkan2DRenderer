@@ -64,6 +64,13 @@ VK2D_API vk2d::RenderTargetTexture::RenderTargetTexture(
 VK2D_API vk2d::RenderTargetTexture::~RenderTargetTexture()
 {}
 
+VK2D_API void VK2D_APIENTRY vk2d::RenderTargetTexture::SetRenderCoordinateSpace(
+	vk2d::RenderCoordinateSpace coordinate_space
+)
+{
+	impl->SetRenderCoordinateSpace( coordinate_space );
+}
+
 VK2D_API void VK2D_APIENTRY vk2d::RenderTargetTexture::SetSize(
 	vk2d::Vector2u		new_size
 )
@@ -358,6 +365,7 @@ vk2d::_internal::RenderTargetTextureImpl::RenderTargetTextureImpl(
 	this->create_info_copy	= create_info;
 	this->surface_format	= VK_FORMAT_R8G8B8A8_UNORM;
 
+	this->coordinate_space	= create_info_copy.coordinate_space;
 	this->samples			= CheckSupportedMultisampleCount( instance, create_info_copy.samples );
 
 
@@ -397,6 +405,13 @@ vk2d::_internal::RenderTargetTextureImpl::~RenderTargetTextureImpl()
 	DestroyRenderPasses();
 	DestroyFrameDataBuffers();
 	DestroyCommandBuffers();
+}
+
+void vk2d::_internal::RenderTargetTextureImpl::SetRenderCoordinateSpace(
+	vk2d::RenderCoordinateSpace coordinate_space
+)
+{
+	this->coordinate_space = coordinate_space;
 }
 
 void vk2d::_internal::RenderTargetTextureImpl::SetSize(
@@ -3406,7 +3421,7 @@ bool vk2d::_internal::RenderTargetTextureImpl::CmdUpdateFrameData(
 	// Window coordinate system scaling
 	vk2d::_internal::WindowCoordinateScaling window_coordinate_scaling {};
 
-	switch( create_info_copy.coordinate_space ) {
+	switch( coordinate_space ) {
 		case vk2d::RenderCoordinateSpace::TEXEL_SPACE:
 			window_coordinate_scaling.multiplier	= { 1.0f / ( size.x / 2.0f ), 1.0f / ( size.y / 2.0f ) };
 			window_coordinate_scaling.offset		= { -1.0f, -1.0f };
