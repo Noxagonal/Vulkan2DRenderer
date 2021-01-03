@@ -36,6 +36,12 @@ public:
 				window->TakeScreenshotToFile( ss.str() );
 				*/
 			}
+			if( button == vk2d::KeyboardButton::KEY_1 ) {
+				window->SetRenderCoordinateSpace( vk2d::RenderCoordinateSpace::TEXEL_SPACE );
+			}
+			if( button == vk2d::KeyboardButton::KEY_2 ) {
+				window->SetRenderCoordinateSpace( vk2d::RenderCoordinateSpace::TEXEL_SPACE_CENTERED );
+			}
 		}
 	};
 };

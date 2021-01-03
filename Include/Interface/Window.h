@@ -779,6 +779,13 @@ public:
 	/// @return		true if operation was successful, false on error and if you should quit.
 	VK2D_API bool										VK2D_APIENTRY				EndRender();
 
+	/// @brief		Switch render coordinate space. Can be set at any time, but will not take effect until
+	///				starting next frame.
+	/// @param[in]	coordinate_space
+	///				Coordinate space to switch to.
+	VK2D_API void										VK2D_APIENTRY				SetRenderCoordinateSpace(
+		vk2d::RenderCoordinateSpace						coordinate_space );
+
 	/// @brief		Draw triangles directly.
 	///				Best used if you want to manipulate and draw vertices directly.
 	/// @note		Multithreading: Main thread only.
