@@ -72,6 +72,13 @@ class RenderTargetTexture :
 public:
 	VK2D_API																				~RenderTargetTexture();
 
+	/// @brief		Switch render coordinate space. Can be set at any time, but will not take effect until
+	///				starting next frame.
+	/// @param[in]	coordinate_space
+	///				Coordinate space to switch to.
+	VK2D_API void												VK2D_APIENTRY				SetRenderCoordinateSpace(
+		vk2d::RenderCoordinateSpace								coordinate_space );
+
 	/// @brief		Sets the texel size of the render target texture, recreates all
 	///				internal resources which means this render target texture will
 	///				synchronize which will cause some microstutters during hot

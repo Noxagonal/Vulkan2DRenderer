@@ -124,6 +124,9 @@ public:
 
 	~RenderTargetTextureImpl();
 
+	void																SetRenderCoordinateSpace(
+		vk2d::RenderCoordinateSpace										coordinate_space );
+
 	void																SetSize(
 		vk2d::Vector2u													new_size );
 	vk2d::Vector2u														GetSize() const;
@@ -359,6 +362,7 @@ private:
 
 	VkFormat															surface_format								= {};
 	vk2d::Vector2u														size										= {};
+	vk2d::RenderCoordinateSpace											coordinate_space							= {};
 	vk2d::Multisamples													samples										= {};
 	std::vector<VkExtent2D>												mipmap_levels								= {};
 	bool																granularity_aligned							= {};
