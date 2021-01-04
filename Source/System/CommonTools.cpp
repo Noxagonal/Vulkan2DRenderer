@@ -1,12 +1,10 @@
 
 #include "Core/SourceCommon.h"
 
-#include "Types/Vector2.hpp"
-
 #include "System/CommonTools.h"
 
 std::vector<VkExtent2D> vk2d::_internal::GenerateMipSizes(
-	vk2d::Vector2u		full_size
+	glm::uvec2		full_size
 )
 {
 	std::vector<VkExtent2D> mipmap_levels;

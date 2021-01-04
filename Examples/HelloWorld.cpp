@@ -77,8 +77,8 @@ int main()
 		// object which tells the position and size of draw.
 		window->DrawRectangle(
 			vk2d::Rect2f(
-			vk2d::Vector2f( 200.0f, 200.0f ),
-			vk2d::Vector2f( 700.0f, 400.0f ) )
+			glm::vec2( 200.0f, 200.0f ),
+			glm::vec2( 700.0f, 400.0f ) )
 		);
 
 		// Draw an ellipse or a circle.

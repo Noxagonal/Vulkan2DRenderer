@@ -1,7 +1,6 @@
 
 #include "Core/SourceCommon.h"
 
-#include "Types/Vector2.hpp"
 #include "Types/Color.hpp"
 
 #include "Core/SystemConsole.h"
@@ -182,7 +181,7 @@ VK2D_API void VK2D_APIENTRY vk2d::Instance::SetMonitorUpdateCallback(
 
 VK2D_API vk2d::Cursor * VK2D_APIENTRY vk2d::Instance::CreateCursor(
 	const std::filesystem::path			&	image_path,
-	vk2d::Vector2i							hot_spot
+	glm::ivec2								hot_spot
 )
 {
 	return impl->CreateCursor(
@@ -192,9 +191,9 @@ VK2D_API vk2d::Cursor * VK2D_APIENTRY vk2d::Instance::CreateCursor(
 }
 
 VK2D_API vk2d::Cursor * VK2D_APIENTRY vk2d::Instance::CreateCursor(
-	vk2d::Vector2u							image_size,
+	glm::uvec2								image_size,
 	const std::vector<vk2d::Color8>		&	image_data,
-	vk2d::Vector2i							hot_spot
+	glm::ivec2								hot_spot
 )
 {
 	return impl->CreateCursor(
@@ -490,7 +489,7 @@ void vk2d::_internal::InstanceImpl::SetMonitorUpdateCallback(
 
 vk2d::Cursor * vk2d::_internal::InstanceImpl::CreateCursor(
 	const std::filesystem::path			&	image_path,
-	vk2d::Vector2i							hot_spot
+	glm::ivec2								hot_spot
 )
 {
 	VK2D_ASSERT_MAIN_THREAD( this );
@@ -516,9 +515,9 @@ vk2d::Cursor * vk2d::_internal::InstanceImpl::CreateCursor(
 }
 
 vk2d::Cursor * vk2d::_internal::InstanceImpl::CreateCursor(
-	vk2d::Vector2u							image_size,
+	glm::uvec2								image_size,
 	const std::vector<vk2d::Color8>		&	image_data,
-	vk2d::Vector2i							hot_spot
+	glm::ivec2								hot_spot
 )
 {
 	VK2D_ASSERT_MAIN_THREAD( this );
@@ -2464,7 +2463,7 @@ bool vk2d::_internal::InstanceImpl::CreateResourceManager()
 bool vk2d::_internal::InstanceImpl::CreateDefaultTexture()
 {
 	default_texture		= resource_manager->CreateTextureResource(
-		vk2d::Vector2u( 1, 1 ),
+		glm::uvec2( 1, 1 ),
 		{ vk2d::Color8( 255, 255, 255, 255 ) }
 	);
 	default_texture->WaitUntilLoaded();

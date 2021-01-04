@@ -128,8 +128,8 @@ public:
 		vk2d::RenderCoordinateSpace										coordinate_space );
 
 	void																SetSize(
-		vk2d::Vector2u													new_size );
-	vk2d::Vector2u														GetSize() const;
+		glm::uvec2														new_size );
+	glm::uvec2															GetSize() const;
 	uint32_t															GetLayerCount() const;
 
 	uint32_t															GetCurrentSwapBuffer() const;
@@ -155,7 +155,7 @@ public:
 	// This will display the results on screen.
 	bool																EndRender(
 		vk2d::BlurType													blur_type,
-		vk2d::Vector2f													blur_amount );
+		glm::vec2														blur_amount );
 
 	bool																SynchronizeFrame();
 	bool																WaitIdle();
@@ -196,7 +196,7 @@ public:
 		const std::vector<vk2d::VertexIndex_3>						&	indices,
 		const std::vector<vk2d::Vertex>								&	vertices,
 		const std::vector<float>									&	texture_layer_weights,
-		const std::vector<vk2d::Matrix4f>							&	transformations,
+		const std::vector<glm::mat4>								&	transformations,
 		bool															filled,
 		vk2d::Texture												*	texture,
 		vk2d::Sampler												*	sampler );
@@ -205,7 +205,7 @@ public:
 		const std::vector<uint32_t>									&	raw_indices,
 		const std::vector<vk2d::Vertex>								&	vertices,
 		const std::vector<float>									&	texture_layer_weights,
-		const std::vector<vk2d::Matrix4f>							&	transformations,
+		const std::vector<glm::mat4>								&	transformations,
 		bool															filled,
 		vk2d::Texture												*	texture,
 		vk2d::Sampler												*	sampler );
@@ -214,7 +214,7 @@ public:
 		const std::vector<vk2d::VertexIndex_2>						&	indices,
 		const std::vector<vk2d::Vertex>								&	vertices,
 		const std::vector<float>									&	texture_layer_weights,
-		const std::vector<vk2d::Matrix4f>							&	transformations,
+		const std::vector<glm::mat4>								&	transformations,
 		vk2d::Texture												*	texture,
 		vk2d::Sampler												*	sampler,
 		float															line_width );
@@ -223,7 +223,7 @@ public:
 		const std::vector<uint32_t>									&	raw_indices,
 		const std::vector<vk2d::Vertex>								&	vertices,
 		const std::vector<float>									&	texture_layer_weights,
-		const std::vector<vk2d::Matrix4f>							&	transformations,
+		const std::vector<glm::mat4>								&	transformations,
 		vk2d::Texture												*	texture,
 		vk2d::Sampler												*	sampler,
 		float															line_width );
@@ -231,13 +231,13 @@ public:
 	void																DrawPointList(
 		const std::vector<vk2d::Vertex>								&	vertices,
 		const std::vector<float>									&	texture_layer_weights,
-		const std::vector<vk2d::Matrix4f>							&	transformations,
+		const std::vector<glm::mat4>								&	transformations,
 		vk2d::Texture												*	texture,
 		vk2d::Sampler												*	sampler );
 
 	void																DrawMesh(
 		const vk2d::Mesh											&	mesh,
-		const std::vector<vk2d::Matrix4f>							&	transformations );
+		const std::vector<glm::mat4>								&	transformations );
 
 	bool																IsGood() const;
 
@@ -251,7 +251,7 @@ private:
 	void																DestroyFrameDataBuffers();
 
 	bool																CreateImages(
-		vk2d::Vector2u													new_size );
+		glm::uvec2														new_size );
 	void																DestroyImages();
 
 	bool																CreateRenderPasses();
@@ -297,7 +297,7 @@ private:
 	void																CmdFinalizeRender(
 		vk2d::_internal::RenderTargetTextureImpl::SwapBuffer		&	swap,
 		vk2d::BlurType													blur_type,
-		vk2d::Vector2f													blur_amount );
+		glm::vec2														blur_amount );
 
 	/// @brief		Record commands to copy an image to the final sampled image, then generate mipmaps for it.
 	///				Called by vk2d::_internal::RenderTargetTextureImpl::CmdFinalizeNonBlurredRender().
@@ -326,7 +326,7 @@ private:
 		vk2d::_internal::RenderTargetTextureImpl::SwapBuffer		&	swap,
 		VkCommandBuffer													command_buffer,
 		vk2d::BlurType													blur_type,
-		vk2d::Vector2f													blur_amount,
+		glm::vec2														blur_amount,
 		vk2d::_internal::CompleteImageResource						&	source_image,
 		VkImageLayout													source_image_layout,
 		VkPipelineStageFlagBits											source_image_pipeline_barrier_src_stage,
@@ -361,7 +361,7 @@ private:
 	vk2d::_internal::RenderTargetTextureType							type										= {};
 
 	VkFormat															surface_format								= {};
-	vk2d::Vector2u														size										= {};
+	glm::uvec2															size										= {};
 	vk2d::RenderCoordinateSpace											coordinate_space							= {};
 	vk2d::Multisamples													samples										= {};
 	std::vector<VkExtent2D>												mipmap_levels								= {};

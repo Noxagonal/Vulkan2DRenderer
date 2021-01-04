@@ -128,7 +128,7 @@ int main()
 
 		// Window::DrawMesh() can take 3 types of transformation parameters:
 		// vk2d::Transform object, std::array of vk2d::Transform objects or a std::array of
-		// vk2d::Matrix4f. Matrices are the only things capable of scene parent-child hierarchy.
+		// glm::mat4. Matrices are the only things capable of scene parent-child hierarchy.
 		// Here vk2d::Transform object is used directly when drawing a mesh for easier use.
 		window->DrawMesh( box_mesh, origin );
 

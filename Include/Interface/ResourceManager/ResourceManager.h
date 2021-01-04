@@ -2,7 +2,6 @@
 
 #include "Core/Common.h"
 
-#include "Types/Vector2.hpp"
 #include "Types/Color.hpp"
 
 #include <memory>
@@ -51,7 +50,7 @@ public:
 	///				you do not need to keep the vector around.
 	/// @return		Handle to newly created texture resource you can use when rendering.
 	VK2D_API TextureResource								*	VK2D_APIENTRY				CreateTextureResource(
-		vk2d::Vector2u											size,
+		glm::uvec2												size,
 		const std::vector<vk2d::Color8>						&	texels );
 
 	/// @brief		Load a single layer texture resource from a file. File format is always
@@ -110,7 +109,7 @@ public:
 	///				not need to keep the vector around.
 	/// @return		Handle to newly created texture resource you can use when rendering.
 	VK2D_API TextureResource								*	VK2D_APIENTRY				CreateArrayTextureResource(
-		vk2d::Vector2u											size,
+		glm::uvec2												size,
 		const std::vector<const std::vector<vk2d::Color8>*>	&	texels_listing );
 
 	/// @brief		Load a multi-layer texture resource from files.

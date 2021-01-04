@@ -54,7 +54,7 @@ VK2D_API vk2d::ResourceManager::~ResourceManager()
 {}
 
 VK2D_API vk2d::TextureResource * VK2D_APIENTRY vk2d::ResourceManager::CreateTextureResource(
-	vk2d::Vector2u						size,
+	glm::uvec2						size,
 	const std::vector<vk2d::Color8>	&	texels
 )
 {
@@ -76,7 +76,7 @@ VK2D_API vk2d::TextureResource * VK2D_APIENTRY vk2d::ResourceManager::LoadTextur
 }
 
 VK2D_API vk2d::TextureResource * VK2D_APIENTRY vk2d::ResourceManager::CreateArrayTextureResource(
-	vk2d::Vector2u											size,
+	glm::uvec2											size,
 	const std::vector<const std::vector<vk2d::Color8>*>	&	texels_listing
 )
 {
@@ -276,7 +276,7 @@ vk2d::TextureResource * vk2d::_internal::ResourceManagerImpl::LoadTextureResourc
 }
 
 vk2d::TextureResource * vk2d::_internal::ResourceManagerImpl::CreateTextureResource(
-	vk2d::Vector2u							size,
+	glm::uvec2							size,
 	const std::vector<vk2d::Color8>		&	texture_data,
 	vk2d::Resource						*	parent_resource )
 {
@@ -323,7 +323,7 @@ vk2d::TextureResource * vk2d::_internal::ResourceManagerImpl::LoadArrayTextureRe
 }
 
 vk2d::TextureResource * vk2d::_internal::ResourceManagerImpl::CreateArrayTextureResource(
-	vk2d::Vector2u											size,
+	glm::uvec2											size,
 	const std::vector<const std::vector<vk2d::Color8>*>	&	texture_data_listings,
 	vk2d::Resource										*	parent_resource )
 {

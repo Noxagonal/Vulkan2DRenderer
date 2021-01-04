@@ -3,7 +3,6 @@
 #include "Core/Common.h"
 
 #include "Interface/ResourceManager/Resource.h"
-#include "Types/Vector2.hpp"
 
 #include <filesystem>
 
@@ -16,14 +15,14 @@ class FontResource;
 
 
 VK2D_API vk2d::Mesh VK2D_APIENTRY GenerateTextMesh(
-	vk2d::FontResource						*	font,
-	vk2d::Vector2f								origin,
-	std::string									text,
-	float										kerning,
-	vk2d::Vector2f								scale,
-	bool										vertical,
-	uint32_t									font_face,
-	bool										wait_for_resource_load );
+	vk2d::FontResource		*	font,
+	glm::vec2					origin,
+	std::string					text,
+	float						kerning,
+	glm::vec2					scale,
+	bool						vertical,
+	uint32_t					font_face,
+	bool						wait_for_resource_load );
 
 
 
@@ -49,10 +48,10 @@ class FontResource
 	friend class vk2d::_internal::FontResourceImpl;
 	friend VK2D_API vk2d::Mesh								VK2D_APIENTRY						vk2d::GenerateTextMesh(
 		vk2d::FontResource								*	font,
-		vk2d::Vector2f										origin,
+		glm::vec2											origin,
 		std::string											text,
 		float												kerning,
-		vk2d::Vector2f										scale,
+		glm::vec2											scale,
 		bool												vertical,
 		uint32_t											font_face,
 		bool												wait_for_resource );
@@ -177,7 +176,7 @@ public:
 	VK2D_API vk2d::Rect2f									VK2D_APIENTRY						CalculateRenderedSize(
 		std::string_view									text,
 		float												kerning								= 0.0f,
-		vk2d::Vector2f										scale								= vk2d::Vector2f( 1.0f, 1.0f ),
+		glm::vec2											scale								= glm::vec2( 1.0f, 1.0f ),
 		bool												vertical							= false,
 		uint32_t											font_face							= 0,
 		bool												wait_for_resource_load				= true );

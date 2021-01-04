@@ -22,7 +22,7 @@ public:
 
 	VkSampler									GetVulkanSampler() const;
 	VkBuffer									GetVulkanBufferForSamplerData() const;
-	vk2d::Vector2u								GetBorderColorEnable() const;
+	glm::uvec2									GetBorderColorEnable() const;
 	bool										IsAnyBorderColorEnabled() const;
 
 	bool										IsGood() const;
@@ -31,7 +31,7 @@ public:
 
 	struct BufferData {
 		alignas( 16 )	vk2d::Colorf			borderColor			= {};	// Border color
-		alignas( 8 )	vk2d::Vector2u			borderColorEnable	= {};	// Border color enable
+		alignas( 8 )	glm::uvec2				borderColorEnable	= {};	// Border color enable
 	};
 
 private:
@@ -42,7 +42,7 @@ private:
 	VkSampler									vk_sampler			= {};
 	vk2d::_internal::CompleteBufferResource		sampler_data		= {};
 
-	vk2d::Vector2u								border_color_enable	= {};
+	glm::uvec2									border_color_enable	= {};
 
 	bool										is_good				= {};
 };

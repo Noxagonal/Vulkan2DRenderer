@@ -107,7 +107,7 @@ VK2D_API vk2d::ResourceStatus VK2D_APIENTRY vk2d::FontResource::WaitUntilLoaded(
 VK2D_API vk2d::Rect2f VK2D_APIENTRY vk2d::FontResource::CalculateRenderedSize(
 	std::string_view	text,
 	float				kerning,
-	vk2d::Vector2f		scale,
+	glm::vec2			scale,
 	bool				vertical,
 	uint32_t			font_face,
 	bool				wait_for_resource_load
@@ -171,7 +171,7 @@ vk2d::_internal::FontResourceImpl::FontResourceImpl(
 	assert( resource_manager );
 
 	this->my_interface					= my_interface;
-	this->resource_manager		= resource_manager;
+	this->resource_manager				= resource_manager;
 
 	this->glyph_texel_size				= glyph_texel_size;
 	this->glyph_atlas_padding			= glyph_atlas_padding;
@@ -255,10 +255,10 @@ bool vk2d::_internal::FontResourceImpl::MTLoad(
 	// which should give enough space in the atlas to contain all glyphs in 
 	auto average_to_max_weight					= 0.05;
 	auto total_glyph_count						= uint64_t( 0 );
-	auto maximum_glyph_size						= vk2d::Vector2d( 0.0, 0.0 );
-	auto maximum_glyph_bitmap_size				= vk2d::Vector2d( 0.0, 0.0 );
-	auto maximum_glyph_bitmap_occupancy_size	= vk2d::Vector2d( 0.0, 0.0 );
-	auto average_glyph_bitmap_occupancy_size	= vk2d::Vector2d( 0.0, 0.0 );
+	auto maximum_glyph_size						= glm::dvec2( 0.0, 0.0 );
+	auto maximum_glyph_bitmap_size				= glm::dvec2( 0.0, 0.0 );
+	auto maximum_glyph_bitmap_occupancy_size	= glm::dvec2( 0.0, 0.0 );
+	auto average_glyph_bitmap_occupancy_size	= glm::dvec2( 0.0, 0.0 );
 
 	if( my_interface->impl->IsFromFile() ) {
 		// Try to load from file.
@@ -350,19 +350,19 @@ bool vk2d::_internal::FontResourceImpl::MTLoad(
 				}
 
 				auto glyph_size =
-					vk2d::Vector2d(
+					glm::dvec2(
 						double( face->glyph->metrics.width ),
 						double( face->glyph->metrics.height )
 					);
 
 				auto glyph_bitmap_size =
-					vk2d::Vector2d(
+					glm::dvec2(
 						double( face->glyph->bitmap.width ),
 						double( face->glyph->bitmap.rows )
 					);
 
 				auto glyph_bitmap_space_occupancy =
-					vk2d::Vector2d(
+					glm::dvec2(
 						double( face->glyph->bitmap.width + glyph_atlas_padding ),
 						double( face->glyph->bitmap.rows + glyph_atlas_padding )
 					);
@@ -397,12 +397,12 @@ bool vk2d::_internal::FontResourceImpl::MTLoad(
 	// This code tries to find a tradeoff between texture size and amount so that 1 to 3 textures are
 	// created. For example if glyphs do not fit into 3 textures of size 512 * 512, a larger 1024 * 1024
 	// texture is created which should be able to contain the glyphs.
-	average_glyph_bitmap_occupancy_size	+= vk2d::Vector2d( double( glyph_atlas_padding ), double( glyph_atlas_padding ) ) * 2.0;
+	average_glyph_bitmap_occupancy_size	+= glm::dvec2( double( glyph_atlas_padding ), double( glyph_atlas_padding ) ) * 2.0;
 	average_glyph_bitmap_occupancy_size	/= float( total_glyph_count );
 	{
 		auto estimated_glyph_space_requirements		= average_glyph_bitmap_occupancy_size * ( 1.0 - average_to_max_weight ) + maximum_glyph_bitmap_occupancy_size * average_to_max_weight;
-		auto estimated_average_space_requirements	= estimated_glyph_space_requirements / 1.5;	// aim to have 1 to 4 textures to optimzise memory usage
-//		auto estimated_average_space_requirements	= estimated_glyph_space_requirements / 5.0;	// aim to have 1 to 4 textures to optimzise memory usage
+		auto estimated_average_space_requirements	= estimated_glyph_space_requirements / 1.5;	// aim to have 1 to 4 textures to optimize memory usage
+//		auto estimated_average_space_requirements	= estimated_glyph_space_requirements / 5.0;	// aim to have 1 to 4 textures to optimize memory usage
 		atlas_size			=
 			RoundToCeilingPowerOfTwo(
 				uint32_t(
@@ -540,10 +540,10 @@ bool vk2d::_internal::FontResourceImpl::MTLoad(
 				};
 
 				auto & metrics								= face.face->glyph->metrics;
-				auto glyph_size								= vk2d::Vector2d( metrics.width, metrics.height ) * glyph_size_bitmap_size_ratio;
-				auto glyph_hori_top_left					= vk2d::Vector2d( metrics.horiBearingX, -metrics.horiBearingY ) * glyph_size_bitmap_size_ratio;
+				auto glyph_size								= glm::dvec2( metrics.width, metrics.height ) * glyph_size_bitmap_size_ratio;
+				auto glyph_hori_top_left					= glm::dvec2( metrics.horiBearingX, -metrics.horiBearingY ) * glyph_size_bitmap_size_ratio;
 				auto glyph_hori_bottom_right				= glyph_hori_top_left + glyph_size;
-				auto glyph_vert_top_left					= vk2d::Vector2d( metrics.vertBearingX, metrics.vertBearingY ) * glyph_size_bitmap_size_ratio;
+				auto glyph_vert_top_left					= glm::dvec2( metrics.vertBearingX, metrics.vertBearingY ) * glyph_size_bitmap_size_ratio;
 				auto glyph_vert_bottom_right				= glyph_vert_top_left + glyph_size;
 				auto hori_advance							= metrics.horiAdvance * glyph_size_bitmap_size_ratio;
 				auto vert_advance							= metrics.vertAdvance * glyph_size_bitmap_size_ratio;
@@ -552,10 +552,10 @@ bool vk2d::_internal::FontResourceImpl::MTLoad(
 				glyph_info.face_index						= uint32_t( face_index );
 				glyph_info.atlas_index						= atlas_location.atlas_index;
 				glyph_info.uv_coords						= uv_coords;
-				glyph_info.horisontal_coords.top_left		= vk2d::Vector2f( float( glyph_hori_top_left.x ), float( glyph_hori_top_left.y ) );
-				glyph_info.horisontal_coords.bottom_right	= vk2d::Vector2f( float( glyph_hori_bottom_right.x ), float( glyph_hori_bottom_right.y ) );
-				glyph_info.vertical_coords.top_left			= vk2d::Vector2f( float( glyph_vert_top_left.x ), float( glyph_vert_top_left.y ) );
-				glyph_info.vertical_coords.bottom_right		= vk2d::Vector2f( float( glyph_vert_bottom_right.x ), float( glyph_vert_bottom_right.y ) );
+				glyph_info.horisontal_coords.top_left		= glm::vec2( float( glyph_hori_top_left.x ), float( glyph_hori_top_left.y ) );
+				glyph_info.horisontal_coords.bottom_right	= glm::vec2( float( glyph_hori_bottom_right.x ), float( glyph_hori_bottom_right.y ) );
+				glyph_info.vertical_coords.top_left			= glm::vec2( float( glyph_vert_top_left.x ), float( glyph_vert_top_left.y ) );
+				glyph_info.vertical_coords.bottom_right		= glm::vec2( float( glyph_vert_bottom_right.x ), float( glyph_vert_bottom_right.y ) );
 				glyph_info.horisontal_advance				= float( hori_advance );
 				glyph_info.vertical_advance					= float( vert_advance );
 
@@ -599,7 +599,7 @@ bool vk2d::_internal::FontResourceImpl::MTLoad(
 		}
 
 		texture_resource = resource_manager->CreateArrayTextureResource(
-			vk2d::Vector2u( atlas_size, atlas_size ),
+			glm::uvec2( atlas_size, atlas_size ),
 			texture_data_array,
 			my_interface
 		);
@@ -627,7 +627,7 @@ void vk2d::_internal::FontResourceImpl::MTUnload(
 vk2d::Rect2f vk2d::_internal::FontResourceImpl::CalculateRenderedSize(
 	std::string_view	text,
 	float				kerning,
-	vk2d::Vector2f		scale,
+	glm::vec2		scale,
 	bool				vertical,
 	uint32_t			font_face,
 	bool				wait_for_resource_load
@@ -781,7 +781,7 @@ vk2d::_internal::FontResourceImpl::AtlasLocation vk2d::_internal::FontResourceIm
 				};
 				new_glyph_location.location.bottom_right	=
 					new_glyph_location.location.top_left	+
-					vk2d::Vector2u( uint32_t( glyph->bitmap.width ), uint32_t( glyph->bitmap.rows ) );
+					glm::uvec2( uint32_t( glyph->bitmap.width ), uint32_t( glyph->bitmap.rows ) );
 
 				// update current row height and write locations before returning the result.
 				atlas_texture->current_row_height			= std::max( atlas_texture->current_row_height, glyph_height );
@@ -811,7 +811,7 @@ vk2d::_internal::FontResourceImpl::AtlasLocation vk2d::_internal::FontResourceIm
 					};
 					new_glyph_location.location.bottom_right	=
 						new_glyph_location.location.top_left	+
-						vk2d::Vector2u( uint32_t( glyph->bitmap.width ), uint32_t( glyph->bitmap.rows ) );
+						glm::uvec2( uint32_t( glyph->bitmap.width ), uint32_t( glyph->bitmap.rows ) );
 
 					// update current row height and write locations before returning the result.
 					atlas_texture->current_row_height		= std::max( atlas_texture->current_row_height, glyph_height );
@@ -877,7 +877,7 @@ void vk2d::_internal::FontResourceImpl::CopyGlyphTextureToAtlasLocation(
 
 	auto glyph_width		= atlas_location.location.bottom_right.x - atlas_location.location.top_left.x;
 	auto glyph_height		= atlas_location.location.bottom_right.y - atlas_location.location.top_left.y;
-	vk2d::Vector2u location	= atlas_location.location.top_left;
+	glm::uvec2 location	= atlas_location.location.top_left;
 
 	for( uint32_t gy = 0; gy < glyph_height; ++gy ) {
 		for( uint32_t gx = 0; gx < glyph_width; ++gx ) {

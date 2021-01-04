@@ -2,8 +2,6 @@
 
 #include "Core/SourceCommon.h"
 
-#include "Types/Vector2.hpp"
-
 
 
 namespace vk2d {
@@ -22,8 +20,8 @@ constexpr uint32_t GRAPHICS_DESCRIPTOR_SET_ALLOCATION_texture_channel_weights			
 
 
 struct WindowCoordinateScaling {
-	alignas( 8 )	vk2d::Vector2f				multiplier				= {};
-	alignas( 8 )	vk2d::Vector2f				offset					= {};
+	alignas( 8 )	glm::vec2					multiplier				= {};
+	alignas( 8 )	glm::vec2					offset					= {};
 };
 
 struct FrameData {

@@ -3,6 +3,9 @@
 #include "Core/Platform.h"
 
 #include <stdint.h>
+
+#define GLM_FORCE_DEPTH_ZERO_TO_ONE 1
+#define GLM_FORCE_LEFT_HANDED 1
 #include <glm/glm.hpp>
 
 

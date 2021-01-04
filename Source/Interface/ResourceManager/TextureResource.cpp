@@ -65,7 +65,7 @@ VK2D_API vk2d::TextureResource::TextureResource(
 	vk2d::_internal::ResourceManagerImpl				*	resource_manager,
 	uint32_t												loader_thread,
 	vk2d::Resource										*	parent_resource,
-	vk2d::Vector2u											size,
+	glm::uvec2											size,
 	const std::vector<const std::vector<vk2d::Color8>*>	&	texels_listing
 )
 {
@@ -109,7 +109,7 @@ VK2D_API vk2d::ResourceStatus VK2D_APIENTRY vk2d::TextureResource::WaitUntilLoad
 	return impl->WaitUntilLoaded( timeout );
 }
 
-VK2D_API vk2d::Vector2u VK2D_APIENTRY vk2d::TextureResource::GetSize() const
+VK2D_API glm::uvec2 VK2D_APIENTRY vk2d::TextureResource::GetSize() const
 {
 	return impl->GetSize();
 }
@@ -173,7 +173,7 @@ vk2d::_internal::TextureResourceImpl::TextureResourceImpl(
 	vk2d::_internal::ResourceManagerImpl				*	resource_manager,
 	uint32_t												loader_thread,
 	vk2d::Resource										*	parent_resource,
-	vk2d::Vector2u											size,
+	glm::uvec2												size,
 	const std::vector<const std::vector<vk2d::Color8>*>	&	texels
 ) :
 	vk2d::_internal::ResourceImpl(
@@ -329,7 +329,7 @@ bool vk2d::_internal::TextureResourceImpl::MTLoad(
 
 	// 3. Create image and image view Vulkan objects.
 	auto mipmap_levels = vk2d::_internal::GenerateMipSizes(
-		vk2d::Vector2u( image_info.x, image_info.y )
+		glm::uvec2( image_info.x, image_info.y )
 	);
 	{
 		VkImageCreateInfo image_create_info {};
@@ -1087,9 +1087,9 @@ VkImageLayout vk2d::_internal::TextureResourceImpl::GetVulkanImageLayout() const
 	return vk_image_layout;
 }
 
-vk2d::Vector2u vk2d::_internal::TextureResourceImpl::GetSize() const
+glm::uvec2 vk2d::_internal::TextureResourceImpl::GetSize() const
 {
-	return vk2d::Vector2u( extent.width, extent.height );
+	return glm::uvec2( extent.width, extent.height );
 }
 
 uint32_t vk2d::_internal::TextureResourceImpl::GetLayerCount() const

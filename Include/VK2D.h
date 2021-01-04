@@ -7,11 +7,6 @@
 
 #include "Types/Array.hpp"
 #include "Types/Text.h"
-#include "Types/Vector2.hpp"
-#include "Types/Vector3.hpp"
-#include "Types/Matrix2.hpp"
-#include "Types/Matrix3.hpp"
-#include "Types/Matrix4.hpp"
 #include "Types/Rect2.hpp"
 #include "Types/Transform.h"
 #include "Types/Color.hpp"

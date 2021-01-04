@@ -120,10 +120,10 @@ public:
 
 	bool														IsFullscreen();
 
-	vk2d::Vector2d												GetCursorPosition();
+	glm::dvec2													GetCursorPosition();
 
 	void														SetCursorPosition(
-		vk2d::Vector2d											new_position );
+		glm::dvec2												new_position );
 
 	void														SetCursor(
 		vk2d::Cursor										*	cursor );
@@ -142,14 +142,14 @@ public:
 		const std::vector<std::filesystem::path>			&	image_paths );
 
 	void														SetPosition(
-		vk2d::Vector2i											new_position );
+		glm::ivec2												new_position );
 
-	vk2d::Vector2i												GetPosition();
+	glm::ivec2													GetPosition();
 
 	void														SetSize(
-		vk2d::Vector2u											new_size );
+		glm::uvec2												new_size );
 
-	vk2d::Vector2u												GetSize();
+	glm::uvec2													GetSize();
 
 	void														Iconify(
 		bool													minimized );
@@ -173,7 +173,7 @@ public:
 		const std::vector<vk2d::VertexIndex_3>				&	indices,
 		const std::vector<vk2d::Vertex>						&	vertices,
 		const std::vector<float>							&	texture_layer_weights,
-		const std::vector<vk2d::Matrix4f>					&	transformations,
+		const std::vector<glm::mat4>						&	transformations,
 		bool													solid,
 		vk2d::Texture										*	texture,
 		vk2d::Sampler										*	sampler );
@@ -182,7 +182,7 @@ public:
 		const std::vector<uint32_t>							&	raw_indices,
 		const std::vector<vk2d::Vertex>						&	vertices,
 		const std::vector<float>							&	texture_layer_weights,
-		const std::vector<vk2d::Matrix4f>					&	transformations,
+		const std::vector<glm::mat4>						&	transformations,
 		bool													solid,
 		vk2d::Texture										*	texture,
 		vk2d::Sampler										*	sampler);
@@ -191,7 +191,7 @@ public:
 		const std::vector<vk2d::VertexIndex_2>				&	indices,
 		const std::vector<vk2d::Vertex>						&	vertices,
 		const std::vector<float>							&	texture_layer_weights,
-		const std::vector<vk2d::Matrix4f>					&	transformations,
+		const std::vector<glm::mat4>						&	transformations,
 		vk2d::Texture										*	texture,
 		vk2d::Sampler										*	sampler,
 		float													line_width );
@@ -200,7 +200,7 @@ public:
 		const std::vector<uint32_t>							&	raw_indices,
 		const std::vector<vk2d::Vertex>						&	vertices,
 		const std::vector<float>							&	texture_layer_weights,
-		const std::vector<vk2d::Matrix4f>					&	transformations,
+		const std::vector<glm::mat4>						&	transformations,
 		vk2d::Texture										*	texture,
 		vk2d::Sampler										*	sampler,
 		float													line_width );
@@ -208,13 +208,13 @@ public:
 	void														DrawPointList(
 		const std::vector<vk2d::Vertex>						&	vertices,
 		const std::vector<float>							&	texture_layer_weights,
-		const std::vector<vk2d::Matrix4f>					&	transformations,
+		const std::vector<glm::mat4>						&	transformations,
 		vk2d::Texture										*	texture,
 		vk2d::Sampler										*	sampler );
 
 	void														DrawMesh(
 		const vk2d::Mesh									&	mesh,
-		const std::vector<vk2d::Matrix4f>					&	transformations );
+		const std::vector<glm::mat4>						&	transformations );
 
 	bool														SynchronizeFrame();
 
@@ -392,7 +392,7 @@ public:
 												CursorImpl(
 		vk2d::_internal::InstanceImpl		*	instance,
 		const std::filesystem::path			&	image_path,
-		vk2d::Vector2i							hot_spot );
+		glm::ivec2								hot_spot );
 
 	// Cursor constructor, raw data version.
 	// Image data needs to be in format RGBA, 8 bits per channel, 32 bits per pixel,
@@ -404,9 +404,9 @@ public:
 	// [in] hot_spot_y: where the active location of the cursor is, y location.
 												CursorImpl(
 		vk2d::_internal::InstanceImpl		*	instance,
-		vk2d::Vector2u							image_size,
+		glm::uvec2								image_size,
 		const std::vector<vk2d::Color8>		&	image_data,
-		vk2d::Vector2i							hot_spot );
+		glm::ivec2								hot_spot );
 
 	// Copy constructor from another cursor.
 												CursorImpl(
@@ -432,8 +432,8 @@ public:
 	vk2d::_internal::InstanceImpl			*	GetInstance();
 	const std::vector<vk2d::Color8>			&	GetTexelData();
 	GLFWcursor								*	GetGLFWcursor();
-	vk2d::Vector2u								GetSize();
-	vk2d::Vector2i								GetHotSpot();
+	glm::uvec2									GetSize();
+	glm::ivec2									GetHotSpot();
 
 private:
 	vk2d::_internal::InstanceImpl			*	instance					= {};

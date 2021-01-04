@@ -2,9 +2,7 @@
 
 #include "Core/Common.h"
 
-#include "Types/Vector2.hpp"
 #include "Types/Rect2.hpp"
-#include "Types/Matrix4.hpp"
 #include "Types/Transform.h"
 #include "Types/Color.hpp"
 #include "Types/MeshPrimitives.hpp"
@@ -223,9 +221,9 @@ struct WindowCreateInfo {
 	bool								maximized					= false;										///< Is the window maximized to fill the screen when created.
 	bool								transparent_framebuffer		= false;										///< Is the alpha value of the render interpreted as a transparent window background.
 	vk2d::RenderCoordinateSpace			coordinate_space			= vk2d::RenderCoordinateSpace::TEXEL_SPACE;		///< Coordinate system to be used, see vk2d::RenderCoordinateSpace.
-	vk2d::Vector2u						size						= { 800, 600 };									///< Window content initial pixel size
-	vk2d::Vector2u						min_size					= { 32, 32 };									///< Minimum size of the window. (also works when drag resizing, this value may be adjusted to suit the hardware)
-	vk2d::Vector2u						max_size					= { UINT32_MAX, UINT32_MAX };					///< Maximum size of the window. (also works when drag resizing, this value may be adjusted to suit the hardware)
+	glm::uvec2							size						= { 800, 600 };									///< Window content initial pixel size
+	glm::uvec2							min_size					= { 32, 32 };									///< Minimum size of the window. (also works when drag resizing, this value may be adjusted to suit the hardware)
+	glm::uvec2							max_size					= { UINT32_MAX, UINT32_MAX };					///< Maximum size of the window. (also works when drag resizing, this value may be adjusted to suit the hardware)
 	vk2d::Monitor					*	fullscreen_monitor			= {};											///< Fullscreen monitor pointer, nullptr is windowed, use Instance::GetPrimaryMonitor() to use primary monitor for fullscreen.
 	uint32_t							fullscreen_refresh_rate		= UINT32_MAX;									///< Refresh rate in fullscreen mode, UINT32_MAX uses maximum refresh rate available.
 	bool								vsync						= true;											///< Vertical synchronization, works in both windowed and fullscreen modes, usually best left on for 2d graphics.
@@ -240,7 +238,7 @@ struct WindowCreateInfo {
 
 /// @brief		Video mode the monitor can natively work in.
 struct MonitorVideoMode {
-	vk2d::Vector2u		resolution;
+	glm::uvec2			resolution;
 	uint32_t			red_bit_count;
 	uint32_t			green_bit_count;
 	uint32_t			blue_bit_count;
@@ -399,7 +397,7 @@ class Cursor {
 	VK2D_API																		Cursor(
 		vk2d::_internal::InstanceImpl		*	instance,
 		const std::filesystem::path			&	image_path,
-		vk2d::Vector2i							hot_spot );
+		glm::ivec2								hot_spot );
 
 	/// @brief		This object should not be directly constructed, it is created by
 	///				vk2d::Instance::CreateCursor().
@@ -420,9 +418,9 @@ class Cursor {
 	///				"tip" of the cursor, then the cursor's hot spot is 32*32.
 	VK2D_API																		Cursor(
 		vk2d::_internal::InstanceImpl		*	instance,
-		vk2d::Vector2u							image_size,
+		glm::uvec2								image_size,
 		const std::vector<vk2d::Color8>		&	image_data,
-		vk2d::Vector2i							hot_spot );
+		glm::ivec2								hot_spot );
 
 public:
 	/// @note		Multithreading: Main thread only.
@@ -447,14 +445,14 @@ public:
 	/// @brief		Get cursor image texel size.
 	/// @note		Multithreading: Main thread only.
 	/// @return		Size of the cursor image in texels.
-	VK2D_API vk2d::Vector2u						VK2D_APIENTRY						GetSize();
+	VK2D_API glm::uvec2							VK2D_APIENTRY						GetSize();
 
 	/// @brief		Get hot spot location in texels.
 	/// @note		Multithreading: Main thread only.
 	/// @return		The hot spot of the cursor image.
 	///				Hot spot is the offset of the image to the "tip" of the cursor
 	///				starting from top left of the image.
-	VK2D_API vk2d::Vector2i						VK2D_APIENTRY						GetHotSpot();
+	VK2D_API glm::ivec2							VK2D_APIENTRY						GetHotSpot();
 
 	/// @brief		Get texel data of the cursor image.
 	/// @note		Multithreading: Main thread only.
@@ -609,7 +607,7 @@ public:
 	/// @note		Multithreading: Main thread only.
 	/// @return		The cursor position on window surface in texels where 0*0 coordinate
 	///				is top left corner of the window.
-	VK2D_API vk2d::Vector2d								VK2D_APIENTRY				GetCursorPosition();
+	VK2D_API glm::dvec2									VK2D_APIENTRY				GetCursorPosition();
 
 	/// @brief		Set cursor position in relation to this window.
 	/// @note		Multithreading: Main thread only.
@@ -617,7 +615,7 @@ public:
 	///				New mouse cursor position. This changes the position of the OS or
 	///				the "hardware" cursor.
 	VK2D_API void										VK2D_APIENTRY				SetCursorPosition(
-		vk2d::Vector2d									new_position );
+		glm::dvec2										new_position );
 
 	/// @brief		Sets the OS or "hardware" cursor image to something else.
 	/// @note		Multithreading: Main thread only.
@@ -697,12 +695,12 @@ public:
 	///				coordinates determine in which monitor the window will appear,
 	///				this depends on the user's monitor setup however.
 	VK2D_API void										VK2D_APIENTRY				SetPosition(
-		vk2d::Vector2i									new_position );
+		glm::ivec2										new_position );
 
 	/// @brief		Get window current position on the virtual screen space.
 	/// @note		Multithreading: Main thread only.
 	/// @return		Position of the window.
-	VK2D_API vk2d::Vector2i								VK2D_APIENTRY				GetPosition();
+	VK2D_API glm::ivec2									VK2D_APIENTRY				GetPosition();
 
 	/// @brief		Set size of the window. More specifically this sets the framebuffer
 	///				size or the content size of the window to a new size, window decorators
@@ -711,12 +709,12 @@ public:
 	/// @param[in]	new_size
 	///				New size of the window.
 	VK2D_API void										VK2D_APIENTRY				SetSize(
-		vk2d::Vector2u									new_size );
+		glm::uvec2										new_size );
 
 	/// @brief		Get content/framebuffer size of the window.
 	/// @note		Multithreading: Main thread only.
 	/// @return		Size of the window.
-	VK2D_API vk2d::Vector2u								VK2D_APIENTRY				GetSize();
+	VK2D_API glm::uvec2									VK2D_APIENTRY				GetSize();
 
 	/// @brief		Iconifies the window to the taskbar or restores it back into a window.
 	/// @note		Multithreading: Main thread only.
@@ -809,7 +807,7 @@ public:
 		const std::vector<vk2d::VertexIndex_3>		&	indices,
 		const std::vector<vk2d::Vertex>				&	vertices,
 		const std::vector<float>					&	texture_layer_weights,
-		const std::vector<vk2d::Matrix4f>			&	transformations				= {},
+		const std::vector<glm::mat4>				&	transformations				= {},
 		bool											filled						= true,
 		vk2d::Texture								*	texture						= nullptr,
 		vk2d::Sampler								*	sampler						= nullptr );
@@ -835,7 +833,7 @@ public:
 		const std::vector<vk2d::VertexIndex_2>		&	indices,
 		const std::vector<vk2d::Vertex>				&	vertices,
 		const std::vector<float>					&	texture_layer_weights,
-		const std::vector<vk2d::Matrix4f>			&	transformations				= {},
+		const std::vector<glm::mat4>				&	transformations				= {},
 		vk2d::Texture								*	texture						= nullptr,
 		vk2d::Sampler								*	sampler						= nullptr,
 		float											line_width					= 1.0f );
@@ -858,7 +856,7 @@ public:
 	VK2D_API void										VK2D_APIENTRY				DrawPointList(
 		const std::vector<vk2d::Vertex>				&	vertices,
 		const std::vector<float>					&	texture_layer_weights,
-		const std::vector<vk2d::Matrix4f>			&	transformations				= {},
+		const std::vector<glm::mat4>				&	transformations				= {},
 		vk2d::Texture								*	texture						= nullptr,
 		vk2d::Sampler								*	sampler						= nullptr );
 
@@ -873,7 +871,7 @@ public:
 	/// @param[in]	size
 	///				Size of the point to be drawn, sizes larger than 1.0f will appear as a rectangle.
 	VK2D_API void										VK2D_APIENTRY				DrawPoint(
-		vk2d::Vector2f									location,
+		glm::vec2										location,
 		vk2d::Colorf									color						= { 1.0f, 1.0f, 1.0f, 1.0f },
 		float											size						= 1.0f );
 
@@ -888,8 +886,8 @@ public:
 	/// @param[in]	color 
 	///				Color of the line to be drawn.
 	VK2D_API void										VK2D_APIENTRY				DrawLine(
-		vk2d::Vector2f									point_1,
-		vk2d::Vector2f									point_2,
+		glm::vec2										point_1,
+		glm::vec2										point_2,
 		vk2d::Colorf									color						= { 1.0f, 1.0f, 1.0f, 1.0f },
 		float											line_width					= 1.0f );
 
@@ -986,7 +984,7 @@ public:
 	///				Color multiplier of the texture texel color, eg. If Red color is 0.0 then texture will
 	///				lack all Red color, or if alpha channel of the color is 0.5 then texture appears half transparent.
 	VK2D_API void										VK2D_APIENTRY				DrawTexture(
-		vk2d::Vector2f									location,
+		glm::vec2										location,
 		vk2d::Texture								*	texture,
 		vk2d::Colorf									color						= { 1.0f, 1.0f, 1.0f, 1.0f } );
 
@@ -1025,7 +1023,7 @@ public:
 	///				different transformations. This is also called instanced drawing.
 	VK2D_API void										VK2D_APIENTRY				DrawMesh(
 		const vk2d::Mesh							&	mesh,
-		const std::vector<vk2d::Matrix4f>			&	transformations );
+		const std::vector<glm::mat4>				&	transformations );
 
 	/// @brief		VK2D class object checker function.
 	/// @note		Multithreading: Any thread.
@@ -1071,7 +1069,7 @@ public:
 	///				Where the window moved to.
 	virtual void								VK2D_APIENTRY		EventWindowPosition(
 		vk2d::Window						*	window,
-		vk2d::Vector2i							position )
+		glm::ivec2								position )
 	{};
 
 	/// @brief		Window size changed.
@@ -1081,7 +1079,7 @@ public:
 	///				what's the new size of the window.
 	virtual void								VK2D_APIENTRY		EventWindowSize(
 		vk2d::Window						*	window,
-		vk2d::Vector2u							size )
+		glm::uvec2								size )
 	{};
 
 	/// @brief		Window wants to close when this event runs, either the user pressed the "X", the OS
@@ -1160,7 +1158,7 @@ public:
 	///				Tells the new mouse position.
 	virtual void								VK2D_APIENTRY		EventCursorPosition(
 		vk2d::Window						*	window,
-		vk2d::Vector2d							position )
+		glm::ivec2								position )
 	{};
 
 	/// @brief		Mouse cursor moved on top of the window area, or left it.
@@ -1178,11 +1176,11 @@ public:
 	///				Which window the scrolling happened in.
 	/// @param[in]	scroll
 	///				Scroll direction vector telling what changed since last event handling.
-	///				This is a vector2 because some mice have sideways scrolling. Normal vertical
+	///				This is a 2d vector because some mice have sideways scrolling. Normal vertical
 	///				scrolling is reported in the Y axis, sideways movement in the X axis.
 	virtual void								VK2D_APIENTRY		EventScroll(
 		vk2d::Window						*	window,
-		vk2d::Vector2d							scroll )
+		glm::ivec2								scroll )
 	{};
 
 	/// @brief		Keyboard button was pressed, released or kepth down (repeating).

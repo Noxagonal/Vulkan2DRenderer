@@ -39,7 +39,7 @@ class PrimaryWindowEventHandler : public vk2d::WindowEventHandler
 public:
 	PrimaryWindowEventHandler(
 		vk2d::Instance				*	instance,
-		vk2d::Vector2d				*	mouse_position,
+		glm::ivec2				*	mouse_position,
 		vk2d::Rect2f				*	create_button_rect,
 		vk2d::Rect2f				*	destroy_button_rect,
 		std::list<vk2d::Window*>	*	window_list
@@ -53,7 +53,7 @@ public:
 
 	void							VK2D_APIENTRY		EventCursorPosition(
 		vk2d::Window			*	window,
-		vk2d::Vector2d				position )
+		glm::ivec2				position )
 	{
 		*mouse_position		= position;
 	};
@@ -79,7 +79,7 @@ public:
 
 	vk2d::Instance				*	instance			= {};
 
-	vk2d::Vector2d				*	mouse_position		= {};
+	glm::ivec2				*	mouse_position		= {};
 
 	vk2d::Rect2f				*	create_button_rect	= {};
 	vk2d::Rect2f				*	destroy_button_rect	= {};
@@ -95,7 +95,7 @@ int main()
 	auto instance = vk2d::CreateInstance( instance_create_info );
 	if( !instance ) return -1;
 
-	vk2d::Vector2d mouse_position {};
+	glm::ivec2 mouse_position {};
 	vk2d::Rect2f create_button { 50.0f, 50.0f, 350.0f, 150.0f };
 	vk2d::Rect2f destroy_button { 50.0f, 200.0f, 350.0f, 300.0f };
 	std::list<vk2d::Window*> window_list {};

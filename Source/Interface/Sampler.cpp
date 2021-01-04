@@ -317,7 +317,7 @@ VkBuffer vk2d::_internal::SamplerImpl::GetVulkanBufferForSamplerData() const
 	return sampler_data.buffer;
 }
 
-vk2d::Vector2u vk2d::_internal::SamplerImpl::GetBorderColorEnable() const
+glm::uvec2 vk2d::_internal::SamplerImpl::GetBorderColorEnable() const
 {
 	VK2D_ASSERT_MAIN_THREAD( instance );
 

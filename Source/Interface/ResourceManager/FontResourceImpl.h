@@ -68,7 +68,7 @@ public:
 	vk2d::Rect2f																			CalculateRenderedSize(
 		std::string_view								text,
 		float											kerning								= 0.0f,
-		vk2d::Vector2f									scale								= vk2d::Vector2f( 1.0f, 1.0f ),
+		glm::vec2										scale								= glm::vec2( 1.0f, 1.0f ),
 		bool											vertical							= false,
 		uint32_t										font_face							= 0,
 		bool											wait_for_resource_load				= true );

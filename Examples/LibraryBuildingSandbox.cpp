@@ -118,9 +118,6 @@ int main()
 
 	auto resource_manager		= instance->GetResourceManager();
 
-	std::vector<vk2d::Vector4f> stl_vector { {}, { 10.0f, 10.4f, 10.04f }, { 50.1f, float( vk2d::PI ), 40.03f } };
-	std::cout << stl_vector << "\n";
-
 	auto delta_time_counter		= DeltaTimeCounter();
 	auto delta_time				= 0.0f;
 	auto seconds_since_start	= 0.0f;
@@ -142,8 +139,8 @@ int main()
 
 
 		std::string text = "Testing...";
-		vk2d::Vector2f text_location { std::cos( seconds_since_start / 3.0f ) * 300.0f, std::sin( seconds_since_start / 3.0f ) * 300.0f };
-		vk2d::Vector2f text_scale { std::cos( seconds_since_start * 5.0f ) * 0.5f + 1.5f, std::cos( seconds_since_start * 5.0f ) * 0.5f + 1.5f };
+		glm::vec2 text_location { std::cos( seconds_since_start / 3.0f ) * 300.0f, std::sin( seconds_since_start / 3.0f ) * 300.0f };
+		glm::vec2 text_scale { std::cos( seconds_since_start * 5.0f ) * 0.5f + 1.5f, std::cos( seconds_since_start * 5.0f ) * 0.5f + 1.5f };
 
 		rtt->BeginRender();
 		rtt->DrawEllipse( { -4, -4, 4, 4 }, true, 8 );

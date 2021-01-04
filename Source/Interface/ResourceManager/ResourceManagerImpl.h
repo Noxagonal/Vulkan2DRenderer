@@ -4,7 +4,6 @@
 
 #include "System/ThreadPool.h"
 
-#include "Types/Vector2.hpp"
 #include "Types/Color.hpp"
 
 namespace vk2d {
@@ -68,7 +67,7 @@ public:
 		vk2d::Resource										*	parent_resource );
 
 	vk2d::TextureResource									*	CreateTextureResource(
-		vk2d::Vector2u											size,
+		glm::uvec2												size,
 		const std::vector<vk2d::Color8>						&	texture_data,
 		vk2d::Resource										*	parent_resource );
 
@@ -77,7 +76,7 @@ public:
 		vk2d::Resource										*	parent_resource );
 
 	vk2d::TextureResource									*	CreateArrayTextureResource(
-		vk2d::Vector2u											size,
+		glm::uvec2												size,
 		const std::vector<const std::vector<vk2d::Color8>*>	&	texture_data_listings,
 		vk2d::Resource										*	parent_resource );
 

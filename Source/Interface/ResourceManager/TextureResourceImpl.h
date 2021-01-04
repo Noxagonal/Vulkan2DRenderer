@@ -2,7 +2,6 @@
 
 #include "Core/SourceCommon.h"
 
-#include "Types/Vector2.hpp"
 #include "Types/Color.hpp"
 
 #include "System/VulkanMemoryManagement.h"
@@ -45,7 +44,7 @@ public:
 		vk2d::_internal::ResourceManagerImpl				*	resource_manager,
 		uint32_t												loader_thread,
 		vk2d::Resource										*	parent_resource,
-		vk2d::Vector2u											size,
+		glm::uvec2												size,
 		const std::vector<const std::vector<vk2d::Color8>*>	&	texels );
 
 	bool														MTLoad(
@@ -66,7 +65,7 @@ public:
 	VkImageView													GetVulkanImageView() const;
 	VkImageLayout												GetVulkanImageLayout() const;
 
-	vk2d::Vector2u												GetSize() const;
+	glm::uvec2													GetSize() const;
 	uint32_t													GetLayerCount() const;
 
 	bool														IsTextureDataReady();

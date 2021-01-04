@@ -69,7 +69,7 @@ int main()
 
 	CoordGrid grid(
 		window->GetSize(),
-		vk2d::Vector2f( 100.0f, 100.0f )
+		glm::vec2( 100.0f, 100.0f )
 	);
 
 	size_t frame_counter = 500;

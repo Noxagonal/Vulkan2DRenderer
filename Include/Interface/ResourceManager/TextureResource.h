@@ -2,7 +2,6 @@
 
 #include "Core/Common.h"
 
-#include "Types/Vector2.hpp"
 #include "Types/Color.hpp"
 
 #include "Interface/ResourceManager/Resource.h"
@@ -102,7 +101,7 @@ class TextureResource :
 		vk2d::_internal::ResourceManagerImpl				*	resource_manager,
 		uint32_t												loader_thread,
 		vk2d::Resource										*	parent_resource,
-		vk2d::Vector2u											size,
+		glm::uvec2												size,
 		const std::vector<const std::vector<vk2d::Color8>*>	&	texels_listing );
 
 public:
@@ -148,7 +147,7 @@ public:
 
 	/// @brief		Get texel size of the texture resource.
 	/// @return		Texel size of the resource.
-	VK2D_API vk2d::Vector2u										VK2D_APIENTRY				GetSize() const;
+	VK2D_API glm::uvec2											VK2D_APIENTRY				GetSize() const;
 
 	/// @brief		All VK2D textures are multi-layer textures. This returns the
 	///				amount of layers in the texture.

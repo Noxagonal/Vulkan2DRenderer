@@ -2,8 +2,6 @@
 
 #include "Core/Common.h"
 
-#include "Types/Vector2.hpp"
-
 #include <initializer_list>
 #include <ostream>
 
@@ -22,13 +20,13 @@ class Rect2Base
 public:
 
 	/// @brief		Top left coordinate.
-	vk2d::Vector2Base<T>		top_left			= {};
+	glm::vec<2, T, glm::packed_highp>		top_left			= {};
 
 	/// @brief		Bottom right coordinates. This is not size but a coordinate on the same coordinate
 	///				space as vk2d::Rect2Base::top_left so this value can be right of or above
 	///				vk2d::Rect2Base::top_left, depending on the situation this may be okay, in situations
 	///				where top left and bottom right order matters you can use vk2d::Rect2Base::GetOrganized().
-	vk2d::Vector2Base<T>		bottom_right		= {};
+	glm::vec<2, T, glm::packed_highp>		bottom_right		= {};
 
 	Rect2Base()										= default;
 	Rect2Base( const vk2d::Rect2Base<T> & other )	= default;
@@ -46,7 +44,7 @@ public:
 	) :
 		top_left( { x1, y1 } ), bottom_right( { x2, y2 } )
 	{}
-	Rect2Base( Vector2Base<T> top_left, Vector2Base<T> bottom_right
+	Rect2Base( glm::vec<2, T, glm::packed_highp> top_left, glm::vec<2, T, glm::packed_highp> bottom_right
 	) :
 		top_left( top_left ),
 		bottom_right( bottom_right )
@@ -55,13 +53,13 @@ public:
 	/// @param[in]	elements
 	///				Initializer list where elements are ordered
 	///				{Top left, Bottom right}
-	Rect2Base( const std::initializer_list<vk2d::Vector2Base<T>> & elements )
+	Rect2Base( const std::initializer_list<glm::vec<2, T, glm::packed_highp>> & elements )
 	{
 		auto s = elements.size();
 		assert( s <= 2 );
 		auto e = elements.begin();
-		top_left		= ( s >= 1 ) ? *e++ : vk2d::Vector2Base<T>{};
-		bottom_right	= ( s >= 2 ) ? *e++ : vk2d::Vector2Base<T>{};
+		top_left		= ( s >= 1 ) ? *e++ : glm::vec<2, T, glm::packed_highp>{};
+		bottom_right	= ( s >= 2 ) ? *e++ : glm::vec<2, T, glm::packed_highp>{};
 	}
 
 	/// @param[in]	elements
@@ -87,7 +85,7 @@ public:
 	/// @param[in]	other
 	///				Vector telling where the resulting rectangle should be translated.
 	/// @return		A new rectangle.
-	vk2d::Rect2Base<T> operator+( vk2d::Vector2Base<T> other ) const
+	vk2d::Rect2Base<T> operator+( glm::vec<2, T, glm::packed_highp> other ) const
 	{
 		return { top_left + other, bottom_right + other };
 	}
@@ -99,7 +97,7 @@ public:
 	/// @param[in]	other
 	///				Vector telling where the resulting rectangle should be translated away from.
 	/// @return		A new rectangle.
-	vk2d::Rect2Base<T> operator-( vk2d::Vector2Base<T> other ) const
+	vk2d::Rect2Base<T> operator-( glm::vec<2, T, glm::packed_highp> other ) const
 	{
 		return { top_left - other, bottom_right - other };
 	}
@@ -110,7 +108,7 @@ public:
 	/// @param[in]	other
 	///				Vector telling where this rectangle should be translated.
 	/// @return		Reference to this.
-	vk2d::Rect2Base<T> & operator+=( vk2d::Vector2Base<T> other )
+	vk2d::Rect2Base<T> & operator+=( glm::vec<2, T, glm::packed_highp> other )
 	{
 		top_left += other;
 		bottom_right += other;
@@ -124,7 +122,7 @@ public:
 	/// @param[in]	other
 	///				Vector telling where this rectangle should be translated away from.
 	/// @return		Reference to this.
-	vk2d::Rect2Base<T> & operator-=( vk2d::Vector2Base<T> other )
+	vk2d::Rect2Base<T> & operator-=( glm::vec<2, T, glm::packed_highp> other )
 	{
 		top_left -= other;
 		bottom_right -= other;
@@ -144,7 +142,7 @@ public:
 	/// @brief		Get the size of the rectangle area. This value is the absolute size so
 	///				it's never negative.
 	/// @return		Size of the rectangle in 2 dimensions.
-	vk2d::Vector2Base<T> GetAreaSize()
+	glm::vec<2, T, glm::packed_highp> GetAreaSize()
 	{
 		return { std::abs( bottom_right.x - top_left.x ), std::abs( bottom_right.y - top_left.y ) };
 	}
@@ -156,7 +154,7 @@ public:
 	///				Point coordinate to check against.
 	/// @return		true if point is inside this rectangle, false if point is outside.
 	template<typename PointT>
-	bool IsPointInside( vk2d::Vector2Base<PointT> point )
+	bool IsPointInside( glm::vec<2, PointT, glm::packed_highp> point )
 	{
 		if( T( point.x ) > top_left.x && T( point.x ) < bottom_right.x &&
 			T( point.y ) > top_left.y && T( point.y ) < bottom_right.y ) {
