@@ -41,7 +41,10 @@ find_package(Git REQUIRED QUIET)
 ################################################################
 # Update library submodules.
 ################################################################
-if(EXISTS "${PROJECT_SOURCE_DIR}/.git")
+set(EXTERNAL_SUBMODULES_DIR "ExternalSubmodules")
+set(EXTERNAL_SUBMODULES_PATH "${CMAKE_CURRENT_SOURCE_DIR}/${EXTERNAL_SUBMODULES_DIR}")
+
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/.git")
 	option(GIT_SUBMODULE "Check submodules during build" ON)
 	if(GIT_SUBMODULE)
 		message(STATUS "Submodule update")
@@ -56,16 +59,16 @@ else()
 	message(FATAL_ERROR "You must download this repository via Git")
 endif()
 
-if(NOT EXISTS "${PROJECT_SOURCE_DIR}/ExternalLibraries/glfw/CMakeLists.txt")
+if(NOT EXISTS "${EXTERNAL_SUBMODULES_PATH}/glfw/CMakeLists.txt")
     message(FATAL_ERROR "The submodules were not downloaded! GIT_SUBMODULE was turned off or failed. Please update submodules and try again.")
 endif()
-if(NOT EXISTS "${PROJECT_SOURCE_DIR}/ExternalLibraries/stb/stb.h")
+if(NOT EXISTS "${EXTERNAL_SUBMODULES_PATH}/stb/stb.h")
     message(FATAL_ERROR "The submodules were not downloaded! GIT_SUBMODULE was turned off or failed. Please update submodules and try again.")
 endif()
-if(NOT EXISTS "${PROJECT_SOURCE_DIR}/ExternalLibraries/freetype2/CMakeLists.txt")
+if(NOT EXISTS "${EXTERNAL_SUBMODULES_PATH}/freetype2/CMakeLists.txt")
     message(FATAL_ERROR "The submodules were not downloaded! GIT_SUBMODULE was turned off or failed. Please update submodules and try again.")
 endif()
-if(NOT EXISTS "${PROJECT_SOURCE_DIR}/ExternalLibraries/glslang/CMakeLists.txt")
+if(NOT EXISTS "${EXTERNAL_SUBMODULES_PATH}/glslang/CMakeLists.txt")
     message(FATAL_ERROR "The submodules were not downloaded! GIT_SUBMODULE was turned off or failed. Please update submodules and try again.")
 endif()
 
@@ -118,21 +121,11 @@ option(VK2D_BUILD_DOCS_FOR_COMPLETE_SOURCE
 	OFF
 )
 
-set(EXTERNAL_INCLUDES_PATH
-	"${PROJECT_SOURCE_DIR}/ExternalLibraries/"
-)
-set(EXTERNAL_LIBRARY_PATH
-	"${PROJECT_BINARY_DIR}/ExternalLibraries/"
-)
-
 set(EXTERNAL_INCLUDES
-	"${EXTERNAL_INCLUDES_PATH}/freetype2/include/"
-	"${EXTERNAL_INCLUDES_PATH}/glfw/include/"
-	"${EXTERNAL_INCLUDES_PATH}/stb/"
-)
-set(EXTERNAL_LIBRARIES
-	"${EXTERNAL_LIBRARY_PATH}/freetype2"
-	"${EXTERNAL_LIBRARY_PATH}/glfw/src"
+	"${EXTERNAL_SUBMODULES_PATH}/freetype2/include/"
+	"${EXTERNAL_SUBMODULES_PATH}/glfw/include/"
+	"${EXTERNAL_SUBMODULES_PATH}/stb/"
+	"${EXTERNAL_SUBMODULES_PATH}/glm/"
 )
 
 # All files in Include folder
@@ -163,7 +156,7 @@ set(FILES_COMPILED_SHADERS
 ################################################################
 # Project prerequisites
 ################################################################
-add_subdirectory("ExternalLibraries" EXCLUDE_FROM_ALL)
+add_subdirectory("${EXTERNAL_SUBMODULES_DIR}" EXCLUDE_FROM_ALL)
 add_subdirectory("Tools")
 
 
@@ -171,7 +164,7 @@ add_subdirectory("Tools")
 ################################################################
 # VK2D
 ################################################################
-source_group(TREE "${PROJECT_SOURCE_DIR}"
+source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}"
 	FILES
 		${FILES_INCLUDE}
 		${FILES_SOURCE}
@@ -199,7 +192,7 @@ endif()
 
 target_precompile_headers(${VK2D_NAME}
 	PRIVATE
-		"${PROJECT_SOURCE_DIR}/Source/Core/PreCompiledHeader.h"
+		"${CMAKE_CURRENT_SOURCE_DIR}/Source/Core/PreCompiledHeader.h"
 )
 
 add_dependencies(${VK2D_NAME}
@@ -216,9 +209,9 @@ set_target_properties(${VK2D_NAME}
 )
 
 # Internal includes
-target_include_directories(${VK2D_NAME} PRIVATE "${PROJECT_SOURCE_DIR}/Source/")
-target_include_directories(${VK2D_NAME} PUBLIC "${PROJECT_SOURCE_DIR}/Include/")
-target_include_directories(${VK2D_NAME} PRIVATE "${PROJECT_SOURCE_DIR}/Shaders/")
+target_include_directories(${VK2D_NAME} PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/Source/")
+target_include_directories(${VK2D_NAME} PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/Include/")
+target_include_directories(${VK2D_NAME} PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/Shaders/")
 
 # External includes
 target_include_directories(${VK2D_NAME}

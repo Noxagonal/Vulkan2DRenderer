@@ -32,7 +32,7 @@ function(BuildTestcase EXECUTABLE_NAME)
 		${VK2D_NAME}
 	)
 	add_test("${EXECUTABLE_NAME}"
-		"${PROJECT_BINARY_DIR}/Bin/${EXECUTABLE_NAME}"
+		"${CMAKE_CURRENT_BINARY_DIR}/Bin/${EXECUTABLE_NAME}"
 	)
 	
 endfunction()
