@@ -15,6 +15,7 @@ function(BuildTestcase EXECUTABLE_NAME)
 	target_include_directories("${EXECUTABLE_NAME}"
 		PUBLIC
 			"${PROJECT_SOURCE_DIR}/Include"
+			"${EXTERNAL_SUBMODULES_PATH}/glm/"
 	)
 	target_link_libraries("${EXECUTABLE_NAME}"
 		PUBLIC
