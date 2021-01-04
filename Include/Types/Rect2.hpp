@@ -174,12 +174,6 @@ public:
 	}
 };
 
-template<typename T>
-std::ostream& operator<<( std::ostream & os, const Rect2Base<T> & v )
-{
-	return os << "[" << v.top_left << ", " << v.bottom_right << "]";
-}
-
 /// @brief		2D rectangle with float precision.
 using Rect2f			= Rect2Base<float>;
 

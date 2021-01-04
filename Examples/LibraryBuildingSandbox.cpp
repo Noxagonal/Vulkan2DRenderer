@@ -48,24 +48,6 @@ public:
 
 
 
-template<typename T>
-std::ostream& operator<<( std::ostream & os, const std::vector<T> & v )
-{
-	auto vs = std::size( v );
-	if( vs ) {
-		os << "[";
-		for( size_t i = 0; i < vs - 1; ++i ) {
-			os << v[ i ] << ", ";
-		}
-		os << v.back() << "]";
-	} else {
-		os << "[]";
-	}
-	return os;
-}
-
-
-
 // Simple class to calculate delta time.
 class DeltaTimeCounter
 {

@@ -1158,7 +1158,7 @@ public:
 	///				Tells the new mouse position.
 	virtual void								VK2D_APIENTRY		EventCursorPosition(
 		vk2d::Window						*	window,
-		glm::ivec2								position )
+		glm::dvec2								position )
 	{};
 
 	/// @brief		Mouse cursor moved on top of the window area, or left it.

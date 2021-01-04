@@ -14,6 +14,7 @@
 #include "Types/Mesh.h"
 #include "Types/Multisamples.h"
 #include "Types/RenderCoordinateSpace.hpp"
+#include "Types/StreamOps.h"
 
 #include "Interface/Instance.h"
 #include "Interface/Window.h"
