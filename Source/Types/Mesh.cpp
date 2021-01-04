@@ -132,13 +132,14 @@ VK2D_API void VK2D_APIENTRY vk2d::Mesh::DirectionalWave(
 		std::cos( direction_radians ),
 		std::sin( direction_radians )
 	};
+	// Matrix input has flipped column and row order.
 	auto forward_rotation_matrix = glm::mat2(
-		+dir.x, -dir.y,
-		+dir.y, +dir.x
-	);
-	auto backward_rotation_matrix = glm::mat2(
 		+dir.x, +dir.y,
 		-dir.y, +dir.x
+	);
+	auto backward_rotation_matrix = glm::mat2(
+		+dir.x, -dir.y,
+		+dir.y, +dir.x
 	);
 
 	for( auto & i : vertices ) {
@@ -215,13 +216,14 @@ VK2D_API void VK2D_APIENTRY vk2d::Mesh::DirectionalWaveUV(
 		std::cos( direction_radians ),
 		std::sin( direction_radians )
 	};
+	// Matrix input has flipped column and row order.
 	auto forward_rotation_matrix = glm::mat2(
-		+dir.x, -dir.y,
-		+dir.y, +dir.x
-	);
-	auto backward_rotation_matrix = glm::mat2(
 		+dir.x, +dir.y,
 		-dir.y, +dir.x
+	);
+	auto backward_rotation_matrix = glm::mat2(
+		+dir.x, -dir.y,
+		+dir.y, +dir.x
 	);
 
 	for( auto & i : vertices ) {
@@ -263,13 +265,14 @@ VK2D_API void VK2D_APIENTRY vk2d::Mesh::SetVertexColorGradient(
 		coord_dir					= { 1.0f, 0.0f };
 	}
 
+	// Matrix input has flipped column and row order.
 	auto forward_rotation_matrix = glm::mat2(
-		+coord_dir.x, -coord_dir.y,
-		+coord_dir.y, +coord_dir.x
-	);
-	auto backward_rotation_matrix = glm::mat2(
 		+coord_dir.x, +coord_dir.y,
 		-coord_dir.y, +coord_dir.x
+	);
+	auto backward_rotation_matrix = glm::mat2(
+		+coord_dir.x, -coord_dir.y,
+		+coord_dir.y, +coord_dir.x
 	);
 	auto coord_linearilized = backward_rotation_matrix * ( coord_dir * coord_lenght );
 

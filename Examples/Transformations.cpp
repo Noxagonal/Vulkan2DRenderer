@@ -12,6 +12,7 @@
 
 #include <VK2D.h>
 #include <chrono>
+#include <iostream>
 
 
 
@@ -66,6 +67,8 @@ int main()
 	DeltaTimeCounter delta_time_counter;
 	auto seconds_from_launch = 0.0f;
 
+	bool first_frame = true;
+
 	while( instance->Run() && !window->ShouldClose() ) {
 
 		// Get delta time.
@@ -89,6 +92,11 @@ int main()
 		// This transformation matrix is useful when calculating parent-child
 		// transformation relationships.
 		auto origin_matrix = origin.CalculateTransformationMatrix();
+
+		if( first_frame ) {
+			std::cout << origin_matrix << "\n";
+			first_frame = false;
+		}
 
 		// We want one of the box meshes to follow transformations of the origin,
 		// so information given here is intented to be relative to "origin" transform.

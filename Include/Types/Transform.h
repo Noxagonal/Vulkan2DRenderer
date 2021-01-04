@@ -76,9 +76,10 @@ glm::mat<2, 2, T> CreateRotationMatrix2(
 {
 	auto x = T( glm::cos( rotation ) );
 	auto y = T( glm::sin( rotation ) );
+	// Matrix input has flipped column and row order.
 	return glm::mat<2, 2, T>(
-		+x, -y,
-		+y, +x
+		+x, +y,
+		-y, +x
 	);
 }
 
@@ -96,9 +97,10 @@ glm::mat<3, 3, T> CreateRotationMatrix3(
 {
 	auto x = T( glm::cos( rotation ) );
 	auto y = T( glm::sin( rotation ) );
+	// Matrix input has flipped column and row order.
 	return glm::mat<3, 3, T>(
-		+x, -y, 0,
-		+y, +x, 0,
+		+x, +y, 0,
+		-y, +x, 0,
 		0,  0,  1
 	);
 }
@@ -117,9 +119,10 @@ glm::mat<4, 4, T> CreateRotationMatrix4(
 {
 	auto x = T( glm::cos( rotation ) );
 	auto y = T( glm::sin( rotation ) );
+	// Matrix input has flipped column and row order.
 	return glm::mat<4, 4, T>(
-		+x, -y, 0,  0,
-		+y, +x, 0,  0,
+		+x, +y, 0,  0,
+		-y, +x, 0,  0,
 		0,  0,  1,  0,
 		0,  0,  0,  1
 	);

@@ -111,7 +111,7 @@ VK2D_API void VK2D_APIENTRY vk2d::RenderTargetTexture::DrawTriangleList(
 	const std::vector<vk2d::VertexIndex_3>	&	indices,
 	const std::vector<vk2d::Vertex>			&	vertices,
 	const std::vector<float>				&	texture_layer_weights,
-	const std::vector<glm::mat4>		&	transformations,
+	const std::vector<glm::mat4>			&	transformations,
 	bool										filled,
 	vk2d::Texture							*	texture,
 	vk2d::Sampler							*	sampler
@@ -132,7 +132,7 @@ VK2D_API void VK2D_APIENTRY vk2d::RenderTargetTexture::DrawLineList(
 	const std::vector<vk2d::VertexIndex_2>	&	indices,
 	const std::vector<vk2d::Vertex>			&	vertices,
 	const std::vector<float>				&	texture_layer_weights,
-	const std::vector<glm::mat4>		&	transformations,
+	const std::vector<glm::mat4>			&	transformations,
 	vk2d::Texture							*	texture,
 	vk2d::Sampler							*	sampler,
 	float										line_width
@@ -152,7 +152,7 @@ VK2D_API void VK2D_APIENTRY vk2d::RenderTargetTexture::DrawLineList(
 VK2D_API void VK2D_APIENTRY vk2d::RenderTargetTexture::DrawPointList(
 	const std::vector<vk2d::Vertex>			&	vertices,
 	const std::vector<float>				&	texture_layer_weights,
-	const std::vector<glm::mat4>		&	transformations,
+	const std::vector<glm::mat4>			&	transformations,
 	vk2d::Texture							*	texture,
 	vk2d::Sampler							*	sampler
 )
@@ -167,7 +167,7 @@ VK2D_API void VK2D_APIENTRY vk2d::RenderTargetTexture::DrawPointList(
 }
 
 VK2D_API void VK2D_APIENTRY vk2d::RenderTargetTexture::DrawPoint(
-	glm::vec2			location,
+	glm::vec2				location,
 	vk2d::Colorf			color,
 	float					size
 )
@@ -181,8 +181,8 @@ VK2D_API void VK2D_APIENTRY vk2d::RenderTargetTexture::DrawPoint(
 }
 
 VK2D_API void VK2D_APIENTRY vk2d::RenderTargetTexture::DrawLine(
-	glm::vec2					point_1,
-	glm::vec2					point_2,
+	glm::vec2						point_1,
+	glm::vec2						point_2,
 	vk2d::Colorf					color,
 	float							line_width
 )
@@ -265,7 +265,7 @@ VK2D_API void VK2D_APIENTRY vk2d::RenderTargetTexture::DrawRectanglePie(
 }
 
 VK2D_API void VK2D_APIENTRY vk2d::RenderTargetTexture::DrawTexture(
-	glm::vec2				top_left,
+	glm::vec2					top_left,
 	vk2d::Texture			*	texture,
 	vk2d::Colorf				color
 )
@@ -311,7 +311,7 @@ VK2D_API void VK2D_APIENTRY vk2d::RenderTargetTexture::DrawMesh(
 
 VK2D_API void VK2D_APIENTRY vk2d::RenderTargetTexture::DrawMesh(
 	const vk2d::Mesh						&	mesh,
-	const std::vector<glm::mat4>		&	transformations
+	const std::vector<glm::mat4>			&	transformations
 )
 {
 	impl->DrawMesh(
