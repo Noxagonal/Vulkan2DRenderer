@@ -80,8 +80,8 @@ int main()
 		// Animate the scale x axis, leave scale y axis as 1.0.
 		// Animate rotation.
 		auto origin = vk2d::Transform(
-			{ std::cos( -seconds_from_launch ) * 100.0f, std::sin( -seconds_from_launch ) * 100.0f },
-			{ std::sin( seconds_from_launch ) * 0.5f + 1.0f, 1.0f },
+			{ glm::cos( -seconds_from_launch ) * 100.0f, glm::sin( -seconds_from_launch ) * 100.0f },
+			{ glm::sin( seconds_from_launch ) * 0.5f + 1.0f, 1.0f },
 			seconds_from_launch / 3.0f
 		);
 
@@ -101,9 +101,9 @@ int main()
 
 		// Same as "child" transform but this is intended to follow "child"'s transform.
 		auto sub_child = vk2d::Transform(
-			{ 0.0f, std::sin( seconds_from_launch / 2.0f ) * 150.0f },
+			{ 0.0f, glm::sin( seconds_from_launch / 2.0f ) * 150.0f },
 			{ 1.0f, 1.0f },
-			std::sin( seconds_from_launch )
+			glm::sin( seconds_from_launch )
 		);
 		auto sub_child_matrix = sub_child.CalculateTransformationMatrix();
 
