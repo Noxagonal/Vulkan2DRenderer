@@ -1,7 +1,7 @@
 
 #include <VK2D.h>
 
-#include "TestCommon.h"
+#include "Testbed/Testbed.h"
 
 constexpr double PI = 3.14159265358979323846;
 constexpr double RAD = PI * 2.0;

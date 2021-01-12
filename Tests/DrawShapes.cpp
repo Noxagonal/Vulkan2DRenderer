@@ -1,7 +1,7 @@
 
 #include <VK2D.h>
 
-#include "TestCommon.h"
+#include "Testbed/Testbed.h"
 
 #include "DrawShapesRenderTestSamples.h"
 

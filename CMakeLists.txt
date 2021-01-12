@@ -41,8 +41,8 @@ find_package(Git REQUIRED QUIET)
 ################################################################
 # Update library submodules.
 ################################################################
-set(EXTERNAL_SUBMODULES_DIR "ExternalSubmodules")
-set(EXTERNAL_SUBMODULES_PATH "${CMAKE_CURRENT_SOURCE_DIR}/${EXTERNAL_SUBMODULES_DIR}")
+set(VK2D_EXTERNAL_SUBMODULES_DIR_NAME "ExternalSubmodules")
+set(VK2D_EXTERNAL_SUBMODULES_DIR "${CMAKE_CURRENT_SOURCE_DIR}/${VK2D_EXTERNAL_SUBMODULES_DIR_NAME}")
 
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/.git")
 	option(GIT_SUBMODULE "Check submodules during build" ON)
@@ -59,19 +59,19 @@ else()
 	message(FATAL_ERROR "You must download this repository via Git")
 endif()
 
-if(NOT EXISTS "${EXTERNAL_SUBMODULES_PATH}/glm/CMakeLists.txt")
+if(NOT EXISTS "${VK2D_EXTERNAL_SUBMODULES_DIR}/glm/CMakeLists.txt")
     message(FATAL_ERROR "The submodules were not downloaded! GIT_SUBMODULE was turned off or failed. Please update submodules and try again.")
 endif()
-if(NOT EXISTS "${EXTERNAL_SUBMODULES_PATH}/glfw/CMakeLists.txt")
+if(NOT EXISTS "${VK2D_EXTERNAL_SUBMODULES_DIR}/glfw/CMakeLists.txt")
     message(FATAL_ERROR "The submodules were not downloaded! GIT_SUBMODULE was turned off or failed. Please update submodules and try again.")
 endif()
-if(NOT EXISTS "${EXTERNAL_SUBMODULES_PATH}/stb/stb.h")
+if(NOT EXISTS "${VK2D_EXTERNAL_SUBMODULES_DIR}/stb/stb.h")
     message(FATAL_ERROR "The submodules were not downloaded! GIT_SUBMODULE was turned off or failed. Please update submodules and try again.")
 endif()
-if(NOT EXISTS "${EXTERNAL_SUBMODULES_PATH}/freetype2/CMakeLists.txt")
+if(NOT EXISTS "${VK2D_EXTERNAL_SUBMODULES_DIR}/freetype2/CMakeLists.txt")
     message(FATAL_ERROR "The submodules were not downloaded! GIT_SUBMODULE was turned off or failed. Please update submodules and try again.")
 endif()
-if(NOT EXISTS "${EXTERNAL_SUBMODULES_PATH}/glslang/CMakeLists.txt")
+if(NOT EXISTS "${VK2D_EXTERNAL_SUBMODULES_DIR}/glslang/CMakeLists.txt")
     message(FATAL_ERROR "The submodules were not downloaded! GIT_SUBMODULE was turned off or failed. Please update submodules and try again.")
 endif()
 
@@ -125,10 +125,11 @@ option(VK2D_BUILD_DOCS_FOR_COMPLETE_SOURCE
 )
 
 set(EXTERNAL_INCLUDES
-	"${EXTERNAL_SUBMODULES_PATH}/freetype2/include/"
-	"${EXTERNAL_SUBMODULES_PATH}/glfw/include/"
-	"${EXTERNAL_SUBMODULES_PATH}/stb/"
-	"${EXTERNAL_SUBMODULES_PATH}/glm/"
+	"${VK2D_EXTERNAL_SUBMODULES_DIR}/"
+	"${VK2D_EXTERNAL_SUBMODULES_DIR}/freetype2/include/"
+	"${VK2D_EXTERNAL_SUBMODULES_DIR}/glfw/include/"
+	"${VK2D_EXTERNAL_SUBMODULES_DIR}/stb/"
+	"${VK2D_EXTERNAL_SUBMODULES_DIR}/glm/"
 )
 
 # All files in Include folder
@@ -159,7 +160,7 @@ set(FILES_COMPILED_SHADERS
 ################################################################
 # Project prerequisites
 ################################################################
-add_subdirectory("${EXTERNAL_SUBMODULES_DIR}" EXCLUDE_FROM_ALL)
+add_subdirectory("${VK2D_EXTERNAL_SUBMODULES_DIR_NAME}" EXCLUDE_FROM_ALL)
 add_subdirectory("Tools")
 
 
@@ -322,7 +323,7 @@ install(
 )
 install(
 	DIRECTORY
-		"${EXTERNAL_SUBMODULES_PATH}/glm/"
+		"${VK2D_EXTERNAL_SUBMODULES_DIR}/glm/"
 	DESTINATION
 		"include/glm/"
 )
