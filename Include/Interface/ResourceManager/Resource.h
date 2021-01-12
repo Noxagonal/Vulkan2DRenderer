@@ -99,9 +99,6 @@ public:
 	///				resource manager to create a texture from.
 	VK2D_API bool											VK2D_APIENTRY						IsFromFile() const;
 
-	// Returns the file path where the resource was loaded from,
-	// if the was not loaded from a file, returns "".
-
 	/// @brief		If resource origin is a file then this returns all the file paths
 	///				where to load the resource from. Some resources can use multiple
 	///				files to create a single resource object, eg. vk2d::Texture can

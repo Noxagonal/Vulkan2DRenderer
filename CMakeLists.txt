@@ -59,6 +59,9 @@ else()
 	message(FATAL_ERROR "You must download this repository via Git")
 endif()
 
+if(NOT EXISTS "${EXTERNAL_SUBMODULES_PATH}/glm/CMakeLists.txt")
+    message(FATAL_ERROR "The submodules were not downloaded! GIT_SUBMODULE was turned off or failed. Please update submodules and try again.")
+endif()
 if(NOT EXISTS "${EXTERNAL_SUBMODULES_PATH}/glfw/CMakeLists.txt")
     message(FATAL_ERROR "The submodules were not downloaded! GIT_SUBMODULE was turned off or failed. Please update submodules and try again.")
 endif()
@@ -316,6 +319,12 @@ install(
 		"${CMAKE_CURRENT_SOURCE_DIR}/Include/"
 	DESTINATION
 		"include/VK2D/"
+)
+install(
+	DIRECTORY
+		"${EXTERNAL_SUBMODULES_PATH}/glm/"
+	DESTINATION
+		"include/glm/"
 )
 install(
 	FILES

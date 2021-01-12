@@ -43,15 +43,6 @@ struct GraphicsBlurPushConstants
 	alignas( 4 )	std::array<float, 2>		pixel_size				= {};	// Pixel size on a canvas considered ranging from 0 to 1.
 };
 
-/*
-struct ComputeBlurPushConstants
-{
-	alignas( 4 )	uint32_t					kernel_count			= {};	// How many kernels we're using to determine blur.
-	alignas( 4 )	uint32_t					image_size_x			= {};	// Size of the image we're processing.
-	alignas( 4 )	uint32_t					image_size_y			= {};	// Size of the image we're processing.
-};
-*/
-
 
 
 enum class GraphicsShaderProgramID {

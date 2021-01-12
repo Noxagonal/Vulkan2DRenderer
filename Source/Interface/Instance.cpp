@@ -2186,7 +2186,7 @@ bool vk2d::_internal::InstanceImpl::CreateDescriptorSetLayouts()
 		VkDescriptorType		descriptor_type;
 		VkShaderStageFlags		shader_stage_flags;
 	};
-	auto CreateLocalDescriptorSetLayout =[this](
+	auto CreateLocalDescriptorSetLayout			= [this](
 		const std::vector<Binding>			&	bindings,
 		VkDescriptorSetLayoutCreateFlags		flags			= 0
 		) -> std::unique_ptr<vk2d::_internal::DescriptorSetLayout>
@@ -2244,7 +2244,7 @@ bool vk2d::_internal::InstanceImpl::CreateDescriptorSetLayouts()
 		graphics_sampler_descriptor_set_layout = CreateLocalDescriptorSetLayout(
 			{
 				{ VK_DESCRIPTOR_TYPE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT },
-			{ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT }
+				{ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT }
 			}
 		);
 		if( !graphics_sampler_descriptor_set_layout ) {

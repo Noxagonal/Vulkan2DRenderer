@@ -1,5 +1,5 @@
 
-message(==== LINUX(debian) PACKAGE ====)
+message("------ LINUX(debian) PACKAGE ------")
 
 install(
 	DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/../install/"
