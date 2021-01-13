@@ -1,7 +1,6 @@
 
 #include "Core/SourceCommon.h"
 
-#include "Types/Matrix4.hpp"
 #include "Types/MeshPrimitives.hpp"
 
 #include "System/VulkanMemoryManagement.h"
@@ -36,14 +35,14 @@ vk2d::_internal::MeshBuffer::PushResult vk2d::_internal::MeshBuffer::CmdPushMesh
 	const std::vector<uint32_t>			&	new_indices,
 	const std::vector<vk2d::Vertex>		&	new_vertices,
 	const std::vector<float>			&	new_texture_channel_weights,
-	const std::vector<vk2d::Matrix4f>	&	new_transformations
+	const std::vector<glm::mat4>		&	new_transformations
 )
 {
 	// TODO: Could save some memory when calling CmdPushMesh with empty new_transformations, could just point to an identity matrix stored on the first index.
 	// Whenever new_transformations is empty, just submit the render once and have the transformation point to the first index.
 
-	std::vector<vk2d::Matrix4f>				default_transformation		= { vk2d::Matrix4f( 1.0f ) };
-	const std::vector<vk2d::Matrix4f>	*	new_transformations_actual	= &default_transformation;
+	std::vector<glm::mat4>					default_transformation		= { glm::mat4( 1.0f ) };
+	const std::vector<glm::mat4>		*	new_transformations_actual	= &default_transformation;
 	if( new_transformations.size() )		new_transformations_actual	= &new_transformations;
 
 	auto reserve_result = ReserveSpaceForMesh(
@@ -301,7 +300,7 @@ vk2d::_internal::MeshBuffer::MeshBlockLocationInfo vk2d::_internal::MeshBuffer::
 	vk2d::_internal::MeshBufferBlock<uint32_t>			*	index_buffer_block						= nullptr;
 	vk2d::_internal::MeshBufferBlock<vk2d::Vertex>		*	vertex_buffer_block						= nullptr;
 	vk2d::_internal::MeshBufferBlock<float>				*	texture_channel_weight_buffer_block		= nullptr;
-	vk2d::_internal::MeshBufferBlock<vk2d::Matrix4f>	*	transformation_buffer_block				= nullptr;
+	vk2d::_internal::MeshBufferBlock<glm::mat4>			*	transformation_buffer_block				= nullptr;
 
 	VkDeviceSize											index_buffer_position					= 0;
 	VkDeviceSize											vertex_buffer_position					= 0;
@@ -460,7 +459,7 @@ vk2d::_internal::MeshBufferBlock<float>* vk2d::_internal::MeshBuffer::FindTextur
 	return nullptr;
 }
 
-vk2d::_internal::MeshBufferBlock<vk2d::Matrix4f>* vk2d::_internal::MeshBuffer::FindTransformationBufferWithEnoughSpace(
+vk2d::_internal::MeshBufferBlock<glm::mat4>* vk2d::_internal::MeshBuffer::FindTransformationBufferWithEnoughSpace(
 	uint32_t count
 )
 {
@@ -546,11 +545,11 @@ vk2d::_internal::MeshBufferBlock<float>* vk2d::_internal::MeshBuffer::AllocateTe
 	}
 }
 
-vk2d::_internal::MeshBufferBlock<vk2d::Matrix4f>* vk2d::_internal::MeshBuffer::AllocateTransformationBufferBlockAndStore(
+vk2d::_internal::MeshBufferBlock<glm::mat4>* vk2d::_internal::MeshBuffer::AllocateTransformationBufferBlockAndStore(
 	VkDeviceSize byte_size
 )
 {
-	auto buffer_block	= std::make_unique<vk2d::_internal::MeshBufferBlock<vk2d::Matrix4f>>(
+	auto buffer_block	= std::make_unique<vk2d::_internal::MeshBufferBlock<glm::mat4>>(
 		this,
 		byte_size,
 		VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
@@ -614,7 +613,7 @@ void vk2d::_internal::MeshBuffer::FreeBufferBlockFromStorage(
 }
 
 void vk2d::_internal::MeshBuffer::FreeBufferBlockFromStorage(
-	vk2d::_internal::MeshBufferBlock<vk2d::Matrix4f>	*	buffer_block
+	vk2d::_internal::MeshBufferBlock<glm::mat4>	*	buffer_block
 )
 {
 	if( transformation_buffer_blocks.size() ) {

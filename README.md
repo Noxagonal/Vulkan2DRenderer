@@ -91,14 +91,21 @@ files and compile but it will not install this library for you.
 
 ------
 
+## Included external libraries (packed in)
+
+| Library    | Licence                                                                           | Web page                                |
+| ---------- | --------------------------------------------------------------------------------- | --------------------------------------- |
+| GLM        | [MIT/Happy Bunny](https://github.com/g-truc/glm/blob/master/copying.txt)          | https://github.com/g-truc/glm           |
+
 ## External libraries used in this project
 
-| Library | License | Web page |
-| --- | --- | --- |
-| Freetype 2 | [FTL](https://git.savannah.gnu.org/cgit/freetype/freetype2.git/tree/docs/FTL.TXT) | https://www.freetype.org |
-| GLFW 3 | [zlib/libpng](https://github.com/glfw/glfw/blob/master/LICENSE.md) | https://github.com/glfw/glfw |
-| STB | [MIT](https://github.com/nothings/stb/blob/master/LICENSE) | https://github.com/nothings/stb |
-| glslang | ['*Custom*'](https://github.com/KhronosGroup/glslang/blob/master/LICENSE.txt) | https://github.com/KhronosGroup/glslang |
+| Library    | License                                                                           | Web page                                |
+| ---------- | --------------------------------------------------------------------------------- | --------------------------------------- |
+| GLM        | [MIT/Happy Bunny](https://github.com/g-truc/glm/blob/master/copying.txt)          | https://github.com/g-truc/glm           |
+| Freetype 2 | [FTL](https://git.savannah.gnu.org/cgit/freetype/freetype2.git/tree/docs/FTL.TXT) | https://www.freetype.org                |
+| GLFW 3     | [zlib/libpng](https://github.com/glfw/glfw/blob/master/LICENSE.md)                | https://github.com/glfw/glfw            |
+| STB        | [MIT/Public Domain](https://github.com/nothings/stb/blob/master/LICENSE)          | https://github.com/nothings/stb         |
+| glslang    | ['*Custom*'](https://github.com/KhronosGroup/glslang/blob/master/LICENSE.txt)     | https://github.com/KhronosGroup/glslang |
 
 ------
 

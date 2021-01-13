@@ -1,9 +1,7 @@
 
 #include "Core/SourceCommon.h"
 
-#include "Types/Vector2.hpp"
 #include "Types/Rect2.hpp"
-#include "Types/Matrix4.hpp"
 #include "Types/Color.hpp"
 #include "Types/Mesh.h"
 
@@ -16,8 +14,8 @@
 #include "Interface/Instance.h"
 #include "Interface/InstanceImpl.h"
 
-#include "Interface/ResourceManager/TextureResource.h"
-#include "Interface/ResourceManager/TextureResourceImpl.h"
+#include "Interface/Resources/TextureResource.h"
+#include "Interface/Resources/TextureResourceImpl.h"
 
 #include "Interface/RenderTargetTexture.h"
 #include "Interface/RenderTargetTextureImpl.h"
@@ -153,13 +151,13 @@ VK2D_API bool VK2D_APIENTRY vk2d::Window::IsFullscreen()
 	return impl->IsFullscreen();
 }
 
-VK2D_API vk2d::Vector2d VK2D_APIENTRY vk2d::Window::GetCursorPosition()
+VK2D_API glm::dvec2 VK2D_APIENTRY vk2d::Window::GetCursorPosition()
 {
 	return impl->GetCursorPosition();
 }
 
 VK2D_API void VK2D_APIENTRY vk2d::Window::SetCursorPosition(
-	vk2d::Vector2d			new_position
+	glm::dvec2			new_position
 )
 {
 	impl->SetCursorPosition( new_position );
@@ -199,25 +197,25 @@ VK2D_API void VK2D_APIENTRY vk2d::Window::SetIcon(
 }
 
 VK2D_API void VK2D_APIENTRY vk2d::Window::SetPosition(
-	vk2d::Vector2i			new_position
+	glm::ivec2			new_position
 )
 {
 	impl->SetPosition( new_position );
 }
 
-VK2D_API vk2d::Vector2i VK2D_APIENTRY vk2d::Window::GetPosition()
+VK2D_API glm::ivec2 VK2D_APIENTRY vk2d::Window::GetPosition()
 {
 	return impl->GetPosition();
 }
 
 VK2D_API void VK2D_APIENTRY vk2d::Window::SetSize(
-	vk2d::Vector2u		new_size
+	glm::uvec2		new_size
 )
 {
 	impl->SetSize( new_size );
 }
 
-VK2D_API vk2d::Vector2u VK2D_APIENTRY vk2d::Window::GetSize()
+VK2D_API glm::uvec2 VK2D_APIENTRY vk2d::Window::GetSize()
 {
 	return impl->GetSize();
 }
@@ -289,7 +287,7 @@ VK2D_API void VK2D_APIENTRY vk2d::Window::DrawTriangleList(
 	const std::vector<vk2d::VertexIndex_3>	&	indices,
 	const std::vector<vk2d::Vertex>			&	vertices,
 	const std::vector<float>				&	texture_layer_weights,
-	const std::vector<vk2d::Matrix4f>		&	transformations,
+	const std::vector<glm::mat4>			&	transformations,
 	bool										filled,
 	vk2d::Texture							*	texture,
 	vk2d::Sampler							*	sampler
@@ -310,7 +308,7 @@ VK2D_API void VK2D_APIENTRY vk2d::Window::DrawLineList(
 	const std::vector<vk2d::VertexIndex_2>	&	indices,
 	const std::vector<vk2d::Vertex>			&	vertices,
 	const std::vector<float>				&	texture_layer_weights,
-	const std::vector<vk2d::Matrix4f>		&	transformations,
+	const std::vector<glm::mat4>			&	transformations,
 	vk2d::Texture							*	texture,
 	vk2d::Sampler							*	sampler,
 	float										line_width
@@ -330,7 +328,7 @@ VK2D_API void VK2D_APIENTRY vk2d::Window::DrawLineList(
 VK2D_API void VK2D_APIENTRY vk2d::Window::DrawPointList(
 	const std::vector<vk2d::Vertex>			&	vertices,
 	const std::vector<float>				&	texture_layer_weights,
-	const std::vector<vk2d::Matrix4f>		&	transformations,
+	const std::vector<glm::mat4>			&	transformations,
 	vk2d::Texture							*	texture,
 	vk2d::Sampler							*	sampler
 )
@@ -345,7 +343,7 @@ VK2D_API void VK2D_APIENTRY vk2d::Window::DrawPointList(
 }
 
 VK2D_API void VK2D_APIENTRY vk2d::Window::DrawPoint(
-	vk2d::Vector2f			location,
+	glm::vec2				location,
 	vk2d::Colorf			color,
 	float					size
 )
@@ -355,12 +353,12 @@ VK2D_API void VK2D_APIENTRY vk2d::Window::DrawPoint(
 	);
 	mesh.SetVertexColor( color );
 	mesh.SetPointSize( size );
-	impl->DrawMesh( mesh, { vk2d::Matrix4f( 1.0f ) } );
+	impl->DrawMesh( mesh, { glm::mat4( 1.0f ) } );
 }
 
 VK2D_API void VK2D_APIENTRY vk2d::Window::DrawLine(
-	vk2d::Vector2f					point_1,
-	vk2d::Vector2f					point_2,
+	glm::vec2						point_1,
+	glm::vec2						point_2,
 	vk2d::Colorf					color,
 	float							line_width
 )
@@ -371,7 +369,7 @@ VK2D_API void VK2D_APIENTRY vk2d::Window::DrawLine(
 	);
 	mesh.SetVertexColor( color );
 	mesh.SetLineWidth( line_width );
-	impl->DrawMesh( mesh, { vk2d::Matrix4f( 1.0f ) } );
+	impl->DrawMesh( mesh, { glm::mat4( 1.0f ) } );
 }
 
 VK2D_API void VK2D_APIENTRY vk2d::Window::DrawRectangle(
@@ -385,7 +383,7 @@ VK2D_API void VK2D_APIENTRY vk2d::Window::DrawRectangle(
 		filled
 	);
 	mesh.SetVertexColor( color );
-	impl->DrawMesh( mesh, { vk2d::Matrix4f( 1.0f ) } );
+	impl->DrawMesh( mesh, { glm::mat4( 1.0f ) } );
 }
 
 VK2D_API void VK2D_APIENTRY vk2d::Window::DrawEllipse(
@@ -401,7 +399,7 @@ VK2D_API void VK2D_APIENTRY vk2d::Window::DrawEllipse(
 		edge_count
 	);
 	mesh.SetVertexColor( color );
-	impl->DrawMesh( mesh, { vk2d::Matrix4f( 1.0f ) } );
+	impl->DrawMesh( mesh, { glm::mat4( 1.0f ) } );
 }
 
 VK2D_API void VK2D_APIENTRY vk2d::Window::DrawEllipsePie(
@@ -421,7 +419,7 @@ VK2D_API void VK2D_APIENTRY vk2d::Window::DrawEllipsePie(
 		edge_count
 	);
 	mesh.SetVertexColor( color );
-	impl->DrawMesh( mesh, { vk2d::Matrix4f( 1.0f ) } );
+	impl->DrawMesh( mesh, { glm::mat4( 1.0f ) } );
 }
 
 VK2D_API void VK2D_APIENTRY vk2d::Window::DrawRectanglePie(
@@ -439,25 +437,25 @@ VK2D_API void VK2D_APIENTRY vk2d::Window::DrawRectanglePie(
 		filled
 	);
 	mesh.SetVertexColor( color );
-	impl->DrawMesh( mesh, { vk2d::Matrix4f( 1.0f ) } );
+	impl->DrawMesh( mesh, { glm::mat4( 1.0f ) } );
 }
 
 VK2D_API void VK2D_APIENTRY vk2d::Window::DrawTexture(
-	vk2d::Vector2f				top_left,
+	glm::vec2				top_left,
 	vk2d::Texture			*	texture,
 	vk2d::Colorf				color
 )
 {
 	if( texture ) {
 		auto texture_size	= texture->GetSize();
-		auto bottom_right	= top_left + vk2d::Vector2f( float( texture_size.x ), float( texture_size.y ) );
+		auto bottom_right	= top_left + glm::vec2( float( texture_size.x ), float( texture_size.y ) );
 		texture->GetSize();
 		auto mesh = vk2d::GenerateRectangleMesh(
 			{ top_left, bottom_right }
 		);
 		mesh.SetTexture( texture );
 		mesh.SetVertexColor( color );
-		impl->DrawMesh( mesh, { vk2d::Matrix4f( 1.0f ) } );
+		impl->DrawMesh( mesh, { glm::mat4( 1.0f ) } );
 	}
 }
 
@@ -477,7 +475,7 @@ VK2D_API void VK2D_APIENTRY vk2d::Window::DrawMesh(
 	const std::vector<vk2d::Transform>		&	transformations
 )
 {
-	std::vector<vk2d::Matrix4f> transformation_matrices( std::size( transformations ) );
+	std::vector<glm::mat4> transformation_matrices( std::size( transformations ) );
 	for( size_t i = 0; i < std::size( transformations ); ++i ) {
 		transformation_matrices[ i ]	= transformations[ i ].CalculateTransformationMatrix();
 	}
@@ -490,7 +488,7 @@ VK2D_API void VK2D_APIENTRY vk2d::Window::DrawMesh(
 
 VK2D_API void VK2D_APIENTRY vk2d::Window::DrawMesh(
 	const vk2d::Mesh						&	mesh,
-	const std::vector<vk2d::Matrix4f>		&	transformations
+	const std::vector<glm::mat4>			&	transformations
 )
 {
 	impl->DrawMesh(
@@ -514,7 +512,7 @@ VK2D_API bool VK2D_APIENTRY vk2d::Window::IsGood() const
 VK2D_API vk2d::Cursor::Cursor(
 	vk2d::_internal::InstanceImpl		*	instance,
 	const std::filesystem::path			&	image_path,
-	vk2d::Vector2i							hot_spot
+	glm::ivec2								hot_spot
 )
 {
 	impl		= std::make_unique<vk2d::_internal::CursorImpl>(
@@ -530,9 +528,9 @@ VK2D_API vk2d::Cursor::Cursor(
 
 VK2D_API vk2d::Cursor::Cursor(
 	vk2d::_internal::InstanceImpl		*	instance,
-	vk2d::Vector2u							image_size,
+	glm::uvec2								image_size,
 	const std::vector<vk2d::Color8>		&	image_data,
-	vk2d::Vector2i							hot_spot
+	glm::ivec2								hot_spot
 )
 {
 	impl		= std::make_unique<vk2d::_internal::CursorImpl>(
@@ -598,12 +596,12 @@ VK2D_API vk2d::Cursor & VK2D_APIENTRY vk2d::Cursor::operator=(
 	return *this;
 }
 
-VK2D_API vk2d::Vector2u VK2D_APIENTRY vk2d::Cursor::GetSize()
+VK2D_API glm::uvec2 VK2D_APIENTRY vk2d::Cursor::GetSize()
 {
 	return impl->GetSize();
 }
 
-VK2D_API vk2d::Vector2i VK2D_APIENTRY vk2d::Cursor::GetHotSpot()
+VK2D_API glm::ivec2 VK2D_APIENTRY vk2d::Cursor::GetHotSpot()
 {
 	return impl->GetHotSpot();
 }
@@ -1943,7 +1941,7 @@ bool vk2d::_internal::WindowImpl::IsFullscreen()
 	return !!glfwGetWindowMonitor( glfw_window );
 }
 
-vk2d::Vector2d vk2d::_internal::WindowImpl::GetCursorPosition()
+glm::dvec2 vk2d::_internal::WindowImpl::GetCursorPosition()
 {
 	VK2D_ASSERT_MAIN_THREAD( instance );
 
@@ -1953,7 +1951,7 @@ vk2d::Vector2d vk2d::_internal::WindowImpl::GetCursorPosition()
 }
 
 void vk2d::_internal::WindowImpl::SetCursorPosition(
-	vk2d::Vector2d		new_position
+	glm::dvec2		new_position
 )
 {
 	VK2D_ASSERT_MAIN_THREAD( instance );
@@ -2040,7 +2038,7 @@ void vk2d::_internal::WindowImpl::SetIcon(
 }
 
 void vk2d::_internal::WindowImpl::SetPosition(
-	vk2d::Vector2i		new_position
+	glm::ivec2		new_position
 )
 {
 	VK2D_ASSERT_MAIN_THREAD( instance );
@@ -2048,7 +2046,7 @@ void vk2d::_internal::WindowImpl::SetPosition(
 	glfwSetWindowPos( glfw_window, new_position.x, new_position.y );
 }
 
-vk2d::Vector2i vk2d::_internal::WindowImpl::GetPosition()
+glm::ivec2 vk2d::_internal::WindowImpl::GetPosition()
 {
 	VK2D_ASSERT_MAIN_THREAD( instance );
 
@@ -2058,7 +2056,7 @@ vk2d::Vector2i vk2d::_internal::WindowImpl::GetPosition()
 }
 
 void vk2d::_internal::WindowImpl::SetSize(
-	vk2d::Vector2u			new_size
+	glm::uvec2			new_size
 )
 {
 	VK2D_ASSERT_MAIN_THREAD( instance );
@@ -2067,7 +2065,7 @@ void vk2d::_internal::WindowImpl::SetSize(
 	should_reconstruct		= true;
 }
 
-vk2d::Vector2u vk2d::_internal::WindowImpl::GetSize()
+glm::uvec2 vk2d::_internal::WindowImpl::GetSize()
 {
 	VK2D_ASSERT_MAIN_THREAD( instance );
 
@@ -2178,7 +2176,7 @@ void vk2d::_internal::WindowImpl::DrawTriangleList(
 	const std::vector<vk2d::VertexIndex_3>	&	indices,
 	const std::vector<vk2d::Vertex>			&	vertices,
 	const std::vector<float>				&	texture_layer_weights,
-	const std::vector<vk2d::Matrix4f>		&	transformations,
+	const std::vector<glm::mat4>			&	transformations,
 	bool										filled,
 	vk2d::Texture							*	texture,
 	vk2d::Sampler							*	sampler
@@ -2210,7 +2208,7 @@ void vk2d::_internal::WindowImpl::DrawTriangleList(
 	const std::vector<uint32_t>				&	raw_indices,
 	const std::vector<vk2d::Vertex>			&	vertices,
 	const std::vector<float>				&	texture_layer_weights,
-	const std::vector<vk2d::Matrix4f>		&	transformations,
+	const std::vector<glm::mat4>			&	transformations,
 	bool										filled,
 	vk2d::Texture							*	texture,
 	vk2d::Sampler							*	sampler
@@ -2336,7 +2334,7 @@ void vk2d::_internal::WindowImpl::DrawLineList(
 	const std::vector<vk2d::VertexIndex_2>	&	indices,
 	const std::vector<vk2d::Vertex>			&	vertices,
 	const std::vector<float>				&	texture_layer_weights,
-	const std::vector<vk2d::Matrix4f>		&	transformations,
+	const std::vector<glm::mat4>			&	transformations,
 	vk2d::Texture							*	texture,
 	vk2d::Sampler							*	sampler,
 	float										line_width
@@ -2367,7 +2365,7 @@ void vk2d::_internal::WindowImpl::DrawLineList(
 	const std::vector<uint32_t>				&	raw_indices,
 	const std::vector<vk2d::Vertex>			&	vertices,
 	const std::vector<float>				&	texture_layer_weights,
-	const std::vector<vk2d::Matrix4f>		&	transformations,
+	const std::vector<glm::mat4>			&	transformations,
 	vk2d::Texture							*	texture,
 	vk2d::Sampler							*	sampler,
 	float										line_width
@@ -2481,7 +2479,7 @@ void vk2d::_internal::WindowImpl::DrawLineList(
 void vk2d::_internal::WindowImpl::DrawPointList(
 	const std::vector<vk2d::Vertex>			&	vertices,
 	const std::vector<float>				&	texture_layer_weights,
-	const std::vector<vk2d::Matrix4f>		&	transformations,
+	const std::vector<glm::mat4>			&	transformations,
 	vk2d::Texture							*	texture,
 	vk2d::Sampler							*	sampler
 )
@@ -2552,12 +2550,12 @@ void vk2d::_internal::WindowImpl::DrawPointList(
 	if( push_result.success ) {
 		{
 			vk2d::_internal::GraphicsPrimaryRenderPushConstants pc {};
-			pc.transformation_offset	= push_result.location_info.transformation_offset;
-			pc.index_offset				= push_result.location_info.index_offset;
-			pc.index_count				= 1;
-			pc.vertex_offset			= push_result.location_info.vertex_offset;
+			pc.transformation_offset			= push_result.location_info.transformation_offset;
+			pc.index_offset						= push_result.location_info.index_offset;
+			pc.index_count						= 1;
+			pc.vertex_offset					= push_result.location_info.vertex_offset;
 			pc.texture_channel_weight_offset	= push_result.location_info.texture_channel_weight_offset;
-			pc.texture_channel_weight_count	= texture->GetLayerCount();
+			pc.texture_channel_weight_count		= texture->GetLayerCount();
 
 			vkCmdPushConstants(
 				command_buffer,
@@ -2587,7 +2585,7 @@ void vk2d::_internal::WindowImpl::DrawPointList(
 
 void vk2d::_internal::WindowImpl::DrawMesh(
 	const vk2d::Mesh						&	mesh,
-	const std::vector<vk2d::Matrix4f>		&	transformations )
+	const std::vector<glm::mat4>			&	transformations )
 {
 	VK2D_ASSERT_MAIN_THREAD( instance );
 
@@ -4158,7 +4156,7 @@ bool vk2d::_internal::WindowImpl::CmdUpdateFrameData(
 vk2d::_internal::CursorImpl::CursorImpl(
 	vk2d::_internal::InstanceImpl		*	instance,
 	const std::filesystem::path			&	image_path,
-	vk2d::Vector2i							hot_spot
+	glm::ivec2								hot_spot
 )
 {
 	instance		= instance;
@@ -4181,9 +4179,9 @@ vk2d::_internal::CursorImpl::CursorImpl(
 
 vk2d::_internal::CursorImpl::CursorImpl(
 	vk2d::_internal::InstanceImpl		*	instance,
-	vk2d::Vector2u							image_size,
+	glm::uvec2								image_size,
 	const std::vector<vk2d::Color8>		&	image_data,
-	vk2d::Vector2i							hot_spot
+	glm::ivec2								hot_spot
 )
 {
 	instance		= instance;
@@ -4270,12 +4268,12 @@ GLFWcursor * vk2d::_internal::CursorImpl::GetGLFWcursor()
 	return cursor;
 }
 
-vk2d::Vector2u vk2d::_internal::CursorImpl::GetSize()
+glm::uvec2 vk2d::_internal::CursorImpl::GetSize()
 {
 	return { extent.width, extent.height };
 }
 
-vk2d::Vector2i vk2d::_internal::CursorImpl::GetHotSpot()
+glm::ivec2 vk2d::_internal::CursorImpl::GetHotSpot()
 {
 	return { hotSpot.x, hotSpot.y };
 }

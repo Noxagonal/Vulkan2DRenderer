@@ -1,7 +1,6 @@
 #pragma once
 
 #include "Core/SourceCommon.h"
-#include "Types/Vector2.hpp"
 
 
 
@@ -17,7 +16,7 @@ class InstanceImpl;
 class TextureImpl
 {
 public:
-	virtual vk2d::Vector2u							GetSize() const					= 0;
+	virtual glm::uvec2								GetSize() const					= 0;
 	virtual uint32_t								GetLayerCount() const			= 0;
 	virtual VkImage									GetVulkanImage() const			= 0;
 	virtual VkImageView								GetVulkanImageView() const		= 0;

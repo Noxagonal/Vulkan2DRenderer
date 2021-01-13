@@ -2,9 +2,6 @@
 
 #include "Core/Common.h"
 
-#include "Types/Vector2.hpp"
-#include "Types/Matrix4.hpp"
-
 #include <initializer_list>
 
 
@@ -26,26 +23,26 @@ namespace vk2d {
 class Transform
 {
 public:
-	vk2d::Vector2f		position					= {};
-	vk2d::Vector2f		scale						= { 1.0f, 1.0f };
-	float				rotation					= {};
+	glm::vec2						position				= {};
+	glm::vec2						scale					= { 1.0f, 1.0f };
+	float							rotation				= {};
 
-	VK2D_API										Transform()								= default;
-	VK2D_API										Transform(
-		const Transform		&	other )				= default;
-	VK2D_API										Transform(
-		Transform			&&	other )				= default;
-	VK2D_API										Transform(
-		vk2d::Vector2f			position,
-		vk2d::Vector2f			scale,
-		float					rotation );
+	VK2D_API												Transform()					= default;
+	VK2D_API												Transform(
+		const vk2d::Transform	&	other )					= default;
+	VK2D_API												Transform(
+		vk2d::Transform			&&	other )					= default;
+	VK2D_API												Transform(
+		glm::vec2					position,
+		glm::vec2					scale,
+		float						rotation );
 
-	VK2D_API void				VK2D_APIENTRY		Translate(
-		vk2d::Vector2f			movement );
-	VK2D_API void				VK2D_APIENTRY		Scale(
-		vk2d::Vector2f			scale );
-	VK2D_API void				VK2D_APIENTRY		Rotate(
-		float					rotation );
+	VK2D_API void					VK2D_APIENTRY			Translate(
+		glm::vec2					movement );
+	VK2D_API void					VK2D_APIENTRY			Scale(
+		glm::vec2					scale );
+	VK2D_API void					VK2D_APIENTRY			Rotate(
+		float						rotation );
 
 	/// @brief		Calculate new transformation matrix from position, scale and rotation that can be used
 	///				with scene transformation hierarchy. <br> For example if you wish to draw 2 boxes and have
@@ -62,8 +59,74 @@ public:
 	///				window->DrawMesh( box, { child_follow_parent_matrix } );
 	/// @endcode
 	/// @return		A new 4*4 matrix that combines location, scale and rotation.
-	VK2D_API vk2d::Matrix4f		VK2D_APIENTRY		CalculateTransformationMatrix() const;
+	VK2D_API glm::mat4			VK2D_APIENTRY			CalculateTransformationMatrix() const;
 };
+
+
+
+/// @brief		Create 2*2 rotation matrix.
+/// @tparam		T
+///				Matrix precision.
+/// @param		rotation
+///				Rotation in radians.
+/// @return		Rotation matrix.
+template<typename T>
+glm::mat<2, 2, T> CreateRotationMatrix2(
+	T rotation )
+{
+	auto x = T( glm::cos( rotation ) );
+	auto y = T( glm::sin( rotation ) );
+	// Matrix input has flipped column and row order.
+	return glm::mat<2, 2, T>(
+		+x, +y,
+		-y, +x
+	);
+}
+
+
+
+/// @brief		Create 3*3 rotation matrix.
+/// @tparam		T
+///				Matrix precision.
+/// @param		rotation
+///				Rotation in radians.
+/// @return		Rotation matrix.
+template<typename T>
+glm::mat<3, 3, T> CreateRotationMatrix3(
+	T rotation )
+{
+	auto x = T( glm::cos( rotation ) );
+	auto y = T( glm::sin( rotation ) );
+	// Matrix input has flipped column and row order.
+	return glm::mat<3, 3, T>(
+		+x, +y, 0,
+		-y, +x, 0,
+		0,  0,  1
+	);
+}
+
+
+
+/// @brief		Create 4*4 rotation matrix.
+/// @tparam		T
+///				Matrix precision.
+/// @param		rotation
+///				Rotation in radians.
+/// @return		Rotation matrix.
+template<typename T>
+glm::mat<4, 4, T> CreateRotationMatrix4(
+	T rotation )
+{
+	auto x = T( glm::cos( rotation ) );
+	auto y = T( glm::sin( rotation ) );
+	// Matrix input has flipped column and row order.
+	return glm::mat<4, 4, T>(
+		+x, +y, 0,  0,
+		-y, +x, 0,  0,
+		0,  0,  1,  0,
+		0,  0,  0,  1
+	);
+}
 
 
 

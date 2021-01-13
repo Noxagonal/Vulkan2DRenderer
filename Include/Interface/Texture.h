@@ -2,8 +2,6 @@
 
 #include "Core/Common.h"
 
-#include "Types/Vector2.hpp"
-
 
 
 namespace vk2d {
@@ -33,7 +31,7 @@ public:
 	/// @brief		Gets the texel size of the texture.
 	/// @note		Multithreading: Main thread only.
 	/// @return		Size of the texture in texels.
-	VK2D_API vk2d::Vector2u								VK2D_APIENTRY				GetSize() const;
+	VK2D_API glm::uvec2									VK2D_APIENTRY				GetSize() const;
 
 	/// @brief		Gets the texture layer count. VK2D Textures are multi-layer, meaning that
 	///				a single texture can be considered more like an array of textures rather

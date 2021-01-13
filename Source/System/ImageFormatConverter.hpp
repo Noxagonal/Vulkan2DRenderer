@@ -2,8 +2,6 @@
 
 #include "Core/SourceCommon.h"
 
-#include "Types/Vector2.hpp"
-
 
 
 namespace vk2d {
@@ -49,7 +47,7 @@ enum class ImageFormatConverterColorSwizzle : uint32_t
 /// @return		true on success, false on failure.
 template<typename DestinationT, typename SourceT>
 void ImageFormatConverter(
-	vk2d::Vector2u												size,
+	glm::uvec2													size,
 	DestinationT											*	destination_image_data,
 	uint32_t													destination_image_channel_count,
 	SourceT													*	source_image_data,

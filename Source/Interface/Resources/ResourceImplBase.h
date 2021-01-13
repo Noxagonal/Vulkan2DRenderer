@@ -2,7 +2,7 @@
 
 #include "Core/SourceCommon.h"
 
-#include "Interface/ResourceManager/Resource.h"
+#include "Interface/Resources/ResourceBase.h"
 
 #include "Types/Synchronization.hpp"
 
@@ -10,7 +10,7 @@
 
 namespace vk2d {
 
-class Resource;
+class ResourceBase;
 
 namespace _internal {
 
@@ -23,29 +23,29 @@ class ThreadPrivateResource;
 
 
 
-class ResourceImpl
+class ResourceImplBase
 {
 	friend class vk2d::_internal::ResourceManagerImpl;
 	friend class vk2d::_internal::ResourceThreadLoadTask;
 	friend class vk2d::_internal::ResourceThreadUnloadTask;
 
 public:
-															ResourceImpl()					= delete;
+															ResourceImplBase()					= delete;
 
-															ResourceImpl(
-		vk2d::Resource									*	my_interface,
+															ResourceImplBase(
+		vk2d::ResourceBase								*	my_interface,
 		uint32_t											loader_thread,
 		vk2d::_internal::ResourceManagerImpl			*	resource_manager,
-		vk2d::Resource									*	parent_resource );
+		vk2d::ResourceBase								*	parent_resource );
 
-															ResourceImpl(
-		vk2d::Resource									*	my_interface,
+															ResourceImplBase(
+		vk2d::ResourceBase								*	my_interface,
 		uint32_t											loader_thread,
 		vk2d::_internal::ResourceManagerImpl			*	resource_manager,
-		vk2d::Resource									*	parent_resource,
+		vk2d::ResourceBase								*	parent_resource,
 		const std::vector<std::filesystem::path>		&	paths );
 
-	virtual													~ResourceImpl()					= default;
+	virtual													~ResourceImplBase()					= default;
 
 	// Checks the status of the resource.
 	virtual vk2d::ResourceStatus							GetStatus()						= 0;
@@ -82,10 +82,10 @@ private:
 	// Subresources can be created either in the resource constructor or MTLoad(). To create a subresource,
 	// we can create them just like regular resources, just add parent information.
 	void													AddSubresource(
-		vk2d::Resource									*	subresource );
+		vk2d::ResourceBase								*	subresource );
 
 public:
-	vk2d::Resource										*	GetParentResource();
+	vk2d::ResourceBase									*	GetParentResource();
 
 	// Gets the thread index that was responsible for loading this resource.
 	uint32_t												GetLoaderThread();
@@ -108,15 +108,15 @@ protected:
 
 	vk2d::_internal::Fence									load_function_run_fence;
 	std::atomic<vk2d::ResourceStatus>						status								= {};
-	vk2d::Resource										*	my_interface						= {};
+	vk2d::ResourceBase									*	my_interface						= {};
 
 private:
 	vk2d::_internal::ResourceManagerImpl				*	resource_manager					= {};
 	uint32_t												loader_thread						= {};
 	std::vector<std::filesystem::path>						file_paths							= {};
 	std::mutex												subresources_mutex;
-	std::vector<vk2d::Resource*>							subresources						= {};
-	vk2d::Resource										*	parent_resource						= {};
+	std::vector<vk2d::ResourceBase*>						subresources						= {};
+	vk2d::ResourceBase									*	parent_resource						= {};
 	bool													is_from_file						= {};
 };
 

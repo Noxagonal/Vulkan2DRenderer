@@ -4,13 +4,14 @@
 cmake_minimum_required(VERSION 3.16)
 
 function(BuildExample EXECUTABLE_NAME)
-
+	message("Adding Example: ${EXECUTABLE_NAME}")
 	add_executable("${EXECUTABLE_NAME}"
 		"${EXECUTABLE_NAME}.cpp"
 	)
 	target_include_directories("${EXECUTABLE_NAME}"
 		PUBLIC
-			"${PROJECT_SOURCE_DIR}/Include"
+			"${PROJECT_SOURCE_DIR}/Include/"
+			"${VK2D_EXTERNAL_SUBMODULES_DIR}/"
 	)
 	target_link_libraries("${EXECUTABLE_NAME}"
 		PUBLIC
@@ -27,7 +28,6 @@ function(BuildExample EXECUTABLE_NAME)
 	add_dependencies("${EXECUTABLE_NAME}"
 		${VK2D_NAME}
 	)
-
 endfunction()
 
 
@@ -37,6 +37,8 @@ file(GLOB ExampleFiles
 	"*.cpp"
 )
 foreach(ExampleFile ${ExampleFiles})
-	get_filename_component(ExampleFileName ${ExampleFile} NAME_WE)
-	BuildExample(${ExampleFileName})
+	if(NOT IS_DIRECTORY ${ExampleFile})
+		get_filename_component(ExampleFileName ${ExampleFile} NAME_WE)
+		BuildExample(${ExampleFileName})
+	endif()
 endforeach()

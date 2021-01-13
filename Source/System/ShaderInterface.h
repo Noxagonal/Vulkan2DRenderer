@@ -2,8 +2,6 @@
 
 #include "Core/SourceCommon.h"
 
-#include "Types/Vector2.hpp"
-
 
 
 namespace vk2d {
@@ -22,8 +20,8 @@ constexpr uint32_t GRAPHICS_DESCRIPTOR_SET_ALLOCATION_texture_channel_weights			
 
 
 struct WindowCoordinateScaling {
-	alignas( 8 )	vk2d::Vector2f				multiplier				= {};
-	alignas( 8 )	vk2d::Vector2f				offset					= {};
+	alignas( 8 )	glm::vec2					multiplier				= {};
+	alignas( 8 )	glm::vec2					offset					= {};
 };
 
 struct FrameData {
@@ -44,15 +42,6 @@ struct GraphicsBlurPushConstants
 	alignas( 4 )	std::array<float, 4>		blur_info				= {};	// [ 0 ] = sigma, [ 1 ] = precomputed normalizer, [ 2 ] = initial coefficient, [ 3 ] = initial natural exponentation, 
 	alignas( 4 )	std::array<float, 2>		pixel_size				= {};	// Pixel size on a canvas considered ranging from 0 to 1.
 };
-
-/*
-struct ComputeBlurPushConstants
-{
-	alignas( 4 )	uint32_t					kernel_count			= {};	// How many kernels we're using to determine blur.
-	alignas( 4 )	uint32_t					image_size_x			= {};	// Size of the image we're processing.
-	alignas( 4 )	uint32_t					image_size_y			= {};	// Size of the image we're processing.
-};
-*/
 
 
 

@@ -48,24 +48,6 @@ public:
 
 
 
-template<typename T>
-std::ostream& operator<<( std::ostream & os, const std::vector<T> & v )
-{
-	auto vs = std::size( v );
-	if( vs ) {
-		os << "[";
-		for( size_t i = 0; i < vs - 1; ++i ) {
-			os << v[ i ] << ", ";
-		}
-		os << v.back() << "]";
-	} else {
-		os << "[]";
-	}
-	return os;
-}
-
-
-
 // Simple class to calculate delta time.
 class DeltaTimeCounter
 {
@@ -97,44 +79,26 @@ int main()
 
 	EventHandler event_handler;
 	vk2d::WindowCreateInfo					window_create_info {};
-	window_create_info.size					= { 1200, 600 };
+	window_create_info.size					= { 600, 600 };
 	window_create_info.coordinate_space		= vk2d::RenderCoordinateSpace::TEXEL_SPACE_CENTERED;
 	window_create_info.samples				= vk2d::Multisamples::SAMPLE_COUNT_1;
 	window_create_info.event_handler		= &event_handler;
-	window_create_info.vsync				= false;
 	auto window1 = instance->CreateOutputWindow( window_create_info );
 	if( !window1 ) return -1;
 
-	std::string s;
-	s = "Testing";
+	uint32_t rtt_pixels_x = 16;
+	uint32_t rtt_pixels_y = 16;
+	vk2d::RenderTargetTextureCreateInfo rtt_create_info {};
+	rtt_create_info.coordinate_space		= vk2d::RenderCoordinateSpace::TEXEL_SPACE_CENTERED;
+	rtt_create_info.size					= { rtt_pixels_x, rtt_pixels_y };
+	auto rtt = instance->CreateRenderTargetTexture( rtt_create_info );
 
-	vk2d::Text t = "Testing";
-	t = "Test2";
-	t = "Testing this thing even more...";
-
-	vk2d::Array<int32_t> arr1;
-	vk2d::Array<int32_t> arr2 { 5, 8 };
-	arr1 = arr2;
-	vk2d::Array<uint32_t> arr = { 0, 1, 2, 3, 4 };
-	std::cout << "Single array element: " << arr[ 0 ] << "\n";
-	std::cout << "Entire array: " << arr << "\n";
-	arr[ 4 ] = 1000;
-	std::cout << "Modified array: " << arr << "\n";
-	std::cout << "Array size: " << std::size( arr ) << "\n";
-
-	arr.PushBack( 50 );
-	std::cout << "Array appended: " << arr << "\n";
-
-	std::vector<uint32_t> vec = arr;
+	vk2d::SamplerCreateInfo sampler_create_info {};
+	sampler_create_info.minification_filter		= vk2d::SamplerFilter::NEAREST;
+	sampler_create_info.magnification_filter	= vk2d::SamplerFilter::NEAREST;
+	auto pixelated_sampler = instance->CreateSampler( sampler_create_info );
 
 	auto resource_manager		= instance->GetResourceManager();
-
-	auto font = resource_manager->LoadFontResource(
-		"../../Data/Fonts/ubuntu-font-family-0.83/Ubuntu-M.ttf"
-	);
-
-	std::vector<vk2d::Vector4f> stl_vector { {}, { 10.0f, 10.4f, 10.04f }, { 50.1f, float( vk2d::PI ), 40.03f } };
-	std::cout << stl_vector << "\n";
 
 	auto delta_time_counter		= DeltaTimeCounter();
 	auto delta_time				= 0.0f;
@@ -157,41 +121,26 @@ int main()
 
 
 		std::string text = "Testing...";
-		vk2d::Vector2f text_location { std::cos( seconds_since_start / 3.0f ) * 300.0f, std::sin( seconds_since_start / 3.0f ) * 300.0f };
-		vk2d::Vector2f text_scale { std::cos( seconds_since_start * 5.0f ) * 0.5f + 1.5f, std::cos( seconds_since_start * 5.0f ) * 0.5f + 1.5f };
+		glm::vec2 text_location { std::cos( seconds_since_start / 3.0f ) * 300.0f, std::sin( seconds_since_start / 3.0f ) * 300.0f };
+		glm::vec2 text_scale { std::cos( seconds_since_start * 5.0f ) * 0.5f + 1.5f, std::cos( seconds_since_start * 5.0f ) * 0.5f + 1.5f };
 
-		auto text_calculated_area = font->CalculateRenderedSize(
-			text,
-			0,
-			text_scale,
-			false,
-			0,
-			true
-		);
-		auto text_mesh = vk2d::GenerateTextMesh(
-			font,
-			text_location,
-			text,
-			0,
-			text_scale,
-			false,
-			0,
-			true
-		);
-
-
+		rtt->BeginRender();
+		rtt->DrawEllipse( { -4, -4, 4, 4 }, true, 8 );
+		rtt->EndRender();
 
 		if( !window1->BeginRender() ) return -1;
 
 		{
-			window1->DrawEllipse(
-				{ -300, -300, 300, 300 },
-				false,
-				64,
-				vk2d::Colorf::CYAN()
-			);
-			window1->DrawMesh( text_mesh );
-			window1->DrawRectangle( text_mesh.aabb, false );
+			auto rtt_mesh = vk2d::GenerateLatticeMesh( { -200, -200, 200, 200 }, { float( rtt_pixels_x - 1 ), float( rtt_pixels_y - 1 ) } );
+			rtt_mesh.SetTexture( rtt );
+			rtt_mesh.SetSampler( pixelated_sampler );
+			window1->DrawMesh( rtt_mesh );
+
+			rtt_mesh.SetTexture( nullptr );
+			rtt_mesh.SetSampler( nullptr );
+			rtt_mesh.SetMeshType( vk2d::MeshType::TRIANGLE_WIREFRAME );
+			window1->DrawMesh( rtt_mesh );
+
 			//window1->DrawRectangle( text_calculated_area + text_location, false );
 		}
 

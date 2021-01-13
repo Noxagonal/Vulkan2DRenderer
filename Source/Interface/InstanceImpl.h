@@ -3,7 +3,6 @@
 #include "Core/SourceCommon.h"
 #include "Interface/Instance.h"
 
-#include "Types/Vector2.hpp"
 #include "Types/Color.hpp"
 
 #include "System/QueueResolver.h"
@@ -92,13 +91,13 @@ public:
 	/// @return		Handle to new Cursor object.
 	vk2d::Cursor										*	CreateCursor(
 		const std::filesystem::path						&	image_path,
-		vk2d::Vector2i										hot_spot );
+		glm::ivec2											hot_spot );
 
 	// Main thread only.
 	vk2d::Cursor										*	CreateCursor(
-		vk2d::Vector2u										image_size,
+		glm::uvec2											image_size,
 		const std::vector<vk2d::Color8>					&	image_data,
-		vk2d::Vector2i										hot_spot );
+		glm::ivec2											hot_spot );
 
 	// Main thread only.
 	void													DestroyCursor(

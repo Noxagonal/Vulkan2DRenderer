@@ -1,6 +1,6 @@
 #pragma once
 
-#include "TestCommon.h"
+#include "Testbed/Testbed.h"
 
 #include <stdint.h>
 #include <array>

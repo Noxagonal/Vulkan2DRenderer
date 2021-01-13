@@ -12,7 +12,7 @@ VK2D_API bool VK2D_APIENTRY vk2d::Texture::IsTextureDataReady()
 	return texture_impl->IsTextureDataReady();
 }
 
-VK2D_API vk2d::Vector2u VK2D_APIENTRY vk2d::Texture::GetSize() const
+VK2D_API glm::uvec2 VK2D_APIENTRY vk2d::Texture::GetSize() const
 {
 	assert( texture_impl );
 	return texture_impl->GetSize();

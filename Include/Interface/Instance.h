@@ -3,7 +3,6 @@
 #include "Core/Common.h"
 #include "Core/Version.hpp"
 
-#include "Types/Vector2.hpp"
 #include "Types/Color.hpp"
 
 #include "Interface/Window.h"
@@ -299,7 +298,7 @@ public:
 	/// @return		Handle to new Cursor object.
 	VK2D_API vk2d::Cursor							*	VK2D_APIENTRY						CreateCursor(
 		const std::filesystem::path					&	image_path,
-		vk2d::Vector2i									hot_spot );
+		glm::ivec2										hot_spot );
 
 	/// @brief		Create a new cursor from raw data directly.
 	///				Cursor object is needed to set hardware cursor image.
@@ -320,9 +319,9 @@ public:
 	///				is 64x64 pixels, the hot spot would be 32x32 pixels.
 	/// @return		Handle to new Cursor object.
 	VK2D_API vk2d::Cursor							*	VK2D_APIENTRY						CreateCursor(
-		vk2d::Vector2u									image_size,
+		glm::uvec2										image_size,
 		const std::vector<vk2d::Color8>				&	image_data,
-		vk2d::Vector2i									hot_spot );
+		glm::ivec2										hot_spot );
 
 	/// @brief		Manually destroy cursor that was created with
 	///				vk2d::Instance::CreateCursor(). Cursor must be destroyed
@@ -349,7 +348,7 @@ public:
 	///				vk2d::PFN_GamepadConnectionEventCallback function that will be called
 	///				if a gamepad gets added or removed from the system.
 	VK2D_API void										VK2D_APIENTRY						SetGamepadEventCallback(
-		vk2d::PFN_GamepadConnectionEventCallback					gamepad_event_callback_function );
+		vk2d::PFN_GamepadConnectionEventCallback		gamepad_event_callback_function );
 
 	/// @brief		Checks if a specific gamepad is currently attached to the system.
 	/// @note		Multithreading: Main thread only.

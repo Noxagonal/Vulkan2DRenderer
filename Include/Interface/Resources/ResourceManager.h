@@ -2,7 +2,6 @@
 
 #include "Core/Common.h"
 
-#include "Types/Vector2.hpp"
 #include "Types/Color.hpp"
 
 #include <memory>
@@ -11,7 +10,7 @@
 namespace vk2d {
 
 class ThreadPool;
-class Resource;
+class ResourceBase;
 class TextureResource;
 class FontResource;
 
@@ -51,7 +50,7 @@ public:
 	///				you do not need to keep the vector around.
 	/// @return		Handle to newly created texture resource you can use when rendering.
 	VK2D_API TextureResource								*	VK2D_APIENTRY				CreateTextureResource(
-		vk2d::Vector2u											size,
+		glm::uvec2												size,
 		const std::vector<vk2d::Color8>						&	texels );
 
 	/// @brief		Load a single layer texture resource from a file. File format is always
@@ -110,7 +109,7 @@ public:
 	///				not need to keep the vector around.
 	/// @return		Handle to newly created texture resource you can use when rendering.
 	VK2D_API TextureResource								*	VK2D_APIENTRY				CreateArrayTextureResource(
-		vk2d::Vector2u											size,
+		glm::uvec2												size,
 		const std::vector<const std::vector<vk2d::Color8>*>	&	texels_listing );
 
 	/// @brief		Load a multi-layer texture resource from files.
@@ -134,51 +133,21 @@ public:
 	///				File path to a font file. VK2D uses Freetype 2 so most common fonts are
 	///				supported. See https://www.freetype.org/freetype2/docs/ for more info. <br>
 	///				<table>
-	///				<tr>
-	///					<th>Supported formats</th>
-	///				</tr>
-	///				<tr>
-	///					<td>TrueType fonts (TTF)</td>
-	///				</tr>
-	///				<tr>
-	///					<td>TrueType collections (TTC)</td>
-	///				</tr>
-	///				<tr>
-	///					<td>CFF fonts</td>
-	///				</tr>
-	///				<tr>
-	///					<td>WOFF fonts</td>
-	///				</tr>
-	///				<tr>
-	///					<td>OpenType fonts (OTF, both TrueType and CFF variants)</td>
-	///				</tr>
-	///				<tr>
-	///					<td>OpenType collections (OTC)</td>
-	///				</tr>
-	///				<tr>
-	///					<td>Type 1 fonts (PFA and PFB)</td>
-	///				</tr>
-	///				<tr>
-	///					<td>CID-keyed Type 1 fonts</td>
-	///				</tr>
-	///				<tr>
-	///					<td>SFNT-based bitmap fonts, including color Emoji</td>
-	///				</tr>
-	///				<tr>
-	///					<td>X11 PCF fonts</td>
-	///				</tr>
-	///				<tr>
-	///					<td>Windows FNT fonts</td>
-	///				</tr>
-	///				<tr>
-	///					<td>BDF fonts (including anti-aliased ones)</td>
-	///				</tr>
-	///				<tr>
-	///					<td>PFR fonts</td>
-	///				</tr>
-	///				<tr>
-	///					<td>Type 42 fonts (limited support)</td>
-	///				</tr>
+	///				<tr> <th> Supported formats
+	///				<tr> <td> TrueType fonts (TTF) 
+	///				<tr> <td> TrueType collections (TTC)
+	///				<tr> <td> CFF fonts
+	///				<tr> <td> WOFF fonts
+	///				<tr> <td> OpenType fonts (OTF, both TrueType and CFF variants)
+	///				<tr> <td> OpenType collections (OTC)
+	///				<tr> <td> Type 1 fonts (PFA and PFB)
+	///				<tr> <td> CID-keyed Type 1 fonts
+	///				<tr> <td> SFNT-based bitmap fonts, including color Emoji
+	///				<tr> <td> X11 PCF fonts
+	///				<tr> <td> Windows FNT fonts
+	///				<tr> <td> BDF fonts (including anti-aliased ones)
+	///				<tr> <td> PFR fonts
+	///				<tr> <td> Type 42 fonts (limited support)
 	///				</table>
 	/// @param[in]	glyph_texel_size
 	///				Glyph texel size tells the desired nominal height of a single letter
@@ -227,7 +196,7 @@ public:
 	///				Pointer to vk2d::Resource to destroy. After this the resource is no
 	///				longer valid and trying to use it will crash your application.
 	VK2D_API void												VK2D_APIENTRY				DestroyResource(
-		vk2d::Resource																	*	resource );
+		vk2d::ResourceBase																*	resource );
 
 	/// @brief		VK2D class object checker function.
 	/// @note		Multithreading: Any thread.

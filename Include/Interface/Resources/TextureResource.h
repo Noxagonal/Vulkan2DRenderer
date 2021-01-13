@@ -2,10 +2,9 @@
 
 #include "Core/Common.h"
 
-#include "Types/Vector2.hpp"
 #include "Types/Color.hpp"
 
-#include "Interface/ResourceManager/Resource.h"
+#include "Interface/Resources/ResourceBase.h"
 #include "Interface/Texture.h"
 
 #include <memory>
@@ -31,7 +30,7 @@ class ResourceThreadUnloadTask;
 ///				contain multiple images that can be indexed at runtime.
 class TextureResource :
 	public vk2d::Texture,
-	public vk2d::Resource
+	public vk2d::ResourceBase
 {
 	friend class vk2d::_internal::TextureResourceImpl;
 	friend class vk2d::_internal::ResourceManagerImpl;
@@ -66,7 +65,7 @@ class TextureResource :
 	VK2D_API																				TextureResource(
 		vk2d::_internal::ResourceManagerImpl				*	resource_manager,
 		uint32_t												loader_thread,
-		vk2d::Resource										*	parent_resource,
+		vk2d::ResourceBase									*	parent_resource,
 		const std::vector<std::filesystem::path>			&	file_paths_listing );
 
 	/// @brief		This constructor is meant for internal use only. All resources are
@@ -101,8 +100,8 @@ class TextureResource :
 	VK2D_API																				TextureResource(
 		vk2d::_internal::ResourceManagerImpl				*	resource_manager,
 		uint32_t												loader_thread,
-		vk2d::Resource										*	parent_resource,
-		vk2d::Vector2u											size,
+		vk2d::ResourceBase									*	parent_resource,
+		glm::uvec2												size,
 		const std::vector<const std::vector<vk2d::Color8>*>	&	texels_listing );
 
 public:
@@ -148,7 +147,7 @@ public:
 
 	/// @brief		Get texel size of the texture resource.
 	/// @return		Texel size of the resource.
-	VK2D_API vk2d::Vector2u										VK2D_APIENTRY				GetSize() const;
+	VK2D_API glm::uvec2											VK2D_APIENTRY				GetSize() const;
 
 	/// @brief		All VK2D textures are multi-layer textures. This returns the
 	///				amount of layers in the texture.

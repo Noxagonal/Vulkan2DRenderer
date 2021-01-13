@@ -1,5 +1,5 @@
 
-message(==== WINDOWS PACKAGE ====)
+message("------ WINDOWS PACKAGE ------")
 
 install(
 	DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/../install/"

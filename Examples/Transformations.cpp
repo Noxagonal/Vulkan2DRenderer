@@ -12,6 +12,7 @@
 
 #include <VK2D.h>
 #include <chrono>
+#include <iostream>
 
 
 
@@ -66,6 +67,8 @@ int main()
 	DeltaTimeCounter delta_time_counter;
 	auto seconds_from_launch = 0.0f;
 
+	bool first_frame = true;
+
 	while( instance->Run() && !window->ShouldClose() ) {
 
 		// Get delta time.
@@ -80,8 +83,8 @@ int main()
 		// Animate the scale x axis, leave scale y axis as 1.0.
 		// Animate rotation.
 		auto origin = vk2d::Transform(
-			{ std::cos( -seconds_from_launch ) * 100.0f, std::sin( -seconds_from_launch ) * 100.0f },
-			{ std::sin( seconds_from_launch ) * 0.5f + 1.0f, 1.0f },
+			{ glm::cos( -seconds_from_launch ) * 100.0f, glm::sin( -seconds_from_launch ) * 100.0f },
+			{ glm::sin( seconds_from_launch ) * 0.5f + 1.0f, 1.0f },
 			seconds_from_launch / 3.0f
 		);
 
@@ -89,6 +92,11 @@ int main()
 		// This transformation matrix is useful when calculating parent-child
 		// transformation relationships.
 		auto origin_matrix = origin.CalculateTransformationMatrix();
+
+		if( first_frame ) {
+			std::cout << origin_matrix << "\n";
+			first_frame = false;
+		}
 
 		// We want one of the box meshes to follow transformations of the origin,
 		// so information given here is intented to be relative to "origin" transform.
@@ -101,9 +109,9 @@ int main()
 
 		// Same as "child" transform but this is intended to follow "child"'s transform.
 		auto sub_child = vk2d::Transform(
-			{ 0.0f, std::sin( seconds_from_launch / 2.0f ) * 150.0f },
+			{ 0.0f, glm::sin( seconds_from_launch / 2.0f ) * 150.0f },
 			{ 1.0f, 1.0f },
-			std::sin( seconds_from_launch )
+			glm::sin( seconds_from_launch )
 		);
 		auto sub_child_matrix = sub_child.CalculateTransformationMatrix();
 
@@ -128,7 +136,7 @@ int main()
 
 		// Window::DrawMesh() can take 3 types of transformation parameters:
 		// vk2d::Transform object, std::array of vk2d::Transform objects or a std::array of
-		// vk2d::Matrix4f. Matrices are the only things capable of scene parent-child hierarchy.
+		// glm::mat4. Matrices are the only things capable of scene parent-child hierarchy.
 		// Here vk2d::Transform object is used directly when drawing a mesh for easier use.
 		window->DrawMesh( box_mesh, origin );
 

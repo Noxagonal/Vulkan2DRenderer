@@ -1,5 +1,5 @@
 
-#include "TestCommon.h"
+#include "Testbed.h"
 
 #include <random>
 #include <functional>
@@ -129,24 +129,24 @@ bool VerifyImageWithSamples(
 }
 
 CoordGrid::CoordGrid(
-	vk2d::Vector2f		draw_area,
-	vk2d::Vector2f		spacing )
+	glm::vec2		draw_area,
+	glm::vec2		spacing )
 {
 	this->draw_area		= draw_area;
 	this->spacing		= spacing;
 	this->location		= {};
 }
 
-CoordGrid::CoordGrid( vk2d::Vector2u draw_area, vk2d::Vector2f spacing )
+CoordGrid::CoordGrid( glm::uvec2 draw_area, glm::vec2 spacing )
 {
-	this->draw_area		= vk2d::Vector2f( float( draw_area.x ), float( draw_area.y ) );
+	this->draw_area		= glm::vec2( float( draw_area.x ), float( draw_area.y ) );
 	this->spacing		= spacing;
 	this->location		= {};
 }
 
-vk2d::Vector2f CoordGrid::InsertTopLeft()
+glm::vec2 CoordGrid::InsertTopLeft()
 {
-	vk2d::Vector2f coords {};
+	glm::vec2 coords {};
 	coords.x		= location.x * spacing.x;
 	coords.y		= location.y * spacing.y;
 
@@ -159,9 +159,9 @@ vk2d::Vector2f CoordGrid::InsertTopLeft()
 	return coords;
 }
 
-vk2d::Vector2f CoordGrid::InsertBottomRight()
+glm::vec2 CoordGrid::InsertBottomRight()
 {
-	vk2d::Vector2f coords {};
+	glm::vec2 coords {};
 	coords.x		= location.x * spacing.x + spacing.x;
 	coords.y		= location.y * spacing.y + spacing.y;
 	return coords;

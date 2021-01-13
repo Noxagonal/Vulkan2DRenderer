@@ -353,22 +353,6 @@ private:
 	size_t							data_capacity			= {};
 };
 
-template<typename T>
-std::ostream & operator<<( std::ostream & os, vk2d::Array<T> & v )
-{
-	auto vs = std::size( v );
-	if( vs ) {
-		os << "[";
-		for( size_t i = 0; i < vs - 1; ++i ) {
-			os << v[ i ] << ", ";
-		}
-		os << v.Back() << "]";
-	} else {
-		os << "[]";
-	}
-	return os;
-}
-
 
 
 } // vk2d

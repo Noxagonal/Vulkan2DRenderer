@@ -8,7 +8,7 @@ namespace vk2d {
 
 namespace _internal {
 class ResourceManagerImpl;
-class ResourceImpl;
+class ResourceImplBase;
 class ResourceThreadLoadTask;
 class ResourceThreadUnloadTask;
 }
@@ -37,15 +37,15 @@ enum class ResourceStatus
 ///				the next section of the map or load commonly used textures in the game
 ///				while user is still in the main menu.
 /// @see		vk2d::ResourceManager
-class Resource {
+class ResourceBase {
 	friend class vk2d::_internal::ResourceManagerImpl;
-	friend class vk2d::_internal::ResourceImpl;
+	friend class vk2d::_internal::ResourceImplBase;
 	friend class vk2d::_internal::ResourceThreadLoadTask;
 	friend class vk2d::_internal::ResourceThreadUnloadTask;
 
 public:
 	// TODO: Figure out how to get rid of Resource virtual destructor to improve ABI compatibility further.
-	VK2D_API virtual																			~Resource()						= default;
+	VK2D_API virtual																			~ResourceBase()						= default;
 
 	/// @brief		Checks if the resource has been loaded, failed to load or is yet
 	///				to be loaded / determined. This function will not wait but returns
@@ -90,7 +90,7 @@ public:
 	///				should not be removed unless the parent resources are removed.
 	/// @note		Multithreading: Any thread.
 	/// @return		Parent resource that owns this resource.
-	VK2D_API vk2d::Resource								*	VK2D_APIENTRY						GetParentResource();
+	VK2D_API vk2d::ResourceBase							*	VK2D_APIENTRY						GetParentResource();
 
 	/// @brief		Checks if the resource was loaded from a file or from data.
 	/// @note		Multithreading: Any thread.
@@ -98,9 +98,6 @@ public:
 	///				resource origin is data, eg. a list of texels given to the
 	///				resource manager to create a texture from.
 	VK2D_API bool											VK2D_APIENTRY						IsFromFile() const;
-
-	// Returns the file path where the resource was loaded from,
-	// if the was not loaded from a file, returns "".
 
 	/// @brief		If resource origin is a file then this returns all the file paths
 	///				where to load the resource from. Some resources can use multiple
@@ -121,7 +118,7 @@ public:
 
 protected:
 
-	vk2d::_internal::ResourceImpl						*	resource_impl						= {};
+	vk2d::_internal::ResourceImplBase					*	resource_impl						= {};
 };
 
 

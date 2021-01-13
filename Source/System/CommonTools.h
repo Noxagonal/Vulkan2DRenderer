@@ -2,8 +2,6 @@
 
 #include "Core/SourceCommon.h"
 
-#include "Types/Vector2.hpp"
-
 namespace vk2d {
 
 namespace _internal {
@@ -11,7 +9,7 @@ namespace _internal {
 
 
 std::vector<VkExtent2D>				GenerateMipSizes(
-	vk2d::Vector2u					full_size );
+	glm::uvec2						full_size );
 
 
 

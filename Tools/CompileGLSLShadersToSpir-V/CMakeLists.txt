@@ -6,7 +6,7 @@
 cmake_minimum_required(VERSION 3.16)
 
 set(GLSLANG_PATH
-	"${CMAKE_SOURCE_DIR}/ExternalLibraries/glslang"
+	"${EXTERNAL_SUBMODULES_PATH}/glslang"
 )
 
 add_executable(CompileGLSLShadersToSpirV
@@ -17,14 +17,14 @@ set_target_properties(CompileGLSLShadersToSpirV
 	PROPERTIES
 		FOLDER						"Tools"
 		CXX_STANDARD				17
-		ARCHIVE_OUTPUT_DIRECTORY	"${CMAKE_BINARY_DIR}/Lib"
-		LIBRARY_OUTPUT_DIRECTORY	"${CMAKE_BINARY_DIR}/Lib"
-		RUNTIME_OUTPUT_DIRECTORY	"${CMAKE_BINARY_DIR}/Bin"
+		ARCHIVE_OUTPUT_DIRECTORY	"${CMAKE_CURRENT_BINARY_DIR}/Lib/"
+		LIBRARY_OUTPUT_DIRECTORY	"${CMAKE_CURRENT_BINARY_DIR}/Lib/"
+		RUNTIME_OUTPUT_DIRECTORY	"${CMAKE_CURRENT_BINARY_DIR}/Bin/"
 )
 
 target_include_directories(CompileGLSLShadersToSpirV
 	PUBLIC
-		"${GLSLANG_PATH}"
+		"${GLSLANG_PATH}/"
 )
 
 target_link_libraries(CompileGLSLShadersToSpirV

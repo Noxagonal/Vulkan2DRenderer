@@ -5,15 +5,15 @@
 
 #include "Interface/InstanceImpl.h"
 
-#include "Interface/ResourceManager/ResourceManager.h"
-#include "Interface/ResourceManager/ResourceManagerImpl.h"
+#include "Interface/Resources/ResourceManager.h"
+#include "Interface/Resources/ResourceManagerImpl.h"
 
-#include "Interface/ResourceManager/Resource.h"
-#include "Interface/ResourceManager/ResourceImpl.h"
+#include "Interface/Resources/ResourceBase.h"
+#include "Interface/Resources/ResourceImplBase.h"
 
-#include "Interface/ResourceManager/TextureResource.h"
+#include "Interface/Resources/TextureResource.h"
 
-#include "Interface/ResourceManager/FontResource.h"
+#include "Interface/Resources/FontResource.h"
 
 
 
@@ -54,7 +54,7 @@ VK2D_API vk2d::ResourceManager::~ResourceManager()
 {}
 
 VK2D_API vk2d::TextureResource * VK2D_APIENTRY vk2d::ResourceManager::CreateTextureResource(
-	vk2d::Vector2u						size,
+	glm::uvec2						size,
 	const std::vector<vk2d::Color8>	&	texels
 )
 {
@@ -76,7 +76,7 @@ VK2D_API vk2d::TextureResource * VK2D_APIENTRY vk2d::ResourceManager::LoadTextur
 }
 
 VK2D_API vk2d::TextureResource * VK2D_APIENTRY vk2d::ResourceManager::CreateArrayTextureResource(
-	vk2d::Vector2u											size,
+	glm::uvec2											size,
 	const std::vector<const std::vector<vk2d::Color8>*>	&	texels_listing
 )
 {
@@ -116,7 +116,7 @@ VK2D_API vk2d::FontResource * VK2D_APIENTRY vk2d::ResourceManager::LoadFontResou
 }
 
 VK2D_API void VK2D_APIENTRY vk2d::ResourceManager::DestroyResource(
-	vk2d::Resource		*	resource
+	vk2d::ResourceBase		*	resource
 )
 {
 	impl->DestroyResource( resource );
@@ -149,7 +149,7 @@ VK2D_API bool VK2D_APIENTRY vk2d::ResourceManager::IsGood() const
 
 vk2d::_internal::ResourceThreadLoadTask::ResourceThreadLoadTask(
 	vk2d::_internal::ResourceManagerImpl	*	resource_manager,
-	vk2d::Resource							*	resource
+	vk2d::ResourceBase						*	resource
 ) :
 	resource_manager( resource_manager ),
 	resource( resource )
@@ -174,7 +174,7 @@ void vk2d::_internal::ResourceThreadLoadTask::operator()(
 
 vk2d::_internal::ResourceThreadUnloadTask::ResourceThreadUnloadTask(
 	vk2d::_internal::ResourceManagerImpl	*	resource_manager,
-	std::unique_ptr<vk2d::Resource>				resource
+	std::unique_ptr<vk2d::ResourceBase>			resource
 ) :
 	resource_manager( resource_manager ),
 	resource( std::move( resource ) )
@@ -255,7 +255,7 @@ vk2d::_internal::ResourceManagerImpl::~ResourceManagerImpl()
 
 vk2d::TextureResource * vk2d::_internal::ResourceManagerImpl::LoadTextureResource(
 	const std::filesystem::path			&	file_path,
-	vk2d::Resource						*	parent_resource )
+	vk2d::ResourceBase					*	parent_resource )
 {
 	std::lock_guard<std::recursive_mutex>		resources_lock( resources_mutex );
 
@@ -276,9 +276,9 @@ vk2d::TextureResource * vk2d::_internal::ResourceManagerImpl::LoadTextureResourc
 }
 
 vk2d::TextureResource * vk2d::_internal::ResourceManagerImpl::CreateTextureResource(
-	vk2d::Vector2u							size,
+	glm::uvec2								size,
 	const std::vector<vk2d::Color8>		&	texture_data,
-	vk2d::Resource						*	parent_resource )
+	vk2d::ResourceBase					*	parent_resource )
 {
 	std::lock_guard<std::recursive_mutex>		resources_lock( resources_mutex );
 
@@ -302,7 +302,7 @@ vk2d::TextureResource * vk2d::_internal::ResourceManagerImpl::CreateTextureResou
 
 vk2d::TextureResource * vk2d::_internal::ResourceManagerImpl::LoadArrayTextureResource(
 	const std::vector<std::filesystem::path>		&	file_path_listing,
-	vk2d::Resource									*	parent_resource )
+	vk2d::ResourceBase								*	parent_resource )
 {
 	std::lock_guard<std::recursive_mutex>		resources_lock( resources_mutex );
 
@@ -323,9 +323,9 @@ vk2d::TextureResource * vk2d::_internal::ResourceManagerImpl::LoadArrayTextureRe
 }
 
 vk2d::TextureResource * vk2d::_internal::ResourceManagerImpl::CreateArrayTextureResource(
-	vk2d::Vector2u											size,
+	glm::uvec2											size,
 	const std::vector<const std::vector<vk2d::Color8>*>	&	texture_data_listings,
-	vk2d::Resource										*	parent_resource )
+	vk2d::ResourceBase									*	parent_resource )
 {
 	std::lock_guard<std::recursive_mutex>		resources_lock( resources_mutex );
 
@@ -350,7 +350,7 @@ vk2d::TextureResource * vk2d::_internal::ResourceManagerImpl::CreateArrayTexture
 
 vk2d::FontResource * vk2d::_internal::ResourceManagerImpl::LoadFontResource(
 	const std::filesystem::path			&	file_path,
-	vk2d::Resource						*	parent_resource,
+	vk2d::ResourceBase					*	parent_resource,
 	uint32_t								glyph_texel_size,
 	bool									use_alpha,
 	uint32_t								fallback_character,
@@ -382,7 +382,7 @@ vk2d::FontResource * vk2d::_internal::ResourceManagerImpl::LoadFontResource(
 }
 
 void vk2d::_internal::ResourceManagerImpl::DestroyResource(
-	vk2d::Resource		*	resource
+	vk2d::ResourceBase	*	resource
 )
 {
 	if( !resource ) return;
@@ -437,7 +437,9 @@ bool vk2d::_internal::ResourceManagerImpl::IsGood() const
 	return is_good;
 }
 
-void vk2d::_internal::ResourceManagerImpl::ScheduleResourceLoad( vk2d::Resource * resource_ptr )
+void vk2d::_internal::ResourceManagerImpl::ScheduleResourceLoad(
+	vk2d::ResourceBase * resource_ptr
+)
 {
 	thread_pool->ScheduleTask(
 		std::make_unique<vk2d::_internal::ResourceThreadLoadTask>(

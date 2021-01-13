@@ -3,7 +3,6 @@
 #include "Core/Common.h"
 
 #include "Types/MeshPrimitives.hpp"
-#include "Types/Vector2.hpp"
 #include "Types/Rect2.hpp"
 #include "Types/Color.hpp"
 
@@ -34,14 +33,14 @@ class Mesh {
 	friend class vk2d::_internal::RenderTargetTextureImpl;
 
 	friend VK2D_API vk2d::Mesh						VK2D_APIENTRY					GeneratePointMeshFromList(
-		const std::vector<vk2d::Vector2f>		&	points );
+		const std::vector<glm::vec2>			&	points );
 
 	friend VK2D_API vk2d::Mesh						VK2D_APIENTRY					GenerateLineMeshFromList(
-		const std::vector<vk2d::Vector2f>		&	points,
+		const std::vector<glm::vec2>			&	points,
 		const std::vector<vk2d::VertexIndex_2>	&	indices );
 
 	friend VK2D_API vk2d::Mesh						VK2D_APIENTRY					GenerateTriangleMeshFromList(
-		const std::vector<vk2d::Vector2f>		&	points,
+		const std::vector<glm::vec2>			&	points,
 		const std::vector<vk2d::VertexIndex_3>	&	indices,
 		bool										filled );
 
@@ -69,15 +68,15 @@ class Mesh {
 
 	friend VK2D_API vk2d::Mesh						VK2D_APIENTRY					GenerateLatticeMesh(
 		vk2d::Rect2f								area,
-		vk2d::Vector2f								subdivisions,
+		glm::vec2								subdivisions,
 		bool										filled );
 
 	friend VK2D_API vk2d::Mesh						VK2D_APIENTRY					GenerateTextMesh(
 		vk2d::FontResource						*	font,
-		vk2d::Vector2f								origin,
+		glm::vec2								origin,
 		std::string									text,
 		float										kerning,
-		vk2d::Vector2f								scale,
+		glm::vec2								scale,
 		bool										vertical,
 		uint32_t									font_face,
 		bool										wait_for_resource_load );
@@ -87,7 +86,7 @@ public:
 	/// @param[in]	movement
 	///				A math vector that will be added to each vertex position.
 	VK2D_API void									VK2D_APIENTRY					Translate(
-		const vk2d::Vector2f						movement );
+		const glm::vec2								movement );
 
 	/// @brief		Rotate the mesh around a pivot point.
 	/// @param[in]	rotation_amount_radians
@@ -96,7 +95,7 @@ public:
 	///				The pivot point of which the mesh vertices are rotated around.
 	VK2D_API void									VK2D_APIENTRY					Rotate(
 		float										rotation_amount_radians,
-		vk2d::Vector2f								origin							= {} );
+		glm::vec2									origin							= {} );
 
 	/// @brief		Moves all the vertices closer or father from the origin point.
 	/// @param[in]	scaling_amount
@@ -105,8 +104,8 @@ public:
 	/// @param[in]	origin
 	///				Origin point of which everything is scaled towards or away from.
 	VK2D_API void									VK2D_APIENTRY					Scale(
-		vk2d::Vector2f								scaling_amount,
-		vk2d::Vector2f								origin							= {} );
+		glm::vec2									scaling_amount,
+		glm::vec2									origin							= {} );
 
 	/// @brief		Scews the mesh in vertical and horisontal directions based on origin point.
 	/// @param[in]	scew_amount
@@ -121,8 +120,8 @@ public:
 	/// @param[in]	origin
 	///				Origin point of which everything is scewed in relation to.
 	VK2D_API void									VK2D_APIENTRY					Scew(
-		vk2d::Vector2f								scew_amount,
-		vk2d::Vector2f								origin							= {} );
+		glm::vec2									scew_amount,
+		glm::vec2									origin							= {} );
 
 	/// @brief		Makes a simple wave pattern that can be animated. This is purely artistic
 	///				effect.
@@ -146,8 +145,8 @@ public:
 		float										direction_radians,
 		float										frequency,
 		float										animation,
-		vk2d::Vector2f								intensity,
-		vk2d::Vector2f								origin							= {} );
+		glm::vec2									intensity,
+		glm::vec2									origin							= {} );
 
 	/// @brief		Moves vertices UV coordinates to some direction. This directly moves the
 	///				UVs to some direction so texture movement will appear exact opposite of
@@ -157,7 +156,7 @@ public:
 	///				are always in range of 0.0 to 1.0, in case a UV coordinate goes outside
 	///				this range, a vk2d::Sampler will determine what to do with it.
 	VK2D_API void									VK2D_APIENTRY					TranslateUV(
-		const vk2d::Vector2f						movement );
+		const glm::vec2								movement );
 
 	/// @brief		Rotate UV coordinates on all vertices around origin. This directly scales
 	///				the UVs so texture rotation will appear inverted.
@@ -170,7 +169,7 @@ public:
 	///				range will appear to both translate and rotate.
 	VK2D_API void									VK2D_APIENTRY					RotateUV(
 		float										rotation_amount_radians,
-		vk2d::Vector2f								origin							= { 0.5f, 0.5f } );
+		glm::vec2									origin							= { 0.5f, 0.5f } );
 
 	/// @brief		Scaling UVs will work exactly the same as to scaling vertices except for
 	///				UV coordinates, so scaling everything to 0.0 will make texture to be sampled
@@ -181,8 +180,8 @@ public:
 	/// @param[in]	origin
 	///				Origin point of which everything is scaled towards or away from.
 	VK2D_API void									VK2D_APIENTRY					ScaleUV(
-		vk2d::Vector2f								scaling_amount,
-		vk2d::Vector2f								origin							= { 0.5f, 0.5f } );
+		glm::vec2									scaling_amount,
+		glm::vec2									origin							= { 0.5f, 0.5f } );
 
 	/// @brief		Scewing UVs works similarly to scewing vertices except for UVs. This means
 	///				everything appears the opposite of the actual effect.
@@ -195,8 +194,8 @@ public:
 	/// @param[in]	origin
 	///				Origin point of which everything is scewed in relation to.
 	VK2D_API void									VK2D_APIENTRY					ScewUV(
-		vk2d::Vector2f								scew_amount,
-		vk2d::Vector2f								origin							= { 0.5f, 0.5f } );
+		glm::vec2									scew_amount,
+		glm::vec2									origin							= { 0.5f, 0.5f } );
 
 	/// @brief		Makes a simple wave pattern that can be animated in the UV coordinate space.
 	///				This is purely artistic effect. Please note that this directly effects the
@@ -221,8 +220,8 @@ public:
 		float										direction_radians,
 		float										frequency,
 		float										animation,
-		vk2d::Vector2f								intensity,
-		vk2d::Vector2f								origin							= { 0.5f, 0.5f } );
+		glm::vec2									intensity,
+		glm::vec2									origin							= { 0.5f, 0.5f } );
 
 	/// @brief		Set all vertices to a specific color.
 	/// @param[in]	new_color
@@ -243,8 +242,8 @@ public:
 	VK2D_API void									VK2D_APIENTRY					SetVertexColorGradient(
 		vk2d::Colorf								color_1,
 		vk2d::Colorf								color_2,
-		vk2d::Vector2f								coord_1,
-		vk2d::Vector2f								coord_2 );
+		glm::vec2									coord_1,
+		glm::vec2									coord_2 );
 
 	/// @brief		Recalculates new UV locations for each vertex so that the entire
 	///				UV space is contained within the bounding box of the mesh.
@@ -373,7 +372,7 @@ private:
 ///				A list of coordinates representing point locations.
 /// @return		A new mesh object.
 VK2D_API vk2d::Mesh									VK2D_APIENTRY					GeneratePointMeshFromList(
-	const std::vector<vk2d::Vector2f>			&	points );
+	const std::vector<glm::vec2>				&	points );
 
 /// @brief		Generate line mesh from points and connections.
 /// @param[in]	points
@@ -382,7 +381,7 @@ VK2D_API vk2d::Mesh									VK2D_APIENTRY					GeneratePointMeshFromList(
 ///				Indices defining which points should be connected with a line.
 /// @return		A new mesh object.
 VK2D_API vk2d::Mesh									VK2D_APIENTRY					GenerateLineMeshFromList(
-	const std::vector<vk2d::Vector2f>			&	points,
+	const std::vector<glm::vec2>				&	points,
 	const std::vector<vk2d::VertexIndex_2>		&	indices );
 
 /// @brief		Generate triangle mesh from points and connections.
@@ -394,7 +393,7 @@ VK2D_API vk2d::Mesh									VK2D_APIENTRY					GenerateLineMeshFromList(
 ///				true if triangle mesh is filled, false for wireframe.
 /// @return		A new mesh object.
 VK2D_API vk2d::Mesh									VK2D_APIENTRY					GenerateTriangleMeshFromList(
-	const std::vector<vk2d::Vector2f>			&	points,
+	const std::vector<glm::vec2>				&	points,
 	const std::vector<vk2d::VertexIndex_3>		&	indices,
 	bool											filled							= true );
 
@@ -479,7 +478,7 @@ VK2D_API vk2d::Mesh									VK2D_APIENTRY					GenerateRectanglePieMesh(
 /// @return		A new mesh object.
 VK2D_API vk2d::Mesh									VK2D_APIENTRY					GenerateLatticeMesh(
 	vk2d::Rect2f									area,
-	vk2d::Vector2f									subdivisions,
+	glm::vec2										subdivisions,
 	bool											filled							= true );
 
 /// @brief		Generate a text mesh that can be used to render text.
@@ -518,10 +517,10 @@ VK2D_API vk2d::Mesh									VK2D_APIENTRY					GenerateLatticeMesh(
 /// @return		A new mesh object.
 VK2D_API vk2d::Mesh									VK2D_APIENTRY					GenerateTextMesh(
 	vk2d::FontResource							*	font,
-	vk2d::Vector2f									origin,
+	glm::vec2										origin,
 	std::string										text,
 	float											kerning							= 0.0f,
-	vk2d::Vector2f									scale							= vk2d::Vector2f( 1.0f, 1.0f ),
+	glm::vec2										scale							= glm::vec2( 1.0f, 1.0f ),
 	bool											vertical						= false,
 	uint32_t										font_face						= 0,
 	bool											wait_for_resource_load			= true );

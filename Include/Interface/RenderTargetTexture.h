@@ -3,9 +3,7 @@
 #include "Core/Common.h"
 
 #include "Types/BlurType.h"
-#include "Types/Vector2.hpp"
 #include "Types/Rect2.hpp"
-#include "Types/Matrix4.hpp"
 #include "Types/Transform.h"
 #include "Types/Color.hpp"
 #include "Types/Multisamples.h"
@@ -33,7 +31,7 @@ class RenderTargetTextureImpl;
 struct RenderTargetTextureCreateInfo
 {
 	vk2d::RenderCoordinateSpace				coordinate_space			= vk2d::RenderCoordinateSpace::TEXEL_SPACE;	///< Coordinate system to be used, see vk2d::RenderCoordinateSpace.
-	vk2d::Vector2u							size						= vk2d::Vector2u( 512, 512 );				///< Render target texture texel size.
+	glm::uvec2								size						= glm::uvec2( 512, 512 );					///< Render target texture texel size.
 	vk2d::Multisamples						samples						= vk2d::Multisamples::SAMPLE_COUNT_1;		///< Multisampling, must be a singular value, see vk2d::Multisamples. Uses more GPU resources if higher than 1.
 	bool									enable_blur					= false;									///< Enable ability to blur the render target texture at the end of the render. Uses more GPU resources if enabled.
 };
@@ -101,12 +99,12 @@ public:
 	/// @param[in]	new_size
 	///				New texel size of this render target texture.
 	VK2D_API void												VK2D_APIENTRY				SetSize(
-		vk2d::Vector2u											new_size );
+		glm::uvec2												new_size );
 
 	/// @brief		Gets the texel size of the render target texture.
 	/// @note		Multithreading: Main thread only.
 	/// @return		Size of the render target texture in texels.
-	VK2D_API vk2d::Vector2u										VK2D_APIENTRY				GetSize() const;
+	VK2D_API glm::uvec2											VK2D_APIENTRY				GetSize() const;
 
 	/// @brief		Gets the texture layer count. This is provided for compatibility
 	///				with vk2d::Texture. It always returns 1.
@@ -152,7 +150,7 @@ public:
 	///				Type of blur to use, see vk2d::BlurType for more info.
 	/// @return		true on success, false if something went wrong.
 	VK2D_API bool												VK2D_APIENTRY				EndRender(
-		vk2d::Vector2f											blur_amount					= {},
+		glm::vec2												blur_amount					= {},
 		vk2d::BlurType											blur_type					= vk2d::BlurType::GAUSSIAN );
 
 	/// @brief		Draw triangles directly. This is the best option if you wish to render vertices directly.
@@ -190,7 +188,7 @@ public:
 		const std::vector<vk2d::VertexIndex_3>				&	indices,
 		const std::vector<vk2d::Vertex>						&	vertices,
 		const std::vector<float>							&	texture_layer_weights,
-		const std::vector<vk2d::Matrix4f>					&	transformations				= {},
+		const std::vector<glm::mat4>						&	transformations				= {},
 		bool													filled						= true,
 		vk2d::Texture										*	texture						= nullptr,
 		vk2d::Sampler										*	sampler						= nullptr );
@@ -232,7 +230,7 @@ public:
 		const std::vector<vk2d::VertexIndex_2>				&	indices,
 		const std::vector<vk2d::Vertex>						&	vertices,
 		const std::vector<float>							&	texture_layer_weights,
-		const std::vector<vk2d::Matrix4f>					&	transformations				= {},
+		const std::vector<glm::mat4>						&	transformations				= {},
 		vk2d::Texture										*	texture						= nullptr,
 		vk2d::Sampler										*	sampler						= nullptr,
 		float													line_width					= 1.0f );
@@ -269,7 +267,7 @@ public:
 	VK2D_API void												VK2D_APIENTRY				DrawPointList(
 		const std::vector<vk2d::Vertex>						&	vertices,
 		const std::vector<float>							&	texture_layer_weights,
-		const std::vector<vk2d::Matrix4f>					&	transformations				= {},
+		const std::vector<glm::mat4>						&	transformations				= {},
 		vk2d::Texture										*	texture						= nullptr,
 		vk2d::Sampler										*	sampler						= nullptr );
 
@@ -286,7 +284,7 @@ public:
 	/// @param[in]	size
 	///				Size of the point we're drawing in texels.
 	VK2D_API void												VK2D_APIENTRY				DrawPoint(
-		vk2d::Vector2f											location,
+		glm::vec2												location,
 		vk2d::Colorf											color						= { 1.0f, 1.0f, 1.0f, 1.0f },
 		float													size						= 1.0f );
 
@@ -303,8 +301,8 @@ public:
 	/// @param[in]	color
 	///				Color of the line.
 	VK2D_API void												VK2D_APIENTRY				DrawLine(
-		vk2d::Vector2f											point_1,
-		vk2d::Vector2f											point_2,
+		glm::vec2												point_1,
+		glm::vec2												point_2,
 		vk2d::Colorf											color						= { 1.0f, 1.0f, 1.0f, 1.0f },
 		float													line_width					= 1.0f );
 
@@ -419,7 +417,7 @@ public:
 	///				red channel of the texture, { 1.0, 1.0, 1.0, 0.5 } renders the texture half
 	///				transparent, { 10.0, 10.0, 10.0, 1.0 } will render the texture overexposed.
 	VK2D_API void												VK2D_APIENTRY				DrawTexture(
-		vk2d::Vector2f											top_left,
+		glm::vec2												top_left,
 		vk2d::Texture										*	texture,
 		vk2d::Colorf											color						= { 1.0f, 1.0f, 1.0f, 1.0f } );
 
@@ -453,7 +451,7 @@ public:
 	///				transformations tells how many times to draw this mesh using each transformation.
 	VK2D_API void												VK2D_APIENTRY				DrawMesh(
 		const vk2d::Mesh									&	mesh,
-		const std::vector<vk2d::Matrix4f>					&	transformations );
+		const std::vector<glm::mat4>						&	transformations );
 
 	/// @brief		VK2D class object checker function.
 	/// @note		Multithreading: Any thread.

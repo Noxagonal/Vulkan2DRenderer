@@ -2,7 +2,6 @@
 
 #include "Core/Common.h"
 
-#include "Types/Vector2.hpp"
 #include "Types/Color.hpp"
 
 #include <array>
@@ -34,12 +33,12 @@ enum class MeshType : uint32_t
 struct Vertex
 {
 	/// @brief		Spacial coordinates of this vertex.
-	alignas( 8 )	vk2d::Vector2f			vertex_coords			= {};
+	alignas( 8 )	glm::vec2				vertex_coords			= {};
 
 	/// @brief		UV coordinates to determine where to read from a texture. UV coordinate space
 	///				is always in range from 0.0 to 1.0 where {0.0, 0.0} is top left of texture and
 	///				{1.0, 1.0} is bottom right of the texture.
-	alignas( 8 )	vk2d::Vector2f			uv_coords				= {};
+	alignas( 8 )	glm::vec2				uv_coords				= {};
 
 	/// @brief		Texture color is multiplied by this, or if no texture is applied, determines
 	///				the displayed color for this vertex.
@@ -57,24 +56,24 @@ struct Vertex
 /// @brief		This is a container enforcing using 2 indices when drawing lines.
 struct VertexIndex_2
 {
-	std::array<uint32_t, 2>		indices		= {};
+	std::array<uint32_t, 2>					indices					= {};
 };
 
 /// @brief		This is a container enforcing using 3 indices when drawing polygons.
 struct VertexIndex_3
 {
-	std::array<uint32_t, 3>		indices		= {};
+	std::array<uint32_t, 3>					indices					= {};
 };
 
 /// @brief		This is a container to hold image texel size and texel data.
 struct ImageData
 {
 	/// @brief		Texel size of an image.
-	vk2d::Vector2u				size		= {};
+	glm::uvec2								size					= {};
 
 	/// @brief		A list of texel color values forming an image fitting to vk2d::ImageData::size
 	///				dimensions. Image data is left to right, top to bottom ordered.
-	std::vector<vk2d::Color8>	data;
+	std::vector<vk2d::Color8>				data;
 };
 
 

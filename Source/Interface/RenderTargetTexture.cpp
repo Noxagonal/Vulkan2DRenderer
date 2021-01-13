@@ -2,7 +2,6 @@
 #include "Core/SourceCommon.h"
 
 #include "Types/BlurType.h"
-#include "Types/Vector2.hpp"
 #include "Types/Rect2.hpp"
 #include "Types/Color.hpp"
 #include "Types/Mesh.h"
@@ -72,7 +71,7 @@ VK2D_API void VK2D_APIENTRY vk2d::RenderTargetTexture::SetRenderCoordinateSpace(
 }
 
 VK2D_API void VK2D_APIENTRY vk2d::RenderTargetTexture::SetSize(
-	vk2d::Vector2u		new_size
+	glm::uvec2		new_size
 )
 {
 	impl->SetSize(
@@ -80,7 +79,7 @@ VK2D_API void VK2D_APIENTRY vk2d::RenderTargetTexture::SetSize(
 	);
 }
 
-VK2D_API vk2d::Vector2u VK2D_APIENTRY vk2d::RenderTargetTexture::GetSize() const
+VK2D_API glm::uvec2 VK2D_APIENTRY vk2d::RenderTargetTexture::GetSize() const
 {
 	return impl->GetSize();
 }
@@ -101,7 +100,7 @@ VK2D_API bool VK2D_APIENTRY vk2d::RenderTargetTexture::BeginRender()
 }
 
 VK2D_API bool VK2D_APIENTRY vk2d::RenderTargetTexture::EndRender(
-	vk2d::Vector2f	blur_amount,
+	glm::vec2	blur_amount,
 	vk2d::BlurType	blur_type
 )
 {
@@ -112,7 +111,7 @@ VK2D_API void VK2D_APIENTRY vk2d::RenderTargetTexture::DrawTriangleList(
 	const std::vector<vk2d::VertexIndex_3>	&	indices,
 	const std::vector<vk2d::Vertex>			&	vertices,
 	const std::vector<float>				&	texture_layer_weights,
-	const std::vector<vk2d::Matrix4f>		&	transformations,
+	const std::vector<glm::mat4>			&	transformations,
 	bool										filled,
 	vk2d::Texture							*	texture,
 	vk2d::Sampler							*	sampler
@@ -133,7 +132,7 @@ VK2D_API void VK2D_APIENTRY vk2d::RenderTargetTexture::DrawLineList(
 	const std::vector<vk2d::VertexIndex_2>	&	indices,
 	const std::vector<vk2d::Vertex>			&	vertices,
 	const std::vector<float>				&	texture_layer_weights,
-	const std::vector<vk2d::Matrix4f>		&	transformations,
+	const std::vector<glm::mat4>			&	transformations,
 	vk2d::Texture							*	texture,
 	vk2d::Sampler							*	sampler,
 	float										line_width
@@ -153,7 +152,7 @@ VK2D_API void VK2D_APIENTRY vk2d::RenderTargetTexture::DrawLineList(
 VK2D_API void VK2D_APIENTRY vk2d::RenderTargetTexture::DrawPointList(
 	const std::vector<vk2d::Vertex>			&	vertices,
 	const std::vector<float>				&	texture_layer_weights,
-	const std::vector<vk2d::Matrix4f>		&	transformations,
+	const std::vector<glm::mat4>			&	transformations,
 	vk2d::Texture							*	texture,
 	vk2d::Sampler							*	sampler
 )
@@ -168,7 +167,7 @@ VK2D_API void VK2D_APIENTRY vk2d::RenderTargetTexture::DrawPointList(
 }
 
 VK2D_API void VK2D_APIENTRY vk2d::RenderTargetTexture::DrawPoint(
-	vk2d::Vector2f			location,
+	glm::vec2				location,
 	vk2d::Colorf			color,
 	float					size
 )
@@ -178,12 +177,12 @@ VK2D_API void VK2D_APIENTRY vk2d::RenderTargetTexture::DrawPoint(
 	);
 	mesh.SetVertexColor( color );
 	mesh.SetPointSize( size );
-	impl->DrawMesh( mesh, { vk2d::Matrix4f( 1.0f ) } );
+	impl->DrawMesh( mesh, { glm::mat4( 1.0f ) } );
 }
 
 VK2D_API void VK2D_APIENTRY vk2d::RenderTargetTexture::DrawLine(
-	vk2d::Vector2f					point_1,
-	vk2d::Vector2f					point_2,
+	glm::vec2						point_1,
+	glm::vec2						point_2,
 	vk2d::Colorf					color,
 	float							line_width
 )
@@ -194,7 +193,7 @@ VK2D_API void VK2D_APIENTRY vk2d::RenderTargetTexture::DrawLine(
 	);
 	mesh.SetVertexColor( color );
 	mesh.SetLineWidth( line_width );
-	impl->DrawMesh( mesh, { vk2d::Matrix4f( 1.0f ) } );
+	impl->DrawMesh( mesh, { glm::mat4( 1.0f ) } );
 }
 
 VK2D_API void VK2D_APIENTRY vk2d::RenderTargetTexture::DrawRectangle(
@@ -208,7 +207,7 @@ VK2D_API void VK2D_APIENTRY vk2d::RenderTargetTexture::DrawRectangle(
 		filled
 	);
 	mesh.SetVertexColor( color );
-	impl->DrawMesh( mesh, { vk2d::Matrix4f( 1.0f ) } );
+	impl->DrawMesh( mesh, { glm::mat4( 1.0f ) } );
 }
 
 VK2D_API void VK2D_APIENTRY vk2d::RenderTargetTexture::DrawEllipse(
@@ -224,7 +223,7 @@ VK2D_API void VK2D_APIENTRY vk2d::RenderTargetTexture::DrawEllipse(
 		edge_count
 	);
 	mesh.SetVertexColor( color );
-	impl->DrawMesh( mesh, { vk2d::Matrix4f( 1.0f ) } );
+	impl->DrawMesh( mesh, { glm::mat4( 1.0f ) } );
 }
 
 VK2D_API void VK2D_APIENTRY vk2d::RenderTargetTexture::DrawEllipsePie(
@@ -244,7 +243,7 @@ VK2D_API void VK2D_APIENTRY vk2d::RenderTargetTexture::DrawEllipsePie(
 		edge_count
 	);
 	mesh.SetVertexColor( color );
-	impl->DrawMesh( mesh, { vk2d::Matrix4f( 1.0f ) } );
+	impl->DrawMesh( mesh, { glm::mat4( 1.0f ) } );
 }
 
 VK2D_API void VK2D_APIENTRY vk2d::RenderTargetTexture::DrawRectanglePie(
@@ -262,24 +261,24 @@ VK2D_API void VK2D_APIENTRY vk2d::RenderTargetTexture::DrawRectanglePie(
 		filled
 	);
 	mesh.SetVertexColor( color );
-	impl->DrawMesh( mesh, { vk2d::Matrix4f( 1.0f ) } );
+	impl->DrawMesh( mesh, { glm::mat4( 1.0f ) } );
 }
 
 VK2D_API void VK2D_APIENTRY vk2d::RenderTargetTexture::DrawTexture(
-	vk2d::Vector2f				top_left,
+	glm::vec2					top_left,
 	vk2d::Texture			*	texture,
 	vk2d::Colorf				color
 )
 {
 	if( texture ) {
 		auto texture_size = texture->GetSize();
-		auto bottom_right = top_left + vk2d::Vector2f( float( texture_size.x ), float( texture_size.y ) );
+		auto bottom_right = top_left + glm::vec2( float( texture_size.x ), float( texture_size.y ) );
 		auto mesh = vk2d::GenerateRectangleMesh(
 			{ top_left, bottom_right }
 		);
 		mesh.SetTexture( texture );
 		mesh.SetVertexColor( color );
-		impl->DrawMesh( mesh, { vk2d::Matrix4f( 1.0f ) } );
+		impl->DrawMesh( mesh, { glm::mat4( 1.0f ) } );
 	}
 }
 
@@ -299,7 +298,7 @@ VK2D_API void VK2D_APIENTRY vk2d::RenderTargetTexture::DrawMesh(
 	const std::vector<vk2d::Transform>		&	transformations
 )
 {
-	std::vector<vk2d::Matrix4f> transformation_matrices( std::size( transformations ) );
+	std::vector<glm::mat4> transformation_matrices( std::size( transformations ) );
 	for( size_t i = 0; i < std::size( transformations ); ++i ) {
 		transformation_matrices[ i ]	= transformations[ i ].CalculateTransformationMatrix();
 	}
@@ -312,7 +311,7 @@ VK2D_API void VK2D_APIENTRY vk2d::RenderTargetTexture::DrawMesh(
 
 VK2D_API void VK2D_APIENTRY vk2d::RenderTargetTexture::DrawMesh(
 	const vk2d::Mesh						&	mesh,
-	const std::vector<vk2d::Matrix4f>		&	transformations
+	const std::vector<glm::mat4>			&	transformations
 )
 {
 	impl->DrawMesh(
@@ -415,7 +414,7 @@ void vk2d::_internal::RenderTargetTextureImpl::SetRenderCoordinateSpace(
 }
 
 void vk2d::_internal::RenderTargetTextureImpl::SetSize(
-	vk2d::Vector2u			new_size
+	glm::uvec2			new_size
 )
 {
 	VK2D_ASSERT_MAIN_THREAD( instance );
@@ -464,7 +463,7 @@ void vk2d::_internal::RenderTargetTextureImpl::SetSize(
 	}
 }
 
-vk2d::Vector2u vk2d::_internal::RenderTargetTextureImpl::GetSize() const
+glm::uvec2 vk2d::_internal::RenderTargetTextureImpl::GetSize() const
 {
 	VK2D_ASSERT_MAIN_THREAD( instance );
 
@@ -672,7 +671,7 @@ bool vk2d::_internal::RenderTargetTextureImpl::BeginRender()
 
 bool vk2d::_internal::RenderTargetTextureImpl::EndRender(
 	vk2d::BlurType	blur_type,
-	vk2d::Vector2f	blur_amount
+	glm::vec2		blur_amount
 )
 {
 	VK2D_ASSERT_MAIN_THREAD( instance );
@@ -972,7 +971,7 @@ void vk2d::_internal::RenderTargetTextureImpl::DrawTriangleList(
 	const std::vector<vk2d::VertexIndex_3>	&	indices,
 	const std::vector<vk2d::Vertex>			&	vertices,
 	const std::vector<float>				&	texture_layer_weights,
-	const std::vector<vk2d::Matrix4f>		&	transformations,
+	const std::vector<glm::mat4>			&	transformations,
 	bool										filled,
 	vk2d::Texture							*	texture,
 	vk2d::Sampler							*	sampler
@@ -1004,7 +1003,7 @@ void vk2d::_internal::RenderTargetTextureImpl::DrawTriangleList(
 	const std::vector<uint32_t>				&	raw_indices,
 	const std::vector<vk2d::Vertex>			&	vertices,
 	const std::vector<float>				&	texture_layer_weights,
-	const std::vector<vk2d::Matrix4f>		&	transformations,
+	const std::vector<glm::mat4>			&	transformations,
 	bool										solid,
 	vk2d::Texture							*	texture,
 	vk2d::Sampler							*	sampler
@@ -1136,7 +1135,7 @@ void vk2d::_internal::RenderTargetTextureImpl::DrawLineList(
 	const std::vector<vk2d::VertexIndex_2>	&	indices,
 	const std::vector<vk2d::Vertex>			&	vertices,
 	const std::vector<float>				&	texture_layer_weights,
-	const std::vector<vk2d::Matrix4f>		&	transformations,
+	const std::vector<glm::mat4>			&	transformations,
 	vk2d::Texture							*	texture,
 	vk2d::Sampler							*	sampler,
 	float										line_width
@@ -1167,7 +1166,7 @@ void vk2d::_internal::RenderTargetTextureImpl::DrawLineList(
 	const std::vector<uint32_t>				&	raw_indices,
 	const std::vector<vk2d::Vertex>			&	vertices,
 	const std::vector<float>				&	texture_layer_weights,
-	const std::vector<vk2d::Matrix4f>		&	transformations,
+	const std::vector<glm::mat4>			&	transformations,
 	vk2d::Texture							*	texture,
 	vk2d::Sampler							*	sampler,
 	float										line_width
@@ -1284,7 +1283,7 @@ void vk2d::_internal::RenderTargetTextureImpl::DrawLineList(
 void vk2d::_internal::RenderTargetTextureImpl::DrawPointList(
 	const std::vector<vk2d::Vertex>			&	vertices,
 	const std::vector<float>				&	texture_layer_weights,
-	const std::vector<vk2d::Matrix4f>		&	transformations,
+	const std::vector<glm::mat4>			&	transformations,
 	vk2d::Texture							*	texture,
 	vk2d::Sampler							*	sampler
 )
@@ -1393,7 +1392,7 @@ void vk2d::_internal::RenderTargetTextureImpl::DrawPointList(
 
 void vk2d::_internal::RenderTargetTextureImpl::DrawMesh(
 	const vk2d::Mesh						&	mesh,
-	const std::vector<vk2d::Matrix4f>		&	transformations
+	const std::vector<glm::mat4>			&	transformations
 )
 {
 	VK2D_ASSERT_MAIN_THREAD( instance );
@@ -1648,7 +1647,7 @@ void vk2d::_internal::RenderTargetTextureImpl::DestroyFrameDataBuffers()
 
 
 bool vk2d::_internal::RenderTargetTextureImpl::CreateImages(
-	vk2d::Vector2u		new_size
+	glm::uvec2		new_size
 )
 {
 	assert( instance );
@@ -2592,7 +2591,7 @@ void vk2d::_internal::RenderTargetTextureImpl::CmdPushBlurTextureDescriptorWrite
 void vk2d::_internal::RenderTargetTextureImpl::CmdFinalizeRender(
 	vk2d::_internal::RenderTargetTextureImpl::SwapBuffer		&	swap,
 	vk2d::BlurType													blur_type,
-	vk2d::Vector2f													blur_amount
+	glm::vec2														blur_amount
 )
 {
 	switch( type ) {
@@ -3065,7 +3064,7 @@ bool vk2d::_internal::RenderTargetTextureImpl::CmdRecordBlurCommands(
 	vk2d::_internal::RenderTargetTextureImpl::SwapBuffer	&	swap,
 	VkCommandBuffer												command_buffer,
 	vk2d::BlurType												blur_type,
-	vk2d::Vector2f												blur_amount,
+	glm::vec2													blur_amount,
 	vk2d::_internal::CompleteImageResource					&	source_image,
 	VkImageLayout												source_image_layout,
 	VkPipelineStageFlagBits										source_image_pipeline_barrier_src_stage,

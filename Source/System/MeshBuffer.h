@@ -2,7 +2,6 @@
 
 #include "Core/SourceCommon.h"
 
-#include "Types/Matrix4.hpp"
 #include "Types/MeshPrimitives.hpp"
 
 #include "System/VulkanMemoryManagement.h"
@@ -25,7 +24,7 @@ class MeshBufferBlock;
 using IndexBufferBlocks									= std::vector<std::unique_ptr<vk2d::_internal::MeshBufferBlock<uint32_t>>>;
 using VertexBufferBlocks								= std::vector<std::unique_ptr<vk2d::_internal::MeshBufferBlock<vk2d::Vertex>>>;
 using TextureChannelBufferBlocks						= std::vector<std::unique_ptr<vk2d::_internal::MeshBufferBlock<float>>>;
-using TransformationBufferBlocks						= std::vector<std::unique_ptr<vk2d::_internal::MeshBufferBlock<vk2d::Matrix4f>>>;
+using TransformationBufferBlocks						= std::vector<std::unique_ptr<vk2d::_internal::MeshBufferBlock<glm::mat4>>>;
 
 enum class MeshBufferDescriptorSetType : uint32_t {
 	NONE,
@@ -45,7 +44,7 @@ public:
 		vk2d::_internal::MeshBufferBlock<uint32_t>			*	index_block							= {};
 		vk2d::_internal::MeshBufferBlock<vk2d::Vertex>		*	vertex_block						= {};
 		vk2d::_internal::MeshBufferBlock<float>				*	texture_channel_weight_block		= {};
-		vk2d::_internal::MeshBufferBlock<vk2d::Matrix4f>	*	transformation_block				= {};
+		vk2d::_internal::MeshBufferBlock<glm::mat4>	*	transformation_block				= {};
 
 		uint32_t												index_size							= {};	// size of data.
 		VkDeviceSize											index_byte_size						= {};	// size of data in bytes.
@@ -93,7 +92,7 @@ public:
 		const std::vector<uint32_t>							&	new_indices,
 		const std::vector<vk2d::Vertex>						&	new_vertices,
 		const std::vector<float>							&	new_texture_channel_weights,
-		const std::vector<vk2d::Matrix4f>					&	new_transformations );
+		const std::vector<glm::mat4>						&	new_transformations );
 
 	bool														CmdUploadMeshDataToGPU(
 		VkCommandBuffer											command_buffer );
@@ -141,7 +140,7 @@ private:
 	// Find a transformation buffer with enough space to hold the data, if none found
 	// this function will allocate a new buffer that will have enough space.
 	// Returns nullptr on failure.
-	vk2d::_internal::MeshBufferBlock<vk2d::Matrix4f>		*	FindTransformationBufferWithEnoughSpace(
+	vk2d::_internal::MeshBufferBlock<glm::mat4>				*	FindTransformationBufferWithEnoughSpace(
 		uint32_t												count );
 
 	// Creates a new buffer block and stores it internally,
@@ -161,7 +160,7 @@ private:
 
 	// Creates a new buffer block and stores it internally,
 	// returns a pointer to it if successful or nullptr on failure.
-	vk2d::_internal::MeshBufferBlock<vk2d::Matrix4f>		*	AllocateTransformationBufferBlockAndStore(
+	vk2d::_internal::MeshBufferBlock<glm::mat4>				*	AllocateTransformationBufferBlockAndStore(
 		VkDeviceSize											byte_size );
 
 	// Removes a buffer block with matching pointer from internal storage.
@@ -178,7 +177,7 @@ private:
 
 	// Removes a buffer block with matching pointer from internal storage.
 	void														FreeBufferBlockFromStorage(
-		vk2d::_internal::MeshBufferBlock<vk2d::Matrix4f>	*	buffer_block );
+		vk2d::_internal::MeshBufferBlock<glm::mat4>			*	buffer_block );
 
 	vk2d::_internal::InstanceImpl							*	instance									= {};
 	VkDevice													device										= {};
@@ -195,8 +194,8 @@ private:
 
 	vk2d::_internal::MeshBufferBlock<uint32_t>				*	bound_index_buffer_block					= {};
 	vk2d::_internal::MeshBufferBlock<vk2d::Vertex>			*	bound_vertex_buffer_block					= {};
-	vk2d::_internal::MeshBufferBlock<float>					*	bound_texture_channel_weight_buffer_block		= {};
-	vk2d::_internal::MeshBufferBlock<vk2d::Matrix4f>		*	bound_transformation_buffer_block			= {};
+	vk2d::_internal::MeshBufferBlock<float>					*	bound_texture_channel_weight_buffer_block	= {};
+	vk2d::_internal::MeshBufferBlock<glm::mat4>				*	bound_transformation_buffer_block			= {};
 
 	vk2d::_internal::IndexBufferBlocks							index_buffer_blocks							= {};
 	vk2d::_internal::VertexBufferBlocks							vertex_buffer_blocks						= {};

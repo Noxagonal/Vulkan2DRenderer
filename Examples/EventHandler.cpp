@@ -39,12 +39,12 @@ public:
 
 	void								VK2D_APIENTRY		EventCursorPosition(
 		vk2d::Window				*	window,
-		vk2d::Vector2d					position )			override
+		glm::dvec2						position )			override
 	{
 		if( mouse_button_down ) {
-			mouse_position_2 = vk2d::Vector2f( float( position.x ), float( position.y ) );
+			mouse_position_2 = glm::vec2( float( position.x ), float( position.y ) );
 		} else {
-			mouse_position_1 = vk2d::Vector2f( float( position.x ), float( position.y ) );
+			mouse_position_1 = glm::vec2( float( position.x ), float( position.y ) );
 			mouse_position_2 = mouse_position_1;
 		}
 	}
@@ -62,8 +62,8 @@ public:
 		}
 	}
 
-	vk2d::Vector2f						mouse_position_1	= {};
-	vk2d::Vector2f						mouse_position_2	= {};
+	glm::vec2						mouse_position_1	= {};
+	glm::vec2						mouse_position_2	= {};
 	bool								mouse_button_down	= {};
 };
 

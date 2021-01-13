@@ -22,7 +22,7 @@ enum class ExitCodes : int
 };
 
 struct ColorPoint {
-	vk2d::Vector2u						position			= {};
+	glm::uvec2						position			= {};
 	vk2d::Color8						color				= {};
 };
 
@@ -79,21 +79,21 @@ class CoordGrid
 {
 public:
 	CoordGrid(
-		vk2d::Vector2f			draw_area,
-		vk2d::Vector2f			spacing );
+		glm::vec2			draw_area,
+		glm::vec2			spacing );
 
 	CoordGrid(
-		vk2d::Vector2u			draw_area,
-		vk2d::Vector2f			spacing );
+		glm::uvec2			draw_area,
+		glm::vec2			spacing );
 
-	vk2d::Vector2f				InsertTopLeft();
-	vk2d::Vector2f				InsertBottomRight();
-	void						Reset();
+	glm::vec2				InsertTopLeft();
+	glm::vec2				InsertBottomRight();
+	void					Reset();
 
 private:
-	vk2d::Vector2f				draw_area			= {};
-	vk2d::Vector2f				spacing				= {};
-	vk2d::Vector2i				location			= {};
+	glm::vec2				draw_area			= {};
+	glm::vec2				spacing				= {};
+	glm::ivec2				location			= {};
 };
 
 #define GetTestGridCoords( grid_object ) \

@@ -4,13 +4,12 @@
 
 #include "System/ThreadPool.h"
 
-#include "Types/Vector2.hpp"
 #include "Types/Color.hpp"
 
 namespace vk2d {
 
 class ResourceManager;
-class Resource;
+class ResourceBase;
 class TextureResource;
 class FontResource;
 
@@ -19,7 +18,7 @@ namespace _internal {
 class InstanceImpl;
 class ResourceManagerImpl;
 class ThreadPool;
-class ResourceImpl;
+class ResourceImplBase;
 
 
 
@@ -29,13 +28,13 @@ class ResourceThreadLoadTask : public vk2d::_internal::Task
 public:
 	ResourceThreadLoadTask(
 		vk2d::_internal::ResourceManagerImpl	*	resource_manager,
-		vk2d::Resource							*	resource );
+		vk2d::ResourceBase						*	resource );
 
 	void operator()( vk2d::_internal::ThreadPrivateResource * thread_resource );
 
 private:
-	vk2d::_internal::ResourceManagerImpl	*	resource_manager		= {};
-	vk2d::Resource							*	resource				= {};
+	vk2d::_internal::ResourceManagerImpl		*	resource_manager		= {};
+	vk2d::ResourceBase							*	resource				= {};
 };
 
 // Unload task takes ownership of the task
@@ -44,13 +43,13 @@ class ResourceThreadUnloadTask : public vk2d::_internal::Task
 public:
 	ResourceThreadUnloadTask(
 		vk2d::_internal::ResourceManagerImpl	*	resource_manager,
-		std::unique_ptr<vk2d::Resource>				resource );
+		std::unique_ptr<vk2d::ResourceBase>			resource );
 
 	void operator()( vk2d::_internal::ThreadPrivateResource * thread_resource );
 
 private:
-	vk2d::_internal::ResourceManagerImpl	*	resource_manager		= {};
-	std::unique_ptr<vk2d::Resource>				resource				= {};
+	vk2d::_internal::ResourceManagerImpl		*	resource_manager		= {};
+	std::unique_ptr<vk2d::ResourceBase>				resource				= {};
 };
 
 
@@ -65,32 +64,32 @@ public:
 
 	vk2d::TextureResource									*	LoadTextureResource(
 		const std::filesystem::path							&	file_path,
-		vk2d::Resource										*	parent_resource );
+		vk2d::ResourceBase									*	parent_resource );
 
 	vk2d::TextureResource									*	CreateTextureResource(
-		vk2d::Vector2u											size,
+		glm::uvec2												size,
 		const std::vector<vk2d::Color8>						&	texture_data,
-		vk2d::Resource										*	parent_resource );
+		vk2d::ResourceBase									*	parent_resource );
 
 	vk2d::TextureResource									*	LoadArrayTextureResource(
 		const std::vector<std::filesystem::path>			&	file_path_listings,
-		vk2d::Resource										*	parent_resource );
+		vk2d::ResourceBase									*	parent_resource );
 
 	vk2d::TextureResource									*	CreateArrayTextureResource(
-		vk2d::Vector2u											size,
+		glm::uvec2												size,
 		const std::vector<const std::vector<vk2d::Color8>*>	&	texture_data_listings,
-		vk2d::Resource										*	parent_resource );
+		vk2d::ResourceBase									*	parent_resource );
 
 	vk2d::FontResource										*	LoadFontResource(
 		const std::filesystem::path							&	file_path,
-		vk2d::Resource										*	parent_resource,
+		vk2d::ResourceBase									*	parent_resource,
 		uint32_t												glyph_texel_size,
 		bool													use_alpha,
 		uint32_t												fallback_character,
 		uint32_t												glyph_atlas_padding );
 
 	void														DestroyResource(
-		vk2d::Resource										*	resource );
+		vk2d::ResourceBase									*	resource );
 
 	vk2d::_internal::InstanceImpl							*	GetInstance() const;
 	vk2d::_internal::ThreadPool								*	GetThreadPool() const;
@@ -104,7 +103,7 @@ private:
 	// CALL ONLY FROM "AttachResource()".
 	// Schedules the resource to be loaded after it's attached.
 	void														ScheduleResourceLoad(
-		vk2d::Resource										*	resource_ptr );
+		vk2d::ResourceBase									*	resource_ptr );
 
 	// Some resources will need to use the same thread where they were
 	// originally created, for example if a resource uses a memory pool
@@ -119,6 +118,8 @@ private:
 	T														*	AttachResource(
 		std::unique_ptr<T>										resource )
 	{
+		static_assert( std::is_base_of_v<vk2d::ResourceBase, T>, "<T> must be resource type." );
+
 		auto resource_ptr = resource.get();
 		std::lock_guard<std::recursive_mutex>		resources_lock( resources_mutex );
 		resources.push_back( std::move( resource ) );
@@ -139,7 +140,7 @@ private:
 	uint32_t													current_loader_thread_index			= {};
 
 	std::recursive_mutex										resources_mutex						= {};
-	std::list<std::unique_ptr<vk2d::Resource>>					resources							= {};
+	std::list<std::unique_ptr<vk2d::ResourceBase>>				resources							= {};
 
 	bool														is_good								= {};
 };
