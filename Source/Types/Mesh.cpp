@@ -5,10 +5,10 @@
 #include "Types/Color.hpp"
 #include "Types/Transform.h"
 
-#include "Interface/ResourceManager/FontResource.h"
-#include "Interface/ResourceManager/FontResourceImpl.h"
+#include "Interface/Resources/FontResource.h"
+#include "Interface/Resources/FontResourceImpl.h"
 
-#include "Interface/ResourceManager/TextureResource.h"
+#include "Interface/Resources/TextureResource.h"
 #include "Interface/Texture.h"
 
 #include "Types/Mesh.h"

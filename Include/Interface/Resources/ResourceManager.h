@@ -10,7 +10,7 @@
 namespace vk2d {
 
 class ThreadPool;
-class Resource;
+class ResourceBase;
 class TextureResource;
 class FontResource;
 
@@ -196,7 +196,7 @@ public:
 	///				Pointer to vk2d::Resource to destroy. After this the resource is no
 	///				longer valid and trying to use it will crash your application.
 	VK2D_API void												VK2D_APIENTRY				DestroyResource(
-		vk2d::Resource																	*	resource );
+		vk2d::ResourceBase																*	resource );
 
 	/// @brief		VK2D class object checker function.
 	/// @note		Multithreading: Any thread.

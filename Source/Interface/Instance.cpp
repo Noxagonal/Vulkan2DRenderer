@@ -13,8 +13,8 @@
 #include "Interface/Instance.h"
 #include "Interface/InstanceImpl.h"
 
-#include "Interface/ResourceManager/ResourceManager.h"
-#include "Interface/ResourceManager/ResourceManagerImpl.h"
+#include "Interface/Resources/ResourceManager.h"
+#include "Interface/Resources/ResourceManagerImpl.h"
 
 #include "Interface/Window.h"
 #include "Interface/WindowImpl.h"
@@ -22,8 +22,8 @@
 #include "Interface/Sampler.h"
 #include "Interface/SamplerImpl.h"
 
-#include "Interface/ResourceManager/TextureResource.h"
-#include "Interface/ResourceManager/TextureResourceImpl.h"
+#include "Interface/Resources/TextureResource.h"
+#include "Interface/Resources/TextureResourceImpl.h"
 
 #include "Spir-V/IncludeAllShaders.h"
 

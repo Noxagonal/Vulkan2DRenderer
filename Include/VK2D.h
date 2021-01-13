@@ -22,7 +22,7 @@
 #include "Interface/Sampler.h"
 #include "Interface/Texture.h"
 
-#include "Interface/ResourceManager/ResourceManager.h"
-#include "Interface/ResourceManager/Resource.h"
-#include "Interface/ResourceManager/TextureResource.h"
-#include "Interface/ResourceManager/FontResource.h"
+#include "Interface/Resources/ResourceManager.h"
+#include "Interface/Resources/ResourceBase.h"
+#include "Interface/Resources/TextureResource.h"
+#include "Interface/Resources/FontResource.h"

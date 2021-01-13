@@ -14,8 +14,8 @@
 #include "Interface/Instance.h"
 #include "Interface/InstanceImpl.h"
 
-#include "Interface/ResourceManager/TextureResource.h"
-#include "Interface/ResourceManager/TextureResourceImpl.h"
+#include "Interface/Resources/TextureResource.h"
+#include "Interface/Resources/TextureResourceImpl.h"
 
 #include "Interface/RenderTargetTexture.h"
 #include "Interface/RenderTargetTextureImpl.h"

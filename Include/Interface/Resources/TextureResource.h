@@ -4,7 +4,7 @@
 
 #include "Types/Color.hpp"
 
-#include "Interface/ResourceManager/Resource.h"
+#include "Interface/Resources/ResourceBase.h"
 #include "Interface/Texture.h"
 
 #include <memory>
@@ -30,7 +30,7 @@ class ResourceThreadUnloadTask;
 ///				contain multiple images that can be indexed at runtime.
 class TextureResource :
 	public vk2d::Texture,
-	public vk2d::Resource
+	public vk2d::ResourceBase
 {
 	friend class vk2d::_internal::TextureResourceImpl;
 	friend class vk2d::_internal::ResourceManagerImpl;
@@ -65,7 +65,7 @@ class TextureResource :
 	VK2D_API																				TextureResource(
 		vk2d::_internal::ResourceManagerImpl				*	resource_manager,
 		uint32_t												loader_thread,
-		vk2d::Resource										*	parent_resource,
+		vk2d::ResourceBase									*	parent_resource,
 		const std::vector<std::filesystem::path>			&	file_paths_listing );
 
 	/// @brief		This constructor is meant for internal use only. All resources are
@@ -100,7 +100,7 @@ class TextureResource :
 	VK2D_API																				TextureResource(
 		vk2d::_internal::ResourceManagerImpl				*	resource_manager,
 		uint32_t												loader_thread,
-		vk2d::Resource										*	parent_resource,
+		vk2d::ResourceBase									*	parent_resource,
 		glm::uvec2												size,
 		const std::vector<const std::vector<vk2d::Color8>*>	&	texels_listing );
 

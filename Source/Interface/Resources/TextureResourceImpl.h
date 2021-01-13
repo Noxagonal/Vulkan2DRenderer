@@ -6,7 +6,7 @@
 
 #include "System/VulkanMemoryManagement.h"
 
-#include "Interface/ResourceManager/ResourceImpl.h"
+#include "Interface/Resources/ResourceImplBase.h"
 #include "Interface/TextureImpl.h"
 
 
@@ -24,7 +24,7 @@ class ThreadPrivateResource;
 
 
 class TextureResourceImpl :
-	public vk2d::_internal::ResourceImpl,
+	public vk2d::_internal::ResourceImplBase,
 	public vk2d::_internal::TextureImpl
 {
 	friend class vk2d::TextureResource;
@@ -36,14 +36,14 @@ public:
 		vk2d::TextureResource								*	my_interface,
 		vk2d::_internal::ResourceManagerImpl				*	resource_manager,
 		uint32_t												loader_thread,
-		vk2d::Resource										*	parent_resource,
+		vk2d::ResourceBase									*	parent_resource,
 		const std::vector<std::filesystem::path>			&	file_paths_listing );
 
 																TextureResourceImpl(
 		vk2d::TextureResource								*	my_interface,
 		vk2d::_internal::ResourceManagerImpl				*	resource_manager,
 		uint32_t												loader_thread,
-		vk2d::Resource										*	parent_resource,
+		vk2d::ResourceBase									*	parent_resource,
 		glm::uvec2												size,
 		const std::vector<const std::vector<vk2d::Color8>*>	&	texels );
 

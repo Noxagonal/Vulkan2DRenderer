@@ -2,7 +2,7 @@
 
 #include "Core/Common.h"
 
-#include "Interface/ResourceManager/Resource.h"
+#include "Interface/Resources/ResourceBase.h"
 
 #include <filesystem>
 
@@ -29,7 +29,7 @@ VK2D_API vk2d::Mesh VK2D_APIENTRY GenerateTextMesh(
 namespace _internal {
 
 class ResourceManagerImpl;
-class FontResourceImpl;
+class FontResourceImplBase;
 
 } // _internal
 
@@ -42,10 +42,10 @@ class FontResourceImpl;
 ///				finally render the text mesh to a window or render target texture using
 ///				either vk2d::Window::DrawMesh() or vk2d::RenderTargetTexture::DrawMesh() functions.
 class FontResource
-	: public vk2d::Resource
+	: public vk2d::ResourceBase
 {
 	friend class vk2d::_internal::ResourceManagerImpl;
-	friend class vk2d::_internal::FontResourceImpl;
+	friend class vk2d::_internal::FontResourceImplBase;
 	friend VK2D_API vk2d::Mesh								VK2D_APIENTRY						vk2d::GenerateTextMesh(
 		vk2d::FontResource								*	font,
 		glm::vec2											origin,
@@ -103,7 +103,7 @@ class FontResource
 	VK2D_API																					FontResource(
 		vk2d::_internal::ResourceManagerImpl			*	resource_manager,
 		uint32_t											loader_thread_index,
-		vk2d::Resource									*	parent_resource,
+		vk2d::ResourceBase								*	parent_resource,
 		const std::filesystem::path						&	file_path,
 		uint32_t											glyph_texel_size,
 		bool												use_alpha,
@@ -189,7 +189,7 @@ public:
 
 private:
 
-	std::unique_ptr<vk2d::_internal::FontResourceImpl>		impl;
+	std::unique_ptr<vk2d::_internal::FontResourceImplBase>		impl;
 };
 
 

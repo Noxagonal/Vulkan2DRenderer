@@ -9,11 +9,11 @@
 #include "Interface/Instance.h"
 #include "Interface/InstanceImpl.h"
 
-#include "Interface/ResourceManager/ResourceManager.h"
-#include "Interface/ResourceManager/ResourceManagerImpl.h"
+#include "Interface/Resources/ResourceManager.h"
+#include "Interface/Resources/ResourceManagerImpl.h"
 
-#include "Interface/ResourceManager/TextureResource.h"
-#include "Interface/ResourceManager/TextureResourceImpl.h"
+#include "Interface/Resources/TextureResource.h"
+#include "Interface/Resources/TextureResourceImpl.h"
 
 #include <stb_image.h>
 
@@ -40,7 +40,7 @@
 VK2D_API vk2d::TextureResource::TextureResource(
 	vk2d::_internal::ResourceManagerImpl		*	resource_manager,
 	uint32_t										loader_thread,
-	vk2d::Resource								*	parent_resource,
+	vk2d::ResourceBase							*	parent_resource,
 	const std::vector<std::filesystem::path>	&	file_paths_listing
 )
 {
@@ -64,7 +64,7 @@ VK2D_API vk2d::TextureResource::TextureResource(
 VK2D_API vk2d::TextureResource::TextureResource(
 	vk2d::_internal::ResourceManagerImpl				*	resource_manager,
 	uint32_t												loader_thread,
-	vk2d::Resource										*	parent_resource,
+	vk2d::ResourceBase									*	parent_resource,
 	glm::uvec2											size,
 	const std::vector<const std::vector<vk2d::Color8>*>	&	texels_listing
 )
@@ -148,10 +148,10 @@ vk2d::_internal::TextureResourceImpl::TextureResourceImpl(
 	vk2d::TextureResource						*	my_interface,
 	vk2d::_internal::ResourceManagerImpl		*	resource_manager,
 	uint32_t										loader_thread,
-	vk2d::Resource								*	parent_resource,
+	vk2d::ResourceBase							*	parent_resource,
 	const std::vector<std::filesystem::path>	&	file_paths_listing
 ) :
-	vk2d::_internal::ResourceImpl(
+	vk2d::_internal::ResourceImplBase(
 		my_interface,
 		loader_thread,
 		resource_manager,
@@ -172,11 +172,11 @@ vk2d::_internal::TextureResourceImpl::TextureResourceImpl(
 	vk2d::TextureResource								*	my_interface,
 	vk2d::_internal::ResourceManagerImpl				*	resource_manager,
 	uint32_t												loader_thread,
-	vk2d::Resource										*	parent_resource,
+	vk2d::ResourceBase									*	parent_resource,
 	glm::uvec2												size,
 	const std::vector<const std::vector<vk2d::Color8>*>	&	texels
 ) :
-	vk2d::_internal::ResourceImpl(
+	vk2d::_internal::ResourceImplBase(
 		my_interface,
 		loader_thread,
 		resource_manager,

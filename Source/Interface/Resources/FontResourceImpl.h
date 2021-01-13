@@ -5,7 +5,7 @@
 #include "Types/Rect2.hpp"
 #include "Types/Color.hpp"
 
-#include "Interface/ResourceManager/ResourceImpl.h"
+#include "Interface/Resources/ResourceImplBase.h"
 
 #include <ft2build.h>
 #include FT_FREETYPE_H
@@ -34,22 +34,22 @@ struct GlyphInfo {
 
 
 
-class FontResourceImpl :
-	public vk2d::_internal::ResourceImpl
+class FontResourceImplBase :
+	public vk2d::_internal::ResourceImplBase
 {
 public:
-	FontResourceImpl(
+	FontResourceImplBase(
 		vk2d::FontResource							*	my_interface,
 		vk2d::_internal::ResourceManagerImpl		*	resource_manager,
 		uint32_t										loader_thread,
-		vk2d::Resource								*	parent_resource,
+		vk2d::ResourceBase							*	parent_resource,
 		const std::filesystem::path					&	file_path,
 		uint32_t										glyph_texel_size,
 		bool											use_alpha,
 		uint32_t										fallback_character,
 		uint32_t										glyph_atlas_padding );
 
-	~FontResourceImpl();
+	~FontResourceImplBase();
 
 	vk2d::ResourceStatus																	GetStatus();
 

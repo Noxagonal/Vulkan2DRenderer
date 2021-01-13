@@ -5,13 +5,13 @@
 
 #include "Interface/InstanceImpl.h"
 
-#include "Interface/ResourceManager/ResourceManager.h"
-#include "Interface/ResourceManager/ResourceManagerImpl.h"
+#include "Interface/Resources/ResourceManager.h"
+#include "Interface/Resources/ResourceManagerImpl.h"
 
-#include "Interface/ResourceManager/FontResource.h"
-#include "Interface/ResourceManager/FontResourceImpl.h"
+#include "Interface/Resources/FontResource.h"
+#include "Interface/Resources/FontResourceImpl.h"
 
-#include "Interface/ResourceManager/TextureResource.h"
+#include "Interface/Resources/TextureResource.h"
 
 #include <stb_image_write.h>
 
@@ -54,7 +54,7 @@ uint32_t RoundToCeilingPowerOfTwo(
 VK2D_API vk2d::FontResource::FontResource(
 	vk2d::_internal::ResourceManagerImpl	*	resource_manager,
 	uint32_t									loader_thread_index,
-	vk2d::Resource							*	parent_resource,
+	vk2d::ResourceBase						*	parent_resource,
 	const std::filesystem::path				&	file_path,
 	uint32_t									glyph_texel_size,
 	bool										use_alpha,
@@ -62,7 +62,7 @@ VK2D_API vk2d::FontResource::FontResource(
 	uint32_t									glyph_atlas_padding
 )
 {
-	impl = std::make_unique<vk2d::_internal::FontResourceImpl>(
+	impl = std::make_unique<vk2d::_internal::FontResourceImplBase>(
 		this,
 		resource_manager,
 		loader_thread_index,
@@ -148,18 +148,18 @@ VK2D_API bool VK2D_APIENTRY vk2d::FontResource::IsGood() const
 
 
 
-vk2d::_internal::FontResourceImpl::FontResourceImpl(
+vk2d::_internal::FontResourceImplBase::FontResourceImplBase(
 	vk2d::FontResource						*	my_interface,
 	vk2d::_internal::ResourceManagerImpl	*	resource_manager,
 	uint32_t									loader_thread_index,
-	vk2d::Resource							*	parent_resource,
+	vk2d::ResourceBase						*	parent_resource,
 	const std::filesystem::path				&	file_path,
 	uint32_t									glyph_texel_size,
 	bool										use_alpha,
 	uint32_t									fallback_character,
 	uint32_t									glyph_atlas_padding
 ) :
-	vk2d::_internal::ResourceImpl(
+	vk2d::_internal::ResourceImplBase(
 		my_interface,
 		loader_thread_index,
 		resource_manager,
@@ -181,10 +181,10 @@ vk2d::_internal::FontResourceImpl::FontResourceImpl(
 	is_good		= true;
 }
 
-vk2d::_internal::FontResourceImpl::~FontResourceImpl()
+vk2d::_internal::FontResourceImplBase::~FontResourceImplBase()
 {}
 
-vk2d::ResourceStatus vk2d::_internal::FontResourceImpl::GetStatus()
+vk2d::ResourceStatus vk2d::_internal::FontResourceImplBase::GetStatus()
 {
 	if( !is_good )				return vk2d::ResourceStatus::FAILED_TO_LOAD;
 
@@ -202,7 +202,7 @@ vk2d::ResourceStatus vk2d::_internal::FontResourceImpl::GetStatus()
 	return local_status;
 }
 
-vk2d::ResourceStatus vk2d::_internal::FontResourceImpl::WaitUntilLoaded(
+vk2d::ResourceStatus vk2d::_internal::FontResourceImplBase::WaitUntilLoaded(
 	std::chrono::nanoseconds timeout
 )
 {
@@ -212,7 +212,7 @@ vk2d::ResourceStatus vk2d::_internal::FontResourceImpl::WaitUntilLoaded(
 	return WaitUntilLoaded( std::chrono::steady_clock::now() + timeout );
 }
 
-vk2d::ResourceStatus vk2d::_internal::FontResourceImpl::WaitUntilLoaded(
+vk2d::ResourceStatus vk2d::_internal::FontResourceImplBase::WaitUntilLoaded(
 	std::chrono::steady_clock::time_point timeout
 )
 {
@@ -234,7 +234,7 @@ vk2d::ResourceStatus vk2d::_internal::FontResourceImpl::WaitUntilLoaded(
 	return local_status;
 }
 
-bool vk2d::_internal::FontResourceImpl::MTLoad(
+bool vk2d::_internal::FontResourceImplBase::MTLoad(
 	vk2d::_internal::ThreadPrivateResource		*	thread_resource
 )
 {
@@ -612,7 +612,7 @@ bool vk2d::_internal::FontResourceImpl::MTLoad(
 	return true;
 }
 
-void vk2d::_internal::FontResourceImpl::MTUnload(
+void vk2d::_internal::FontResourceImplBase::MTUnload(
 	vk2d::_internal::ThreadPrivateResource		*	thread_resource
 )
 {
@@ -624,7 +624,7 @@ void vk2d::_internal::FontResourceImpl::MTUnload(
 
 }
 
-vk2d::Rect2f vk2d::_internal::FontResourceImpl::CalculateRenderedSize(
+vk2d::Rect2f vk2d::_internal::FontResourceImplBase::CalculateRenderedSize(
 	std::string_view	text,
 	float				kerning,
 	glm::vec2		scale,
@@ -695,7 +695,7 @@ vk2d::Rect2f vk2d::_internal::FontResourceImpl::CalculateRenderedSize(
 	return ret;
 }
 
-bool vk2d::_internal::FontResourceImpl::FaceExists(
+bool vk2d::_internal::FontResourceImplBase::FaceExists(
 	uint32_t font_face
 ) const
 {
@@ -705,7 +705,7 @@ bool vk2d::_internal::FontResourceImpl::FaceExists(
 	return false;
 }
 
-vk2d::TextureResource * vk2d::_internal::FontResourceImpl::GetTextureResource()
+vk2d::TextureResource * vk2d::_internal::FontResourceImplBase::GetTextureResource()
 {
 	if( GetStatus() == vk2d::ResourceStatus::LOADED ) {
 		return texture_resource;
@@ -713,7 +713,7 @@ vk2d::TextureResource * vk2d::_internal::FontResourceImpl::GetTextureResource()
 	return {};
 }
 
-const vk2d::_internal::GlyphInfo * vk2d::_internal::FontResourceImpl::GetGlyphInfo(
+const vk2d::_internal::GlyphInfo * vk2d::_internal::FontResourceImplBase::GetGlyphInfo(
 	uint32_t		font_face,
 	uint32_t		character
 ) const
@@ -730,14 +730,14 @@ const vk2d::_internal::GlyphInfo * vk2d::_internal::FontResourceImpl::GetGlyphIn
 	return &face_info.glyph_infos[ glyph_index ];
 }
 
-bool vk2d::_internal::FontResourceImpl::IsGood() const
+bool vk2d::_internal::FontResourceImplBase::IsGood() const
 {
 	return is_good;
 }
 
-vk2d::_internal::FontResourceImpl::AtlasTexture * vk2d::_internal::FontResourceImpl::CreateNewAtlasTexture()
+vk2d::_internal::FontResourceImplBase::AtlasTexture * vk2d::_internal::FontResourceImplBase::CreateNewAtlasTexture()
 {
-	auto new_atlas_texture			= std::make_unique<vk2d::_internal::FontResourceImpl::AtlasTexture>();
+	auto new_atlas_texture			= std::make_unique<vk2d::_internal::FontResourceImplBase::AtlasTexture>();
 
 	new_atlas_texture->data.resize( size_t( atlas_size ) * size_t( atlas_size ) );
 	new_atlas_texture->index		= uint32_t( atlas_textures.size() );
@@ -748,7 +748,7 @@ vk2d::_internal::FontResourceImpl::AtlasTexture * vk2d::_internal::FontResourceI
 	return new_atlas_texture_ptr;
 }
 
-vk2d::_internal::FontResourceImpl::AtlasLocation vk2d::_internal::FontResourceImpl::ReserveSpaceForGlyphFromAtlasTextures(
+vk2d::_internal::FontResourceImplBase::AtlasLocation vk2d::_internal::FontResourceImplBase::ReserveSpaceForGlyphFromAtlasTextures(
 	FT_GlyphSlot		glyph,
 	uint32_t			glyph_atlas_padding
 )
@@ -756,11 +756,11 @@ vk2d::_internal::FontResourceImpl::AtlasLocation vk2d::_internal::FontResourceIm
 	assert( current_atlas_texture );
 
 	auto FindLocationInAtlasTexture =[](
-		vk2d::_internal::FontResourceImpl::AtlasTexture		*	atlas_texture,
+		vk2d::_internal::FontResourceImplBase::AtlasTexture		*	atlas_texture,
 		FT_GlyphSlot											glyph,
 		uint32_t												atlas_size,
 		uint32_t												glyph_atlas_padding
-		) -> vk2d::_internal::FontResourceImpl::AtlasLocation
+		) -> vk2d::_internal::FontResourceImplBase::AtlasLocation
 	{
 		uint32_t glyph_width		= uint32_t( glyph->bitmap.width )	+ glyph_atlas_padding;
 		uint32_t glyph_height		= uint32_t( glyph->bitmap.rows )	+ glyph_atlas_padding;
@@ -772,7 +772,7 @@ vk2d::_internal::FontResourceImpl::AtlasLocation vk2d::_internal::FontResourceIm
 			if( atlas_texture->current_write_location + glyph_width + glyph_atlas_padding < atlas_size ) {
 				// Fits width wise, fits completely.
 
-				vk2d::_internal::FontResourceImpl::AtlasLocation new_glyph_location {};
+				vk2d::_internal::FontResourceImplBase::AtlasLocation new_glyph_location {};
 				new_glyph_location.atlas_ptr				= atlas_texture;
 				new_glyph_location.atlas_index				= atlas_texture->index;
 				new_glyph_location.location.top_left		= {
@@ -802,7 +802,7 @@ vk2d::_internal::FontResourceImpl::AtlasLocation vk2d::_internal::FontResourceIm
 				if( atlas_texture->current_write_location + glyph_width + glyph_atlas_padding < atlas_size ) {
 					// Fits width wise.
 
-					vk2d::_internal::FontResourceImpl::AtlasLocation new_glyph_location {};
+					vk2d::_internal::FontResourceImplBase::AtlasLocation new_glyph_location {};
 					new_glyph_location.atlas_ptr				= atlas_texture;
 					new_glyph_location.atlas_index				= atlas_texture->index;
 					new_glyph_location.location.top_left		= {
@@ -869,7 +869,7 @@ vk2d::_internal::FontResourceImpl::AtlasLocation vk2d::_internal::FontResourceIm
 	return new_location;
 }
 
-void vk2d::_internal::FontResourceImpl::CopyGlyphTextureToAtlasLocation(
+void vk2d::_internal::FontResourceImplBase::CopyGlyphTextureToAtlasLocation(
 	AtlasLocation							atlas_location,
 	const std::vector<vk2d::Color8>		&	converted_texture_data )
 {
@@ -888,7 +888,7 @@ void vk2d::_internal::FontResourceImpl::CopyGlyphTextureToAtlasLocation(
 	}
 }
 
-vk2d::_internal::FontResourceImpl::AtlasLocation vk2d::_internal::FontResourceImpl::AttachGlyphToAtlas(
+vk2d::_internal::FontResourceImplBase::AtlasLocation vk2d::_internal::FontResourceImplBase::AttachGlyphToAtlas(
 	FT_GlyphSlot							glyph,
 	uint32_t								glyph_atlas_padding,
 	const std::vector<vk2d::Color8>		&	converted_texture_data )

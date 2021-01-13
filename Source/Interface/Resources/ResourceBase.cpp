@@ -1,12 +1,12 @@
 
 #include "Core/SourceCommon.h"
 
-#include "Interface/ResourceManager/Resource.h"
-#include "Interface/ResourceManager/ResourceImpl.h"
+#include "Interface/Resources/ResourceBase.h"
+#include "Interface/Resources/ResourceImplBase.h"
 
 #include "Interface/InstanceImpl.h"
 
-#include "Interface/ResourceManager/ResourceManagerImpl.h"
+#include "Interface/Resources/ResourceManagerImpl.h"
 
 
 
@@ -28,13 +28,13 @@
 
 
 
-VK2D_API vk2d::ResourceStatus VK2D_APIENTRY vk2d::Resource::GetStatus()
+VK2D_API vk2d::ResourceStatus VK2D_APIENTRY vk2d::ResourceBase::GetStatus()
 {
 	assert( resource_impl );
 	return resource_impl->GetStatus();
 }
 
-VK2D_API vk2d::ResourceStatus VK2D_APIENTRY vk2d::Resource::WaitUntilLoaded(
+VK2D_API vk2d::ResourceStatus VK2D_APIENTRY vk2d::ResourceBase::WaitUntilLoaded(
 	std::chrono::nanoseconds				timeout
 )
 {
@@ -42,7 +42,7 @@ VK2D_API vk2d::ResourceStatus VK2D_APIENTRY vk2d::Resource::WaitUntilLoaded(
 	return resource_impl->WaitUntilLoaded( timeout );
 }
 
-VK2D_API vk2d::ResourceStatus VK2D_APIENTRY vk2d::Resource::WaitUntilLoaded(
+VK2D_API vk2d::ResourceStatus VK2D_APIENTRY vk2d::ResourceBase::WaitUntilLoaded(
 	std::chrono::steady_clock::time_point	timeout
 )
 {
@@ -50,25 +50,25 @@ VK2D_API vk2d::ResourceStatus VK2D_APIENTRY vk2d::Resource::WaitUntilLoaded(
 	return resource_impl->WaitUntilLoaded( timeout );
 }
 
-VK2D_API vk2d::Resource *VK2D_APIENTRY vk2d::Resource::GetParentResource()
+VK2D_API vk2d::ResourceBase * VK2D_APIENTRY vk2d::ResourceBase::GetParentResource()
 {
 	assert( resource_impl );
 	return resource_impl->GetParentResource();
 }
 
-VK2D_API bool VK2D_APIENTRY vk2d::Resource::IsFromFile() const
+VK2D_API bool VK2D_APIENTRY vk2d::ResourceBase::IsFromFile() const
 {
 	assert( resource_impl );
 	return resource_impl->IsFromFile();
 }
 
-VK2D_API const std::vector<std::filesystem::path>&VK2D_APIENTRY vk2d::Resource::GetFilePaths() const
+VK2D_API const std::vector<std::filesystem::path>&VK2D_APIENTRY vk2d::ResourceBase::GetFilePaths() const
 {
 	assert( resource_impl );
 	return resource_impl->GetFilePaths();
 }
 
-VK2D_API bool VK2D_APIENTRY vk2d::Resource::IsGood() const
+VK2D_API bool VK2D_APIENTRY vk2d::ResourceBase::IsGood() const
 {
 	if( !resource_impl ) return false;
 	return resource_impl->IsGood();
@@ -94,11 +94,11 @@ VK2D_API bool VK2D_APIENTRY vk2d::Resource::IsGood() const
 
 
 
-vk2d::_internal::ResourceImpl::ResourceImpl(
-	vk2d::Resource								*	my_interface,
+vk2d::_internal::ResourceImplBase::ResourceImplBase(
+	vk2d::ResourceBase							*	my_interface,
 	uint32_t										loader_thread,
 	vk2d::_internal::ResourceManagerImpl		*	resource_manager,
-	vk2d::Resource								*	parent_resource
+	vk2d::ResourceBase							*	parent_resource
 )
 {
 	this->my_interface				= my_interface;
@@ -113,11 +113,11 @@ vk2d::_internal::ResourceImpl::ResourceImpl(
 	}
 }
 
-vk2d::_internal::ResourceImpl::ResourceImpl(
-	vk2d::Resource								*	my_interface,
+vk2d::_internal::ResourceImplBase::ResourceImplBase(
+	vk2d::ResourceBase							*	my_interface,
 	uint32_t										loader_thread,
 	vk2d::_internal::ResourceManagerImpl		*	resource_manager,
-	vk2d::Resource								*	parent_resource,
+	vk2d::ResourceBase							*	parent_resource,
 	const std::vector<std::filesystem::path>	&	paths
 )
 {
@@ -133,7 +133,7 @@ vk2d::_internal::ResourceImpl::ResourceImpl(
 	}
 }
 
-void vk2d::_internal::ResourceImpl::DestroySubresources()
+void vk2d::_internal::ResourceImplBase::DestroySubresources()
 {
 	std::lock_guard<std::mutex> lock_guard( subresources_mutex );
 
@@ -144,8 +144,8 @@ void vk2d::_internal::ResourceImpl::DestroySubresources()
 	subresources.clear();
 }
 
-void vk2d::_internal::ResourceImpl::AddSubresource(
-	vk2d::Resource			*	subresource
+void vk2d::_internal::ResourceImplBase::AddSubresource(
+	vk2d::ResourceBase		*	subresource
 )
 {
 	std::lock_guard<std::mutex> lock_guard( subresources_mutex );
@@ -153,27 +153,27 @@ void vk2d::_internal::ResourceImpl::AddSubresource(
 	subresources.push_back( subresource );
 }
 
-vk2d::Resource * VK2D_APIENTRY vk2d::_internal::ResourceImpl::GetParentResource()
+vk2d::ResourceBase * VK2D_APIENTRY vk2d::_internal::ResourceImplBase::GetParentResource()
 {
 	return parent_resource;
 }
 
-uint32_t vk2d::_internal::ResourceImpl::GetLoaderThread()
+uint32_t vk2d::_internal::ResourceImplBase::GetLoaderThread()
 {
 	return loader_thread;
 }
 
-bool vk2d::_internal::ResourceImpl::IsFromFile() const
+bool vk2d::_internal::ResourceImplBase::IsFromFile() const
 {
 	return is_from_file;
 }
 
-const std::vector<std::filesystem::path> & vk2d::_internal::ResourceImpl::GetFilePaths() const
+const std::vector<std::filesystem::path> & vk2d::_internal::ResourceImplBase::GetFilePaths() const
 {
 	return file_paths;
 }
 
-bool vk2d::_internal::ResourceImpl::IsSubResource() const
+bool vk2d::_internal::ResourceImplBase::IsSubResource() const
 {
 	return !!parent_resource;
 }
