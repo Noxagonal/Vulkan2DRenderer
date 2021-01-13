@@ -43,3 +43,16 @@ vk2d::PipelineResource::~PipelineResource()
 ////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////
+
+
+
+
+
+
+
+vk2d::_internal::PipelineResourceImpl::PipelineResourceImpl() :
+	vk2d::_internal::ResourceImplBase( this, loader_thread, resource_manager, parent_resource )
+{}
+
+vk2d::_internal::PipelineResourceImpl::~PipelineResourceImpl()
+{}

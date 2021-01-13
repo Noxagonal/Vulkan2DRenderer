@@ -26,3 +26,4 @@
 #include "Interface/Resources/ResourceBase.h"
 #include "Interface/Resources/TextureResource.h"
 #include "Interface/Resources/FontResource.h"
+#include "Interface/Resources/PipelineResource.h"

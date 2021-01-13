@@ -19,8 +19,8 @@ class PipelineResourceImplBase;
 
 
 
-class PipelineResource // :
-	// public vk2d::ResourceBase
+class PipelineResource :
+	public vk2d::ResourceBase
 {
 public:
 	PipelineResource();
