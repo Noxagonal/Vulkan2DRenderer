@@ -1119,10 +1119,10 @@ VK2D_API vk2d::Mesh VK2D_APIENTRY vk2d::GenerateLatticeMesh(
 
 VK2D_API vk2d::Mesh VK2D_APIENTRY vk2d::GenerateTextMesh(
 	vk2d::FontResource		*	font,
-	glm::vec2				origin,
+	glm::vec2					origin,
 	std::string					text,
 	float						kerning,
-	glm::vec2				scale,
+	glm::vec2					scale,
 	bool						vertical,
 	uint32_t					font_face,
 	bool						wait_for_resource_load )

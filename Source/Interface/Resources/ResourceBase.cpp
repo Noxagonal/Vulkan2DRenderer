@@ -7,6 +7,7 @@
 #include "Interface/InstanceImpl.h"
 
 #include "Interface/Resources/ResourceManagerImpl.h"
+#include "ResourceImplBase.h"
 
 
 
@@ -131,6 +132,23 @@ vk2d::_internal::ResourceImplBase::ResourceImplBase(
 	if( this->parent_resource ) {
 		this->parent_resource->resource_impl->AddSubresource( my_interface );
 	}
+}
+
+vk2d::ResourceStatus vk2d::_internal::ResourceImplBase::WaitUntilLoaded(
+	std::chrono::nanoseconds timeout
+)
+{
+	if( timeout == std::chrono::nanoseconds::max() ) {
+		return WaitUntilLoaded( std::chrono::steady_clock::time_point::max() );
+	}
+	return WaitUntilLoaded( std::chrono::steady_clock::now() + timeout );
+}
+
+bool vk2d::_internal::ResourceImplBase::MTLoadMore(
+	vk2d::_internal::ThreadPrivateResource * thread_resource
+)
+{
+	return false;
 }
 
 void vk2d::_internal::ResourceImplBase::DestroySubresources()

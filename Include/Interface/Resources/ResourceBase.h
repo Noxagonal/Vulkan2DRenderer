@@ -19,11 +19,12 @@ class ResourceThreadUnloadTask;
 ///				immediately available to be used, in this case vk2d::ResourceStatus
 ///				will tell if the resource has been loaded, failed to load or still
 ///				undetermined.
-enum class ResourceStatus
+enum class ResourceStatus : uint32_t
 {
 	UNDETERMINED		= 0,	///< Loading is still ongoing or not yet attempted.
-	LOADED,						///< Resource has been fully loaded and is ready to be used.
-	FAILED_TO_LOAD,				///< Attempt to load the resource has been made but something went wrong.
+	LOADED,						///< Resource has been loaded and is ready to be used.
+	LOADING_MORE,				///< Resource is loaded but is loading more on the background, query specific resource for available features and to request more loading.
+	FAILED_TO_LOAD,				///< Attempt to load the resource has been made but something went wrong, resource can be set to this state from loaded state if loading more fails.
 };
 
 
@@ -55,10 +56,8 @@ public:
 	VK2D_API vk2d::ResourceStatus							VK2D_APIENTRY						GetStatus();
 
 	/// @brief		Waits for the resource to load on the calling thread before
-	///				continuing execution. For as long as the resource status is
-	///				undetermined or timeout hasn't been met this function will block.
-	///				As soon as the resource state becomes determined this function
-	///				will return and code execution can continue.
+	///				continuing execution. This function will block for as long as
+	///				resource state is not either LOADED or FAILED_TO_LOAD.
 	/// @note		Multithreading: Any thread.
 	/// @param[in]	timeout
 	///				Maximum time to wait. If resource is still in undetermined state
@@ -70,12 +69,10 @@ public:
 	///				Resource status can only be undetermined if timeout was given.
 	VK2D_API vk2d::ResourceStatus							VK2D_APIENTRY						WaitUntilLoaded(
 		std::chrono::nanoseconds							timeout								= std::chrono::nanoseconds::max() );
-
+	
 	/// @brief		Waits for the resource to load on the calling thread before
-	///				continuing execution. For as long as the resource status is
-	///				undetermined or timeout hasn't been met this function will block.
-	///				As soon as the resource state becomes determined this function
-	///				will return and code execution can continue.
+	///				continuing execution. This function will block for as long as
+	///				resource state is not either LOADED or FAILED_TO_LOAD.
 	/// @note		Multithreading: Any thread.
 	/// @param[in]	timeout
 	///				Maximum time to wait. If resource is still in undetermined state

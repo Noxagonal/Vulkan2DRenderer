@@ -48,28 +48,33 @@ public:
 	virtual													~ResourceImplBase()					= default;
 
 	// Checks the status of the resource.
-	virtual vk2d::ResourceStatus							GetStatus()						= 0;
+	virtual vk2d::ResourceStatus							GetStatus()							= 0;
 
 	// Blocks until the resource is ready to be used or an error happened.
 	// Returns the new status of the resource, it's guaranteed to not be undetermined.
 	virtual vk2d::ResourceStatus							WaitUntilLoaded(
-		std::chrono::nanoseconds							timeout							= std::chrono::nanoseconds::max() ) = 0;
+		std::chrono::nanoseconds							timeout								= std::chrono::nanoseconds::max() ) = 0;
 
 	// Blocks until the resource is ready to be used or an error happened.
 	// Returns the new status of the resource, it's guaranteed to not be undetermined.
 	virtual vk2d::ResourceStatus							WaitUntilLoaded(
-		std::chrono::steady_clock::time_point				timeout )						= 0;
+		std::chrono::steady_clock::time_point				timeout )							= 0;
 
 protected:
 	// Multithreaded load function, runs when the thread pool has time to process this resource.
 	// Return true if loading was successful.
 	virtual bool											MTLoad(
-		vk2d::_internal::ThreadPrivateResource			*	thread_resource )				= 0;
+		vk2d::_internal::ThreadPrivateResource			*	thread_resource )					= 0;
+
+	// Optional multithreaded load function to load more afterwards, runs when the thread pool has
+	// time to process this resource further. Returns true if loading was successful.
+	virtual bool											MTLoadMore(
+		vk2d::_internal::ThreadPrivateResource			*	thread_resource );
 
 	// Multithreaded unload function, runs when the thread pool has time to process this resource.
 	// Internal use only.
 	virtual void											MTUnload(
-		vk2d::_internal::ThreadPrivateResource			*	thread_resource )				= 0;
+		vk2d::_internal::ThreadPrivateResource			*	thread_resource )					= 0;
 
 private:
 	// Internal use only.
