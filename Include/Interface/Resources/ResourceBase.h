@@ -10,6 +10,7 @@ namespace _internal {
 class ResourceManagerImpl;
 class ResourceImplBase;
 class ResourceThreadLoadTask;
+class ResourceThreadLoadMoreTask;
 class ResourceThreadUnloadTask;
 }
 
@@ -21,10 +22,9 @@ class ResourceThreadUnloadTask;
 ///				undetermined.
 enum class ResourceStatus : uint32_t
 {
-	UNDETERMINED		= 0,	///< Loading is still ongoing or not yet attempted.
-	LOADED,						///< Resource has been loaded and is ready to be used.
-	LOADING_MORE,				///< Resource is loaded but is loading more on the background, query specific resource for available features and to request more loading.
-	FAILED_TO_LOAD,				///< Attempt to load the resource has been made but something went wrong, resource can be set to this state from loaded state if loading more fails.
+	UNDETERMINED			= 0,	///< Loading is still ongoing or not yet attempted.
+	LOADED,							///< Resource has been loaded and is ready to be used.
+	FAILED_TO_LOAD,					///< Attempt to load the resource has been made but something went wrong, resource can be set to this state from loaded state if loading more fails.
 };
 
 
@@ -42,6 +42,7 @@ class ResourceBase {
 	friend class vk2d::_internal::ResourceManagerImpl;
 	friend class vk2d::_internal::ResourceImplBase;
 	friend class vk2d::_internal::ResourceThreadLoadTask;
+	friend class vk2d::_internal::ResourceThreadLoadMoreTask;
 	friend class vk2d::_internal::ResourceThreadUnloadTask;
 
 public:

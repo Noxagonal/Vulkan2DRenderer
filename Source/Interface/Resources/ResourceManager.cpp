@@ -162,12 +162,30 @@ void vk2d::_internal::ResourceThreadLoadTask::operator()(
 	// Because Vulkan often needs to do more processing afterwards resource status
 	// is not set to "LOADED" here, it'll be determined by the resource itself.
 	// However we can set resource status to "FAILED_TO_LOAD" at any time.
-
 	if( !resource->resource_impl->MTLoad( thread_resource ) ) {
 		resource->resource_impl->status = vk2d::ResourceStatus::FAILED_TO_LOAD;
 		resource_manager->GetInstance()->Report( vk2d::ReportSeverity::WARNING, "Resource loading failed!" );
 	}
 	resource->resource_impl->load_function_run_fence.Set();
+}
+
+
+
+vk2d::_internal::ResourceThreadLoadMoreTask::ResourceThreadLoadMoreTask(
+	vk2d::_internal::ResourceManagerImpl	*	resource_manager,
+	vk2d::ResourceBase						*	resource
+) :
+	resource_manager( resource_manager ),
+	resource( resource )
+{};
+
+void vk2d::_internal::ResourceThreadLoadMoreTask::operator()(
+	vk2d::_internal::ThreadPrivateResource	*	thread_resource
+)
+{
+	if( !resource->resource_impl->MTLoadMore( thread_resource ) ) {
+		resource_manager->GetInstance()->Report( vk2d::ReportSeverity::WARNING, "Resource loading more failed, some functionality might be disabled!" );
+	}
 }
 
 
@@ -437,12 +455,35 @@ bool vk2d::_internal::ResourceManagerImpl::IsGood() const
 	return is_good;
 }
 
+void vk2d::_internal::ResourceManagerImpl::RequestLoadMore(
+	vk2d::ResourceBase * resource_ptr
+)
+{
+	std::lock_guard<std::mutex> lock_guard( resource_ptr->resource_impl->load_more_status_mutex );
+	if( resource_ptr->resource_impl->load_more_status != vk2d::_internal::ResourceLoadMoreStatus::IDLE ) return;
+	ScheduleResourceLoadMore( resource_ptr );
+}
+
 void vk2d::_internal::ResourceManagerImpl::ScheduleResourceLoad(
 	vk2d::ResourceBase * resource_ptr
 )
 {
 	thread_pool->ScheduleTask(
 		std::make_unique<vk2d::_internal::ResourceThreadLoadTask>(
+			this,
+			resource_ptr
+			),
+		{ resource_ptr->resource_impl->loader_thread }
+	);
+}
+
+void vk2d::_internal::ResourceManagerImpl::ScheduleResourceLoadMore(
+	vk2d::ResourceBase * resource_ptr
+)
+{
+	resource_ptr->resource_impl->load_more_status = vk2d::_internal::ResourceLoadMoreStatus::QUEUED;
+	thread_pool->ScheduleTask(
+		std::make_unique<vk2d::_internal::ResourceThreadLoadMoreTask>(
 			this,
 			resource_ptr
 			),

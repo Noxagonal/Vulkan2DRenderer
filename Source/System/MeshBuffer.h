@@ -44,7 +44,7 @@ public:
 		vk2d::_internal::MeshBufferBlock<uint32_t>			*	index_block							= {};
 		vk2d::_internal::MeshBufferBlock<vk2d::Vertex>		*	vertex_block						= {};
 		vk2d::_internal::MeshBufferBlock<float>				*	texture_channel_weight_block		= {};
-		vk2d::_internal::MeshBufferBlock<glm::mat4>	*	transformation_block				= {};
+		vk2d::_internal::MeshBufferBlock<glm::mat4>			*	transformation_block				= {};
 
 		uint32_t												index_size							= {};	// size of data.
 		VkDeviceSize											index_byte_size						= {};	// size of data in bytes.

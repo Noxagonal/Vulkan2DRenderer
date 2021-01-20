@@ -18,8 +18,19 @@ namespace _internal {
 
 class ResourceManagerImpl;
 class ResourceThreadLoadTask;
+class ResourceThreadLoadMoreTask;
 class ResourceThreadUnloadTask;
 class ThreadPrivateResource;
+
+
+
+/// @brief		Some VK2D resources can continue loading stuff after initial loading has completed.
+enum class ResourceLoadMoreStatus : uint32_t
+{
+	IDLE					= 0,
+	QUEUED,
+	LOADING,
+};
 
 
 
@@ -27,6 +38,7 @@ class ResourceImplBase
 {
 	friend class vk2d::_internal::ResourceManagerImpl;
 	friend class vk2d::_internal::ResourceThreadLoadTask;
+	friend class vk2d::_internal::ResourceThreadLoadMoreTask;
 	friend class vk2d::_internal::ResourceThreadUnloadTask;
 
 public:
@@ -113,6 +125,8 @@ protected:
 
 	vk2d::_internal::Fence									load_function_run_fence;
 	std::atomic<vk2d::ResourceStatus>						status								= {};
+	std::mutex												load_more_status_mutex;
+	vk2d::_internal::ResourceLoadMoreStatus					load_more_status					= {};
 	vk2d::ResourceBase									*	my_interface						= {};
 
 private:

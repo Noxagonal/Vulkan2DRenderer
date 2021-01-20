@@ -101,6 +101,7 @@ private:
 	VK2D_API void									VK2D_APIENTRY					MoveOther(
 		vk2d::Text								&&	other );
 	VK2D_API void									VK2D_APIENTRY					Deallocate();
+
 	int32_t										*	str_data						= {};
 	size_t											str_size						= {};
 	size_t											str_capacity					= {};

@@ -22,6 +22,7 @@ class ResourceImplBase;
 
 
 
+// Load task
 // Load task works on the resource list through pointers
 class ResourceThreadLoadTask : public vk2d::_internal::Task
 {
@@ -37,6 +38,23 @@ private:
 	vk2d::ResourceBase							*	resource				= {};
 };
 
+// Load more task
+// Load task works on the resource list through pointers
+class ResourceThreadLoadMoreTask : public vk2d::_internal::Task
+{
+public:
+	ResourceThreadLoadMoreTask(
+		vk2d::_internal::ResourceManagerImpl	*	resource_manager,
+		vk2d::ResourceBase						*	resource );
+
+	void operator()( vk2d::_internal::ThreadPrivateResource * thread_resource );
+
+private:
+	vk2d::_internal::ResourceManagerImpl		*	resource_manager		= {};
+	vk2d::ResourceBase							*	resource				= {};
+};
+
+// Unload task
 // Unload task takes ownership of the task
 class ResourceThreadUnloadTask : public vk2d::_internal::Task
 {
@@ -99,21 +117,43 @@ public:
 
 	bool														IsGood() const;
 
+	/// @brief		Called by the resource when the resource needs further processing on
+	///				a separate thread.
+	/// @note		Multithreading: Any thread.
+	/// @param[in]	resource_ptr
+	///				Pointer to resource that should be processed further.
+	void														RequestLoadMore(
+		vk2d::ResourceBase									*	resource_ptr );
+
 private:
-	// CALL ONLY FROM "AttachResource()".
-	// Schedules the resource to be loaded after it's attached.
+	/// @brief		Schedules the resource to be loaded after it's attached.
+	/// @note		CALL ONLY FROM "AttachResource()".
+	/// @param resource_ptr 
 	void														ScheduleResourceLoad(
 		vk2d::ResourceBase									*	resource_ptr );
 
-	// Some resources will need to use the same thread where they were
-	// originally created, for example if a resource uses a memory pool
-	// from a thread, memory should be freed to the same thread memory
-	// pool, idea of per thread resource scheme is to reduce mutex usage.
-	// This is just to select a loader thread prior to resource loading.
+	/// @brief		Schedule resource to load more.
+	/// @note		CALL ONLY FROM "RequestLoadMore()".
+	/// @param		resource_ptr
+	///				Pointer to resource to process further.
+	void														ScheduleResourceLoadMore(
+		vk2d::ResourceBase									*	resource_ptr );
+
+	/// @brief		Some resources will need to use the same thread where they were
+	///				originally created, for example if a resource uses a memory pool
+	///				from a thread, memory should be freed to the same thread memory
+	///				pool, idea of per thread resource scheme is to reduce mutex usage.
+	///				This is just to select a loader thread prior to resource loading.
+	/// @return		Loader thread allocated for the resource.
 	uint32_t													SelectLoaderThread();
 
-	// Take ownership of the resource and put it into a load queue.
-	// Returns raw pointer to the resource after it's been attached.
+	/// @brief		Take ownership of the resource and put it into a load queue.
+	/// @note		Multithreading: Any thread.
+	/// @tparam		T
+	///				Resource type. Must be derived from vk2d::ResourceBase.
+	/// @param[in]	resource
+	///				Resource to take ownership of.
+	/// @return		Raw pointer to the resource after it's been attached.
 	template<typename T>
 	T														*	AttachResource(
 		std::unique_ptr<T>										resource )
@@ -121,7 +161,7 @@ private:
 		static_assert( std::is_base_of_v<vk2d::ResourceBase, T>, "<T> must be resource type." );
 
 		auto resource_ptr = resource.get();
-		std::lock_guard<std::recursive_mutex>		resources_lock( resources_mutex );
+		std::lock_guard<std::recursive_mutex> resources_lock( resources_mutex );
 		resources.push_back( std::move( resource ) );
 		ScheduleResourceLoad( resource_ptr );
 		return resource_ptr;
