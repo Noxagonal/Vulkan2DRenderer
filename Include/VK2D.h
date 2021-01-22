@@ -12,6 +12,7 @@
 #include "Types/Color.hpp"
 #include "Types/MeshPrimitives.hpp"
 #include "Types/Mesh.h"
+#include "Types/MeshNew.h"
 #include "Types/Multisamples.h"
 #include "Types/RenderCoordinateSpace.hpp"
 #include "Types/StreamOps.h"

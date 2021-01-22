@@ -98,6 +98,20 @@ int main()
 	sampler_create_info.magnification_filter	= vk2d::SamplerFilter::NEAREST;
 	auto pixelated_sampler = instance->CreateSampler( sampler_create_info );
 
+
+
+	vk2d::tr1::Mesh<0, 0> tmesh1( 0, 0 );
+	vk2d::tr1::Mesh<1, 1, glm::vec2> tmesh2( 0, 0 );
+	vk2d::tr1::Mesh<0, 2> tmesh3( 0, 0 );
+
+	tmesh1.AppendVertex( glm::vec2( 1, 2 ) );
+	tmesh2.AppendVertex( glm::vec2( 1, 2 ), { glm::vec2( 3, 4 ) }, { vk2d::Colorf::GREY() }, glm::vec2( 5, 6 ) );
+	tmesh3.AppendVertex( glm::vec2( 1, 2 ), { vk2d::Colorf::GREEN(), vk2d::Colorf::BLUE() } );
+	auto v1 = tmesh1[ 0 ];
+	auto v2 = tmesh2[ 0 ];
+	auto v3 = tmesh3[ 0 ];
+
+
 	auto resource_manager		= instance->GetResourceManager();
 
 	auto delta_time_counter		= DeltaTimeCounter();
