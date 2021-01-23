@@ -190,76 +190,22 @@ static constexpr size_t VertexExpectedSize = sizeof( glm::vec2 ) + sizeof( glm::
 
 
 
-struct VertexInterfaceBase
-{
-	alignas( 4 ) glm::vec2										coords			= {};
-};
-
-template<size_t UVCountPerVertex>
-struct VertexInterfaceUVs
-{
-	alignas( 4 ) std::array<glm::vec2, UVCountPerVertex>		uv_coords		= {};
-};
-template<> struct VertexInterfaceUVs<0> {};
-
-template<size_t ColorCountPerVertex>
-struct VertexInterfaceColors
-{
-	alignas( 4 ) std::array<vk2d::Colorf, ColorCountPerVertex>	colors			= {};
-};
-template<> struct VertexInterfaceColors<0> {};
-
-template<typename UserDataPerVertexT>
-struct VertexInterfaceUserData
-{
-	alignas( 4 ) UserDataPerVertexT								user_data		= {};
-};
-template<> struct VertexInterfaceUserData<void> {};
-
-
-
 } // _internal
 
 
 
-/*
-// Annoyingly MSVC multiple inheritance empty base optimization is not working like other compilers, otherwise this code would be all that's needed.
 template<
 	size_t		UVCountPerVertex,
 	size_t		ColorCountPerVertex,
 	typename	UserDataPerVertexT
 >
-struct Vertex :
-	public vk2d::tr1::_internal::VertexInterfaceBase,
-	public vk2d::tr1::_internal::VertexInterfaceUVs<UVCountPerVertex>,
-	public vk2d::tr1::_internal::VertexInterfaceColors<ColorCountPerVertex>,
-	public vk2d::tr1::_internal::VertexInterfaceUserData<UserDataPerVertexT>
+struct Vertex
 {
-	#if VK2D_DEBUG_ENABLE
-	Vertex()
-	{
-		// Relaying on empty base class optimization here... Consider moving to C++20 so we could try [[no_unique_address]]
-		static_assert( sizeof( *this ) ==
-			vk2d::tr1::_internal::VertexExpectedSize<UVCountPerVertex, ColorCountPerVertex, UserDataPerVertexT>,
-			"Internal error, Vertex size does not match expected." );
-	}
-	#endif
-};
-*/
+	alignas( 4 ) glm::vec2										coords			= {};
+	alignas( 4 ) std::array<glm::vec2, UVCountPerVertex>		uv_coords		= {};
+	alignas( 4 ) std::array<vk2d::Colorf, ColorCountPerVertex>	colors			= {};
+	alignas( 4 ) UserDataPerVertexT								user_data		= {};
 
-
-
-template<
-	size_t		UVCountPerVertex,
-	size_t		ColorCountPerVertex,
-	typename	UserDataPerVertexT
->
-struct Vertex :
-	public vk2d::tr1::_internal::VertexInterfaceBase,
-	public vk2d::tr1::_internal::VertexInterfaceUVs<UVCountPerVertex>,
-	public vk2d::tr1::_internal::VertexInterfaceColors<ColorCountPerVertex>,
-	public vk2d::tr1::_internal::VertexInterfaceUserData<UserDataPerVertexT>
-{
 	#if VK2D_DEBUG_ENABLE
 	Vertex()
 	{
@@ -274,11 +220,12 @@ template<
 	size_t		ColorCountPerVertex,
 	typename	UserDataPerVertexT
 >
-struct Vertex<0, ColorCountPerVertex, UserDataPerVertexT> :
-	public vk2d::tr1::_internal::VertexInterfaceBase,
-	public vk2d::tr1::_internal::VertexInterfaceColors<ColorCountPerVertex>,
-	public vk2d::tr1::_internal::VertexInterfaceUserData<UserDataPerVertexT>
+struct Vertex<0, ColorCountPerVertex, UserDataPerVertexT>
 {
+	alignas( 4 ) glm::vec2										coords			= {};
+	alignas( 4 ) std::array<vk2d::Colorf, ColorCountPerVertex>	colors			= {};
+	alignas( 4 ) UserDataPerVertexT								user_data		= {};
+
 	#if VK2D_DEBUG_ENABLE
 	Vertex()
 	{
@@ -293,11 +240,12 @@ template<
 	size_t		UVCountPerVertex,
 	typename	UserDataPerVertexT
 >
-struct Vertex<UVCountPerVertex, 0, UserDataPerVertexT> :
-	public vk2d::tr1::_internal::VertexInterfaceBase,
-	public vk2d::tr1::_internal::VertexInterfaceUVs<UVCountPerVertex>,
-	public vk2d::tr1::_internal::VertexInterfaceUserData<UserDataPerVertexT>
+struct Vertex<UVCountPerVertex, 0, UserDataPerVertexT>
 {
+	alignas( 4 ) glm::vec2										coords			= {};
+	alignas( 4 ) std::array<glm::vec2, UVCountPerVertex>		uv_coords		= {};
+	alignas( 4 ) UserDataPerVertexT								user_data		= {};
+
 	#if VK2D_DEBUG_ENABLE
 	Vertex()
 	{
@@ -311,10 +259,11 @@ struct Vertex<UVCountPerVertex, 0, UserDataPerVertexT> :
 template<
 	typename	UserDataPerVertexT
 >
-struct Vertex<0, 0, UserDataPerVertexT> :
-	public vk2d::tr1::_internal::VertexInterfaceBase,
-	public vk2d::tr1::_internal::VertexInterfaceUserData<UserDataPerVertexT>
+struct Vertex<0, 0, UserDataPerVertexT>
 {
+	alignas( 4 ) glm::vec2										coords			= {};
+	alignas( 4 ) UserDataPerVertexT								user_data		= {};
+
 	#if VK2D_DEBUG_ENABLE
 	Vertex()
 	{
@@ -329,11 +278,12 @@ template<
 	size_t		UVCountPerVertex,
 	size_t		ColorCountPerVertex
 >
-struct Vertex<UVCountPerVertex, ColorCountPerVertex, void> :
-	public vk2d::tr1::_internal::VertexInterfaceBase,
-	public vk2d::tr1::_internal::VertexInterfaceUVs<UVCountPerVertex>,
-	public vk2d::tr1::_internal::VertexInterfaceColors<ColorCountPerVertex>
+struct Vertex<UVCountPerVertex, ColorCountPerVertex, void>
 {
+	alignas( 4 ) glm::vec2										coords			= {};
+	alignas( 4 ) std::array<glm::vec2, UVCountPerVertex>		uv_coords		= {};
+	alignas( 4 ) std::array<vk2d::Colorf, ColorCountPerVertex>	colors			= {};
+
 	#if VK2D_DEBUG_ENABLE
 	Vertex()
 	{
@@ -347,10 +297,11 @@ struct Vertex<UVCountPerVertex, ColorCountPerVertex, void> :
 template<
 	size_t		ColorCountPerVertex
 >
-struct Vertex<0, ColorCountPerVertex, void> :
-	public vk2d::tr1::_internal::VertexInterfaceBase,
-	public vk2d::tr1::_internal::VertexInterfaceColors<ColorCountPerVertex>
+struct Vertex<0, ColorCountPerVertex, void>
 {
+	alignas( 4 ) glm::vec2										coords			= {};
+	alignas( 4 ) std::array<vk2d::Colorf, ColorCountPerVertex>	colors			= {};
+
 	#if VK2D_DEBUG_ENABLE
 	Vertex()
 	{
@@ -364,10 +315,11 @@ struct Vertex<0, ColorCountPerVertex, void> :
 template<
 	size_t		UVCountPerVertex
 >
-struct Vertex<UVCountPerVertex, 0, void> :
-	public vk2d::tr1::_internal::VertexInterfaceBase,
-	public vk2d::tr1::_internal::VertexInterfaceUVs<UVCountPerVertex>
+struct Vertex<UVCountPerVertex, 0, void>
 {
+	alignas( 4 ) glm::vec2										coords			= {};
+	alignas( 4 ) std::array<glm::vec2, UVCountPerVertex>		uv_coords		= {};
+
 	#if VK2D_DEBUG_ENABLE
 	Vertex()
 	{
@@ -379,9 +331,10 @@ struct Vertex<UVCountPerVertex, 0, void> :
 };
 
 template<>
-struct Vertex<0, 0, void> :
-	public vk2d::tr1::_internal::VertexInterfaceBase
+struct Vertex<0, 0, void>
 {
+	alignas( 4 ) glm::vec2										coords			= {};
+
 	#if VK2D_DEBUG_ENABLE
 	Vertex()
 	{
