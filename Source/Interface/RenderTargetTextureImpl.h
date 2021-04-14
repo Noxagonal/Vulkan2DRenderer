@@ -22,7 +22,6 @@
 
 
 
-
 namespace vk2d {
 
 class Mesh;

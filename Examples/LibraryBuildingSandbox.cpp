@@ -100,9 +100,15 @@ int main()
 
 
 
-	vk2d::tr1::Mesh<0, 0> tmesh1( 0, 0 );
-	vk2d::tr1::Mesh<1, 1, glm::vec2> tmesh2( 0, 0 );
-	vk2d::tr1::Mesh<0, 2> tmesh3( 0, 0 );
+	// Interfaces...
+	// Move user per draw data to when we're actually drawing so we can reuse it with instanced drawing.
+	// Eg. window->DrawMesh( pipeline, mesh, { transforms_with_user_data } );
+	// The pipeline must match mesh user data and user data per draw.
+
+
+	vk2d::p1::Mesh<0, 0> tmesh1( 0, 0 );
+	vk2d::p1::Mesh<1, 1, glm::vec2> tmesh2( 0, 0 );
+	vk2d::p1::Mesh<0, 2> tmesh3( 0, 0 );
 
 	tmesh1.AppendVertex( glm::vec2( 1, 2 ) );
 	tmesh2.AppendVertex( glm::vec2( 1, 2 ), { glm::vec2( 3, 4 ) }, { vk2d::Colorf::GREY() }, glm::vec2( 5, 6 ) );
@@ -110,6 +116,7 @@ int main()
 	auto v1 = tmesh1[ 0 ];
 	auto v2 = tmesh2[ 0 ];
 	auto v3 = tmesh3[ 0 ];
+
 
 
 	auto resource_manager		= instance->GetResourceManager();

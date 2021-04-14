@@ -23,7 +23,7 @@ class Texture;
 
 
 
-namespace tr1 {
+namespace p1 {
 
 
 
@@ -103,7 +103,7 @@ public:
 		assert( index < vertex_count );
 		return raw_vertex_data.data() + index * vertex_stride;
 	}
-	inline uint32_t									GetVertexStride() const
+	inline uint32_t									GetVertexRawDataStride() const
 	{
 		return vertex_stride;
 	}
@@ -131,13 +131,22 @@ public:
 	{
 		return color_count;
 	}
-	inline uint32_t									GetUserDataPerVertexByteSize() const
+	inline uint32_t									GetUserDataPerVertexRawSize() const
 	{
 		return user_data_per_vertex_byte_size;
 	}
-	inline uint32_t									GetUserDataPerDrawByteSize() const
+	inline void										SetUserDataPerDrawRaw(
+		void									*	user_data_raw,
+		uint32_t									user_data_byte_size )
 	{
-		return user_data_per_draw_byte_size;
+		// TODO: Might be a good idea to move per draw data into when we're actually drawing the mesh.
+		// This would allow reusing mesh data with different per draw user data per instance.
+		user_data_per_draw.resize( user_data_byte_size );
+		std::memcpy( user_data_per_draw.data(), user_data_raw, user_data_byte_size );
+	}
+	inline const std::vector<uint8_t>			&	GetUserDataPerDrawRawData() const
+	{
+		return user_data_per_draw;
 	}
 	inline std::vector<uint32_t>				&	GetIndices()
 	{
@@ -160,7 +169,6 @@ protected:
 	std::vector<vk2d::Sampler*>						samplers						= {};
 	std::vector<vk2d::Texture*>						textures						= {};
 
-	uint32_t										user_data_per_draw_byte_size	= {};
 	std::vector<uint8_t>							user_data_per_draw				= {};
 
 	bool											generated						= false;							///< Tells if this mesh was created by a mesh generator.
@@ -174,19 +182,20 @@ namespace _internal {
 
 
 
-// Data-type byte size with exception for void which returns 0 size.
-template<typename T> static constexpr size_t TypeSizeVoid0 = sizeof( T );
-template<> static constexpr size_t TypeSizeVoid0<void> = 0;
-
-
-
-// Vertex expected byte size
+/// @brief		Gets the expected vertex byte for specific template parameters.
+///				Used for compile-time error checking.
+/// @tparam		UVCountPerVertex
+///				Number of UV coordinates per vertex.
+/// @tparam		ColorCountPerVertex
+///				Number of colors per vertex.
+/// @tparam		UserDataPerVertexT
+///				User data type per vertex.
 template<
 	size_t		UVCountPerVertex,
 	size_t		ColorCountPerVertex,
 	typename	UserDataPerVertexT
 >
-static constexpr size_t VertexExpectedSize = sizeof( glm::vec2 ) + sizeof( glm::vec2 ) * UVCountPerVertex + sizeof( vk2d::Colorf ) * ColorCountPerVertex + vk2d::tr1::_internal::TypeSizeVoid0<UserDataPerVertexT>;
+static constexpr size_t ExpectedVertexSize = sizeof( glm::vec2 ) + sizeof( glm::vec2 ) * UVCountPerVertex + sizeof( vk2d::Colorf ) * ColorCountPerVertex + vk2d::TypeSizeVoid0<UserDataPerVertexT>;
 
 
 
@@ -210,7 +219,7 @@ struct Vertex
 	Vertex()
 	{
 		static_assert( sizeof( *this ) ==
-			vk2d::tr1::_internal::VertexExpectedSize<UVCountPerVertex, ColorCountPerVertex, UserDataPerVertexT>,
+			vk2d::p1::_internal::ExpectedVertexSize<UVCountPerVertex, ColorCountPerVertex, UserDataPerVertexT>,
 			"Internal error, Vertex size does not match expected." );
 	}
 	#endif
@@ -230,7 +239,7 @@ struct Vertex<0, ColorCountPerVertex, UserDataPerVertexT>
 	Vertex()
 	{
 		static_assert( sizeof( *this ) ==
-			vk2d::tr1::_internal::VertexExpectedSize<0, ColorCountPerVertex, UserDataPerVertexT>,
+			vk2d::p1::_internal::ExpectedVertexSize<0, ColorCountPerVertex, UserDataPerVertexT>,
 			"Internal error, Vertex size does not match expected." );
 	}
 	#endif
@@ -250,7 +259,7 @@ struct Vertex<UVCountPerVertex, 0, UserDataPerVertexT>
 	Vertex()
 	{
 		static_assert( sizeof( *this ) ==
-			vk2d::tr1::_internal::VertexExpectedSize<UVCountPerVertex, 0, UserDataPerVertexT>,
+			vk2d::p1::_internal::ExpectedVertexSize<UVCountPerVertex, 0, UserDataPerVertexT>,
 			"Internal error, Vertex size does not match expected." );
 	}
 	#endif
@@ -268,7 +277,7 @@ struct Vertex<0, 0, UserDataPerVertexT>
 	Vertex()
 	{
 		static_assert( sizeof( *this ) ==
-			vk2d::tr1::_internal::VertexExpectedSize<0, 0, UserDataPerVertexT>,
+			vk2d::p1::_internal::ExpectedVertexSize<0, 0, UserDataPerVertexT>,
 			"Internal error, Vertex size does not match expected." );
 	}
 	#endif
@@ -288,7 +297,7 @@ struct Vertex<UVCountPerVertex, ColorCountPerVertex, void>
 	Vertex()
 	{
 		static_assert( sizeof( *this ) ==
-			vk2d::tr1::_internal::VertexExpectedSize<UVCountPerVertex, ColorCountPerVertex, void>,
+			vk2d::p1::_internal::ExpectedVertexSize<UVCountPerVertex, ColorCountPerVertex, void>,
 			"Internal error, Vertex size does not match expected." );
 	}
 	#endif
@@ -306,7 +315,7 @@ struct Vertex<0, ColorCountPerVertex, void>
 	Vertex()
 	{
 		static_assert( sizeof( *this ) ==
-			vk2d::tr1::_internal::VertexExpectedSize<0, ColorCountPerVertex, void>,
+			vk2d::p1::_internal::ExpectedVertexSize<0, ColorCountPerVertex, void>,
 			"Internal error, Vertex size does not match expected." );
 	}
 	#endif
@@ -324,7 +333,7 @@ struct Vertex<UVCountPerVertex, 0, void>
 	Vertex()
 	{
 		static_assert( sizeof( *this ) ==
-			vk2d::tr1::_internal::VertexExpectedSize<UVCountPerVertex, 0, void>,
+			vk2d::p1::_internal::ExpectedVertexSize<UVCountPerVertex, 0, void>,
 			"Internal error, Vertex size does not match expected." );
 	}
 	#endif
@@ -339,7 +348,7 @@ struct Vertex<0, 0, void>
 	Vertex()
 	{
 		static_assert( sizeof( *this ) ==
-			vk2d::tr1::_internal::VertexExpectedSize<0, 0, void>,
+			vk2d::p1::_internal::ExpectedVertexSize<0, 0, void>,
 			"Internal error, Vertex size does not match expected." );
 	}
 	#endif
@@ -351,7 +360,7 @@ namespace _internal {
 
 
 
-class MeshInterfaceForUserDataPerVertexBase
+class MeshInterfaceForVertexBase
 {
 protected:
 	MeshData * ptr_to_self = {};
@@ -369,11 +378,11 @@ template<
 	size_t		ColorCountPerVertex,
 	typename	UserDataPerVertexT		= void
 >
-class MeshInterfaceForUserDataPerVertex :
-	protected MeshInterfaceForUserDataPerVertexBase
+class MeshInterfaceForVertex :
+	protected MeshInterfaceForVertexBase
 {
 public:
-	MeshInterfaceForUserDataPerVertex( MeshData * ptr_to_self ) { this->ptr_to_self = ptr_to_self; };
+	MeshInterfaceForVertex( MeshData * ptr_to_self ) { this->ptr_to_self = ptr_to_self; };
 
 	inline void												AppendVertex(
 		const glm::vec2									&	vertex_coordinates,
@@ -402,11 +411,11 @@ template<
 	size_t		ColorCountPerVertex,
 	typename	UserDataPerVertexT
 >
-class MeshInterfaceForUserDataPerVertex<0, ColorCountPerVertex, UserDataPerVertexT> :
-	protected MeshInterfaceForUserDataPerVertexBase
+class MeshInterfaceForVertex<0, ColorCountPerVertex, UserDataPerVertexT> :
+	protected MeshInterfaceForVertexBase
 {
 public:
-	MeshInterfaceForUserDataPerVertex( MeshData * ptr_to_self ) { this->ptr_to_self = ptr_to_self; };
+	MeshInterfaceForVertex( MeshData * ptr_to_self ) { this->ptr_to_self = ptr_to_self; };
 
 	inline void												AppendVertex(
 		const glm::vec2									&	vertex_coordinates,
@@ -432,11 +441,11 @@ template<
 	size_t		UVCountPerVertex,
 	typename	UserDataPerVertexT
 >
-class MeshInterfaceForUserDataPerVertex<UVCountPerVertex, 0, UserDataPerVertexT> :
-	protected MeshInterfaceForUserDataPerVertexBase
+class MeshInterfaceForVertex<UVCountPerVertex, 0, UserDataPerVertexT> :
+	protected MeshInterfaceForVertexBase
 {
 public:
-	MeshInterfaceForUserDataPerVertex( MeshData * ptr_to_self ) { this->ptr_to_self = ptr_to_self; };
+	MeshInterfaceForVertex( MeshData * ptr_to_self ) { this->ptr_to_self = ptr_to_self; };
 
 	inline void												AppendVertex(
 		const glm::vec2									&	vertex_coordinates,
@@ -461,11 +470,11 @@ public:
 template<
 	typename	UserDataPerVertexT
 >
-class MeshInterfaceForUserDataPerVertex<0, 0, UserDataPerVertexT> :
-	protected MeshInterfaceForUserDataPerVertexBase
+class MeshInterfaceForVertex<0, 0, UserDataPerVertexT> :
+	protected MeshInterfaceForVertexBase
 {
 public:
-	MeshInterfaceForUserDataPerVertex( MeshData * ptr_to_self ) { this->ptr_to_self = ptr_to_self; };
+	MeshInterfaceForVertex( MeshData * ptr_to_self ) { this->ptr_to_self = ptr_to_self; };
 
 	inline void												AppendVertex(
 		const glm::vec2									&	vertex_coordinates,
@@ -487,11 +496,11 @@ template<
 	size_t		UVCountPerVertex,
 	size_t		ColorCountPerVertex
 >
-class MeshInterfaceForUserDataPerVertex<UVCountPerVertex, ColorCountPerVertex, void> :
-	protected MeshInterfaceForUserDataPerVertexBase
+class MeshInterfaceForVertex<UVCountPerVertex, ColorCountPerVertex, void> :
+	protected MeshInterfaceForVertexBase
 {
 public:
-	MeshInterfaceForUserDataPerVertex( MeshData * ptr_to_self ) { this->ptr_to_self = ptr_to_self; };
+	MeshInterfaceForVertex( MeshData * ptr_to_self ) { this->ptr_to_self = ptr_to_self; };
 
 	inline void												AppendVertex(
 		const glm::vec2									&	vertex_coordinates,
@@ -517,11 +526,11 @@ public:
 template<
 	size_t		ColorCountPerVertex
 >
-class MeshInterfaceForUserDataPerVertex<0, ColorCountPerVertex, void> :
-	protected MeshInterfaceForUserDataPerVertexBase
+class MeshInterfaceForVertex<0, ColorCountPerVertex, void> :
+	protected MeshInterfaceForVertexBase
 {
 public:
-	MeshInterfaceForUserDataPerVertex( MeshData * ptr_to_self ) { this->ptr_to_self = ptr_to_self; };
+	MeshInterfaceForVertex( MeshData * ptr_to_self ) { this->ptr_to_self = ptr_to_self; };
 
 	inline void												AppendVertex(
 		const glm::vec2									&	vertex_coordinates,
@@ -544,11 +553,11 @@ public:
 template<
 	size_t		UVCountPerVertex
 >
-class MeshInterfaceForUserDataPerVertex<UVCountPerVertex, 0, void> :
-	protected MeshInterfaceForUserDataPerVertexBase
+class MeshInterfaceForVertex<UVCountPerVertex, 0, void> :
+	protected MeshInterfaceForVertexBase
 {
 public:
-	MeshInterfaceForUserDataPerVertex( MeshData * ptr_to_self ) { this->ptr_to_self = ptr_to_self; };
+	MeshInterfaceForVertex( MeshData * ptr_to_self ) { this->ptr_to_self = ptr_to_self; };
 
 	inline void												AppendVertex(
 		const glm::vec2									&	vertex_coordinates,
@@ -569,11 +578,11 @@ public:
 /// @brief		Mesh specialization for UV and color count 0, user data per vertex = void.
 /// @see		vk2d::_internal::MeshInterfaceForUserDataPerVertex
 template<>
-class MeshInterfaceForUserDataPerVertex<0, 0, void> :
-	protected MeshInterfaceForUserDataPerVertexBase
+class MeshInterfaceForVertex<0, 0, void> :
+	protected MeshInterfaceForVertexBase
 {
 public:
-	MeshInterfaceForUserDataPerVertex( MeshData * ptr_to_self ) { this->ptr_to_self = ptr_to_self; };
+	MeshInterfaceForVertex( MeshData * ptr_to_self ) { this->ptr_to_self = ptr_to_self; };
 
 	inline void												AppendVertex(
 		const glm::vec2									&	vertex_coordinates
@@ -595,7 +604,16 @@ public:
 template<typename UserDataPerDrawT>
 class MeshInterfaceForUserDataPerDraw
 {
+public:
+	MeshInterfaceForUserDataPerDraw( MeshData * ptr_to_self ) : ptr_to_self( ptr_to_self ) {};
 
+	void SetUserDataPerDraw( const UserDataPerDrawT & user_data )
+	{
+		
+	}
+
+private:
+	vk2d::p1::MeshData		*	ptr_to_self = nullptr;
 };
 
 /// @brief		Mesh specialization for user data per draw = void.
@@ -603,7 +621,8 @@ class MeshInterfaceForUserDataPerDraw
 template<>
 class MeshInterfaceForUserDataPerDraw<void>
 {
-
+public:
+	MeshInterfaceForUserDataPerDraw( MeshData * ptr_to_self ) {};
 };
 
 
@@ -626,31 +645,33 @@ template<
 	typename	UserDataPerDrawT		= void
 >
 class Mesh :
-	public vk2d::tr1::MeshData,
-	public vk2d::tr1::_internal::MeshInterfaceForUserDataPerVertex<UVCountPerVertex, ColorCountPerVertex, UserDataPerVertexT>,
-	public vk2d::tr1::_internal::MeshInterfaceForUserDataPerDraw<UserDataPerDrawT>
+	public vk2d::p1::MeshData,
+	public vk2d::p1::_internal::MeshInterfaceForVertex<UVCountPerVertex, ColorCountPerVertex, UserDataPerVertexT>,
+	public vk2d::p1::_internal::MeshInterfaceForUserDataPerDraw<UserDataPerDrawT>
 {
 	static_assert( std::is_void_v<UserDataPerVertexT> || std::is_pod_v<UserDataPerVertexT>, "User data per vertex must be plain-old-data struct." );
 	static_assert( std::is_void_v<UserDataPerVertexT> || std::is_trivially_copyable_v<UserDataPerVertexT>, "User data per vertex must be trivially constructible." );
+	static_assert( std::is_void_v<UserDataPerVertexT> || vk2d::TypeSizeVoid0<UserDataPerVertexT> % 4 == 0, "User data per vertex size must be integer multiple of 4 bits." );
 	static_assert( std::is_void_v<UserDataPerDrawT> || std::is_pod_v<UserDataPerDrawT>, "User data per draw must be plain-old-data struct." );
 	static_assert( std::is_void_v<UserDataPerDrawT> || std::is_trivially_copyable_v<UserDataPerDrawT>, "User data per draw must be trivially constructible." );
+	static_assert( std::is_void_v<UserDataPerDrawT> || vk2d::TypeSizeVoid0<UserDataPerVertexT> % 4 == 0, "User data per draw size must be integer multiple of 4 bits." );
 
-	using VertexType = Vertex<UVCountPerVertex, ColorCountPerVertex, UserDataPerVertexT>;
 public:
+	using VertexType = Vertex<UVCountPerVertex, ColorCountPerVertex, UserDataPerVertexT>;
 
 	inline Mesh(
 		size_t	initial_vertex_count	= 0,
 		size_t	initial_index_count		= 0
 	) :
-		vk2d::tr1::MeshData(
+		vk2d::p1::MeshData(
 			UVCountPerVertex,
 			ColorCountPerVertex,
-			vk2d::tr1::_internal::TypeSizeVoid0<UserDataPerVertexT>,
-			vk2d::tr1::_internal::TypeSizeVoid0<UserDataPerDrawT>,
+			vk2d::TypeSizeVoid0<UserDataPerVertexT>,
+			vk2d::TypeSizeVoid0<UserDataPerDrawT>,
 			initial_vertex_count,
 			initial_index_count
 		),
-		vk2d::tr1::_internal::MeshInterfaceForUserDataPerVertex<UVCountPerVertex, ColorCountPerVertex, UserDataPerVertexT>( this )
+		vk2d::p1::_internal::MeshInterfaceForVertex<UVCountPerVertex, ColorCountPerVertex, UserDataPerVertexT>( this )
 	{}
 
 	inline VertexType & GetVertex( size_t index )

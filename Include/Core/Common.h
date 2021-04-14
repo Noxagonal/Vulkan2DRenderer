@@ -35,6 +35,18 @@ constexpr double PI					= 3.14159265358979323846;
 constexpr double RAD				= vk2d::PI * 2.0;
 constexpr double KINDA_SMALL_VALUE	= 0.001;
 
+
+
+/// @brief		Get size of a data type with exception for void which returns 0 size.
+///				This is needed by a few templates that accept void as template parameter,
+///				and because sizeof( void ) is an error.
+/// @tparam		T
+///				Data type
+template<typename T> static constexpr size_t TypeSizeVoid0 = sizeof( T );
+template<> static constexpr size_t TypeSizeVoid0<void> = 0;
+
+
+
 } // vk2d
 
 
