@@ -67,6 +67,7 @@ class WindowImpl {
 	friend void glfwWindowRefreshCallback( GLFWwindow * glfwWindow );
 	friend void glfwWindowFocusCallback( GLFWwindow * glfwWindow, int focus );
 	friend void glfwWindowIconifyCallback( GLFWwindow * glfwWindow, int iconify );
+	friend void glfwWindowMaximizeCallback( GLFWwindow * glfwWindow, int maximized );
 	friend void glfwFramebufferSizeCallback( GLFWwindow * glfwWindow, int x, int y );
 	friend void glfwMouseButtonCallback( GLFWwindow * glfwWindow, int button, int action, int mods );
 	friend void glfwCursorPosCallback( GLFWwindow * glfwWindow, double x, double y );
