@@ -757,6 +757,7 @@ void glfwWindowCloseCallback( GLFWwindow * glfwWindow );
 void glfwWindowRefreshCallback( GLFWwindow * glfwWindow );
 void glfwWindowFocusCallback( GLFWwindow * glfwWindow, int focus );
 void glfwWindowIconifyCallback( GLFWwindow * glfwWindow, int iconify );
+void glfwWindowMaximizeCallback( GLFWwindow * glfwWindow, int maximized );
 void glfwFramebufferSizeCallback( GLFWwindow * glfwWindow, int x, int y );
 void glfwMouseButtonCallback( GLFWwindow * glfwWindow, int button, int action, int mods );
 void glfwCursorPosCallback( GLFWwindow * glfwWindow, double x, double y );
@@ -858,6 +859,24 @@ void vk2d::_internal::glfwWindowIconifyCallback(
 	}
 	if( impl->event_handler ) {
 		impl->event_handler->EventWindowIconify( impl->my_interface, bool( iconify ) );
+	}
+}
+
+void vk2d::_internal::glfwWindowMaximizeCallback(
+	GLFWwindow		*	glfwWindow,
+	int					maximized
+)
+{
+	auto impl = reinterpret_cast<vk2d::_internal::WindowImpl*>( glfwGetWindowUserPointer( glfwWindow ) );
+
+	if( maximized ) {
+		impl->is_maximized			= true;
+	} else {
+		impl->is_maximized			= false;
+		impl->should_reconstruct	= true;
+	}
+	if( impl->event_handler ) {
+		impl->event_handler->EventWindowMaximize( impl->my_interface, bool( maximized ) );
 	}
 }
 
@@ -1044,6 +1063,7 @@ vk2d::_internal::WindowImpl::WindowImpl(
 		glfwSetWindowRefreshCallback( glfw_window, vk2d::_internal::glfwWindowRefreshCallback );
 		glfwSetWindowFocusCallback( glfw_window, vk2d::_internal::glfwWindowFocusCallback );
 		glfwSetWindowIconifyCallback( glfw_window, vk2d::_internal::glfwWindowIconifyCallback );
+		glfwSetWindowMaximizeCallback( glfw_window, vk2d::_internal::glfwWindowMaximizeCallback );
 		glfwSetFramebufferSizeCallback( glfw_window, vk2d::_internal::glfwFramebufferSizeCallback );
 
 		glfwSetMouseButtonCallback( glfw_window, vk2d::_internal::glfwMouseButtonCallback );
