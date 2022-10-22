@@ -3,6 +3,7 @@
 /build/*
 /build_tool/*
 /install/*
+/out/*
 
 # Visual Studio
 /.vs/*
