@@ -10,7 +10,7 @@ function(BuildExample EXECUTABLE_NAME)
 	)
 	target_include_directories("${EXECUTABLE_NAME}"
 		PUBLIC
-			"${PROJECT_SOURCE_DIR}/Include/"
+			"${PROJECT_SOURCE_DIR}/include/"
 			"${VK2D_EXTERNAL_SUBMODULES_DIR}/"
 	)
 	target_link_libraries("${EXECUTABLE_NAME}"
@@ -19,11 +19,11 @@ function(BuildExample EXECUTABLE_NAME)
 	)
 	set_target_properties("${EXECUTABLE_NAME}"
 		PROPERTIES
-			FOLDER						"Examples"
+			FOLDER						"examples"
 			CXX_STANDARD				17
-			ARCHIVE_OUTPUT_DIRECTORY	"${PROJECT_BINARY_DIR}/Lib"
-			LIBRARY_OUTPUT_DIRECTORY	"${PROJECT_BINARY_DIR}/Lib"
-			RUNTIME_OUTPUT_DIRECTORY	"${PROJECT_BINARY_DIR}/Bin"
+			ARCHIVE_OUTPUT_DIRECTORY	"${PROJECT_BINARY_DIR}/lib"
+			LIBRARY_OUTPUT_DIRECTORY	"${PROJECT_BINARY_DIR}/lib"
+			RUNTIME_OUTPUT_DIRECTORY	"${PROJECT_BINARY_DIR}/bin"
 	)
 	add_dependencies("${EXECUTABLE_NAME}"
 		VK2D

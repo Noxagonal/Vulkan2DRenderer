@@ -1,8 +1,8 @@
 #pragma once
 
-#include "Core/Common.h"
+#include "core/Common.h"
 
-#include "Types/Color.hpp"
+#include "types/Color.hpp"
 
 #include <memory>
 #include <filesystem>

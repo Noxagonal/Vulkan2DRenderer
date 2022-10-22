@@ -1,13 +1,13 @@
 #pragma once
 
-#include "Core/Common.h"
+#include "core/Common.h"
 
-#include "Types/Rect2.hpp"
-#include "Types/Transform.h"
-#include "Types/Color.hpp"
-#include "Types/MeshPrimitives.hpp"
-#include "Types/Multisamples.h"
-#include "Types/RenderCoordinateSpace.hpp"
+#include "types/Rect2.hpp"
+#include "types/Transform.h"
+#include "types/Color.hpp"
+#include "types/MeshPrimitives.hpp"
+#include "types/Multisamples.h"
+#include "types/RenderCoordinateSpace.hpp"
 
 #include <memory>
 #include <string>

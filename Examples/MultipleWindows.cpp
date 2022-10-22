@@ -39,7 +39,7 @@ class PrimaryWindowEventHandler : public vk2d::WindowEventHandler
 public:
 	PrimaryWindowEventHandler(
 		vk2d::Instance				*	instance,
-		glm::ivec2				*	mouse_position,
+		glm::ivec2					*	mouse_position,
 		vk2d::Rect2f				*	create_button_rect,
 		vk2d::Rect2f				*	destroy_button_rect,
 		std::list<vk2d::Window*>	*	window_list
@@ -53,16 +53,18 @@ public:
 
 	void							VK2D_APIENTRY		EventCursorPosition(
 		vk2d::Window			*	window,
-		glm::ivec2				position )
+		glm::dvec2					position
+	) override
 	{
-		*mouse_position		= position;
+		*mouse_position = position;
 	};
 
 	void							VK2D_APIENTRY		EventMouseButton(
 		vk2d::Window			*	window,
 		vk2d::MouseButton			button,
 		vk2d::ButtonAction			action,
-		vk2d::ModifierKeyFlags		modifier_keys )
+		vk2d::ModifierKeyFlags		modifier_keys
+	) override
 	{
 		if( action == vk2d::ButtonAction::PRESS ) {
 			if( create_button_rect->IsPointInside( *mouse_position ) ) {
@@ -79,7 +81,7 @@ public:
 
 	vk2d::Instance				*	instance			= {};
 
-	glm::ivec2				*	mouse_position		= {};
+	glm::ivec2					*	mouse_position		= {};
 
 	vk2d::Rect2f				*	create_button_rect	= {};
 	vk2d::Rect2f				*	destroy_button_rect	= {};

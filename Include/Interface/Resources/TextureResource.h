@@ -1,11 +1,11 @@
 #pragma once
 
-#include "Core/Common.h"
+#include "core/Common.h"
 
-#include "Types/Color.hpp"
+#include "types/Color.hpp"
 
-#include "Interface/Resources/ResourceBase.h"
-#include "Interface/Texture.h"
+#include "interface/resources/ResourceBase.h"
+#include "interface/Texture.h"
 
 #include <memory>
 

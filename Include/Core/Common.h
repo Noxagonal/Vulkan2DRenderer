@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Core/Platform.h"
+#include "core/Platform.h"
 
 #include <stdint.h>
 

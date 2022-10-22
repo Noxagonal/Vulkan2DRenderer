@@ -27,7 +27,7 @@ set(DOXYFILE_STRIP_FROM_PATH
 	${PROJECT_SOURCE_DIR}
 )
 set(DOXYFILE_SOURCE_DIR
-	"${PROJECT_SOURCE_DIR}/Source/"
+	"${PROJECT_SOURCE_DIR}/src/"
 )
 if(NOT VK2D_BUILD_DOCS_FOR_COMPLETE_SOURCE)
 set(DOXYFILE_SOURCE_DIR
@@ -36,13 +36,13 @@ set(DOXYFILE_SOURCE_DIR
 endif()
 
 set(DOXYFILE_INCLUDE_DIR
-	"${PROJECT_SOURCE_DIR}/Include/" 
+	"${PROJECT_SOURCE_DIR}/include/" 
 )
 set(DOXYFILE_EXAMPLES_DIR
-	"${PROJECT_SOURCE_DIR}/Examples/"
+	"${PROJECT_SOURCE_DIR}/examples/"
 )
 set(DOXYFILE_PAGES_DIR
-	"${CMAKE_CURRENT_SOURCE_DIR}/Pages/"
+	"${CMAKE_CURRENT_SOURCE_DIR}/pages/"
 )
 
 
@@ -51,16 +51,16 @@ set(DOXYFILE_PAGES_DIR
 # General settings
 ################################################################
 set(DOXYGEN_OUTPUT_DIR
-	"${CMAKE_CURRENT_BINARY_DIR}/Docs/Doxygen"
+	"${CMAKE_CURRENT_BINARY_DIR}/docs/doxygen"
 )
 set(DOXYGEN_INDEX_FILE
 	"${DOXYGEN_OUTPUT_DIR}/xml/index.xml"
 )
 set(DOXYFILE_IN
-	"${CMAKE_CURRENT_SOURCE_DIR}/Doxygen/vk2d.Doxyfile.in"
+	"${CMAKE_CURRENT_SOURCE_DIR}/doxygen/vk2d.Doxyfile.in"
 )
 set(DOXYFILE_OUT
-	"${CMAKE_CURRENT_BINARY_DIR}/Doxygen/vk2d.Doxyfile"
+	"${CMAKE_CURRENT_BINARY_DIR}/doxygen/vk2d.Doxyfile"
 )
 
 ################################################################
@@ -111,7 +111,7 @@ add_dependencies(VK2D
 ################################################################
 install(
 	DIRECTORY
-		"${CMAKE_CURRENT_BINARY_DIR}/Docs/Doxygen/html/"
+		"${CMAKE_CURRENT_BINARY_DIR}/docs/doxygen/html/"
 	DESTINATION
 		"docs/"
 )

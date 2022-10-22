@@ -1,10 +1,10 @@
 #pragma once
 
-#include "Core/Common.h"
+#include "core/Common.h"
 
-#include "Types/MeshPrimitives.hpp"
-#include "Types/Rect2.hpp"
-#include "Types/Color.hpp"
+#include "types/MeshPrimitives.hpp"
+#include "types/Rect2.hpp"
+#include "types/Color.hpp"
 
 #include <vector>
 #include <string>

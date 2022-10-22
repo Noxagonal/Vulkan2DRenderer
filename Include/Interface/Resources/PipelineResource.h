@@ -1,8 +1,8 @@
 #pragma once
 
-#include "Core/Common.h"
+#include "core/Common.h"
 
-#include "Interface/Resources/ResourceBase.h"
+#include "interface/resources/ResourceBase.h"
 
 #include <filesystem>
 

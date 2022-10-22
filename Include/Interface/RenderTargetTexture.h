@@ -1,15 +1,15 @@
 #pragma once
 
-#include "Core/Common.h"
+#include "core/Common.h"
 
-#include "Types/BlurType.h"
-#include "Types/Rect2.hpp"
-#include "Types/Transform.h"
-#include "Types/Color.hpp"
-#include "Types/Multisamples.h"
-#include "Types/RenderCoordinateSpace.hpp"
+#include "types/BlurType.h"
+#include "types/Rect2.hpp"
+#include "types/Transform.h"
+#include "types/Color.hpp"
+#include "types/Multisamples.h"
+#include "types/RenderCoordinateSpace.hpp"
 
-#include "Interface/Texture.h"
+#include "interface/Texture.h"
 
 #include <memory>
 

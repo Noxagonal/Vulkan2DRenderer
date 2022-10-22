@@ -24,7 +24,7 @@ find_package(Git REQUIRED QUIET)
 ################################################################
 # Update library submodules.
 ################################################################
-set(VK2D_EXTERNAL_SUBMODULES_DIR_NAME "ExternalSubmodules")
+set(VK2D_EXTERNAL_SUBMODULES_DIR_NAME "external_submodules")
 set(VK2D_EXTERNAL_SUBMODULES_DIR "${CMAKE_CURRENT_SOURCE_DIR}/${VK2D_EXTERNAL_SUBMODULES_DIR_NAME}")
 
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/.git")
@@ -119,23 +119,23 @@ set(EXTERNAL_INCLUDES
 file(GLOB_RECURSE FILES_INCLUDE
 	RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}"
 	CONFIGURE_DEPENDS
-	"${CMAKE_CURRENT_SOURCE_DIR}/Include/*"
+	"${CMAKE_CURRENT_SOURCE_DIR}/include/*"
 )
 # All files in source folder
 file(GLOB_RECURSE FILES_SOURCE
 	RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}"
 	CONFIGURE_DEPENDS
-	"${CMAKE_CURRENT_SOURCE_DIR}/Source/*"
+	"${CMAKE_CURRENT_SOURCE_DIR}/src/*"
 )
 # GLSL shaders
 file(GLOB FILES_GLSL_SHADERS
 	RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}"
 	CONFIGURE_DEPENDS
-	"${CMAKE_CURRENT_SOURCE_DIR}/Shaders/*"
+	"${CMAKE_CURRENT_SOURCE_DIR}/shaders/*"
 )
 # Compiled shaders, only really need the "IncludeAllShaders.h",
 set(FILES_COMPILED_SHADERS
-	"${CMAKE_CURRENT_SOURCE_DIR}/Shaders/Spir-V/IncludeAllShaders.h"
+	"${CMAKE_CURRENT_SOURCE_DIR}/shaders/spir-v/IncludeAllShaders.h"
 )
 
 
@@ -144,7 +144,7 @@ set(FILES_COMPILED_SHADERS
 # Project prerequisites
 ################################################################
 add_subdirectory("${VK2D_EXTERNAL_SUBMODULES_DIR_NAME}" EXCLUDE_FROM_ALL)
-add_subdirectory("Tools")
+add_subdirectory("tools")
 
 
 
@@ -179,7 +179,7 @@ endif()
 
 target_precompile_headers(VK2D
 	PRIVATE
-		"${CMAKE_CURRENT_SOURCE_DIR}/Source/Core/PreCompiledHeader.h"
+		"${CMAKE_CURRENT_SOURCE_DIR}/src/core/PreCompiledHeader.h"
 )
 
 add_dependencies(VK2D
@@ -191,15 +191,15 @@ set_target_properties(VK2D
 	PROPERTIES
 		CXX_STANDARD				17
 		DEBUG_POSTFIX				"_d"
-		ARCHIVE_OUTPUT_DIRECTORY	"${PROJECT_BINARY_DIR}/Lib/"
-		LIBRARY_OUTPUT_DIRECTORY	"${PROJECT_BINARY_DIR}/Lib/"
-		RUNTIME_OUTPUT_DIRECTORY	"${PROJECT_BINARY_DIR}/Bin/"
+		ARCHIVE_OUTPUT_DIRECTORY	"${PROJECT_BINARY_DIR}/lib/"
+		LIBRARY_OUTPUT_DIRECTORY	"${PROJECT_BINARY_DIR}/lib/"
+		RUNTIME_OUTPUT_DIRECTORY	"${PROJECT_BINARY_DIR}/bin/"
 )
 
 # Internal includes
-target_include_directories(VK2D PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/Source/")
-target_include_directories(VK2D PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/Include/")
-target_include_directories(VK2D PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/Shaders/")
+target_include_directories(VK2D PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/src/")
+target_include_directories(VK2D PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include/")
+target_include_directories(VK2D PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/shaders/")
 
 # External includes
 target_include_directories(VK2D
@@ -238,7 +238,7 @@ if(MSVC)
 	#add_custom_target(RunTool_CompileGLSLShaderToSpirV
 	#	COMMAND
 	#		CompileGLSLShadersToSpirV
-	#		"-shaderpath" "${CMAKE_CURRENT_SOURCE_DIR}/Source/Shaders/"
+	#		"-shaderpath" "${CMAKE_CURRENT_SOURCE_DIR}/src/shaders/"
 	#)
 	#add_dependencies(RunTool_CompileGLSLShaderToSpirV
 	#	CompileGLSLShadersToSpirV
@@ -252,8 +252,8 @@ if(MSVC)
 		TARGET VK2D
 		PRE_BUILD
 		COMMAND CompileGLSLShadersToSpirV
-			"-shaderpath" "${CMAKE_CURRENT_SOURCE_DIR}/Shaders/"
-		WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/Shaders/"
+			"-shaderpath" "${CMAKE_CURRENT_SOURCE_DIR}/shaders/"
+		WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/shaders/"
 	)
 	add_dependencies(VK2D
 		CompileGLSLShadersToSpirV
@@ -263,9 +263,9 @@ else()
 	# Other than Visual Studio compilers.
 
 	add_custom_command(
-		OUTPUT "${CMAKE_CURRENT_SOURCE_DIR}/Shaders/Spir-V/IncludeAllShaders.h"
+		OUTPUT "${CMAKE_CURRENT_SOURCE_DIR}/shaders/spir-v/includeAllShaders.h"
 		COMMAND CompileGLSLShadersToSpirV
-		WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/Shaders/"
+		WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/shaders/"
 		DEPENDS ${FILES_GLSL_SHADERS}
 	)
 endif()
@@ -276,15 +276,15 @@ endif()
 # Additionals
 ################################################################
 if(VK2D_BUILD_TESTS)
-	add_subdirectory("Tests")
+	add_subdirectory("tests")
 endif()
 
 if(VK2D_BUILD_EXAMPLES)
-	add_subdirectory("Examples")
+	add_subdirectory("examples")
 endif()
 
 if(VK2D_BUILD_DOCS)
-	add_subdirectory("Docs")
+	add_subdirectory("docs")
 endif()
 
 
@@ -301,7 +301,7 @@ install(
 )
 install(
 	DIRECTORY
-		"${CMAKE_CURRENT_SOURCE_DIR}/Include/"
+		"${CMAKE_CURRENT_SOURCE_DIR}/include/"
 	DESTINATION
 		"include/VK2D/"
 )
