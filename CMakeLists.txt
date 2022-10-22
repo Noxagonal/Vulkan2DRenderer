@@ -3,24 +3,7 @@
 
 cmake_minimum_required(VERSION 3.16)
 
-option(VK2D_SEPARATE_DEBUG_NAME
-	"Set project name to VK2D_d for Debug builds"
-	OFF
-)
-
-if(VK2D_SEPARATE_DEBUG_NAME AND CMAKE_BUILD_TYPE STREQUAL "Debug")
-	# Allows building both Release and Debug with different names and putting
-	# resulting library files into the same folders without name conflicts.
-	set(VK2D_NAME
-		VK2D_d
-	)
-else()
-	set(VK2D_NAME
-		VK2D
-	)
-endif()
-
-project(${VK2D_NAME} CXX)
+project(VK2D CXX)
 
 message("========== VK2D ==========")
 
@@ -177,7 +160,7 @@ source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}"
 )
 
 if(VK2D_BUILD_STATIC_LIBRARY)
-	add_library(${VK2D_NAME}
+	add_library(VK2D
 		STATIC
 			${FILES_INCLUDE}
 			${FILES_SOURCE}
@@ -185,7 +168,7 @@ if(VK2D_BUILD_STATIC_LIBRARY)
 			${FILES_COMPILED_SHADERS}
 	)
 else()
-	add_library(${VK2D_NAME}
+	add_library(VK2D
 		SHARED
 			${FILES_INCLUDE}
 			${FILES_SOURCE}
@@ -194,48 +177,49 @@ else()
 	)
 endif()
 
-target_precompile_headers(${VK2D_NAME}
+target_precompile_headers(VK2D
 	PRIVATE
 		"${CMAKE_CURRENT_SOURCE_DIR}/Source/Core/PreCompiledHeader.h"
 )
 
-add_dependencies(${VK2D_NAME}
+add_dependencies(VK2D
 	freetype
 	glfw
 )
 
-set_target_properties(${VK2D_NAME}
+set_target_properties(VK2D
 	PROPERTIES
 		CXX_STANDARD				17
+		DEBUG_POSTFIX				"_d"
 		ARCHIVE_OUTPUT_DIRECTORY	"${PROJECT_BINARY_DIR}/Lib/"
 		LIBRARY_OUTPUT_DIRECTORY	"${PROJECT_BINARY_DIR}/Lib/"
 		RUNTIME_OUTPUT_DIRECTORY	"${PROJECT_BINARY_DIR}/Bin/"
 )
 
 # Internal includes
-target_include_directories(${VK2D_NAME} PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/Source/")
-target_include_directories(${VK2D_NAME} PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/Include/")
-target_include_directories(${VK2D_NAME} PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/Shaders/")
+target_include_directories(VK2D PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/Source/")
+target_include_directories(VK2D PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/Include/")
+target_include_directories(VK2D PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/Shaders/")
 
 # External includes
-target_include_directories(${VK2D_NAME}
+target_include_directories(VK2D
 	PRIVATE
 		Vulkan::Vulkan
 		${EXTERNAL_INCLUDES}
 )
 
-target_link_libraries(${VK2D_NAME}
+target_link_libraries(VK2D
 	Vulkan::Vulkan
 	freetype
 	glfw
 )
 
 if(${VK2D_ENABLE_LIBRARY_DEBUG_FEATURES})
-	target_compile_definitions(${VK2D_NAME}
+	target_compile_definitions(VK2D
 		PRIVATE
 			VK2D_DEBUG_ENABLE=1)
 else()
-	target_compile_definitions(${VK2D_NAME}
+	target_compile_definitions(VK2D
 		PRIVATE
 			VK2D_DEBUG_ENABLE=0)
 endif()
@@ -265,13 +249,13 @@ if(MSVC)
 	#)
 	
 	add_custom_command(
-		TARGET ${VK2D_NAME}
+		TARGET VK2D
 		PRE_BUILD
 		COMMAND CompileGLSLShadersToSpirV
 			"-shaderpath" "${CMAKE_CURRENT_SOURCE_DIR}/Shaders/"
 		WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/Shaders/"
 	)
-	add_dependencies(${VK2D_NAME}
+	add_dependencies(VK2D
 		CompileGLSLShadersToSpirV
 	)
 
@@ -310,7 +294,7 @@ endif()
 ################################################################
 install(
 	TARGETS
-		${VK2D_NAME}
+		VK2D
 	LIBRARY DESTINATION "lib/"
 	ARCHIVE DESTINATION "lib/"
 	RUNTIME DESTINATION "bin/"

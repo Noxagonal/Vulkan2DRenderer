@@ -19,7 +19,7 @@ function(BuildTestcase EXECUTABLE_NAME)
 	)
 	target_link_libraries("${EXECUTABLE_NAME}"
 		PUBLIC
-			${VK2D_NAME}
+			VK2D
 	)
 	set_target_properties("${EXECUTABLE_NAME}"
 		PROPERTIES
@@ -30,7 +30,7 @@ function(BuildTestcase EXECUTABLE_NAME)
 			RUNTIME_OUTPUT_DIRECTORY	"${PROJECT_BINARY_DIR}/Bin"
 	)
 	add_dependencies("${EXECUTABLE_NAME}"
-		${VK2D_NAME}
+		VK2D
 	)
 	add_test("${EXECUTABLE_NAME}"
 		"${CMAKE_CURRENT_BINARY_DIR}/Bin/${EXECUTABLE_NAME}"
