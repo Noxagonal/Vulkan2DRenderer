@@ -284,6 +284,7 @@ private:
 	vk2d::WindowEventHandler								*	event_handler								= {};
 	VkOffset2D													position									= {};
 	bool														is_iconified								= {};
+	bool														is_maximized								= {};
 
 	struct IconData {
 		std::vector<uint8_t>									image_data									= {};
@@ -437,7 +438,7 @@ public:
 	glm::ivec2									GetHotSpot();
 
 private:
-	vk2d::_internal::InstanceImpl			*	instance					= {};
+	vk2d::_internal::InstanceImpl			*	instance						= {};
 	std::vector<vk2d::Color8>					pixel_data						= {};
 	GLFWcursor								*	cursor							= nullptr;
 	VkExtent2D									extent							= {};
