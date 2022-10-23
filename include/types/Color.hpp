@@ -11,7 +11,9 @@ namespace vk2d {
 
 
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /// @brief		This is a collection of 4 color channels in order of RGBA.
+/// 
 /// @tparam		T
 ///				Data type per color channel.
 template<typename T>
@@ -24,71 +26,52 @@ public:
 	T b			= {};
 	T a			= {};
 
-	ColorBase()										= default;
-	ColorBase( const vk2d::ColorBase<T> & other )	= default;
-	ColorBase( vk2d::ColorBase<T> && other )		= default;
-	ColorBase( const std::initializer_list<T> & elements )
+	constexpr ColorBase()									= default;
+
+	template<typename OtherT>
+	constexpr ColorBase(
+		const vk2d::ColorBase<OtherT> & other
+	)
 	{
-		auto s = elements.size();
-		assert( s <= 4 );
-		auto e = elements.begin();
-		r = ( s >= 1 ) ? *e++ : T{};
-		g = ( s >= 2 ) ? *e++ : T{};
-		b = ( s >= 3 ) ? *e++ : T{};
-		a = ( s >= 4 ) ? *e++ : T{};
+		*this = other;
 	}
-	ColorBase( T r, T g, T b, T a ) :
+
+	//constexpr ColorBase( const std::initializer_list<T> & elements )
+	//{
+	//	auto s = elements.size();
+	//	assert( s <= 4 );
+	//	auto e = elements.begin();
+	//	r = ( s >= 1 ) ? *e++ : T{};
+	//	g = ( s >= 2 ) ? *e++ : T{};
+	//	b = ( s >= 3 ) ? *e++ : T{};
+	//	a = ( s >= 4 ) ? *e++ : T{};
+	//}
+	constexpr ColorBase( T r, T g, T b, T a ) :
 		r( r ),
 		g( g ),
 		b( b ),
 		a( a )
 	{};
 
-	vk2d::ColorBase<T> & operator=( const vk2d::ColorBase<T> & other )	= default;
-	vk2d::ColorBase<T> & operator=( vk2d::ColorBase<T> && other )		= default;
-
-	/// @brief		Add color channels directly by another color and apply to itself. eg. when using
-	///				vk2d::Colorf {1.0, 1.0, 0.5, 0.5} + {0.0, 2.0, 0.5, 0.5} will result in
-	///				{1.0, 3.0, 1.0, 1.0} color.
-	/// @tparam		OtherT
-	///				Another type can be used for the other parameter. No extra operations are done to
-	///				types when added together, eg. Add 0.5 float to 128 integral value will result in
-	///				128.5, which is then rounded down to 128, in this case you'd have to pre-multiply
-	///				the float type color yourself.
-	/// @param[in]	other
-	///				Other color to multiply this with.
-	/// @return		Itself with multiplied color value.
 	template<typename OtherT>
-	vk2d::ColorBase<T> & operator+=( const vk2d::ColorBase<OtherT> & other )
+	constexpr vk2d::ColorBase<T> & operator=( const vk2d::ColorBase<T> & other )
 	{
-		r += T( other.r );
-		g += T( other.g );
-		b += T( other.b );
-		a += T( other.a );
+		if constexpr( std::is_same_v<T, OtherT> ) {
+			r = other.r;
+			g = other.g;
+			b = other.b;
+			a = other.a;
+		} else {
+			*this = ConvertTo<T>( other );
+		}
 	}
 
-	/// @brief		Multiply color channels directly by another color and apply to itself. This is
-	///				useful when you wish to disable some color channels or intensify them. For example,
-	///				when using vk2d::Colorf, {1.0, 0.0, 5.0, 1.0} * {1.0, 5.0, 2.0, 2.0} will result in
-	///				{1.0, 0.0, 10.0, 2.0}.
-	/// @tparam		OtherT
-	///				Another type can be used for the other parameter. Useful if primary color is integer
-	///				type and you wish to multiply it with float or double value.
-	/// @param[in]	other
-	///				Other color to multiply this with.
-	/// @return		Itself with multiplied color value.
-	template<typename OtherT>
-	vk2d::ColorBase<T> & operator*=( const vk2d::ColorBase<OtherT> & other )
-	{
-		r = T( r * other.r );
-		g = T( g * other.g );
-		b = T( b * other.b );
-		a = T( a * other.a );
-	}
-
-	///	@brief		Add color channels directly by another color. eg.when using vk2d::Colorf
-	///				{1.0, 1.0, 0.5, 0.5} + {0.0, 2.0, 0.5, 0.5} will result in {1.0, 3.0, 1.0, 1.0}
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	/// @brief		Add color channels directly by another color and apply to itself.
+	///
+	///				eg. when using vk2d::Colorf {1.0, 1.0, 0.5, 0.5} + {0.0, 2.0, 0.5, 0.5} will result in {1.0, 3.0, 1.0, 1.0}
 	///				color.
+	/// 
 	/// @tparam		OtherT
 	///				Another type can be used for the other parameter. No extra operations are done to
 	///				types when added together, eg. Add 0.5 float to 128 integral value will result in
@@ -98,173 +81,166 @@ public:
 	///				Other color to multiply this with.
 	/// @return		Itself with multiplied color value.
 	template<typename OtherT>
-	vk2d::ColorBase<T> operator+( const vk2d::ColorBase<OtherT> & other )
+	constexpr vk2d::ColorBase<T> & operator+=( const vk2d::ColorBase<OtherT> & other )
+	{
+		auto other_converted = ConvertTo<T>( other );
+		r += T( other_converted.r );
+		g += T( other_converted.g );
+		b += T( other_converted.b );
+		a += T( other_converted.a );
+	}
+
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	/// @brief		Multiply color channels directly by another color and apply to itself.
+	///
+	///				This is useful when you wish to disable some color channels or intensify them. For example, when using
+	///				vk2d::Colorf, {1.0, 0.0, 5.0, 1.0} * {1.0, 5.0, 2.0, 2.0} will result in {1.0, 0.0, 10.0, 2.0}.
+	/// 
+	/// @tparam		OtherT
+	///				Another type can be used for the other parameter. Other type is converted to this type first.
+	/// 
+	/// @param[in]	other
+	///				Other color to multiply this with.
+	/// 
+	/// @return		Itself with multiplied color value.
+	template<typename OtherT>
+	constexpr vk2d::ColorBase<T> & operator*=( const vk2d::ColorBase<OtherT> & other )
+	{
+		auto other_converted = ConvertTo<T>( other );
+		r = T( r * other_converted.r );
+		g = T( g * other_converted.g );
+		b = T( b * other_converted.b );
+		a = T( a * other_converted.a );
+	}
+
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	///	@brief		Add color channels directly by another color.
+	///
+	///				For example when using vk2d::Colorf {1.0, 1.0, 0.5, 0.5} + {0.0, 2.0, 0.5, 0.5} will result in
+	///				{1.0, 3.0, 1.0, 1.0} color.
+	/// 
+	/// @tparam		OtherT
+	///				Another type can be used for the other parameter. Other type is converted to this type first.
+	/// 
+	/// @param[in]	other
+	///				Other color to multiply this with.
+	/// @return		Itself with multiplied color value.
+	template<typename OtherT>
+	constexpr vk2d::ColorBase<T> operator+( const vk2d::ColorBase<OtherT> & other )
 	{
 		vk2d::ColorBase<T> ret = *this;
 		ret += other;
 		return ret;
 	}
 
-	/// @brief		Multiply color channels directly by another color. This is useful when you with to
-	///				disable some color channels or intensify them. For example, when using vk2d::Colorf,
-	///				{1.0, 0.0, 5.0, 1.0} * {1.0, 5.0, 2.0, 2.0} will result in {1.0, 0.0, 10.0, 2.0}.
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	/// @brief		Multiply color channels directly by another color.
+	///
+	///				This is useful when you wish to disable some color channels or intensify them. For example, when using
+	///				vk2d::Colorf, {1.0, 0.0, 5.0, 1.0} * {1.0, 5.0, 2.0, 2.0} will result in {1.0, 0.0, 10.0, 2.0}.
+	/// 
 	/// @tparam		OtherT
-	///				Another type can be used for the other parameter. Useful if primary color is integer
-	///				type and you wish to multiply it with float or double value.
+	///				Another type can be used for the other parameter. Useful if primary color is integer type and you wish to
+	///				multiply it with float or double value.
+	/// 
 	/// @param[in]	other
 	///				Other color to multiply with.
+	/// 
 	/// @return		New multiplied color value.
 	template<typename OtherT>
-	vk2d::ColorBase<T> operator*( const vk2d::ColorBase<OtherT> & other )
+	constexpr vk2d::ColorBase<T> operator*( const vk2d::ColorBase<OtherT> & other )
 	{
 		vk2d::ColorBase<T> ret = *this;
 		ret *= other;
 		return ret;
 	}
 
-	/// @brief		Color blend using alpha of the input color to determind blend amount and return
-	///				resulting color.
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	/// @brief		Color blend using alpha of the input color to determind blend amount and return resulting color.
 	///
-	///				This works exactly the same way as the output render color blending.
-	///				For example blending color: <br>
+	///				This works exactly the same way as the output render color blending. For example blending color: <br>
 	///				{0.25, 1.0, 0.5, 0.5} with: <br>
 	///				{1.0, 0.25, 0.8, 0.8} will result: <br>
 	///				{0.85, 0.4, 0.74, 0.9} <br>
-	///				Note that resulting alpha channel gets blended differently from the color channels.
-	///				Resulting color is clamped to <tt>0.0 - 1.0</tt> range for float values or
-	///				<tt>0 - (integer positive maximum)</tt> for integer types. <br>
-	///				Blending works for integer types as well, for example vk2d::Color8 channel value 128
-	///				is considered equal to vk2d::Colorf channel value 0.5 by this function. This makes
-	///				blending between integer colors easy.
+	///				Note that resulting alpha channel gets blended differently from the color channels. Resulting color is clamped
+	///				to <tt>0.0 - 1.0</tt> range for float values or <tt>0 - (integer positive maximum)</tt> for integer types. <br>
+	///				Blending works for integer types as well, for example vk2d::Color8 channel value 128 is considered equal to
+	///				vk2d::Colorf channel value 0.5 by this function. This makes blending between integer colors easy.
+	/// 
+	///				Values are clamped if this type is an integral type.
+	/// 
 	/// @tparam		OtherT
-	///				Another type can be used for the other parameter. Useful when you want to mix integer
-	///				colors with a float for example.
+	///				Another type can be used for the other parameter. Useful when you want to mix integer colors with a float for
+	///				example.
+	/// 
 	/// @param[in]	other
 	///				Second color that this color will get blended with.
+	/// 
 	/// @return		New alpha blended color between this and other.
 	template<typename OtherT>
-	vk2d::ColorBase<T> BlendUsingAlpha( const vk2d::ColorBase<OtherT> & other )
+	constexpr vk2d::ColorBase<T> BlendUsingAlpha( const vk2d::ColorBase<OtherT> & other )
 	{
-		double this_r;
-		double this_g;
-		double this_b;
-		double this_a;
+		auto this_floating = ConvertTo<double>( *this );
+		auto other_floating = ConvertTo<double>( other );
+		auto final_floating = ColorBase<double>();
 
-		double other_r;
-		double other_g;
-		double other_b;
-		double other_a;
-
-		if constexpr( std::is_integral_v<T> ) {
-			T t_max = std::numeric_limits<T>::max();
-			this_r = r / t_max;
-			this_g = g / t_max;
-			this_b = b / t_max;
-			this_a = a / t_max;
+		if constexpr( std::is_floating_point_v<T> ) {
+			final_floating.r = this_floating.r * ( 1.0 - other_floating.a ) + other_floating.r * other_floating.a;
+			final_floating.g = this_floating.g * ( 1.0 - other_floating.a ) + other_floating.g * other_floating.a;
+			final_floating.b = this_floating.b * ( 1.0 - other_floating.a ) + other_floating.b * other_floating.a;
+			final_floating.a = this_floating.a + other_floating.a * ( 1.0 - this_floating.a );
 		} else {
-			this_r = double( r );
-			this_g = double( g );
-			this_b = double( b );
-			this_a = double( a );
+			constexpr auto minimum_clamp = std::is_signed_v<T> ? -1.0 : 0.0;
+			constexpr auto maximum_clamp = 1.0;
+			final_floating.r = std::clamp( this_floating.r * ( 1.0 - other_floating.a ) + other_floating.r * other_floating.a, minimum_clamp, maximum_clamp );
+			final_floating.g = std::clamp( this_floating.g * ( 1.0 - other_floating.a ) + other_floating.g * other_floating.a, minimum_clamp, maximum_clamp );
+			final_floating.b = std::clamp( this_floating.b * ( 1.0 - other_floating.a ) + other_floating.b * other_floating.a, minimum_clamp, maximum_clamp );
+			final_floating.a = std::clamp( this_floating.a + other_floating.a * ( 1.0 - this_floating.a ), minimum_clamp, maximum_clamp );
 		}
 
-		if constexpr( std::is_integral_v<OtherT> ) {
-			OtherT ot_max = std::numeric_limits<OtherT>::max();
-			other_r = other.r / ot_max;
-			other_g = other.g / ot_max;
-			other_b = other.b / ot_max;
-			other_a = other.a / ot_max;
-		} else {
-			other_r = double( other.r );
-			other_g = double( other.g );
-			other_b = double( other.b );
-			other_a = double( other.a );
-		}
-
-		double final_r = std::clamp( this_r * ( 1.0 - other_a ) + other_r * other_a,	0.0, 1.0 );
-		double final_g = std::clamp( this_g * ( 1.0 - other_a ) + other_g * other_a,	0.0, 1.0 );
-		double final_b = std::clamp( this_b * ( 1.0 - other_a ) + other_b * other_a,	0.0, 1.0 );
-		double final_a = std::clamp( this_a + other_a * ( 1.0 - this_a ),				0.0, 1.0 );
-
-		if constexpr( std::is_integral_v<T> ) {
-			T t_max = std::numeric_limits<T>::max();
-			return vk2d::ColorBase<T>{ T( final_r * t_max ), T( final_g * t_max ), T( final_b * t_max ), T( final_a * t_max ) };
-		} else {
-			return vk2d::ColorBase<T>{ T( final_r ), T( final_g ), T( final_b ), T( final_a ) };
-		}
+		return ConvertTo<T>( final_floating );
 	}
 
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Linear color blending on all channels using single value.
+	///
+	///				Values are clamped if this type is an integral type.
+	///
 	/// @tparam		OtherT
-	///				Another type can be used for the other parameter. Useful when you want to mix integer
-	///				colors with a float for example.
+	///				Another type can be used for the other parameter. Useful when you want to mix integer colors with a float for
+	///				example.
+	/// 
 	/// @param[in]	other
 	///				Second color that this color will get blended with.
+	/// 
 	/// @param[in]	amount
-	///				Blending amount, if OtherT is float or double then 0.0 will return the original color
-	///				and if this is 1.0 then other color is returned, values inbetween 0.0 and 1.0 return
-	///				a color that's linearly interpolated between this and other. <br>
-	///				If OtherT is integer type then 0 returns this color and integer maximum positive will
-	///				return other, values inbetween 0 and integer-maximum-positive return a color that's
-	///				linearly interpolated between this and other. For example if OtherT is uint8_t
-	///				(vk2d::Color8) then 128 returns middle color between this and other. uint8_t value 128
-	///				is considered to be equal to 0.5 float. uint16_t value 32768 would be considered equal
-	///				to 0.5 float. int16_t value 16384 would be considered equal to 0.5 float and so on...
-	/// @return     A new linearly interpolated color value between this and other.
+	///				Blending amount, if OtherT is float or double then 0.0 will return the original color and if this is 1.0 then
+	///				other color is returned, values inbetween 0.0 and 1.0 return a color that's linearly interpolated between this
+	///				and other. <br>
+	/// 
+	/// @return		A new linearly interpolated color value between this and other.
 	template<typename OtherT>
-	vk2d::ColorBase<T> BlendLinear( const vk2d::ColorBase<OtherT> & other, OtherT amount )
+	constexpr vk2d::ColorBase<T> BlendLinear( const vk2d::ColorBase<OtherT> & other, double amount )
 	{
-		double this_r;
-		double this_g;
-		double this_b;
-		double this_a;
+		auto this_floating = ConvertTo<double>( *this );
+		auto other_floating = ConvertTo<double>( other );
+		auto final_floating = ColorBase<double>();
 
-		double other_r;
-		double other_g;
-		double other_b;
-		double other_a;
-
-		double amount_f;
-
-		if constexpr( std::is_integral_v<T> ) {
-			T t_max = std::numeric_limits<T>::max();
-			this_r = r / t_max;
-			this_g = g / t_max;
-			this_b = b / t_max;
-			this_a = a / t_max;
+		if constexpr( std::is_floating_point_v<T> ) {
+			final_floating.r = this_floating.r * ( 1.0 - amount ) + other_floating.r * amount;
+			final_floating.g = this_floating.g * ( 1.0 - amount ) + other_floating.g * amount;
+			final_floating.b = this_floating.b * ( 1.0 - amount ) + other_floating.b * amount;
+			final_floating.a = this_floating.a * ( 1.0 - amount ) + other_floating.a * amount;
 		} else {
-			this_r = double( r );
-			this_g = double( g );
-			this_b = double( b );
-			this_a = double( a );
+			constexpr auto minimum_clamp = std::is_signed_v<T> ? -1.0 : 0.0;
+			constexpr auto maximum_clamp = 1.0;
+			final_floating.r = std::clamp( this_floating.r * ( 1.0 - amount ) + other_floating.r * amount, minimum_clamp, maximum_clamp );
+			final_floating.g = std::clamp( this_floating.g * ( 1.0 - amount ) + other_floating.g * amount, minimum_clamp, maximum_clamp );
+			final_floating.b = std::clamp( this_floating.b * ( 1.0 - amount ) + other_floating.b * amount, minimum_clamp, maximum_clamp );
+			final_floating.a = std::clamp( this_floating.a * ( 1.0 - amount ) + other_floating.a * amount, minimum_clamp, maximum_clamp );
 		}
 
-		if constexpr( std::is_integral_v<OtherT> ) {
-			OtherT ot_max = std::numeric_limits<OtherT>::max();
-			other_r		= other.r / ot_max;
-			other_g		= other.g / ot_max;
-			other_b		= other.b / ot_max;
-			other_a		= other.a / ot_max;
-			amount_f	= amount  / ot_max;
-		} else {
-			other_r		= double( other.r );
-			other_g		= double( other.g );
-			other_b		= double( other.b );
-			other_a		= double( other.a );
-			amount_f	= double( amount );
-		}
-
-		double final_r = std::clamp( this_r * ( 1.0 - amount_f ) + other_r * amount_f, 0.0, 1.0 );
-		double final_g = std::clamp( this_g * ( 1.0 - amount_f ) + other_g * amount_f, 0.0, 1.0 );
-		double final_b = std::clamp( this_b * ( 1.0 - amount_f ) + other_b * amount_f, 0.0, 1.0 );
-		double final_a = std::clamp( this_a * ( 1.0 - amount_f ) + other_a * amount_f, 0.0, 1.0 );
-
-		if constexpr( std::is_integral_v<T> ) {
-			T t_max = std::numeric_limits<T>::max();
-			return vk2d::ColorBase<T>{ T( final_r * t_max ), T( final_g * t_max ), T( final_b * t_max ), T( final_a * t_max ) };
-		} else {
-			return vk2d::ColorBase<T>{ T( final_r ), T( final_g ), T( final_b ), T( final_a ) };
-		}
+		return ConvertTo<T>( final_floating );
 	}
 
 	static constexpr ColorBase<T> WHITE()
@@ -406,28 +382,40 @@ private:
 
 	static constexpr ColorBase<T> PREDEFINED_COLOR(double r, double g, double b)
 	{
-		return ConvertTo<T>( ColorBase<double>( r, g, b, 1.0 ) );
+		if constexpr( std::is_integral_v<T> ) {
 			T max = std::numeric_limits<T>::max();
-			return ColorBase<T>{ T( r * max ), T( g * max ), T( b * max ), T( 1.0 * max ) };
+			return ColorBase<T>{
+				T( r * max ),
+				T( g * max ),
+				T( b * max ),
+				T( 1.0 * max )
+			};
 		} else {
 			return ColorBase<T>{ T( r ), T( g ), T( b ), T( 1.0 ) };
 		}
 	};
 };
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /// @brief		float per color channel.
 using Colorf			= vk2d::ColorBase<float>;
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /// @brief		double per color channel.
 using Colord			= vk2d::ColorBase<double>;
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /// @brief		uint8_t per color channel.
 using Color8			= vk2d::ColorBase<uint8_t>;
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /// @brief		uint16_t per color channel.
 using Color16			= vk2d::ColorBase<uint16_t>;
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /// @brief		uint32_t per color channel.
 using Color32			= vk2d::ColorBase<uint32_t>;
+
+
 
 } // vk2d
