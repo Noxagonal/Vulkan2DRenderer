@@ -35,13 +35,15 @@ class RenderTargetTextureImpl;
 
 
 
-/// @brief		Used to select the implementation. Each works a bit differently from the others.
-///				We use 2 to 4 Vulkan images depending on the implementation used. "Attachment" is the first
-///				render, it alone can have multisample enabled, "Sampled" is the final product of this
-///				pipeline, it alone can have multiple mip maps, Buffer1 and Buffer2 are used as needed
-///				as intermediate render target images, those must always be 1 sample and 1 mipmap. <br>
-///				Depending on the type of render target texture used, different rendering paths are used
-///				with different amount of images.
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/// @brief		Render target texture type.
+///
+///				Used to select the implementation. Each works a bit differently from the others. We use 2 to 4 Vulkan images
+///				depending on the implementation used. "Attachment" is the first render, it alone can have multisample enabled,
+///				"Sampled" is the final product of this pipeline, it alone can have multiple mip maps, Buffer1 and Buffer2 are
+///				used as needed as intermediate render target images, those must always be 1 sample and 1 mipmap. <br>
+///				Depending on the type of render target texture used, different rendering paths are used with different amount of
+///				images.<br>
 ///				<table>
 ///				<caption>Images</caption>
 ///				<tr><th> Name					<th> Description
@@ -66,11 +68,20 @@ class RenderTargetTextureImpl;
 ///				</table>
 enum class RenderTargetTextureType
 {
-	NONE						= 0,	///< Not a type, used for error detection.
-	DIRECT,								///< No multisample, No blur
-	WITH_MULTISAMPLE,					///< With multisample, No blur
-	WITH_BLUR,							///< No multisample, With blur
-	WITH_MULTISAMPLE_AND_BLUR,			///< With multisample, with blur
+	/// @brief		Not a type, used for error detection.
+	NONE						= 0,
+
+	/// @brief		No multisample, No blur.
+	DIRECT,
+
+	/// @brief		With multisample, No blur.
+	WITH_MULTISAMPLE,
+
+	/// @brief		No multisample, With blur.
+	WITH_BLUR,
+
+	/// @brief		With multisample, with blur
+	WITH_MULTISAMPLE_AND_BLUR,
 };
 
 
@@ -285,13 +296,18 @@ private:
 		VkImageView														source_image,
 		VkImageLayout													source_image_layout );
 
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Record commands to finalize render into the sampled image.
-	///				This includes resolving multisamples, blur, mipmap generation and storing the result
-	///				into sampled image to be used later as a texture.
+	/// 
+	///				This includes resolving multisamples, blur, mipmap generation and storing the result into sampled image to be
+	///				used later as a texture.
 	///				<br>
 	///				Finalization goes through multiple stages and uses multiple buffers.
+	/// 
 	/// @note		Multithreading: Main thread only.
+	/// 
 	/// @see		vk2d::_internal::RenderTargetTextureType
+	/// 
 	/// @param[in]	swap
 	///				Reference to internal structure which contains all the information about the current frame.
 	void																CmdFinalizeRender(
@@ -299,20 +315,27 @@ private:
 		vk2d::BlurType													blur_type,
 		glm::vec2														blur_amount );
 
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Record commands to copy an image to the final sampled image, then generate mipmaps for it.
+	///
 	///				Called by vk2d::_internal::RenderTargetTextureImpl::CmdFinalizeNonBlurredRender().
+	/// 
 	/// @note		Multithreading: Main thread only.
+	/// 
 	/// @param[in]	command_buffer
 	///				Command buffer where to record mipmap blit commands to.
+	/// 
 	/// @param[in]	source_image
-	///				Reference to image object from where data is copied and blitted from.
-	///				Only mip level 0 is accessed.
-	///				Must have been created with VK_IMAGE_USAGE_TRANSFER_SRC_BIT flag.
-	///				After this function returns source image layout will be VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL.
+	///				Reference to image object from where data is copied and blitted from. Only mip level 0 is accessed. Must have
+	///				been created with VK_IMAGE_USAGE_TRANSFER_SRC_BIT flag. After this function returns source image layout will be
+	///				VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL.
+	/// 
 	/// @param[in]	source_image_layout
 	///				Source image current layout. See Vulkan documentation about VkImageLayout.
+	/// 
 	/// @param[in]	source_image_pipeline_barrier_src_stage
 	///				Vulkan pipeline stage flags that must complete before source image data is accessed.
+	/// 
 	/// @param[in]	destination_image
 	///				Sampled image to be used as shader read only optimal, has to have correct amount of mip levels.
 	void																CmdBlitMipmapsToSampledImage(
