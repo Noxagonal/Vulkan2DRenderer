@@ -112,97 +112,75 @@ enum class SamplerAddressMode : uint32_t
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-/// @var		vk2d::SamplerCreateInfo::minification_filter
-/// @see		vk2d::SamplerFilter
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-/// @var		vk2d::SamplerCreateInfo::magnification_filter
-/// @see		vk2d::SamplerFilter
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-/// @var		vk2d::SamplerCreateInfo::mipmap_mode
-/// @see		vk2d::SamplerMipmapMode
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-/// @var		vk2d::SamplerCreateInfo::address_mode_u
-/// @brief		Address mode on texture horizontal axis.
-/// 
-/// @see		vk2d::SamplerAddressMode
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-/// @var		vk2d::SamplerCreateInfo::address_mode_v
-/// @brief		Address mode on texture vertical axis.
-///
-/// @see		vk2d::SamplerAddressMode
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-/// @var		vk2d::SamplerCreateInfo::border_color
-/// @brief		When using clamp to border address mode, use this color outside UV range 0.0 to 1.0.
-///
-/// @see		vk2d::Colorf
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-/// @var		vk2d::SamplerCreateInfo::anisotropy_enable
-/// @brief		Enable anisotropic filtering.
-///
-///				Anisotropic filtering results the best quality texture filtering when you want smooth results over a surface
-///				that shrinks or expands different amounts at different locations. In the animation below, on the left an
-///				anisotropic filtering is enabled, on the right it's disabled. (For the purpose of visualization, minification
-///				and magnification filters have been set to "nearest". Sampler mipmap mode has been set to "linear", and mipmap
-///				bias is manually adjusted over time) <br>
-///				<img src="SamplerAnisotropicFiltering.apng">
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-/// @var		vk2d::SamplerCreateInfo::mipmap_max_anisotropy
-/// @brief		Maximum anisotropic filtering.
-///
-///				affects the quality of the final anisotropic filter results. The higher this value is, the more clear the final
-///				image appears in areas that are shrunk down. Supported maximum anisotropy depends on the hardware but is usually
-///				around 16.0. This is a pretty cheap operation for modern hardware, so unless you need this for artistic purposes
-///				you should just leave it at maximum supported by the system. <br>
-///				The animation below shows max anisotropic value changing over time. (For the purpose of visualization the image
-///				on the left is rendered with minification and magnification filters set to "nearest", and level-of-detail bias
-///				is set to 4.3. On the right everything is "linear" and level-of-detail bias set to 0.0) <br>
-///				<img src="SamplerMaxAnisotropy.apng">
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-/// @var		vk2d::SamplerCreateInfo::mipmap_level_of_detail_bias
-/// @brief		Level-of-detail bias.
-///
-///				This is a way to manually nudge towards one mip level or another. 0.0 is the default and usually what you want.
-///				Positive values use higher mip level, meaning less details visible, while negative values use lower mip levels,
-///				which can give more visible detail but may also introduce graininess. <br>
-///				<img src="SamplerLODBias.apng">
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-/// @var		vk2d::SamplerCreateInfo::mipmap_min_level_of_detail
-/// @brief		Minimum mipmap level to use.
-///
-///				0 is the original texture, so minimum 0.0 means that the original texture can be used. If you set this to 1.0
-///				then only mip level 1 and up are used. The higher this value the less texture detail is made available.
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-/// @var		vk2d::SamplerCreateInfo::mipmap_max_level_of_detail
-/// @brief		Maximum mipmap level to use.
-///
-///				A texture has a number of mipmap images, higher mip levels have less detail than the lower ones. For example a
-///				texture that's 512*512 texels has mip levels 0 = {512*512}, 1 = {256*256}, 2 = {128*128} ... 8 = {2*2}, 9 =
-///				{1*1} giving us 10 mip levels. The higher the resolution of the texture the more mip levels we have. This value
-///				cuts use of the lower resolution mip levels at a specific level.
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /// @brief		Parameters to construct a vk2d::Sampler.
 struct SamplerCreateInfo {
+
+	/// @see		vk2d::SamplerFilter
 	vk2d::SamplerFilter					minification_filter				= vk2d::SamplerFilter::LINEAR;
+
+	/// @see		vk2d::SamplerFilter
 	vk2d::SamplerFilter					magnification_filter			= vk2d::SamplerFilter::LINEAR;
+
+	/// @see		vk2d::SamplerMipmapMode
 	vk2d::SamplerMipmapMode				mipmap_mode						= vk2d::SamplerMipmapMode::LINEAR;
+
+	/// @brief		Address mode on texture horizontal axis.
+	/// 
+	/// @see		vk2d::SamplerAddressMode
 	vk2d::SamplerAddressMode			address_mode_u					= vk2d::SamplerAddressMode::REPEAT;
+
+	/// @brief		Address mode on texture vertical axis.
+	///
+	/// @see		vk2d::SamplerAddressMode
 	vk2d::SamplerAddressMode			address_mode_v					= vk2d::SamplerAddressMode::REPEAT;
+
+	/// @brief		When using clamp to border address mode, use this color outside UV range 0.0 to 1.0.
+	///
+	/// @see		vk2d::Colorf
 	vk2d::Colorf						border_color					= { 0.0f, 0.0f, 0.0f, 1.0f };
+
+	/// @brief		Enable anisotropic filtering.
+	///
+	///				Anisotropic filtering results the best quality texture filtering when you want smooth results over a surface
+	///				that shrinks or expands different amounts at different locations. In the animation below, on the left an
+	///				anisotropic filtering is enabled, on the right it's disabled. (For the purpose of visualization, minification
+	///				and magnification filters have been set to "nearest". Sampler mipmap mode has been set to "linear", and mipmap
+	///				bias is manually adjusted over time) <br>
+	///				<img src="SamplerAnisotropicFiltering.apng">
 	bool								anisotropy_enable				= true;
+
+	/// @brief		Maximum anisotropic filtering.
+	///
+	///				affects the quality of the final anisotropic filter results. The higher this value is, the more clear the final
+	///				image appears in areas that are shrunk down. Supported maximum anisotropy depends on the hardware but is usually
+	///				around 16.0. This is a pretty cheap operation for modern hardware, so unless you need this for artistic purposes
+	///				you should just leave it at maximum supported by the system. <br>
+	///				The animation below shows max anisotropic value changing over time. (For the purpose of visualization the image
+	///				on the left is rendered with minification and magnification filters set to "nearest", and level-of-detail bias
+	///				is set to 4.3. On the right everything is "linear" and level-of-detail bias set to 0.0) <br>
+	///				<img src="SamplerMaxAnisotropy.apng">
 	float								mipmap_max_anisotropy			= 16.0f;
+
+	/// @brief		Level-of-detail bias.
+	///
+	///				This is a way to manually nudge towards one mip level or another. 0.0 is the default and usually what you want.
+	///				Positive values use higher mip level, meaning less details visible, while negative values use lower mip levels,
+	///				which can give more visible detail but may also introduce graininess. <br>
+	///				<img src="SamplerLODBias.apng">
 	float								mipmap_level_of_detail_bias		= 0.0f;
+
+	/// @brief		Minimum mipmap level to use.
+	///
+	///				0 is the original texture, so minimum 0.0 means that the original texture can be used. If you set this to 1.0
+	///				then only mip level 1 and up are used. The higher this value the less texture detail is made available.
 	float								mipmap_min_level_of_detail		= 0.0f;
+
+	/// @brief		Maximum mipmap level to use.
+	///
+	///				A texture has a number of mipmap images, higher mip levels have less detail than the lower ones. For example a
+	///				texture that's 512*512 texels has mip levels 0 = {512*512}, 1 = {256*256}, 2 = {128*128} ... 8 = {2*2}, 9 =
+	///				{1*1} giving us 10 mip levels. The higher the resolution of the texture the more mip levels we have. This value
+	///				cuts use of the lower resolution mip levels at a specific level.
 	float								mipmap_max_level_of_detail		= 32.0f;
 };
 
