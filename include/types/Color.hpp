@@ -353,9 +353,60 @@ public:
 	};
 
 private:
+	template<
+		typename ToT,
+		typename FromT
+	>
+	static constexpr ColorBase<ToT> ConvertTo(
+		const ColorBase<FromT> & from
+	)
+	{
+		static_assert( std::is_integral_v<ToT> || std::is_floating_point_v<ToT>, "To type must be either integral or flaoating point type." );
+		static_assert( std::is_integral_v<FromT> || std::is_floating_point_v<FromT>, "From type must be either integral or flaoating point type." );
+
+		if constexpr( std::is_same_v<ToT, FromT> ) return from;
+
+		auto ret = ColorBase<ToT>();
+		if constexpr( std::is_floating_point_v<ToT> && std::is_integral_v<FromT> ) {
+			// From integral to floating point.
+			auto from_max = std::numeric_limits<FromT>::max();
+			ret.r = ToT( from.r ) / from_max;
+			ret.g = ToT( from.g ) / from_max;
+			ret.b = ToT( from.b ) / from_max;
+			ret.a = ToT( from.a ) / from_max;
+		}
+
+		if constexpr( std::is_integral_v<ToT> && std::is_floating_point_v<FromT> ) {
+			// From floating point to integral.
+			constexpr auto to_max = std::numeric_limits<ToT>::max();
+			constexpr auto minimum_clamp = FromT( std::is_signed_v<ToT> ? -1.0 : 0.0 );
+			constexpr auto maximum_clamp = FromT( 1.0 );
+			ret.r = ToT( std::clamp( from.r, minimum_clamp, maximum_clamp ) * to_max );
+			ret.g = ToT( std::clamp( from.g, minimum_clamp, maximum_clamp ) * to_max );
+			ret.b = ToT( std::clamp( from.b, minimum_clamp, maximum_clamp ) * to_max );
+			ret.a = ToT( std::clamp( from.a, minimum_clamp, maximum_clamp ) * to_max );
+		}
+
+		if constexpr( std::is_integral_v<ToT> && std::is_integral_v<FromT> ) {
+			// From integral to integral.
+			auto as_floating = ConvertTo<double>( from );
+			ret = ConvertTo<ToT>( as_floating );
+		}
+
+		if constexpr( std::is_floating_point_v<T> && std::is_floating_point_v<FromT> ) {
+			// From floating point to floating point.
+			ret.r = T( from.r );
+			ret.g = T( from.g );
+			ret.b = T( from.b );
+			ret.a = T( from.a );
+		}
+
+		return ret;
+	}
+
 	static constexpr ColorBase<T> PREDEFINED_COLOR(double r, double g, double b)
 	{
-		if constexpr( std::is_integral_v<T> ) {
+		return ConvertTo<T>( ColorBase<double>( r, g, b, 1.0 ) );
 			T max = std::numeric_limits<T>::max();
 			return ColorBase<T>{ T( r * max ), T( g * max ), T( b * max ), T( 1.0 * max ) };
 		} else {
