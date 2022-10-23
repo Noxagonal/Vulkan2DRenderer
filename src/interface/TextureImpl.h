@@ -5,7 +5,7 @@
 
 
 namespace vk2d {
-namespace _internal {
+namespace vk2d_internal {
 
 
 
@@ -31,5 +31,5 @@ private:
 
 
 
-} // _internal
+} // vk2d_internal
 } // vk2d

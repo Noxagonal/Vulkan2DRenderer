@@ -11,33 +11,33 @@
 
 namespace vk2d {
 
-namespace _internal {
+namespace vk2d_internal {
 class InstanceImpl;
 class WindowImpl;
 class TextureResourceImpl;
 class ResourceThreadLoadTask;
 class ResourceThreadUnloadTask;
-} // _internal
+} // vk2d_internal
 
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /// @brief		Texture resource which is loaded from a file or data.
 ///
-///				vk2d::TextureResource is a resource that can be loaded with vk2d::ResourceManager. It is needed for rendering
+///				TextureResource is a resource that can be loaded with ResourceManager. It is needed for rendering
 ///				images on the window or render target texture. To use a texture resource you'll first need to load the texture
 ///				font from a disk or directly from data, then either draw it directly using Window::DrawTexture() or use it as a
-///				part of a vk2d::Mesh and finally draw it by using Window::DrawMesh(). All texture resources are multi-layer
+///				part of a Mesh and finally draw it by using Window::DrawMesh(). All texture resources are multi-layer
 ///				textures, meaning that a single texture can contain multiple images that can be indexed at runtime.
 class TextureResource :
-	public vk2d::ResourceBase,
-	public vk2d::Texture
+	public ResourceBase,
+	public Texture
 {
-	friend class vk2d::_internal::TextureResourceImpl;
-	friend class vk2d::_internal::ResourceManagerImpl;
-	friend class vk2d::_internal::ResourceThreadLoadTask;
-	friend class vk2d::_internal::ResourceThreadUnloadTask;
-	friend class vk2d::_internal::WindowImpl;
+	friend class vk2d_internal::TextureResourceImpl;
+	friend class vk2d_internal::ResourceManagerImpl;
+	friend class vk2d_internal::ResourceThreadLoadTask;
+	friend class vk2d_internal::ResourceThreadUnloadTask;
+	friend class vk2d_internal::WindowImpl;
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		This constructor is meant for internal use only.
@@ -59,15 +59,15 @@ class TextureResource :
 	/// @param[in]	file_paths_listing
 	///				A vector of file paths to use when creating the texture.
 	///				<br>
-	///				- Supported file formats are listed in vk2d::ResourceManager::CreateTextureResource().
+	///				- Supported file formats are listed in ResourceManager::CreateTextureResource().
 	///				- Each file path corresponds to a texture layer in given order. Eg. input is {{path1}{path2}} then "path1" is
 	///				texture array layer 0 and "path2" is texture array layer 1.
 	///				- Each texture layer must be the same size. If images in these file paths are not same size then texture loading
 	///				will fail.
-	VK2D_API																				TextureResource(
-		vk2d::_internal::ResourceManagerImpl				*	resource_manager,
+	VK2D_API													TextureResource(
+		vk2d_internal::ResourceManagerImpl					*	resource_manager,
 		uint32_t												loader_thread,
-		vk2d::ResourceBase									*	parent_resource,
+		ResourceBase										*	parent_resource,
 		const std::vector<std::filesystem::path>			&	file_paths_listing );
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -100,17 +100,17 @@ class TextureResource :
 	///				texture array layer 0 and "data2" is texture array layer 1.
 	///				- Each texture layer must be the same size.
 	///				- This data is copied over to internal memory before returning so you do not need to keep the vector around.
-	VK2D_API																				TextureResource(
-		vk2d::_internal::ResourceManagerImpl				*	resource_manager,
-		uint32_t												loader_thread,
-		vk2d::ResourceBase									*	parent_resource,
-		glm::uvec2												size,
-		const std::vector<const std::vector<vk2d::Color8>*>	&	texels_listing );
+	VK2D_API												TextureResource(
+		vk2d_internal::ResourceManagerImpl				*	resource_manager,
+		uint32_t											loader_thread,
+		ResourceBase									*	parent_resource,
+		glm::uvec2											size,
+		const std::vector<const std::vector<Color8>*>	&	texels_listing );
 
 public:
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	VK2D_API																				~TextureResource();
+	VK2D_API												~TextureResource();
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Checks if the resource has been loaded or is in the process of being loaded.
@@ -119,8 +119,8 @@ public:
 	/// 
 	/// @note		Multithreading: Any thread.
 	/// 
-	/// @return		Status of the resource, see vk2d::ResourceStatus.
-	VK2D_API vk2d::ResourceStatus								VK2D_APIENTRY				GetStatus();
+	/// @return		Status of the resource, see ResourceStatus.
+	VK2D_API ResourceStatus									GetStatus();
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Waits for the resource to load on the calling thread before continuing execution.
@@ -135,9 +135,9 @@ public:
 	///				result will tell that the resource is still undetermined. Default value is std::chrono::nanoseconds::max() which
 	///				makes this function wait indefinitely.
 	/// 
-	/// @return		Status of the resource, see vk2d::ResourceStatus. Resource status can only be undetermined if timeout was given.
-	VK2D_API vk2d::ResourceStatus								VK2D_APIENTRY				WaitUntilLoaded(
-		std::chrono::nanoseconds								timeout						= std::chrono::nanoseconds::max() );
+	/// @return		Status of the resource, see ResourceStatus. Resource status can only be undetermined if timeout was given.
+	VK2D_API ResourceStatus									WaitUntilLoaded(
+		std::chrono::nanoseconds							timeout						= std::chrono::nanoseconds::max() );
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Waits for the resource to load on the calling thread before continuing execution.
@@ -151,21 +151,21 @@ public:
 	///				Maximum time to wait. If resource is still in undetermined state at timeout it will return anyways and the
 	///				result will tell that the resource is still undetermined.
 	/// 
-	/// @return		Status of the resource, see vk2d::ResourceStatus.
-	VK2D_API vk2d::ResourceStatus								VK2D_APIENTRY				WaitUntilLoaded(
-		std::chrono::steady_clock::time_point					timeout );
+	/// @return		Status of the resource, see ResourceStatus.
+	VK2D_API ResourceStatus									WaitUntilLoaded(
+		std::chrono::steady_clock::time_point				timeout );
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Get texel size of the texture resource.
 	/// 
 	/// @return		Texel size of the resource.
-	VK2D_API glm::uvec2											VK2D_APIENTRY				GetSize() const;
+	VK2D_API glm::uvec2										GetSize() const;
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		All VK2D textures are multi-layer textures. This returns the amount of layers in the texture.
 	/// 
 	/// @return		Number of layers in this texture.
-	VK2D_API uint32_t											VK2D_APIENTRY				GetLayerCount() const;
+	VK2D_API uint32_t										GetLayerCount() const;
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Checks if the object is good to be used or if a failure occurred in it's creation.
@@ -173,12 +173,12 @@ public:
 	/// @note		Multithreading: Any thread.
 	/// 
 	/// @return		true if class object was created successfully, false if something went wrong
-	VK2D_API bool												VK2D_APIENTRY				IsGood() const;
+	VK2D_API bool											IsGood() const;
 
 private:
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	std::unique_ptr<vk2d::_internal::TextureResourceImpl>		impl;
+	std::unique_ptr<vk2d_internal::TextureResourceImpl>		impl;
 };
 
 

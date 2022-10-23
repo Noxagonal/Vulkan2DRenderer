@@ -15,8 +15,8 @@ class FontResource;
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-VK2D_API vk2d::Mesh VK2D_APIENTRY GenerateTextMesh(
-	vk2d::FontResource		*	font,
+VK2D_API Mesh					GenerateTextMesh(
+	FontResource			*	font,
 	glm::vec2					origin,
 	std::string					text,
 	float						kerning,
@@ -28,31 +28,31 @@ VK2D_API vk2d::Mesh VK2D_APIENTRY GenerateTextMesh(
 
 
 
-namespace _internal {
+namespace vk2d_internal {
 
 class ResourceManagerImpl;
-class FontResourceImplBase;
+class FontResourceImpl;
 
-} // _internal
+} // vk2d_internal
 
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-/// @brief		vk2d::FontResource is a resource that contains a font which is used to draw text.
+/// @brief		FontResource is a resource that contains a font which is used to draw text.
 ///
-///				vk2d::FontResource can be loaded with vk2d::ResourceManager.
+///				FontResource can be loaded with ResourceManager.
 ///
 ///				Font is needed for printing text in the realtime scene / window. To use a font to print text in the window
 ///				you'll first need to load the font from a disk, then generate text mesh using the font resource, then finally
-///				render the text mesh to a window or render target texture using either vk2d::Window::DrawMesh() or
-///				vk2d::RenderTargetTexture::DrawMesh() functions.
+///				render the text mesh to a window or render target texture using either Window::DrawMesh() or
+///				RenderTargetTexture::DrawMesh() functions.
 class FontResource
-	: public vk2d::ResourceBase
+	: public ResourceBase
 {
-	friend class vk2d::_internal::ResourceManagerImpl;
-	friend class vk2d::_internal::FontResourceImplBase;
-	friend VK2D_API vk2d::Mesh								VK2D_APIENTRY						vk2d::GenerateTextMesh(
-		vk2d::FontResource								*	font,
+	friend class vk2d_internal::ResourceManagerImpl;
+	friend class vk2d_internal::FontResourceImpl;
+	friend VK2D_API Mesh									GenerateTextMesh(
+		FontResource									*	font,
 		glm::vec2											origin,
 		std::string											text,
 		float												kerning,
@@ -65,7 +65,7 @@ class FontResource
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		This constructor is meant for internal use only.
 	///
-	/// @note		All resources are created from vk2d::ResourceManager only.
+	/// @note		All resources are created from ResourceManager only.
 	/// 
 	/// @note		Multithreading: Any thread.
 	/// 
@@ -106,10 +106,10 @@ class FontResource
 	///				used to make text appear less grainy. However if mipmapping is used, then the glyphs may eventually start to
 	///				mix together in the final render, to decrease the amount of this "UV bleeding" you can increase the gap
 	///				between glyphs in the texture atlas here.
-	VK2D_API																					FontResource(
-		vk2d::_internal::ResourceManagerImpl			*	resource_manager,
+	VK2D_API												FontResource(
+		vk2d_internal::ResourceManagerImpl				*	resource_manager,
 		uint32_t											loader_thread_index,
-		vk2d::ResourceBase								*	parent_resource,
+		ResourceBase									*	parent_resource,
 		const std::filesystem::path						&	file_path,
 		uint32_t											glyph_texel_size,
 		bool												use_alpha,
@@ -120,7 +120,7 @@ class FontResource
 public:
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	VK2D_API																					~FontResource();
+	VK2D_API												~FontResource();
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Checks if the resource has been loaded or is in the process of being loaded.
@@ -129,8 +129,8 @@ public:
 	/// 
 	/// @note		Multithreading: Any thread.
 	/// 
-	/// @return		Status of the resource, see vk2d::ResourceStatus.
-	VK2D_API vk2d::ResourceStatus							VK2D_APIENTRY						GetStatus();
+	/// @return		Status of the resource, see ResourceStatus.
+	VK2D_API ResourceStatus									GetStatus();
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Waits for the resource to load on the calling thread before continuing execution.
@@ -145,9 +145,9 @@ public:
 	///				result will tell that the resource is still undetermined. Default value is std::chrono::nanoseconds::max() which
 	///				makes this function wait indefinitely.
 	/// 
-	/// @return		Status of the resource, see vk2d::ResourceStatus.
+	/// @return		Status of the resource, see ResourceStatus.
 	///				Resource status can only be undetermined if timeout was given.
-	VK2D_API vk2d::ResourceStatus							VK2D_APIENTRY						WaitUntilLoaded(
+	VK2D_API ResourceStatus									WaitUntilLoaded(
 		std::chrono::nanoseconds							timeout								= std::chrono::nanoseconds::max()
 	);
 
@@ -163,8 +163,8 @@ public:
 	///				Maximum time to wait. If resource is still in undetermined state at timeout it will return anyways and the
 	///				result will tell that the resource is still undetermined.
 	/// 
-	/// @return		Status of the resource, see vk2d::ResourceStatus.
-	VK2D_API vk2d::ResourceStatus							VK2D_APIENTRY						WaitUntilLoaded(
+	/// @return		Status of the resource, see ResourceStatus.
+	VK2D_API ResourceStatus									WaitUntilLoaded(
 		std::chrono::steady_clock::time_point				timeout );
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -194,7 +194,7 @@ public:
 	///				rectangle area {} until the font has been fully loaded by the resource manager.
 	/// 
 	/// @return		Area the text would occupy if rendered.
-	VK2D_API vk2d::Rect2f									VK2D_APIENTRY						CalculateRenderedSize(
+	VK2D_API Rect2f											CalculateRenderedSize(
 		std::string_view									text,
 		float												kerning								= 0.0f,
 		glm::vec2											scale								= glm::vec2( 1.0f, 1.0f ),
@@ -208,12 +208,12 @@ public:
 	/// @note		Multithreading: Any thread.
 	/// 
 	/// @return		true if class object was created successfully, false if something went wrong
-	VK2D_API bool											VK2D_APIENTRY						IsGood() const;
+	VK2D_API bool											IsGood() const;
 
 private:
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	std::unique_ptr<vk2d::_internal::FontResourceImplBase>		impl;
+	std::unique_ptr<vk2d_internal::FontResourceImpl>		impl;
 };
 
 

@@ -29,15 +29,15 @@ public:
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Default constructor.
-	VK2D_API												Transform()					= default;
+	VK2D_API						Transform()					= default;
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Copy constructor.
 	/// 
 	/// @param		other
 	///				Transform to copy from.
-	VK2D_API												Transform(
-		const vk2d::Transform	&	other )					= default;
+	VK2D_API						Transform(
+		const Transform			&	other )							= default;
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Construct from manual parameters.
@@ -50,7 +50,7 @@ public:
 	/// 
 	/// @param		rotation
 	///				Rotation offset from 0 angle. Counter clockwise.
-	VK2D_API												Transform(
+	VK2D_API						Transform(
 		glm::vec2					position,
 		glm::vec2					scale,
 		float						rotation );
@@ -60,7 +60,7 @@ public:
 	/// 
 	/// @param		movement
 	///				Amount and diretion where we wish to move.
-	VK2D_API void					VK2D_APIENTRY			Translate(
+	VK2D_API void					Translate(
 		glm::vec2					movement );
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -68,7 +68,7 @@ public:
 	/// 
 	/// @param		scale
 	///				Multiply scale by this.
-	VK2D_API void					VK2D_APIENTRY			Scale(
+	VK2D_API void					Scale(
 		glm::vec2					scale );
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -76,7 +76,7 @@ public:
 	/// 
 	/// @param		rotation
 	///				Rotation offset from 0 angle to be used to add to existing rotation of this transform.
-	VK2D_API void					VK2D_APIENTRY			Rotate(
+	VK2D_API void					Rotate(
 		float						rotation );
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -96,7 +96,7 @@ public:
 	/// @endcode
 	/// 
 	/// @return		A new 4*4 matrix that combines location, scale and rotation.
-	VK2D_API glm::mat4			VK2D_APIENTRY			CalculateTransformationMatrix() const;
+	VK2D_API glm::mat4				CalculateTransformationMatrix() const;
 };
 
 

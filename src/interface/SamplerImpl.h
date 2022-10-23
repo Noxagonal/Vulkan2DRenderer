@@ -7,16 +7,16 @@
 
 namespace vk2d {
 
-namespace _internal {
+namespace vk2d_internal {
 
 
 
 class SamplerImpl {
 public:
 	SamplerImpl(
-		vk2d::Sampler						*	sampler,
-		vk2d::_internal::InstanceImpl		*	instance,
-		const vk2d::SamplerCreateInfo		&	create_info );
+		Sampler								*	sampler,
+		InstanceImpl						*	instance,
+		const SamplerCreateInfo				&	create_info );
 
 	~SamplerImpl();
 
@@ -30,17 +30,17 @@ public:
 
 
 	struct BufferData {
-		alignas( 16 )	vk2d::Colorf			borderColor			= {};	// Border color
+		alignas( 16 )	Colorf					borderColor			= {};	// Border color
 		alignas( 8 )	glm::uvec2				borderColorEnable	= {};	// Border color enable
 	};
 
 private:
-	vk2d::Sampler							*	my_interface		= {};
-	vk2d::_internal::InstanceImpl			*	instance			= {};
+	Sampler									*	my_interface		= {};
+	InstanceImpl							*	instance			= {};
 	VkDevice									vk_device			= {};
 
 	VkSampler									vk_sampler			= {};
-	vk2d::_internal::CompleteBufferResource		sampler_data		= {};
+	CompleteBufferResource						sampler_data		= {};
 
 	glm::uvec2									border_color_enable	= {};
 
@@ -49,6 +49,6 @@ private:
 
 
 
-} // _internal
+} // vk2d_internal
 
 } // vk2d

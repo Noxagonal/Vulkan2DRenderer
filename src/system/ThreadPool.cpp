@@ -7,14 +7,14 @@
 
 namespace vk2d {
 
-namespace _internal {
+namespace vk2d_internal {
 
 
 
 void ThreadPoolWorkerThread(
-	vk2d::_internal::ThreadSharedResource		*	thread_shared_resource,
-	vk2d::_internal::ThreadPrivateResource		*	thread_private_resource,
-	vk2d::_internal::ThreadSignal				*	thread_signals
+	ThreadSharedResource		*	thread_shared_resource,
+	ThreadPrivateResource		*	thread_private_resource,
+	ThreadSignal				*	thread_signals
 )
 {
 	auto success = thread_private_resource->ThreadBegin();
@@ -49,14 +49,14 @@ void ThreadPoolWorkerThread(
 	thread_signals->ready_to_join		= true;
 }
 
-} // _internal
+} // vk2d_internal
 
 } // vk2d
 
 
 
-vk2d::_internal::Task * vk2d::_internal::ThreadSharedResource::FindWork(
-	vk2d::_internal::ThreadPrivateResource 	*	thread_private_resource
+vk2d::vk2d_internal::Task * vk2d::vk2d_internal::ThreadSharedResource::FindWork(
+	ThreadPrivateResource 	*	thread_private_resource
 )
 {
 	std::lock_guard<std::mutex> lock_guard( task_list_mutex );
@@ -81,7 +81,7 @@ vk2d::_internal::Task * vk2d::_internal::ThreadSharedResource::FindWork(
 				// Finished tasks are removed from task_list.
 				const auto & dependencies = task->GetDependencies();
 				if( std::any_of( task_list.begin(), task_list.end(), [ &dependencies ](
-					std::unique_ptr<vk2d::_internal::Task> & t )
+					std::unique_ptr<Task> & t )
 					{
 						return std::any_of( dependencies.begin(), dependencies.end(), [ &t ]( uint64_t d )
 							{
@@ -108,8 +108,8 @@ vk2d::_internal::Task * vk2d::_internal::ThreadSharedResource::FindWork(
 	return nullptr;
 }
 
-void vk2d::_internal::ThreadSharedResource::TaskComplete(
-	vk2d::_internal::Task	*	task
+void vk2d::vk2d_internal::ThreadSharedResource::TaskComplete(
+	Task	*	task
 )
 {
 	std::lock_guard<std::mutex> lock_guard( task_list_mutex );
@@ -123,14 +123,14 @@ void vk2d::_internal::ThreadSharedResource::TaskComplete(
 	}
 }
 
-bool vk2d::_internal::ThreadSharedResource::IsTaskListEmpty()
+bool vk2d::vk2d_internal::ThreadSharedResource::IsTaskListEmpty()
 {
 	std::lock_guard<std::mutex> lock_guard( task_list_mutex );
 	return !task_list.size();
 }
 
-void vk2d::_internal::ThreadSharedResource::AddTask(
-	std::unique_ptr<vk2d::_internal::Task> new_task )
+void vk2d::vk2d_internal::ThreadSharedResource::AddTask(
+	std::unique_ptr<Task> new_task )
 {
 	std::lock_guard<std::mutex> lock_guard( task_list_mutex );
 	task_list.emplace_back( std::move( new_task ) );
@@ -138,13 +138,13 @@ void vk2d::_internal::ThreadSharedResource::AddTask(
 
 
 
-vk2d::_internal::ThreadPool::ThreadPool(
-	std::vector<std::unique_ptr<vk2d::_internal::ThreadPrivateResource>>	&&	thread_resources
+vk2d::vk2d_internal::ThreadPool::ThreadPool(
+	std::vector<std::unique_ptr<ThreadPrivateResource>>	&&	thread_resources
 )
 {
 	thread_signals.resize( thread_resources.size() );
 	threads.reserve( thread_resources.size() );
-	thread_shared_resource		= std::make_unique<vk2d::_internal::ThreadSharedResource>();
+	thread_shared_resource		= std::make_unique<ThreadSharedResource>();
 	thread_private_resources	= std::move( thread_resources );
 	for( size_t i = 0; i < thread_private_resources.size(); ++i ) {
 		thread_private_resources[ i ]->thread_index		= uint32_t( i );
@@ -163,7 +163,7 @@ vk2d::_internal::ThreadPool::ThreadPool(
 
 
 
-vk2d::_internal::ThreadPool::~ThreadPool()
+vk2d::vk2d_internal::ThreadPool::~ThreadPool()
 {
 	shutting_down	= true;
 
@@ -190,17 +190,17 @@ vk2d::_internal::ThreadPool::~ThreadPool()
 	}
 }
 
-std::thread::id vk2d::_internal::ThreadPool::GetThreadID( uint32_t thread_index ) const
+std::thread::id vk2d::vk2d_internal::ThreadPool::GetThreadID( uint32_t thread_index ) const
 {
 	return threads[ thread_index ].get_id();
 }
 
-bool vk2d::_internal::ThreadPool::IsGood() const
+bool vk2d::vk2d_internal::ThreadPool::IsGood() const
 {
 	return is_good;
 }
 
-void vk2d::_internal::ThreadPool::WaitIdle()
+void vk2d::vk2d_internal::ThreadPool::WaitIdle()
 {
 	while( !thread_shared_resource->IsTaskListEmpty() ) {
 		thread_shared_resource->thread_wakeup.notify_all();
@@ -211,7 +211,9 @@ void vk2d::_internal::ThreadPool::WaitIdle()
 
 std::atomic_uint64_t task_index_counter		= 0;
 
-uint64_t vk2d::_internal::ThreadPool::AddTask( std::unique_ptr<Task> new_task )
+uint64_t vk2d::vk2d_internal::ThreadPool::AddTask(
+	std::unique_ptr<Task> new_task
+)
 {
 	if( !is_good ) return false;
 

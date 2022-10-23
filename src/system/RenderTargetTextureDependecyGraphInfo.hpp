@@ -9,7 +9,7 @@
 
 
 namespace vk2d {
-namespace _internal {
+namespace vk2d_internal {
 
 
 
@@ -21,7 +21,7 @@ class RenderTargetTextureImpl;
 
 struct TimedDescriptorPoolData
 {
-	vk2d::_internal::PoolDescriptorSet						descriptor_set								= {};
+	PoolDescriptorSet										descriptor_set								= {};
 	std::chrono::time_point<std::chrono::steady_clock>		previous_access_time						= {};	// For cleanup
 };
 
@@ -29,14 +29,14 @@ struct TimedDescriptorPoolData
 
 struct RenderTargetTextureDependencyInfo
 {
-	vk2d::_internal::RenderTargetTextureImpl			*	render_target								= {};
+	RenderTargetTextureImpl								*	render_target								= {};
 	uint32_t												swap_buffer_index							= {};
 };
 
 
 
 /// @brief		Used to collect render information from render target texture when render is going to happen.
-/// @see		vk2d::_internal::WindowImpl::EndRender().
+/// @see		WindowImpl::EndRender().
 class RenderTargetTextureRenderCollector
 {
 	friend WindowImpl;
@@ -53,23 +53,23 @@ public:
 		VkSubmitInfo		*	render_submit_info
 	);
 
-	vk2d::_internal::RenderTargetTextureRenderCollector::Collection				&	operator[]( size_t index );
-	vk2d::_internal::RenderTargetTextureRenderCollector::Collection				*	begin();
-	vk2d::_internal::RenderTargetTextureRenderCollector::Collection				*	end();
+	RenderTargetTextureRenderCollector::Collection				&	operator[]( size_t index );
+	RenderTargetTextureRenderCollector::Collection				*	begin();
+	RenderTargetTextureRenderCollector::Collection				*	end();
 	size_t																			size();
 
 private:
-	std::vector<vk2d::_internal::RenderTargetTextureRenderCollector::Collection>	collection;
+	std::vector<RenderTargetTextureRenderCollector::Collection>	collection;
 };
 
 
 
-vk2d::Multisamples						CheckSupportedMultisampleCount(
-	vk2d::_internal::InstanceImpl	*	instance,
-	vk2d::Multisamples					samples
+Multisamples					CheckSupportedMultisampleCount(
+	InstanceImpl			*	instance,
+	Multisamples				samples
 );
 
 
 
-} // _internal
+} // vk2d_internal
 } // vk2d

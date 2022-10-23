@@ -5,7 +5,7 @@
 
 
 namespace vk2d {
-namespace _internal {
+namespace vk2d_internal {
 
 
 
@@ -66,7 +66,7 @@ void ImageFormatConverter(
 
 		for( size_t c = 0; c < destination_image_channel_count; ++c ) {
 			destination_image_data[ c ] =
-				( swizzles[ c ] == vk2d::_internal::ImageFormatConverterColorSwizzle::CONSTANT ) ?
+				( swizzles[ c ] == ImageFormatConverterColorSwizzle::CONSTANT ) ?
 				DestinationT( constants[ c ] ) :
 				DestinationT( float( source_image_data[ uint32_t( swizzles[ c ] ) ] ) * multiplier );
 		}
@@ -78,5 +78,5 @@ void ImageFormatConverter(
 
 
 
-} // _internal
+} // vk2d_internal
 } // vk2d

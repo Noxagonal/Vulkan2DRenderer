@@ -6,7 +6,7 @@
 
 namespace vk2d {
 
-namespace _internal {
+namespace vk2d_internal {
 
 
 
@@ -21,73 +21,73 @@ struct ThreadSignal;
 class ThreadSharedResource {
 public:
 
-	vk2d::_internal::Task * FindWork(
-		vk2d::_internal::ThreadPrivateResource	*	thread_private_resource );
+	Task * FindWork(
+		ThreadPrivateResource				*	thread_private_resource );
 
 	void TaskComplete(
-		vk2d::_internal::Task					*	task );
+		Task								*	task );
 
 	bool IsTaskListEmpty();
 
 	void AddTask(
-		std::unique_ptr<vk2d::_internal::Task> new_task );
+		std::unique_ptr<Task>					new_task );
 
-	std::mutex											thread_wakeup_mutex;
-	std::condition_variable								thread_wakeup;
+	std::mutex									thread_wakeup_mutex;
+	std::condition_variable						thread_wakeup;
 
-	std::atomic_bool									threads_should_exit;
+	std::atomic_bool							threads_should_exit;
 
-	std::mutex											task_list_mutex;
-	std::deque<std::unique_ptr<vk2d::_internal::Task>>	task_list;
+	std::mutex									task_list_mutex;
+	std::deque<std::unique_ptr<Task>>			task_list;
 };
 
 
 class Task {
-	friend class vk2d::_internal::ThreadPool;
-	friend class vk2d::_internal::ThreadSharedResource;
+	friend class ThreadPool;
+	friend class ThreadSharedResource;
 
 public:
 	Task()
 	{};
-	Task( const Task & other )						= delete;
-	Task( Task && other )							= default;
+	Task( const Task & other )					= delete;
+	Task( Task && other )						= default;
 
-	virtual											~Task()
+	virtual										~Task()
 	{};
 
-	inline const std::vector<uint32_t>			&	GetThreadLocks() const
+	inline const std::vector<uint32_t>		&	GetThreadLocks() const
 	{
 		return locked_to_threads;
 	}
 
-	inline bool										IsThreadLocked() const
+	inline bool									IsThreadLocked() const
 	{
 		return !!locked_to_threads.size();
 	}
 
-	inline uint64_t									GetTaskIndex() const
+	inline uint64_t								GetTaskIndex() const
 	{
 		return task_index;
 	}
 
-	inline const std::vector<uint64_t>			&	GetDependencies() const
+	inline const std::vector<uint64_t>		&	GetDependencies() const
 	{
 		return dependencies;
 	}
 
-	inline bool										IsRunning() const
+	inline bool									IsRunning() const
 	{
 		return is_running;
 	}
 
-	virtual void									operator()(
-		vk2d::_internal::ThreadPrivateResource	*	thread_resource )			= 0;
+	virtual void								operator()(
+		ThreadPrivateResource				*	thread_resource )			= 0;
 
 private:
-	std::vector<uint32_t>							locked_to_threads			= {};
-	uint64_t										task_index					= {};
-	std::vector<uint64_t>							dependencies				= {};
-	std::atomic_bool								is_running					= {};
+	std::vector<uint32_t>						locked_to_threads			= {};
+	uint64_t									task_index					= {};
+	std::vector<uint64_t>						dependencies				= {};
+	std::atomic_bool							is_running					= {};
 };
 
 
@@ -95,24 +95,26 @@ private:
 // This tells a specific thread what to do immediately after the
 // thread has been created and what to do before joining the thread.
 class ThreadPrivateResource {
-	friend class vk2d::_internal::ThreadPool;
+	friend class ThreadPool;
 	friend void ThreadPoolWorkerThread(
-		vk2d::_internal::ThreadSharedResource		*	thread_shared_resource,
-		vk2d::_internal::ThreadPrivateResource		*	thread_private_resource,
-		vk2d::_internal::ThreadSignal				*	thread_signals
+		ThreadSharedResource				*	thread_shared_resource,
+		ThreadPrivateResource				*	thread_private_resource,
+		ThreadSignal						*	thread_signals
 	);
 
 public:
 	ThreadPrivateResource()
 	{};
-	ThreadPrivateResource( const vk2d::_internal::ThreadPrivateResource & other )		= delete;
-	ThreadPrivateResource( vk2d::_internal::ThreadPrivateResource && other )			= default;
+	ThreadPrivateResource(
+		const ThreadPrivateResource			&	other )						= delete;
+	ThreadPrivateResource(
+		ThreadPrivateResource				&&	other )						= default;
 
-	virtual					~ThreadPrivateResource()
+	virtual ~ThreadPrivateResource()
 	{};
 
 	// This is not thread id, just the index
-	inline uint32_t			GetThreadIndex()
+	inline uint32_t								GetThreadIndex()
 	{
 		return thread_index;
 	}
@@ -121,34 +123,36 @@ protected:
 	// Ran at thread start before anything else.
 	// Return true if succesful, false to terminate entire thread pool.
 	// ThreadEnd() is ran afterwards regardless so you can rely that for cleanup.
-	virtual	bool			ThreadBegin()			= 0;
+	virtual	bool								ThreadBegin()				= 0;
 
 	// Ran at thread pool termination, this is ran after all tasks have completed.
 	// It's also run even if ThreadBegin() returns false,
 	// so you can rely on this function for cleanup.
-	virtual void			ThreadEnd()				= 0;
+	virtual void								ThreadEnd()					= 0;
 
 private:
-	uint32_t				thread_index			= {};
+	uint32_t									thread_index				= {};
 };
 
 
 
 // Used to pass signals between specific threads and the main thread
 struct ThreadSignal {
-	ThreadSignal()												= default;
-	ThreadSignal( const vk2d::_internal::ThreadSignal & other )
+	ThreadSignal()									= default;
+	ThreadSignal(
+		const ThreadSignal	&	other )
 	{
 		init_success	= other.init_success.load();
 		init_error		= other.init_error.load();
 		ready_to_join	= other.ready_to_join.load();
 	}
-	ThreadSignal( vk2d::_internal::ThreadSignal && other )		= default;
-	~ThreadSignal()												= default;
+	ThreadSignal(
+		ThreadSignal		&&	other )				= default;
+	~ThreadSignal()									= default;
 
-	std::atomic_bool		init_success						= {};
-	std::atomic_bool		init_error							= {};
-	std::atomic_bool		ready_to_join						= {};
+	std::atomic_bool			init_success		= {};
+	std::atomic_bool			init_error			= {};
+	std::atomic_bool			ready_to_join		= {};
 };
 
 
@@ -159,10 +163,10 @@ public:
 	// Main thread only!
 	// 'thread_resources' IS CONSUMED!
 	ThreadPool(
-		std::vector<std::unique_ptr<vk2d::_internal::ThreadPrivateResource>>		&&	thread_resources );
+		std::vector<std::unique_ptr<ThreadPrivateResource>>		&&	thread_resources );
 
 	// MAIN THREAD ONLY!
-	virtual												~ThreadPool();
+	virtual ~ThreadPool();
 
 	// Any thread.
 	// 'unique_task' IS CONSUMED!
@@ -197,11 +201,11 @@ public:
 
 private:
 	uint64_t											AddTask(
-		std::unique_ptr<vk2d::_internal::Task>			new_task );
+		std::unique_ptr<Task>			new_task );
 
-	std::unique_ptr<vk2d::_internal::ThreadSharedResource>					thread_shared_resource		= {};
-	std::vector<std::unique_ptr<vk2d::_internal::ThreadPrivateResource>>	thread_private_resources	= {};
-	std::vector<vk2d::_internal::ThreadSignal>								thread_signals				= {};
+	std::unique_ptr<ThreadSharedResource>					thread_shared_resource		= {};
+	std::vector<std::unique_ptr<ThreadPrivateResource>>	thread_private_resources	= {};
+	std::vector<ThreadSignal>								thread_signals				= {};
 	std::vector<std::thread>												threads						= {};
 
 	std::atomic_bool														shutting_down				= {};
@@ -211,6 +215,6 @@ private:
 
 
 
-} // _internal
+} // vk2d_internal
 
 } // vk2d

@@ -15,18 +15,18 @@ namespace vk2d {
 
 
 // This works as a replacement of sorts to std::vector but with a few more features.
-// TODO: vk2d::Array is experimental at this point.
-// TODO: vk2d::Array key feature should be that the memory is allocated from a memory pool, this is not implemented yet.
+// TODO: Array is experimental at this point.
+// TODO: Array key feature should be that the memory is allocated from a memory pool, this is not implemented yet.
 template<typename T>
 class Array
 {
 public:
 	Array()										= default;
-	Array( const vk2d::Array<T> & other )
+	Array( const Array<T> & other )
 	{
 		CopyOther( other );
 	}
-	Array( vk2d::Array<T> && other )
+	Array( Array<T> && other )
 	{
 		SwapOther( std::move( other ) );
 	}
@@ -80,12 +80,12 @@ public:
 		return ret;
 	};
 
-	vk2d::Array<T> & operator=( const vk2d::Array<T> & other )
+	Array<T> & operator=( const Array<T> & other )
 	{
 		CopyOther( other );
 		return *this;
 	}
-	vk2d::Array<T> & operator=( vk2d::Array<T> && other )
+	Array<T> & operator=( Array<T> && other )
 	{
 		SwapOther( std::move( other ) );
 		return *this;
@@ -97,7 +97,7 @@ public:
 		if( !data_size ) throw std::out_of_range( "Index out of range." );
 		return data_ptr[ index ];
 	}
-	vk2d::Array<T> & operator+=( const vk2d::Array<T> & other )
+	Array<T> & operator+=( const Array<T> & other )
 	{
 		if( other.data_size ) {
 			auto old_size = data_size;
@@ -243,7 +243,7 @@ private:
 		Reserve( new_size, headroom );
 		data_size = new_size;
 	}
-	void CopyOther( const vk2d::Array<T> & other )
+	void CopyOther( const Array<T> & other )
 	{
 		// Destruct everything in this array and copy construct from values on other array.
 		if( this != &other ) {
@@ -255,7 +255,7 @@ private:
 			}
 		}
 	}
-	void SwapOther( vk2d::Array<T> && other )
+	void SwapOther( Array<T> && other )
 	{
 		if( this != &other ) {
 			std::swap( data_ptr, other.data_ptr );

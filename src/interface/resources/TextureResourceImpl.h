@@ -14,7 +14,7 @@ namespace vk2d {
 
 class TextureResource;
 
-namespace _internal {
+namespace vk2d_internal {
 
 class ResourceManagerImpl;
 class DestroyTextureLoadResources;
@@ -24,82 +24,82 @@ class ThreadPrivateResource;
 
 
 class TextureResourceImpl :
-	public vk2d::_internal::ResourceImplBase,
-	public vk2d::_internal::TextureImpl
+	public ResourceImplBase,
+	public TextureImpl
 {
-	friend class vk2d::TextureResource;
-	friend class vk2d::_internal::ResourceManagerImpl;
-	friend class vk2d::_internal::DestroyTextureLoadResources;
+	friend class TextureResource;
+	friend class ResourceManagerImpl;
+	friend class DestroyTextureLoadResources;
 
 public:
-																TextureResourceImpl(
-		vk2d::TextureResource								*	my_interface,
-		vk2d::_internal::ResourceManagerImpl				*	resource_manager,
-		uint32_t												loader_thread,
-		vk2d::ResourceBase									*	parent_resource,
-		const std::vector<std::filesystem::path>			&	file_paths_listing );
+															TextureResourceImpl(
+		TextureResource									*	my_interface,
+		ResourceManagerImpl								*	resource_manager,
+		uint32_t											loader_thread,
+		ResourceBase									*	parent_resource,
+		const std::vector<std::filesystem::path>		&	file_paths_listing );
 
-																TextureResourceImpl(
-		vk2d::TextureResource								*	my_interface,
-		vk2d::_internal::ResourceManagerImpl				*	resource_manager,
-		uint32_t												loader_thread,
-		vk2d::ResourceBase									*	parent_resource,
-		glm::uvec2												size,
-		const std::vector<const std::vector<vk2d::Color8>*>	&	texels );
+															TextureResourceImpl(
+		TextureResource									*	my_interface,
+		ResourceManagerImpl								*	resource_manager,
+		uint32_t											loader_thread,
+		ResourceBase									*	parent_resource,
+		glm::uvec2											size,
+		const std::vector<const std::vector<Color8>*>	&	texels );
 
-	bool														MTLoad(
-		vk2d::_internal::ThreadPrivateResource				*	thread_resource );
+	bool													MTLoad(
+		ThreadPrivateResource							*	thread_resource );
 
-	void														MTUnload(
-		vk2d::_internal::ThreadPrivateResource				*	thread_resource );
+	void													MTUnload(
+		ThreadPrivateResource							*	thread_resource );
 
-	vk2d::ResourceStatus										GetStatus();
+	ResourceStatus											GetStatus();
 
-	vk2d::ResourceStatus										WaitUntilLoaded(
-		std::chrono::nanoseconds								timeout );
+	ResourceStatus											WaitUntilLoaded(
+		std::chrono::nanoseconds							timeout );
 
-	vk2d::ResourceStatus										WaitUntilLoaded(
-		std::chrono::steady_clock::time_point					timeout );
+	ResourceStatus											WaitUntilLoaded(
+		std::chrono::steady_clock::time_point				timeout );
 
-	VkImage														GetVulkanImage() const;
-	VkImageView													GetVulkanImageView() const;
-	VkImageLayout												GetVulkanImageLayout() const;
+	VkImage													GetVulkanImage() const;
+	VkImageView												GetVulkanImageView() const;
+	VkImageLayout											GetVulkanImageLayout() const;
 
-	glm::uvec2													GetSize() const;
-	uint32_t													GetLayerCount() const;
+	glm::uvec2												GetSize() const;
+	uint32_t												GetLayerCount() const;
 
-	bool														IsTextureDataReady();
+	bool													IsTextureDataReady();
 
-	bool														IsGood() const;
+	bool													IsGood() const;
 
 private:
-	void														ScheduleTextureLoadResourceDestruction();
+	void													ScheduleTextureLoadResourceDestruction();
 
-	vk2d::TextureResource									*	my_interface								= {};
-	vk2d::_internal::ResourceManagerImpl					*	resource_manager							= {};
-	vk2d::_internal::ThreadLoaderResource					*	loader_thread_resource						= {};
+	TextureResource										*	my_interface								= {};
+	ResourceManagerImpl									*	resource_manager							= {};
+	ThreadLoaderResource								*	loader_thread_resource						= {};
 
-	std::vector<vk2d::_internal::CompleteBufferResource>		staging_buffers								= {};
-	vk2d::_internal::CompleteImageResource						image										= {};
-	VkImageLayout												vk_image_layout								= {};
+	std::vector<CompleteBufferResource>						staging_buffers								= {};
+	CompleteImageResource									image										= {};
+	VkImageLayout											vk_image_layout								= {};
 
-	uint32_t													image_layer_count							= {};
-	VkExtent2D													extent										= {};
-	std::vector<std::vector<vk2d::Color8>>						texture_data								= {};
+	uint32_t												image_layer_count							= {};
+	VkExtent2D												extent										= {};
+	std::vector<std::vector<Color8>>						texture_data								= {};
 
-	VkCommandBuffer												vk_primary_render_command_buffer			= {};
-	VkCommandBuffer												vk_secondary_render_command_buffer			= {};
-	VkCommandBuffer												vk_primary_transfer_command_buffer			= {};
+	VkCommandBuffer											vk_primary_render_command_buffer			= {};
+	VkCommandBuffer											vk_secondary_render_command_buffer			= {};
+	VkCommandBuffer											vk_primary_transfer_command_buffer			= {};
 
-	VkSemaphore													vk_transfer_semaphore						= {};
-	VkSemaphore													vk_blit_semaphore							= {};
-	VkFence														vk_texture_complete_fence					= {};
+	VkSemaphore												vk_transfer_semaphore						= {};
+	VkSemaphore												vk_blit_semaphore							= {};
+	VkFence													vk_texture_complete_fence					= {};
 
-	bool														is_good										= {};
+	bool													is_good										= {};
 };
 
 
 
-} // _internal
+} // vk2d_internal
 
 } // vk2d

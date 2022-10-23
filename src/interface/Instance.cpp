@@ -60,22 +60,22 @@
 
 
 namespace vk2d {
-namespace _internal {
+namespace vk2d_internal {
 
 
 
 // Private global varibles.
-std::mutex									instance_globals_mutex;
-vk2d::Monitor								primary_monitor				= {};
-std::vector<vk2d::Monitor>					all_monitors				= {};
-std::list<vk2d::_internal::InstanceImpl*>	instance_listeners			= {};
-uint64_t									instance_count				= {};
+std::mutex					instance_globals_mutex;
+Monitor						primary_monitor					= {};
+std::vector<Monitor>		all_monitors					= {};
+std::list<InstanceImpl*>	instance_listeners				= {};
+uint64_t					InstanceImpl::instance_count	= {};
 
 
 
 // Private function declarations.
-void VK2D_APIENTRY VK2D_default_ReportFunction(
-	vk2d::ReportSeverity	severity,
+void VK2D_default_ReportFunction(
+	ReportSeverity			severity,
 	std::string_view		message );
 
 void UpdateMonitorLists(
@@ -91,7 +91,7 @@ void glfwJoystickEventCallback(
 
 
 
-} // _internal
+} // vk2d_internal
 } // vk2d
 
 
@@ -114,18 +114,18 @@ void glfwJoystickEventCallback(
 
 
 
-VK2D_API										vk2d::Instance::Instance(
+VK2D_API vk2d::Instance::Instance(
 	const vk2d::InstanceCreateInfo			&	instance_create_info
 )
 {
-	impl = std::make_unique<vk2d::_internal::InstanceImpl>(
+	impl = std::make_unique<vk2d_internal::InstanceImpl>(
 		this,
 		instance_create_info
 	);
 	if( !impl || !impl->IsGood() ) {
 		impl	= nullptr;
 		if( instance_create_info.report_function ) {
-			instance_create_info.report_function( vk2d::ReportSeverity::CRITICAL_ERROR, "Cannot create instance implementation!" );
+			instance_create_info.report_function( ReportSeverity::CRITICAL_ERROR, "Cannot create instance implementation!" );
 		}
 	}
 }
@@ -136,41 +136,41 @@ VK2D_API vk2d::Instance::~Instance()
 {
 }
 
-VK2D_API bool VK2D_APIENTRY vk2d::Instance::Run()
+VK2D_API bool vk2d::Instance::Run()
 {
 	return impl->Run();
 }
 
-VK2D_API vk2d::ResourceManager * VK2D_APIENTRY vk2d::Instance::GetResourceManager()
+VK2D_API vk2d::ResourceManager * vk2d::Instance::GetResourceManager()
 {
 	return impl->GetResourceManager();
 }
 
-VK2D_API std::vector<vk2d::Monitor*> VK2D_APIENTRY vk2d::Instance::GetMonitors()
+VK2D_API std::vector<vk2d::Monitor*> vk2d::Instance::GetMonitors()
 {
 	if( !impl->IsThisThreadCreatorThread() ) {
-		impl->Report( vk2d::ReportSeverity::WARNING, "Instance::GetMonitors() must be called from main thread only!" );
+		impl->Report( ReportSeverity::WARNING, "Instance::GetMonitors() must be called from main thread only!" );
 		return {};
 	}
 
-	std::vector<vk2d::Monitor*> ret;
-	ret.reserve( vk2d::_internal::all_monitors.size() );
+	std::vector<Monitor*> ret;
+	ret.reserve( vk2d::vk2d_internal::all_monitors.size() );
 
-	for( auto & m : vk2d::_internal::all_monitors ) {
+	for( auto & m : vk2d::vk2d_internal::all_monitors ) {
 		ret.push_back( &m );
 	}
 
 	return ret;
 }
 
-VK2D_API vk2d::Monitor *VK2D_APIENTRY vk2d::Instance::GetPrimaryMonitor()
+VK2D_API vk2d::Monitor *vk2d::Instance::GetPrimaryMonitor()
 {
-	return &vk2d::_internal::primary_monitor;
+	return &vk2d::vk2d_internal::primary_monitor;
 }
 
 
 
-VK2D_API void VK2D_APIENTRY vk2d::Instance::SetMonitorUpdateCallback(
+VK2D_API void vk2d::Instance::SetMonitorUpdateCallback(
 	vk2d::PFN_MonitorUpdateCallback			monitor_update_callback_funtion
 )
 {
@@ -179,7 +179,7 @@ VK2D_API void VK2D_APIENTRY vk2d::Instance::SetMonitorUpdateCallback(
 	);
 }
 
-VK2D_API vk2d::Cursor * VK2D_APIENTRY vk2d::Instance::CreateCursor(
+VK2D_API vk2d::Cursor * vk2d::Instance::CreateCursor(
 	const std::filesystem::path			&	image_path,
 	glm::ivec2								hot_spot
 )
@@ -190,9 +190,9 @@ VK2D_API vk2d::Cursor * VK2D_APIENTRY vk2d::Instance::CreateCursor(
 	);
 }
 
-VK2D_API vk2d::Cursor * VK2D_APIENTRY vk2d::Instance::CreateCursor(
+VK2D_API vk2d::Cursor * vk2d::Instance::CreateCursor(
 	glm::uvec2								image_size,
-	const std::vector<vk2d::Color8>		&	image_data,
+	const std::vector<Color8>		&	image_data,
 	glm::ivec2								hot_spot
 )
 {
@@ -203,46 +203,46 @@ VK2D_API vk2d::Cursor * VK2D_APIENTRY vk2d::Instance::CreateCursor(
 	);
 }
 
-VK2D_API void VK2D_APIENTRY vk2d::Instance::DestroyCursor(
-	vk2d::Cursor						*	cursor )
+VK2D_API void vk2d::Instance::DestroyCursor(
+	Cursor						*	cursor )
 {
 	impl->DestroyCursor( cursor );
 }
 
-VK2D_API vk2d::PFN_GamepadConnectionEventCallback VK2D_APIENTRY vk2d::Instance::GetGamepadEventCallback() const
+VK2D_API vk2d::PFN_GamepadConnectionEventCallback vk2d::Instance::GetGamepadEventCallback() const
 {
 	return impl->GetGamepadEventCallback();
 }
 
-VK2D_API void VK2D_APIENTRY vk2d::Instance::SetGamepadEventCallback(
-	vk2d::PFN_GamepadConnectionEventCallback		gamepad_event_callback_function
+VK2D_API void vk2d::Instance::SetGamepadEventCallback(
+	PFN_GamepadConnectionEventCallback		gamepad_event_callback_function
 )
 {
 	impl->SetGamepadEventCallback( gamepad_event_callback_function );
 }
 
-VK2D_API bool VK2D_APIENTRY vk2d::Instance::IsGamepadPresent(
-	vk2d::Gamepad			gamepad
+VK2D_API bool vk2d::Instance::IsGamepadPresent(
+	Gamepad			gamepad
 )
 {
 	return impl->IsGamepadPresent( gamepad );
 }
 
-VK2D_API std::string VK2D_APIENTRY vk2d::Instance::GetGamepadName(
-	vk2d::Gamepad		gamepad
+VK2D_API std::string vk2d::Instance::GetGamepadName(
+	Gamepad		gamepad
 )
 {
 	return impl->GetGamepadName( gamepad );
 }
 
-VK2D_API vk2d::GamepadState VK2D_APIENTRY vk2d::Instance::QueryGamepadState(
-	vk2d::Gamepad		gamepad
+VK2D_API vk2d::GamepadState vk2d::Instance::QueryGamepadState(
+	Gamepad		gamepad
 )
 {
 	return impl->QueryGamepadState( gamepad );
 }
 
-VK2D_API vk2d::Window * VK2D_APIENTRY vk2d::Instance::CreateOutputWindow(
+VK2D_API vk2d::Window * vk2d::Instance::CreateOutputWindow(
 	const WindowCreateInfo		&	window_create_info
 )
 {
@@ -251,63 +251,63 @@ VK2D_API vk2d::Window * VK2D_APIENTRY vk2d::Instance::CreateOutputWindow(
 
 
 
-VK2D_API void VK2D_APIENTRY vk2d::Instance::DestroyOutputWindow(
-	vk2d::Window				*	window
+VK2D_API void vk2d::Instance::DestroyOutputWindow(
+	Window				*	window
 )
 {
 	impl->DestroyOutputWindow( window );
 }
 
-VK2D_API vk2d::RenderTargetTexture * VK2D_APIENTRY vk2d::Instance::CreateRenderTargetTexture(
-	const vk2d::RenderTargetTextureCreateInfo	&	render_target_texture_create_info
+VK2D_API vk2d::RenderTargetTexture * vk2d::Instance::CreateRenderTargetTexture(
+	const RenderTargetTextureCreateInfo	&	render_target_texture_create_info
 )
 {
 	return impl->CreateRenderTargetTexture( render_target_texture_create_info );
 }
 
-VK2D_API void VK2D_APIENTRY vk2d::Instance::DestroyRenderTargetTexture(
-	vk2d::RenderTargetTexture					*	render_target_texture
+VK2D_API void vk2d::Instance::DestroyRenderTargetTexture(
+	RenderTargetTexture					*	render_target_texture
 )
 {
 	impl->DestroyRenderTargetTexture( render_target_texture );
 }
 
-VK2D_API vk2d::Sampler * VK2D_APIENTRY vk2d::Instance::CreateSampler(
-	const vk2d::SamplerCreateInfo		&	sampler_create_info
+VK2D_API vk2d::Sampler * vk2d::Instance::CreateSampler(
+	const SamplerCreateInfo		&	sampler_create_info
 )
 {
 	return impl->CreateSampler( sampler_create_info );
 }
 
-VK2D_API void VK2D_APIENTRY vk2d::Instance::DestroySampler(
-	vk2d::Sampler						*	sampler
+VK2D_API void vk2d::Instance::DestroySampler(
+	Sampler						*	sampler
 )
 {
 	impl->DestroySampler( sampler );
 }
 
-VK2D_API vk2d::Multisamples VK2D_APIENTRY vk2d::Instance::GetMaximumSupportedMultisampling()
+VK2D_API vk2d::Multisamples vk2d::Instance::GetMaximumSupportedMultisampling()
 {
 	return impl->GetMaximumSupportedMultisampling();
 }
 
-VK2D_API vk2d::Multisamples VK2D_APIENTRY vk2d::Instance::GetAllSupportedMultisampling()
+VK2D_API vk2d::Multisamples vk2d::Instance::GetAllSupportedMultisampling()
 {
 	return impl->GetAllSupportedMultisampling();
 }
 
-VK2D_API bool VK2D_APIENTRY vk2d::Instance::IsGood() const
+VK2D_API bool vk2d::Instance::IsGood() const
 {
 	return !!impl;
 }
 
 
 
-VK2D_API std::unique_ptr<vk2d::Instance>VK2D_APIENTRY vk2d::CreateInstance(
+VK2D_API std::unique_ptr<vk2d::Instance> vk2d::CreateInstance(
 	const vk2d::InstanceCreateInfo		&	instance_create_info
 )
 {
-	auto instance = std::unique_ptr<vk2d::Instance>( new vk2d::Instance( instance_create_info ) );
+	auto instance = std::unique_ptr<Instance>( new Instance( instance_create_info ) );
 
 	if( instance->impl->IsGood() ) {
 		return instance;
@@ -335,8 +335,8 @@ VK2D_API std::unique_ptr<vk2d::Instance>VK2D_APIENTRY vk2d::CreateInstance(
 
 
 
-vk2d::_internal::InstanceImpl::InstanceImpl(
-	vk2d::Instance				*	my_interface,
+vk2d::vk2d_internal::InstanceImpl::InstanceImpl(
+	Instance				*	my_interface,
 	const InstanceCreateInfo	&	instance_create_info
 )
 {
@@ -348,30 +348,30 @@ vk2d::_internal::InstanceImpl::InstanceImpl(
 	std::lock_guard<std::mutex> lock_guard( instance_globals_mutex );
 
 	// Initialize glfw if this is the first instance.
-	if( vk2d::_internal::instance_count == 0 ) {
+	if( instance_count == 0 ) {
 		if( glfwInit() != GLFW_TRUE ) {
 			if( instance_create_info.report_function ) {
-				instance_create_info.report_function( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot initialize GLFW!" );
+				instance_create_info.report_function( ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot initialize GLFW!" );
 			}
 			return;
 		}
 		glfwWindowHint( GLFW_CLIENT_API, GLFW_NO_API );
-		glfwSetMonitorCallback( vk2d::_internal::glfwMonitorCallback );
-		glfwSetJoystickCallback( vk2d::_internal::glfwJoystickEventCallback );
-		vk2d::_internal::UpdateMonitorLists( true );
+		glfwSetMonitorCallback( glfwMonitorCallback );
+		glfwSetJoystickCallback( glfwJoystickEventCallback );
+		UpdateMonitorLists( true );
 	}
-	++vk2d::_internal::instance_count;
+	++instance_count;
 
 	// Check if vulkan is supported
 	if( glfwVulkanSupported() == GLFW_FALSE ) {
 		if( instance_create_info.report_function ) {
-			instance_create_info.report_function( vk2d::ReportSeverity::CRITICAL_ERROR, "Vulkan is not supported on this machine!\nUpdating your graphics drivers might fix this issue!" );
+			instance_create_info.report_function( ReportSeverity::CRITICAL_ERROR, "Vulkan is not supported on this machine!\nUpdating your graphics drivers might fix this issue!" );
 		}
 		return;
 	}
 
 	if( report_function == nullptr ) {
-		report_function = VK2D_default_ReportFunction;
+		report_function = vk2d::vk2d_internal::VK2D_default_ReportFunction;
 	}
 
 	//	Introduce layers and extensions here
@@ -399,8 +399,8 @@ vk2d::_internal::InstanceImpl::InstanceImpl(
 	if( !CreateDeviceAndQueues() ) return;
 
 	#if VK2D_BUILD_OPTION_VULKAN_COMMAND_BUFFER_CHECKMARKS && VK2D_BUILD_OPTION_VULKAN_VALIDATION && VK2D_DEBUG_ENABLE
-	if( vk2d::_internal::instance_count == 1 ) {
-		vk2d::_internal::SetCommandBufferCheckpointQueue(
+	if( instance_count == 1 ) {
+		SetCommandBufferCheckpointQueue(
 			vk_device,
 			primary_render_queue.GetQueue(),
 			primary_render_queue.GetQueueMutex()
@@ -421,17 +421,17 @@ vk2d::_internal::InstanceImpl::InstanceImpl(
 	if( !CreateDefaultSampler() ) return;
 	if( !CreateBlurSampler() ) return;
 
-	vk2d::_internal::instance_listeners.push_back( this );
+	instance_listeners.push_back( this );
 
 	is_good				= true;
 }
 
-vk2d::_internal::InstanceImpl::~InstanceImpl()
+vk2d::vk2d_internal::InstanceImpl::~InstanceImpl()
 {
 	VK2D_ASSERT_MAIN_THREAD( this );
 
 	std::lock_guard<std::mutex> lock_guard( instance_globals_mutex );
-	vk2d::_internal::instance_listeners.push_back( this );
+	instance_listeners.push_back( this );
 
 	vkDeviceWaitIdle( vk_device );
 
@@ -456,38 +456,38 @@ vk2d::_internal::InstanceImpl::~InstanceImpl()
 	DestroyInstance();
 
 	// If this is the last instance exiting, also terminate glfw
-	--vk2d::_internal::instance_count;
-	if( vk2d::_internal::instance_count == 0 ) {
+	--instance_count;
+	if( instance_count == 0 ) {
 		glfwTerminate();
 	}
 }
 
-bool vk2d::_internal::InstanceImpl::Run()
+bool vk2d::vk2d_internal::InstanceImpl::Run()
 {
 	VK2D_ASSERT_MAIN_THREAD( this );
 
 	glfwPollEvents();
 
-	// TODO: Schedule cleanup tasks at vk2d::_internal::InstanceImpl::Run().
+	// TODO: Schedule cleanup tasks at vk2d::vk2d_internal::InstanceImpl::Run().
 
 	return true;
 }
 
-void vk2d::_internal::InstanceImpl::SetMonitorUpdateCallback(
-	vk2d::PFN_MonitorUpdateCallback		monitor_update_callback_funtion
+void vk2d::vk2d_internal::InstanceImpl::SetMonitorUpdateCallback(
+	PFN_MonitorUpdateCallback		monitor_update_callback_funtion
 )
 {
 	VK2D_ASSERT_MAIN_THREAD( this );
 
 	if( !IsThisThreadCreatorThread() ) {
-		Report( vk2d::ReportSeverity::WARNING, "Instance::SetMonitorUpdateCallback() must be called from main thread only!" );
+		Report( ReportSeverity::WARNING, "Instance::SetMonitorUpdateCallback() must be called from main thread only!" );
 		return;
 	}
 
 	monitor_update_callback		= monitor_update_callback_funtion;
 }
 
-vk2d::Cursor * vk2d::_internal::InstanceImpl::CreateCursor(
+vk2d::Cursor * vk2d::vk2d_internal::InstanceImpl::CreateCursor(
 	const std::filesystem::path			&	image_path,
 	glm::ivec2								hot_spot
 )
@@ -495,11 +495,11 @@ vk2d::Cursor * vk2d::_internal::InstanceImpl::CreateCursor(
 	VK2D_ASSERT_MAIN_THREAD( this );
 
 	if( !IsThisThreadCreatorThread() ) {
-		Report( vk2d::ReportSeverity::WARNING, "Instance::CreateCursor() must be called from main thread only!" );
+		Report( ReportSeverity::WARNING, "Instance::CreateCursor() must be called from main thread only!" );
 		return {};
 	}
 
-	auto cursor = std::unique_ptr<vk2d::Cursor>( new vk2d::Cursor(
+	auto cursor = std::unique_ptr<Cursor>( new Cursor(
 		this,
 		image_path,
 		hot_spot
@@ -509,25 +509,25 @@ vk2d::Cursor * vk2d::_internal::InstanceImpl::CreateCursor(
 		cursors.push_back( std::move( cursor ) );
 		return ret;
 	} else {
-		Report( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot create cursor!" );
+		Report( ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot create cursor!" );
 	}
 	return {};
 }
 
-vk2d::Cursor * vk2d::_internal::InstanceImpl::CreateCursor(
+vk2d::Cursor * vk2d::vk2d_internal::InstanceImpl::CreateCursor(
 	glm::uvec2								image_size,
-	const std::vector<vk2d::Color8>		&	image_data,
+	const std::vector<Color8>		&	image_data,
 	glm::ivec2								hot_spot
 )
 {
 	VK2D_ASSERT_MAIN_THREAD( this );
 
 	if( !IsThisThreadCreatorThread() ) {
-		Report( vk2d::ReportSeverity::WARNING, "Instance::CreateCursor() must be called from main thread only!" );
+		Report( ReportSeverity::WARNING, "Instance::CreateCursor() must be called from main thread only!" );
 		return {};
 	}
 
-	auto cursor = std::unique_ptr<vk2d::Cursor>( new vk2d::Cursor(
+	auto cursor = std::unique_ptr<Cursor>( new Cursor(
 		this,
 		image_size,
 		image_data,
@@ -538,19 +538,19 @@ vk2d::Cursor * vk2d::_internal::InstanceImpl::CreateCursor(
 		cursors.push_back( std::move( cursor ) );
 		return ret;
 	} else {
-		Report( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot create cursor!" );
+		Report( ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot create cursor!" );
 	}
 	return {};
 }
 
-void vk2d::_internal::InstanceImpl::DestroyCursor(
-	vk2d::Cursor		*	cursor
+void vk2d::vk2d_internal::InstanceImpl::DestroyCursor(
+	Cursor		*	cursor
 )
 {
 	VK2D_ASSERT_MAIN_THREAD( this );
 
 	if( !IsThisThreadCreatorThread() ) {
-		Report( vk2d::ReportSeverity::WARNING, "Instance::DestroyCursor() must be called from main thread only!" );
+		Report( ReportSeverity::WARNING, "Instance::DestroyCursor() must be called from main thread only!" );
 		return;
 	}
 
@@ -565,33 +565,33 @@ void vk2d::_internal::InstanceImpl::DestroyCursor(
 	}
 }
 
-vk2d::PFN_GamepadConnectionEventCallback vk2d::_internal::InstanceImpl::GetGamepadEventCallback() const
+vk2d::PFN_GamepadConnectionEventCallback vk2d::vk2d_internal::InstanceImpl::GetGamepadEventCallback() const
 {
 	VK2D_ASSERT_MAIN_THREAD( this );
 
 	return joystick_event_callback;
 }
 
-void vk2d::_internal::InstanceImpl::SetGamepadEventCallback(
-	vk2d::PFN_GamepadConnectionEventCallback		joystick_event_callback_function
+void vk2d::vk2d_internal::InstanceImpl::SetGamepadEventCallback(
+	PFN_GamepadConnectionEventCallback		joystick_event_callback_function
 )
 {
 	VK2D_ASSERT_MAIN_THREAD( this );
 
 	if( !IsThisThreadCreatorThread() ) {
-		Report( vk2d::ReportSeverity::WARNING, "Instance::SetGamepadEventCallback() must be called from main thread only!" );
+		Report( ReportSeverity::WARNING, "Instance::SetGamepadEventCallback() must be called from main thread only!" );
 		return;
 	}
 
 	joystick_event_callback		= joystick_event_callback_function;
 }
 
-bool vk2d::_internal::InstanceImpl::IsGamepadPresent( vk2d::Gamepad joystick )
+bool vk2d::vk2d_internal::InstanceImpl::IsGamepadPresent( Gamepad joystick )
 {
 	VK2D_ASSERT_MAIN_THREAD( this );
 
 	if( !IsThisThreadCreatorThread() ) {
-		Report( vk2d::ReportSeverity::WARNING, "Instance::IsGamepadPresent() must be called from main thread only!" );
+		Report( ReportSeverity::WARNING, "Instance::IsGamepadPresent() must be called from main thread only!" );
 		return {};
 	}
 
@@ -602,29 +602,29 @@ bool vk2d::_internal::InstanceImpl::IsGamepadPresent( vk2d::Gamepad joystick )
 	}
 }
 
-std::string vk2d::_internal::InstanceImpl::GetGamepadName( vk2d::Gamepad gamepad )
+std::string vk2d::vk2d_internal::InstanceImpl::GetGamepadName( Gamepad gamepad )
 {
 	VK2D_ASSERT_MAIN_THREAD( this );
 
 	if( !IsThisThreadCreatorThread() ) {
-		Report( vk2d::ReportSeverity::WARNING, "Instance::GetGamepadName() must be called from main thread only!" );
+		Report( ReportSeverity::WARNING, "Instance::GetGamepadName() must be called from main thread only!" );
 		return {};
 	}
 
 	return glfwGetGamepadName( int( gamepad ) );
 }
 
-vk2d::GamepadState vk2d::_internal::InstanceImpl::QueryGamepadState(
-	vk2d::Gamepad			gamepad )
+vk2d::GamepadState vk2d::vk2d_internal::InstanceImpl::QueryGamepadState(
+	Gamepad			gamepad )
 {
 	VK2D_ASSERT_MAIN_THREAD( this );
 
 	if( !IsThisThreadCreatorThread() ) {
-		Report( vk2d::ReportSeverity::WARNING, "Instance::QueryGamepadState() must be called from main thread only!" );
+		Report( ReportSeverity::WARNING, "Instance::QueryGamepadState() must be called from main thread only!" );
 		return {};
 	}
 
-	vk2d::GamepadState	gamepad_state {};
+	GamepadState	gamepad_state {};
 	GLFWgamepadstate	glfw_gamepad_state {};
 
 	int32_t button_array_size	= int32_t( sizeof( glfw_gamepad_state.buttons ) / sizeof( *glfw_gamepad_state.buttons ) );
@@ -650,18 +650,18 @@ vk2d::GamepadState vk2d::_internal::InstanceImpl::QueryGamepadState(
 
 
 
-vk2d::Window * vk2d::_internal::InstanceImpl::CreateOutputWindow(
-	const vk2d::WindowCreateInfo	&	window_create_info
+vk2d::Window * vk2d::vk2d_internal::InstanceImpl::CreateOutputWindow(
+	const WindowCreateInfo	&	window_create_info
 )
 {
 	VK2D_ASSERT_MAIN_THREAD( this );
 
 	if( !IsThisThreadCreatorThread() ) {
-		Report( vk2d::ReportSeverity::WARNING, "Instance::CreateOutputWindow() must be called from main thread only!" );
+		Report( ReportSeverity::WARNING, "Instance::CreateOutputWindow() must be called from main thread only!" );
 		return {};
 	}
 
-	auto new_window = std::unique_ptr<vk2d::Window>( new vk2d::Window( this, window_create_info ) );
+	auto new_window = std::unique_ptr<Window>( new Window( this, window_create_info ) );
 
 	if( new_window->IsGood() ) {
 		windows.push_back( std::move( new_window ) );
@@ -670,14 +670,14 @@ vk2d::Window * vk2d::_internal::InstanceImpl::CreateOutputWindow(
 	return {};
 }
 
-void vk2d::_internal::InstanceImpl::DestroyOutputWindow(
-	vk2d::Window				*	window
+void vk2d::vk2d_internal::InstanceImpl::DestroyOutputWindow(
+	Window				*	window
 )
 {
 	VK2D_ASSERT_MAIN_THREAD( this );
 
 	if( !IsThisThreadCreatorThread() ) {
-		Report( vk2d::ReportSeverity::WARNING, "Instance::DestroyOutputWindow() must be called from main thread only!" );
+		Report( ReportSeverity::WARNING, "Instance::DestroyOutputWindow() must be called from main thread only!" );
 		return;
 	}
 
@@ -694,19 +694,19 @@ void vk2d::_internal::InstanceImpl::DestroyOutputWindow(
 	}
 }
 
-vk2d::RenderTargetTexture * vk2d::_internal::InstanceImpl::CreateRenderTargetTexture(
-	const vk2d::RenderTargetTextureCreateInfo		&	render_target_texture_create_info
+vk2d::RenderTargetTexture * vk2d::vk2d_internal::InstanceImpl::CreateRenderTargetTexture(
+	const RenderTargetTextureCreateInfo		&	render_target_texture_create_info
 )
 {
 	VK2D_ASSERT_MAIN_THREAD( this );
 
 	if( !IsThisThreadCreatorThread() ) {
-		Report( vk2d::ReportSeverity::WARNING, "Instance::CreateRenderTargetTexture() must be called from main thread only!" );
+		Report( ReportSeverity::WARNING, "Instance::CreateRenderTargetTexture() must be called from main thread only!" );
 		return {};
 	}
 
-	auto render_target_texture	= std::unique_ptr<vk2d::RenderTargetTexture>(
-		new vk2d::RenderTargetTexture( this, render_target_texture_create_info )
+	auto render_target_texture	= std::unique_ptr<RenderTargetTexture>(
+		new RenderTargetTexture( this, render_target_texture_create_info )
 		);
 
 	if( render_target_texture && render_target_texture->IsGood() ) {
@@ -718,14 +718,14 @@ vk2d::RenderTargetTexture * vk2d::_internal::InstanceImpl::CreateRenderTargetTex
 	}
 }
 
-void vk2d::_internal::InstanceImpl::DestroyRenderTargetTexture(
-	vk2d::RenderTargetTexture						*	render_target_texture
+void vk2d::vk2d_internal::InstanceImpl::DestroyRenderTargetTexture(
+	RenderTargetTexture						*	render_target_texture
 )
 {
 	VK2D_ASSERT_MAIN_THREAD( this );
 
 	if( !IsThisThreadCreatorThread() ) {
-		Report( vk2d::ReportSeverity::WARNING, "Instance::DestroyRenderTargetTexture() must be called from main thread only!" );
+		Report( ReportSeverity::WARNING, "Instance::DestroyRenderTargetTexture() must be called from main thread only!" );
 		return;
 	}
 
@@ -747,8 +747,8 @@ void vk2d::_internal::InstanceImpl::DestroyRenderTargetTexture(
 	}
 }
 
-vk2d::_internal::PoolDescriptorSet vk2d::_internal::InstanceImpl::AllocateDescriptorSet(
-	const vk2d::_internal::DescriptorSetLayout		&	for_descriptor_set_layout
+vk2d::vk2d_internal::PoolDescriptorSet vk2d::vk2d_internal::InstanceImpl::AllocateDescriptorSet(
+	const DescriptorSetLayout		&	for_descriptor_set_layout
 )
 {
 	std::lock_guard<std::mutex> lock_guard( descriptor_pool_mutex );
@@ -758,8 +758,8 @@ vk2d::_internal::PoolDescriptorSet vk2d::_internal::InstanceImpl::AllocateDescri
 	);
 }
 
-void vk2d::_internal::InstanceImpl::FreeDescriptorSet(
-	vk2d::_internal::PoolDescriptorSet & descriptor_set
+void vk2d::vk2d_internal::InstanceImpl::FreeDescriptorSet(
+	PoolDescriptorSet & descriptor_set
 )
 {
 	std::lock_guard<std::mutex> lock_guard( descriptor_pool_mutex );
@@ -771,19 +771,19 @@ void vk2d::_internal::InstanceImpl::FreeDescriptorSet(
 
 
 
-vk2d::Sampler * vk2d::_internal::InstanceImpl::CreateSampler(
-	const vk2d::SamplerCreateInfo	&	sampler_create_info
+vk2d::Sampler * vk2d::vk2d_internal::InstanceImpl::CreateSampler(
+	const SamplerCreateInfo	&	sampler_create_info
 )
 {
 	VK2D_ASSERT_MAIN_THREAD( this );
 
 	if( !IsThisThreadCreatorThread() ) {
-		Report( vk2d::ReportSeverity::WARNING, "Instance::CreateSampler() must be called from main thread only!" );
+		Report( ReportSeverity::WARNING, "Instance::CreateSampler() must be called from main thread only!" );
 		return {};
 	}
 
-	auto sampler	= std::unique_ptr<vk2d::Sampler>(
-		new vk2d::Sampler( this, sampler_create_info )
+	auto sampler	= std::unique_ptr<Sampler>(
+		new Sampler( this, sampler_create_info )
 		);
 
 	if( sampler && sampler->IsGood() ) {
@@ -795,14 +795,14 @@ vk2d::Sampler * vk2d::_internal::InstanceImpl::CreateSampler(
 	}
 }
 
-void vk2d::_internal::InstanceImpl::DestroySampler(
-	vk2d::Sampler					*	sampler
+void vk2d::vk2d_internal::InstanceImpl::DestroySampler(
+	Sampler					*	sampler
 )
 {
 	VK2D_ASSERT_MAIN_THREAD( this );
 
 	if( !IsThisThreadCreatorThread() ) {
-		Report( vk2d::ReportSeverity::WARNING, "Instance::DestroySampler() must be called from main thread only!" );
+		Report( ReportSeverity::WARNING, "Instance::DestroySampler() must be called from main thread only!" );
 		return;
 	}
 
@@ -824,29 +824,29 @@ void vk2d::_internal::InstanceImpl::DestroySampler(
 	}
 }
 
-vk2d::Multisamples vk2d::_internal::InstanceImpl::GetMaximumSupportedMultisampling() const
+vk2d::Multisamples vk2d::vk2d_internal::InstanceImpl::GetMaximumSupportedMultisampling() const
 {
 	VK2D_ASSERT_MAIN_THREAD( this );
 
-	vk2d::Multisamples max_samples	= vk2d::Multisamples( vk_physical_device_properties.limits.framebufferColorSampleCounts );
-	if( uint32_t( max_samples )			& uint32_t( vk2d::Multisamples::SAMPLE_COUNT_64 ) )	return vk2d::Multisamples::SAMPLE_COUNT_64;
-	else if( uint32_t( max_samples )	& uint32_t( vk2d::Multisamples::SAMPLE_COUNT_32 ) )	return vk2d::Multisamples::SAMPLE_COUNT_32;
-	else if( uint32_t( max_samples )	& uint32_t( vk2d::Multisamples::SAMPLE_COUNT_16 ) )	return vk2d::Multisamples::SAMPLE_COUNT_16;
-	else if( uint32_t( max_samples )	& uint32_t( vk2d::Multisamples::SAMPLE_COUNT_8 ) )	return vk2d::Multisamples::SAMPLE_COUNT_8;
-	else if( uint32_t( max_samples )	& uint32_t( vk2d::Multisamples::SAMPLE_COUNT_4 ) )	return vk2d::Multisamples::SAMPLE_COUNT_4;
-	else if( uint32_t( max_samples )	& uint32_t( vk2d::Multisamples::SAMPLE_COUNT_2 ) )	return vk2d::Multisamples::SAMPLE_COUNT_2;
-	else if( uint32_t( max_samples )	& uint32_t( vk2d::Multisamples::SAMPLE_COUNT_1 ) )	return vk2d::Multisamples::SAMPLE_COUNT_1;
-	return vk2d::Multisamples::SAMPLE_COUNT_1;
+	Multisamples max_samples	= Multisamples( vk_physical_device_properties.limits.framebufferColorSampleCounts );
+	if( uint32_t( max_samples )			& uint32_t( Multisamples::SAMPLE_COUNT_64 ) )	return Multisamples::SAMPLE_COUNT_64;
+	else if( uint32_t( max_samples )	& uint32_t( Multisamples::SAMPLE_COUNT_32 ) )	return Multisamples::SAMPLE_COUNT_32;
+	else if( uint32_t( max_samples )	& uint32_t( Multisamples::SAMPLE_COUNT_16 ) )	return Multisamples::SAMPLE_COUNT_16;
+	else if( uint32_t( max_samples )	& uint32_t( Multisamples::SAMPLE_COUNT_8 ) )	return Multisamples::SAMPLE_COUNT_8;
+	else if( uint32_t( max_samples )	& uint32_t( Multisamples::SAMPLE_COUNT_4 ) )	return Multisamples::SAMPLE_COUNT_4;
+	else if( uint32_t( max_samples )	& uint32_t( Multisamples::SAMPLE_COUNT_2 ) )	return Multisamples::SAMPLE_COUNT_2;
+	else if( uint32_t( max_samples )	& uint32_t( Multisamples::SAMPLE_COUNT_1 ) )	return Multisamples::SAMPLE_COUNT_1;
+	return Multisamples::SAMPLE_COUNT_1;
 }
 
-vk2d::Multisamples vk2d::_internal::InstanceImpl::GetAllSupportedMultisampling() const
+vk2d::Multisamples vk2d::vk2d_internal::InstanceImpl::GetAllSupportedMultisampling() const
 {
 	VK2D_ASSERT_MAIN_THREAD( this );
 
-	return vk2d::Multisamples( vk_physical_device_properties.limits.framebufferColorSampleCounts );
+	return Multisamples( vk_physical_device_properties.limits.framebufferColorSampleCounts );
 }
 
-vk2d::PFN_VK2D_ReportFunction vk2d::_internal::InstanceImpl::GetReportFunction() const
+vk2d::PFN_VK2D_ReportFunction vk2d::vk2d_internal::InstanceImpl::GetReportFunction() const
 {
 	VK2D_ASSERT_MAIN_THREAD( this );
 
@@ -861,16 +861,16 @@ vk2d::PFN_VK2D_ReportFunction vk2d::_internal::InstanceImpl::GetReportFunction()
 
 
 
-void vk2d::_internal::InstanceImpl::Report(
+void vk2d::vk2d_internal::InstanceImpl::Report(
 	VkResult					vk_result,
-	vk2d::ReportSeverity		severity,
+	ReportSeverity				severity,
 	const std::string		&	message
 )
 {
 	if( report_function ) {
 		std::lock_guard<std::mutex> report_lock( report_mutex );
 
-		if( vk_result == VK_ERROR_DEVICE_LOST ) severity = vk2d::ReportSeverity::DEVICE_LOST;
+		if( vk_result == VK_ERROR_DEVICE_LOST ) severity = ReportSeverity::DEVICE_LOST;
 
 		report_function(
 			severity,
@@ -879,14 +879,14 @@ void vk2d::_internal::InstanceImpl::Report(
 	}
 }
 
-void vk2d::_internal::InstanceImpl::Report(
+void vk2d::vk2d_internal::InstanceImpl::Report(
 	VkResult					vk_result,
 	const std::string		&	message )
 {
 	if( report_function ) {
 		std::lock_guard<std::mutex> report_lock( report_mutex );
 
-		auto severity = vk2d::ReportSeverity::NONE;
+		auto severity = ReportSeverity::NONE;
 
 		switch( vk_result ) {
 			case VK_SUCCESS:
@@ -894,11 +894,11 @@ void vk2d::_internal::InstanceImpl::Report(
 			case VK_THREAD_DONE_KHR:
 			case VK_OPERATION_DEFERRED_KHR:
 			case VK_OPERATION_NOT_DEFERRED_KHR:
-				severity = vk2d::ReportSeverity::VERBOSE;
+				severity = ReportSeverity::VERBOSE;
 				break;
 
 			case VK_PIPELINE_COMPILE_REQUIRED_EXT:
-				severity = vk2d::ReportSeverity::INFO;
+				severity = ReportSeverity::INFO;
 				break;
 
 			case VK_NOT_READY:
@@ -907,7 +907,7 @@ void vk2d::_internal::InstanceImpl::Report(
 			case VK_EVENT_RESET:
 			case VK_INCOMPLETE:
 			case VK_SUBOPTIMAL_KHR:
-				severity = vk2d::ReportSeverity::WARNING;
+				severity = ReportSeverity::WARNING;
 				break;
 
 			case VK_ERROR_OUT_OF_HOST_MEMORY:
@@ -919,7 +919,7 @@ void vk2d::_internal::InstanceImpl::Report(
 			case VK_ERROR_OUT_OF_POOL_MEMORY:
 			case VK_ERROR_FRAGMENTATION:
 			case VK_ERROR_OUT_OF_DATE_KHR:
-				severity = vk2d::ReportSeverity::NON_CRITICAL_ERROR;
+				severity = ReportSeverity::NON_CRITICAL_ERROR;
 				break;
 
 			case VK_ERROR_INITIALIZATION_FAILED:
@@ -939,15 +939,15 @@ void vk2d::_internal::InstanceImpl::Report(
 			case VK_ERROR_INVALID_DRM_FORMAT_MODIFIER_PLANE_LAYOUT_EXT:
 			case VK_ERROR_NOT_PERMITTED_EXT:
 			case VK_ERROR_FULL_SCREEN_EXCLUSIVE_MODE_LOST_EXT:
-				severity = vk2d::ReportSeverity::CRITICAL_ERROR;
+				severity = ReportSeverity::CRITICAL_ERROR;
 				break;
 
 			case VK_ERROR_DEVICE_LOST:
-				severity = vk2d::ReportSeverity::DEVICE_LOST;
+				severity = ReportSeverity::DEVICE_LOST;
 				break;
 
 			default:
-				severity = vk2d::ReportSeverity::CRITICAL_ERROR;
+				severity = ReportSeverity::CRITICAL_ERROR;
 				break;
 		}
 
@@ -958,7 +958,7 @@ void vk2d::_internal::InstanceImpl::Report(
 	}
 }
 
-void vk2d::_internal::InstanceImpl::Report( vk2d::ReportSeverity severity, const std::string & message )
+void vk2d::vk2d_internal::InstanceImpl::Report( ReportSeverity severity, const std::string & message )
 {
 	if( report_function ) {
 		std::lock_guard<std::mutex> report_lock( report_mutex );
@@ -970,78 +970,78 @@ void vk2d::_internal::InstanceImpl::Report( vk2d::ReportSeverity severity, const
 	}
 }
 
-vk2d::_internal::ThreadPool * vk2d::_internal::InstanceImpl::GetThreadPool() const
+vk2d::vk2d_internal::ThreadPool * vk2d::vk2d_internal::InstanceImpl::GetThreadPool() const
 {
 	return thread_pool.get();
 }
 
-const std::vector<uint32_t> & vk2d::_internal::InstanceImpl::GetLoaderThreads() const
+const std::vector<uint32_t> & vk2d::vk2d_internal::InstanceImpl::GetLoaderThreads() const
 {
 	return loader_threads;
 }
 
-const std::vector<uint32_t> & vk2d::_internal::InstanceImpl::GetGeneralThreads() const
+const std::vector<uint32_t> & vk2d::vk2d_internal::InstanceImpl::GetGeneralThreads() const
 {
 	return general_threads;
 }
 
-vk2d::ResourceManager * vk2d::_internal::InstanceImpl::GetResourceManager() const
+vk2d::ResourceManager * vk2d::vk2d_internal::InstanceImpl::GetResourceManager() const
 {
 	return resource_manager.get();
 }
 
-VkInstance vk2d::_internal::InstanceImpl::GetVulkanInstance() const
+VkInstance vk2d::vk2d_internal::InstanceImpl::GetVulkanInstance() const
 {
 	return vk_instance;
 }
 
-VkPhysicalDevice vk2d::_internal::InstanceImpl::GetVulkanPhysicalDevice() const
+VkPhysicalDevice vk2d::vk2d_internal::InstanceImpl::GetVulkanPhysicalDevice() const
 {
 	return vk_physical_device;
 }
 
-VkDevice vk2d::_internal::InstanceImpl::GetVulkanDevice() const
+VkDevice vk2d::vk2d_internal::InstanceImpl::GetVulkanDevice() const
 {
 	return vk_device;
 }
 
-vk2d::_internal::ResolvedQueue vk2d::_internal::InstanceImpl::GetPrimaryRenderQueue() const
+vk2d::vk2d_internal::ResolvedQueue vk2d::vk2d_internal::InstanceImpl::GetPrimaryRenderQueue() const
 {
 	return primary_render_queue;
 }
 
-vk2d::_internal::ResolvedQueue vk2d::_internal::InstanceImpl::GetSecondaryRenderQueue() const
+vk2d::vk2d_internal::ResolvedQueue vk2d::vk2d_internal::InstanceImpl::GetSecondaryRenderQueue() const
 {
 	return secondary_render_queue;
 }
 
-vk2d::_internal::ResolvedQueue vk2d::_internal::InstanceImpl::GetPrimaryComputeQueue() const
+vk2d::vk2d_internal::ResolvedQueue vk2d::vk2d_internal::InstanceImpl::GetPrimaryComputeQueue() const
 {
 	return primary_compute_queue;
 }
 
-vk2d::_internal::ResolvedQueue vk2d::_internal::InstanceImpl::GetPrimaryTransferQueue() const
+vk2d::vk2d_internal::ResolvedQueue vk2d::vk2d_internal::InstanceImpl::GetPrimaryTransferQueue() const
 {
 	return primary_transfer_queue;
 }
 
-const VkPhysicalDeviceProperties & vk2d::_internal::InstanceImpl::GetVulkanPhysicalDeviceProperties() const
+const VkPhysicalDeviceProperties & vk2d::vk2d_internal::InstanceImpl::GetVulkanPhysicalDeviceProperties() const
 {
 	return vk_physical_device_properties;
 }
 
-const VkPhysicalDeviceMemoryProperties & vk2d::_internal::InstanceImpl::GetVulkanPhysicalDeviceMemoryProperties() const
+const VkPhysicalDeviceMemoryProperties & vk2d::vk2d_internal::InstanceImpl::GetVulkanPhysicalDeviceMemoryProperties() const
 {
 	return vk_physical_device_memory_properties;
 }
 
-const VkPhysicalDeviceFeatures & vk2d::_internal::InstanceImpl::GetVulkanPhysicalDeviceFeatures() const
+const VkPhysicalDeviceFeatures & vk2d::vk2d_internal::InstanceImpl::GetVulkanPhysicalDeviceFeatures() const
 {
 	return vk_physical_device_features;
 }
 
-vk2d::_internal::GraphicsShaderProgram vk2d::_internal::InstanceImpl::GetGraphicsShaderModules(
-	vk2d::_internal::GraphicsShaderProgramID id
+vk2d::vk2d_internal::GraphicsShaderProgram vk2d::vk2d_internal::InstanceImpl::GetGraphicsShaderModules(
+	GraphicsShaderProgramID id
 ) const
 {
 	auto collection = graphics_shader_programs.find( id );
@@ -1051,8 +1051,8 @@ vk2d::_internal::GraphicsShaderProgram vk2d::_internal::InstanceImpl::GetGraphic
 	return {};
 }
 
-VkShaderModule vk2d::_internal::InstanceImpl::GetComputeShaderModules(
-	vk2d::_internal::ComputeShaderProgramID id
+VkShaderModule vk2d::vk2d_internal::InstanceImpl::GetComputeShaderModules(
+	ComputeShaderProgramID id
 ) const
 {
 	auto collection = compute_shader_programs.find( id );
@@ -1062,7 +1062,7 @@ VkShaderModule vk2d::_internal::InstanceImpl::GetComputeShaderModules(
 	return {};
 }
 
-vk2d::_internal::GraphicsShaderProgram vk2d::_internal::InstanceImpl::GetCompatibleGraphicsShaderModules(
+vk2d::vk2d_internal::GraphicsShaderProgram vk2d::vk2d_internal::InstanceImpl::GetCompatibleGraphicsShaderModules(
 	bool				multitextured,
 	bool				custom_uv_border_color,
 	uint32_t			vertices_per_primitive
@@ -1071,38 +1071,38 @@ vk2d::_internal::GraphicsShaderProgram vk2d::_internal::InstanceImpl::GetCompati
 	if( multitextured ) {
 		if( custom_uv_border_color ) {
 			if( vertices_per_primitive == 1 ) {
-				return GetGraphicsShaderModules( vk2d::_internal::GraphicsShaderProgramID::MULTITEXTURED_POINT_UV_BORDER_COLOR );
+				return GetGraphicsShaderModules( GraphicsShaderProgramID::MULTITEXTURED_POINT_UV_BORDER_COLOR );
 			}
 			if( vertices_per_primitive == 2 ) {
-				return GetGraphicsShaderModules( vk2d::_internal::GraphicsShaderProgramID::MULTITEXTURED_LINE_UV_BORDER_COLOR );
+				return GetGraphicsShaderModules( GraphicsShaderProgramID::MULTITEXTURED_LINE_UV_BORDER_COLOR );
 			}
 			if( vertices_per_primitive == 3 ) {
-				return GetGraphicsShaderModules( vk2d::_internal::GraphicsShaderProgramID::MULTITEXTURED_TRIANGLE_UV_BORDER_COLOR );
+				return GetGraphicsShaderModules( GraphicsShaderProgramID::MULTITEXTURED_TRIANGLE_UV_BORDER_COLOR );
 			}
 		} else {
 			if( vertices_per_primitive == 1 ) {
-				return GetGraphicsShaderModules( vk2d::_internal::GraphicsShaderProgramID::MULTITEXTURED_POINT );
+				return GetGraphicsShaderModules( GraphicsShaderProgramID::MULTITEXTURED_POINT );
 			}
 			if( vertices_per_primitive == 2 ) {
-				return GetGraphicsShaderModules( vk2d::_internal::GraphicsShaderProgramID::MULTITEXTURED_LINE );
+				return GetGraphicsShaderModules( GraphicsShaderProgramID::MULTITEXTURED_LINE );
 			}
 			if( vertices_per_primitive == 3 ) {
-				return GetGraphicsShaderModules( vk2d::_internal::GraphicsShaderProgramID::MULTITEXTURED_TRIANGLE );
+				return GetGraphicsShaderModules( GraphicsShaderProgramID::MULTITEXTURED_TRIANGLE );
 			}
 		}
 	} else {
 		if( custom_uv_border_color ) {
-			return GetGraphicsShaderModules( vk2d::_internal::GraphicsShaderProgramID::SINGLE_TEXTURED_UV_BORDER_COLOR );
+			return GetGraphicsShaderModules( GraphicsShaderProgramID::SINGLE_TEXTURED_UV_BORDER_COLOR );
 		} else {
-			return GetGraphicsShaderModules( vk2d::_internal::GraphicsShaderProgramID::SINGLE_TEXTURED );
+			return GetGraphicsShaderModules( GraphicsShaderProgramID::SINGLE_TEXTURED );
 		}
 	}
 
 	return {};
 }
 
-VkPipeline vk2d::_internal::InstanceImpl::GetGraphicsPipeline(
-	const vk2d::_internal::GraphicsPipelineSettings		&	settings
+VkPipeline vk2d::vk2d_internal::InstanceImpl::GetGraphicsPipeline(
+	const GraphicsPipelineSettings		&	settings
 )
 {
 	VK2D_ASSERT_SINGLE_THREAD_ACCESS_SCOPE();
@@ -1124,8 +1124,8 @@ VkPipeline vk2d::_internal::InstanceImpl::GetGraphicsPipeline(
 	return CreateGraphicsPipeline( settings );
 }
 
-VkPipeline vk2d::_internal::InstanceImpl::GetComputePipeline(
-	const vk2d::_internal::ComputePipelineSettings		&	settings
+VkPipeline vk2d::vk2d_internal::InstanceImpl::GetComputePipeline(
+	const ComputePipelineSettings		&	settings
 )
 {
 	VK2D_ASSERT_SINGLE_THREAD_ACCESS_SCOPE();
@@ -1147,8 +1147,8 @@ VkPipeline vk2d::_internal::InstanceImpl::GetComputePipeline(
 	return CreateComputePipeline( settings );
 }
 
-VkPipeline vk2d::_internal::InstanceImpl::CreateGraphicsPipeline(
-	const vk2d::_internal::GraphicsPipelineSettings		&	settings
+VkPipeline vk2d::vk2d_internal::InstanceImpl::CreateGraphicsPipeline(
+	const GraphicsPipelineSettings		&	settings
 )
 {
 	VK2D_ASSERT_MAIN_THREAD( this );
@@ -1173,29 +1173,29 @@ VkPipeline vk2d::_internal::InstanceImpl::CreateGraphicsPipeline(
 	// Make sure this matches Vertex in RenderPrimitives.h
 	std::array<VkVertexInputBindingDescription, 0> vertex_input_binding_descriptions {};
 	//	vertex_input_binding_descriptions[ 0 ].binding		= 0;
-	//	vertex_input_binding_descriptions[ 0 ].stride		= sizeof( vk2d::Vertex );
+	//	vertex_input_binding_descriptions[ 0 ].stride		= sizeof( Vertex );
 	//	vertex_input_binding_descriptions[ 0 ].inputRate	= VK_VERTEX_INPUT_RATE_VERTEX;
 
 	std::array<VkVertexInputAttributeDescription, 0> vertex_input_attribute_descriptions {};
 	//	vertex_input_attribute_descriptions[ 0 ].location	= 0;
 	//	vertex_input_attribute_descriptions[ 0 ].binding	= 0;
 	//	vertex_input_attribute_descriptions[ 0 ].format		= VK_FORMAT_R32G32_SFLOAT;
-	//	vertex_input_attribute_descriptions[ 0 ].offset		= offsetof( vk2d::Vertex, vertex_coords );
+	//	vertex_input_attribute_descriptions[ 0 ].offset		= offsetof( Vertex, vertex_coords );
 	//
 	//	vertex_input_attribute_descriptions[ 1 ].location	= 1;
 	//	vertex_input_attribute_descriptions[ 1 ].binding	= 0;
 	//	vertex_input_attribute_descriptions[ 1 ].format		= VK_FORMAT_R32G32_SFLOAT;
-	//	vertex_input_attribute_descriptions[ 1 ].offset		= offsetof( vk2d::Vertex, uv_coords );
+	//	vertex_input_attribute_descriptions[ 1 ].offset		= offsetof( Vertex, uv_coords );
 	//
 	//	vertex_input_attribute_descriptions[ 2 ].location	= 2;
 	//	vertex_input_attribute_descriptions[ 2 ].binding	= 0;
 	//	vertex_input_attribute_descriptions[ 2 ].format		= VK_FORMAT_R32G32B32A32_SFLOAT;
-	//	vertex_input_attribute_descriptions[ 2 ].offset		= offsetof( vk2d::Vertex, color );
+	//	vertex_input_attribute_descriptions[ 2 ].offset		= offsetof( Vertex, color );
 	//
 	//	vertex_input_attribute_descriptions[ 3 ].location	= 3;
 	//	vertex_input_attribute_descriptions[ 3 ].binding	= 0;
 	//	vertex_input_attribute_descriptions[ 3 ].format		= VK_FORMAT_R32_SFLOAT;
-	//	vertex_input_attribute_descriptions[ 3 ].offset		= offsetof( vk2d::Vertex, point_size );
+	//	vertex_input_attribute_descriptions[ 3 ].offset		= offsetof( Vertex, point_size );
 
 	VkPipelineVertexInputStateCreateInfo vertex_input_state_create_info {};
 	vertex_input_state_create_info.sType							= VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
@@ -1360,7 +1360,7 @@ VkPipeline vk2d::_internal::InstanceImpl::CreateGraphicsPipeline(
 	return pipeline;
 }
 
-VkPipeline vk2d::_internal::InstanceImpl::CreateComputePipeline( const vk2d::_internal::ComputePipelineSettings & settings )
+VkPipeline vk2d::vk2d_internal::InstanceImpl::CreateComputePipeline( const ComputePipelineSettings & settings )
 {
 	VK2D_ASSERT_MAIN_THREAD( this );
 
@@ -1400,99 +1400,99 @@ VkPipeline vk2d::_internal::InstanceImpl::CreateComputePipeline( const vk2d::_in
 	return pipeline;
 }
 
-VkPipelineCache vk2d::_internal::InstanceImpl::GetGraphicsPipelineCache() const
+VkPipelineCache vk2d::vk2d_internal::InstanceImpl::GetGraphicsPipelineCache() const
 {
 	return vk_graphics_pipeline_cache;
 }
 
-VkPipelineCache vk2d::_internal::InstanceImpl::GetComputePipelineCache() const
+VkPipelineCache vk2d::vk2d_internal::InstanceImpl::GetComputePipelineCache() const
 {
 	return vk_compute_pipeline_cache;
 }
 
-VkPipelineLayout vk2d::_internal::InstanceImpl::GetGraphicsPrimaryRenderPipelineLayout() const
+VkPipelineLayout vk2d::vk2d_internal::InstanceImpl::GetGraphicsPrimaryRenderPipelineLayout() const
 {
 	return vk_graphics_primary_render_pipeline_layout;
 }
 
-VkPipelineLayout vk2d::_internal::InstanceImpl::GetGraphicsBlurPipelineLayout() const
+VkPipelineLayout vk2d::vk2d_internal::InstanceImpl::GetGraphicsBlurPipelineLayout() const
 {
 	return vk_graphics_blur_pipeline_layout;
 }
 
 /*
-VkPipelineLayout vk2d::_internal::InstanceImpl::GetComputeBlurPipelineLayout() const
+VkPipelineLayout vk2d::vk2d_internal::InstanceImpl::GetComputeBlurPipelineLayout() const
 {
 	return vk_compute_blur_pipeline_layout;
 }
 
-const vk2d::_internal::DescriptorSetLayout & vk2d::_internal::InstanceImpl::GetComputeBasicSamplerDescriptorSetLayout() const
+const DescriptorSetLayout & vk2d::vk2d_internal::InstanceImpl::GetComputeBasicSamplerDescriptorSetLayout() const
 {
 	return *compute_basic_sampler_descriptor_set_layout;
 }
 
-const vk2d::_internal::DescriptorSetLayout & vk2d::_internal::InstanceImpl::GetComputeBlurTexturesDescriptorSetLayout() const
+const DescriptorSetLayout & vk2d::vk2d_internal::InstanceImpl::GetComputeBlurTexturesDescriptorSetLayout() const
 {
 	return *compute_blur_textures_descriptor_set_layout;
 }
 */
 
-const vk2d::_internal::DescriptorSetLayout & vk2d::_internal::InstanceImpl::GetGraphicsSamplerDescriptorSetLayout() const
+const vk2d::vk2d_internal::DescriptorSetLayout & vk2d::vk2d_internal::InstanceImpl::GetGraphicsSamplerDescriptorSetLayout() const
 {
 	return *graphics_sampler_descriptor_set_layout;
 }
 
-const vk2d::_internal::DescriptorSetLayout & vk2d::_internal::InstanceImpl::GetGraphicsTextureDescriptorSetLayout() const
+const vk2d::vk2d_internal::DescriptorSetLayout & vk2d::vk2d_internal::InstanceImpl::GetGraphicsTextureDescriptorSetLayout() const
 {
 	return *graphics_texture_descriptor_set_layout;
 }
 
-const vk2d::_internal::DescriptorSetLayout & vk2d::_internal::InstanceImpl::GetGraphicsRenderTargetBlurTextureDescriptorSetLayout() const
+const vk2d::vk2d_internal::DescriptorSetLayout & vk2d::vk2d_internal::InstanceImpl::GetGraphicsRenderTargetBlurTextureDescriptorSetLayout() const
 {
 	return *graphics_render_target_blur_texture_descriptor_set_layout;
 }
 
-const vk2d::_internal::DescriptorSetLayout & vk2d::_internal::InstanceImpl::GetGraphicsUniformBufferDescriptorSetLayout() const
+const vk2d::vk2d_internal::DescriptorSetLayout & vk2d::vk2d_internal::InstanceImpl::GetGraphicsUniformBufferDescriptorSetLayout() const
 {
 	return *graphics_uniform_buffer_descriptor_set_layout;
 }
 
-const vk2d::_internal::DescriptorSetLayout & vk2d::_internal::InstanceImpl::GetGraphicsStorageBufferDescriptorSetLayout() const
+const vk2d::vk2d_internal::DescriptorSetLayout & vk2d::vk2d_internal::InstanceImpl::GetGraphicsStorageBufferDescriptorSetLayout() const
 {
 	return *graphics_storage_buffer_descriptor_set_layout;
 }
 
-vk2d::Texture * vk2d::_internal::InstanceImpl::GetDefaultTexture() const
+vk2d::Texture * vk2d::vk2d_internal::InstanceImpl::GetDefaultTexture() const
 {
 	return default_texture;
 }
 
-vk2d::Sampler * vk2d::_internal::InstanceImpl::GetDefaultSampler() const
+vk2d::Sampler * vk2d::vk2d_internal::InstanceImpl::GetDefaultSampler() const
 {
 	return default_sampler.get();
 }
 
-VkDescriptorSet vk2d::_internal::InstanceImpl::GetBlurSamplerDescriptorSet() const
+VkDescriptorSet vk2d::vk2d_internal::InstanceImpl::GetBlurSamplerDescriptorSet() const
 {
 	return blur_sampler_descriptor_set.descriptorSet;
 }
 
-vk2d::_internal::DeviceMemoryPool * vk2d::_internal::InstanceImpl::GetDeviceMemoryPool() const
+vk2d::vk2d_internal::DeviceMemoryPool * vk2d::vk2d_internal::InstanceImpl::GetDeviceMemoryPool() const
 {
 	return device_memory_pool.get();
 }
 
-std::thread::id vk2d::_internal::InstanceImpl::GetCreatorThreadID() const
+std::thread::id vk2d::vk2d_internal::InstanceImpl::GetCreatorThreadID() const
 {
 	return creator_thread_id;
 }
 
-bool vk2d::_internal::InstanceImpl::IsThisThreadCreatorThread() const
+bool vk2d::vk2d_internal::InstanceImpl::IsThisThreadCreatorThread() const
 {
 	return creator_thread_id == std::this_thread::get_id();
 }
 
-void vk2d::_internal::InstanceImpl::VkFun_vkCmdPushDescriptorSetKHR(
+void vk2d::vk2d_internal::InstanceImpl::VkFun_vkCmdPushDescriptorSetKHR(
 	VkCommandBuffer					commandBuffer,
 	VkPipelineBindPoint				pipelineBindPoint,
 	VkPipelineLayout				layout,
@@ -1511,7 +1511,7 @@ void vk2d::_internal::InstanceImpl::VkFun_vkCmdPushDescriptorSetKHR(
 	);
 }
 
-bool vk2d::_internal::InstanceImpl::IsGood() const
+bool vk2d::vk2d_internal::InstanceImpl::IsGood() const
 {
 	return is_good;
 }
@@ -1528,7 +1528,7 @@ bool vk2d::_internal::InstanceImpl::IsGood() const
 
 namespace vk2d {
 
-namespace _internal {
+namespace vk2d_internal {
 
 VkBool32 VKAPI_PTR DebugMessenger(
 	VkDebugUtilsMessageSeverityFlagBitsEXT           messageSeverity,
@@ -1537,26 +1537,26 @@ VkBool32 VKAPI_PTR DebugMessenger(
 	void*                                            pUserData )
 {
 	std::string str_severity;
-	vk2d::ReportSeverity vk2d_severity;
+	ReportSeverity vk2d_severity;
 	switch( messageSeverity ) {
 		case VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT:
-			vk2d_severity	= vk2d::ReportSeverity::VERBOSE;
+			vk2d_severity	= ReportSeverity::VERBOSE;
 			str_severity	= "VERBOSE";
 			break;
 		case VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT:
-			vk2d_severity	= vk2d::ReportSeverity::INFO;
+			vk2d_severity	= ReportSeverity::INFO;
 			str_severity	= "INFO";
 			break;
 		case VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT:
-			vk2d_severity	= vk2d::ReportSeverity::WARNING;
+			vk2d_severity	= ReportSeverity::WARNING;
 			str_severity	= "WARNING";
 			break;
 		case VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT:
-			vk2d_severity	= vk2d::ReportSeverity::NON_CRITICAL_ERROR;
+			vk2d_severity	= ReportSeverity::NON_CRITICAL_ERROR;
 			str_severity	= "ERROR";
 			break;
 		default:
-			vk2d_severity	= vk2d::ReportSeverity::INFO;
+			vk2d_severity	= ReportSeverity::INFO;
 			str_severity	= "<UNKNOWN>";
 			assert( 0 );
 			break;
@@ -1586,7 +1586,7 @@ VkBool32 VKAPI_PTR DebugMessenger(
 	ss_message << "\n" << ss_title.str() << ":\n\n - " << pCallbackData->pMessage << "\n\n";
 	// TODO: labels, object, message id name / number;
 
-	auto instance = reinterpret_cast<vk2d::_internal::InstanceImpl*>( pUserData );
+	auto instance = reinterpret_cast<InstanceImpl*>( pUserData );
 	assert( instance );
 
 	instance->GetReportFunction()( vk2d_severity, ss_message.str() );
@@ -1601,7 +1601,7 @@ VkBool32 VKAPI_PTR DebugMessenger(
 	return VK_FALSE;
 }
 
-} // _internal
+} // vk2d_internal
 
 } // vk2d
 
@@ -1615,7 +1615,7 @@ VkBool32 VKAPI_PTR DebugMessenger(
 
 
 
-bool vk2d::_internal::InstanceImpl::CreateInstance()
+bool vk2d::vk2d_internal::InstanceImpl::CreateInstance()
 {
 	#if VK2D_BUILD_OPTION_VULKAN_VALIDATION && VK2D_DEBUG_ENABLE
 
@@ -1676,7 +1676,7 @@ bool vk2d::_internal::InstanceImpl::CreateInstance()
 		VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT |
 		VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT |
 		VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
-	debug_utils_create_info.pfnUserCallback		= vk2d::_internal::DebugMessenger;
+	debug_utils_create_info.pfnUserCallback		= DebugMessenger;
 	debug_utils_create_info.pUserData			= this;
 
 	VkValidationFeaturesEXT validation_features {};
@@ -1730,7 +1730,7 @@ bool vk2d::_internal::InstanceImpl::CreateInstance()
 	{
 		auto createDebugUtilsMessenger = (PFN_vkCreateDebugUtilsMessengerEXT)vkGetInstanceProcAddr( vk_instance, "vkCreateDebugUtilsMessengerEXT" );
 		if( !createDebugUtilsMessenger ) {
-			Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot create vulkan debug object!" );
+			Report( ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot create vulkan debug object!" );
 			return false;
 		}
 		auto result = createDebugUtilsMessenger(
@@ -1757,12 +1757,12 @@ bool vk2d::_internal::InstanceImpl::CreateInstance()
 
 
 
-bool vk2d::_internal::InstanceImpl::PickPhysicalDevice()
+bool vk2d::vk2d_internal::InstanceImpl::PickPhysicalDevice()
 {
 	vk_physical_device	= PickBestVulkanPhysicalDevice();
 
 	if( !vk_physical_device ) {
-		Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Cannot find physical device!" );
+		Report( ReportSeverity::CRITICAL_ERROR, "Cannot find physical device!" );
 	}
 
 	if( vk_physical_device ) {
@@ -1792,7 +1792,7 @@ bool vk2d::_internal::InstanceImpl::PickPhysicalDevice()
 
 
 
-bool vk2d::_internal::InstanceImpl::CreateDeviceAndQueues()
+bool vk2d::vk2d_internal::InstanceImpl::CreateDeviceAndQueues()
 {
 	std::vector<std::pair<VkQueueFlags, float>> queue_requests {
 		{ VK_QUEUE_GRAPHICS_BIT, 1.0f },
@@ -1802,7 +1802,7 @@ bool vk2d::_internal::InstanceImpl::CreateDeviceAndQueues()
 	};
 	DeviceQueueResolver queue_resolver( vk_instance, vk_physical_device, queue_requests );
 	if( !queue_resolver.IsGood() ) {
-		Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot create queue resolver!" );
+		Report( ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot create queue resolver!" );
 		return false;
 	}
 	auto queue_create_infos = queue_resolver.GetDeviceQueueCreateInfos();
@@ -1846,7 +1846,7 @@ bool vk2d::_internal::InstanceImpl::CreateDeviceAndQueues()
 
 	auto resolved_queues = queue_resolver.GetQueues( vk_device );
 	if( resolved_queues.size() != queue_requests.size() ) {
-		Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot get correct amount of queues from queue resolver!" );
+		Report( ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot get correct amount of queues from queue resolver!" );
 		return false;
 	}
 	primary_render_queue		= resolved_queues[ 0 ];
@@ -1857,9 +1857,9 @@ bool vk2d::_internal::InstanceImpl::CreateDeviceAndQueues()
 	return true;
 }
 
-bool vk2d::_internal::InstanceImpl::CreateDescriptorPool()
+bool vk2d::vk2d_internal::InstanceImpl::CreateDescriptorPool()
 {
-	descriptor_pool			= vk2d::_internal::CreateDescriptorAutoPool(
+	descriptor_pool			= CreateDescriptorAutoPool(
 		this,
 		vk_device
 	);
@@ -1878,49 +1878,49 @@ bool vk2d::_internal::InstanceImpl::CreateDescriptorPool()
 
 
 
-bool vk2d::_internal::InstanceImpl::CreateDefaultSampler()
+bool vk2d::vk2d_internal::InstanceImpl::CreateDefaultSampler()
 {
-	vk2d::SamplerCreateInfo sampler_create_info {};
-	sampler_create_info.minification_filter				= vk2d::SamplerFilter::LINEAR;
-	sampler_create_info.magnification_filter			= vk2d::SamplerFilter::LINEAR;
-	sampler_create_info.mipmap_mode						= vk2d::SamplerMipmapMode::LINEAR;
-	sampler_create_info.address_mode_u					= vk2d::SamplerAddressMode::REPEAT;
-	sampler_create_info.address_mode_v					= vk2d::SamplerAddressMode::REPEAT;
+	SamplerCreateInfo sampler_create_info {};
+	sampler_create_info.minification_filter				= SamplerFilter::LINEAR;
+	sampler_create_info.magnification_filter			= SamplerFilter::LINEAR;
+	sampler_create_info.mipmap_mode						= SamplerMipmapMode::LINEAR;
+	sampler_create_info.address_mode_u					= SamplerAddressMode::REPEAT;
+	sampler_create_info.address_mode_v					= SamplerAddressMode::REPEAT;
 	sampler_create_info.border_color					= { 0.0f, 0.0f, 0.0f, 1.0f };
 	sampler_create_info.anisotropy_enable				= true;
 	sampler_create_info.mipmap_max_anisotropy			= 16.0f;
 	sampler_create_info.mipmap_level_of_detail_bias		= 0.0f;
 	sampler_create_info.mipmap_min_level_of_detail		= 0.0f;
 	sampler_create_info.mipmap_max_level_of_detail		= 128.0f;
-	default_sampler			= std::unique_ptr<vk2d::Sampler>( new vk2d::Sampler( this, sampler_create_info ) );
+	default_sampler			= std::unique_ptr<Sampler>( new Sampler( this, sampler_create_info ) );
 	if( default_sampler && default_sampler->IsGood() ) {
 		return true;
 	} else {
 		default_sampler		= nullptr;
-		Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot create default sampler!" );
+		Report( ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot create default sampler!" );
 		return false;
 	}
 }
 
-bool vk2d::_internal::InstanceImpl::CreateBlurSampler()
+bool vk2d::vk2d_internal::InstanceImpl::CreateBlurSampler()
 {
 	{
-		vk2d::SamplerCreateInfo sampler_create_info {};
-		sampler_create_info.minification_filter				= vk2d::SamplerFilter::LINEAR;
-		sampler_create_info.magnification_filter			= vk2d::SamplerFilter::LINEAR;
-		sampler_create_info.mipmap_mode						= vk2d::SamplerMipmapMode::NEAREST;
-		sampler_create_info.address_mode_u					= vk2d::SamplerAddressMode::CLAMP_TO_EDGE;
-		sampler_create_info.address_mode_v					= vk2d::SamplerAddressMode::CLAMP_TO_EDGE;
+		SamplerCreateInfo sampler_create_info {};
+		sampler_create_info.minification_filter				= SamplerFilter::LINEAR;
+		sampler_create_info.magnification_filter			= SamplerFilter::LINEAR;
+		sampler_create_info.mipmap_mode						= SamplerMipmapMode::NEAREST;
+		sampler_create_info.address_mode_u					= SamplerAddressMode::CLAMP_TO_EDGE;
+		sampler_create_info.address_mode_v					= SamplerAddressMode::CLAMP_TO_EDGE;
 		sampler_create_info.border_color					= { 0.0f, 0.0f, 0.0f, 1.0f };
 		sampler_create_info.anisotropy_enable				= false;
 		sampler_create_info.mipmap_max_anisotropy			= 1.0f;
 		sampler_create_info.mipmap_level_of_detail_bias		= 0.0f;
 		sampler_create_info.mipmap_min_level_of_detail		= 0.0f;
 		sampler_create_info.mipmap_max_level_of_detail		= 128.0f;
-		blur_sampler			= std::unique_ptr<vk2d::Sampler>( new vk2d::Sampler( this, sampler_create_info ) );
+		blur_sampler			= std::unique_ptr<Sampler>( new Sampler( this, sampler_create_info ) );
 		if( !blur_sampler || !blur_sampler->IsGood() ) {
 			blur_sampler		= nullptr;
-			Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot create blur sampler!" );
+			Report( ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot create blur sampler!" );
 			return false;
 		}
 	}
@@ -1929,7 +1929,7 @@ bool vk2d::_internal::InstanceImpl::CreateBlurSampler()
 		blur_sampler_descriptor_set = AllocateDescriptorSet( *graphics_simple_sampler_descriptor_set_layout );
 		if( blur_sampler_descriptor_set != VK_SUCCESS ) {
 			FreeDescriptorSet( blur_sampler_descriptor_set );
-			Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot create blur sampler descriptor set!" );
+			Report( ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot create blur sampler descriptor set!" );
 			return false;
 		}
 	}
@@ -1968,7 +1968,7 @@ bool vk2d::_internal::InstanceImpl::CreateBlurSampler()
 
 
 
-bool vk2d::_internal::InstanceImpl::CreatePipelineCache()
+bool vk2d::vk2d_internal::InstanceImpl::CreatePipelineCache()
 {
 	VkPipelineCacheCreateInfo pipeline_cache_create_info {};
 	pipeline_cache_create_info.sType				= VK_STRUCTURE_TYPE_PIPELINE_CACHE_CREATE_INFO;
@@ -1999,7 +1999,7 @@ bool vk2d::_internal::InstanceImpl::CreatePipelineCache()
 
 
 
-bool vk2d::_internal::InstanceImpl::CreateShaderModules()
+bool vk2d::vk2d_internal::InstanceImpl::CreateShaderModules()
 {
 	auto CreateModule = [this](
 		uint32_t	*	code,
@@ -2128,20 +2128,20 @@ bool vk2d::_internal::InstanceImpl::CreateShaderModules()
 		vk_graphics_shader_modules.push_back( render_target_texture_fragment_gaussian_blur_vertical );
 
 		// Collect a listing of shader units, which is a collection of shader modules needed to create a pipeline.
-		graphics_shader_programs[ vk2d::_internal::GraphicsShaderProgramID::SINGLE_TEXTURED ]								= vk2d::_internal::GraphicsShaderProgram( single_textured_vertex, single_textured_fragment );
-		graphics_shader_programs[ vk2d::_internal::GraphicsShaderProgramID::SINGLE_TEXTURED_UV_BORDER_COLOR ]				= vk2d::_internal::GraphicsShaderProgram( single_textured_vertex, single_textured_fragment_uv_border_color );
+		graphics_shader_programs[ GraphicsShaderProgramID::SINGLE_TEXTURED ]								= GraphicsShaderProgram( single_textured_vertex, single_textured_fragment );
+		graphics_shader_programs[ GraphicsShaderProgramID::SINGLE_TEXTURED_UV_BORDER_COLOR ]				= GraphicsShaderProgram( single_textured_vertex, single_textured_fragment_uv_border_color );
 
-		graphics_shader_programs[ vk2d::_internal::GraphicsShaderProgramID::MULTITEXTURED_TRIANGLE ]						= vk2d::_internal::GraphicsShaderProgram( multitextured_vertex, multitextured_fragment_triangle );
-		graphics_shader_programs[ vk2d::_internal::GraphicsShaderProgramID::MULTITEXTURED_LINE ]							= vk2d::_internal::GraphicsShaderProgram( multitextured_vertex, multitextured_fragment_line );
-		graphics_shader_programs[ vk2d::_internal::GraphicsShaderProgramID::MULTITEXTURED_POINT ]							= vk2d::_internal::GraphicsShaderProgram( multitextured_vertex, multitextured_fragment_point );
-		graphics_shader_programs[ vk2d::_internal::GraphicsShaderProgramID::MULTITEXTURED_TRIANGLE_UV_BORDER_COLOR ]		= vk2d::_internal::GraphicsShaderProgram( multitextured_vertex, multitextured_fragment_triangle_uv_border_color );
-		graphics_shader_programs[ vk2d::_internal::GraphicsShaderProgramID::MULTITEXTURED_LINE_UV_BORDER_COLOR ]			= vk2d::_internal::GraphicsShaderProgram( multitextured_vertex, multitextured_fragment_line_uv_border_color );
-		graphics_shader_programs[ vk2d::_internal::GraphicsShaderProgramID::MULTITEXTURED_POINT_UV_BORDER_COLOR ]			= vk2d::_internal::GraphicsShaderProgram( multitextured_vertex, multitextured_fragment_point_uv_border_color );
+		graphics_shader_programs[ GraphicsShaderProgramID::MULTITEXTURED_TRIANGLE ]						= GraphicsShaderProgram( multitextured_vertex, multitextured_fragment_triangle );
+		graphics_shader_programs[ GraphicsShaderProgramID::MULTITEXTURED_LINE ]							= GraphicsShaderProgram( multitextured_vertex, multitextured_fragment_line );
+		graphics_shader_programs[ GraphicsShaderProgramID::MULTITEXTURED_POINT ]							= GraphicsShaderProgram( multitextured_vertex, multitextured_fragment_point );
+		graphics_shader_programs[ GraphicsShaderProgramID::MULTITEXTURED_TRIANGLE_UV_BORDER_COLOR ]		= GraphicsShaderProgram( multitextured_vertex, multitextured_fragment_triangle_uv_border_color );
+		graphics_shader_programs[ GraphicsShaderProgramID::MULTITEXTURED_LINE_UV_BORDER_COLOR ]			= GraphicsShaderProgram( multitextured_vertex, multitextured_fragment_line_uv_border_color );
+		graphics_shader_programs[ GraphicsShaderProgramID::MULTITEXTURED_POINT_UV_BORDER_COLOR ]			= GraphicsShaderProgram( multitextured_vertex, multitextured_fragment_point_uv_border_color );
 
-		graphics_shader_programs[ vk2d::_internal::GraphicsShaderProgramID::RENDER_TARGET_BOX_BLUR_HORISONTAL ]				= vk2d::_internal::GraphicsShaderProgram( render_target_texture_blur_vertex, render_target_texture_fragment_box_blur_horisontal );
-		graphics_shader_programs[ vk2d::_internal::GraphicsShaderProgramID::RENDER_TARGET_BOX_BLUR_VERTICAL ]				= vk2d::_internal::GraphicsShaderProgram( render_target_texture_blur_vertex, render_target_texture_fragment_box_blur_vertical );
-		graphics_shader_programs[ vk2d::_internal::GraphicsShaderProgramID::RENDER_TARGET_GAUSSIAN_BLUR_HORISONTAL ]		= vk2d::_internal::GraphicsShaderProgram( render_target_texture_blur_vertex, render_target_texture_fragment_gaussian_blur_horisontal );
-		graphics_shader_programs[ vk2d::_internal::GraphicsShaderProgramID::RENDER_TARGET_GAUSSIAN_BLUR_VERTICAL ]			= vk2d::_internal::GraphicsShaderProgram( render_target_texture_blur_vertex, render_target_texture_fragment_gaussian_blur_vertical );
+		graphics_shader_programs[ GraphicsShaderProgramID::RENDER_TARGET_BOX_BLUR_HORISONTAL ]				= GraphicsShaderProgram( render_target_texture_blur_vertex, render_target_texture_fragment_box_blur_horisontal );
+		graphics_shader_programs[ GraphicsShaderProgramID::RENDER_TARGET_BOX_BLUR_VERTICAL ]				= GraphicsShaderProgram( render_target_texture_blur_vertex, render_target_texture_fragment_box_blur_vertical );
+		graphics_shader_programs[ GraphicsShaderProgramID::RENDER_TARGET_GAUSSIAN_BLUR_HORISONTAL ]		= GraphicsShaderProgram( render_target_texture_blur_vertex, render_target_texture_fragment_gaussian_blur_horisontal );
+		graphics_shader_programs[ GraphicsShaderProgramID::RENDER_TARGET_GAUSSIAN_BLUR_VERTICAL ]			= GraphicsShaderProgram( render_target_texture_blur_vertex, render_target_texture_fragment_gaussian_blur_vertical );
 	}
 
 
@@ -2167,7 +2167,7 @@ bool vk2d::_internal::InstanceImpl::CreateShaderModules()
 
 
 
-bool vk2d::_internal::InstanceImpl::CreateDescriptorSetLayouts()
+bool vk2d::vk2d_internal::InstanceImpl::CreateDescriptorSetLayouts()
 {
 	// TODO: Creating descriptor sets could be streamlined some, consider creating descriptor set layouts on the fly as needed for each shader.
 	// Checking, changing and making sure descriptor set layouts match the shaders is a bit tedious and prone to errors. So we could use a system
@@ -2189,7 +2189,7 @@ bool vk2d::_internal::InstanceImpl::CreateDescriptorSetLayouts()
 	auto CreateLocalDescriptorSetLayout			= [this](
 		const std::vector<Binding>			&	bindings,
 		VkDescriptorSetLayoutCreateFlags		flags			= 0
-		) -> std::unique_ptr<vk2d::_internal::DescriptorSetLayout>
+		) -> std::unique_ptr<DescriptorSetLayout>
 	{
 		std::vector<VkDescriptorSetLayoutBinding> set_bindings( std::size( bindings ) );
 		for( size_t i = 0; i < std::size( bindings ); ++i ) {
@@ -2211,13 +2211,13 @@ bool vk2d::_internal::InstanceImpl::CreateDescriptorSetLayouts()
 		descriptor_set_layout_create_info.bindingCount	= uint32_t( std::size( set_bindings ) );
 		descriptor_set_layout_create_info.pBindings		= set_bindings.data();
 
-		auto descriptor_set_layout = vk2d::_internal::CreateDescriptorSetLayout(
+		auto descriptor_set_layout = CreateDescriptorSetLayout(
 			this,
 			vk_device,
 			&descriptor_set_layout_create_info
 		);
 		if( !descriptor_set_layout ) {
-			Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot create sampler descriptor set layout!" );
+			Report( ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot create sampler descriptor set layout!" );
 			return {};
 		}
 
@@ -2314,7 +2314,7 @@ bool vk2d::_internal::InstanceImpl::CreateDescriptorSetLayouts()
 
 
 
-bool vk2d::_internal::InstanceImpl::CreatePipelineLayouts()
+bool vk2d::vk2d_internal::InstanceImpl::CreatePipelineLayouts()
 {
 	// Graphics primary render pipeline layout.
 	{
@@ -2335,7 +2335,7 @@ bool vk2d::_internal::InstanceImpl::CreatePipelineLayouts()
 		std::array<VkPushConstantRange, 1> push_constant_ranges {};
 		push_constant_ranges[ 0 ].stageFlags	= VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
 		push_constant_ranges[ 0 ].offset		= 0;
-		push_constant_ranges[ 0 ].size			= uint32_t( sizeof( vk2d::_internal::GraphicsPrimaryRenderPushConstants ) );
+		push_constant_ranges[ 0 ].size			= uint32_t( sizeof( GraphicsPrimaryRenderPushConstants ) );
 
 		VkPipelineLayoutCreateInfo pipeline_layout_create_info {};
 		pipeline_layout_create_info.sType					= VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
@@ -2369,7 +2369,7 @@ bool vk2d::_internal::InstanceImpl::CreatePipelineLayouts()
 		std::array<VkPushConstantRange, 1> push_constant_ranges {};
 		push_constant_ranges[ 0 ].stageFlags	= VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
 		push_constant_ranges[ 0 ].offset		= 0;
-		push_constant_ranges[ 0 ].size			= uint32_t( sizeof( vk2d::_internal::GraphicsBlurPushConstants ) );
+		push_constant_ranges[ 0 ].size			= uint32_t( sizeof( GraphicsBlurPushConstants ) );
 
 		VkPipelineLayoutCreateInfo pipeline_layout_create_info {};
 		pipeline_layout_create_info.sType					= VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
@@ -2395,20 +2395,20 @@ bool vk2d::_internal::InstanceImpl::CreatePipelineLayouts()
 	return true;
 }
 
-bool vk2d::_internal::InstanceImpl::CreateDeviceMemoryPool()
+bool vk2d::vk2d_internal::InstanceImpl::CreateDeviceMemoryPool()
 {
 	device_memory_pool		= MakeDeviceMemoryPool(
 		vk_physical_device,
 		vk_device
 	);
 	if( !device_memory_pool ) {
-		Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot create memory pool!" );
+		Report( ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot create memory pool!" );
 		return false;
 	}
 	return true;
 }
 
-bool vk2d::_internal::InstanceImpl::CreateThreadPool()
+bool vk2d::vk2d_internal::InstanceImpl::CreateThreadPool()
 {
 	uint32_t thread_count					= uint32_t( std::thread::hardware_concurrency() );
 	if( thread_count == 0 ) thread_count	= 8;
@@ -2421,12 +2421,12 @@ bool vk2d::_internal::InstanceImpl::CreateThreadPool()
 
 	uint32_t general_thread_count = 1;
 
-	std::vector<std::unique_ptr<vk2d::_internal::ThreadPrivateResource>> thread_resources;
+	std::vector<std::unique_ptr<ThreadPrivateResource>> thread_resources;
 	for( uint32_t i = 0; i < loader_thread_count; ++i ) {
-		thread_resources.push_back( std::make_unique<vk2d::_internal::ThreadLoaderResource>( this ) );
+		thread_resources.push_back( std::make_unique<ThreadLoaderResource>( this ) );
 	}
 	for( uint32_t i = 0; i < general_thread_count; ++i ) {
-		thread_resources.push_back( std::make_unique<vk2d::_internal::ThreadGeneralResource>() );
+		thread_resources.push_back( std::make_unique<ThreadGeneralResource>() );
 	}
 
 	loader_threads.resize( loader_thread_count );
@@ -2438,43 +2438,43 @@ bool vk2d::_internal::InstanceImpl::CreateThreadPool()
 		general_threads[ i ]	= loader_thread_count + i;
 	}
 
-	thread_pool				= std::make_unique<vk2d::_internal::ThreadPool>( std::move( thread_resources ) );
+	thread_pool				= std::make_unique<ThreadPool>( std::move( thread_resources ) );
 	if( thread_pool && thread_pool->IsGood() ) {
 		return true;
 	} else {
-		Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot create thread pool!" );
+		Report( ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot create thread pool!" );
 		return false;
 	}
 }
 
-bool vk2d::_internal::InstanceImpl::CreateResourceManager()
+bool vk2d::vk2d_internal::InstanceImpl::CreateResourceManager()
 {
-	resource_manager		= std::unique_ptr<vk2d::ResourceManager>( new vk2d::ResourceManager(
+	resource_manager		= std::unique_ptr<ResourceManager>( new ResourceManager(
 		this
 	) );
 	if( resource_manager && resource_manager->IsGood() ) {
 		return true;
 	} else {
-		Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot create resource manager!" );
+		Report( ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot create resource manager!" );
 		return false;
 	}
 }
 
-bool vk2d::_internal::InstanceImpl::CreateDefaultTexture()
+bool vk2d::vk2d_internal::InstanceImpl::CreateDefaultTexture()
 {
 	default_texture		= resource_manager->CreateTextureResource(
 		glm::uvec2( 1, 1 ),
-		{ vk2d::Color8( 255, 255, 255, 255 ) }
+		{ Color8( 255, 255, 255, 255 ) }
 	);
 	default_texture->WaitUntilLoaded();
 	return true;
 }
 
-bool vk2d::_internal::InstanceImpl::PopulateNonStaticallyExposedVulkanFunctions()
+bool vk2d::vk2d_internal::InstanceImpl::PopulateNonStaticallyExposedVulkanFunctions()
 {
 	vk_fun_vkCmdPushDescriptorSetKHR		= (PFN_vkCmdPushDescriptorSetKHR)vkGetDeviceProcAddr( vk_device, "vkCmdPushDescriptorSetKHR" );
 	if( !vk_fun_vkCmdPushDescriptorSetKHR ) {
-		Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot create Instance, cannot get vulkan function: vkCmdPushDescriptorSetKHR()!" );
+		Report( ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot create Instance, cannot get vulkan function: vkCmdPushDescriptorSetKHR()!" );
 		return false;
 	}
 
@@ -2483,7 +2483,7 @@ bool vk2d::_internal::InstanceImpl::PopulateNonStaticallyExposedVulkanFunctions(
 
 
 
-void vk2d::_internal::InstanceImpl::DestroyInstance()
+void vk2d::vk2d_internal::InstanceImpl::DestroyInstance()
 {
 	if( vk_debug_utils_messenger ) {
 		auto destroyDebugUtilsMessenger = (PFN_vkDestroyDebugUtilsMessengerEXT)vkGetInstanceProcAddr( vk_instance, "vkDestroyDebugUtilsMessengerEXT" );
@@ -2506,7 +2506,7 @@ void vk2d::_internal::InstanceImpl::DestroyInstance()
 	vk_instance				= {};
 }
 
-void vk2d::_internal::InstanceImpl::DestroyDevice()
+void vk2d::vk2d_internal::InstanceImpl::DestroyDevice()
 {
 	vkDestroyDevice(
 		vk_device,
@@ -2516,23 +2516,23 @@ void vk2d::_internal::InstanceImpl::DestroyDevice()
 	vk_device					= {};
 }
 
-void vk2d::_internal::InstanceImpl::DestroyDescriptorPool()
+void vk2d::vk2d_internal::InstanceImpl::DestroyDescriptorPool()
 {
 	descriptor_pool			= nullptr;
 }
 
-void vk2d::_internal::InstanceImpl::DestroyDefaultSampler()
+void vk2d::vk2d_internal::InstanceImpl::DestroyDefaultSampler()
 {
 	default_sampler			= {};
 }
 
-void vk2d::_internal::InstanceImpl::DestroyBlurSampler()
+void vk2d::vk2d_internal::InstanceImpl::DestroyBlurSampler()
 {
 	FreeDescriptorSet( blur_sampler_descriptor_set );
 	blur_sampler			= {};
 }
 
-void vk2d::_internal::InstanceImpl::DestroyPipelineCaches()
+void vk2d::vk2d_internal::InstanceImpl::DestroyPipelineCaches()
 {
 	vkDestroyPipelineCache(
 		vk_device,
@@ -2549,7 +2549,7 @@ void vk2d::_internal::InstanceImpl::DestroyPipelineCaches()
 	vk_compute_pipeline_cache			= {};
 }
 
-void vk2d::_internal::InstanceImpl::DestroyPipelines()
+void vk2d::vk2d_internal::InstanceImpl::DestroyPipelines()
 {
 	for( auto p : vk_graphics_pipelines ) {
 		vkDestroyPipeline(
@@ -2570,7 +2570,7 @@ void vk2d::_internal::InstanceImpl::DestroyPipelines()
 	vk_compute_pipelines.clear();
 }
 
-void vk2d::_internal::InstanceImpl::DestroyShaderModules()
+void vk2d::vk2d_internal::InstanceImpl::DestroyShaderModules()
 {
 	for( auto s : vk_graphics_shader_modules ) {
 		vkDestroyShaderModule(
@@ -2593,7 +2593,7 @@ void vk2d::_internal::InstanceImpl::DestroyShaderModules()
 	compute_shader_programs.clear();
 }
 
-void vk2d::_internal::InstanceImpl::DestroyDescriptorSetLayouts()
+void vk2d::vk2d_internal::InstanceImpl::DestroyDescriptorSetLayouts()
 {
 	graphics_simple_sampler_descriptor_set_layout				= nullptr;
 	graphics_sampler_descriptor_set_layout						= nullptr;
@@ -2603,7 +2603,7 @@ void vk2d::_internal::InstanceImpl::DestroyDescriptorSetLayouts()
 	graphics_storage_buffer_descriptor_set_layout				= nullptr;
 }
 
-void vk2d::_internal::InstanceImpl::DestroyPipelineLayouts()
+void vk2d::vk2d_internal::InstanceImpl::DestroyPipelineLayouts()
 {
 	vkDestroyPipelineLayout(
 		vk_device,
@@ -2620,22 +2620,22 @@ void vk2d::_internal::InstanceImpl::DestroyPipelineLayouts()
 	vk_graphics_blur_pipeline_layout = {};
 }
 
-void vk2d::_internal::InstanceImpl::DestroyDeviceMemoryPool()
+void vk2d::vk2d_internal::InstanceImpl::DestroyDeviceMemoryPool()
 {
 	device_memory_pool		= {};
 }
 
-void vk2d::_internal::InstanceImpl::DestroyThreadPool()
+void vk2d::vk2d_internal::InstanceImpl::DestroyThreadPool()
 {
 	thread_pool				= {};
 }
 
-void vk2d::_internal::InstanceImpl::DestroyResourceManager()
+void vk2d::vk2d_internal::InstanceImpl::DestroyResourceManager()
 {
 	resource_manager		= {};
 }
 
-void vk2d::_internal::InstanceImpl::DestroyDefaultTexture()
+void vk2d::vk2d_internal::InstanceImpl::DestroyDefaultTexture()
 {
 	resource_manager->DestroyResource( default_texture );
 	default_texture			= {};
@@ -2649,7 +2649,7 @@ void vk2d::_internal::InstanceImpl::DestroyDefaultTexture()
 
 
 
-std::vector<VkPhysicalDevice> vk2d::_internal::InstanceImpl::EnumeratePhysicalDevices()
+std::vector<VkPhysicalDevice> vk2d::vk2d_internal::InstanceImpl::EnumeratePhysicalDevices()
 {
 	auto result = VK_SUCCESS;
 
@@ -2686,7 +2686,7 @@ std::vector<VkPhysicalDevice> vk2d::_internal::InstanceImpl::EnumeratePhysicalDe
 
 
 
-VkPhysicalDevice vk2d::_internal::InstanceImpl::PickBestVulkanPhysicalDevice()
+VkPhysicalDevice vk2d::vk2d_internal::InstanceImpl::PickBestVulkanPhysicalDevice()
 {
 	auto physicalDevices = EnumeratePhysicalDevices();
 
@@ -2735,49 +2735,49 @@ VkPhysicalDevice vk2d::_internal::InstanceImpl::PickBestVulkanPhysicalDevice()
 	}
 
 	if( !best_physical_device ) {
-		Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Cannot find physical device capable of presenting to any surface!" );
+		Report( ReportSeverity::CRITICAL_ERROR, "Cannot find physical device capable of presenting to any surface!" );
 	}
 
 	return best_physical_device;
 }
 
 namespace vk2d {
-namespace _internal {
+namespace vk2d_internal {
 
 
 
-void VK2D_APIENTRY VK2D_default_ReportFunction(
-	vk2d::ReportSeverity			severity,
+void VK2D_default_ReportFunction(
+	ReportSeverity			severity,
 	std::string_view				message
 )
 {
 	VK2D_ASSERT_SINGLE_THREAD_ACCESS_SCOPE();
 
-	auto text_color			= vk2d::ConsoleColor::DEFAULT;
-	auto background_color	= vk2d::ConsoleColor::DEFAULT;
+	auto text_color			= ConsoleColor::DEFAULT;
+	auto background_color	= ConsoleColor::DEFAULT;
 
 	switch( severity ) {
-		case vk2d::ReportSeverity::NONE:
+		case ReportSeverity::NONE:
 			break;
-		case vk2d::ReportSeverity::VERBOSE:
-			text_color = vk2d::ConsoleColor::DARK_GRAY;
+		case ReportSeverity::VERBOSE:
+			text_color = ConsoleColor::DARK_GRAY;
 			break;
-		case vk2d::ReportSeverity::INFO:
-			text_color = vk2d::ConsoleColor::DARK_GREEN;
+		case ReportSeverity::INFO:
+			text_color = ConsoleColor::DARK_GREEN;
 			break;
-		case vk2d::ReportSeverity::PERFORMANCE_WARNING:
-			text_color = vk2d::ConsoleColor::BLUE;
+		case ReportSeverity::PERFORMANCE_WARNING:
+			text_color = ConsoleColor::BLUE;
 			break;
-		case vk2d::ReportSeverity::WARNING:
-			text_color = vk2d::ConsoleColor::DARK_YELLOW;
+		case ReportSeverity::WARNING:
+			text_color = ConsoleColor::DARK_YELLOW;
 			break;
-		case vk2d::ReportSeverity::NON_CRITICAL_ERROR:
-			text_color = vk2d::ConsoleColor::RED;
+		case ReportSeverity::NON_CRITICAL_ERROR:
+			text_color = ConsoleColor::RED;
 			break;
-		case vk2d::ReportSeverity::CRITICAL_ERROR:
-		case vk2d::ReportSeverity::DEVICE_LOST:
-			text_color			= vk2d::ConsoleColor::WHITE;
-			background_color	= vk2d::ConsoleColor::DARK_RED;
+		case ReportSeverity::CRITICAL_ERROR:
+		case ReportSeverity::DEVICE_LOST:
+			text_color			= ConsoleColor::WHITE;
+			background_color	= ConsoleColor::DARK_RED;
 			break;
 		default:
 			break;
@@ -2786,28 +2786,28 @@ void VK2D_APIENTRY VK2D_default_ReportFunction(
 	std::string message_editable;
 	message_editable.append( message );
 	message_editable += "\n";
-	vk2d::ConsolePrint( message_editable, text_color, background_color );
+	ConsolePrint( message_editable, text_color, background_color );
 
 	#if VK2D_BUILD_OPTION_VULKAN_COMMAND_BUFFER_CHECKMARKS && VK2D_BUILD_OPTION_VULKAN_VALIDATION && VK2D_DEBUG_ENABLE
-	if( severity == vk2d::ReportSeverity::DEVICE_LOST ) {
+	if( severity == ReportSeverity::DEVICE_LOST ) {
 
-		auto checkpoints = vk2d::_internal::GetCommandBufferCheckpoints();
+		auto checkpoints = GetCommandBufferCheckpoints();
 		if( checkpoints.size() ) {
 			{
 				std::stringstream ss;
 				ss << "\n\nLatest command buffer checkpoint marker stages: " << checkpoints.size() << "\n";
-				vk2d::ConsolePrint( ss.str() );
+				ConsolePrint( ss.str() );
 			}
 			for( auto & c : checkpoints ) {
-				auto data = reinterpret_cast<vk2d::_internal::CommandBufferCheckpointData*>( c.pCheckpointMarker );
+				auto data = reinterpret_cast<CommandBufferCheckpointData*>( c.pCheckpointMarker );
 				std::stringstream ss;
-				ss << vk2d::_internal::CommandBufferCheckpointTypeToString( data->type )
+				ss << CommandBufferCheckpointTypeToString( data->type )
 					<< " : " << data->name
-					<< vk2d::_internal::VkPipelineStageFlagBitsToString( c.stage )
+					<< VkPipelineStageFlagBitsToString( c.stage )
 					<< "\n";
-				vk2d::ConsolePrint( ss.str() );
+				ConsolePrint( ss.str() );
 			}
-			vk2d::ConsolePrint( "\nCommand buffer checkmark trail:\n" );
+			ConsolePrint( "\nCommand buffer checkmark trail:\n" );
 			auto c = reinterpret_cast<CommandBufferCheckpointData*>( checkpoints[ 0 ].pCheckpointMarker )->previous;
 			while( c ) {
 				auto current = c;
@@ -2815,9 +2815,9 @@ void VK2D_APIENTRY VK2D_default_ReportFunction(
 				c = previous;
 
 				std::stringstream ss;
-				ss << vk2d::_internal::CommandBufferCheckpointTypeToString( current->type )
+				ss << CommandBufferCheckpointTypeToString( current->type )
 					<< " : " << current->name << "\n";
-				vk2d::ConsolePrint( ss.str() );
+				ConsolePrint( ss.str() );
 
 				delete current;
 			}
@@ -2826,11 +2826,11 @@ void VK2D_APIENTRY VK2D_default_ReportFunction(
 	}
 	#endif
 
-	if( severity >= vk2d::ReportSeverity::NON_CRITICAL_ERROR ) {
+	if( severity >= ReportSeverity::NON_CRITICAL_ERROR ) {
 		#ifdef _WIN32
 		MessageBox( NULL, message_editable.c_str(), "Critical error!", MB_OK | MB_ICONERROR );
 		#endif
-		if( severity >= vk2d::ReportSeverity::CRITICAL_ERROR ) {
+		if( severity >= ReportSeverity::CRITICAL_ERROR ) {
 			std::exit( -1 );
 		}
 	}
@@ -2838,7 +2838,7 @@ void VK2D_APIENTRY VK2D_default_ReportFunction(
 
 
 
-void UpdateMonitorLists(
+void vk2d::vk2d_internal::UpdateMonitorLists(
 	bool		globals_locked
 )
 {
@@ -2852,7 +2852,7 @@ void UpdateMonitorLists(
 
 	auto BuildMonitorData = [](
 		GLFWmonitor		*	monitor
-		) -> std::unique_ptr<vk2d::_internal::MonitorImpl>
+		) -> std::unique_ptr<MonitorImpl>
 	{
 		VkOffset2D position {};
 		{
@@ -2869,7 +2869,7 @@ void UpdateMonitorLists(
 		}
 
 		std::string					name					= glfwGetMonitorName( monitor );
-		vk2d::MonitorVideoMode		current_video_mode		= {};
+		MonitorVideoMode		current_video_mode		= {};
 		{
 			auto glfw_current_video_mode		= glfwGetVideoMode( monitor );
 			current_video_mode.resolution		= { uint32_t( glfw_current_video_mode->width ), uint32_t( glfw_current_video_mode->height ) };
@@ -2879,7 +2879,7 @@ void UpdateMonitorLists(
 			current_video_mode.refresh_rate		= uint32_t( glfw_current_video_mode->refreshRate );
 		}
 
-		std::vector<vk2d::MonitorVideoMode> video_modes		= {};
+		std::vector<MonitorVideoMode> video_modes		= {};
 		{
 			int vidModeCount = 0;
 			auto glfw_video_modes = glfwGetVideoModes( monitor, &vidModeCount );
@@ -2893,7 +2893,7 @@ void UpdateMonitorLists(
 			};
 		}
 
-		return std::make_unique<vk2d::_internal::MonitorImpl>(
+		return std::make_unique<MonitorImpl>(
 			monitor,
 			position,
 			physical_size,
@@ -2904,21 +2904,21 @@ void UpdateMonitorLists(
 	};
 
 	// All monitors
-	vk2d::_internal::all_monitors.clear();
+	all_monitors.clear();
 	int monitorCount = 0;
 	auto monitors = glfwGetMonitors( &monitorCount );
-	vk2d::_internal::all_monitors.reserve( monitorCount );
+	all_monitors.reserve( monitorCount );
 	for( int i = 0; i < monitorCount; ++i ) {
 
 		GLFWmonitor * monitor		= monitors[ i ];
-		vk2d::_internal::all_monitors.push_back( std::move( vk2d::Monitor( BuildMonitorData( monitor ) ) ) );
+		all_monitors.push_back( std::move( Monitor( BuildMonitorData( monitor ) ) ) );
 	}
 
 	// primary monitor
-	vk2d::_internal::primary_monitor = std::move( vk2d::Monitor( BuildMonitorData( glfwGetPrimaryMonitor() ) ) );
+	primary_monitor = std::move( Monitor( BuildMonitorData( glfwGetPrimaryMonitor() ) ) );
 
 	// callback
-	for( auto l : vk2d::_internal::instance_listeners ) {
+	for( auto l : instance_listeners ) {
 		if( l->monitor_update_callback ) {
 			l->monitor_update_callback();
 		}
@@ -2930,7 +2930,7 @@ void glfwMonitorCallback(
 	int					event
 )
 {
-	vk2d::_internal::UpdateMonitorLists();
+	UpdateMonitorLists();
 }
 
 
@@ -2942,21 +2942,21 @@ void glfwJoystickEventCallback( int joystick, int event )
 	if( event == GLFW_CONNECTED ) {
 		std::string joystic_name = glfwGetJoystickName( joystick );
 
-		for( auto l : vk2d::_internal::instance_listeners ) {
+		for( auto l : instance_listeners ) {
 			if( l->GetGamepadEventCallback() ) {
-				l->GetGamepadEventCallback()( vk2d::Gamepad( joystick ), vk2d::GamepadConnectionEvent::CONNECTED, joystic_name );
+				l->GetGamepadEventCallback()( Gamepad( joystick ), GamepadConnectionEvent::CONNECTED, joystic_name );
 			}
 		}
 	} else {
-		for( auto l : vk2d::_internal::instance_listeners ) {
+		for( auto l : instance_listeners ) {
 			if( l->GetGamepadEventCallback() ) {
-				l->GetGamepadEventCallback()( vk2d::Gamepad( joystick ), vk2d::GamepadConnectionEvent::DISCONNECTED, std::string( "" ) );
+				l->GetGamepadEventCallback()( Gamepad( joystick ), GamepadConnectionEvent::DISCONNECTED, std::string( "" ) );
 			}
 		}
 	}
 }
 
-} // _internal
+} // vk2d_internal
 
 } // vk2d
 

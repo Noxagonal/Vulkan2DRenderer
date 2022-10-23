@@ -3,7 +3,7 @@
 #include "core/SourceCommon.h"
 
 namespace vk2d {
-namespace _internal {
+namespace vk2d_internal {
 
 
 
@@ -11,12 +11,14 @@ namespace _internal {
 class Fence
 {
 public:
-	Fence()											= default;
-	Fence( const vk2d::_internal::Fence & other )	= delete;
-	Fence( vk2d::_internal::Fence && other )		= default;
+	Fence()																= default;
+	Fence(
+		const Fence									&	other )			= delete;
+	Fence(
+		Fence										&&	other )			= default;
 
 	/// @brief		Unblocks waiting on this fence, any thread calling
-	///				vk2d::_interna::Wait() is allowed to continue after calling this.
+	///				_interna::Wait() is allowed to continue after calling this.
 	void											Set();
 
 	/// @brief		Tests without blocking if this fence is set.
@@ -28,7 +30,7 @@ public:
 	///				Maximum time to wait before returning false.
 	/// @return		true if successfully waited, false if timeout.
 	bool											Wait(
-		std::chrono::nanoseconds					timeout		= std::chrono::nanoseconds::max() );
+		std::chrono::nanoseconds					timeout				= std::chrono::nanoseconds::max() );
 
 	/// @brief		Blocks calling thread until this fence is set by another thread.
 	/// @param[in]	timeout
@@ -122,5 +124,5 @@ private:
 
 
 
-} // _internal
+} // vk2d_internal
 } // vk2d

@@ -8,19 +8,19 @@
 
 
 
-void vk2d::_internal::Fence::Set()
+void vk2d::vk2d_internal::Fence::Set()
 {
 	std::lock_guard<std::mutex> lock_guard( condition_variable_mutex );
 	is_set = true;
 	condition_variable.notify_all();
 }
 
-bool vk2d::_internal::Fence::IsSet()
+bool vk2d::vk2d_internal::Fence::IsSet()
 {
 	return is_set.load();
 }
 
-bool vk2d::_internal::Fence::Wait(
+bool vk2d::vk2d_internal::Fence::Wait(
 	std::chrono::nanoseconds timeout
 )
 {
@@ -30,7 +30,7 @@ bool vk2d::_internal::Fence::Wait(
 	return Wait( std::chrono::steady_clock::now() + timeout );
 }
 
-bool vk2d::_internal::Fence::Wait(
+bool vk2d::vk2d_internal::Fence::Wait(
 	std::chrono::steady_clock::time_point timeout
 )
 {

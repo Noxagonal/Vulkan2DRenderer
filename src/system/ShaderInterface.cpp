@@ -9,8 +9,8 @@
 
 
 
-bool vk2d::_internal::GraphicsShaderProgram::operator<(
-	const vk2d::_internal::GraphicsShaderProgram		&	other
+bool vk2d::vk2d_internal::GraphicsShaderProgram::operator<(
+	const GraphicsShaderProgram		&	other
 ) const
 {
 	return
@@ -24,8 +24,8 @@ bool vk2d::_internal::GraphicsShaderProgram::operator<(
 		);
 }
 
-bool vk2d::_internal::GraphicsShaderProgram::operator>(
-	const vk2d::_internal::GraphicsShaderProgram		&	other
+bool vk2d::vk2d_internal::GraphicsShaderProgram::operator>(
+	const GraphicsShaderProgram		&	other
 ) const
 {
 	return
@@ -39,8 +39,8 @@ bool vk2d::_internal::GraphicsShaderProgram::operator>(
 		);
 }
 
-bool vk2d::_internal::GraphicsShaderProgram::operator<=(
-	const vk2d::_internal::GraphicsShaderProgram		&	other
+bool vk2d::vk2d_internal::GraphicsShaderProgram::operator<=(
+	const GraphicsShaderProgram		&	other
 	) const
 {
 	return
@@ -54,8 +54,8 @@ bool vk2d::_internal::GraphicsShaderProgram::operator<=(
 		);
 }
 
-bool vk2d::_internal::GraphicsShaderProgram::operator>=(
-	const vk2d::_internal::GraphicsShaderProgram		&	other
+bool vk2d::vk2d_internal::GraphicsShaderProgram::operator>=(
+	const GraphicsShaderProgram		&	other
 	) const
 {
 	return
@@ -69,8 +69,8 @@ bool vk2d::_internal::GraphicsShaderProgram::operator>=(
 		);
 }
 
-bool vk2d::_internal::GraphicsShaderProgram::operator==(
-	const vk2d::_internal::GraphicsShaderProgram		&	other
+bool vk2d::vk2d_internal::GraphicsShaderProgram::operator==(
+	const GraphicsShaderProgram		&	other
 ) const
 {
 	return
@@ -84,8 +84,8 @@ bool vk2d::_internal::GraphicsShaderProgram::operator==(
 		);
 }
 
-bool vk2d::_internal::GraphicsShaderProgram::operator!=(
-	const vk2d::_internal::GraphicsShaderProgram		&	other
+bool vk2d::vk2d_internal::GraphicsShaderProgram::operator!=(
+	const GraphicsShaderProgram		&	other
 ) const
 {
 	return
@@ -105,8 +105,8 @@ bool vk2d::_internal::GraphicsShaderProgram::operator!=(
 
 
 
-bool vk2d::_internal::GraphicsPipelineSettings::operator<(
-	const vk2d::_internal::GraphicsPipelineSettings		&	other
+bool vk2d::vk2d_internal::GraphicsPipelineSettings::operator<(
+	const GraphicsPipelineSettings		&	other
 ) const
 {
 	// do this everywhere and understand how strict - smaller - than works;
@@ -132,8 +132,8 @@ bool vk2d::_internal::GraphicsPipelineSettings::operator<(
 		);
 }
 
-bool vk2d::_internal::GraphicsPipelineSettings::operator>(
-	const vk2d::_internal::GraphicsPipelineSettings		&	other
+bool vk2d::vk2d_internal::GraphicsPipelineSettings::operator>(
+	const GraphicsPipelineSettings		&	other
 ) const
 {
 	return
@@ -157,8 +157,8 @@ bool vk2d::_internal::GraphicsPipelineSettings::operator>(
 		);
 }
 
-bool vk2d::_internal::GraphicsPipelineSettings::operator<=(
-	const vk2d::_internal::GraphicsPipelineSettings		&	other
+bool vk2d::vk2d_internal::GraphicsPipelineSettings::operator<=(
+	const GraphicsPipelineSettings		&	other
 	) const
 {
 	return
@@ -182,8 +182,8 @@ bool vk2d::_internal::GraphicsPipelineSettings::operator<=(
 		);
 }
 
-bool vk2d::_internal::GraphicsPipelineSettings::operator>=(
-	const vk2d::_internal::GraphicsPipelineSettings		&	other
+bool vk2d::vk2d_internal::GraphicsPipelineSettings::operator>=(
+	const GraphicsPipelineSettings		&	other
 	) const
 {
 	return
@@ -207,8 +207,8 @@ bool vk2d::_internal::GraphicsPipelineSettings::operator>=(
 		);
 }
 
-bool vk2d::_internal::GraphicsPipelineSettings::operator==(
-	const vk2d::_internal::GraphicsPipelineSettings		&	other
+bool vk2d::vk2d_internal::GraphicsPipelineSettings::operator==(
+	const GraphicsPipelineSettings		&	other
 ) const
 {
 	return
@@ -232,8 +232,8 @@ bool vk2d::_internal::GraphicsPipelineSettings::operator==(
 		);
 }
 
-bool vk2d::_internal::GraphicsPipelineSettings::operator!=(
-	const vk2d::_internal::GraphicsPipelineSettings		&	other
+bool vk2d::vk2d_internal::GraphicsPipelineSettings::operator!=(
+	const GraphicsPipelineSettings		&	other
 	) const
 {
 	return
@@ -259,7 +259,7 @@ bool vk2d::_internal::GraphicsPipelineSettings::operator!=(
 
 
 
-bool vk2d::_internal::ComputePipelineSettings::operator<( const vk2d::_internal::ComputePipelineSettings & other ) const
+bool vk2d::vk2d_internal::ComputePipelineSettings::operator<( const ComputePipelineSettings & other ) const
 {
 	return
 		std::tie(
@@ -272,7 +272,7 @@ bool vk2d::_internal::ComputePipelineSettings::operator<( const vk2d::_internal:
 		);
 }
 
-bool vk2d::_internal::ComputePipelineSettings::operator>( const vk2d::_internal::ComputePipelineSettings & other ) const
+bool vk2d::vk2d_internal::ComputePipelineSettings::operator>( const ComputePipelineSettings & other ) const
 {
 	return
 		std::tie(
@@ -285,7 +285,7 @@ bool vk2d::_internal::ComputePipelineSettings::operator>( const vk2d::_internal:
 		);
 }
 
-bool vk2d::_internal::ComputePipelineSettings::operator<=( const vk2d::_internal::ComputePipelineSettings & other ) const
+bool vk2d::vk2d_internal::ComputePipelineSettings::operator<=( const ComputePipelineSettings & other ) const
 {
 	return
 		std::tie(
@@ -298,7 +298,7 @@ bool vk2d::_internal::ComputePipelineSettings::operator<=( const vk2d::_internal
 		);
 }
 
-bool vk2d::_internal::ComputePipelineSettings::operator>=( const vk2d::_internal::ComputePipelineSettings & other ) const
+bool vk2d::vk2d_internal::ComputePipelineSettings::operator>=( const ComputePipelineSettings & other ) const
 {
 	return
 		std::tie(
@@ -311,7 +311,7 @@ bool vk2d::_internal::ComputePipelineSettings::operator>=( const vk2d::_internal
 		);
 }
 
-bool vk2d::_internal::ComputePipelineSettings::operator==( const vk2d::_internal::ComputePipelineSettings & other ) const
+bool vk2d::vk2d_internal::ComputePipelineSettings::operator==( const ComputePipelineSettings & other ) const
 {
 	return
 		std::tie(
@@ -324,7 +324,7 @@ bool vk2d::_internal::ComputePipelineSettings::operator==( const vk2d::_internal
 		);
 }
 
-bool vk2d::_internal::ComputePipelineSettings::operator!=( const vk2d::_internal::ComputePipelineSettings & other ) const
+bool vk2d::vk2d_internal::ComputePipelineSettings::operator!=( const ComputePipelineSettings & other ) const
 {
 	return
 		std::tie(

@@ -8,12 +8,12 @@
 
 namespace vk2d {
 
-namespace _internal {
+namespace vk2d_internal {
 class InstanceImpl;
 class WindowImpl;
 class RenderTargetTextureImpl;
 class SamplerImpl;
-} // _internal
+} // vk2d_internal
 
 class Instance;
 
@@ -105,39 +105,39 @@ enum class SamplerAddressMode : uint32_t
 	///
 	///			Border color was set green in this example.
 	///
-	/// @see	vk2d::SamplerCreateInfo::border_color
+	/// @see	SamplerCreateInfo::border_color
 	///
 	///			<img src="SamplerAddressMode_ClampToBorder.png">
 	CLAMP_TO_BORDER,
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-/// @brief		Parameters to construct a vk2d::Sampler.
+/// @brief		Parameters to construct a Sampler.
 struct SamplerCreateInfo {
 
-	/// @see		vk2d::SamplerFilter
-	vk2d::SamplerFilter					minification_filter				= vk2d::SamplerFilter::LINEAR;
+	/// @see		SamplerFilter
+	SamplerFilter				minification_filter				= SamplerFilter::LINEAR;
 
-	/// @see		vk2d::SamplerFilter
-	vk2d::SamplerFilter					magnification_filter			= vk2d::SamplerFilter::LINEAR;
+	/// @see		SamplerFilter
+	SamplerFilter				magnification_filter			= SamplerFilter::LINEAR;
 
-	/// @see		vk2d::SamplerMipmapMode
-	vk2d::SamplerMipmapMode				mipmap_mode						= vk2d::SamplerMipmapMode::LINEAR;
+	/// @see		SamplerMipmapMode
+	SamplerMipmapMode			mipmap_mode						= SamplerMipmapMode::LINEAR;
 
 	/// @brief		Address mode on texture horizontal axis.
 	/// 
-	/// @see		vk2d::SamplerAddressMode
-	vk2d::SamplerAddressMode			address_mode_u					= vk2d::SamplerAddressMode::REPEAT;
+	/// @see		SamplerAddressMode
+	SamplerAddressMode			address_mode_u					= SamplerAddressMode::REPEAT;
 
 	/// @brief		Address mode on texture vertical axis.
 	///
-	/// @see		vk2d::SamplerAddressMode
-	vk2d::SamplerAddressMode			address_mode_v					= vk2d::SamplerAddressMode::REPEAT;
+	/// @see		SamplerAddressMode
+	SamplerAddressMode			address_mode_v					= SamplerAddressMode::REPEAT;
 
 	/// @brief		When using clamp to border address mode, use this color outside UV range 0.0 to 1.0.
 	///
-	/// @see		vk2d::Colorf
-	vk2d::Colorf						border_color					= { 0.0f, 0.0f, 0.0f, 1.0f };
+	/// @see		Colorf
+	Colorf						border_color					= { 0.0f, 0.0f, 0.0f, 1.0f };
 
 	/// @brief		Enable anisotropic filtering.
 	///
@@ -147,7 +147,7 @@ struct SamplerCreateInfo {
 	///				and magnification filters have been set to "nearest". Sampler mipmap mode has been set to "linear", and mipmap
 	///				bias is manually adjusted over time) <br>
 	///				<img src="SamplerAnisotropicFiltering.apng">
-	bool								anisotropy_enable				= true;
+	bool						anisotropy_enable				= true;
 
 	/// @brief		Maximum anisotropic filtering.
 	///
@@ -159,7 +159,7 @@ struct SamplerCreateInfo {
 	///				on the left is rendered with minification and magnification filters set to "nearest", and level-of-detail bias
 	///				is set to 4.3. On the right everything is "linear" and level-of-detail bias set to 0.0) <br>
 	///				<img src="SamplerMaxAnisotropy.apng">
-	float								mipmap_max_anisotropy			= 16.0f;
+	float						mipmap_max_anisotropy			= 16.0f;
 
 	/// @brief		Level-of-detail bias.
 	///
@@ -167,13 +167,13 @@ struct SamplerCreateInfo {
 	///				Positive values use higher mip level, meaning less details visible, while negative values use lower mip levels,
 	///				which can give more visible detail but may also introduce graininess. <br>
 	///				<img src="SamplerLODBias.apng">
-	float								mipmap_level_of_detail_bias		= 0.0f;
+	float						mipmap_level_of_detail_bias		= 0.0f;
 
 	/// @brief		Minimum mipmap level to use.
 	///
 	///				0 is the original texture, so minimum 0.0 means that the original texture can be used. If you set this to 1.0
 	///				then only mip level 1 and up are used. The higher this value the less texture detail is made available.
-	float								mipmap_min_level_of_detail		= 0.0f;
+	float						mipmap_min_level_of_detail		= 0.0f;
 
 	/// @brief		Maximum mipmap level to use.
 	///
@@ -181,7 +181,7 @@ struct SamplerCreateInfo {
 	///				texture that's 512*512 texels has mip levels 0 = {512*512}, 1 = {256*256}, 2 = {128*128} ... 8 = {2*2}, 9 =
 	///				{1*1} giving us 10 mip levels. The higher the resolution of the texture the more mip levels we have. This value
 	///				cuts use of the lower resolution mip levels at a specific level.
-	float								mipmap_max_level_of_detail		= 32.0f;
+	float						mipmap_max_level_of_detail		= 32.0f;
 };
 
 
@@ -192,28 +192,28 @@ struct SamplerCreateInfo {
 ///				A sampler is used to determine how to fetch texture color values at specific locations and what filters should
 ///				be used when fetches happen inbetween texture texels.
 class Sampler {
-	friend class vk2d::_internal::InstanceImpl;
-	friend class vk2d::_internal::WindowImpl;
-	friend class vk2d::_internal::RenderTargetTextureImpl;
+	friend class vk2d_internal::InstanceImpl;
+	friend class vk2d_internal::WindowImpl;
+	friend class vk2d_internal::RenderTargetTextureImpl;
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Constructor. This object should not be directly constructed.
 	///
-	///				This object is created by vk2d::Instance::CreateSampler().
+	///				This object is created by Instance::CreateSampler().
 	/// 
 	/// @param[in]	instance
 	///				Pointer to instance that owns this object.
 	/// 
 	/// @param[in]	create_info
-	///				Reference to vk2d::SamplerCreateInfo object defining parameters for this render target texture.
-	VK2D_API																			Sampler(
-		vk2d::_internal::InstanceImpl				*	instance,
-		const vk2d::SamplerCreateInfo				&	create_info );
+	///				Reference to SamplerCreateInfo object defining parameters for this render target texture.
+	VK2D_API										Sampler(
+		vk2d_internal::InstanceImpl				*	instance,
+		const SamplerCreateInfo					&	create_info );
 
 public:
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	VK2D_API																			~Sampler();
+	VK2D_API										~Sampler();
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Checks if the object is good to be used or if a failure occurred in it's creation.
@@ -221,12 +221,12 @@ public:
 	/// @note		Multithreading: Any thread.
 	/// 
 	/// @return		true if class object was created successfully, false if something went wrong
-	VK2D_API bool										VK2D_APIENTRY					IsGood() const;
+	VK2D_API bool									IsGood() const;
 
 private:
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	std::unique_ptr<vk2d::_internal::SamplerImpl>		impl;
+	std::unique_ptr<vk2d_internal::SamplerImpl>		impl;
 };
 
 

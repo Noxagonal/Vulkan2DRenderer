@@ -6,17 +6,17 @@
 #include "system/DescriptorSet.h"
 
 namespace vk2d {
-namespace _internal {
+namespace vk2d_internal {
 
 constexpr float			DESCRIPTOR_AUTO_POOL_CATEGORY_MINIMUM_COMPATIBILITY		= 0.75;
 constexpr uint32_t		DESCRIPTOR_AUTO_POOL_ALLOCATION_BATCH_SIZE				= 256;
 
-} // _internal
+} // vk2d_internal
 } // vk2d
 
 
-double vk2d::_internal::DescriptorPoolRequirements::CheckCompatibilityWith(
-	const vk2d::_internal::DescriptorPoolRequirements		&	other ) const
+double vk2d::vk2d_internal::DescriptorPoolRequirements::CheckCompatibilityWith(
+	const DescriptorPoolRequirements		&	other ) const
 {
 	double compatibility	= 0.0;
 
@@ -48,8 +48,8 @@ double vk2d::_internal::DescriptorPoolRequirements::CheckCompatibilityWith(
 	return compatibility;
 }
 
-vk2d::_internal::DescriptorSetLayout::DescriptorSetLayout(
-	vk2d::_internal::InstanceImpl			*	instance,
+vk2d::vk2d_internal::DescriptorSetLayout::DescriptorSetLayout(
+	InstanceImpl							*	instance,
 	VkDevice									device,
 	const VkDescriptorSetLayoutCreateInfo	*	pCreateInfo
 ) :
@@ -86,7 +86,7 @@ vk2d::_internal::DescriptorSetLayout::DescriptorSetLayout(
 	is_good		= true;
 }
 
-vk2d::_internal::DescriptorSetLayout::~DescriptorSetLayout()
+vk2d::vk2d_internal::DescriptorSetLayout::~DescriptorSetLayout()
 {
 	vkDestroyDescriptorSetLayout(
 		refDevice,
@@ -95,35 +95,35 @@ vk2d::_internal::DescriptorSetLayout::~DescriptorSetLayout()
 	);
 }
 
-VkDescriptorSetLayout vk2d::_internal::DescriptorSetLayout::GetVulkanDescriptorSetLayout() const
+VkDescriptorSetLayout vk2d::vk2d_internal::DescriptorSetLayout::GetVulkanDescriptorSetLayout() const
 {
 	return setLayout;
 }
 
-const VkDescriptorSetLayoutCreateInfo & vk2d::_internal::DescriptorSetLayout::GetDescriptorSetLayoutCreateInfo() const
+const VkDescriptorSetLayoutCreateInfo & vk2d::vk2d_internal::DescriptorSetLayout::GetDescriptorSetLayoutCreateInfo() const
 {
 	return createInfo;
 }
 
-const vk2d::_internal::DescriptorPoolRequirements & vk2d::_internal::DescriptorSetLayout::GetDescriptorPoolRequirements() const
+const vk2d::vk2d_internal::DescriptorPoolRequirements & vk2d::vk2d_internal::DescriptorSetLayout::GetDescriptorPoolRequirements() const
 {
 	return descriptorPoolRequirements;
 }
 
-vk2d::_internal::DescriptorSetLayout::operator VkDescriptorSetLayout() const
+vk2d::vk2d_internal::DescriptorSetLayout::operator VkDescriptorSetLayout() const
 {
 	return setLayout;
 }
 
 
 
-std::unique_ptr<vk2d::_internal::DescriptorSetLayout> vk2d::_internal::CreateDescriptorSetLayout(
-	vk2d::_internal::InstanceImpl			*	instance,
+std::unique_ptr<vk2d::vk2d_internal::DescriptorSetLayout> vk2d::vk2d_internal::CreateDescriptorSetLayout(
+	InstanceImpl							*	instance,
 	VkDevice									device,
 	const VkDescriptorSetLayoutCreateInfo	*	pCreateInfo
 )
 {
-	auto unique_object = std::unique_ptr<vk2d::_internal::DescriptorSetLayout>( new vk2d::_internal::DescriptorSetLayout(
+	auto unique_object = std::unique_ptr<DescriptorSetLayout>( new DescriptorSetLayout(
 		instance,
 		device,
 		pCreateInfo ) );
@@ -133,16 +133,16 @@ std::unique_ptr<vk2d::_internal::DescriptorSetLayout> vk2d::_internal::CreateDes
 
 
 
-vk2d::_internal::PoolDescriptorSet::operator VkResult() const
+vk2d::vk2d_internal::PoolDescriptorSet::operator VkResult() const
 {
 	return result;
 };
 
 
 
-vk2d::_internal::DescriptorAutoPool::DescriptorAutoPool(
-	vk2d::_internal::InstanceImpl	*	instance,
-	VkDevice							device
+vk2d::vk2d_internal::DescriptorAutoPool::DescriptorAutoPool(
+	InstanceImpl	*	instance,
+	VkDevice			device
 )
 {
 	assert( instance );
@@ -153,7 +153,7 @@ vk2d::_internal::DescriptorAutoPool::DescriptorAutoPool(
 	is_good		= true;
 }
 
-vk2d::_internal::DescriptorAutoPool::~DescriptorAutoPool()
+vk2d::vk2d_internal::DescriptorAutoPool::~DescriptorAutoPool()
 {
 	for( auto & c : poolCategories ) {
 		vkDestroyDescriptorPool(
@@ -165,7 +165,7 @@ vk2d::_internal::DescriptorAutoPool::~DescriptorAutoPool()
 }
 
 
-vk2d::_internal::PoolDescriptorSet vk2d::_internal::DescriptorAutoPool::AllocateDescriptorSet(
+vk2d::vk2d_internal::PoolDescriptorSet vk2d::vk2d_internal::DescriptorAutoPool::AllocateDescriptorSet(
 	const DescriptorSetLayout		&	rForDescriptorSetLayout )
 {
 	VK2D_ASSERT_SINGLE_THREAD_ACCESS_SCOPE();
@@ -310,8 +310,8 @@ vk2d::_internal::PoolDescriptorSet vk2d::_internal::DescriptorAutoPool::Allocate
 	return ret;
 }
 
-void vk2d::_internal::DescriptorAutoPool::FreeDescriptorSet(
-	vk2d::_internal::PoolDescriptorSet		&	rDescriptorSet
+void vk2d::vk2d_internal::DescriptorAutoPool::FreeDescriptorSet(
+	PoolDescriptorSet		&	rDescriptorSet
 )
 {
 	VK2D_ASSERT_SINGLE_THREAD_ACCESS_SCOPE();
@@ -349,18 +349,18 @@ void vk2d::_internal::DescriptorAutoPool::FreeDescriptorSet(
 }
 
 
-std::unique_ptr<vk2d::_internal::DescriptorAutoPool> vk2d::_internal::CreateDescriptorAutoPool(
-	vk2d::_internal::InstanceImpl	*	instance,
+std::unique_ptr<vk2d::vk2d_internal::DescriptorAutoPool> vk2d::vk2d_internal::CreateDescriptorAutoPool(
+	InstanceImpl	*	instance,
 	VkDevice							device
 )
 {
-	auto unique_object = std::unique_ptr<vk2d::_internal::DescriptorAutoPool>( new vk2d::_internal::DescriptorAutoPool(
+	auto unique_object = std::unique_ptr<DescriptorAutoPool>( new DescriptorAutoPool(
 		instance,
 		device ) );
 	if( unique_object && unique_object->is_good ) {
 		return unique_object;
 	} else {
-		instance->Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot create descriptor auto pool!" );
+		instance->Report( ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot create descriptor auto pool!" );
 	}
 	return {};
 }

@@ -20,11 +20,6 @@
 /// same header files for both the library and the API.
 #define VK2D_API
 
-/// This is basically the calling convention to the library.
-/// To make sure the program calls the vk2d library functions correctly
-/// this macro enforces a specific calling convention.
-#define VK2D_APIENTRY
-
 #endif
 
 
@@ -32,7 +27,7 @@
 namespace vk2d {
 
 constexpr double PI					= 3.14159265358979323846;
-constexpr double RAD				= vk2d::PI * 2.0;
+constexpr double RAD				= PI * 2.0;
 constexpr double KINDA_SMALL_VALUE	= 0.001;
 
 } // vk2d
@@ -57,10 +52,7 @@ constexpr double KINDA_SMALL_VALUE	= 0.001;
 					#define VK2D_API			__declspec(dllimport)
 				#endif
 			#endif
-	
-			// Calling convension
-			#define VK2D_APIENTRY				__stdcall
-	
+
 		#else
 			#error "Please add compiler support here!"
 		#endif
@@ -90,10 +82,7 @@ constexpr double KINDA_SMALL_VALUE	= 0.001;
 					#define VK2D_API
 				#endif
 			#endif
-	
-			// Calling convension
-			#define VK2D_APIENTRY				// Default calling convention for Linux, change in the future if needed.
-	
+
 		#else
 			#error "Please add compiler support here!"
 		#endif
@@ -109,8 +98,4 @@ constexpr double KINDA_SMALL_VALUE	= 0.001;
 
 #if !defined( VK2D_API )
 	#error "VK2D_API not defined!"
-#endif
-
-#if !defined( VK2D_APIENTRY )
-	#error "VK2D_APIENTRY not defined!"
 #endif

@@ -24,7 +24,7 @@ class TextureResource;
 class Sampler;
 class RenderTargetTexture;
 
-namespace _internal {
+namespace vk2d_internal {
 
 class ThreadPool;
 class DescriptorSetLayout;
@@ -37,107 +37,107 @@ void UpdateMonitorLists( bool globals_locked );
 
 
 class InstanceImpl {
-	friend class vk2d::Instance;
-	friend void vk2d::_internal::UpdateMonitorLists( bool globals_locked );
+	friend class Instance;
+	friend void UpdateMonitorLists( bool globals_locked );
 
 public:
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	/// @see vk2d::Instance::Instance()
+	/// @see Instance::Instance()
 	InstanceImpl(
-		vk2d::Instance									*	my_interface,
-		const vk2d::InstanceCreateInfo					&	instance_create_info );
+		Instance									*	my_interface,
+		const InstanceCreateInfo					&	instance_create_info );
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	/// @see vk2d::Instance::~Instance()
+	/// @see Instance::~Instance()
 	~InstanceImpl();
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	/// @see vk2d::Instance::Run()
+	/// @see Instance::Run()
 	bool													Run();
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	/// @see vk2d::Instance::GetMonitors()
-	std::vector<vk2d::Monitor*>								GetMonitors();
+	/// @see Instance::GetMonitors()
+	std::vector<Monitor*>								GetMonitors();
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	/// @see vk2d::Instance::GetPrimaryMonitor()
-	vk2d::Monitor										*	GetPrimaryMonitor() const;
+	/// @see Instance::GetPrimaryMonitor()
+	Monitor										*	GetPrimaryMonitor() const;
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	/// @see vk2d::Instance::SetMonitorUpdateCallback()
+	/// @see Instance::SetMonitorUpdateCallback()
 	void													SetMonitorUpdateCallback(
-		vk2d::PFN_MonitorUpdateCallback						monitor_update_callback_funtion );
+		PFN_MonitorUpdateCallback						monitor_update_callback_funtion );
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	/// @see vk2d::Instance::CreateCursor()
-	vk2d::Cursor										*	CreateCursor(
+	/// @see Instance::CreateCursor()
+	Cursor										*	CreateCursor(
 		const std::filesystem::path						&	image_path,
 		glm::ivec2											hot_spot );
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	/// @see vk2d::Instance::CreateCursor()
-	vk2d::Cursor										*	CreateCursor(
+	/// @see Instance::CreateCursor()
+	Cursor										*	CreateCursor(
 		glm::uvec2											image_size,
-		const std::vector<vk2d::Color8>					&	image_data,
+		const std::vector<Color8>					&	image_data,
 		glm::ivec2											hot_spot );
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	/// @see vk2d::Instance::DestroyCursor()
+	/// @see Instance::DestroyCursor()
 	void													DestroyCursor(
-		vk2d::Cursor									*	cursor );
+		Cursor									*	cursor );
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	/// @see vk2d::Instance::GetGamepadEventCallback()
-	vk2d::PFN_GamepadConnectionEventCallback				GetGamepadEventCallback() const;
+	/// @see Instance::GetGamepadEventCallback()
+	PFN_GamepadConnectionEventCallback				GetGamepadEventCallback() const;
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	/// @see vk2d::Instance::SetGamepadEventCallback()
+	/// @see Instance::SetGamepadEventCallback()
 	void													SetGamepadEventCallback(
-		vk2d::PFN_GamepadConnectionEventCallback			gamepad_event_callback_function );
+		PFN_GamepadConnectionEventCallback			gamepad_event_callback_function );
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	/// @see vk2d::Instance::IsGamepadPresent()
+	/// @see Instance::IsGamepadPresent()
 	bool													IsGamepadPresent(
-		vk2d::Gamepad										gamepad );
+		Gamepad										gamepad );
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	/// @see vk2d::Instance::GetGamepadName()
+	/// @see Instance::GetGamepadName()
 	std::string												GetGamepadName(
-		vk2d::Gamepad										gamepad );
+		Gamepad										gamepad );
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	/// @see vk2d::Instance::QueryGamepadState()
-	vk2d::GamepadState										QueryGamepadState(
-		vk2d::Gamepad										gamepad );
+	/// @see Instance::QueryGamepadState()
+	GamepadState										QueryGamepadState(
+		Gamepad										gamepad );
 
 	// TODO: gamepad mapping
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	/// @see vk2d::Instance::SetGamepadMapping()
+	/// @see Instance::SetGamepadMapping()
 	void													SetGamepadMapping();
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	/// @see vk2d::Instance::CreateOutputWindow()
-	vk2d::Window										*	CreateOutputWindow(
-		const vk2d::WindowCreateInfo					&	window_create_info );
+	/// @see Instance::CreateOutputWindow()
+	Window										*	CreateOutputWindow(
+		const WindowCreateInfo					&	window_create_info );
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	/// @see vk2d::Instance::DestroyOutputWindow()
+	/// @see Instance::DestroyOutputWindow()
 	void													DestroyOutputWindow(
-		vk2d::Window									*	window );
+		Window									*	window );
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	/// @see vk2d::Instance::CreateRenderTargetTexture()
-	vk2d::RenderTargetTexture							*	CreateRenderTargetTexture(
-		const vk2d::RenderTargetTextureCreateInfo		&	render_target_texture_create_info );
+	/// @see Instance::CreateRenderTargetTexture()
+	RenderTargetTexture							*	CreateRenderTargetTexture(
+		const RenderTargetTextureCreateInfo		&	render_target_texture_create_info );
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	/// @see vk2d::Instance::DestroyRenderTargetTexture()
+	/// @see Instance::DestroyRenderTargetTexture()
 	void													DestroyRenderTargetTexture(
-		vk2d::RenderTargetTexture						*	render_target_texture );
+		RenderTargetTexture						*	render_target_texture );
 
-	// vk2d::_internal::DescriptorAutoPool					*	GetDescriptorPool();
+	// DescriptorAutoPool					*	GetDescriptorPool();
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Allocate descriptor set directly from instance.
@@ -151,8 +151,8 @@ public:
 	///				tells what type of a descriptor set we should allocate.
 	/// 
 	/// @return		PoolDescriptorSet
-	vk2d::_internal::PoolDescriptorSet						AllocateDescriptorSet(
-		const vk2d::_internal::DescriptorSetLayout		&	for_descriptor_set_layout );
+	PoolDescriptorSet						AllocateDescriptorSet(
+		const DescriptorSetLayout		&	for_descriptor_set_layout );
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Free descriptor set that was directly allocated from instance.
@@ -165,29 +165,29 @@ public:
 	/// @param[in]	descriptor_set
 	///				DescriptorSet that was previously allocated from the same instance.
 	void													FreeDescriptorSet(
-		vk2d::_internal::PoolDescriptorSet				&	descriptor_set );
+		PoolDescriptorSet				&	descriptor_set );
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	/// @see		vk2d::Instance::CreateSampler()
-	vk2d::Sampler										*	CreateSampler(
-		const vk2d::SamplerCreateInfo					&	sampler_create_info );
+	/// @see		Instance::CreateSampler()
+	Sampler										*	CreateSampler(
+		const SamplerCreateInfo					&	sampler_create_info );
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	/// @see		vk2d::Instance::DestroySampler()
+	/// @see		Instance::DestroySampler()
 	void													DestroySampler(
-		vk2d::Sampler									*	sampler );
+		Sampler									*	sampler );
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	/// @see		vk2d::Instance::GetMaximumSupportedMultisampling()
-	vk2d::Multisamples										GetMaximumSupportedMultisampling() const;
+	/// @see		Instance::GetMaximumSupportedMultisampling()
+	Multisamples										GetMaximumSupportedMultisampling() const;
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	/// @see		vk2d::Instance::GetAllSupportedMultisampling()
-	vk2d::Multisamples										GetAllSupportedMultisampling() const;
+	/// @see		Instance::GetAllSupportedMultisampling()
+	Multisamples										GetAllSupportedMultisampling() const;
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Get report function so that parts of VK2D may log messages.
-	vk2d::PFN_VK2D_ReportFunction							GetReportFunction() const;
+	PFN_VK2D_ReportFunction							GetReportFunction() const;
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Log a message.
@@ -204,7 +204,7 @@ public:
 	///				Message.
 	void													Report(
 		VkResult											vk_result,
-		vk2d::ReportSeverity								severity,
+		ReportSeverity								severity,
 		const std::string								&	message );
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -232,18 +232,18 @@ public:
 	/// @param		message
 	///				Message.
 	void													Report(
-		vk2d::ReportSeverity								severity,
+		ReportSeverity								severity,
 		const std::string								&	message );
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Get internal thread pool.
 	///
-	/// @see		vk2d::_internal::ThreadPool
+	/// @see		ThreadPool
 	/// 
 	/// @note		Multithreading: Any thread.
 	///
 	/// @return		Pointer to thread pool.
-	vk2d::_internal::ThreadPool							*	GetThreadPool() const;
+	ThreadPool							*	GetThreadPool() const;
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Get loader threads.
@@ -251,7 +251,7 @@ public:
 	///				Loader threads are threads that are allowed to access the system's hard drive. These are generally used to copy
 	///				file contents into RAM.
 	///
-	/// @see		vk2d::_internal::ThreadPool
+	/// @see		ThreadPool
 	/// 
 	/// @note		Multithreading: Any thread.
 	///
@@ -264,7 +264,7 @@ public:
 	///				General threads are meant to do heavy lifting like translating data and decoding packed image files like png
 	///				into a list of pixels.
 	/// 
-	/// @see		vk2d::_internal::ThreadPool
+	/// @see		ThreadPool
 	/// 
 	/// @note		Multithreading: Any thread.
 	///
@@ -272,8 +272,8 @@ public:
 	const std::vector<uint32_t>							&	GetGeneralThreads() const;
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	/// @see		vk2d::Instance::GetResourceManager()
-	vk2d::ResourceManager								*	GetResourceManager() const;
+	/// @see		Instance::GetResourceManager()
+	ResourceManager								*	GetResourceManager() const;
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Get Vulkan instance.
@@ -308,7 +308,7 @@ public:
 	/// @note		Multithreading: Any thread.
 	///
 	/// @return		Resolved queue object.
-	vk2d::_internal::ResolvedQueue							GetPrimaryRenderQueue() const;
+	ResolvedQueue							GetPrimaryRenderQueue() const;
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Get secondary render queue.
@@ -319,7 +319,7 @@ public:
 	/// @note		Multithreading: Any thread.
 	///
 	/// @return		Resolved queue object.
-	vk2d::_internal::ResolvedQueue							GetSecondaryRenderQueue() const;
+	ResolvedQueue							GetSecondaryRenderQueue() const;
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Get compute queue.
@@ -330,7 +330,7 @@ public:
 	/// @note		Multithreading: Any thread.
 	///
 	/// @return		Resolved queue object.
-	vk2d::_internal::ResolvedQueue							GetPrimaryComputeQueue() const;
+	ResolvedQueue							GetPrimaryComputeQueue() const;
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Get transfer queue.
@@ -341,7 +341,7 @@ public:
 	/// @note		Multithreading: Any thread.
 	///
 	/// @return		Resolved queue object.
-	vk2d::_internal::ResolvedQueue							GetPrimaryTransferQueue() const;
+	ResolvedQueue							GetPrimaryTransferQueue() const;
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Get Vulkan physical device properties.
@@ -373,11 +373,11 @@ public:
 	/// @note		Multithreading: Any thread.
 	///
 	/// @param[in]	id
-	///				Graphics shader program ID. See vk2d::_internal::GraphicsShaderProgramID for more info.
+	///				Graphics shader program ID. See GraphicsShaderProgramID for more info.
 	///
 	/// @return		Graphics shader program.
-	vk2d::_internal::GraphicsShaderProgram					GetGraphicsShaderModules(
-		vk2d::_internal::GraphicsShaderProgramID			id ) const;
+	GraphicsShaderProgram					GetGraphicsShaderModules(
+		GraphicsShaderProgramID			id ) const;
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Get compute shader modules.
@@ -385,11 +385,11 @@ public:
 	/// @note		Multithreading: Any thread.
 	///
 	/// @param[in]	id
-	///				Compute shader program ID. See vk2d::_internal::ComputeShaderProgramID for more info.
+	///				Compute shader program ID. See ComputeShaderProgramID for more info.
 	///
 	/// @return		Compute shader program.
 	VkShaderModule											GetComputeShaderModules(
-		vk2d::_internal::ComputeShaderProgramID				id ) const;
+		ComputeShaderProgramID				id ) const;
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Get compatible graphics shader modules.
@@ -408,7 +408,7 @@ public:
 	///				Tells how many vertices per primitive the shader needs to support, must be a value between 1 and 3 (inclusive).
 	///
 	/// @return		Graphics shader program.
-	vk2d::_internal::GraphicsShaderProgram					GetCompatibleGraphicsShaderModules(
+	GraphicsShaderProgram					GetCompatibleGraphicsShaderModules(
 		bool												multitextured,
 		bool												custom_uv_border_color,
 		uint32_t											vertices_per_primitive ) const;
@@ -426,7 +426,7 @@ public:
 	///
 	/// @return		Graphics shader pipeline.
 	VkPipeline												GetGraphicsPipeline(
-		const vk2d::_internal::GraphicsPipelineSettings	&	settings );
+		const GraphicsPipelineSettings	&	settings );
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Get compute pipeline.
@@ -441,7 +441,7 @@ public:
 	///
 	/// @return		Graphics shader pipeline.
 	VkPipeline												GetComputePipeline(
-		const vk2d::_internal::ComputePipelineSettings	&	settings );
+		const ComputePipelineSettings	&	settings );
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Create graphics pipeline.
@@ -453,7 +453,7 @@ public:
 	///
 	/// @return		New graphics shader pipeline.
 	VkPipeline												CreateGraphicsPipeline(
-		const vk2d::_internal::GraphicsPipelineSettings	&	settings );
+		const GraphicsPipelineSettings	&	settings );
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Create compute pipeline.
@@ -468,7 +468,7 @@ public:
 	///
 	/// @return		New compute shader pipeline.
 	VkPipeline												CreateComputePipeline(
-		const vk2d::_internal::ComputePipelineSettings	&	settings );
+		const ComputePipelineSettings	&	settings );
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Get graphics pipeline cache.
@@ -518,7 +518,7 @@ public:
 	/// @note		Multithreading: Any thread.
 	///
 	/// @return		Descriptor set layout.
-	const vk2d::_internal::DescriptorSetLayout			&	GetGraphicsSamplerDescriptorSetLayout() const;
+	const DescriptorSetLayout			&	GetGraphicsSamplerDescriptorSetLayout() const;
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Get graphics texture descriptor set layout.
@@ -528,7 +528,7 @@ public:
 	/// @note		Multithreading: Any thread.
 	///
 	/// @return		Descriptor set layout.
-	const vk2d::_internal::DescriptorSetLayout			&	GetGraphicsTextureDescriptorSetLayout() const;
+	const DescriptorSetLayout			&	GetGraphicsTextureDescriptorSetLayout() const;
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Get graphics render target blur texure descriptor set layout.
@@ -538,7 +538,7 @@ public:
 	/// @note		Multithreading: Any thread.
 	///
 	/// @return		Descriptor set layout.
-	const vk2d::_internal::DescriptorSetLayout			&	GetGraphicsRenderTargetBlurTextureDescriptorSetLayout() const;
+	const DescriptorSetLayout			&	GetGraphicsRenderTargetBlurTextureDescriptorSetLayout() const;
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Get graphics uniform buffer descriptor set layout.
@@ -548,7 +548,7 @@ public:
 	/// @note		Multithreading: Any thread.
 	///
 	/// @return		Descriptor set layout.
-	const vk2d::_internal::DescriptorSetLayout			&	GetGraphicsUniformBufferDescriptorSetLayout() const;
+	const DescriptorSetLayout			&	GetGraphicsUniformBufferDescriptorSetLayout() const;
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Get graphics storage buffer descriptor set layout.
@@ -558,7 +558,7 @@ public:
 	/// @note		Multithreading: Any thread.
 	///
 	/// @return		Descriptor set layout.
-	const vk2d::_internal::DescriptorSetLayout			&	GetGraphicsStorageBufferDescriptorSetLayout() const;
+	const DescriptorSetLayout			&	GetGraphicsStorageBufferDescriptorSetLayout() const;
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Get default texture.
@@ -569,7 +569,7 @@ public:
 	/// @note		Multithreading: Any thread.
 	///
 	/// @return		Default texture handle.
-	vk2d::Texture										*	GetDefaultTexture() const;
+	Texture										*	GetDefaultTexture() const;
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Get default sampler.
@@ -579,7 +579,7 @@ public:
 	/// @note		Multithreading: Any thread.
 	///
 	/// @return		Default sampler handle.
-	vk2d::Sampler										*	GetDefaultSampler() const;
+	Sampler										*	GetDefaultSampler() const;
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Get blur sampler descriptor set.
@@ -598,12 +598,12 @@ public:
 	///				allocations from the GPU are permitted. Alignment requirements and memory types complicate things further.
 	///				Device memory pool takes care of these details.
 	///
-	/// @see		vk2d::_internal::DeviceMemoryPool
+	/// @see		DeviceMemoryPool
 	/// 
 	/// @note		Multithreading: Any thread.
 	///
 	/// @return		Pointer to device memory pool.
-	vk2d::_internal::DeviceMemoryPool					*	GetDeviceMemoryPool() const;
+	DeviceMemoryPool					*	GetDeviceMemoryPool() const;
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Get id of the thread that made this VK2D instance.
@@ -696,23 +696,23 @@ private:
 	std::vector<VkPhysicalDevice>							EnumeratePhysicalDevices();
 	VkPhysicalDevice										PickBestVulkanPhysicalDevice();
 
-	vk2d::Instance										*	my_interface							= {};
+	Instance											*	my_interface							= {};
 
-	vk2d::PFN_MonitorUpdateCallback							monitor_update_callback					= nullptr;
+	PFN_MonitorUpdateCallback								monitor_update_callback					= nullptr;
 
-	static uint64_t											instance_count;		// used to keep track of Instance instances
+	static uint64_t											instance_count;		// used to keep track of number of instances.
 
-	vk2d::InstanceCreateInfo								create_info_copy						= {};
+	InstanceCreateInfo										create_info_copy						= {};
 
 	std::vector<const char*>								instance_layers;
 	std::vector<const char*>								instance_extensions;
 	std::vector<const char*>								device_extensions;
 
-	vk2d::PFN_VK2D_ReportFunction							report_function							= {};
+	PFN_VK2D_ReportFunction									report_function							= {};
 	std::mutex												report_mutex;
 
-	std::unique_ptr<vk2d::ResourceManager>					resource_manager;
-	std::unique_ptr<vk2d::_internal::ThreadPool>			thread_pool;
+	std::unique_ptr<ResourceManager>						resource_manager;
+	std::unique_ptr<ThreadPool>								thread_pool;
 	std::vector<uint32_t>									loader_threads;
 	std::vector<uint32_t>									general_threads;
 
@@ -729,14 +729,13 @@ private:
 	std::vector<VkShaderModule>								vk_graphics_shader_modules;
 	std::vector<VkShaderModule>								vk_compute_shader_modules;
 
-	std::map<vk2d::_internal::GraphicsShaderProgramID, vk2d::_internal::GraphicsShaderProgram>
-															graphics_shader_programs;
-	std::map<vk2d::_internal::ComputeShaderProgramID, VkShaderModule>
+	std::map<GraphicsShaderProgramID, GraphicsShaderProgram>graphics_shader_programs;
+	std::map<ComputeShaderProgramID, VkShaderModule>
 															compute_shader_programs;
 
-	std::map<vk2d::_internal::GraphicsPipelineSettings, VkPipeline>
+	std::map<GraphicsPipelineSettings, VkPipeline>
 															vk_graphics_pipelines;
-	std::map<vk2d::_internal::ComputePipelineSettings, VkPipeline>
+	std::map<ComputePipelineSettings, VkPipeline>
 															vk_compute_pipelines;
 
 	VkPipelineCache											vk_graphics_pipeline_cache					= {};
@@ -745,34 +744,34 @@ private:
 	VkPipelineLayout										vk_graphics_primary_render_pipeline_layout	= {};
 	VkPipelineLayout										vk_graphics_blur_pipeline_layout			= {};
 
-	std::unique_ptr<vk2d::_internal::DescriptorSetLayout>	graphics_simple_sampler_descriptor_set_layout;
-	std::unique_ptr<vk2d::_internal::DescriptorSetLayout>	graphics_sampler_descriptor_set_layout;
-	std::unique_ptr<vk2d::_internal::DescriptorSetLayout>	graphics_texture_descriptor_set_layout;
-	std::unique_ptr<vk2d::_internal::DescriptorSetLayout>	graphics_render_target_blur_texture_descriptor_set_layout;
-	std::unique_ptr<vk2d::_internal::DescriptorSetLayout>	graphics_uniform_buffer_descriptor_set_layout;
-	std::unique_ptr<vk2d::_internal::DescriptorSetLayout>	graphics_storage_buffer_descriptor_set_layout;
+	std::unique_ptr<DescriptorSetLayout>					graphics_simple_sampler_descriptor_set_layout;
+	std::unique_ptr<DescriptorSetLayout>					graphics_sampler_descriptor_set_layout;
+	std::unique_ptr<DescriptorSetLayout>					graphics_texture_descriptor_set_layout;
+	std::unique_ptr<DescriptorSetLayout>					graphics_render_target_blur_texture_descriptor_set_layout;
+	std::unique_ptr<DescriptorSetLayout>					graphics_uniform_buffer_descriptor_set_layout;
+	std::unique_ptr<DescriptorSetLayout>					graphics_storage_buffer_descriptor_set_layout;
 
-	vk2d::_internal::ResolvedQueue							primary_render_queue						= {};
-	vk2d::_internal::ResolvedQueue							secondary_render_queue						= {};
-	vk2d::_internal::ResolvedQueue							primary_compute_queue						= {};
-	vk2d::_internal::ResolvedQueue							primary_transfer_queue						= {};
+	ResolvedQueue											primary_render_queue						= {};
+	ResolvedQueue											secondary_render_queue						= {};
+	ResolvedQueue											primary_compute_queue						= {};
+	ResolvedQueue											primary_transfer_queue						= {};
 
-	std::unique_ptr<vk2d::_internal::DeviceMemoryPool>		device_memory_pool;
+	std::unique_ptr<DeviceMemoryPool>						device_memory_pool;
 
 	std::mutex												descriptor_pool_mutex;
-	std::unique_ptr<vk2d::_internal::DescriptorAutoPool>	descriptor_pool;
+	std::unique_ptr<DescriptorAutoPool>						descriptor_pool;
 
-	std::unique_ptr<vk2d::Sampler>							default_sampler;
-	vk2d::TextureResource								*	default_texture								= {};
-	std::unique_ptr<vk2d::Sampler>							blur_sampler;
-	vk2d::_internal::PoolDescriptorSet						blur_sampler_descriptor_set					= {};
+	std::unique_ptr<Sampler>								default_sampler;
+	TextureResource										*	default_texture								= {};
+	std::unique_ptr<Sampler>								blur_sampler;
+	PoolDescriptorSet										blur_sampler_descriptor_set					= {};
 
-	std::vector<std::unique_ptr<vk2d::Window>>				windows;
-	std::vector<std::unique_ptr<vk2d::RenderTargetTexture>>	render_target_textures;
-	std::vector<std::unique_ptr<vk2d::Sampler>>				samplers;
-	std::vector<std::unique_ptr<vk2d::Cursor>>				cursors;
+	std::vector<std::unique_ptr<Window>>					windows;
+	std::vector<std::unique_ptr<RenderTargetTexture>>		render_target_textures;
+	std::vector<std::unique_ptr<Sampler>>					samplers;
+	std::vector<std::unique_ptr<Cursor>>					cursors;
 
-	vk2d::PFN_GamepadConnectionEventCallback				joystick_event_callback						= {};
+	PFN_GamepadConnectionEventCallback						joystick_event_callback						= {};
 
 	std::thread::id											creator_thread_id							= {};
 
@@ -783,7 +782,7 @@ private:
 
 
 
-} // _internal
+} // vk2d_internal
 
 
 

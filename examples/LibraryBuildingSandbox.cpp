@@ -15,7 +15,7 @@ uint32_t frame = 0;
 class EventHandler : public vk2d::WindowEventHandler {
 public:
 	// Keyboard button was pressed, released or kept down ( repeating ).
-	void										VK2D_APIENTRY		EventKeyboard(
+	void										EventKeyboard(
 		vk2d::Window						*	window,
 		vk2d::KeyboardButton					button,
 		int32_t									scancode,

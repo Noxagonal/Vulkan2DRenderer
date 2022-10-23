@@ -14,7 +14,7 @@ class ResourceBase;
 class TextureResource;
 class FontResource;
 
-namespace _internal {
+namespace vk2d_internal {
 class InstanceImpl;
 class ResourceManagerImpl;
 }
@@ -24,24 +24,24 @@ class ResourceManagerImpl;
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /// @brief		Resource manager for handling different user resources, eg. textures, fonts...
 ///
-///				VK2D Is capable of loading and unloading resources in a background thread, and vk2d::ResourceManager is
+///				VK2D Is capable of loading and unloading resources in a background thread, and ResourceManager is
 ///				responsible of making it happen.
 class ResourceManager {
-	friend class vk2d::_internal::InstanceImpl;
+	friend class vk2d_internal::InstanceImpl;
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	/// @brief		This object should not be directly constructed, it is automatically created by vk2d::Instance at it's creation.
+	/// @brief		This object should not be directly constructed, it is automatically created by Instance at it's creation.
 	/// 
 	/// @note		Multithreading: Main thread only.
 	/// 
 	/// @param		parent_instance
 	///				Pointer back to owner who created this object.
-	VK2D_API																				ResourceManager(
-		vk2d::_internal::InstanceImpl													*	parent_instance
+	VK2D_API													ResourceManager(
+		vk2d_internal::InstanceImpl							*	parent_instance
 	);
 
 public:
-	VK2D_API																				~ResourceManager();
+	VK2D_API ~ResourceManager();
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Create a single layer texture resource from data.
@@ -57,9 +57,9 @@ public:
 	///				- This data is copied over to internal memory before returning so you do not need to keep the vector around.
 	/// 
 	/// @return		Handle to newly created texture resource you can use when rendering.
-	VK2D_API TextureResource								*	VK2D_APIENTRY				CreateTextureResource(
+	VK2D_API TextureResource								*	CreateTextureResource(
 		glm::uvec2												size,
-		const std::vector<vk2d::Color8>						&	texels );
+		const std::vector<Color8>							&	texels );
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Load a single layer texture resource from a file.
@@ -103,7 +103,7 @@ public:
 	///				</table>
 	///
 	/// @return		Handle to newly created texture resource you can use when rendering.
-	VK2D_API vk2d::TextureResource							*	VK2D_APIENTRY				LoadTextureResource(
+	VK2D_API TextureResource								*	LoadTextureResource(
 		const std::filesystem::path							&	file_path );
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -126,9 +126,9 @@ public:
 	///				- This data is copied over to internal memory before returning so you do not need to keep the vector around.
 	/// 
 	/// @return		Handle to newly created texture resource you can use when rendering.
-	VK2D_API TextureResource								*	VK2D_APIENTRY				CreateArrayTextureResource(
+	VK2D_API TextureResource								*	CreateArrayTextureResource(
 		glm::uvec2												size,
-		const std::vector<const std::vector<vk2d::Color8>*>	&	texels_listing );
+		const std::vector<const std::vector<Color8>*>		&	texels_listing );
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Load a multi-layer texture resource from files.
@@ -138,14 +138,14 @@ public:
 	/// @param[in]	file_path_listing
 	///				A vector of file paths to use when creating the texture.
 	///				<br>
-	///				- Supported file formats are listed in vk2d::ResourceManager::CreateTextureResource().
+	///				- Supported file formats are listed in ResourceManager::CreateTextureResource().
 	///				- Each file path corresponds to a texture layer in given order. Eg. input is {{path1}{path2}} then "path1" is
 	///				texture array layer 0 and "path2" is texture array layer 1.
 	///				- Each texture layer must be the same size. If images in these file paths are not same size then texture
 	///				loading will fail.
 	/// 
 	/// @return		Handle to newly created texture resource you can use when rendering.
-	VK2D_API vk2d::TextureResource							*	VK2D_APIENTRY				LoadArrayTextureResource(
+	VK2D_API TextureResource								*	LoadArrayTextureResource(
 		const std::vector<std::filesystem::path>			&	file_path_listing );
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -199,7 +199,7 @@ public:
 	///				between glyphs in the texture atlas here.
 	/// 
 	/// @return		Handle to newly created font resource you can use when rendering text.
-	VK2D_API vk2d::FontResource								*	VK2D_APIENTRY				LoadFontResource(
+	VK2D_API FontResource									*	LoadFontResource(
 		const std::filesystem::path							&	file_path,
 		uint32_t												glyph_texel_size			= 32,
 		bool													use_alpha					= true,
@@ -217,10 +217,10 @@ public:
 	/// @note		Multithreading: Any thread.
 	/// 
 	/// @param[in]	resource
-	///				Pointer to vk2d::Resource to destroy. After this the resource is no longer valid and trying to use it will crash
+	///				Pointer to Resource to destroy. After this the resource is no longer valid and trying to use it will crash
 	///				your application.
-	VK2D_API void												VK2D_APIENTRY				DestroyResource(
-		vk2d::ResourceBase																*	resource );
+	VK2D_API void												DestroyResource(
+		ResourceBase										*	resource );
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Checks if the object is good to be used or if a failure occurred in it's creation.
@@ -228,12 +228,12 @@ public:
 	/// @note		Multithreading: Any thread.
 	/// 
 	/// @return		true if class object was created successfully, false if something went wrong
-	VK2D_API bool												VK2D_APIENTRY				IsGood() const;
+	VK2D_API bool												IsGood() const;
 
 private:
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	std::unique_ptr<_internal::ResourceManagerImpl>				impl;
+	std::unique_ptr<vk2d_internal::ResourceManagerImpl>			impl;
 };
 
 

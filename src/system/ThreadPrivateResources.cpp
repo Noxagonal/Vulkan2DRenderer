@@ -9,53 +9,53 @@
 
 
 
-vk2d::_internal::ThreadLoaderResource::ThreadLoaderResource( InstanceImpl * instance )
+vk2d::vk2d_internal::ThreadLoaderResource::ThreadLoaderResource( InstanceImpl * instance )
 {
 	this->instance		= instance;
 	this->device		= instance->GetVulkanDevice();
 }
 
-vk2d::_internal::InstanceImpl * vk2d::_internal::ThreadLoaderResource::GetInstance() const
+vk2d::vk2d_internal::InstanceImpl * vk2d::vk2d_internal::ThreadLoaderResource::GetInstance() const
 {
 	return instance;
 }
 
-VkDevice vk2d::_internal::ThreadLoaderResource::GetVulkanDevice() const
+VkDevice vk2d::vk2d_internal::ThreadLoaderResource::GetVulkanDevice() const
 {
 	return device;
 }
 
-vk2d::_internal::DeviceMemoryPool * vk2d::_internal::ThreadLoaderResource::GetDeviceMemoryPool() const
+vk2d::vk2d_internal::DeviceMemoryPool * vk2d::vk2d_internal::ThreadLoaderResource::GetDeviceMemoryPool() const
 {
 	return device_memory_pool.get();
 }
 
-vk2d::_internal::DescriptorAutoPool * vk2d::_internal::ThreadLoaderResource::GetDescriptorAutoPool() const
+vk2d::vk2d_internal::DescriptorAutoPool * vk2d::vk2d_internal::ThreadLoaderResource::GetDescriptorAutoPool() const
 {
 	return descriptor_auto_pool.get();
 }
 
-VkCommandPool vk2d::_internal::ThreadLoaderResource::GetPrimaryRenderCommandPool() const
+VkCommandPool vk2d::vk2d_internal::ThreadLoaderResource::GetPrimaryRenderCommandPool() const
 {
 	return primary_render_command_pool;
 }
 
-VkCommandPool vk2d::_internal::ThreadLoaderResource::GetSecondaryRenderCommandPool() const
+VkCommandPool vk2d::vk2d_internal::ThreadLoaderResource::GetSecondaryRenderCommandPool() const
 {
 	return secondary_render_command_pool;
 }
 
-VkCommandPool vk2d::_internal::ThreadLoaderResource::GetPrimaryTransferCommandPool() const
+VkCommandPool vk2d::vk2d_internal::ThreadLoaderResource::GetPrimaryTransferCommandPool() const
 {
 	return primary_transfer_command_pool;
 }
 
-FT_Library vk2d::_internal::ThreadLoaderResource::GetFreeTypeInstance() const
+FT_Library vk2d::vk2d_internal::ThreadLoaderResource::GetFreeTypeInstance() const
 {
 	return freetype_instance;
 }
 
-bool vk2d::_internal::ThreadLoaderResource::ThreadBegin()
+bool vk2d::vk2d_internal::ThreadLoaderResource::ThreadBegin()
 {
 	// Initialize Vulkan stuff here
 
@@ -122,7 +122,7 @@ bool vk2d::_internal::ThreadLoaderResource::ThreadBegin()
 
 	// Descriptor pool
 	{
-		descriptor_auto_pool	= vk2d::_internal::CreateDescriptorAutoPool(
+		descriptor_auto_pool	= CreateDescriptorAutoPool(
 			instance,
 			device
 		);
@@ -130,14 +130,14 @@ bool vk2d::_internal::ThreadLoaderResource::ThreadBegin()
 			std::stringstream ss;
 			ss << "Internal error: Cannot create descriptor auto pool in thread: "
 				<< std::this_thread::get_id();
-			instance->Report( vk2d::ReportSeverity::CRITICAL_ERROR, ss.str() );
+			instance->Report( ReportSeverity::CRITICAL_ERROR, ss.str() );
 			return false;
 		}
 	}
 
 	// Device memory pool
 	{
-		device_memory_pool			= vk2d::_internal::MakeDeviceMemoryPool(
+		device_memory_pool			= MakeDeviceMemoryPool(
 			instance->GetVulkanPhysicalDevice(),
 			device
 		);
@@ -145,7 +145,7 @@ bool vk2d::_internal::ThreadLoaderResource::ThreadBegin()
 			std::stringstream ss;
 			ss << "Internal error: Cannot create device memory pool in thread: "
 				<< std::this_thread::get_id();
-			instance->Report( vk2d::ReportSeverity::CRITICAL_ERROR, ss.str() );
+			instance->Report( ReportSeverity::CRITICAL_ERROR, ss.str() );
 			return false;
 		}
 	}
@@ -157,7 +157,7 @@ bool vk2d::_internal::ThreadLoaderResource::ThreadBegin()
 			std::stringstream ss;
 			ss << "Internal error: Cannot create FreeType instance in thread: "
 				<< std::this_thread::get_id();
-			instance->Report( vk2d::ReportSeverity::CRITICAL_ERROR, ss.str() );
+			instance->Report( ReportSeverity::CRITICAL_ERROR, ss.str() );
 			return false;
 		}
 	}
@@ -165,7 +165,7 @@ bool vk2d::_internal::ThreadLoaderResource::ThreadBegin()
 	return true;
 }
 
-void vk2d::_internal::ThreadLoaderResource::ThreadEnd()
+void vk2d::vk2d_internal::ThreadLoaderResource::ThreadEnd()
 {
 	// FreeType
 	FT_Done_FreeType( freetype_instance );

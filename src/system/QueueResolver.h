@@ -4,7 +4,7 @@
 
 namespace vk2d {
 
-namespace _internal {
+namespace vk2d_internal {
 
 
 
@@ -13,7 +13,7 @@ class DeviceQueueResolver;
 
 
 class ResolvedQueue {
-	friend class vk2d::_internal::DeviceQueueResolver;
+	friend class DeviceQueueResolver;
 
 public:
 	ResolvedQueue()							= default;
@@ -50,39 +50,39 @@ private:
 
 class DeviceQueueResolver {
 public:
-	VK2D_API																						DeviceQueueResolver()		= delete;
-	VK2D_API																						DeviceQueueResolver(
-		VkInstance														instance,
-		VkPhysicalDevice												physicalDevice,
-		std::vector<std::pair<VkQueueFlags, float>>						queueTypes );
+	VK2D_API												DeviceQueueResolver()		= delete;
+	VK2D_API												DeviceQueueResolver(
+		VkInstance											instance,
+		VkPhysicalDevice									physicalDevice,
+		std::vector<std::pair<VkQueueFlags, float>>			queueTypes );
 
-	VK2D_API																						~DeviceQueueResolver();
+	VK2D_API												~DeviceQueueResolver();
 
-	const VK2D_API std::vector<VkDeviceQueueCreateInfo>				&	VK2D_APIENTRY				GetDeviceQueueCreateInfos();
-	VK2D_API std::vector<vk2d::_internal::ResolvedQueue>				VK2D_APIENTRY				GetQueues( VkDevice device );
+	const VK2D_API std::vector<VkDeviceQueueCreateInfo>	&	GetDeviceQueueCreateInfos();
+	VK2D_API std::vector<ResolvedQueue>						GetQueues( VkDevice device );
 
-	bool																							IsGood();
+	bool													IsGood();
 
 private:
 	struct QueueGetInfo {
-		uint32_t							queueIndex;
-		uint32_t							queueFamilyIndex;
-		uint32_t							based_on;
+		uint32_t											queueIndex;
+		uint32_t											queueFamilyIndex;
+		uint32_t											based_on;
 	};
-	std::vector<VkDeviceQueueCreateInfo>	queueCreateInfos;
-	std::vector<QueueGetInfo>				queueGetInfo;
-	std::vector<std::vector<float>>			queuePriorities;
+	std::vector<VkDeviceQueueCreateInfo>					queueCreateInfos;
+	std::vector<QueueGetInfo>								queueGetInfo;
+	std::vector<std::vector<float>>							queuePriorities;
 
-	VkInstance								refInstance					= VK_NULL_HANDLE;
-	VkPhysicalDevice						refPhysicalDevice			= VK_NULL_HANDLE;
+	VkInstance												refInstance					= VK_NULL_HANDLE;
+	VkPhysicalDevice										refPhysicalDevice			= VK_NULL_HANDLE;
 
-	std::vector<VkQueueFamilyProperties>	family_properties;
+	std::vector<VkQueueFamilyProperties>					family_properties;
 
-	bool									is_good						= {};
+	bool													is_good						= {};
 };
 
 
 
-} // _internal
+} // vk2d_internal
 
 } // vk2d
