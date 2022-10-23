@@ -41,304 +41,610 @@ class InstanceImpl {
 	friend void vk2d::_internal::UpdateMonitorLists( bool globals_locked );
 
 public:
-	///				Constructor.
-	///	@note		Multithreading: Any thread originally, that thread will then be
-	///				considered as the main thread for all child vk2d objects.
-	/// @param[in]	instance_create_info 
-	///				Reference to InstanceCreateInfo object.
+
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	/// @see vk2d::Instance::Instance()
 	InstanceImpl(
 		vk2d::Instance									*	my_interface,
 		const vk2d::InstanceCreateInfo					&	instance_create_info );
 
-	/// @note		Multithreading: Main thread only.
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	/// @see vk2d::Instance::~Instance()
 	~InstanceImpl();
 
-	/// @see		Instance::Run().
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	/// @see vk2d::Instance::Run()
 	bool													Run();
 
-	///				Get a list of monitors connected to the system, this will be
-	///				needed later if the vk2d application is ran fullscreen mode.
-	/// @note		Multithreading: Main thread only.
-	/// @return		A list of handles to monitors.
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	/// @see vk2d::Instance::GetMonitors()
 	std::vector<vk2d::Monitor*>								GetMonitors();
 
-	///				Gets the primary monitor of the system, this will be needed
-	///				later if the vk2d application is ran fullscreen mode.
-	/// @note		Multithreading: Any thread.
-	/// @return		Handle to the primary monitor of the system.
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	/// @see vk2d::Instance::GetPrimaryMonitor()
 	vk2d::Monitor										*	GetPrimaryMonitor() const;
 
-	///				Set monitor update callback, this registers a callback that will be called if
-	///				monitors got removed or new monitors were plugged into the system.
-	/// @note		Multithreading: Main thread only.
-	/// @param[in]	monitor_update_callback_funtion
-	///				Function pointer to callback that will be called when monitor is added or
-	///				removed from the system.
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	/// @see vk2d::Instance::SetMonitorUpdateCallback()
 	void													SetMonitorUpdateCallback(
 		vk2d::PFN_MonitorUpdateCallback						monitor_update_callback_funtion );
 
-	///				Create a new cursor. Cursor object is needed to set hardware
-	///				cursor image. See Cursor class for more information.
-	/// @note		Multithreading: Main thread only.
-	/// @param[in]	image_path
-	///				Path to the image file. Supported formats are
-	///				JPG, PNG, TGA, BMP, PSD, GIF, PIC
-	/// @param[in]	hot_spot
-	///				hot spot is an offset from the image 0x0 coords to the tip
-	///				of the cursor. Eg, circular cursor where you want the
-	///				exact centre of the image to be the "tip" and the the image
-	///				is 64x64 pixels, the hot spot would be 32x32 pixels.
-	/// @return		Handle to new Cursor object.
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	/// @see vk2d::Instance::CreateCursor()
 	vk2d::Cursor										*	CreateCursor(
 		const std::filesystem::path						&	image_path,
 		glm::ivec2											hot_spot );
 
-	// Main thread only.
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	/// @see vk2d::Instance::CreateCursor()
 	vk2d::Cursor										*	CreateCursor(
 		glm::uvec2											image_size,
 		const std::vector<vk2d::Color8>					&	image_data,
 		glm::ivec2											hot_spot );
 
-	// Main thread only.
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	/// @see vk2d::Instance::DestroyCursor()
 	void													DestroyCursor(
 		vk2d::Cursor									*	cursor );
 
-	// Any thread.
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	/// @see vk2d::Instance::GetGamepadEventCallback()
 	vk2d::PFN_GamepadConnectionEventCallback				GetGamepadEventCallback() const;
 
-	// Main thread only.
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	/// @see vk2d::Instance::SetGamepadEventCallback()
 	void													SetGamepadEventCallback(
 		vk2d::PFN_GamepadConnectionEventCallback			gamepad_event_callback_function );
 
-	// Main thread only.
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	/// @see vk2d::Instance::IsGamepadPresent()
 	bool													IsGamepadPresent(
 		vk2d::Gamepad										gamepad );
 
-	// Main thread only.
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	/// @see vk2d::Instance::GetGamepadName()
 	std::string												GetGamepadName(
 		vk2d::Gamepad										gamepad );
 
-	// Main thread only.
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	/// @see vk2d::Instance::QueryGamepadState()
 	vk2d::GamepadState										QueryGamepadState(
 		vk2d::Gamepad										gamepad );
 
-	// Main thread only.
 	// TODO: gamepad mapping
+
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	/// @see vk2d::Instance::SetGamepadMapping()
 	void													SetGamepadMapping();
 
-	// Main thread only.
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	/// @see vk2d::Instance::CreateOutputWindow()
 	vk2d::Window										*	CreateOutputWindow(
 		const vk2d::WindowCreateInfo					&	window_create_info );
 
-	// Main thread only.
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	/// @see vk2d::Instance::DestroyOutputWindow()
 	void													DestroyOutputWindow(
 		vk2d::Window									*	window );
 
-	// Main thread only.
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	/// @see vk2d::Instance::CreateRenderTargetTexture()
 	vk2d::RenderTargetTexture							*	CreateRenderTargetTexture(
 		const vk2d::RenderTargetTextureCreateInfo		&	render_target_texture_create_info );
 
-	// Main thread only.
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	/// @see vk2d::Instance::DestroyRenderTargetTexture()
 	void													DestroyRenderTargetTexture(
 		vk2d::RenderTargetTexture						*	render_target_texture );
 
-	// Main thread only.
 	// vk2d::_internal::DescriptorAutoPool					*	GetDescriptorPool();
 
-	/// 			Allocate descriptor set directly from instance.
-	/// 			Prefer to use per thread descriptor auto pool if possible.
-	///				Instance field DescriptorAutoPool is not directly exposed as
-	///				DescriptorAutoPool is single thread only.
-	///	@note		Multithreading: Any thread.
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	/// @brief		Allocate descriptor set directly from instance.
+	///
+	///				Prefer to use per thread descriptor auto pool if possible. Instance field DescriptorAutoPool is not directly
+	///				exposed as DescriptorAutoPool is single thread only.
+	///
+	/// @note		Multithreading: Any thread.
+	/// 
 	/// @param[in]	for_descriptor_set_layout
 	///				tells what type of a descriptor set we should allocate.
+	/// 
 	/// @return		PoolDescriptorSet
 	vk2d::_internal::PoolDescriptorSet						AllocateDescriptorSet(
 		const vk2d::_internal::DescriptorSetLayout		&	for_descriptor_set_layout );
 
-	///				Free descriptor set that was directly allocated from instance.
-	///				Prefer to use per thread descriptor auto pool if possible.
-	///				Instance field DescriptorAutoPool is not directly exposed as
-	///				DescriptorAutoPool is single thread only.
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	/// @brief		Free descriptor set that was directly allocated from instance.
+	/// 
+	///				Prefer to use per thread descriptor auto pool if possible. Instance field DescriptorAutoPool is not directly
+	///				exposed as DescriptorAutoPool is single thread only.
+	/// 
 	/// @note		Multithreading: Any thread.
+	/// 
 	/// @param[in]	descriptor_set
 	///				DescriptorSet that was previously allocated from the same instance.
 	void													FreeDescriptorSet(
 		vk2d::_internal::PoolDescriptorSet				&	descriptor_set );
 
-	///				Create sampler and return a handle to it. InstanceImpl will save
-	///				the sampler internally so we don't have to worry about freeing
-	///				manually at the end, though it can be done with DestroySampler().
-	/// @note		Multithreading: Main thread only.
-	/// @param[in]	sampler_create_info 
-	///				SamplerCreateInfo structure defines what type of sampler we want to create.
-	/// @return		new Sampler object handle.
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	/// @see		vk2d::Instance::CreateSampler()
 	vk2d::Sampler										*	CreateSampler(
 		const vk2d::SamplerCreateInfo					&	sampler_create_info );
 
-	///				Manually destroy Sampler. If parameter is nullptr then this
-	///				function does nothing.
-	/// @note		Multithreading: Main thread only.
-	/// @param[in]	sampler
-	///				pointer to Sampler object handle or nullptr.
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	/// @see		vk2d::Instance::DestroySampler()
 	void													DestroySampler(
 		vk2d::Sampler									*	sampler );
 
-	// Any thread.
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	/// @see		vk2d::Instance::GetMaximumSupportedMultisampling()
 	vk2d::Multisamples										GetMaximumSupportedMultisampling() const;
 
-	// Any thread.
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	/// @see		vk2d::Instance::GetAllSupportedMultisampling()
 	vk2d::Multisamples										GetAllSupportedMultisampling() const;
 
-	// Any thread.
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	/// @brief		Get report function so that parts of VK2D may log messages.
 	vk2d::PFN_VK2D_ReportFunction							GetReportFunction() const;
 
-	// Any thread.
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	/// @brief		Log a message.
+	///
+	/// @note		Multithreading: Any thread.
+	///
+	/// @param		vk_result
+	///				Vulkan result.
+	///
+	/// @param		severity
+	///				Severity of the message.
+	///
+	/// @param		message
+	///				Message.
 	void													Report(
 		VkResult											vk_result,
 		vk2d::ReportSeverity								severity,
 		const std::string								&	message );
 
-	// Any thread.
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	/// @brief		Log a message.
+	///
+	/// @note		Multithreading: Any thread.
+	/// 
+	/// @param		vk_result
+	///				Vulkan result.
+	///
+	/// @param		message
+	///				Message.
 	void													Report(
 		VkResult											vk_result,
 		const std::string								&	message );
 
-	// Any thread.
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	/// @brief		Log a message.
+	///
+	/// @note		Multithreading: Any thread.
+	///
+	/// @param		severity
+	///				Severity of the message.
+	///
+	/// @param		message
+	///				Message.
 	void													Report(
 		vk2d::ReportSeverity								severity,
 		const std::string								&	message );
 
-	// Any thread.
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	/// @brief		Get internal thread pool.
+	///
+	/// @see		vk2d::_internal::ThreadPool
+	/// 
+	/// @note		Multithreading: Any thread.
+	///
+	/// @return		Pointer to thread pool.
 	vk2d::_internal::ThreadPool							*	GetThreadPool() const;
 
-	// Any thread.
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	/// @brief		Get loader threads.
+	///
+	///				Loader threads are threads that are allowed to access the system's hard drive. These are generally used to copy
+	///				file contents into RAM.
+	///
+	/// @see		vk2d::_internal::ThreadPool
+	/// 
+	/// @note		Multithreading: Any thread.
+	///
+	/// @return		List of loader threads indices.
 	const std::vector<uint32_t>							&	GetLoaderThreads() const;
 
-	// Any thread.
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	/// @brief		Get general threads.
+	///
+	///				General threads are meant to do heavy lifting like translating data and decoding packed image files like png
+	///				into a list of pixels.
+	/// 
+	/// @see		vk2d::_internal::ThreadPool
+	/// 
+	/// @note		Multithreading: Any thread.
+	///
+	/// @return		List of loader threads indices.
 	const std::vector<uint32_t>							&	GetGeneralThreads() const;
 
-	// Any thread.
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	/// @see		vk2d::Instance::GetResourceManager()
 	vk2d::ResourceManager								*	GetResourceManager() const;
 
-	// Any thread.
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	/// @brief		Get Vulkan instance.
+	///
+	/// @note		Multithreading: Any thread.
+	///
+	/// @return		Vulkan instance handle.
 	VkInstance												GetVulkanInstance() const;
 
-	// Any thread.
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	/// @brief		Get Vulkan physical device.
+	///
+	/// @note		Multithreading: Any thread.
+	///
+	/// @return		Vulkan physical device handle.
 	VkPhysicalDevice										GetVulkanPhysicalDevice() const;
 
-	// Any thread.
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	/// @brief		Get Vulkan device.
+	///
+	/// @note		Multithreading: Any thread.
+	///
+	/// @return		Vulkan device handle.
 	VkDevice												GetVulkanDevice() const;
 
-	// Any thread.
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	/// @brief		Get primary render queue.
+	///
+	///				Primary render queue is used to do high throughput rendering, all window and render target textures are rendered
+	///				in this queue.
+	///
+	/// @note		Multithreading: Any thread.
+	///
+	/// @return		Resolved queue object.
 	vk2d::_internal::ResolvedQueue							GetPrimaryRenderQueue() const;
 
-	// Any thread.
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	/// @brief		Get secondary render queue.
+	///
+	///				Secondary render queue is used to finalize data already in the GPU, for example generating mip maps for
+	///				textures.
+	///
+	/// @note		Multithreading: Any thread.
+	///
+	/// @return		Resolved queue object.
 	vk2d::_internal::ResolvedQueue							GetSecondaryRenderQueue() const;
 
-	// Any thread.
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	/// @brief		Get compute queue.
+	///
+	///				Compute queue is used to do compute tasks. Highly repeatable tasks should be done in this queue. For example,
+	///				image analysis.
+	///
+	/// @note		Multithreading: Any thread.
+	///
+	/// @return		Resolved queue object.
 	vk2d::_internal::ResolvedQueue							GetPrimaryComputeQueue() const;
 
-	// Any thread.
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	/// @brief		Get transfer queue.
+	///
+	///				Transfer queue is used to upload data to the GPU, this task may run asynchronously to the other GPU tasks,
+	///				allowing more asynchronous operations.
+	///
+	/// @note		Multithreading: Any thread.
+	///
+	/// @return		Resolved queue object.
 	vk2d::_internal::ResolvedQueue							GetPrimaryTransferQueue() const;
 
-
-	// Any thread.
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	/// @brief		Get Vulkan physical device properties.
+	///
+	/// @note		Multithreading: Any thread.
+	///
+	/// @return		Reference to internal physical device properties.
 	const VkPhysicalDeviceProperties					&	GetVulkanPhysicalDeviceProperties() const;
 
-	// Any thread.
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	/// @brief		Get Vulkan physical device memory properties.
+	///
+	/// @note		Multithreading: Any thread.
+	///
+	/// @return		Reference to internal physical device memory properties.
 	const VkPhysicalDeviceMemoryProperties				&	GetVulkanPhysicalDeviceMemoryProperties() const;
 
-	// Any thread.
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	/// @brief		Get Vulkan physical device features.
+	///
+	/// @note		Multithreading: Any thread.
+	///
+	/// @return		Reference to internal physical device features.
 	const VkPhysicalDeviceFeatures						&	GetVulkanPhysicalDeviceFeatures() const;
 
-
-	// Any thread.
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	/// @brief		Get graphics shader modules.
+	///
+	/// @note		Multithreading: Any thread.
+	///
+	/// @param[in]	id
+	///				Graphics shader program ID. See vk2d::_internal::GraphicsShaderProgramID for more info.
+	///
+	/// @return		Graphics shader program.
 	vk2d::_internal::GraphicsShaderProgram					GetGraphicsShaderModules(
 		vk2d::_internal::GraphicsShaderProgramID			id ) const;
 
-
-	// Any thread.
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	/// @brief		Get compute shader modules.
+	///
+	/// @note		Multithreading: Any thread.
+	///
+	/// @param[in]	id
+	///				Compute shader program ID. See vk2d::_internal::ComputeShaderProgramID for more info.
+	///
+	/// @return		Compute shader program.
 	VkShaderModule											GetComputeShaderModules(
 		vk2d::_internal::ComputeShaderProgramID				id ) const;
 
-
-	// Any thread.
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	/// @brief		Get compatible graphics shader modules.
+	///
+	///				This is used to find an existing shader module which is compatible with these properties.
+	/// 
+	/// @note		Multithreading: Any thread.
+	///
+	/// @param[in]	multitextured
+	///				Tells if the graphics shader need to support multitextured meshes.
+	/// 
+	/// @param[in]	custom_uv_border_color
+	///				Tells if the graphics shader need to support custom uv border color.
+	/// 
+	/// @param[in]	vertices_per_primitive
+	///				Tells how many vertices per primitive the shader needs to support, must be a value between 1 and 3 (inclusive).
+	///
+	/// @return		Graphics shader program.
 	vk2d::_internal::GraphicsShaderProgram					GetCompatibleGraphicsShaderModules(
 		bool												multitextured,
 		bool												custom_uv_border_color,
 		uint32_t											vertices_per_primitive ) const;
 
-
-	// Any thread.
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	/// @brief		Get graphics pipeline.
+	///
+	///				Tries to find a graphics pipeline matching these pipeline settings. If no existing pipeline is found, a new one
+	///				is created and added to the list of existing pipelines before being returned.
+	/// 
+	/// @note		Multithreading: Any thread.
+	///
+	/// @param[in]	settings
+	///				Pipeline settings we wish to have.
+	///
+	/// @return		Graphics shader pipeline.
 	VkPipeline												GetGraphicsPipeline(
 		const vk2d::_internal::GraphicsPipelineSettings	&	settings );
 
-
-	// Any thread.
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	/// @brief		Get compute pipeline.
+	///
+	///				Tries to find a compute pipeline matching these pipeline settings. If no existing pipeline is found, a new one
+	///				is created and added to the list of existing pipelines before being returned.
+	/// 
+	/// @note		Multithreading: Any thread.
+	///
+	/// @param[in]	settings
+	///				Pipeline settings we wish to have.
+	///
+	/// @return		Graphics shader pipeline.
 	VkPipeline												GetComputePipeline(
 		const vk2d::_internal::ComputePipelineSettings	&	settings );
 
-
-	// Any thread.
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	/// @brief		Create graphics pipeline.
+	///
+	/// @note		Multithreading: Any thread.
+	///
+	/// @param[in]	settings
+	///				Pipeline settings need the new pipeline to have.
+	///
+	/// @return		New graphics shader pipeline.
 	VkPipeline												CreateGraphicsPipeline(
 		const vk2d::_internal::GraphicsPipelineSettings	&	settings );
 
-
-	// Any thread.
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	/// @brief		Create compute pipeline.
+	///
+	///				Tries to find a compute pipeline matching these pipeline settings. If no existing pipeline is found, a new one
+	///				is created and added to the list of existing pipelines before being returned.
+	/// 
+	/// @note		Multithreading: Any thread.
+	///
+	/// @param[in]	settings
+	///				Pipeline settings need the new pipeline to have.
+	///
+	/// @return		New compute shader pipeline.
 	VkPipeline												CreateComputePipeline(
 		const vk2d::_internal::ComputePipelineSettings	&	settings );
 
-
-	// Any thread.
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	/// @brief		Get graphics pipeline cache.
+	///
+	///				Pipeline cache is used to speed up the creation of new pipelines.
+	/// 
+	/// @note		Multithreading: Any thread.
+	///
+	/// @return		Graphics pipeline cache.
 	VkPipelineCache											GetGraphicsPipelineCache() const;
 
-	// Any thread.
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	/// @brief		Get compute pipeline cache.
+	///
+	///				Pipeline cache is used to speed up the creation of new pipelines.
+	/// 
+	/// @note		Multithreading: Any thread.
+	///
+	/// @return		Graphics pipeline cache.
 	VkPipelineCache											GetComputePipelineCache() const;
 
-	// Any thread.
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	/// @brief		Get graphics primary render pipeline layout.
+	///
+	///				Pipeline layout is the interface between shader and data on the GPU, this defines how the shader gets the data.
+	/// 
+	/// @note		Multithreading: Any thread.
+	///
+	/// @return		Graphics primary render pipeline layout.
 	VkPipelineLayout										GetGraphicsPrimaryRenderPipelineLayout() const;
 
-	// Any thread.
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	/// @brief		Get graphics blur pipeline layout.
+	///
+	///				Pipeline layout is the interface between shader and data on the GPU, this defines how the shader gets the data.
+	/// 
+	/// @note		Multithreading: Any thread.
+	///
+	/// @return		Graphics blur pipeline layout.
 	VkPipelineLayout										GetGraphicsBlurPipelineLayout() const;
 
-	// Any thread.
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	/// @brief		Get graphics sampler descriptor set layout.
+	///
+	///				Descriptor set layout is the layout for a set of data that may be bound at a time in shader.
+	/// 
+	/// @note		Multithreading: Any thread.
+	///
+	/// @return		Descriptor set layout.
 	const vk2d::_internal::DescriptorSetLayout			&	GetGraphicsSamplerDescriptorSetLayout() const;
 
-	// Any thread.
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	/// @brief		Get graphics texture descriptor set layout.
+	///
+	///				Descriptor set layout is the layout for a set of data that may be bound at a time in shader.
+	/// 
+	/// @note		Multithreading: Any thread.
+	///
+	/// @return		Descriptor set layout.
 	const vk2d::_internal::DescriptorSetLayout			&	GetGraphicsTextureDescriptorSetLayout() const;
-	
-	// Any thread.
+
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	/// @brief		Get graphics render target blur texure descriptor set layout.
+	///
+	///				Descriptor set layout is the layout for a set of data that may be bound at a time in shader.
+	/// 
+	/// @note		Multithreading: Any thread.
+	///
+	/// @return		Descriptor set layout.
 	const vk2d::_internal::DescriptorSetLayout			&	GetGraphicsRenderTargetBlurTextureDescriptorSetLayout() const;
 
-	// Any thread.
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	/// @brief		Get graphics uniform buffer descriptor set layout.
+	///
+	///				Descriptor set layout is the layout for a set of data that may be bound at a time in shader.
+	/// 
+	/// @note		Multithreading: Any thread.
+	///
+	/// @return		Descriptor set layout.
 	const vk2d::_internal::DescriptorSetLayout			&	GetGraphicsUniformBufferDescriptorSetLayout() const;
 
-	// Any thread.
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	/// @brief		Get graphics storage buffer descriptor set layout.
+	///
+	///				Descriptor set layout is the layout for a set of data that may be bound at a time in shader.
+	/// 
+	/// @note		Multithreading: Any thread.
+	///
+	/// @return		Descriptor set layout.
 	const vk2d::_internal::DescriptorSetLayout			&	GetGraphicsStorageBufferDescriptorSetLayout() const;
 
-	// Any thread.
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	/// @brief		Get default texture.
+	///
+	///				Default texture is used when a specific texture is not found, is not loaded yet or is not used. This is just a
+	///				white 1x1 pixel that is used instead.
+	/// 
+	/// @note		Multithreading: Any thread.
+	///
+	/// @return		Default texture handle.
 	vk2d::Texture										*	GetDefaultTexture() const;
 
-	// Any thread.
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	/// @brief		Get default sampler.
+	///
+	///				Default sampler is used when a specific sampler is not used. This sampler is set to some reasonable defaults.
+	/// 
+	/// @note		Multithreading: Any thread.
+	///
+	/// @return		Default sampler handle.
 	vk2d::Sampler										*	GetDefaultSampler() const;
 
-	// Any thread.
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	/// @brief		Get blur sampler descriptor set.
+	///
+	///				Sampler descriptor set used with blur pass.
+	/// 
+	/// @note		Multithreading: Any thread.
+	///
+	/// @return		Default sampler handle.
 	VkDescriptorSet											GetBlurSamplerDescriptorSet() const;
 
-
-	// Any thread.
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	/// @brief		Get device memory pool.
+	///
+	///				Vulkan objects require memory backing and that memory must be managed manually as only a limited number of
+	///				allocations from the GPU are permitted. Alignment requirements and memory types complicate things further.
+	///				Device memory pool takes care of these details.
+	///
+	/// @see		vk2d::_internal::DeviceMemoryPool
+	/// 
+	/// @note		Multithreading: Any thread.
+	///
+	/// @return		Pointer to device memory pool.
 	vk2d::_internal::DeviceMemoryPool					*	GetDeviceMemoryPool() const;
 
-
-	// Any thread.
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	/// @brief		Get id of the thread that made this VK2D instance.
+	///
+	/// @note		Multithreading: Any thread.
+	///
+	/// @return		Thread id.
 	std::thread::id											GetCreatorThreadID() const;
 
-	// returns true if this function was called from the same
-	// thread as which created this instance, false otherwise.
-	// Any thread.
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	/// @brief		Checks if the calling thread is the same as the thread that created this VK2D instance.
+	///
+	/// @note		Multithreading: Any thread.
+	///
+	/// @return		true if the thread is the same that created this VK2D instance, false otherwise.
 	bool													IsThisThreadCreatorThread() const;
 
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	/// @brief		Indirection to Vulkan extension. vkCmdPushDescriptorSetKHR().
+	///
+	///				This allows to updating descriptor sets directly into the command buffer.
+	///
+	/// @note		Multithreading: Any thread.
+	/// 
+	/// @param		commandBuffer
+	///				Vulkan command buffer to record this command to.
+	/// 
+	/// @param		pipelineBindPoint
+	///				Which pipeline to bind.
+	///
+	/// @param		layout
+	///				Pipeline layout.
+	/// 
+	/// @param		set
+	///				Which descriptor set to update.
+	/// 
+	/// @param		descriptorWriteCount
+	///				Number of elements in pDescriptorWrites.
+	/// 
+	/// @param		pDescriptorWrites
+	///				Pointer to an array of VkWriteDescriptorSet objects describing how the descriptor sets are updated.
 	void													VkFun_vkCmdPushDescriptorSetKHR(
 		VkCommandBuffer										commandBuffer,
 		VkPipelineBindPoint									pipelineBindPoint,
@@ -347,7 +653,12 @@ public:
 		uint32_t											descriptorWriteCount,
 		const VkWriteDescriptorSet						*	pDescriptorWrites );
 
-	// Any thread.
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	/// @brief		Checks if the object is good to be used or if a failure occurred in it's creation.
+	/// 
+	/// @note		Multithreading: Any thread.
+	/// 
+	/// @return		true if class object was created successfully, false if something went wrong
 	bool													IsGood() const;
 
 private:
