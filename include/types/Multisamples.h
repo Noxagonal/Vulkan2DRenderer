@@ -27,8 +27,8 @@ enum class Multisamples : uint32_t
 ///
 ///				This can be used to test if a multisample variable contains a specific multisample flag. For example:
 /// @code
-///				vk2d::Multisamples ms1 = (outside source);
-///				if( ms1 & vk2d::Multisamples::SAMPLE_COUNT_8 ) {
+///				Multisamples ms1 = (outside source);
+///				if( ms1 & Multisamples::SAMPLE_COUNT_8 ) {
 ///					// ms1 sample count 8 flag is set.
 ///				}
 /// @endcode
@@ -40,9 +40,9 @@ enum class Multisamples : uint32_t
 ///				Second multisample value.
 /// 
 /// @return		Multisample flags that were set in both m1 and m2.
-inline vk2d::Multisamples operator&( vk2d::Multisamples m1, vk2d::Multisamples m2 )
+inline Multisamples operator&( Multisamples m1, Multisamples m2 )
 {
-	return vk2d::Multisamples( uint32_t( m1 ) & uint32_t( m2 ) );
+	return Multisamples( uint32_t( m1 ) & uint32_t( m2 ) );
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -51,7 +51,7 @@ inline vk2d::Multisamples operator&( vk2d::Multisamples m1, vk2d::Multisamples m
 ///				This can be used to set a multisample flag on a variable without disturbing other multisample flags in the
 ///				variable. For example:
 /// @code
-///				auto combined = vk2d::Multisamples::SAMPLE_COUNT_1 | vk2d::Multisamples::SAMPLE_COUNT_4;
+///				auto combined = Multisamples::SAMPLE_COUNT_1 | Multisamples::SAMPLE_COUNT_4;
 /// @endcode
 /// 
 /// @param[in]	m1
@@ -61,9 +61,9 @@ inline vk2d::Multisamples operator&( vk2d::Multisamples m1, vk2d::Multisamples m
 ///				Second multisample value.
 /// 
 /// @return		Combined flags in single value.
-inline vk2d::Multisamples operator|( vk2d::Multisamples m1, vk2d::Multisamples m2 )
+inline Multisamples operator|( Multisamples m1, Multisamples m2 )
 {
-	return vk2d::Multisamples( uint32_t( m1 ) | uint32_t( m2 ) );
+	return Multisamples( uint32_t( m1 ) | uint32_t( m2 ) );
 }
 
 

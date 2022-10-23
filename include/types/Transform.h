@@ -29,15 +29,15 @@ public:
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Default constructor.
-	VK2D_API												Transform()					= default;
+	VK2D_API						Transform()					= default;
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Copy constructor.
 	/// 
 	/// @param		other
 	///				Transform to copy from.
-	VK2D_API												Transform(
-		const vk2d::Transform	&	other )					= default;
+	VK2D_API						Transform(
+		const Transform			&	other )							= default;
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Construct from manual parameters.
@@ -50,7 +50,7 @@ public:
 	/// 
 	/// @param		rotation
 	///				Rotation offset from 0 angle. Counter clockwise.
-	VK2D_API												Transform(
+	VK2D_API						Transform(
 		glm::vec2					position,
 		glm::vec2					scale,
 		float						rotation );
@@ -96,7 +96,7 @@ public:
 	/// @endcode
 	/// 
 	/// @return		A new 4*4 matrix that combines location, scale and rotation.
-	VK2D_API glm::mat4			VK2D_APIENTRY			CalculateTransformationMatrix() const;
+	VK2D_API glm::mat4				VK2D_APIENTRY			CalculateTransformationMatrix() const;
 };
 
 

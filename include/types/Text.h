@@ -13,7 +13,7 @@ namespace vk2d {
 // This is a stub of a class I'm thinking of maybe implementing.
 // Or I may throw it out.
 // Thoughts:
-// - If I implement this then I should also implement vk2d::Array to replace std::vector (I kinda like the idea).
+// - If I implement this then I should also implement Array to replace std::vector (I kinda like the idea).
 // - I'd have to reinvent the wheel that stl already does a really good job at.
 // - Performance will likely be worse than stl libraries unless I dedicate serious efforts to this.
 // - Optional memory pool as parameter? if so, maybe use stl polymorphic memory resources instead of implementing our own pool?
@@ -61,25 +61,25 @@ public:
 		}
 	}
 
-	VK2D_API																		Text(
+	VK2D_API										Text(
 		const char								*	str );
 
-	VK2D_API																		Text(
+	VK2D_API										Text(
 		const wchar_t							*	str );
 
-	VK2D_API																		Text(
-		const vk2d::Text						&	other );
+	VK2D_API										Text(
+		const Text								&	other );
 
-	VK2D_API																		Text(
-		vk2d::Text								&&	other );
+	VK2D_API										Text(
+		Text									&&	other );
 
-	VK2D_API																		~Text();
+	VK2D_API										~Text();
 
-	VK2D_API vk2d::Text							&	VK2D_APIENTRY					operator=(
-		const vk2d::Text						&	other );
+	VK2D_API Text								&	VK2D_APIENTRY					operator=(
+		const Text								&	other );
 
-	VK2D_API vk2d::Text							&	VK2D_APIENTRY					operator=(
-		vk2d::Text								&&	other );
+	VK2D_API Text								&	VK2D_APIENTRY					operator=(
+		Text									&&	other );
 
 	VK2D_API void									VK2D_APIENTRY					FromUTF8(
 		std::string									str );
@@ -97,9 +97,9 @@ public:
 
 private:
 	VK2D_API void									VK2D_APIENTRY					CopyOther(
-		const vk2d::Text						&	other );
+		const Text								&	other );
 	VK2D_API void									VK2D_APIENTRY					MoveOther(
-		vk2d::Text								&&	other );
+		Text									&&	other );
 	VK2D_API void									VK2D_APIENTRY					Deallocate();
 	int32_t										*	str_data						= {};
 	size_t											str_size						= {};

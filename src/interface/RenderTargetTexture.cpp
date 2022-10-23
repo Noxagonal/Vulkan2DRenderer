@@ -43,11 +43,11 @@
 
 
 VK2D_API vk2d::RenderTargetTexture::RenderTargetTexture(
-	vk2d::_internal::InstanceImpl						*	instance,
-	const vk2d::RenderTargetTextureCreateInfo			&	create_info
+	vk2d_internal::InstanceImpl					*	instance,
+	const RenderTargetTextureCreateInfo			&	create_info
 )
 {
-	impl = std::make_unique<vk2d::_internal::RenderTargetTextureImpl>(
+	impl = std::make_unique<vk2d_internal::RenderTargetTextureImpl>(
 		this,
 		instance,
 		create_info
@@ -64,7 +64,7 @@ VK2D_API vk2d::RenderTargetTexture::~RenderTargetTexture()
 {}
 
 VK2D_API void VK2D_APIENTRY vk2d::RenderTargetTexture::SetRenderCoordinateSpace(
-	vk2d::RenderCoordinateSpace coordinate_space
+	RenderCoordinateSpace coordinate_space
 )
 {
 	impl->SetRenderCoordinateSpace( coordinate_space );
@@ -101,20 +101,20 @@ VK2D_API bool VK2D_APIENTRY vk2d::RenderTargetTexture::BeginRender()
 
 VK2D_API bool VK2D_APIENTRY vk2d::RenderTargetTexture::EndRender(
 	glm::vec2	blur_amount,
-	vk2d::BlurType	blur_type
+	BlurType	blur_type
 )
 {
 	return impl->EndRender( blur_type, blur_amount );
 }
 
 VK2D_API void VK2D_APIENTRY vk2d::RenderTargetTexture::DrawTriangleList(
-	const std::vector<vk2d::VertexIndex_3>	&	indices,
-	const std::vector<vk2d::Vertex>			&	vertices,
+	const std::vector<VertexIndex_3>	&	indices,
+	const std::vector<Vertex>			&	vertices,
 	const std::vector<float>				&	texture_layer_weights,
 	const std::vector<glm::mat4>			&	transformations,
 	bool										filled,
-	vk2d::Texture							*	texture,
-	vk2d::Sampler							*	sampler
+	Texture							*	texture,
+	Sampler							*	sampler
 )
 {
 	impl->DrawTriangleList(
@@ -129,12 +129,12 @@ VK2D_API void VK2D_APIENTRY vk2d::RenderTargetTexture::DrawTriangleList(
 }
 
 VK2D_API void VK2D_APIENTRY vk2d::RenderTargetTexture::DrawLineList(
-	const std::vector<vk2d::VertexIndex_2>	&	indices,
-	const std::vector<vk2d::Vertex>			&	vertices,
+	const std::vector<VertexIndex_2>	&	indices,
+	const std::vector<Vertex>			&	vertices,
 	const std::vector<float>				&	texture_layer_weights,
 	const std::vector<glm::mat4>			&	transformations,
-	vk2d::Texture							*	texture,
-	vk2d::Sampler							*	sampler,
+	Texture							*	texture,
+	Sampler							*	sampler,
 	float										line_width
 )
 {
@@ -150,11 +150,11 @@ VK2D_API void VK2D_APIENTRY vk2d::RenderTargetTexture::DrawLineList(
 }
 
 VK2D_API void VK2D_APIENTRY vk2d::RenderTargetTexture::DrawPointList(
-	const std::vector<vk2d::Vertex>			&	vertices,
+	const std::vector<Vertex>			&	vertices,
 	const std::vector<float>				&	texture_layer_weights,
 	const std::vector<glm::mat4>			&	transformations,
-	vk2d::Texture							*	texture,
-	vk2d::Sampler							*	sampler
+	Texture							*	texture,
+	Sampler							*	sampler
 )
 {
 	impl->DrawPointList(
@@ -168,11 +168,11 @@ VK2D_API void VK2D_APIENTRY vk2d::RenderTargetTexture::DrawPointList(
 
 VK2D_API void VK2D_APIENTRY vk2d::RenderTargetTexture::DrawPoint(
 	glm::vec2				location,
-	vk2d::Colorf			color,
+	Colorf			color,
 	float					size
 )
 {
-	auto mesh = vk2d::GeneratePointMeshFromList(
+	auto mesh = GeneratePointMeshFromList(
 		{ location }
 	);
 	mesh.SetVertexColor( color );
@@ -183,11 +183,11 @@ VK2D_API void VK2D_APIENTRY vk2d::RenderTargetTexture::DrawPoint(
 VK2D_API void VK2D_APIENTRY vk2d::RenderTargetTexture::DrawLine(
 	glm::vec2						point_1,
 	glm::vec2						point_2,
-	vk2d::Colorf					color,
+	Colorf					color,
 	float							line_width
 )
 {
-	auto mesh = vk2d::GenerateLineMeshFromList(
+	auto mesh = GenerateLineMeshFromList(
 		{ point_1, point_2 },
 		{ { 0, 1 } }
 	);
@@ -197,12 +197,12 @@ VK2D_API void VK2D_APIENTRY vk2d::RenderTargetTexture::DrawLine(
 }
 
 VK2D_API void VK2D_APIENTRY vk2d::RenderTargetTexture::DrawRectangle(
-	vk2d::Rect2f					area,
+	Rect2f					area,
 	bool							filled,
-	vk2d::Colorf					color
+	Colorf					color
 )
 {
-	auto mesh = vk2d::GenerateRectangleMesh(
+	auto mesh = GenerateRectangleMesh(
 		area,
 		filled
 	);
@@ -211,13 +211,13 @@ VK2D_API void VK2D_APIENTRY vk2d::RenderTargetTexture::DrawRectangle(
 }
 
 VK2D_API void VK2D_APIENTRY vk2d::RenderTargetTexture::DrawEllipse(
-	vk2d::Rect2f					area,
+	Rect2f					area,
 	bool							filled,
 	float							edge_count,
-	vk2d::Colorf					color
+	Colorf					color
 )
 {
-	auto mesh = vk2d::GenerateEllipseMesh(
+	auto mesh = GenerateEllipseMesh(
 		area,
 		filled,
 		edge_count
@@ -227,15 +227,15 @@ VK2D_API void VK2D_APIENTRY vk2d::RenderTargetTexture::DrawEllipse(
 }
 
 VK2D_API void VK2D_APIENTRY vk2d::RenderTargetTexture::DrawEllipsePie(
-	vk2d::Rect2f					area,
+	Rect2f					area,
 	float							begin_angle_radians,
 	float							coverage,
 	bool							filled,
 	float							edge_count,
-	vk2d::Colorf					color
+	Colorf					color
 )
 {
-	auto mesh = vk2d::GenerateEllipsePieMesh(
+	auto mesh = GenerateEllipsePieMesh(
 		area,
 		begin_angle_radians,
 		coverage,
@@ -247,14 +247,14 @@ VK2D_API void VK2D_APIENTRY vk2d::RenderTargetTexture::DrawEllipsePie(
 }
 
 VK2D_API void VK2D_APIENTRY vk2d::RenderTargetTexture::DrawRectanglePie(
-	vk2d::Rect2f					area,
+	Rect2f					area,
 	float							begin_angle_radians,
 	float							coverage,
 	bool							filled,
-	vk2d::Colorf					color
+	Colorf					color
 )
 {
-	auto mesh = vk2d::GenerateRectanglePieMesh(
+	auto mesh = GenerateRectanglePieMesh(
 		area,
 		begin_angle_radians,
 		coverage,
@@ -266,14 +266,14 @@ VK2D_API void VK2D_APIENTRY vk2d::RenderTargetTexture::DrawRectanglePie(
 
 VK2D_API void VK2D_APIENTRY vk2d::RenderTargetTexture::DrawTexture(
 	glm::vec2					top_left,
-	vk2d::Texture			*	texture,
-	vk2d::Colorf				color
+	Texture			*	texture,
+	Colorf				color
 )
 {
 	if( texture ) {
 		auto texture_size = texture->GetSize();
 		auto bottom_right = top_left + glm::vec2( float( texture_size.x ), float( texture_size.y ) );
-		auto mesh = vk2d::GenerateRectangleMesh(
+		auto mesh = GenerateRectangleMesh(
 			{ top_left, bottom_right }
 		);
 		mesh.SetTexture( texture );
@@ -283,8 +283,8 @@ VK2D_API void VK2D_APIENTRY vk2d::RenderTargetTexture::DrawTexture(
 }
 
 VK2D_API void VK2D_APIENTRY vk2d::RenderTargetTexture::DrawMesh(
-	const vk2d::Mesh						&	mesh,
-	const vk2d::Transform					&	transformation
+	const Mesh						&	mesh,
+	const Transform					&	transformation
 )
 {
 	impl->DrawMesh(
@@ -294,8 +294,8 @@ VK2D_API void VK2D_APIENTRY vk2d::RenderTargetTexture::DrawMesh(
 }
 
 VK2D_API void VK2D_APIENTRY vk2d::RenderTargetTexture::DrawMesh(
-	const vk2d::Mesh						&	mesh,
-	const std::vector<vk2d::Transform>		&	transformations
+	const Mesh						&	mesh,
+	const std::vector<Transform>		&	transformations
 )
 {
 	std::vector<glm::mat4> transformation_matrices( std::size( transformations ) );
@@ -310,7 +310,7 @@ VK2D_API void VK2D_APIENTRY vk2d::RenderTargetTexture::DrawMesh(
 }
 
 VK2D_API void VK2D_APIENTRY vk2d::RenderTargetTexture::DrawMesh(
-	const vk2d::Mesh						&	mesh,
+	const Mesh						&	mesh,
 	const std::vector<glm::mat4>			&	transformations
 )
 {
@@ -345,17 +345,17 @@ VK2D_API bool VK2D_APIENTRY vk2d::RenderTargetTexture::IsGood() const
 
 
 
-vk2d::_internal::RenderTargetTextureImpl::RenderTargetTextureImpl(
-	vk2d::RenderTargetTexture					*	my_interface,
-	vk2d::_internal::InstanceImpl				*	instance,
-	const vk2d::RenderTargetTextureCreateInfo	&	create_info
+vk2d::vk2d_internal::RenderTargetTextureImpl::RenderTargetTextureImpl(
+	RenderTargetTexture					*	my_interface,
+	InstanceImpl						*	instance,
+	const RenderTargetTextureCreateInfo	&	create_info
 )
 {
 	VK2D_ASSERT_MAIN_THREAD( instance );
 
 	assert( instance );
 	if( !instance->IsThisThreadCreatorThread() ) {
-		instance->Report( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Cannot create render target texture, this needs to be created from the main thread." );
+		instance->Report( ReportSeverity::NON_CRITICAL_ERROR, "Cannot create render target texture, this needs to be created from the main thread." );
 		return;
 	}
 
@@ -376,7 +376,7 @@ vk2d::_internal::RenderTargetTextureImpl::RenderTargetTextureImpl(
 	if( !CreateFramebuffers() ) return;
 	if( !CreateSynchronizationPrimitives() ) return;
 
-	mesh_buffer		= std::make_unique<vk2d::_internal::MeshBuffer>(
+	mesh_buffer		= std::make_unique<MeshBuffer>(
 		instance,
 		instance->GetVulkanDevice(),
 		instance->GetVulkanPhysicalDeviceProperties().limits,
@@ -392,7 +392,7 @@ vk2d::_internal::RenderTargetTextureImpl::RenderTargetTextureImpl(
 }
 
 
-vk2d::_internal::RenderTargetTextureImpl::~RenderTargetTextureImpl()
+vk2d::vk2d_internal::RenderTargetTextureImpl::~RenderTargetTextureImpl()
 {
 	VK2D_ASSERT_MAIN_THREAD( instance );
 
@@ -406,21 +406,21 @@ vk2d::_internal::RenderTargetTextureImpl::~RenderTargetTextureImpl()
 	DestroyCommandBuffers();
 }
 
-void vk2d::_internal::RenderTargetTextureImpl::SetRenderCoordinateSpace(
-	vk2d::RenderCoordinateSpace coordinate_space
+void vk2d::vk2d_internal::RenderTargetTextureImpl::SetRenderCoordinateSpace(
+	RenderCoordinateSpace coordinate_space
 )
 {
 	this->coordinate_space = coordinate_space;
 }
 
-void vk2d::_internal::RenderTargetTextureImpl::SetSize(
+void vk2d::vk2d_internal::RenderTargetTextureImpl::SetSize(
 	glm::uvec2			new_size
 )
 {
 	VK2D_ASSERT_MAIN_THREAD( instance );
 
 	if( size != new_size ) {
-		// TODO: Consider a better synchronization for RenderTargetTextureImpl::SetSize().
+		// TODO: Consider a better synchronization for vk2d::vk2d_internal::RenderTargetTextureImpl::SetSize().
 		// Consider making surfaces their own unit and when changing size, next render would
 		// immediately use the new size but the old surfaces would be kept around until all
 		// rendering operations have finished on them.
@@ -463,50 +463,50 @@ void vk2d::_internal::RenderTargetTextureImpl::SetSize(
 	}
 }
 
-glm::uvec2 vk2d::_internal::RenderTargetTextureImpl::GetSize() const
+glm::uvec2 vk2d::vk2d_internal::RenderTargetTextureImpl::GetSize() const
 {
 	VK2D_ASSERT_MAIN_THREAD( instance );
 
 	return size;
 }
 
-uint32_t vk2d::_internal::RenderTargetTextureImpl::GetLayerCount() const
+uint32_t vk2d::vk2d_internal::RenderTargetTextureImpl::GetLayerCount() const
 {
 	VK2D_ASSERT_MAIN_THREAD( instance );
 
 	return 1;
 }
 
-uint32_t vk2d::_internal::RenderTargetTextureImpl::GetCurrentSwapBuffer() const
+uint32_t vk2d::vk2d_internal::RenderTargetTextureImpl::GetCurrentSwapBuffer() const
 {
 	VK2D_ASSERT_MAIN_THREAD( instance );
 
 	return current_swap_buffer;
 }
 
-VkImage vk2d::_internal::RenderTargetTextureImpl::GetVulkanImage() const
+VkImage vk2d::vk2d_internal::RenderTargetTextureImpl::GetVulkanImage() const
 {
 	VK2D_ASSERT_MAIN_THREAD( instance );
 
 	return swap_buffers[ current_swap_buffer ].sampled_image.image;
 }
 
-VkImageView vk2d::_internal::RenderTargetTextureImpl::GetVulkanImageView() const
+VkImageView vk2d::vk2d_internal::RenderTargetTextureImpl::GetVulkanImageView() const
 {
 	VK2D_ASSERT_MAIN_THREAD( instance );
 
 	return swap_buffers[ current_swap_buffer ].sampled_image.view;
 }
 
-VkImageLayout vk2d::_internal::RenderTargetTextureImpl::GetVulkanImageLayout() const
+VkImageLayout vk2d::vk2d_internal::RenderTargetTextureImpl::GetVulkanImageLayout() const
 {
 	VK2D_ASSERT_MAIN_THREAD( instance );
 
 	return vk_sampled_image_final_layout;
 }
 
-VkFramebuffer vk2d::_internal::RenderTargetTextureImpl::GetFramebuffer(
-	vk2d::_internal::RenderTargetTextureDependencyInfo			&	dependency_info
+VkFramebuffer vk2d::vk2d_internal::RenderTargetTextureImpl::GetFramebuffer(
+	RenderTargetTextureDependencyInfo			&	dependency_info
 ) const
 {
 	VK2D_ASSERT_MAIN_THREAD( instance );
@@ -515,8 +515,8 @@ VkFramebuffer vk2d::_internal::RenderTargetTextureImpl::GetFramebuffer(
 	return swap_buffers[ dependency_info.swap_buffer_index ].vk_render_framebuffer;
 }
 
-VkSemaphore vk2d::_internal::RenderTargetTextureImpl::GetAllCompleteSemaphore(
-	vk2d::_internal::RenderTargetTextureDependencyInfo		&	dependency_info
+VkSemaphore vk2d::vk2d_internal::RenderTargetTextureImpl::GetAllCompleteSemaphore(
+	RenderTargetTextureDependencyInfo		&	dependency_info
 ) const
 {
 	VK2D_ASSERT_MAIN_THREAD( instance );
@@ -525,8 +525,8 @@ VkSemaphore vk2d::_internal::RenderTargetTextureImpl::GetAllCompleteSemaphore(
 	return swap_buffers[ dependency_info.swap_buffer_index ].vk_render_complete_semaphore;
 }
 
-uint64_t vk2d::_internal::RenderTargetTextureImpl::GetRenderCounter(
-	vk2d::_internal::RenderTargetTextureDependencyInfo			&	dependency_info
+uint64_t vk2d::vk2d_internal::RenderTargetTextureImpl::GetRenderCounter(
+	RenderTargetTextureDependencyInfo			&	dependency_info
 ) const
 {
 	VK2D_ASSERT_MAIN_THREAD( instance );
@@ -535,14 +535,14 @@ uint64_t vk2d::_internal::RenderTargetTextureImpl::GetRenderCounter(
 	return swap_buffers[ dependency_info.swap_buffer_index ].render_counter;
 }
 
-bool vk2d::_internal::RenderTargetTextureImpl::IsTextureDataReady()
+bool vk2d::vk2d_internal::RenderTargetTextureImpl::IsTextureDataReady()
 {
 	VK2D_ASSERT_MAIN_THREAD( instance );
 
 	return true;
 }
 
-bool vk2d::_internal::RenderTargetTextureImpl::BeginRender()
+bool vk2d::vk2d_internal::RenderTargetTextureImpl::BeginRender()
 {
 	VK2D_ASSERT_MAIN_THREAD( instance );
 
@@ -557,7 +557,7 @@ bool vk2d::_internal::RenderTargetTextureImpl::BeginRender()
 		// Wait here for the semaphore to signal, this takes care of synchronization
 		// just in case buffer we're trying to modify hasn't finished rendering.
 		if( !SynchronizeFrame() ) {
-			instance->Report( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot render to RenderTargetTexture, synchronization error!" );
+			instance->Report( ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot render to RenderTargetTexture, synchronization error!" );
 			return false;
 		}
 
@@ -585,10 +585,10 @@ bool vk2d::_internal::RenderTargetTextureImpl::BeginRender()
 			instance->Report( result, "Internal error: Cannot render to RenderTargetTexture, Cannot record primary render command buffer!" );
 			return false;
 		}
-		vk2d::_internal::CmdInsertCommandBufferCheckpoint(
+		CmdInsertCommandBufferCheckpoint(
 			command_buffer,
 			"RenderTargetTextureImpl",
-			vk2d::_internal::CommandBufferCheckpointType::BEGIN_COMMAND_BUFFER
+			CommandBufferCheckpointType::BEGIN_COMMAND_BUFFER
 		);
 
 		// Set viewport, scissor and initial line width
@@ -653,10 +653,10 @@ bool vk2d::_internal::RenderTargetTextureImpl::BeginRender()
 			render_pass_begin_info.clearValueCount	= uint32_t( std::size( clear_values ) );
 			render_pass_begin_info.pClearValues		= clear_values.data();
 
-			vk2d::_internal::CmdInsertCommandBufferCheckpoint(
+			CmdInsertCommandBufferCheckpoint(
 				command_buffer,
 				"RenderTargetTextureImpl",
-				vk2d::_internal::CommandBufferCheckpointType::BEGIN_RENDER_PASS
+				CommandBufferCheckpointType::BEGIN_RENDER_PASS
 			);
 			vkCmdBeginRenderPass(
 				command_buffer,
@@ -669,8 +669,8 @@ bool vk2d::_internal::RenderTargetTextureImpl::BeginRender()
 	return true;
 }
 
-bool vk2d::_internal::RenderTargetTextureImpl::EndRender(
-	vk2d::BlurType	blur_type,
+bool vk2d::vk2d_internal::RenderTargetTextureImpl::EndRender(
+	BlurType	blur_type,
 	glm::vec2		blur_amount
 )
 {
@@ -683,20 +683,20 @@ bool vk2d::_internal::RenderTargetTextureImpl::EndRender(
 
 	// End render pass.
 	{
-		vk2d::_internal::CmdInsertCommandBufferCheckpoint(
+		CmdInsertCommandBufferCheckpoint(
 			render_command_buffer,
 			"RenderTargetTextureImpl",
-			vk2d::_internal::CommandBufferCheckpointType::END_RENDER_PASS
+			CommandBufferCheckpointType::END_RENDER_PASS
 		);
 		vkCmdEndRenderPass( render_command_buffer );
 	}
 	CmdFinalizeRender( swap, blur_type, blur_amount );
 
 	// End command buffer
-	vk2d::_internal::CmdInsertCommandBufferCheckpoint(
+	CmdInsertCommandBufferCheckpoint(
 		render_command_buffer,
 		"RenderTargetTextureImpl",
-		vk2d::_internal::CommandBufferCheckpointType::END_COMMAND_BUFFER
+		CommandBufferCheckpointType::END_COMMAND_BUFFER
 	);
 	auto result = vkEndCommandBuffer(
 		render_command_buffer
@@ -718,7 +718,7 @@ bool vk2d::_internal::RenderTargetTextureImpl::EndRender(
 	return true;
 }
 
-bool vk2d::_internal::RenderTargetTextureImpl::SynchronizeFrame()
+bool vk2d::vk2d_internal::RenderTargetTextureImpl::SynchronizeFrame()
 {
 	VK2D_ASSERT_MAIN_THREAD( instance );
 
@@ -753,7 +753,7 @@ bool vk2d::_internal::RenderTargetTextureImpl::SynchronizeFrame()
 	return true;
 }
 
-bool vk2d::_internal::RenderTargetTextureImpl::WaitIdle()
+bool vk2d::vk2d_internal::RenderTargetTextureImpl::WaitIdle()
 {
 	VK2D_ASSERT_MAIN_THREAD( instance );
 
@@ -795,9 +795,9 @@ bool vk2d::_internal::RenderTargetTextureImpl::WaitIdle()
 	return true;
 }
 
-bool vk2d::_internal::RenderTargetTextureImpl::CommitRenderTargetTextureRender(
-	vk2d::_internal::RenderTargetTextureDependencyInfo	&	dependency_info,
-	vk2d::_internal::RenderTargetTextureRenderCollector	&	collector
+bool vk2d::vk2d_internal::RenderTargetTextureImpl::CommitRenderTargetTextureRender(
+	RenderTargetTextureDependencyInfo	&	dependency_info,
+	RenderTargetTextureRenderCollector	&	collector
 )
 {
 	VK2D_ASSERT_MAIN_THREAD( instance );
@@ -857,8 +857,8 @@ bool vk2d::_internal::RenderTargetTextureImpl::CommitRenderTargetTextureRender(
 	return true;
 }
 
-void vk2d::_internal::RenderTargetTextureImpl::ConfirmRenderTargetTextureRenderSubmission(
-	vk2d::_internal::RenderTargetTextureDependencyInfo	&	dependency_info
+void vk2d::vk2d_internal::RenderTargetTextureImpl::ConfirmRenderTargetTextureRenderSubmission(
+	RenderTargetTextureDependencyInfo	&	dependency_info
 )
 {
 	VK2D_ASSERT_MAIN_THREAD( instance );
@@ -873,8 +873,8 @@ void vk2d::_internal::RenderTargetTextureImpl::ConfirmRenderTargetTextureRenderS
 	}
 }
 
-void vk2d::_internal::RenderTargetTextureImpl::ConfirmRenderTargetTextureRenderFinished(
-	vk2d::_internal::RenderTargetTextureDependencyInfo	&	dependency_info
+void vk2d::vk2d_internal::RenderTargetTextureImpl::ConfirmRenderTargetTextureRenderFinished(
+	RenderTargetTextureDependencyInfo	&	dependency_info
 )
 {
 	VK2D_ASSERT_MAIN_THREAD( instance );
@@ -889,8 +889,8 @@ void vk2d::_internal::RenderTargetTextureImpl::ConfirmRenderTargetTextureRenderF
 	}
 }
 
-void vk2d::_internal::RenderTargetTextureImpl::AbortRenderTargetTextureRender(
-	vk2d::_internal::RenderTargetTextureDependencyInfo	&	dependency_info
+void vk2d::vk2d_internal::RenderTargetTextureImpl::AbortRenderTargetTextureRender(
+	RenderTargetTextureDependencyInfo	&	dependency_info
 )
 {
 	VK2D_ASSERT_MAIN_THREAD( instance );
@@ -913,7 +913,7 @@ void vk2d::_internal::RenderTargetTextureImpl::AbortRenderTargetTextureRender(
 	}
 }
 
-void vk2d::_internal::RenderTargetTextureImpl::ResetRenderTargetTextureRenderDependencies(
+void vk2d::vk2d_internal::RenderTargetTextureImpl::ResetRenderTargetTextureRenderDependencies(
 	uint32_t				swap_buffer_index
 )
 {
@@ -930,9 +930,9 @@ void vk2d::_internal::RenderTargetTextureImpl::ResetRenderTargetTextureRenderDep
 	swap.render_wait_for_pipeline_stages.clear();
 }
 
-void vk2d::_internal::RenderTargetTextureImpl::CheckAndAddRenderTargetTextureDependency(
-	uint32_t				swap_buffer_index,
-	vk2d::Texture		*	texture
+void vk2d::vk2d_internal::RenderTargetTextureImpl::CheckAndAddRenderTargetTextureDependency(
+	uint32_t		swap_buffer_index,
+	Texture		*	texture
 )
 {
 	VK2D_ASSERT_MAIN_THREAD( instance );
@@ -940,14 +940,14 @@ void vk2d::_internal::RenderTargetTextureImpl::CheckAndAddRenderTargetTextureDep
 	auto & swap		= swap_buffers[ swap_buffer_index ];
 
 	// TODO: Investigate a need for reference count of some sort. Render target can have dependencies to multiple different parents.
-	if( auto render_target = dynamic_cast<vk2d::_internal::RenderTargetTextureImpl*>( texture->texture_impl ) ) {
+	if( auto render_target = dynamic_cast<RenderTargetTextureImpl*>( texture->texture_impl ) ) {
 
 		//std::lock_guard<std::mutex> lock_guard( swap.render_commitment_request_mutex );
 
 		if( std::none_of(
 			swap.render_target_texture_dependencies.begin(),
 			swap.render_target_texture_dependencies.end(),
-			[render_target]( vk2d::_internal::RenderTargetTextureDependencyInfo & rt )
+			[render_target]( RenderTargetTextureDependencyInfo & rt )
 			{
 				if( render_target == rt.render_target ) return true;
 				return false;
@@ -957,24 +957,24 @@ void vk2d::_internal::RenderTargetTextureImpl::CheckAndAddRenderTargetTextureDep
 	}
 }
 
-vk2d::_internal::RenderTargetTextureDependencyInfo vk2d::_internal::RenderTargetTextureImpl::GetDependencyInfo()
+vk2d::vk2d_internal::RenderTargetTextureDependencyInfo vk2d::vk2d_internal::RenderTargetTextureImpl::GetDependencyInfo()
 {
 	VK2D_ASSERT_MAIN_THREAD( instance );
 
-	vk2d::_internal::RenderTargetTextureDependencyInfo dependency_info {};
+	RenderTargetTextureDependencyInfo dependency_info {};
 	dependency_info.render_target		= this;
 	dependency_info.swap_buffer_index	= current_swap_buffer;
 	return dependency_info;
 }
 
-void vk2d::_internal::RenderTargetTextureImpl::DrawTriangleList(
-	const std::vector<vk2d::VertexIndex_3>	&	indices,
-	const std::vector<vk2d::Vertex>			&	vertices,
-	const std::vector<float>				&	texture_layer_weights,
-	const std::vector<glm::mat4>			&	transformations,
-	bool										filled,
-	vk2d::Texture							*	texture,
-	vk2d::Sampler							*	sampler
+void vk2d::vk2d_internal::RenderTargetTextureImpl::DrawTriangleList(
+	const std::vector<VertexIndex_3>	&	indices,
+	const std::vector<Vertex>			&	vertices,
+	const std::vector<float>			&	texture_layer_weights,
+	const std::vector<glm::mat4>		&	transformations,
+	bool									filled,
+	Texture								*	texture,
+	Sampler								*	sampler
 )
 {
 	VK2D_ASSERT_MAIN_THREAD( instance );
@@ -999,14 +999,14 @@ void vk2d::_internal::RenderTargetTextureImpl::DrawTriangleList(
 	);
 }
 
-void vk2d::_internal::RenderTargetTextureImpl::DrawTriangleList(
-	const std::vector<uint32_t>				&	raw_indices,
-	const std::vector<vk2d::Vertex>			&	vertices,
-	const std::vector<float>				&	texture_layer_weights,
-	const std::vector<glm::mat4>			&	transformations,
-	bool										solid,
-	vk2d::Texture							*	texture,
-	vk2d::Sampler							*	sampler
+void vk2d::vk2d_internal::RenderTargetTextureImpl::DrawTriangleList(
+	const std::vector<uint32_t>			&	raw_indices,
+	const std::vector<Vertex>			&	vertices,
+	const std::vector<float>			&	texture_layer_weights,
+	const std::vector<glm::mat4>		&	transformations,
+	bool									solid,
+	Texture								*	texture,
+	Sampler								*	sampler
 )
 {
 	VK2D_ASSERT_MAIN_THREAD( instance );
@@ -1042,7 +1042,7 @@ void vk2d::_internal::RenderTargetTextureImpl::DrawTriangleList(
 			3
 		);
 
-		vk2d::_internal::GraphicsPipelineSettings pipeline_settings {};
+		GraphicsPipelineSettings pipeline_settings {};
 		pipeline_settings.vk_pipeline_layout	= instance->GetGraphicsPrimaryRenderPipelineLayout();
 		pipeline_settings.vk_render_pass		= vk_attachment_render_pass;
 		pipeline_settings.primitive_topology	= VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
@@ -1081,7 +1081,7 @@ void vk2d::_internal::RenderTargetTextureImpl::DrawTriangleList(
 
 	if( push_result.success ) {
 		{
-			vk2d::_internal::GraphicsPrimaryRenderPushConstants pc {};
+			GraphicsPrimaryRenderPushConstants pc {};
 			pc.transformation_offset	= push_result.location_info.transformation_offset;
 			pc.index_offset				= push_result.location_info.index_offset;
 			pc.index_count				= 3;
@@ -1098,10 +1098,10 @@ void vk2d::_internal::RenderTargetTextureImpl::DrawTriangleList(
 			);
 		}
 
-		vk2d::_internal::CmdInsertCommandBufferCheckpoint(
+		CmdInsertCommandBufferCheckpoint(
 			command_buffer,
 			"MeshBuffer",
-			vk2d::_internal::CommandBufferCheckpointType::DRAW
+			CommandBufferCheckpointType::DRAW
 		);
 		vkCmdDrawIndexed(
 			command_buffer,
@@ -1112,14 +1112,14 @@ void vk2d::_internal::RenderTargetTextureImpl::DrawTriangleList(
 			0
 		);
 	} else {
-		instance->Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot push mesh into mesh render queue!" );
+		instance->Report( ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot push mesh into mesh render queue!" );
 	}
 
 	#if VK2D_BUILD_OPTION_DEBUG_ALWAYS_DRAW_TRIANGLES_WIREFRAME
 	if( solid ) {
 		auto vertices_copy = vertices;
 		for( auto & v : vertices_copy ) {
-			v.color = vk2d::Colorf( 0.2f, 1.0f, 0.4f, 0.25f );
+			v.color = Colorf( 0.2f, 1.0f, 0.4f, 0.25f );
 		}
 		DrawTriangleList(
 			raw_indices,
@@ -1131,14 +1131,14 @@ void vk2d::_internal::RenderTargetTextureImpl::DrawTriangleList(
 	#endif
 }
 
-void vk2d::_internal::RenderTargetTextureImpl::DrawLineList(
-	const std::vector<vk2d::VertexIndex_2>	&	indices,
-	const std::vector<vk2d::Vertex>			&	vertices,
-	const std::vector<float>				&	texture_layer_weights,
-	const std::vector<glm::mat4>			&	transformations,
-	vk2d::Texture							*	texture,
-	vk2d::Sampler							*	sampler,
-	float										line_width
+void vk2d::vk2d_internal::RenderTargetTextureImpl::DrawLineList(
+	const std::vector<VertexIndex_2>	&	indices,
+	const std::vector<Vertex>			&	vertices,
+	const std::vector<float>			&	texture_layer_weights,
+	const std::vector<glm::mat4>		&	transformations,
+	Texture								*	texture,
+	Sampler								*	sampler,
+	float									line_width
 )
 {
 	VK2D_ASSERT_MAIN_THREAD( instance );
@@ -1162,14 +1162,14 @@ void vk2d::_internal::RenderTargetTextureImpl::DrawLineList(
 	);
 }
 
-void vk2d::_internal::RenderTargetTextureImpl::DrawLineList(
-	const std::vector<uint32_t>				&	raw_indices,
-	const std::vector<vk2d::Vertex>			&	vertices,
-	const std::vector<float>				&	texture_layer_weights,
-	const std::vector<glm::mat4>			&	transformations,
-	vk2d::Texture							*	texture,
-	vk2d::Sampler							*	sampler,
-	float										line_width
+void vk2d::vk2d_internal::RenderTargetTextureImpl::DrawLineList(
+	const std::vector<uint32_t>		&	raw_indices,
+	const std::vector<Vertex>		&	vertices,
+	const std::vector<float>		&	texture_layer_weights,
+	const std::vector<glm::mat4>	&	transformations,
+	Texture							*	texture,
+	Sampler							*	sampler,
+	float								line_width
 )
 {
 	VK2D_ASSERT_MAIN_THREAD( instance );
@@ -1205,7 +1205,7 @@ void vk2d::_internal::RenderTargetTextureImpl::DrawLineList(
 			2
 		);
 
-		vk2d::_internal::GraphicsPipelineSettings pipeline_settings {};
+		GraphicsPipelineSettings pipeline_settings {};
 		pipeline_settings.vk_pipeline_layout	= instance->GetGraphicsPrimaryRenderPipelineLayout();
 		pipeline_settings.vk_render_pass		= vk_attachment_render_pass;
 		pipeline_settings.primitive_topology	= VK_PRIMITIVE_TOPOLOGY_LINE_LIST;
@@ -1245,7 +1245,7 @@ void vk2d::_internal::RenderTargetTextureImpl::DrawLineList(
 
 	if( push_result.success ) {
 		{
-			vk2d::_internal::GraphicsPrimaryRenderPushConstants pc {};
+			GraphicsPrimaryRenderPushConstants pc {};
 			pc.transformation_offset	= push_result.location_info.transformation_offset;
 			pc.index_offset				= push_result.location_info.index_offset;
 			pc.index_count				= 2;
@@ -1262,10 +1262,10 @@ void vk2d::_internal::RenderTargetTextureImpl::DrawLineList(
 			);
 		}
 
-		vk2d::_internal::CmdInsertCommandBufferCheckpoint(
+		CmdInsertCommandBufferCheckpoint(
 			command_buffer,
 			"MeshBuffer",
-			vk2d::_internal::CommandBufferCheckpointType::DRAW
+			CommandBufferCheckpointType::DRAW
 		);
 		vkCmdDrawIndexed(
 			command_buffer,
@@ -1276,16 +1276,16 @@ void vk2d::_internal::RenderTargetTextureImpl::DrawLineList(
 			0
 		);
 	} else {
-		instance->Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot push mesh into mesh render queue!" );
+		instance->Report( ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot push mesh into mesh render queue!" );
 	}
 }
 
-void vk2d::_internal::RenderTargetTextureImpl::DrawPointList(
-	const std::vector<vk2d::Vertex>			&	vertices,
-	const std::vector<float>				&	texture_layer_weights,
-	const std::vector<glm::mat4>			&	transformations,
-	vk2d::Texture							*	texture,
-	vk2d::Sampler							*	sampler
+void vk2d::vk2d_internal::RenderTargetTextureImpl::DrawPointList(
+	const std::vector<Vertex>		&	vertices,
+	const std::vector<float>		&	texture_layer_weights,
+	const std::vector<glm::mat4>	&	transformations,
+	Texture							*	texture,
+	Sampler							*	sampler
 )
 {
 	VK2D_ASSERT_MAIN_THREAD( instance );
@@ -1320,7 +1320,7 @@ void vk2d::_internal::RenderTargetTextureImpl::DrawPointList(
 			1
 		);
 
-		vk2d::_internal::GraphicsPipelineSettings pipeline_settings {};
+		GraphicsPipelineSettings pipeline_settings {};
 		pipeline_settings.vk_pipeline_layout	= instance->GetGraphicsPrimaryRenderPipelineLayout();
 		pipeline_settings.vk_render_pass		= vk_attachment_render_pass;
 		pipeline_settings.primitive_topology	= VK_PRIMITIVE_TOPOLOGY_POINT_LIST;
@@ -1356,7 +1356,7 @@ void vk2d::_internal::RenderTargetTextureImpl::DrawPointList(
 
 	if( push_result.success ) {
 		{
-			vk2d::_internal::GraphicsPrimaryRenderPushConstants pc {};
+			GraphicsPrimaryRenderPushConstants pc {};
 			pc.transformation_offset	= push_result.location_info.transformation_offset;
 			pc.index_offset				= push_result.location_info.index_offset;
 			pc.index_count				= 1;
@@ -1373,10 +1373,10 @@ void vk2d::_internal::RenderTargetTextureImpl::DrawPointList(
 			);
 		}
 
-		vk2d::_internal::CmdInsertCommandBufferCheckpoint(
+		CmdInsertCommandBufferCheckpoint(
 			command_buffer,
 			"MeshBuffer",
-			vk2d::_internal::CommandBufferCheckpointType::DRAW
+			CommandBufferCheckpointType::DRAW
 		);
 		vkCmdDraw(
 			command_buffer,
@@ -1386,13 +1386,13 @@ void vk2d::_internal::RenderTargetTextureImpl::DrawPointList(
 			0
 		);
 	} else {
-		instance->Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot push mesh into mesh render queue!" );
+		instance->Report( ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot push mesh into mesh render queue!" );
 	}
 }
 
-void vk2d::_internal::RenderTargetTextureImpl::DrawMesh(
-	const vk2d::Mesh						&	mesh,
-	const std::vector<glm::mat4>			&	transformations
+void vk2d::vk2d_internal::RenderTargetTextureImpl::DrawMesh(
+	const Mesh							&	mesh,
+	const std::vector<glm::mat4>		&	transformations
 )
 {
 	VK2D_ASSERT_MAIN_THREAD( instance );
@@ -1400,7 +1400,7 @@ void vk2d::_internal::RenderTargetTextureImpl::DrawMesh(
 	if( mesh.vertices.size() == 0 ) return;
 
 	switch( mesh.mesh_type ) {
-		case vk2d::MeshType::TRIANGLE_FILLED:
+		case MeshType::TRIANGLE_FILLED:
 			DrawTriangleList(
 				mesh.indices,
 				mesh.vertices,
@@ -1411,7 +1411,7 @@ void vk2d::_internal::RenderTargetTextureImpl::DrawMesh(
 				mesh.sampler
 			);
 			break;
-		case vk2d::MeshType::TRIANGLE_WIREFRAME:
+		case MeshType::TRIANGLE_WIREFRAME:
 			DrawTriangleList(
 				mesh.indices,
 				mesh.vertices,
@@ -1422,7 +1422,7 @@ void vk2d::_internal::RenderTargetTextureImpl::DrawMesh(
 				mesh.sampler
 			);
 			break;
-		case vk2d::MeshType::LINE:
+		case MeshType::LINE:
 			DrawLineList(
 				mesh.indices,
 				mesh.vertices,
@@ -1433,7 +1433,7 @@ void vk2d::_internal::RenderTargetTextureImpl::DrawMesh(
 				mesh.line_width
 			);
 			break;
-		case vk2d::MeshType::POINT:
+		case MeshType::POINT:
 			DrawPointList(
 				mesh.vertices,
 				mesh.texture_layer_weights,
@@ -1447,44 +1447,44 @@ void vk2d::_internal::RenderTargetTextureImpl::DrawMesh(
 	}
 }
 
-bool vk2d::_internal::RenderTargetTextureImpl::IsGood() const
+bool vk2d::vk2d_internal::RenderTargetTextureImpl::IsGood() const
 {
 	return is_good;
 }
 
-bool vk2d::_internal::RenderTargetTextureImpl::DetermineType()
+bool vk2d::vk2d_internal::RenderTargetTextureImpl::DetermineType()
 {
 	VK2D_ASSERT_MAIN_THREAD( instance );
 
 	assert( instance );
-	if( samples == vk2d::Multisamples( 0 ) ) {
-		instance->Report( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Cannot create RenderTargetTexture, multisamples was set to 0, must be 1 or higher!" );
+	if( samples == Multisamples( 0 ) ) {
+		instance->Report( ReportSeverity::NON_CRITICAL_ERROR, "Cannot create RenderTargetTexture, multisamples was set to 0, must be 1 or higher!" );
 		return false;
 	}
 
-	if( samples == vk2d::Multisamples::SAMPLE_COUNT_1 ) {
+	if( samples == Multisamples::SAMPLE_COUNT_1 ) {
 		// no multisamples
 		if( create_info_copy.enable_blur ) {
 			// with blur
-			type = vk2d::_internal::RenderTargetTextureType::WITH_BLUR;
+			type = RenderTargetTextureType::WITH_BLUR;
 		} else {
 			// no blur
-			type = vk2d::_internal::RenderTargetTextureType::DIRECT;
+			type = RenderTargetTextureType::DIRECT;
 		}
 	} else {
 		// with multisamples
 		if( create_info_copy.enable_blur ) {
 			// with blur
-			type = vk2d::_internal::RenderTargetTextureType::WITH_MULTISAMPLE_AND_BLUR;
+			type = RenderTargetTextureType::WITH_MULTISAMPLE_AND_BLUR;
 		} else {
 			// no blur
-			type = vk2d::_internal::RenderTargetTextureType::WITH_MULTISAMPLE;
+			type = RenderTargetTextureType::WITH_MULTISAMPLE;
 		}
 	}
 	return true;
 }
 
-bool vk2d::_internal::RenderTargetTextureImpl::CreateCommandBuffers()
+bool vk2d::vk2d_internal::RenderTargetTextureImpl::CreateCommandBuffers()
 {
 	auto render_queue_family_index = instance->GetPrimaryRenderQueue().GetQueueFamilyIndex();
 	auto compute_queue_family_index = instance->GetPrimaryComputeQueue().GetQueueFamilyIndex();
@@ -1545,7 +1545,7 @@ bool vk2d::_internal::RenderTargetTextureImpl::CreateCommandBuffers()
 	return true;
 }
 
-void vk2d::_internal::RenderTargetTextureImpl::DestroyCommandBuffers()
+void vk2d::vk2d_internal::RenderTargetTextureImpl::DestroyCommandBuffers()
 {
 	vkDestroyCommandPool(
 		instance->GetVulkanDevice(),
@@ -1556,7 +1556,7 @@ void vk2d::_internal::RenderTargetTextureImpl::DestroyCommandBuffers()
 	vk_graphics_command_pool	= {};
 }
 
-bool vk2d::_internal::RenderTargetTextureImpl::CreateFrameDataBuffers()
+bool vk2d::vk2d_internal::RenderTargetTextureImpl::CreateFrameDataBuffers()
 {
 	// Create staging and device buffers
 	{
@@ -1564,7 +1564,7 @@ bool vk2d::_internal::RenderTargetTextureImpl::CreateFrameDataBuffers()
 		staging_buffer_create_info.sType					= VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
 		staging_buffer_create_info.pNext					= nullptr;
 		staging_buffer_create_info.flags					= 0;
-		staging_buffer_create_info.size						= sizeof( vk2d::_internal::FrameData );
+		staging_buffer_create_info.size						= sizeof( FrameData );
 		staging_buffer_create_info.usage					= VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
 		staging_buffer_create_info.sharingMode				= VK_SHARING_MODE_EXCLUSIVE;
 		staging_buffer_create_info.queueFamilyIndexCount	= 0;
@@ -1582,7 +1582,7 @@ bool vk2d::_internal::RenderTargetTextureImpl::CreateFrameDataBuffers()
 		device_buffer_create_info.sType						= VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
 		device_buffer_create_info.pNext						= nullptr;
 		device_buffer_create_info.flags						= 0;
-		device_buffer_create_info.size						= sizeof( vk2d::_internal::FrameData );
+		device_buffer_create_info.size						= sizeof( FrameData );
 		device_buffer_create_info.usage						= VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
 		device_buffer_create_info.sharingMode				= VK_SHARING_MODE_EXCLUSIVE;
 		device_buffer_create_info.queueFamilyIndexCount		= 0;
@@ -1609,7 +1609,7 @@ bool vk2d::_internal::RenderTargetTextureImpl::CreateFrameDataBuffers()
 		VkDescriptorBufferInfo descriptor_write_buffer_info {};
 		descriptor_write_buffer_info.buffer	= frame_data_device_buffer.buffer;
 		descriptor_write_buffer_info.offset	= 0;
-		descriptor_write_buffer_info.range	= sizeof( vk2d::_internal::FrameData );
+		descriptor_write_buffer_info.range	= sizeof( FrameData );
 		VkWriteDescriptorSet descriptor_write {};
 		descriptor_write.sType				= VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 		descriptor_write.pNext				= nullptr;
@@ -1631,7 +1631,7 @@ bool vk2d::_internal::RenderTargetTextureImpl::CreateFrameDataBuffers()
 	return true;
 }
 
-void vk2d::_internal::RenderTargetTextureImpl::DestroyFrameDataBuffers()
+void vk2d::vk2d_internal::RenderTargetTextureImpl::DestroyFrameDataBuffers()
 {
 	instance->FreeDescriptorSet(
 		frame_data_descriptor_set
@@ -1646,7 +1646,7 @@ void vk2d::_internal::RenderTargetTextureImpl::DestroyFrameDataBuffers()
 
 
 
-bool vk2d::_internal::RenderTargetTextureImpl::CreateImages(
+bool vk2d::vk2d_internal::RenderTargetTextureImpl::CreateImages(
 	glm::uvec2		new_size
 )
 {
@@ -1654,11 +1654,11 @@ bool vk2d::_internal::RenderTargetTextureImpl::CreateImages(
 
 	auto CreateLocalImageResource =[ this ](
 		VkImageUsageFlags										usage,
-		const std::vector<vk2d::_internal::ResolvedQueue*>	&	used_in_queues,
+		const std::vector<ResolvedQueue*>	&	used_in_queues,
 		VkSampleCountFlagBits									samples				= VK_SAMPLE_COUNT_1_BIT,
 		const std::vector<VkExtent2D>						&	mip_levels			= { { 1, 1 } },
 		bool													is_array_texture	= false
-		) -> vk2d::_internal::CompleteImageResource
+		) -> CompleteImageResource
 	{
 		std::vector<uint32_t> unique_queue_family_indices;
 		unique_queue_family_indices.clear();
@@ -1710,7 +1710,7 @@ bool vk2d::_internal::RenderTargetTextureImpl::CreateImages(
 		image_view_create_info.subresourceRange.baseArrayLayer	= 0;
 		image_view_create_info.subresourceRange.layerCount		= 1;
 
-		vk2d::_internal::CompleteImageResource image = instance->GetDeviceMemoryPool()->CreateCompleteImageResource(
+		CompleteImageResource image = instance->GetDeviceMemoryPool()->CreateCompleteImageResource(
 			&image_create_info,
 			VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
 			&image_view_create_info
@@ -1737,13 +1737,13 @@ bool vk2d::_internal::RenderTargetTextureImpl::CreateImages(
 		granularity_aligned = false;
 	}
 
-	mipmap_levels				= vk2d::_internal::GenerateMipSizes(
+	mipmap_levels				= GenerateMipSizes(
 		create_info_copy.size
 	);
 
 	// Using switch to decouple different paths of what resources to create.
 	switch( type ) {
-		case vk2d::_internal::RenderTargetTextureType::DIRECT:
+		case RenderTargetTextureType::DIRECT:
 			// (Render) -> Attachment -> (Blit) -> Sampled.
 			//			   render				   render
 			// Image queue family ownership ^
@@ -1774,7 +1774,7 @@ bool vk2d::_internal::RenderTargetTextureImpl::CreateImages(
 			break;
 		}
 
-		case vk2d::_internal::RenderTargetTextureType::WITH_MULTISAMPLE:
+		case RenderTargetTextureType::WITH_MULTISAMPLE:
 			// (Render) -> Attachment -> (Resolve) -> Buffer1 -> (Blit) -> Sampled.
 			//			   render					  render			   render
 			// Image queue family ownership ^
@@ -1809,7 +1809,7 @@ bool vk2d::_internal::RenderTargetTextureImpl::CreateImages(
 			break;
 		}
 
-		case vk2d::_internal::RenderTargetTextureType::WITH_BLUR:
+		case RenderTargetTextureType::WITH_BLUR:
 			// (Render) -> Attachment -> (BlurPass1) -> Buffer1 -> (BlurPass2) -> Attachment -> (Blit) -> Sampled.
 			//			   concurrent                   blur					  concurrent			  render
 			// Image queue family ownership ^
@@ -1843,7 +1843,7 @@ bool vk2d::_internal::RenderTargetTextureImpl::CreateImages(
 
 			break;
 		}
-		case vk2d::_internal::RenderTargetTextureType::WITH_MULTISAMPLE_AND_BLUR:
+		case RenderTargetTextureType::WITH_MULTISAMPLE_AND_BLUR:
 			// (Render) -> Attachment -> (Resolve) -> Buffer1 -> (BlurPass1) -> Buffer2 -> (BlurPass2) -> Buffer1 -> (Blit) -> Sampled.
 			//			   render					  concurrent				blur					  concurrent		   render
 			// Image queue family ownership ^
@@ -1886,7 +1886,7 @@ bool vk2d::_internal::RenderTargetTextureImpl::CreateImages(
 		}
 		default:
 		{
-			instance->Report( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot create RenderTargetTexture, unknown type!" );
+			instance->Report( ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot create RenderTargetTexture, unknown type!" );
 			return false;
 			break;
 		}
@@ -1895,7 +1895,7 @@ bool vk2d::_internal::RenderTargetTextureImpl::CreateImages(
 	return true;
 }
 
-void vk2d::_internal::RenderTargetTextureImpl::DestroyImages()
+void vk2d::vk2d_internal::RenderTargetTextureImpl::DestroyImages()
 {
 	for( auto & s : swap_buffers ) {
 		instance->GetDeviceMemoryPool()->FreeCompleteResource( s.attachment_image );
@@ -1912,9 +1912,9 @@ void vk2d::_internal::RenderTargetTextureImpl::DestroyImages()
 
 
 
-bool vk2d::_internal::RenderTargetTextureImpl::CreateRenderPasses()
+bool vk2d::vk2d_internal::RenderTargetTextureImpl::CreateRenderPasses()
 {
-	bool use_multisampling = samples != vk2d::Multisamples::SAMPLE_COUNT_1;
+	bool use_multisampling = samples != Multisamples::SAMPLE_COUNT_1;
 
 	// Create primary render attachment render pass.
 	{
@@ -2110,7 +2110,7 @@ bool vk2d::_internal::RenderTargetTextureImpl::CreateRenderPasses()
 	return true;
 }
 
-void vk2d::_internal::RenderTargetTextureImpl::DestroyRenderPasses()
+void vk2d::vk2d_internal::RenderTargetTextureImpl::DestroyRenderPasses()
 {
 	auto vk_device = instance->GetVulkanDevice();
 
@@ -2137,9 +2137,9 @@ void vk2d::_internal::RenderTargetTextureImpl::DestroyRenderPasses()
 
 }
 
-bool vk2d::_internal::RenderTargetTextureImpl::CreateFramebuffers()
+bool vk2d::vk2d_internal::RenderTargetTextureImpl::CreateFramebuffers()
 {
-	bool use_multisampling = samples != vk2d::Multisamples::SAMPLE_COUNT_1;
+	bool use_multisampling = samples != Multisamples::SAMPLE_COUNT_1;
 
 	auto CreateLocalFramebuffer =[this](
 		const std::vector<VkImageView>	&	attachments,
@@ -2233,7 +2233,7 @@ bool vk2d::_internal::RenderTargetTextureImpl::CreateFramebuffers()
 	return true;
 }
 
-void vk2d::_internal::RenderTargetTextureImpl::DestroyFramebuffers()
+void vk2d::vk2d_internal::RenderTargetTextureImpl::DestroyFramebuffers()
 {
 	for( auto & s : swap_buffers ) {
 		vkDestroyFramebuffer(
@@ -2261,7 +2261,7 @@ void vk2d::_internal::RenderTargetTextureImpl::DestroyFramebuffers()
 
 
 
-bool vk2d::_internal::RenderTargetTextureImpl::CreateSynchronizationPrimitives()
+bool vk2d::vk2d_internal::RenderTargetTextureImpl::CreateSynchronizationPrimitives()
 {
 	auto result = VK_SUCCESS;
 
@@ -2316,7 +2316,7 @@ bool vk2d::_internal::RenderTargetTextureImpl::CreateSynchronizationPrimitives()
 	return true;
 }
 
-void vk2d::_internal::RenderTargetTextureImpl::DestroySynchronizationPrimitives()
+void vk2d::vk2d_internal::RenderTargetTextureImpl::DestroySynchronizationPrimitives()
 {
 	for( auto & s : swap_buffers ) {
 		vkDestroySemaphore(
@@ -2332,8 +2332,8 @@ void vk2d::_internal::RenderTargetTextureImpl::DestroySynchronizationPrimitives(
 	}
 }
 
-bool vk2d::_internal::RenderTargetTextureImpl::RecordTransferCommandBuffer(
-	vk2d::_internal::RenderTargetTextureImpl::SwapBuffer	&	swap
+bool vk2d::vk2d_internal::RenderTargetTextureImpl::RecordTransferCommandBuffer(
+	RenderTargetTextureImpl::SwapBuffer	&	swap
 )
 {
 	assert( swap.vk_transfer_command_buffer );
@@ -2363,7 +2363,7 @@ bool vk2d::_internal::RenderTargetTextureImpl::RecordTransferCommandBuffer(
 		if( !CmdUpdateFrameData(
 			command_buffer
 		) ) {
-			instance->Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot render to RenderTargetTexture, Cannot record commands to transfer FrameData to GPU!" );
+			instance->Report( ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot render to RenderTargetTexture, Cannot record commands to transfer FrameData to GPU!" );
 			return false;
 		}
 	}
@@ -2373,7 +2373,7 @@ bool vk2d::_internal::RenderTargetTextureImpl::RecordTransferCommandBuffer(
 		if( !mesh_buffer->CmdUploadMeshDataToGPU(
 			command_buffer
 		) ) {
-			instance->Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot render to RenderTargetTexture, Cannot record commands to transfer mesh data to GPU!" );
+			instance->Report( ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot render to RenderTargetTexture, Cannot record commands to transfer mesh data to GPU!" );
 			return false;
 		}
 	}
@@ -2392,11 +2392,11 @@ bool vk2d::_internal::RenderTargetTextureImpl::RecordTransferCommandBuffer(
 	return true;
 }
 
-bool vk2d::_internal::RenderTargetTextureImpl::UpdateSubmitInfos(
-	vk2d::_internal::RenderTargetTextureImpl::SwapBuffer	&	swap,
-	const std::vector<VkSemaphore>							&	wait_for_semaphores,
-	const std::vector<uint64_t>								&	wait_for_semaphore_timeline_values,
-	const std::vector<VkPipelineStageFlags>					&	wait_for_semaphore_pipeline_stages
+bool vk2d::vk2d_internal::RenderTargetTextureImpl::UpdateSubmitInfos(
+	RenderTargetTextureImpl::SwapBuffer			&	swap,
+	const std::vector<VkSemaphore>				&	wait_for_semaphores,
+	const std::vector<uint64_t>					&	wait_for_semaphore_timeline_values,
+	const std::vector<VkPipelineStageFlags>		&	wait_for_semaphore_pipeline_stages
 )
 {
 	assert( std::size( wait_for_semaphores ) == std::size( wait_for_semaphore_timeline_values ) );
@@ -2449,8 +2449,8 @@ bool vk2d::_internal::RenderTargetTextureImpl::UpdateSubmitInfos(
 	return true;
 }
 
-vk2d::_internal::TimedDescriptorPoolData & vk2d::_internal::RenderTargetTextureImpl::GetOrCreateDescriptorSetForSampler(
-	vk2d::Sampler	*	sampler
+vk2d::vk2d_internal::TimedDescriptorPoolData & vk2d::vk2d_internal::RenderTargetTextureImpl::GetOrCreateDescriptorSetForSampler(
+	Sampler	*	sampler
 )
 {
 	auto & set = sampler_descriptor_sets[ sampler ];
@@ -2473,7 +2473,7 @@ vk2d::_internal::TimedDescriptorPoolData & vk2d::_internal::RenderTargetTextureI
 		VkDescriptorBufferInfo buffer_info {};
 		buffer_info.buffer						= sampler->impl->GetVulkanBufferForSamplerData();
 		buffer_info.offset						= 0;
-		buffer_info.range						= sizeof( vk2d::_internal::SamplerImpl::BufferData );
+		buffer_info.range						= sizeof( SamplerImpl::BufferData );
 
 		std::array<VkWriteDescriptorSet, 2> descriptor_write {};
 		descriptor_write[ 0 ].sType				= VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
@@ -2508,8 +2508,8 @@ vk2d::_internal::TimedDescriptorPoolData & vk2d::_internal::RenderTargetTextureI
 	return set;
 }
 
-vk2d::_internal::TimedDescriptorPoolData & vk2d::_internal::RenderTargetTextureImpl::GetOrCreateDescriptorSetForTexture(
-	vk2d::Texture	*	texture
+vk2d::vk2d_internal::TimedDescriptorPoolData & vk2d::vk2d_internal::RenderTargetTextureImpl::GetOrCreateDescriptorSetForTexture(
+	Texture	*	texture
 )
 {
 	assert( texture );
@@ -2553,7 +2553,7 @@ vk2d::_internal::TimedDescriptorPoolData & vk2d::_internal::RenderTargetTextureI
 	return set;
 }
 
-void vk2d::_internal::RenderTargetTextureImpl::CmdPushBlurTextureDescriptorWritesDirectly(
+void vk2d::vk2d_internal::RenderTargetTextureImpl::CmdPushBlurTextureDescriptorWritesDirectly(
 	VkCommandBuffer		command_buffer,
 	VkPipelineLayout	vk_pipeline_layout,
 	uint32_t			set_index,
@@ -2588,14 +2588,14 @@ void vk2d::_internal::RenderTargetTextureImpl::CmdPushBlurTextureDescriptorWrite
 	);
 }
 
-void vk2d::_internal::RenderTargetTextureImpl::CmdFinalizeRender(
-	vk2d::_internal::RenderTargetTextureImpl::SwapBuffer		&	swap,
-	vk2d::BlurType													blur_type,
-	glm::vec2														blur_amount
+void vk2d::vk2d_internal::RenderTargetTextureImpl::CmdFinalizeRender(
+	RenderTargetTextureImpl::SwapBuffer		&	swap,
+	BlurType									blur_type,
+	glm::vec2									blur_amount
 )
 {
 	switch( type ) {
-		case vk2d::_internal::RenderTargetTextureType::DIRECT:
+		case RenderTargetTextureType::DIRECT:
 			// ( Render ) -> Attachment -> ( Blit ) -> Sampled.
 
 			CmdBlitMipmapsToSampledImage(
@@ -2607,7 +2607,7 @@ void vk2d::_internal::RenderTargetTextureImpl::CmdFinalizeRender(
 			);
 			break;
 
-		case vk2d::_internal::RenderTargetTextureType::WITH_MULTISAMPLE:
+		case RenderTargetTextureType::WITH_MULTISAMPLE:
 			// (Render) -> Attachment -> (Resolve) -> Buffer1 -> (Blit) -> Sampled.
 
 			CmdBlitMipmapsToSampledImage(
@@ -2619,7 +2619,7 @@ void vk2d::_internal::RenderTargetTextureImpl::CmdFinalizeRender(
 			);
 			break;
 
-		case vk2d::_internal::RenderTargetTextureType::WITH_BLUR:
+		case RenderTargetTextureType::WITH_BLUR:
 			// (Render) -> Attachment -> (Render) -> Buffer1 -> (Render) -> Attachment -> (Blit) -> Sampled.
 
 			CmdRecordBlurCommands(
@@ -2642,7 +2642,7 @@ void vk2d::_internal::RenderTargetTextureImpl::CmdFinalizeRender(
 			);
 			break;
 
-		case vk2d::_internal::RenderTargetTextureType::WITH_MULTISAMPLE_AND_BLUR:
+		case RenderTargetTextureType::WITH_MULTISAMPLE_AND_BLUR:
 			// (Render) -> Attachment -> (Resolve) -> Buffer1 -> (Render) -> Buffer2 -> (Render) -> Buffer1 -> (Blit) -> Sampled.
 
 			CmdRecordBlurCommands(
@@ -2666,17 +2666,17 @@ void vk2d::_internal::RenderTargetTextureImpl::CmdFinalizeRender(
 			break;
 
 		default:
-			instance->Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot finalize render target texture rendering, Invalid RenderTargetTextureType!" );
+			instance->Report( ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot finalize render target texture rendering, Invalid RenderTargetTextureType!" );
 			break;
 	}
 }
 
-void vk2d::_internal::RenderTargetTextureImpl::CmdBlitMipmapsToSampledImage(
-	VkCommandBuffer												command_buffer,
-	vk2d::_internal::CompleteImageResource					&	source_image,
-	VkImageLayout												source_image_layout,
-	VkPipelineStageFlagBits										source_image_pipeline_barrier_src_stage,
-	vk2d::_internal::CompleteImageResource					&	destination_image
+void vk2d::vk2d_internal::RenderTargetTextureImpl::CmdBlitMipmapsToSampledImage(
+	VkCommandBuffer						command_buffer,
+	CompleteImageResource			&	source_image,
+	VkImageLayout						source_image_layout,
+	VkPipelineStageFlagBits				source_image_pipeline_barrier_src_stage,
+	CompleteImageResource			&	destination_image
 )
 {
 	// Source image only has 1 mip level as it's being rendered
@@ -3060,16 +3060,16 @@ std::array<float, 4> CalculateBlurShaderInfo(
 
 
 
-bool vk2d::_internal::RenderTargetTextureImpl::CmdRecordBlurCommands(
-	vk2d::_internal::RenderTargetTextureImpl::SwapBuffer	&	swap,
-	VkCommandBuffer												command_buffer,
-	vk2d::BlurType												blur_type,
-	glm::vec2													blur_amount,
-	vk2d::_internal::CompleteImageResource					&	source_image,
-	VkImageLayout												source_image_layout,
-	VkPipelineStageFlagBits										source_image_pipeline_barrier_src_stage,
-	vk2d::_internal::CompleteImageResource					&	intermediate_image,
-	vk2d::_internal::CompleteImageResource					&	destination_image
+bool vk2d::vk2d_internal::RenderTargetTextureImpl::CmdRecordBlurCommands(
+	RenderTargetTextureImpl::SwapBuffer		&	swap,
+	VkCommandBuffer								command_buffer,
+	BlurType									blur_type,
+	glm::vec2									blur_amount,
+	CompleteImageResource					&	source_image,
+	VkImageLayout								source_image_layout,
+	VkPipelineStageFlagBits						source_image_pipeline_barrier_src_stage,
+	CompleteImageResource					&	intermediate_image,
+	CompleteImageResource					&	destination_image
 )
 {
 	// This function records commands to do 2 gaussian blur passes using the primary render queue.
@@ -3090,13 +3090,13 @@ bool vk2d::_internal::RenderTargetTextureImpl::CmdRecordBlurCommands(
 
 
 	auto RecordBlurPass =[ this, command_buffer ](
-		VkPipelineLayout							use_pipeline_layout,
-		VkRenderPass								use_render_pass,
-		VkFramebuffer								use_framebuffer,
-		vk2d::_internal::GraphicsShaderProgram	&	graphics_shader_program,
-		float										blur_coverage,
-		VkImageView									vk_texture,
-		VkImageLayout								texture_image_layout
+		VkPipelineLayout			use_pipeline_layout,
+		VkRenderPass				use_render_pass,
+		VkFramebuffer				use_framebuffer,
+		GraphicsShaderProgram	&	graphics_shader_program,
+		float						blur_coverage,
+		VkImageView					vk_texture,
+		VkImageLayout				texture_image_layout
 		) -> void
 	{
 		// Begin the render pass.
@@ -3131,7 +3131,7 @@ bool vk2d::_internal::RenderTargetTextureImpl::CmdRecordBlurCommands(
 		{
 			// Bind blur pass pipeline.
 			{
-				vk2d::_internal::GraphicsPipelineSettings pipeline_settings {};
+				GraphicsPipelineSettings pipeline_settings {};
 				pipeline_settings.vk_pipeline_layout	= use_pipeline_layout;
 				pipeline_settings.vk_render_pass		= use_render_pass;
 				pipeline_settings.primitive_topology	= VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
@@ -3178,7 +3178,7 @@ bool vk2d::_internal::RenderTargetTextureImpl::CmdRecordBlurCommands(
 			{
 				if( blur_coverage < 1.0f ) blur_coverage = 1.0f;
 
-				vk2d::_internal::GraphicsBlurPushConstants push_constants {};
+				GraphicsBlurPushConstants push_constants {};
 				push_constants.blur_info	= CalculateBlurShaderInfo( blur_coverage );
 				push_constants.pixel_size	= { 1.0f / float( size.x ), 1.0f / float( size.y ) };
 
@@ -3247,16 +3247,16 @@ bool vk2d::_internal::RenderTargetTextureImpl::CmdRecordBlurCommands(
 
 	// First render pass.
 	{
-		vk2d::_internal::GraphicsShaderProgram shader_program;
+		GraphicsShaderProgram shader_program;
 		switch( blur_type ) {
-			case vk2d::BlurType::BOX:
-				shader_program = instance->GetGraphicsShaderModules( vk2d::_internal::GraphicsShaderProgramID::RENDER_TARGET_BOX_BLUR_HORISONTAL );
+			case BlurType::BOX:
+				shader_program = instance->GetGraphicsShaderModules( GraphicsShaderProgramID::RENDER_TARGET_BOX_BLUR_HORISONTAL );
 				break;
-			case vk2d::BlurType::GAUSSIAN:
-				shader_program = instance->GetGraphicsShaderModules( vk2d::_internal::GraphicsShaderProgramID::RENDER_TARGET_GAUSSIAN_BLUR_HORISONTAL );
+			case BlurType::GAUSSIAN:
+				shader_program = instance->GetGraphicsShaderModules( GraphicsShaderProgramID::RENDER_TARGET_GAUSSIAN_BLUR_HORISONTAL );
 				break;
 			default:
-				shader_program = instance->GetGraphicsShaderModules( vk2d::_internal::GraphicsShaderProgramID::RENDER_TARGET_GAUSSIAN_BLUR_HORISONTAL );
+				shader_program = instance->GetGraphicsShaderModules( GraphicsShaderProgramID::RENDER_TARGET_GAUSSIAN_BLUR_HORISONTAL );
 				break;
 		}
 
@@ -3300,16 +3300,16 @@ bool vk2d::_internal::RenderTargetTextureImpl::CmdRecordBlurCommands(
 
 	// Second render pass.
 	{
-		vk2d::_internal::GraphicsShaderProgram shader_program;
+		GraphicsShaderProgram shader_program;
 		switch( blur_type ) {
-			case vk2d::BlurType::BOX:
-				shader_program = instance->GetGraphicsShaderModules( vk2d::_internal::GraphicsShaderProgramID::RENDER_TARGET_BOX_BLUR_VERTICAL );
+			case BlurType::BOX:
+				shader_program = instance->GetGraphicsShaderModules( GraphicsShaderProgramID::RENDER_TARGET_BOX_BLUR_VERTICAL );
 				break;
-			case vk2d::BlurType::GAUSSIAN:
-				shader_program = instance->GetGraphicsShaderModules( vk2d::_internal::GraphicsShaderProgramID::RENDER_TARGET_GAUSSIAN_BLUR_VERTICAL );
+			case BlurType::GAUSSIAN:
+				shader_program = instance->GetGraphicsShaderModules( GraphicsShaderProgramID::RENDER_TARGET_GAUSSIAN_BLUR_VERTICAL );
 				break;
 			default:
-				shader_program = instance->GetGraphicsShaderModules( vk2d::_internal::GraphicsShaderProgramID::RENDER_TARGET_GAUSSIAN_BLUR_VERTICAL );
+				shader_program = instance->GetGraphicsShaderModules( GraphicsShaderProgramID::RENDER_TARGET_GAUSSIAN_BLUR_VERTICAL );
 				break;
 		}
 
@@ -3327,9 +3327,9 @@ bool vk2d::_internal::RenderTargetTextureImpl::CmdRecordBlurCommands(
 	return true;
 }
 
-void vk2d::_internal::RenderTargetTextureImpl::CmdBindGraphicsPipelineIfDifferent(
-	VkCommandBuffer										command_buffer,
-	const vk2d::_internal::GraphicsPipelineSettings	&	pipeline_settings
+void vk2d::vk2d_internal::RenderTargetTextureImpl::CmdBindGraphicsPipelineIfDifferent(
+	VkCommandBuffer						command_buffer,
+	const GraphicsPipelineSettings	&	pipeline_settings
 )
 {
 	if( previous_graphics_pipeline_settings != pipeline_settings ) {
@@ -3344,9 +3344,9 @@ void vk2d::_internal::RenderTargetTextureImpl::CmdBindGraphicsPipelineIfDifferen
 	}
 }
 
-void vk2d::_internal::RenderTargetTextureImpl::CmdBindSamplerIfDifferent(
+void vk2d::vk2d_internal::RenderTargetTextureImpl::CmdBindSamplerIfDifferent(
 	VkCommandBuffer			command_buffer,
-	vk2d::Sampler		*	sampler,
+	Sampler				*	sampler,
 	VkPipelineLayout		use_pipeline_layout
 )
 {
@@ -3370,9 +3370,9 @@ void vk2d::_internal::RenderTargetTextureImpl::CmdBindSamplerIfDifferent(
 	}
 }
 
-void vk2d::_internal::RenderTargetTextureImpl::CmdBindTextureIfDifferent(
+void vk2d::vk2d_internal::RenderTargetTextureImpl::CmdBindTextureIfDifferent(
 	VkCommandBuffer			command_buffer,
-	vk2d::Texture		*	texture,
+	Texture				*	texture,
 	VkPipelineLayout		use_pipeline_layout
 )
 {
@@ -3397,9 +3397,9 @@ void vk2d::_internal::RenderTargetTextureImpl::CmdBindTextureIfDifferent(
 }
 
 // TODO: Render target texture line width never used anywhere, we should enable it.
-void vk2d::_internal::RenderTargetTextureImpl::CmdSetLineWidthIfDifferent(
-	VkCommandBuffer						command_buffer,
-	float								line_width
+void vk2d::vk2d_internal::RenderTargetTextureImpl::CmdSetLineWidthIfDifferent(
+	VkCommandBuffer		command_buffer,
+	float				line_width
 )
 {
 	if( previous_line_width != line_width ) {
@@ -3413,37 +3413,37 @@ void vk2d::_internal::RenderTargetTextureImpl::CmdSetLineWidthIfDifferent(
 	}
 }
 
-bool vk2d::_internal::RenderTargetTextureImpl::CmdUpdateFrameData(
+bool vk2d::vk2d_internal::RenderTargetTextureImpl::CmdUpdateFrameData(
 	VkCommandBuffer command_buffer
 )
 {
 	// Window coordinate system scaling
-	vk2d::_internal::WindowCoordinateScaling window_coordinate_scaling {};
+	WindowCoordinateScaling window_coordinate_scaling {};
 
 	switch( coordinate_space ) {
-		case vk2d::RenderCoordinateSpace::TEXEL_SPACE:
+		case RenderCoordinateSpace::TEXEL_SPACE:
 			window_coordinate_scaling.multiplier	= { 1.0f / ( size.x / 2.0f ), 1.0f / ( size.y / 2.0f ) };
 			window_coordinate_scaling.offset		= { -1.0f, -1.0f };
 			break;
-		case vk2d::RenderCoordinateSpace::TEXEL_SPACE_CENTERED:
+		case RenderCoordinateSpace::TEXEL_SPACE_CENTERED:
 			window_coordinate_scaling.multiplier	= { 1.0f / ( size.x / 2.0f ), 1.0f / ( size.y / 2.0f ) };
 			window_coordinate_scaling.offset		= { 0.0f, 0.0f };
 			break;
-		case vk2d::RenderCoordinateSpace::NORMALIZED_SPACE:
+		case RenderCoordinateSpace::NORMALIZED_SPACE:
 		{
 			float contained_minimum_dimension		= float( std::min( size.x, size.y ) );
 			window_coordinate_scaling.multiplier	= { contained_minimum_dimension / ( size.x / 2.0f ), contained_minimum_dimension / ( size.y / 2.0f ) };
 			window_coordinate_scaling.offset		= { -1.0f, -1.0f };
 		}
 		break;
-		case vk2d::RenderCoordinateSpace::NORMALIZED_SPACE_CENTERED:
+		case RenderCoordinateSpace::NORMALIZED_SPACE_CENTERED:
 		{
 			float contained_minimum_dimension		= float( std::min( size.x, size.y ) );
 			window_coordinate_scaling.multiplier	= { contained_minimum_dimension / size.x, contained_minimum_dimension / size.y };
 			window_coordinate_scaling.offset		= { 0.0f, 0.0f };
 		}
 		break;
-		case vk2d::RenderCoordinateSpace::LINEAR_SPACE:
+		case RenderCoordinateSpace::LINEAR_SPACE:
 			window_coordinate_scaling.multiplier	= { 1.0f, 1.0f };
 			window_coordinate_scaling.offset		= { 0.0f, 0.0f };
 			break;
@@ -3455,9 +3455,9 @@ bool vk2d::_internal::RenderTargetTextureImpl::CmdUpdateFrameData(
 
 	// Copy data to staging buffer.
 	{
-		auto frame_data = frame_data_staging_buffer.memory.Map<vk2d::_internal::FrameData>();
+		auto frame_data = frame_data_staging_buffer.memory.Map<FrameData>();
 		if( !frame_data ) {
-			instance->Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot map FrameData staging buffer memory!" );
+			instance->Report( ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot map FrameData staging buffer memory!" );
 			return false;
 		}
 		frame_data->coordinate_scaling		= window_coordinate_scaling;
@@ -3468,7 +3468,7 @@ bool vk2d::_internal::RenderTargetTextureImpl::CmdUpdateFrameData(
 		VkBufferCopy copy_region {};
 		copy_region.srcOffset	= 0;
 		copy_region.dstOffset	= 0;
-		copy_region.size		= sizeof( vk2d::_internal::FrameData );
+		copy_region.size		= sizeof( FrameData );
 		vkCmdCopyBuffer(
 			command_buffer,
 			frame_data_staging_buffer.buffer,

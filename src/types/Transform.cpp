@@ -43,7 +43,7 @@ VK2D_API glm::mat4 VK2D_APIENTRY vk2d::Transform::CalculateTransformationMatrix(
 		position_matrix[ 3 ][ 1 ] = position.y;
 	}
 
-	auto rotation_matrix = vk2d::CreateRotationMatrix4( rotation );
+	auto rotation_matrix = CreateRotationMatrix4( rotation );
 
 	auto scale_matrix = glm::mat4( 1.0f );
 	{

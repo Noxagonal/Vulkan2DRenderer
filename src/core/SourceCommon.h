@@ -11,7 +11,7 @@
 
 namespace vk2d {
 
-namespace _internal {
+namespace vk2d_internal {
 
 
 
@@ -102,6 +102,6 @@ public:
 #endif
 
 
-} // _internal
+} // vk2d_internal
 
 } // vk2d

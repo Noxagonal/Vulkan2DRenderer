@@ -6,7 +6,7 @@
 
 namespace vk2d {
 
-namespace _internal {
+namespace vk2d_internal {
 
 // Descriptor set allocations.
 constexpr uint32_t GRAPHICS_DESCRIPTOR_SET_ALLOCATION_WINDOW_FRAME_DATA					= 0;
@@ -73,58 +73,85 @@ enum class ComputeShaderProgramID
 
 class GraphicsShaderProgram {
 public:
-	GraphicsShaderProgram()															= default;
-	GraphicsShaderProgram( const vk2d::_internal::GraphicsShaderProgram & other )	= default;
-	GraphicsShaderProgram( vk2d::_internal::GraphicsShaderProgram && other )		= default;
+	GraphicsShaderProgram()												= default;
+
+	GraphicsShaderProgram(
+		const GraphicsShaderProgram		&	other )						= default;
+
+	GraphicsShaderProgram(
+		GraphicsShaderProgram			&&	other )						= default;
+
 	template<typename T>
-	GraphicsShaderProgram( std::initializer_list<T> )								= delete;
+	GraphicsShaderProgram(
+		const std::initializer_list<T>	&	init_list )					= delete;
+
 	inline GraphicsShaderProgram(
-		VkShaderModule										vertex,
-		VkShaderModule										fragment
+		VkShaderModule						vertex,
+		VkShaderModule						fragment
 	) :
 		vertex( vertex ),
 		fragment( fragment )
 	{}
 
-	vk2d::_internal::GraphicsShaderProgram & operator=( const vk2d::_internal::GraphicsShaderProgram & other )		= default;
-	vk2d::_internal::GraphicsShaderProgram & operator=( vk2d::_internal::GraphicsShaderProgram && other )			= default;
+	GraphicsShaderProgram				&	operator=(
+		const GraphicsShaderProgram		&	other )						= default;
 
-	bool operator<( const vk2d::_internal::GraphicsShaderProgram & other ) const;
-	bool operator>( const vk2d::_internal::GraphicsShaderProgram & other ) const;
-	bool operator<=( const vk2d::_internal::GraphicsShaderProgram & other ) const;
-	bool operator>=( const vk2d::_internal::GraphicsShaderProgram & other ) const;
-	bool operator==( const vk2d::_internal::GraphicsShaderProgram & other ) const;
-	bool operator!=( const vk2d::_internal::GraphicsShaderProgram & other ) const;
+	GraphicsShaderProgram				&	operator=(
+		GraphicsShaderProgram			&&	other )						= default;
 
-	VkShaderModule						vertex				= {};
-	VkShaderModule						fragment			= {};
+	bool									operator<(
+		const GraphicsShaderProgram		&	other ) const;
+	bool									operator>(
+		const GraphicsShaderProgram		&	other ) const;
+	bool									operator<=(
+		const GraphicsShaderProgram		&	other ) const;
+	bool									operator>=(
+		const GraphicsShaderProgram		&	other ) const;
+	bool									operator==(
+		const GraphicsShaderProgram		&	other ) const;
+	bool									operator!=(
+		const GraphicsShaderProgram		&	other ) const;
+
+	VkShaderModule							vertex						= {};
+	VkShaderModule							fragment					= {};
 };
 
 
 
 class GraphicsPipelineSettings {
 public:
-	GraphicsPipelineSettings()																= default;
-	GraphicsPipelineSettings( const vk2d::_internal::GraphicsPipelineSettings & other )		= default;
-	GraphicsPipelineSettings( vk2d::_internal::GraphicsPipelineSettings && other )			= default;
+	GraphicsPipelineSettings()											= default;
+	GraphicsPipelineSettings(
+		const GraphicsPipelineSettings	&	other )						= default;
+	GraphicsPipelineSettings(
+		GraphicsPipelineSettings		&&	other )						= default;
 	template<typename T>
-	GraphicsPipelineSettings( std::initializer_list<T> )									= delete;
+	GraphicsPipelineSettings(
+		const std::initializer_list<T>	&	init_list )					= delete;
 
-	vk2d::_internal::GraphicsPipelineSettings & operator=( const vk2d::_internal::GraphicsPipelineSettings & other )	= default;
-	vk2d::_internal::GraphicsPipelineSettings & operator=( vk2d::_internal::GraphicsPipelineSettings && other )			= default;
+	GraphicsPipelineSettings			&	operator=(
+		const GraphicsPipelineSettings	&	other )						= default;
+	GraphicsPipelineSettings			&	operator=(
+		GraphicsPipelineSettings		&&	other )						= default;
 
-	bool operator<( const vk2d::_internal::GraphicsPipelineSettings & other ) const;
-	bool operator>( const vk2d::_internal::GraphicsPipelineSettings & other ) const;
-	bool operator<=( const vk2d::_internal::GraphicsPipelineSettings & other ) const;
-	bool operator>=( const vk2d::_internal::GraphicsPipelineSettings & other ) const;
-	bool operator==( const vk2d::_internal::GraphicsPipelineSettings & other ) const;
-	bool operator!=( const vk2d::_internal::GraphicsPipelineSettings & other ) const;
+	bool									operator<(
+		const GraphicsPipelineSettings	&	other ) const;
+	bool									operator>(
+		const GraphicsPipelineSettings	&	other ) const;
+	bool									operator<=(
+		const GraphicsPipelineSettings	&	other ) const;
+	bool									operator>=(
+		const GraphicsPipelineSettings	&	other ) const;
+	bool									operator==(
+		const GraphicsPipelineSettings	&	other ) const;
+	bool									operator!=(
+		const GraphicsPipelineSettings	&	other ) const;
 
 	VkPipelineLayout						vk_pipeline_layout			= {};
 	VkRenderPass							vk_render_pass				= {};
 	VkPrimitiveTopology						primitive_topology			= {};
 	VkPolygonMode							polygon_mode				= {};
-	vk2d::_internal::GraphicsShaderProgram	shader_programs				= {};
+	GraphicsShaderProgram					shader_programs				= {};
 	VkSampleCountFlags						samples						= {};
 	VkBool32								enable_blending				= {};
 };
@@ -134,21 +161,32 @@ public:
 class ComputePipelineSettings
 {
 public:
-	ComputePipelineSettings()																= default;
-	ComputePipelineSettings( const vk2d::_internal::ComputePipelineSettings & other )		= default;
-	ComputePipelineSettings( vk2d::_internal::ComputePipelineSettings && other )			= default;
+	ComputePipelineSettings()											= default;
+	ComputePipelineSettings(
+		const ComputePipelineSettings	&	other )						= default;
+	ComputePipelineSettings(
+		ComputePipelineSettings			&&	other )						= default;
 	template<typename T>
-	ComputePipelineSettings( std::initializer_list<T> )										= delete;
+	ComputePipelineSettings(
+		const std::initializer_list<T>	&	init_list )					= delete;
 
-	vk2d::_internal::ComputePipelineSettings & operator=( const vk2d::_internal::ComputePipelineSettings & other )	= default;
-	vk2d::_internal::ComputePipelineSettings & operator=( vk2d::_internal::ComputePipelineSettings && other )		= default;
+	ComputePipelineSettings				&	operator=(
+		const ComputePipelineSettings	&	other )						= default;
+	ComputePipelineSettings				&	operator=(
+		ComputePipelineSettings			&&	other )						= default;
 
-	bool operator<( const vk2d::_internal::ComputePipelineSettings & other ) const;
-	bool operator>( const vk2d::_internal::ComputePipelineSettings & other ) const;
-	bool operator<=( const vk2d::_internal::ComputePipelineSettings & other ) const;
-	bool operator>=( const vk2d::_internal::ComputePipelineSettings & other ) const;
-	bool operator==( const vk2d::_internal::ComputePipelineSettings & other ) const;
-	bool operator!=( const vk2d::_internal::ComputePipelineSettings & other ) const;
+	bool									operator<(
+		const ComputePipelineSettings	&	other ) const;
+	bool									operator>(
+		const ComputePipelineSettings	&	other ) const;
+	bool									operator<=(
+		const ComputePipelineSettings	&	other ) const;
+	bool									operator>=(
+		const ComputePipelineSettings	&	other ) const;
+	bool									operator==(
+		const ComputePipelineSettings	&	other ) const;
+	bool									operator!=(
+		const ComputePipelineSettings	&	other ) const;
 
 	VkPipelineLayout						vk_pipeline_layout			= {};
 	VkShaderModule							vk_shader_program			= {};
@@ -156,6 +194,6 @@ public:
 
 
 
-} // _internal
+} // vk2d_internal
 
 } // vk2d

@@ -3,7 +3,7 @@
 
 #include "system/CommonTools.h"
 
-std::vector<VkExtent2D> vk2d::_internal::GenerateMipSizes(
+std::vector<VkExtent2D> vk2d::vk2d_internal::GenerateMipSizes(
 	glm::uvec2		full_size
 )
 {

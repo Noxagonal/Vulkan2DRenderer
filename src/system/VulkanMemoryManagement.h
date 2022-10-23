@@ -6,7 +6,7 @@
 
 namespace vk2d {
 
-namespace _internal {
+namespace vk2d_internal {
 
 class DeviceMemoryPool;
 struct DeviceMemoryPoolDataImpl;
@@ -17,9 +17,9 @@ struct DeviceMemoryPoolDataImpl;
 // For example if buffer size is 7 and alignment requirements are
 // 4, this function will return 8 as that is the next aligned size
 // that will fully contain the buffer data.
-VkDeviceSize								CalculateAlignmentForBuffer(
-	VkDeviceSize							unaligned_size,
-	const VkPhysicalDeviceLimits		&	physical_device_limits );
+VkDeviceSize										CalculateAlignmentForBuffer(
+	VkDeviceSize									unaligned_size,
+	const VkPhysicalDeviceLimits				&	physical_device_limits );
 
 
 
@@ -27,44 +27,44 @@ VkDeviceSize								CalculateAlignmentForBuffer(
 struct DeviceMemoryPoolChunk {
 	// Block is a single virtual allocation from the Chunk. Aka, assignment from a single pool.
 	struct Block {
-		uint64_t													id									= UINT64_MAX;
-		VkDeviceSize												offset								= 0;
-		VkDeviceSize												size								= 0;
-		VkDeviceSize												alignment							= 1;
+		uint64_t									id									= UINT64_MAX;
+		VkDeviceSize								offset								= 0;
+		VkDeviceSize								size								= 0;
+		VkDeviceSize								alignment							= 1;
 	};
 
-	uint64_t														id									= UINT64_MAX;
-	VkDeviceMemory													memory								= VK_NULL_HANDLE;
-	VkDeviceSize													size								= 0;
-	::std::list<vk2d::_internal::DeviceMemoryPoolChunk::Block>		blocks;
-	VkResult														result								= VK_RESULT_MAX_ENUM;
+	uint64_t										id									= UINT64_MAX;
+	VkDeviceMemory									memory								= VK_NULL_HANDLE;
+	VkDeviceSize									size								= 0;
+	::std::list<DeviceMemoryPoolChunk::Block>		blocks;
+	VkResult										result								= VK_RESULT_MAX_ENUM;
 
-	uint64_t														blockIDCounter						= 0;
+	uint64_t										blockIDCounter						= 0;
 };
 
 struct DeviceMemoryPoolDataImpl {
-	uint64_t														chunkIDCounter						= {};
+	uint64_t										chunkIDCounter						= {};
 
-	VkPhysicalDevice												refPhysicalDevice					= {};
-	VkDevice														refDevice							= {};
+	VkPhysicalDevice								refPhysicalDevice					= {};
+	VkDevice										refDevice							= {};
 
-	VkDeviceSize													linearChunkSize						= {};
-	VkDeviceSize													nonLinearChunkSize					= {};
+	VkDeviceSize									linearChunkSize						= {};
+	VkDeviceSize									nonLinearChunkSize					= {};
 
-	VkPhysicalDeviceProperties										physicalDeviceProperties			= {};
-	VkPhysicalDeviceMemoryProperties								physicalDeviceMemoryProperties		= {};
+	VkPhysicalDeviceProperties						physicalDeviceProperties			= {};
+	VkPhysicalDeviceMemoryProperties				physicalDeviceMemoryProperties		= {};
 
-	std::vector<std::list<vk2d::_internal::DeviceMemoryPoolChunk>>	linearChunks;						// buffers and linear images
-	std::vector<std::list<vk2d::_internal::DeviceMemoryPoolChunk>>	nonLinearChunks;					// optimal images
+	std::vector<std::list<DeviceMemoryPoolChunk>>	linearChunks;						// buffers and linear images
+	std::vector<std::list<DeviceMemoryPoolChunk>>	nonLinearChunks;					// optimal images
 };
 
 
 
 class PoolMemory {
-	friend class vk2d::_internal::DeviceMemoryPool;
+	friend class DeviceMemoryPool;
 
 private:
-	vk2d::_internal::DeviceMemoryPoolDataImpl	*	allocated_from						= {};
+	DeviceMemoryPoolDataImpl					*	allocated_from						= {};
 
 	VkDeviceMemory									memory								= VK_NULL_HANDLE;
 	VkDeviceSize									offset								= 0;
@@ -155,7 +155,7 @@ public:
 	VkResult										result								= {};
 	VkBuffer										buffer								= {};
 	VkBufferView									view								= {};
-	vk2d::_internal::PoolMemory						memory								= {};
+	PoolMemory										memory								= {};
 
 	inline											operator VkResult()
 	{
@@ -168,7 +168,7 @@ public:
 	VkResult										result								= {};
 	VkImage											image								= {};
 	VkImageView										view								= {};
-	vk2d::_internal::PoolMemory						memory								= {};
+	PoolMemory										memory								= {};
 
 	inline											operator VkResult()
 	{
@@ -177,69 +177,69 @@ public:
 };
 
 class DeviceMemoryPool {
-	friend class vk2d::_internal::PoolMemory;
-	friend struct vk2d::_internal::DeviceMemoryPoolDataImpl;
-	friend std::unique_ptr<vk2d::_internal::DeviceMemoryPool>								MakeDeviceMemoryPool(
-		VkPhysicalDevice								physicalDevice,
-		VkDevice										device,
-		VkDeviceSize									linearAllocationChunkSize,
-		VkDeviceSize									nonLinearAllocationChunkSize
+	friend class PoolMemory;
+	friend struct DeviceMemoryPoolDataImpl;
+	friend std::unique_ptr<DeviceMemoryPool>		MakeDeviceMemoryPool(
+		VkPhysicalDevice							physicalDevice,
+		VkDevice									device,
+		VkDeviceSize								linearAllocationChunkSize,
+		VkDeviceSize								nonLinearAllocationChunkSize
 	);
 
 private:
 	// Only accessible through MakeDeviceMemoryPool
-																							DeviceMemoryPool(
-		VkPhysicalDevice								physicalDevice,
-		VkDevice										device,
-		VkDeviceSize									linearAllocationChunkSize			= uint64_t( 1024 ) * 1024 * 64,
-		VkDeviceSize									nonLinearAllocationChunkSize		= uint64_t( 1024 ) * 1024 * 256 );
+	DeviceMemoryPool(
+		VkPhysicalDevice							physicalDevice,
+		VkDevice									device,
+		VkDeviceSize								linearAllocationChunkSize			= uint64_t( 1024 ) * 1024 * 64,
+		VkDeviceSize								nonLinearAllocationChunkSize		= uint64_t( 1024 ) * 1024 * 256 );
 
 public:
-																							~DeviceMemoryPool();
+	~DeviceMemoryPool();
 
 	// Allocates memory for a buffer
-	vk2d::_internal::PoolMemory																AllocateBufferMemory(
-		VkBuffer										buffer,
-		const VkBufferCreateInfo					*	pBufferCreateInfo,
-		VkMemoryPropertyFlags							propertyFlags );
+	PoolMemory										AllocateBufferMemory(
+		VkBuffer									buffer,
+		const VkBufferCreateInfo				*	pBufferCreateInfo,
+		VkMemoryPropertyFlags						propertyFlags );
 
 	// Allocates memory for an image
-	vk2d::_internal::PoolMemory																AllocateImageMemory(
-		VkImage											image,
-		const VkImageCreateInfo						*	pImageCreateInfo,
-		VkMemoryPropertyFlags							propertyFlags );
+	PoolMemory										AllocateImageMemory(
+		VkImage										image,
+		const VkImageCreateInfo					*	pImageCreateInfo,
+		VkMemoryPropertyFlags						propertyFlags );
 
 	// Allocates memory for a buffer and binds the buffer to the memory location, if memory
 	// allocation or binding fails, the whole operation fails and no memory is allocated.
-	vk2d::_internal::PoolMemory																AllocateAndBindBufferMemory(
-		VkBuffer										buffer,
-		const VkBufferCreateInfo					*	pBufferCreateInfo,
-		VkMemoryPropertyFlags							propertyFlags );
+	PoolMemory										AllocateAndBindBufferMemory(
+		VkBuffer									buffer,
+		const VkBufferCreateInfo				*	pBufferCreateInfo,
+		VkMemoryPropertyFlags						propertyFlags );
 
 	// Allocates memory for an image and binds the image to the memory location, if memory
 	// allocation or binding fails, the whole operation fails and no memory is allocated.
-	vk2d::_internal::PoolMemory																AllocateAndBindImageMemory(
-		VkImage											image,
-		const VkImageCreateInfo						*	pImageCreateInfo,
-		VkMemoryPropertyFlags							propertyFlags );
+	PoolMemory										AllocateAndBindImageMemory(
+		VkImage										image,
+		const VkImageCreateInfo					*	pImageCreateInfo,
+		VkMemoryPropertyFlags						propertyFlags );
 
 	// Creates a buffer object backed with unique non-aliased memory allocated for it.
 	// Creates a buffer, allocates memory for it and binds the buffer to a memory location,
 	// if buffer creation, memory allocation or binding fails, the whole operation fails and
 	// no resources are created. Optionally creates buffer view if it's create info is provided.
-	vk2d::_internal::CompleteBufferResource													CreateCompleteBufferResource(
-		const VkBufferCreateInfo					*	pBufferCreateInfo,
-		VkMemoryPropertyFlags							propertyFlags,
-		const VkBufferViewCreateInfo				*	pBufferViewCreateInfo				= nullptr );
+	CompleteBufferResource							CreateCompleteBufferResource(
+		const VkBufferCreateInfo				*	pBufferCreateInfo,
+		VkMemoryPropertyFlags						propertyFlags,
+		const VkBufferViewCreateInfo			*	pBufferViewCreateInfo				= nullptr );
 
 	// Creates an image object backed with unique non-aliased memory allocated for it.
 	// Creates an image, allocates memory for it and binds the image to a memory location,
 	// if image creation, memory allocation or binding fails, the whole operation fails and
 	// no resources are created. Optionally creates image view if it's create info is provided.
-	vk2d::_internal::CompleteImageResource													CreateCompleteImageResource(
-		const VkImageCreateInfo						*	pImageCreateInfo,
-		VkMemoryPropertyFlags							propertyFlags,
-		const VkImageViewCreateInfo					*	pImageViewCreateInfo				= nullptr );
+	CompleteImageResource							CreateCompleteImageResource(
+		const VkImageCreateInfo					*	pImageCreateInfo,
+		VkMemoryPropertyFlags						propertyFlags,
+		const VkImageViewCreateInfo				*	pImageViewCreateInfo				= nullptr );
 
 	// Creates a buffer object backed with unique non-aliased memory allocated for it.
 	// Creates a buffer, allocates memory for it and binds the buffer to a memory location,
@@ -247,12 +247,12 @@ public:
 	// If any of the operations fail, the whole operation fails and no resources
 	// are created. Optionally creates buffer view if it's create info is provided.
 	template<typename T>
-	vk2d::_internal::CompleteBufferResource													CreateCompleteHostBufferResourceWithData(
-		const std::vector<T>						&	data,
-		VkBufferUsageFlags								buffer_usage,
-		const std::vector<uint32_t>					&	concurrent_family_indices			= {},
-		const void									*	pNextToBufferCreateInfo				= nullptr,
-		const VkBufferViewCreateInfo				*	pBufferViewCreateInfo				= nullptr )
+	CompleteBufferResource							CreateCompleteHostBufferResourceWithData(
+		const std::vector<T>					&	data,
+		VkBufferUsageFlags							buffer_usage,
+		const std::vector<uint32_t>				&	concurrent_family_indices			= {},
+		const void								*	pNextToBufferCreateInfo				= nullptr,
+		const VkBufferViewCreateInfo			*	pBufferViewCreateInfo				= nullptr )
 	{
 		return CreateCompleteHostBufferResourceWithData<T>(
 			data.data(),
@@ -270,13 +270,13 @@ public:
 	// If any of the operations fail, the whole operation fails and no resources
 	// are created. Optionally creates buffer view if it's create info is provided.
 	template<typename T>
-	vk2d::_internal::CompleteBufferResource													CreateCompleteHostBufferResourceWithData(
-		const T										*	data,
-		VkDeviceSize									count,
-		VkBufferUsageFlags								buffer_usage,
-		const std::vector<uint32_t>					&	concurrent_family_indices			= {},
-		const void									*	pNextToBufferCreateInfo				= nullptr,
-		const VkBufferViewCreateInfo				*	pBufferViewCreateInfo				= nullptr )
+	CompleteBufferResource							CreateCompleteHostBufferResourceWithData(
+		const T									*	data,
+		VkDeviceSize								count,
+		VkBufferUsageFlags							buffer_usage,
+		const std::vector<uint32_t>				&	concurrent_family_indices			= {},
+		const void								*	pNextToBufferCreateInfo				= nullptr,
+		const VkBufferViewCreateInfo			*	pBufferViewCreateInfo				= nullptr )
 	{
 		VkDeviceSize byte_size	= sizeof( T ) * count;
 
@@ -308,53 +308,53 @@ public:
 	}
 
 	// Frees whatever memory has been allocated previously, either buffer or image memory.
-	void																	FreeMemory(
-		vk2d::_internal::PoolMemory										&	memory );
+	void												FreeMemory(
+		PoolMemory									&	memory );
 
 	// Deletes the buffer and frees the memory.
-	void																	FreeCompleteResource(
-		vk2d::_internal::CompleteBufferResource							&	resource );
+	void												FreeCompleteResource(
+		CompleteBufferResource						&	resource );
 
 	// Deletes the image and frees the memory.
-	void																	FreeCompleteResource(
-		vk2d::_internal::CompleteImageResource							&	resource );
+	void												FreeCompleteResource(
+		CompleteImageResource						&	resource );
 
-	const VkPhysicalDeviceProperties									&	GetPhysicalDeviceProperties();
-	const VkPhysicalDeviceMemoryProperties								&	GetPhysicalDeviceMemoryProperties();
+	const VkPhysicalDeviceProperties				&	GetPhysicalDeviceProperties();
+	const VkPhysicalDeviceMemoryProperties			&	GetPhysicalDeviceMemoryProperties();
 
 private:
-	std::pair<VkResult, vk2d::_internal::DeviceMemoryPoolChunk*>			AllocateChunk(
-		std::list<vk2d::_internal::DeviceMemoryPoolChunk>				*	chunkGroup,
-		VkDeviceSize														size,
-		uint32_t															memoryTypeIndex );
+	std::pair<VkResult, DeviceMemoryPoolChunk*>			AllocateChunk(
+		std::list<DeviceMemoryPoolChunk>			*	chunkGroup,
+		VkDeviceSize									size,
+		uint32_t										memoryTypeIndex );
 
-	vk2d::_internal::DeviceMemoryPoolChunk::Block						*	AllocateBlockInChunk(
-		vk2d::_internal::DeviceMemoryPoolChunk							*	chunk,
-		VkMemoryRequirements											&	rMemoryRequirements );
+	DeviceMemoryPoolChunk::Block					*	AllocateBlockInChunk(
+		DeviceMemoryPoolChunk						*	chunk,
+		VkMemoryRequirements						&	rMemoryRequirements );
 
-	vk2d::_internal::PoolMemory												AllocateMemory(
-		bool																isLinear,
-		VkMemoryRequirements												memoryRequirements,
-		uint32_t															memoryTypeIndex );
+	PoolMemory											AllocateMemory(
+		bool											isLinear,
+		VkMemoryRequirements							memoryRequirements,
+		uint32_t										memoryTypeIndex );
 
-	void																	FreeChunk(
-		std::list<vk2d::_internal::DeviceMemoryPoolChunk>				*	chunkGroup,
-		vk2d::_internal::DeviceMemoryPoolChunk							*	chunk );
+	void												FreeChunk(
+		std::list<DeviceMemoryPoolChunk>			*	chunkGroup,
+		DeviceMemoryPoolChunk						*	chunk );
 
-	void																	FreeBlock(
-		uint32_t															memoryTypeIndex,
-		bool																isLinear,
-		uint64_t															chunkID,
-		uint64_t															blockID );
+	void												FreeBlock(
+		uint32_t										memoryTypeIndex,
+		bool											isLinear,
+		uint64_t										chunkID,
+		uint64_t										blockID );
 
-	std::unique_ptr<vk2d::_internal::DeviceMemoryPoolDataImpl>				data						= {};
+	std::unique_ptr<DeviceMemoryPoolDataImpl>			data						= {};
 
-	bool																	is_good								= {};
+	bool												is_good								= {};
 };
 
 
 
-std::unique_ptr<vk2d::_internal::DeviceMemoryPool>		MakeDeviceMemoryPool(
+std::unique_ptr<DeviceMemoryPool>						MakeDeviceMemoryPool(
 	VkPhysicalDevice									physicalDevice,
 	VkDevice											device,
 	VkDeviceSize										linearAllocationChunkSize			= VkDeviceSize( 1024 ) * 1024 * 64,
@@ -363,6 +363,6 @@ std::unique_ptr<vk2d::_internal::DeviceMemoryPool>		MakeDeviceMemoryPool(
 
 
 
-} // _internal
+} // vk2d_internal
 
 } // vk2d

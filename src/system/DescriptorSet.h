@@ -4,7 +4,7 @@
 
 namespace vk2d {
 
-namespace _internal {
+namespace vk2d_internal {
 
 
 
@@ -31,7 +31,7 @@ struct PoolDescriptorSet;
 ///				that would waste the least amount of resources, this problem becomes more severe when considering different amounts
 ///				of different descriptor types, we need some heuristics for this and 100% resource utilization will be near impossible.
 class DescriptorPoolRequirements {
-	friend class vk2d::_internal::DescriptorSetLayout;
+	friend class DescriptorSetLayout;
 
 public:
 	inline const std::array<uint32_t, VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT + 1>
@@ -57,96 +57,96 @@ struct PoolCategory {
 };
 
 class DescriptorSetLayout {
-	friend std::unique_ptr<vk2d::_internal::DescriptorSetLayout>	CreateDescriptorSetLayout(
-		vk2d::_internal::InstanceImpl							*	instance,
-		VkDevice													device,
-		const VkDescriptorSetLayoutCreateInfo					*	pCreateInfo );
+	friend std::unique_ptr<DescriptorSetLayout>		CreateDescriptorSetLayout(
+		InstanceImpl							*	instance,
+		VkDevice									device,
+		const VkDescriptorSetLayoutCreateInfo	*	pCreateInfo );
 
 private:
-																	DescriptorSetLayout(
-		vk2d::_internal::InstanceImpl							*	instance,
-		VkDevice													device,
-		const VkDescriptorSetLayoutCreateInfo					*	pCreateInfo );
+													DescriptorSetLayout(
+		InstanceImpl							*	instance,
+		VkDevice									device,
+		const VkDescriptorSetLayoutCreateInfo	*	pCreateInfo );
 public:
 
-																	~DescriptorSetLayout();
+													~DescriptorSetLayout();
 
-	 VkDescriptorSetLayout											GetVulkanDescriptorSetLayout() const;
-	 const VkDescriptorSetLayoutCreateInfo						&	GetDescriptorSetLayoutCreateInfo() const;
+	 VkDescriptorSetLayout							GetVulkanDescriptorSetLayout() const;
+	 const VkDescriptorSetLayoutCreateInfo		&	GetDescriptorSetLayoutCreateInfo() const;
 
 	// Somewhat specialized and mostly used only by the VKRende lirar,
 	// Read more above in the DescriptorPoolCategory struct defniton.
-	 const vk2d::_internal::DescriptorPoolRequirements			&	GetDescriptorPoolRequirements() const;
+	 const DescriptorPoolRequirements			&	GetDescriptorPoolRequirements() const;
 
-																	operator VkDescriptorSetLayout() const;
+													operator VkDescriptorSetLayout() const;
 
 private:
-	vk2d::_internal::InstanceImpl								*	instance							= {};
+	InstanceImpl								*	instance							= {};
 
-	VkDescriptorSetLayoutCreateInfo									createInfo								= {};
-	VkDevice														refDevice								= {};
-	VkDescriptorSetLayout											setLayout								= {};
-	vk2d::_internal::DescriptorPoolRequirements						descriptorPoolRequirements				= {};
+	VkDescriptorSetLayoutCreateInfo					createInfo								= {};
+	VkDevice										refDevice								= {};
+	VkDescriptorSetLayout							setLayout								= {};
+	DescriptorPoolRequirements						descriptorPoolRequirements				= {};
 
-	bool															is_good									= {};
+	bool											is_good									= {};
 };
 
 // TODO: Remove CreateDescriptorSetLayout() function, we don't really need a factory function here.
-std::unique_ptr<vk2d::_internal::DescriptorSetLayout>				CreateDescriptorSetLayout(
-	vk2d::_internal::InstanceImpl								*	instance,
-	VkDevice														device,
-	const VkDescriptorSetLayoutCreateInfo						*	pCreateInfo );
+std::unique_ptr<DescriptorSetLayout>				CreateDescriptorSetLayout(
+	InstanceImpl								*	instance,
+	VkDevice										device,
+	const VkDescriptorSetLayoutCreateInfo		*	pCreateInfo );
 
 
 
 
 
 struct PoolDescriptorSet {
-	friend class vk2d::_internal::DescriptorAutoPool;
+	friend class DescriptorAutoPool;
 
 	operator VkResult() const;
 
-	VkDescriptorSet													descriptorSet							= {};
-	VkResult														result									= {};
+	VkDescriptorSet									descriptorSet							= {};
+	VkResult										result									= {};
 private:
-	VkDescriptorPool												parentPool								= {};
-	bool															allocated								= {};
+	VkDescriptorPool								parentPool								= {};
+	bool											allocated								= {};
 };
 
 class DescriptorAutoPool {
-	friend std::unique_ptr<vk2d::_internal::DescriptorAutoPool>		CreateDescriptorAutoPool(
-		vk2d::_internal::InstanceImpl							*	instance,
-		VkDevice													device );
+	friend std::unique_ptr<DescriptorAutoPool>		CreateDescriptorAutoPool(
+		InstanceImpl							*	instance,
+		VkDevice									device );
 
 private:
-																	DescriptorAutoPool(
-		vk2d::_internal::InstanceImpl							*	instance,
-		VkDevice													device );
+													DescriptorAutoPool(
+		InstanceImpl							*	instance,
+		VkDevice									device );
 public:
-																	~DescriptorAutoPool();
+													~DescriptorAutoPool();
 
-	vk2d::_internal::PoolDescriptorSet								AllocateDescriptorSet(
-		const vk2d::_internal::DescriptorSetLayout				&	rForDescriptorSetLayout );
+	PoolDescriptorSet								AllocateDescriptorSet(
+		const DescriptorSetLayout				&	rForDescriptorSetLayout );
 
-	 void															FreeDescriptorSet(
-		 vk2d::_internal::PoolDescriptorSet						&	pDescriptorSet );
+	 void											FreeDescriptorSet(
+		 PoolDescriptorSet						&	pDescriptorSet );
 
 private:
-	vk2d::_internal::InstanceImpl								*	instance			= {};
+	InstanceImpl								*	instance				= {};
 
-	VkDevice														refDevice				= {};
-	std::vector<vk2d::_internal::PoolCategory>						poolCategories			= {};
+	VkDevice										refDevice				= {};
+	std::vector<PoolCategory>						poolCategories			= {};
 
-	bool															is_good					= {};
+	bool											is_good					= {};
 };
 
 // TODO: Remove CreateDescriptorAutoPool() function, we don't really need a factory function here.
-std::unique_ptr<vk2d::_internal::DescriptorAutoPool>				CreateDescriptorAutoPool(
-	vk2d::_internal::InstanceImpl								*	instance,
-	VkDevice														device );
+std::unique_ptr<DescriptorAutoPool>					CreateDescriptorAutoPool(
+	InstanceImpl								*	instance,
+	VkDevice										device );
 
 
 
-} // _internal
+} // vk2d_internal
 
 } // vk2d

@@ -3,7 +3,7 @@
 
 
 
-std::string vk2d::_internal::VkResultToString( VkResult result )
+std::string vk2d::vk2d_internal::VkResultToString( VkResult result )
 {
 	switch( result ) {
 		case VK_SUCCESS:
@@ -75,7 +75,7 @@ std::string vk2d::_internal::VkResultToString( VkResult result )
 	}
 }
 
-std::string vk2d::_internal::VkPipelineStageFlagBitsToString( VkPipelineStageFlagBits flags )
+std::string vk2d::vk2d_internal::VkPipelineStageFlagBitsToString( VkPipelineStageFlagBits flags )
 {
 	switch( flags ) {
 		case VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT:
@@ -141,16 +141,16 @@ std::string vk2d::_internal::VkPipelineStageFlagBitsToString( VkPipelineStageFla
 
 
 
-PFN_vkCmdSetCheckpointNV							fp_vkCmdSetCheckpointNV						= nullptr;
-PFN_vkGetQueueCheckpointDataNV						fp_vkGetQueueCheckpointDataNV				= nullptr;
+PFN_vkCmdSetCheckpointNV								fp_vkCmdSetCheckpointNV						= nullptr;
+PFN_vkGetQueueCheckpointDataNV							fp_vkGetQueueCheckpointDataNV				= nullptr;
 
-VkQueue												checkpoint_queue							= VK_NULL_HANDLE;
-std::mutex										*	checkpoint_queue_mutex						= nullptr;
-vk2d::_internal::CommandBufferCheckpointData	*	previous_command_buffer_checkpoint_data		= nullptr;
+VkQueue													checkpoint_queue							= VK_NULL_HANDLE;
+std::mutex											*	checkpoint_queue_mutex						= nullptr;
+vk2d::vk2d_internal::CommandBufferCheckpointData	*	previous_command_buffer_checkpoint_data		= nullptr;
 
 
 
-void vk2d::_internal::SetCommandBufferCheckpointQueue(
+void vk2d::vk2d_internal::SetCommandBufferCheckpointQueue(
 	VkDevice							device,
 	VkQueue								queue,
 	std::mutex						*	queue_mutex
@@ -174,13 +174,13 @@ void vk2d::_internal::SetCommandBufferCheckpointQueue(
 	assert( fp_vkGetQueueCheckpointDataNV );
 }
 
-void vk2d::_internal::CmdInsertCommandBufferCheckpoint(
-	VkCommandBuffer					command_buffer,
-	std::string						name,
-	CommandBufferCheckpointType		type
+void vk2d::vk2d_internal::CmdInsertCommandBufferCheckpoint(
+	VkCommandBuffer											command_buffer,
+	std::string												name,
+	vk2d::vk2d_internal::CommandBufferCheckpointType		type
 )
 {
-	auto new_command_buffer_checkpoint_data = new CommandBufferCheckpointData(
+	auto new_command_buffer_checkpoint_data = new vk2d::vk2d_internal::CommandBufferCheckpointData(
 		name,
 		type,
 		previous_command_buffer_checkpoint_data
@@ -194,7 +194,7 @@ void vk2d::_internal::CmdInsertCommandBufferCheckpoint(
 	);
 }
 
-std::vector<VkCheckpointDataNV> vk2d::_internal::GetCommandBufferCheckpoints()
+std::vector<VkCheckpointDataNV> vk2d::vk2d_internal::GetCommandBufferCheckpoints()
 {
 	assert( checkpoint_queue_mutex );
 
@@ -222,28 +222,28 @@ std::vector<VkCheckpointDataNV> vk2d::_internal::GetCommandBufferCheckpoints()
 	return checkpoint_data;
 }
 
-std::string vk2d::_internal::CommandBufferCheckpointTypeToString( CommandBufferCheckpointType type )
+std::string vk2d::vk2d_internal::CommandBufferCheckpointTypeToString( vk2d::vk2d_internal::CommandBufferCheckpointType type )
 {
 	switch( type ) {
-	case vk2d::_internal::CommandBufferCheckpointType::BEGIN_COMMAND_BUFFER:
+	case vk2d::vk2d_internal::CommandBufferCheckpointType::BEGIN_COMMAND_BUFFER:
 		return "BEGIN_COMMAND_BUFFER";
-	case vk2d::_internal::CommandBufferCheckpointType::END_COMMAND_BUFFER:
+	case vk2d::vk2d_internal::CommandBufferCheckpointType::END_COMMAND_BUFFER:
 		return "END_COMMAND_BUFFER";
-	case vk2d::_internal::CommandBufferCheckpointType::BEGIN_RENDER_PASS:
+	case vk2d::vk2d_internal::CommandBufferCheckpointType::BEGIN_RENDER_PASS:
 		return "BEGIN_RENDER_PASS";
-	case vk2d::_internal::CommandBufferCheckpointType::END_RENDER_PASS:
+	case vk2d::vk2d_internal::CommandBufferCheckpointType::END_RENDER_PASS:
 		return "END_RENDER_PASS";
-	case vk2d::_internal::CommandBufferCheckpointType::BIND_PIPELINE:
+	case vk2d::vk2d_internal::CommandBufferCheckpointType::BIND_PIPELINE:
 		return "BIND_PIPELINE";
-	case vk2d::_internal::CommandBufferCheckpointType::BIND_DESCRIPTOR_SET:
+	case vk2d::vk2d_internal::CommandBufferCheckpointType::BIND_DESCRIPTOR_SET:
 		return "BIND_DESCRIPTOR_SET";
-	case vk2d::_internal::CommandBufferCheckpointType::BIND_INDEX_BUFFER:
+	case vk2d::vk2d_internal::CommandBufferCheckpointType::BIND_INDEX_BUFFER:
 		return "BIND_INDEX_BUFFER";
-	case vk2d::_internal::CommandBufferCheckpointType::BIND_VERTEX_BUFFER:
+	case vk2d::vk2d_internal::CommandBufferCheckpointType::BIND_VERTEX_BUFFER:
 		return "BIND_VERTEX_BUFFER";
-	case vk2d::_internal::CommandBufferCheckpointType::DRAW:
+	case vk2d::vk2d_internal::CommandBufferCheckpointType::DRAW:
 		return "DRAW";
-	case vk2d::_internal::CommandBufferCheckpointType::GENERIC:
+	case vk2d::vk2d_internal::CommandBufferCheckpointType::GENERIC:
 		return "GENERIC";
 	default:
 		return "<UNKNOWN CommandBufferCheckpointType>";
@@ -259,7 +259,7 @@ std::string vk2d::_internal::CommandBufferCheckpointTypeToString( CommandBufferC
 std::mutex						access_tracker_map_mutex;
 std::map<std::string, uint32_t>	access_tracker_map;
 
-vk2d::_internal::ThreadAccessScopeTracker::ThreadAccessScopeTracker( std::string file, std::string function_name, size_t line )
+vk2d::vk2d_internal::ThreadAccessScopeTracker::ThreadAccessScopeTracker( std::string file, std::string function_name, size_t line )
 {
 	std::stringstream ss;
 	ss << file << function_name << line;
@@ -276,7 +276,7 @@ vk2d::_internal::ThreadAccessScopeTracker::ThreadAccessScopeTracker( std::string
 	++access_tracker_map[ key ];
 }
 
-vk2d::_internal::ThreadAccessScopeTracker::~ThreadAccessScopeTracker()
+vk2d::vk2d_internal::ThreadAccessScopeTracker::~ThreadAccessScopeTracker()
 {
 	std::lock_guard<std::mutex> lock_guard( access_tracker_map_mutex );
 	--access_tracker_map[ key ];

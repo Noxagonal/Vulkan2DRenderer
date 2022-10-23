@@ -30,7 +30,7 @@ public:
 
 	template<typename OtherT>
 	constexpr ColorBase(
-		const vk2d::ColorBase<OtherT> & other
+		const ColorBase<OtherT> & other
 	)
 	{
 		*this = other;
@@ -54,7 +54,7 @@ public:
 	{};
 
 	template<typename OtherT>
-	constexpr vk2d::ColorBase<T> & operator=( const vk2d::ColorBase<T> & other )
+	constexpr ColorBase<T> & operator=( const ColorBase<T> & other )
 	{
 		if constexpr( std::is_same_v<T, OtherT> ) {
 			r = other.r;
@@ -69,7 +69,7 @@ public:
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Add color channels directly by another color and apply to itself.
 	///
-	///				eg. when using vk2d::Colorf {1.0, 1.0, 0.5, 0.5} + {0.0, 2.0, 0.5, 0.5} will result in {1.0, 3.0, 1.0, 1.0}
+	///				eg. when using Colorf {1.0, 1.0, 0.5, 0.5} + {0.0, 2.0, 0.5, 0.5} will result in {1.0, 3.0, 1.0, 1.0}
 	///				color.
 	/// 
 	/// @tparam		OtherT
@@ -81,7 +81,7 @@ public:
 	///				Other color to multiply this with.
 	/// @return		Itself with multiplied color value.
 	template<typename OtherT>
-	constexpr vk2d::ColorBase<T> & operator+=( const vk2d::ColorBase<OtherT> & other )
+	constexpr ColorBase<T> & operator+=( const ColorBase<OtherT> & other )
 	{
 		auto other_converted = ConvertTo<T>( other );
 		r += T( other_converted.r );
@@ -94,7 +94,7 @@ public:
 	/// @brief		Multiply color channels directly by another color and apply to itself.
 	///
 	///				This is useful when you wish to disable some color channels or intensify them. For example, when using
-	///				vk2d::Colorf, {1.0, 0.0, 5.0, 1.0} * {1.0, 5.0, 2.0, 2.0} will result in {1.0, 0.0, 10.0, 2.0}.
+	///				Colorf, {1.0, 0.0, 5.0, 1.0} * {1.0, 5.0, 2.0, 2.0} will result in {1.0, 0.0, 10.0, 2.0}.
 	/// 
 	/// @tparam		OtherT
 	///				Another type can be used for the other parameter. Other type is converted to this type first.
@@ -104,7 +104,7 @@ public:
 	/// 
 	/// @return		Itself with multiplied color value.
 	template<typename OtherT>
-	constexpr vk2d::ColorBase<T> & operator*=( const vk2d::ColorBase<OtherT> & other )
+	constexpr ColorBase<T> & operator*=( const ColorBase<OtherT> & other )
 	{
 		auto other_converted = ConvertTo<T>( other );
 		r = T( r * other_converted.r );
@@ -116,7 +116,7 @@ public:
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	///	@brief		Add color channels directly by another color.
 	///
-	///				For example when using vk2d::Colorf {1.0, 1.0, 0.5, 0.5} + {0.0, 2.0, 0.5, 0.5} will result in
+	///				For example when using Colorf {1.0, 1.0, 0.5, 0.5} + {0.0, 2.0, 0.5, 0.5} will result in
 	///				{1.0, 3.0, 1.0, 1.0} color.
 	/// 
 	/// @tparam		OtherT
@@ -126,9 +126,9 @@ public:
 	///				Other color to multiply this with.
 	/// @return		Itself with multiplied color value.
 	template<typename OtherT>
-	constexpr vk2d::ColorBase<T> operator+( const vk2d::ColorBase<OtherT> & other )
+	constexpr ColorBase<T> operator+( const ColorBase<OtherT> & other )
 	{
-		vk2d::ColorBase<T> ret = *this;
+		ColorBase<T> ret = *this;
 		ret += other;
 		return ret;
 	}
@@ -137,7 +137,7 @@ public:
 	/// @brief		Multiply color channels directly by another color.
 	///
 	///				This is useful when you wish to disable some color channels or intensify them. For example, when using
-	///				vk2d::Colorf, {1.0, 0.0, 5.0, 1.0} * {1.0, 5.0, 2.0, 2.0} will result in {1.0, 0.0, 10.0, 2.0}.
+	///				Colorf, {1.0, 0.0, 5.0, 1.0} * {1.0, 5.0, 2.0, 2.0} will result in {1.0, 0.0, 10.0, 2.0}.
 	/// 
 	/// @tparam		OtherT
 	///				Another type can be used for the other parameter. Useful if primary color is integer type and you wish to
@@ -148,9 +148,9 @@ public:
 	/// 
 	/// @return		New multiplied color value.
 	template<typename OtherT>
-	constexpr vk2d::ColorBase<T> operator*( const vk2d::ColorBase<OtherT> & other )
+	constexpr ColorBase<T> operator*( const ColorBase<OtherT> & other )
 	{
-		vk2d::ColorBase<T> ret = *this;
+		ColorBase<T> ret = *this;
 		ret *= other;
 		return ret;
 	}
@@ -164,8 +164,8 @@ public:
 	///				{0.85, 0.4, 0.74, 0.9} <br>
 	///				Note that resulting alpha channel gets blended differently from the color channels. Resulting color is clamped
 	///				to <tt>0.0 - 1.0</tt> range for float values or <tt>0 - (integer positive maximum)</tt> for integer types. <br>
-	///				Blending works for integer types as well, for example vk2d::Color8 channel value 128 is considered equal to
-	///				vk2d::Colorf channel value 0.5 by this function. This makes blending between integer colors easy.
+	///				Blending works for integer types as well, for example Color8 channel value 128 is considered equal to
+	///				Colorf channel value 0.5 by this function. This makes blending between integer colors easy.
 	/// 
 	///				Values are clamped if this type is an integral type.
 	/// 
@@ -178,7 +178,7 @@ public:
 	/// 
 	/// @return		New alpha blended color between this and other.
 	template<typename OtherT>
-	constexpr vk2d::ColorBase<T> BlendUsingAlpha( const vk2d::ColorBase<OtherT> & other )
+	constexpr ColorBase<T> BlendUsingAlpha( const ColorBase<OtherT> & other )
 	{
 		auto this_floating = ConvertTo<double>( *this );
 		auto other_floating = ConvertTo<double>( other );
@@ -220,7 +220,7 @@ public:
 	/// 
 	/// @return		A new linearly interpolated color value between this and other.
 	template<typename OtherT>
-	constexpr vk2d::ColorBase<T> BlendLinear( const vk2d::ColorBase<OtherT> & other, double amount )
+	constexpr ColorBase<T> BlendLinear( const ColorBase<OtherT> & other, double amount )
 	{
 		auto this_floating = ConvertTo<double>( *this );
 		auto other_floating = ConvertTo<double>( other );
@@ -398,23 +398,23 @@ private:
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /// @brief		float per color channel.
-using Colorf			= vk2d::ColorBase<float>;
+using Colorf			= ColorBase<float>;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /// @brief		double per color channel.
-using Colord			= vk2d::ColorBase<double>;
+using Colord			= ColorBase<double>;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /// @brief		uint8_t per color channel.
-using Color8			= vk2d::ColorBase<uint8_t>;
+using Color8			= ColorBase<uint8_t>;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /// @brief		uint16_t per color channel.
-using Color16			= vk2d::ColorBase<uint16_t>;
+using Color16			= ColorBase<uint16_t>;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /// @brief		uint32_t per color channel.
-using Color32			= vk2d::ColorBase<uint32_t>;
+using Color32			= ColorBase<uint32_t>;
 
 
 

@@ -18,7 +18,7 @@
 
 
 namespace vk2d {
-namespace _internal {
+namespace vk2d_internal {
 
 
 
@@ -52,9 +52,9 @@ uint32_t RoundToCeilingPowerOfTwo(
 
 
 VK2D_API vk2d::FontResource::FontResource(
-	vk2d::_internal::ResourceManagerImpl	*	resource_manager,
+	vk2d_internal::ResourceManagerImpl		*	resource_manager,
 	uint32_t									loader_thread_index,
-	vk2d::ResourceBase						*	parent_resource,
+	ResourceBase							*	parent_resource,
 	const std::filesystem::path				&	file_path,
 	uint32_t									glyph_texel_size,
 	bool										use_alpha,
@@ -62,7 +62,7 @@ VK2D_API vk2d::FontResource::FontResource(
 	uint32_t									glyph_atlas_padding
 )
 {
-	impl = std::make_unique<vk2d::_internal::FontResourceImplBase>(
+	impl = std::make_unique<vk2d_internal::FontResourceImpl>(
 		this,
 		resource_manager,
 		loader_thread_index,
@@ -75,7 +75,7 @@ VK2D_API vk2d::FontResource::FontResource(
 	);
 	if( !impl || !impl->IsGood() ) {
 		impl		= nullptr;
-		resource_manager->GetInstance()->Report( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot create font resource implementation!" );
+		resource_manager->GetInstance()->Report( ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot create font resource implementation!" );
 		return;
 	}
 
@@ -148,18 +148,18 @@ VK2D_API bool VK2D_APIENTRY vk2d::FontResource::IsGood() const
 
 
 
-vk2d::_internal::FontResourceImplBase::FontResourceImplBase(
-	vk2d::FontResource						*	my_interface,
-	vk2d::_internal::ResourceManagerImpl	*	resource_manager,
+vk2d::vk2d_internal::FontResourceImpl::FontResourceImpl(
+	FontResource							*	my_interface,
+	ResourceManagerImpl						*	resource_manager,
 	uint32_t									loader_thread_index,
-	vk2d::ResourceBase						*	parent_resource,
+	ResourceBase							*	parent_resource,
 	const std::filesystem::path				&	file_path,
 	uint32_t									glyph_texel_size,
 	bool										use_alpha,
 	uint32_t									fallback_character,
 	uint32_t									glyph_atlas_padding
 ) :
-	vk2d::_internal::ResourceImplBase(
+	ResourceImplBase(
 		my_interface,
 		loader_thread_index,
 		resource_manager,
@@ -181,15 +181,15 @@ vk2d::_internal::FontResourceImplBase::FontResourceImplBase(
 	is_good		= true;
 }
 
-vk2d::_internal::FontResourceImplBase::~FontResourceImplBase()
+vk2d::vk2d_internal::FontResourceImpl::~FontResourceImpl()
 {}
 
-vk2d::ResourceStatus vk2d::_internal::FontResourceImplBase::GetStatus()
+vk2d::ResourceStatus vk2d::vk2d_internal::FontResourceImpl::GetStatus()
 {
-	if( !is_good )				return vk2d::ResourceStatus::FAILED_TO_LOAD;
+	if( !is_good )				return ResourceStatus::FAILED_TO_LOAD;
 
 	auto local_status = status.load();
-	if( local_status == vk2d::ResourceStatus::UNDETERMINED ) {
+	if( local_status == ResourceStatus::UNDETERMINED ) {
 
 		if( load_function_run_fence.IsSet() ) {
 
@@ -202,7 +202,7 @@ vk2d::ResourceStatus vk2d::_internal::FontResourceImplBase::GetStatus()
 	return local_status;
 }
 
-vk2d::ResourceStatus vk2d::_internal::FontResourceImplBase::WaitUntilLoaded(
+vk2d::ResourceStatus vk2d::vk2d_internal::FontResourceImpl::WaitUntilLoaded(
 	std::chrono::nanoseconds timeout
 )
 {
@@ -212,7 +212,7 @@ vk2d::ResourceStatus vk2d::_internal::FontResourceImplBase::WaitUntilLoaded(
 	return WaitUntilLoaded( std::chrono::steady_clock::now() + timeout );
 }
 
-vk2d::ResourceStatus vk2d::_internal::FontResourceImplBase::WaitUntilLoaded(
+vk2d::ResourceStatus vk2d::vk2d_internal::FontResourceImpl::WaitUntilLoaded(
 	std::chrono::steady_clock::time_point timeout
 )
 {
@@ -220,10 +220,10 @@ vk2d::ResourceStatus vk2d::_internal::FontResourceImplBase::WaitUntilLoaded(
 	assert( timeout == std::chrono::steady_clock::time_point::max() ||
 		timeout + std::chrono::seconds( 5 ) >= std::chrono::steady_clock::now() );
 
-	if( !is_good ) return vk2d::ResourceStatus::FAILED_TO_LOAD;
+	if( !is_good ) return ResourceStatus::FAILED_TO_LOAD;
 
 	auto local_status = status.load();
-	if( local_status == vk2d::ResourceStatus::UNDETERMINED ) {
+	if( local_status == ResourceStatus::UNDETERMINED ) {
 
 		if( load_function_run_fence.Wait( timeout ) ) {
 			status = local_status = texture_resource->WaitUntilLoaded( timeout );
@@ -234,8 +234,8 @@ vk2d::ResourceStatus vk2d::_internal::FontResourceImplBase::WaitUntilLoaded(
 	return local_status;
 }
 
-bool vk2d::_internal::FontResourceImplBase::MTLoad(
-	vk2d::_internal::ThreadPrivateResource		*	thread_resource
+bool vk2d::vk2d_internal::FontResourceImpl::MTLoad(
+	ThreadPrivateResource		*	thread_resource
 )
 {
 	// TODO: additional parameters:
@@ -244,7 +244,7 @@ bool vk2d::_internal::FontResourceImplBase::MTLoad(
 	assert( thread_resource );
 	assert( my_interface->impl->GetFilePaths().size() );
 
-	auto loader_thread_resource		= static_cast<vk2d::_internal::ThreadLoaderResource*>( thread_resource );
+	auto loader_thread_resource		= static_cast<ThreadLoaderResource*>( thread_resource );
 	auto instance					= loader_thread_resource->GetInstance();
 	auto path_str					= my_interface->impl->GetFilePaths()[ 0 ].string();
 	auto max_texture_size			= instance->GetVulkanPhysicalDeviceProperties().limits.maxImageDimension2D;
@@ -283,21 +283,21 @@ bool vk2d::_internal::FontResourceImplBase::MTLoad(
 				case FT_Err_Cannot_Open_Resource:
 					// Cannot open file error
 					instance->Report(
-						vk2d::ReportSeverity::NON_CRITICAL_ERROR,
+						ReportSeverity::NON_CRITICAL_ERROR,
 						std::string( "Cannot load font: File not found: " ) + path_str
 					);
 					return false;
 				case FT_Err_Unknown_File_Format:
 					// Unknown file format error
 					instance->Report(
-						vk2d::ReportSeverity::NON_CRITICAL_ERROR,
+						ReportSeverity::NON_CRITICAL_ERROR,
 						std::string( "Cannot load font: Unknown file format: " ) + path_str
 					);
 					return false;
 				default:
 					// Other errors
 					instance->Report(
-						vk2d::ReportSeverity::NON_CRITICAL_ERROR,
+						ReportSeverity::NON_CRITICAL_ERROR,
 						std::string( "Cannot load font: " ) + path_str
 					);
 					return false;
@@ -318,7 +318,7 @@ bool vk2d::_internal::FontResourceImplBase::MTLoad(
 				);
 				if( ft_error ) {
 					instance->Report(
-						vk2d::ReportSeverity::NON_CRITICAL_ERROR,
+						ReportSeverity::NON_CRITICAL_ERROR,
 						std::string( "Cannot load font: " ) + path_str
 					);
 					return false;
@@ -332,7 +332,7 @@ bool vk2d::_internal::FontResourceImplBase::MTLoad(
 				);
 				if( ft_error ) {
 					instance->Report(
-						vk2d::ReportSeverity::NON_CRITICAL_ERROR,
+						ReportSeverity::NON_CRITICAL_ERROR,
 						std::string( "Cannot load font: " ) + path_str
 					);
 					return false;
@@ -345,7 +345,7 @@ bool vk2d::_internal::FontResourceImplBase::MTLoad(
 
 				auto ft_load_error = FT_Load_Glyph( face, FT_UInt( i ), FT_LOAD_DEFAULT );
 				if( ft_load_error ) {
-					instance->Report( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot load font, cannot load glyph for bitmap metrics!" );
+					instance->Report( ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot load font, cannot load glyph for bitmap metrics!" );
 					return false;
 				}
 
@@ -389,7 +389,7 @@ bool vk2d::_internal::FontResourceImplBase::MTLoad(
 	}
 
 	if( !total_glyph_count ) {
-		instance->Report( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Cannot load font: Font contains no glyphs!" );
+		instance->Report( ReportSeverity::NON_CRITICAL_ERROR, "Cannot load font: Font contains no glyphs!" );
 		return false;
 	}
 
@@ -420,7 +420,7 @@ bool vk2d::_internal::FontResourceImplBase::MTLoad(
 	// Stop if we don't have any font's to work with.
 	if( !face_infos.size() ) {
 		instance->Report(
-			vk2d::ReportSeverity::NON_CRITICAL_ERROR,
+			ReportSeverity::NON_CRITICAL_ERROR,
 			std::string( "Internal error: Cannot load font: " ) + path_str
 		);
 		return false;
@@ -440,21 +440,21 @@ bool vk2d::_internal::FontResourceImplBase::MTLoad(
 			{
 				auto ft_load_error = FT_Load_Glyph( face.face, glyph_index, FT_LOAD_DEFAULT );
 				if( ft_load_error ) {
-					instance->Report( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot load font, cannot load glyph!" );
+					instance->Report( ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot load font, cannot load glyph!" );
 					return false;
 				}
 			}
 			{
 				auto ft_render_error = FT_Render_Glyph( face.face->glyph, use_alpha ? FT_RENDER_MODE_NORMAL : FT_RENDER_MODE_MONO );
 				if( ft_render_error ) {
-					instance->Report( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot load font, cannot render glyph!" );
+					instance->Report( ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot load font, cannot render glyph!" );
 					return false;
 				}
 			}
 			auto	ft_glyph	= face.face->glyph;
 			auto &	ft_bitmap	= ft_glyph->bitmap;
 
-			std::vector<vk2d::Color8> final_glyph_pixels( size_t( ft_bitmap.rows ) * size_t( ft_bitmap.width ) );
+			std::vector<Color8> final_glyph_pixels( size_t( ft_bitmap.rows ) * size_t( ft_bitmap.width ) );
 
 			switch( ft_bitmap.pixel_mode ) {
 				case FT_PIXEL_MODE_MONO:
@@ -511,7 +511,7 @@ bool vk2d::_internal::FontResourceImplBase::MTLoad(
 
 				default:
 					// Unsupported
-					instance->Report( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot load font, Unsupported pixel format!" );
+					instance->Report( ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot load font, Unsupported pixel format!" );
 					return false;
 					break;
 			}
@@ -524,7 +524,7 @@ bool vk2d::_internal::FontResourceImplBase::MTLoad(
 			);
 			if( !atlas_location.atlas_ptr ) {
 				instance->Report(
-					vk2d::ReportSeverity::NON_CRITICAL_ERROR,
+					ReportSeverity::NON_CRITICAL_ERROR,
 					"Internal error: Cannot create font, cannot copy glyph image to font texture atlas!"
 				);
 				return false;
@@ -532,7 +532,7 @@ bool vk2d::_internal::FontResourceImplBase::MTLoad(
 
 			// Create glyph info structure for the glyph
 			{
-				vk2d::Rect2f uv_coords		= {
+				Rect2f uv_coords		= {
 					float( atlas_location.location.top_left.x ) / float( atlas_size ),
 					float( atlas_location.location.top_left.y ) / float( atlas_size ),
 					float( atlas_location.location.bottom_right.x ) / float( atlas_size ),
@@ -548,7 +548,7 @@ bool vk2d::_internal::FontResourceImplBase::MTLoad(
 				auto hori_advance							= metrics.horiAdvance * glyph_size_bitmap_size_ratio;
 				auto vert_advance							= metrics.vertAdvance * glyph_size_bitmap_size_ratio;
 
-				vk2d::_internal::GlyphInfo glyph_info {};
+				GlyphInfo glyph_info {};
 				glyph_info.face_index						= uint32_t( face_index );
 				glyph_info.atlas_index						= atlas_location.atlas_index;
 				glyph_info.uv_coords						= uv_coords;
@@ -593,7 +593,7 @@ bool vk2d::_internal::FontResourceImplBase::MTLoad(
 
 	// Everything is baked into the atlas, create texture resource to store it.
 	{
-		std::vector<const std::vector<vk2d::Color8>*>		texture_data_array( atlas_textures.size() );
+		std::vector<const std::vector<Color8>*>		texture_data_array( atlas_textures.size() );
 		for( size_t i = 0; i < atlas_textures.size(); ++i ) {
 			texture_data_array[ i ]		= &atlas_textures[ i ]->data;
 		}
@@ -604,7 +604,7 @@ bool vk2d::_internal::FontResourceImplBase::MTLoad(
 			my_interface
 		);
 		if( !texture_resource ) {
-			instance->Report( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot create font, cannot create texture resource for font!" );
+			instance->Report( ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot create font, cannot create texture resource for font!" );
 			return false;
 		}
 	}
@@ -612,8 +612,8 @@ bool vk2d::_internal::FontResourceImplBase::MTLoad(
 	return true;
 }
 
-void vk2d::_internal::FontResourceImplBase::MTUnload(
-	vk2d::_internal::ThreadPrivateResource		*	thread_resource
+void vk2d::vk2d_internal::FontResourceImpl::MTUnload(
+	ThreadPrivateResource		*	thread_resource
 )
 {
 	// Make sure font faces are destroyed.
@@ -624,7 +624,7 @@ void vk2d::_internal::FontResourceImplBase::MTUnload(
 
 }
 
-vk2d::Rect2f vk2d::_internal::FontResourceImplBase::CalculateRenderedSize(
+vk2d::Rect2f vk2d::vk2d_internal::FontResourceImpl::CalculateRenderedSize(
 	std::string_view	text,
 	float				kerning,
 	glm::vec2		scale,
@@ -638,11 +638,11 @@ vk2d::Rect2f vk2d::_internal::FontResourceImplBase::CalculateRenderedSize(
 	if( wait_for_resource_load ) {
 		WaitUntilLoaded( std::chrono::nanoseconds::max() );
 	} else {
-		if( GetStatus() == vk2d::ResourceStatus::UNDETERMINED ) return {};
+		if( GetStatus() == ResourceStatus::UNDETERMINED ) return {};
 	}
 	if( !FaceExists( font_face ) ) return {};
 
-	vk2d::Rect2f ret {};
+	Rect2f ret {};
 	float advance {};
 	if( vertical ) {
 		// Vertical text
@@ -695,7 +695,7 @@ vk2d::Rect2f vk2d::_internal::FontResourceImplBase::CalculateRenderedSize(
 	return ret;
 }
 
-bool vk2d::_internal::FontResourceImplBase::FaceExists(
+bool vk2d::vk2d_internal::FontResourceImpl::FaceExists(
 	uint32_t font_face
 ) const
 {
@@ -705,15 +705,15 @@ bool vk2d::_internal::FontResourceImplBase::FaceExists(
 	return false;
 }
 
-vk2d::TextureResource * vk2d::_internal::FontResourceImplBase::GetTextureResource()
+vk2d::TextureResource *vk2d::vk2d_internal::FontResourceImpl::GetTextureResource()
 {
-	if( GetStatus() == vk2d::ResourceStatus::LOADED ) {
+	if( GetStatus() == ResourceStatus::LOADED ) {
 		return texture_resource;
 	}
 	return {};
 }
 
-const vk2d::_internal::GlyphInfo * vk2d::_internal::FontResourceImplBase::GetGlyphInfo(
+const vk2d::vk2d_internal::GlyphInfo *vk2d::vk2d_internal::FontResourceImpl::GetGlyphInfo(
 	uint32_t		font_face,
 	uint32_t		character
 ) const
@@ -730,25 +730,25 @@ const vk2d::_internal::GlyphInfo * vk2d::_internal::FontResourceImplBase::GetGly
 	return &face_info.glyph_infos[ glyph_index ];
 }
 
-bool vk2d::_internal::FontResourceImplBase::IsGood() const
+bool vk2d::vk2d_internal::FontResourceImpl::IsGood() const
 {
 	return is_good;
 }
 
-vk2d::_internal::FontResourceImplBase::AtlasTexture * vk2d::_internal::FontResourceImplBase::CreateNewAtlasTexture()
+vk2d::vk2d_internal::FontResourceImpl::AtlasTexture *vk2d::vk2d_internal::FontResourceImpl::CreateNewAtlasTexture()
 {
-	auto new_atlas_texture			= std::make_unique<vk2d::_internal::FontResourceImplBase::AtlasTexture>();
+	auto new_atlas_texture			= std::make_unique<FontResourceImpl::AtlasTexture>();
 
 	new_atlas_texture->data.resize( size_t( atlas_size ) * size_t( atlas_size ) );
 	new_atlas_texture->index		= uint32_t( atlas_textures.size() );
-	std::memset( new_atlas_texture->data.data(), 0, new_atlas_texture->data.size() * sizeof( vk2d::Color8 ) );
+	std::memset( new_atlas_texture->data.data(), 0, new_atlas_texture->data.size() * sizeof( Color8 ) );
 
 	auto new_atlas_texture_ptr		= new_atlas_texture.get();
 	atlas_textures.push_back( std::move( new_atlas_texture ) );
 	return new_atlas_texture_ptr;
 }
 
-vk2d::_internal::FontResourceImplBase::AtlasLocation vk2d::_internal::FontResourceImplBase::ReserveSpaceForGlyphFromAtlasTextures(
+vk2d::vk2d_internal::FontResourceImpl::AtlasLocation vk2d::vk2d_internal::FontResourceImpl::ReserveSpaceForGlyphFromAtlasTextures(
 	FT_GlyphSlot		glyph,
 	uint32_t			glyph_atlas_padding
 )
@@ -756,11 +756,11 @@ vk2d::_internal::FontResourceImplBase::AtlasLocation vk2d::_internal::FontResour
 	assert( current_atlas_texture );
 
 	auto FindLocationInAtlasTexture =[](
-		vk2d::_internal::FontResourceImplBase::AtlasTexture		*	atlas_texture,
+		FontResourceImpl::AtlasTexture		*	atlas_texture,
 		FT_GlyphSlot											glyph,
 		uint32_t												atlas_size,
 		uint32_t												glyph_atlas_padding
-		) -> vk2d::_internal::FontResourceImplBase::AtlasLocation
+		) ->vk2d::vk2d_internal::FontResourceImpl::AtlasLocation
 	{
 		uint32_t glyph_width		= uint32_t( glyph->bitmap.width )	+ glyph_atlas_padding;
 		uint32_t glyph_height		= uint32_t( glyph->bitmap.rows )	+ glyph_atlas_padding;
@@ -772,7 +772,7 @@ vk2d::_internal::FontResourceImplBase::AtlasLocation vk2d::_internal::FontResour
 			if( atlas_texture->current_write_location + glyph_width + glyph_atlas_padding < atlas_size ) {
 				// Fits width wise, fits completely.
 
-				vk2d::_internal::FontResourceImplBase::AtlasLocation new_glyph_location {};
+				FontResourceImpl::AtlasLocation new_glyph_location {};
 				new_glyph_location.atlas_ptr				= atlas_texture;
 				new_glyph_location.atlas_index				= atlas_texture->index;
 				new_glyph_location.location.top_left		= {
@@ -802,7 +802,7 @@ vk2d::_internal::FontResourceImplBase::AtlasLocation vk2d::_internal::FontResour
 				if( atlas_texture->current_write_location + glyph_width + glyph_atlas_padding < atlas_size ) {
 					// Fits width wise.
 
-					vk2d::_internal::FontResourceImplBase::AtlasLocation new_glyph_location {};
+					FontResourceImpl::AtlasLocation new_glyph_location {};
 					new_glyph_location.atlas_ptr				= atlas_texture;
 					new_glyph_location.atlas_index				= atlas_texture->index;
 					new_glyph_location.location.top_left		= {
@@ -846,7 +846,7 @@ vk2d::_internal::FontResourceImplBase::AtlasLocation vk2d::_internal::FontResour
 		current_atlas_texture = CreateNewAtlasTexture();
 		if( !current_atlas_texture ) {
 			// Failed to create new atlas texture.
-			resource_manager->GetInstance()->Report( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot create font, cannot create new atlas texture for font!" );
+			resource_manager->GetInstance()->Report( ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot create font, cannot create new atlas texture for font!" );
 			return {};
 		}
 
@@ -860,7 +860,7 @@ vk2d::_internal::FontResourceImplBase::AtlasLocation vk2d::_internal::FontResour
 		if( !new_location.atlas_ptr ) {
 			// Still could not find enough space, a single font face glyph is too large
 			// to fit entire atlas, this should not happen so we raise an error.
-			resource_manager->GetInstance()->Report( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot create font, a single glyph wont fit into a new atlas." );
+			resource_manager->GetInstance()->Report( ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot create font, a single glyph wont fit into a new atlas." );
 			return {};
 		}
 
@@ -869,9 +869,9 @@ vk2d::_internal::FontResourceImplBase::AtlasLocation vk2d::_internal::FontResour
 	return new_location;
 }
 
-void vk2d::_internal::FontResourceImplBase::CopyGlyphTextureToAtlasLocation(
+void vk2d::vk2d_internal::FontResourceImpl::CopyGlyphTextureToAtlasLocation(
 	AtlasLocation							atlas_location,
-	const std::vector<vk2d::Color8>		&	converted_texture_data )
+	const std::vector<Color8>		&	converted_texture_data )
 {
 	assert( atlas_location.atlas_ptr );
 
@@ -888,10 +888,10 @@ void vk2d::_internal::FontResourceImplBase::CopyGlyphTextureToAtlasLocation(
 	}
 }
 
-vk2d::_internal::FontResourceImplBase::AtlasLocation vk2d::_internal::FontResourceImplBase::AttachGlyphToAtlas(
+vk2d::vk2d_internal::FontResourceImpl::AtlasLocation vk2d::vk2d_internal::FontResourceImpl::AttachGlyphToAtlas(
 	FT_GlyphSlot							glyph,
 	uint32_t								glyph_atlas_padding,
-	const std::vector<vk2d::Color8>		&	converted_texture_data )
+	const std::vector<Color8>			&	converted_texture_data )
 {
 	auto atlas_location = ReserveSpaceForGlyphFromAtlasTextures(
 		glyph,
@@ -904,7 +904,7 @@ vk2d::_internal::FontResourceImplBase::AtlasLocation vk2d::_internal::FontResour
 		);
 		return atlas_location;
 	} else {
-		resource_manager->GetInstance()->Report( vk2d::ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot create font, cannot attach glyph to atlas texture!" );
+		resource_manager->GetInstance()->Report( ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot create font, cannot attach glyph to atlas texture!" );
 		return {};
 	}
 }
@@ -915,7 +915,7 @@ vk2d::_internal::FontResourceImplBase::AtlasLocation vk2d::_internal::FontResour
 
 
 
-uint32_t vk2d::_internal::RoundToCeilingPowerOfTwo( uint32_t value )
+uint32_t vk2d::vk2d_internal::RoundToCeilingPowerOfTwo( uint32_t value )
 {
 	value--;
 	value |= value >> 1;

@@ -57,7 +57,7 @@ struct Vertex
 	///
 	///				Texture color is multiplied by this, or if no texture is applied, determines the displayed color for this
 	///				vertex.
-	alignas( 16 )	vk2d::Colorf			color					= {};
+	alignas( 16 )	Colorf			color					= {};
 
 	/// @brief		Size of the vertex.
 	///
@@ -67,7 +67,7 @@ struct Vertex
 	/// @brief		Texture layer.
 	///
 	///				If texture has layers, then this parameter tells which layer of that texture is to be used with this
-	///				vertex. If any texture layer weights are used, eg. vk2d::Mesh::texture_layer_weights, then this
+	///				vertex. If any texture layer weights are used, eg. Mesh::texture_layer_weights, then this
 	///				parameter is ignored.
 	alignas( 4 )	uint32_t				single_texture_layer	= {};
 };
@@ -96,7 +96,7 @@ struct ImageData
 	/// @brief		A list of texel color values forming an image.
 	///
 	///				Image data is left to right, top to bottom ordered.
-	std::vector<vk2d::Color8>				data;
+	std::vector<Color8>				data;
 };
 
 

@@ -10,18 +10,18 @@ namespace vk2d {
 
 
 
-namespace _internal {
+namespace vk2d_internal {
 
 class ResourceManagerImpl;
 class PipelineResourceImplBase;
 
-} // _internal
+} // vk2d_internal
 
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 class PipelineResource // :
-	// public vk2d::ResourceBase
+	// public ResourceBase
 {
 public:
 

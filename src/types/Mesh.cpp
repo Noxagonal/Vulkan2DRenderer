@@ -16,14 +16,14 @@
 
 
 namespace vk2d {
-namespace _internal {
+namespace vk2d_internal {
 
 template<typename T>
-vk2d::Rect2Base<T> CalculateAABBFromPointList(
+Rect2Base<T> CalculateAABBFromPointList(
 	const std::vector<glm::vec<2, T, glm::packed_highp>>		&	points
 )
 {
-	vk2d::Rect2Base<T> ret { points[ 0 ], points[ 0 ] };
+	Rect2Base<T> ret { points[ 0 ], points[ 0 ] };
 	for( auto p : points ) {
 		ret.top_left.x		= std::min( ret.top_left.x, p.x );
 		ret.top_left.y		= std::min( ret.top_left.y, p.y );
@@ -33,11 +33,11 @@ vk2d::Rect2Base<T> CalculateAABBFromPointList(
 	return ret;
 }
 
-vk2d::Rect2f CalculateAABBFromVertexList(
-	const std::vector<vk2d::Vertex>			&	vertices
+Rect2f CalculateAABBFromVertexList(
+	const std::vector<Vertex>			&	vertices
 )
 {
-	vk2d::Rect2f ret { vertices[ 0 ].vertex_coords, vertices[ 0 ].vertex_coords };
+	Rect2f ret { vertices[ 0 ].vertex_coords, vertices[ 0 ].vertex_coords };
 	for( auto p : vertices ) {
 		ret.top_left.x		= std::min( ret.top_left.x, p.vertex_coords.x );
 		ret.top_left.y		= std::min( ret.top_left.y, p.vertex_coords.y );
@@ -47,9 +47,9 @@ vk2d::Rect2f CalculateAABBFromVertexList(
 	return ret;
 }
 
-inline vk2d::Vertex CreateDefaultValueVertex()
+inline Vertex CreateDefaultValueVertex()
 {
-	vk2d::Vertex v;
+	Vertex v;
 	v.vertex_coords				= {};
 	v.uv_coords					= {};
 	v.color						= { 1.0f, 1.0f, 1.0f, 1.0f };
@@ -59,7 +59,7 @@ inline vk2d::Vertex CreateDefaultValueVertex()
 }
 
 inline void ClearVerticesToDefaultValues(
-	std::vector<vk2d::Vertex>				&	vertices
+	std::vector<Vertex>				&	vertices
 )
 {
 	for( auto & v : vertices ) {
@@ -67,7 +67,7 @@ inline void ClearVerticesToDefaultValues(
 	}
 }
 
-} // _internal
+} // vk2d_internal
 } // vk2d
 
 
@@ -84,7 +84,7 @@ VK2D_API void VK2D_APIENTRY vk2d::Mesh::Rotate(
 	float					rotation_amount_radians,
 	glm::vec2				origin )
 {
-	auto rotation_matrix	= vk2d::CreateRotationMatrix2( rotation_amount_radians );
+	auto rotation_matrix	= CreateRotationMatrix2( rotation_amount_radians );
 
 	for( auto & i : vertices ) {
 		i.vertex_coords		-= origin;
@@ -146,7 +146,7 @@ VK2D_API void VK2D_APIENTRY vk2d::Mesh::DirectionalWave(
 		auto c		= i.vertex_coords - origin;
 		c			= backward_rotation_matrix * c;
 
-		auto d		= float( animation / vk2d::RAD ) + float( frequency * ( ( c.x / size.x + c.y / size.y ) / 2.0f ) * RAD );
+		auto d		= float( animation / RAD ) + float( frequency * ( ( c.x / size.x + c.y / size.y ) / 2.0f ) * RAD );
 		i.vertex_coords		= {
 			std::cos( d ) * intensity.x + c.x,
 			std::sin( d ) * intensity.y + c.y };
@@ -157,7 +157,7 @@ VK2D_API void VK2D_APIENTRY vk2d::Mesh::DirectionalWave(
 }
 
 VK2D_API void VK2D_APIENTRY vk2d::Mesh::TranslateUV(
-	const glm::vec2		movement
+	const glm::vec2			movement
 )
 {
 	for( auto & i : vertices ) {
@@ -166,11 +166,11 @@ VK2D_API void VK2D_APIENTRY vk2d::Mesh::TranslateUV(
 }
 
 VK2D_API void VK2D_APIENTRY vk2d::Mesh::RotateUV(
-	float						rotation_amount_radians,
+	float					rotation_amount_radians,
 	glm::vec2				origin
 )
 {
-	auto rotation_matrix	= vk2d::CreateRotationMatrix2( rotation_amount_radians );
+	auto rotation_matrix	= CreateRotationMatrix2( rotation_amount_radians );
 
 	for( auto & i : vertices ) {
 		i.uv_coords		-= origin;
@@ -205,9 +205,9 @@ VK2D_API void VK2D_APIENTRY vk2d::Mesh::ScewUV(
 }
 
 VK2D_API void VK2D_APIENTRY vk2d::Mesh::DirectionalWaveUV(
-	float						direction_radians,
-	float						frequency,
-	float						animation,
+	float					direction_radians,
+	float					frequency,
+	float					animation,
 	glm::vec2				intensity,
 	glm::vec2				origin
 )
@@ -230,7 +230,7 @@ VK2D_API void VK2D_APIENTRY vk2d::Mesh::DirectionalWaveUV(
 		auto c				= i.uv_coords - origin;
 		c					= backward_rotation_matrix * c;
 
-		auto d				= float( animation / vk2d::RAD ) + float( frequency * ( ( c.x + c.y ) / 2.0f ) * RAD );
+		auto d				= float( animation / RAD ) + float( frequency * ( ( c.x + c.y ) / 2.0f ) * RAD );
 		i.uv_coords			= {
 			std::cos( d ) * intensity.x + c.x,
 			std::sin( d ) * intensity.y + c.y };
@@ -241,7 +241,7 @@ VK2D_API void VK2D_APIENTRY vk2d::Mesh::DirectionalWaveUV(
 }
 
 VK2D_API void VK2D_APIENTRY vk2d::Mesh::SetVertexColor(
-	vk2d::Colorf				new_color )
+	Colorf				new_color )
 {
 	for( auto & v : vertices ) {
 		v.color		= new_color;
@@ -249,19 +249,19 @@ VK2D_API void VK2D_APIENTRY vk2d::Mesh::SetVertexColor(
 }
 
 VK2D_API void VK2D_APIENTRY vk2d::Mesh::SetVertexColorGradient(
-	vk2d::Colorf				color_1,
-	vk2d::Colorf				color_2,
-	glm::vec2					coord_1,
-	glm::vec2					coord_2
+	Colorf			color_1,
+	Colorf			color_2,
+	glm::vec2		coord_1,
+	glm::vec2		coord_2
 )
 {
-	glm::vec2					coord_vector	= coord_2 - coord_1;
-	glm::vec2					coord_dir		= {};
-	float						coord_lenght	= std::sqrt( coord_vector.x * coord_vector.x + coord_vector.y * coord_vector.y );
+	glm::vec2		coord_vector	= coord_2 - coord_1;
+	glm::vec2		coord_dir		= {};
+	float			coord_lenght	= std::sqrt( coord_vector.x * coord_vector.x + coord_vector.y * coord_vector.y );
 	if( coord_lenght > 0.0f ) {
 		coord_dir					= coord_vector / coord_lenght;
 	} else {
-		coord_lenght				= vk2d::KINDA_SMALL_VALUE;
+		coord_lenght				= KINDA_SMALL_VALUE;
 		coord_dir					= { 1.0f, 0.0f };
 	}
 
@@ -285,7 +285,7 @@ VK2D_API void VK2D_APIENTRY vk2d::Mesh::SetVertexColorGradient(
 		if( cx < 0.0f )			v.color = color_1;
 		else if( cx > 1.0f )	v.color = color_2;
 		else {
-			auto g = vk2d::Colorf(
+			auto g = Colorf(
 				color_1.r * ( 1.0f - cx ) + color_2.r * cx,
 				color_1.g * ( 1.0f - cx ) + color_2.g * cx,
 				color_1.b * ( 1.0f - cx ) + color_2.b * cx,
@@ -310,21 +310,21 @@ VK2D_API void VK2D_APIENTRY vk2d::Mesh::RecalculateUVsToBoundingBox()
 }
 
 VK2D_API void VK2D_APIENTRY vk2d::Mesh::SetTexture(
-	vk2d::Texture			*	texture_pointer
+	Texture * texture_pointer
 )
 {
 	texture		= texture_pointer;
 }
 
 VK2D_API void VK2D_APIENTRY vk2d::Mesh::SetSampler(
-	vk2d::Sampler		*	sampler_pointer
+	Sampler * sampler_pointer
 )
 {
 	sampler		= sampler_pointer;
 }
 
 VK2D_API void VK2D_APIENTRY vk2d::Mesh::SetPointSize(
-	float						point_size
+	float point_size
 )
 {
 	for( auto & v : vertices ) {
@@ -340,7 +340,7 @@ VK2D_API void VK2D_APIENTRY vk2d::Mesh::SetLineWidth(
 }
 
 VK2D_API void VK2D_APIENTRY vk2d::Mesh::SetMeshType(
-	vk2d::MeshType				type
+	MeshType type
 )
 {
 	if( generated ) {
@@ -349,61 +349,61 @@ VK2D_API void VK2D_APIENTRY vk2d::Mesh::SetMeshType(
 	}
 
 	switch( mesh_type ) {
-	case vk2d::MeshType::TRIANGLE_FILLED:
+	case MeshType::TRIANGLE_FILLED:
 		switch( type ) {
-		case vk2d::MeshType::TRIANGLE_FILLED:
+		case MeshType::TRIANGLE_FILLED:
 			mesh_type	= type;
 			break;
-		case vk2d::MeshType::TRIANGLE_WIREFRAME:
+		case MeshType::TRIANGLE_WIREFRAME:
 			mesh_type	= type;
 			break;
-		case vk2d::MeshType::LINE:
+		case MeshType::LINE:
 //			mesh_type	= type;
 			break;
-		case vk2d::MeshType::POINT:
+		case MeshType::POINT:
 			mesh_type	= type;
 			break;
 		default:
 			break;
 		}
 		break;
-	case vk2d::MeshType::TRIANGLE_WIREFRAME:
+	case MeshType::TRIANGLE_WIREFRAME:
 		switch( type ) {
-		case vk2d::MeshType::TRIANGLE_FILLED:
+		case MeshType::TRIANGLE_FILLED:
 			mesh_type	= type;
 			break;
-		case vk2d::MeshType::TRIANGLE_WIREFRAME:
+		case MeshType::TRIANGLE_WIREFRAME:
 			mesh_type	= type;
 			break;
-		case vk2d::MeshType::LINE:
+		case MeshType::LINE:
 //			mesh_type	= type;
 			break;
-		case vk2d::MeshType::POINT:
+		case MeshType::POINT:
 			mesh_type	= type;
 			break;
 		default:
 			break;
 		}
 		break;
-	case vk2d::MeshType::LINE:
+	case MeshType::LINE:
 		switch( type ) {
-		case vk2d::MeshType::TRIANGLE_FILLED:
+		case MeshType::TRIANGLE_FILLED:
 //			mesh_type	= type;
 			break;
-		case vk2d::MeshType::TRIANGLE_WIREFRAME:
+		case MeshType::TRIANGLE_WIREFRAME:
 //			mesh_type	= type;
 			break;
-		case vk2d::MeshType::LINE:
+		case MeshType::LINE:
 			mesh_type	= type;
 			break;
-		case vk2d::MeshType::POINT:
+		case MeshType::POINT:
 			mesh_type	= type;
 			break;
 		default:
 			break;
 		}
 		break;
-	case vk2d::MeshType::POINT:
+	case MeshType::POINT:
 		// Point cannot be anything else.
 		break;
 	default:
@@ -414,7 +414,7 @@ VK2D_API void VK2D_APIENTRY vk2d::Mesh::SetMeshType(
 VK2D_API vk2d::Rect2f & VK2D_APIENTRY vk2d::Mesh::RecalculateAABBFromVertices()
 {
 	if( std::size( vertices ) > 0 ) {
-		return aabb = vk2d::_internal::CalculateAABBFromVertexList( vertices );
+		return aabb = vk2d_internal::CalculateAABBFromVertexList( vertices );
 	} else {
 		return aabb = {};
 	}
@@ -430,20 +430,20 @@ VK2D_API vk2d::Mesh VK2D_APIENTRY vk2d::GeneratePointMeshFromList(
 	const std::vector<glm::vec2>		&	points
 )
 {
-	auto aabb			= vk2d::_internal::CalculateAABBFromPointList( points );
+	auto aabb			= vk2d_internal::CalculateAABBFromPointList( points );
 	auto aabb_origin	= aabb.top_left;
 	auto aabb_size		= aabb.bottom_right - aabb_origin;
 
 	Mesh mesh;
 	mesh.vertices.resize( points.size() );
-	vk2d::_internal::ClearVerticesToDefaultValues( mesh.vertices );
+	vk2d_internal::ClearVerticesToDefaultValues( mesh.vertices );
 	for( size_t i = 0; i < points.size(); ++i ) {
 		mesh.vertices[ i ].vertex_coords	= points[ i ];
 		mesh.vertices[ i ].uv_coords		= ( points[ i ] - aabb_origin ) / aabb_size;
 	}
 
 	mesh.generated				= true;
-	mesh.generated_mesh_type	= vk2d::MeshType::POINT;
+	mesh.generated_mesh_type	= MeshType::POINT;
 	mesh.aabb					= aabb;
 	mesh.SetMeshType( mesh.generated_mesh_type );
 	return mesh;
@@ -451,7 +451,7 @@ VK2D_API vk2d::Mesh VK2D_APIENTRY vk2d::GeneratePointMeshFromList(
 
 VK2D_API vk2d::Mesh VK2D_APIENTRY vk2d::GenerateLineMeshFromList(
 	const std::vector<glm::vec2>		&	points,
-	const std::vector<vk2d::VertexIndex_2>	&	indices
+	const std::vector<VertexIndex_2>	&	indices
 )
 {
 	auto mesh	= GeneratePointMeshFromList( points );
@@ -462,15 +462,15 @@ VK2D_API vk2d::Mesh VK2D_APIENTRY vk2d::GenerateLineMeshFromList(
 	}
 
 	mesh.generated				= true;
-	mesh.generated_mesh_type	= vk2d::MeshType::LINE;
+	mesh.generated_mesh_type	= MeshType::LINE;
 	mesh.SetMeshType( mesh.generated_mesh_type );
 	return mesh;
 }
 
 VK2D_API vk2d::Mesh VK2D_APIENTRY vk2d::GenerateTriangleMeshFromList(
 	const std::vector<glm::vec2>		&	points,
-	const std::vector<vk2d::VertexIndex_3>	&	indices,
-	bool										filled
+	const std::vector<VertexIndex_3>	&	indices,
+	bool									filled
 )
 {
 	auto mesh = GeneratePointMeshFromList( points );
@@ -482,9 +482,9 @@ VK2D_API vk2d::Mesh VK2D_APIENTRY vk2d::GenerateTriangleMeshFromList(
 	}
 
 	if( filled ) {
-		mesh.generated_mesh_type	= vk2d::MeshType::TRIANGLE_FILLED;
+		mesh.generated_mesh_type	= MeshType::TRIANGLE_FILLED;
 	} else {
-		mesh.generated_mesh_type	= vk2d::MeshType::TRIANGLE_WIREFRAME;
+		mesh.generated_mesh_type	= MeshType::TRIANGLE_WIREFRAME;
 	}
 	mesh.generated				= true;
 	mesh.SetMeshType( mesh.generated_mesh_type );
@@ -492,13 +492,13 @@ VK2D_API vk2d::Mesh VK2D_APIENTRY vk2d::GenerateTriangleMeshFromList(
 }
 
 VK2D_API vk2d::Mesh VK2D_APIENTRY vk2d::GenerateRectangleMesh(
-	vk2d::Rect2f		area,
+	Rect2f		area,
 	bool				filled
 )
 {
-	vk2d::Mesh ret;
+	Mesh ret;
 	ret.vertices.resize( 4 );
-	vk2d::_internal::ClearVerticesToDefaultValues( ret.vertices );
+	vk2d_internal::ClearVerticesToDefaultValues( ret.vertices );
 
 	// 0. Top left
 	ret.vertices[ 0 ].vertex_coords		= { area.top_left.x, area.top_left.y };
@@ -526,7 +526,7 @@ VK2D_API vk2d::Mesh VK2D_APIENTRY vk2d::GenerateRectangleMesh(
 		ret.indices[ 4 ]	= 2;
 		ret.indices[ 5 ]	= 3;
 		ret.generated				= true;
-		ret.generated_mesh_type		= vk2d::MeshType::TRIANGLE_FILLED;
+		ret.generated_mesh_type		= MeshType::TRIANGLE_FILLED;
 		ret.SetMeshType( ret.generated_mesh_type );
 	} else {
 		// Draw lines
@@ -540,7 +540,7 @@ VK2D_API vk2d::Mesh VK2D_APIENTRY vk2d::GenerateRectangleMesh(
 		ret.indices[ 6 ]	= 1;
 		ret.indices[ 7 ]	= 0;
 		ret.generated				= true;
-		ret.generated_mesh_type		= vk2d::MeshType::LINE;
+		ret.generated_mesh_type		= MeshType::LINE;
 		ret.SetMeshType( ret.generated_mesh_type );
 	}
 
@@ -549,9 +549,9 @@ VK2D_API vk2d::Mesh VK2D_APIENTRY vk2d::GenerateRectangleMesh(
 }
 
 VK2D_API vk2d::Mesh VK2D_APIENTRY vk2d::GenerateEllipseMesh(
-	vk2d::Rect2f		area,
-	bool				filled,
-	float				edge_count
+	Rect2f		area,
+	bool		filled,
+	float		edge_count
 )
 {
 	if( edge_count < 3.0f ) edge_count = 3.0f;
@@ -569,10 +569,10 @@ VK2D_API vk2d::Mesh VK2D_APIENTRY vk2d::GenerateEllipseMesh(
 
 	uint32_t edge_count_integer	= uint32_t( std::ceil( edge_count ) );
 
-	vk2d::Mesh ret;
+	Mesh ret;
 
 	ret.vertices.resize( edge_count_integer );
-	vk2d::_internal::ClearVerticesToDefaultValues( ret.vertices );
+	vk2d_internal::ClearVerticesToDefaultValues( ret.vertices );
 
 	for( uint32_t i = 0; i < edge_count_integer; ++i ) {
 		ret.vertices[ i ].vertex_coords		= {
@@ -599,7 +599,7 @@ VK2D_API vk2d::Mesh VK2D_APIENTRY vk2d::GenerateEllipseMesh(
 			}
 		}
 		ret.generated				= true;
-		ret.generated_mesh_type		= vk2d::MeshType::TRIANGLE_FILLED;
+		ret.generated_mesh_type		= MeshType::TRIANGLE_FILLED;
 		ret.SetMeshType( ret.generated_mesh_type );
 	} else {
 		// Draw lines
@@ -615,7 +615,7 @@ VK2D_API vk2d::Mesh VK2D_APIENTRY vk2d::GenerateEllipseMesh(
 			ret.indices[ size_t( edge_count_integer ) * 2LL - 1 ]	= 0;
 		}
 		ret.generated				= true;
-		ret.generated_mesh_type		= vk2d::MeshType::LINE;
+		ret.generated_mesh_type		= MeshType::LINE;
 		ret.SetMeshType( ret.generated_mesh_type );
 	}
 	ret.RecalculateAABBFromVertices();
@@ -623,14 +623,14 @@ VK2D_API vk2d::Mesh VK2D_APIENTRY vk2d::GenerateEllipseMesh(
 }
 
 VK2D_API vk2d::Mesh VK2D_APIENTRY vk2d::GenerateEllipsePieMesh(
-	vk2d::Rect2f		area,
-	float				begin_angle_radians,
-	float				coverage,
-	bool				filled,
-	float				edge_count
+	Rect2f		area,
+	float		begin_angle_radians,
+	float		coverage,
+	bool		filled,
+	float		edge_count
 )
 {
-	vk2d::Mesh ret;
+	Mesh ret;
 
 	if( edge_count < 3.0f )			edge_count		= 3.0f;
 	if( coverage > 1.0f )			coverage		= 1.0f;
@@ -660,7 +660,7 @@ VK2D_API vk2d::Mesh VK2D_APIENTRY vk2d::GenerateEllipsePieMesh(
 	ret.vertices.reserve( size_t( edge_count_integer ) + 2 );
 	// Center vertex.
 	{
-		auto v = vk2d::_internal::CreateDefaultValueVertex();
+		auto v = vk2d_internal::CreateDefaultValueVertex();
 		v.vertex_coords		= center_point;
 		v.uv_coords			= { 0.5f, 0.5f };
 		ret.vertices.push_back( v );
@@ -672,7 +672,7 @@ VK2D_API vk2d::Mesh VK2D_APIENTRY vk2d::GenerateEllipsePieMesh(
 
 	// Start vertex.
 	{
-		auto v = vk2d::_internal::CreateDefaultValueVertex();
+		auto v = vk2d_internal::CreateDefaultValueVertex();
 		v.vertex_coords		= {
 			std::cos( begin_angle_radians ) * center_to_edge_x + center_point.x,
 			std::sin( begin_angle_radians ) * center_to_edge_y + center_point.y
@@ -690,7 +690,7 @@ VK2D_API vk2d::Mesh VK2D_APIENTRY vk2d::GenerateEllipsePieMesh(
 		for( uint32_t i = intermediate_point_begin + 1; i < intermediate_point_end + 1; ++i ) {
 			if( double( rotation_step_size ) * i > RAD ) break;
 
-			auto v = vk2d::_internal::CreateDefaultValueVertex();
+			auto v = vk2d_internal::CreateDefaultValueVertex();
 			v.vertex_coords		= {
 				std::cos( rotation_step_size * i ) * center_to_edge_x + center_point.x,
 				std::sin( rotation_step_size * i ) * center_to_edge_y + center_point.y
@@ -706,7 +706,7 @@ VK2D_API vk2d::Mesh VK2D_APIENTRY vk2d::GenerateEllipsePieMesh(
 		float rotation_step		= 0.0f;
 		while( rotation_step	< end_angle_radians - RAD ) {
 
-			auto v = vk2d::_internal::CreateDefaultValueVertex();
+			auto v = vk2d_internal::CreateDefaultValueVertex();
 			v.vertex_coords		= {
 				std::cos( rotation_step ) * center_to_edge_x + center_point.x,
 				std::sin( rotation_step ) * center_to_edge_y + center_point.y
@@ -723,7 +723,7 @@ VK2D_API vk2d::Mesh VK2D_APIENTRY vk2d::GenerateEllipsePieMesh(
 
 	// End vertex.
 	{
-		auto v = vk2d::_internal::CreateDefaultValueVertex();
+		auto v = vk2d_internal::CreateDefaultValueVertex();
 		v.vertex_coords		= {
 			std::cos( end_angle_radians ) * center_to_edge_x + center_point.x,
 			std::sin( end_angle_radians ) * center_to_edge_y + center_point.y
@@ -748,7 +748,7 @@ VK2D_API vk2d::Mesh VK2D_APIENTRY vk2d::GenerateEllipsePieMesh(
 			}
 		}
 		ret.generated				= true;
-		ret.generated_mesh_type		= vk2d::MeshType::TRIANGLE_FILLED;
+		ret.generated_mesh_type		= MeshType::TRIANGLE_FILLED;
 		ret.SetMeshType( ret.generated_mesh_type );
 	} else {
 		// Draw lines
@@ -761,7 +761,7 @@ VK2D_API vk2d::Mesh VK2D_APIENTRY vk2d::GenerateEllipsePieMesh(
 		ret.indices[ ret.indices.size() - 1 ]	= 0;
 
 		ret.generated				= true;
-		ret.generated_mesh_type		= vk2d::MeshType::LINE;
+		ret.generated_mesh_type		= MeshType::LINE;
 		ret.SetMeshType( ret.generated_mesh_type );
 	}
 	ret.RecalculateAABBFromVertices();
@@ -769,16 +769,16 @@ VK2D_API vk2d::Mesh VK2D_APIENTRY vk2d::GenerateEllipsePieMesh(
 }
 
 VK2D_API vk2d::Mesh VK2D_APIENTRY vk2d::GenerateRectanglePieMesh(
-	vk2d::Rect2f		area,
-	float				begin_angle_radians,
-	float				coverage,
-	bool				filled
+	Rect2f		area,
+	float		begin_angle_radians,
+	float		coverage,
+	bool		filled
 )
 {
-	vk2d::Mesh ret;
+	Mesh ret;
 
 	if( coverage >= 1.0f ) {
-		return vk2d::GenerateRectangleMesh( area, filled );
+		return GenerateRectangleMesh( area, filled );
 	}
 	if( coverage <= 0.0f ) {
 		return ret;		// Nothing to draw
@@ -869,8 +869,8 @@ VK2D_API vk2d::Mesh VK2D_APIENTRY vk2d::GenerateRectanglePieMesh(
 		glm::vec2			point_2
 		) -> bool
 	{
-		if( point_1.y < point_2.y + vk2d::KINDA_SMALL_VALUE &&
-			point_1.y > point_2.y - vk2d::KINDA_SMALL_VALUE ) {
+		if( point_1.y < point_2.y + KINDA_SMALL_VALUE &&
+			point_1.y > point_2.y - KINDA_SMALL_VALUE ) {
 			return true;
 		}
 		return false;
@@ -881,8 +881,8 @@ VK2D_API vk2d::Mesh VK2D_APIENTRY vk2d::GenerateRectanglePieMesh(
 		glm::vec2			point_2
 		) -> bool
 	{
-		if( point_1.x < point_2.x + vk2d::KINDA_SMALL_VALUE &&
-			point_1.x > point_2.x - vk2d::KINDA_SMALL_VALUE ) {
+		if( point_1.x < point_2.x + KINDA_SMALL_VALUE &&
+			point_1.x > point_2.x - KINDA_SMALL_VALUE ) {
 			return true;
 		}
 		return false;
@@ -985,7 +985,7 @@ VK2D_API vk2d::Mesh VK2D_APIENTRY vk2d::GenerateRectanglePieMesh(
 	{
 		ret.vertices.reserve( 7 );
 
-		auto v = vk2d::_internal::CreateDefaultValueVertex();
+		auto v = vk2d_internal::CreateDefaultValueVertex();
 		v.vertex_coords		= center_point;
 		v.uv_coords			= { 0.5f, 0.5f };
 		ret.vertices.push_back( v );
@@ -1006,7 +1006,7 @@ VK2D_API vk2d::Mesh VK2D_APIENTRY vk2d::GenerateRectanglePieMesh(
 		}
 
 		ret.generated				= true;
-		ret.generated_mesh_type		= vk2d::MeshType::TRIANGLE_FILLED;
+		ret.generated_mesh_type		= MeshType::TRIANGLE_FILLED;
 		ret.SetMeshType( ret.generated_mesh_type );
 
 	} else {
@@ -1019,7 +1019,7 @@ VK2D_API vk2d::Mesh VK2D_APIENTRY vk2d::GenerateRectanglePieMesh(
 		ret.indices.push_back( 0 );
 
 		ret.generated				= true;
-		ret.generated_mesh_type		= vk2d::MeshType::LINE;
+		ret.generated_mesh_type		= MeshType::LINE;
 		ret.SetMeshType( ret.generated_mesh_type );
 	}
 	ret.RecalculateAABBFromVertices();
@@ -1027,11 +1027,11 @@ VK2D_API vk2d::Mesh VK2D_APIENTRY vk2d::GenerateRectanglePieMesh(
 }
 
 VK2D_API vk2d::Mesh VK2D_APIENTRY vk2d::GenerateLatticeMesh(
-	vk2d::Rect2f		area,
-	glm::vec2		subdivisions,
-	bool				filled )
+	Rect2f		area,
+	glm::vec2	subdivisions,
+	bool		filled )
 {
-	vk2d::Mesh ret;
+	Mesh ret;
 
 	uint32_t vertex_count_x			= uint32_t( std::ceil( subdivisions.x ) ) + 2;
 	uint32_t vertex_count_y			= uint32_t( std::ceil( subdivisions.y ) ) + 2;
@@ -1042,7 +1042,7 @@ VK2D_API vk2d::Mesh VK2D_APIENTRY vk2d::GenerateLatticeMesh(
 	glm::vec2 uv_spacing		= glm::vec2( 1.0f, 1.0f ) / ( subdivisions + glm::vec2( 1.0f, 1.0f ) );
 
 	ret.vertices.resize( total_vertex_count );
-	vk2d::_internal::ClearVerticesToDefaultValues( ret.vertices );
+	vk2d_internal::ClearVerticesToDefaultValues( ret.vertices );
 
 	for( size_t y = 0; y < vertex_count_y - 1; ++y ) {
 		for( size_t x = 0; x < vertex_count_x - 1; ++x ) {
@@ -1084,7 +1084,7 @@ VK2D_API vk2d::Mesh VK2D_APIENTRY vk2d::GenerateLatticeMesh(
 		}
 
 		ret.generated				= true;
-		ret.generated_mesh_type		= vk2d::MeshType::TRIANGLE_FILLED;
+		ret.generated_mesh_type		= MeshType::TRIANGLE_FILLED;
 		ret.SetMeshType( ret.generated_mesh_type );
 
 	} else {
@@ -1110,7 +1110,7 @@ VK2D_API vk2d::Mesh VK2D_APIENTRY vk2d::GenerateLatticeMesh(
 		}
 
 		ret.generated				= true;
-		ret.generated_mesh_type		= vk2d::MeshType::LINE;
+		ret.generated_mesh_type		= MeshType::LINE;
 		ret.SetMeshType( ret.generated_mesh_type );
 	}
 	ret.RecalculateAABBFromVertices();
@@ -1118,14 +1118,15 @@ VK2D_API vk2d::Mesh VK2D_APIENTRY vk2d::GenerateLatticeMesh(
 }
 
 VK2D_API vk2d::Mesh VK2D_APIENTRY vk2d::GenerateTextMesh(
-	vk2d::FontResource		*	font,
-	glm::vec2				origin,
-	std::string					text,
-	float						kerning,
-	glm::vec2				scale,
-	bool						vertical,
-	uint32_t					font_face,
-	bool						wait_for_resource_load )
+	FontResource	*	font,
+	glm::vec2			origin,
+	std::string			text,
+	float				kerning,
+	glm::vec2			scale,
+	bool				vertical,
+	uint32_t			font_face,
+	bool				wait_for_resource_load
+)
 {
 	if( std::size( text ) <= 0 ) return {};
 	if( !font ) return {};
@@ -1134,18 +1135,18 @@ VK2D_API vk2d::Mesh VK2D_APIENTRY vk2d::GenerateTextMesh(
 	if( wait_for_resource_load ) {
 		fi->WaitUntilLoaded( std::chrono::nanoseconds::max() );
 	} else {
-		if( fi->GetStatus() == vk2d::ResourceStatus::UNDETERMINED ) return {};
+		if( fi->GetStatus() == ResourceStatus::UNDETERMINED ) return {};
 	}
 	if( !fi->FaceExists( font_face ) ) return {};
 	
-	vk2d::Mesh ret;
+	Mesh ret;
 	ret.vertices.reserve( text.size() * 4 );
 	ret.indices.reserve( text.size() * 6 );
 
 	auto AppendBox =[ &ret, scale ](
 		const glm::vec2	&	location,
-		const vk2d::Rect2f		&	coords,
-		const vk2d::Rect2f		&	uv_coords,
+		const Rect2f		&	coords,
+		const Rect2f		&	uv_coords,
 		uint32_t					texture_channel
 		)
 	{
@@ -1165,25 +1166,25 @@ VK2D_API vk2d::Mesh VK2D_APIENTRY vk2d::GenerateTextMesh(
 		ret.vertices.resize( vertex_offset + 4 );
 		ret.vertices[ vertex_offset + 0 ].vertex_coords			= glm::vec2( tcoords.top_left.x, tcoords.top_left.y );
 		ret.vertices[ vertex_offset + 0 ].uv_coords				= glm::vec2( uv_coords.top_left.x, uv_coords.top_left.y );
-		ret.vertices[ vertex_offset + 0 ].color					= vk2d::Colorf( 1.0f, 1.0f, 1.0f, 1.0f );
+		ret.vertices[ vertex_offset + 0 ].color					= Colorf( 1.0f, 1.0f, 1.0f, 1.0f );
 		ret.vertices[ vertex_offset + 0 ].point_size			= 1;
 		ret.vertices[ vertex_offset + 0 ].single_texture_layer	= texture_channel;
 
 		ret.vertices[ vertex_offset + 1 ].vertex_coords			= glm::vec2( tcoords.bottom_right.x, tcoords.top_left.y );
 		ret.vertices[ vertex_offset + 1 ].uv_coords				= glm::vec2( uv_coords.bottom_right.x, uv_coords.top_left.y );
-		ret.vertices[ vertex_offset + 1 ].color					= vk2d::Colorf( 1.0f, 1.0f, 1.0f, 1.0f );
+		ret.vertices[ vertex_offset + 1 ].color					= Colorf( 1.0f, 1.0f, 1.0f, 1.0f );
 		ret.vertices[ vertex_offset + 1 ].point_size			= 1;
 		ret.vertices[ vertex_offset + 1 ].single_texture_layer	= texture_channel;
 
 		ret.vertices[ vertex_offset + 2 ].vertex_coords			= glm::vec2( tcoords.top_left.x, tcoords.bottom_right.y );
 		ret.vertices[ vertex_offset + 2 ].uv_coords				= glm::vec2( uv_coords.top_left.x, uv_coords.bottom_right.y );
-		ret.vertices[ vertex_offset + 2 ].color					= vk2d::Colorf( 1.0f, 1.0f, 1.0f, 1.0f );
+		ret.vertices[ vertex_offset + 2 ].color					= Colorf( 1.0f, 1.0f, 1.0f, 1.0f );
 		ret.vertices[ vertex_offset + 2 ].point_size			= 1;
 		ret.vertices[ vertex_offset + 2 ].single_texture_layer	= texture_channel;
 
 		ret.vertices[ vertex_offset + 3 ].vertex_coords			= glm::vec2( tcoords.bottom_right.x, tcoords.bottom_right.y );
 		ret.vertices[ vertex_offset + 3 ].uv_coords				= glm::vec2( uv_coords.bottom_right.x, uv_coords.bottom_right.y );
-		ret.vertices[ vertex_offset + 3 ].color					= vk2d::Colorf( 1.0f, 1.0f, 1.0f, 1.0f );
+		ret.vertices[ vertex_offset + 3 ].color					= Colorf( 1.0f, 1.0f, 1.0f, 1.0f );
 		ret.vertices[ vertex_offset + 3 ].point_size			= 1;
 		ret.vertices[ vertex_offset + 3 ].single_texture_layer	= texture_channel;
 

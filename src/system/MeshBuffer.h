@@ -14,17 +14,17 @@
 
 namespace vk2d {
 
-namespace _internal {
+namespace vk2d_internal {
 
 class MeshBuffer;
 
 template<typename T>
 class MeshBufferBlock;
 
-using IndexBufferBlocks									= std::vector<std::unique_ptr<vk2d::_internal::MeshBufferBlock<uint32_t>>>;
-using VertexBufferBlocks								= std::vector<std::unique_ptr<vk2d::_internal::MeshBufferBlock<vk2d::Vertex>>>;
-using TextureChannelBufferBlocks						= std::vector<std::unique_ptr<vk2d::_internal::MeshBufferBlock<float>>>;
-using TransformationBufferBlocks						= std::vector<std::unique_ptr<vk2d::_internal::MeshBufferBlock<glm::mat4>>>;
+using IndexBufferBlocks									= std::vector<std::unique_ptr<MeshBufferBlock<uint32_t>>>;
+using VertexBufferBlocks								= std::vector<std::unique_ptr<MeshBufferBlock<Vertex>>>;
+using TextureChannelBufferBlocks						= std::vector<std::unique_ptr<MeshBufferBlock<float>>>;
+using TransformationBufferBlocks						= std::vector<std::unique_ptr<MeshBufferBlock<glm::mat4>>>;
 
 enum class MeshBufferDescriptorSetType : uint32_t {
 	NONE,
@@ -36,40 +36,40 @@ enum class MeshBufferDescriptorSetType : uint32_t {
 
 class MeshBuffer {
 	template<typename T>
-	friend class vk2d::_internal::MeshBufferBlock;
+	friend class MeshBufferBlock;
 public:
 	struct MeshBlockLocationInfo {
-		bool													success								= {};
+		bool									success								= {};
 
-		vk2d::_internal::MeshBufferBlock<uint32_t>			*	index_block							= {};
-		vk2d::_internal::MeshBufferBlock<vk2d::Vertex>		*	vertex_block						= {};
-		vk2d::_internal::MeshBufferBlock<float>				*	texture_channel_weight_block		= {};
-		vk2d::_internal::MeshBufferBlock<glm::mat4>	*	transformation_block				= {};
+		MeshBufferBlock<uint32_t>			*	index_block							= {};
+		MeshBufferBlock<Vertex>				*	vertex_block						= {};
+		MeshBufferBlock<float>				*	texture_channel_weight_block		= {};
+		MeshBufferBlock<glm::mat4>			*	transformation_block				= {};
 
-		uint32_t												index_size							= {};	// size of data.
-		VkDeviceSize											index_byte_size						= {};	// size of data in bytes.
-		uint32_t												index_offset						= {};	// offset into buffer.
-		VkDeviceSize											index_byte_offset					= {};	// offset into buffer in bytes.
+		uint32_t								index_size							= {};	// size of data.
+		VkDeviceSize							index_byte_size						= {};	// size of data in bytes.
+		uint32_t								index_offset						= {};	// offset into buffer.
+		VkDeviceSize							index_byte_offset					= {};	// offset into buffer in bytes.
 
-		uint32_t												vertex_size							= {};	// size of data.
-		VkDeviceSize											vertex_byte_size					= {};	// size of data in bytes.
-		uint32_t												vertex_offset						= {};	// offset into buffer.
-		VkDeviceSize											vertex_byte_offset					= {};	// offset into buffer in bytes.
+		uint32_t								vertex_size							= {};	// size of data.
+		VkDeviceSize							vertex_byte_size					= {};	// size of data in bytes.
+		uint32_t								vertex_offset						= {};	// offset into buffer.
+		VkDeviceSize							vertex_byte_offset					= {};	// offset into buffer in bytes.
 
-		uint32_t												texture_channel_weight_size			= {};	// size of data.
-		VkDeviceSize											texture_channel_weight_byte_size	= {};	// size of data in bytes.
-		uint32_t												texture_channel_weight_offset		= {};	// offset into buffer.
-		VkDeviceSize											texture_channel_weight_byte_offset	= {};	// offset into buffer in bytes.
+		uint32_t								texture_channel_weight_size			= {};	// size of data.
+		VkDeviceSize							texture_channel_weight_byte_size	= {};	// size of data in bytes.
+		uint32_t								texture_channel_weight_offset		= {};	// offset into buffer.
+		VkDeviceSize							texture_channel_weight_byte_offset	= {};	// offset into buffer in bytes.
 
-		uint32_t												transformation_size					= {};	// size of data.
-		VkDeviceSize											transformation_byte_size			= {};	// size of data in bytes.
-		uint32_t												transformation_offset				= {};	// offset into buffer.
-		VkDeviceSize											transformation_byte_offset			= {};	// offset into buffer in bytes.
+		uint32_t								transformation_size					= {};	// size of data.
+		VkDeviceSize							transformation_byte_size			= {};	// size of data in bytes.
+		uint32_t								transformation_offset				= {};	// offset into buffer.
+		VkDeviceSize							transformation_byte_offset			= {};	// offset into buffer in bytes.
 	};
 
 	struct PushResult {
-		vk2d::_internal::MeshBuffer::MeshBlockLocationInfo		location_info;
-		bool													success;
+		MeshBuffer::MeshBlockLocationInfo		location_info;
+		bool									success;
 		inline explicit operator bool()
 		{
 			return	success;
@@ -77,135 +77,135 @@ public:
 	};
 
 	MeshBuffer(
-		vk2d::_internal::InstanceImpl						*	instance,
-		VkDevice												device,
-		const VkPhysicalDeviceLimits						&	physicald_device_limits,
-		vk2d::_internal::DeviceMemoryPool					*	device_memory_pool );
+		InstanceImpl						*	instance,
+		VkDevice								device,
+		const VkPhysicalDeviceLimits		&	physicald_device_limits,
+		DeviceMemoryPool					*	device_memory_pool );
 
 	// Pushes mesh into render list, dynamically allocates new buffers
 	// if needed, binds the new buffers to command buffer if needed
 	// and adds vertex and index data to host visible buffer.
 	// Returns mesh offsets of whatever buffer object this mesh was
 	// put into, needed when recording a Vulkan draw command.
-	vk2d::_internal::MeshBuffer::PushResult						CmdPushMesh(
-		VkCommandBuffer											command_buffer,
-		const std::vector<uint32_t>							&	new_indices,
-		const std::vector<vk2d::Vertex>						&	new_vertices,
-		const std::vector<float>							&	new_texture_channel_weights,
-		const std::vector<glm::mat4>						&	new_transformations );
+	MeshBuffer::PushResult						CmdPushMesh(
+		VkCommandBuffer							command_buffer,
+		const std::vector<uint32_t>			&	new_indices,
+		const std::vector<Vertex>			&	new_vertices,
+		const std::vector<float>			&	new_texture_channel_weights,
+		const std::vector<glm::mat4>		&	new_transformations );
 
-	bool														CmdUploadMeshDataToGPU(
-		VkCommandBuffer											command_buffer );
+	bool										CmdUploadMeshDataToGPU(
+		VkCommandBuffer							command_buffer );
 
 	// Gets the total amount of individual meshes that have been pushed so far.
-	uint32_t													GetPushedMeshCount();
+	uint32_t									GetPushedMeshCount();
 
 	// This gets the total amount of vertices already pushed in
-	uint32_t													GetTotalVertexCount();
+	uint32_t									GetTotalVertexCount();
 
 	// This gets the total amount of indices already pushed in
-	uint32_t													GetTotalIndexCount();
+	uint32_t									GetTotalIndexCount();
 
 	// This gets the total amount of texture channels already pushed in
-	uint32_t													GetTotalTextureChannelCount();
+	uint32_t									GetTotalTextureChannelCount();
 
 	// This gets the total amount of transformations already pushed in
-	uint32_t													GetTotalTransformationCount();
+	uint32_t									GetTotalTransformationCount();
 
 private:
-	vk2d::_internal::MeshBuffer::MeshBlockLocationInfo			ReserveSpaceForMesh(
-		uint32_t												index_count,
-		uint32_t												vertex_count,
-		uint32_t												texture_channel_weight_count,
-		uint32_t												transformation_count );
+	MeshBuffer::MeshBlockLocationInfo			ReserveSpaceForMesh(
+		uint32_t								index_count,
+		uint32_t								vertex_count,
+		uint32_t								texture_channel_weight_count,
+		uint32_t								transformation_count );
 
 	// Find an index buffer with enough space to hold the data, if none found
 	// this function will allocate a new buffer that will have enough space.
 	// Returns nullptr on failure.
-	vk2d::_internal::MeshBufferBlock<uint32_t>				*	FindIndexBufferWithEnoughSpace(
-		uint32_t												count );
+	MeshBufferBlock<uint32_t>				*	FindIndexBufferWithEnoughSpace(
+		uint32_t								count );
 
 	// Find an index buffer with enough space to hold the data, if none found
 	// this function will allocate a new buffer that will have enough space.
 	// Returns nullptr on failure.
-	vk2d::_internal::MeshBufferBlock<vk2d::Vertex>			*	FindVertexBufferWithEnoughSpace(
-		uint32_t												count );
+	MeshBufferBlock<Vertex>					*	FindVertexBufferWithEnoughSpace(
+		uint32_t								count );
 
 	// Find an index buffer with enough space to hold the data, if none found
 	// this function will allocate a new buffer that will have enough space.
 	// Returns nullptr on failure.
-	vk2d::_internal::MeshBufferBlock<float>					*	FindTextureChannelBufferWithEnoughSpace(
-		uint32_t												count );
+	MeshBufferBlock<float>					*	FindTextureChannelBufferWithEnoughSpace(
+		uint32_t								count );
 
 	// Find a transformation buffer with enough space to hold the data, if none found
 	// this function will allocate a new buffer that will have enough space.
 	// Returns nullptr on failure.
-	vk2d::_internal::MeshBufferBlock<glm::mat4>				*	FindTransformationBufferWithEnoughSpace(
-		uint32_t												count );
+	MeshBufferBlock<glm::mat4>				*	FindTransformationBufferWithEnoughSpace(
+		uint32_t								count );
 
 	// Creates a new buffer block and stores it internally,
 	// returns a pointer to it if successful or nullptr on failure.
-	vk2d::_internal::MeshBufferBlock<uint32_t>				*	AllocateIndexBufferBlockAndStore(
-		VkDeviceSize											byte_size );
+	MeshBufferBlock<uint32_t>				*	AllocateIndexBufferBlockAndStore(
+		VkDeviceSize							byte_size );
 
 	// Creates a new buffer block and stores it internally,
 	// returns a pointer to it if successful or nullptr on failure.
-	vk2d::_internal::MeshBufferBlock<vk2d::Vertex>			*	AllocateVertexBufferBlockAndStore(
-		VkDeviceSize											byte_size );
+	MeshBufferBlock<Vertex>					*	AllocateVertexBufferBlockAndStore(
+		VkDeviceSize							byte_size );
 
 	// Creates a new buffer block and stores it internally,
 	// returns a pointer to it if successful or nullptr on failure.
-	vk2d::_internal::MeshBufferBlock<float>					*	AllocateTextureChannelBufferBlockAndStore(
-		VkDeviceSize											byte_size );
+	MeshBufferBlock<float>					*	AllocateTextureChannelBufferBlockAndStore(
+		VkDeviceSize							byte_size );
 
 	// Creates a new buffer block and stores it internally,
 	// returns a pointer to it if successful or nullptr on failure.
-	vk2d::_internal::MeshBufferBlock<glm::mat4>				*	AllocateTransformationBufferBlockAndStore(
-		VkDeviceSize											byte_size );
+	MeshBufferBlock<glm::mat4>				*	AllocateTransformationBufferBlockAndStore(
+		VkDeviceSize							byte_size );
 
 	// Removes a buffer block with matching pointer from internal storage.
-	void														FreeBufferBlockFromStorage(
-		vk2d::_internal::MeshBufferBlock<uint32_t>			*	buffer_block );
+	void										FreeBufferBlockFromStorage(
+		MeshBufferBlock<uint32_t>			*	buffer_block );
 
 	// Removes a buffer block with matching pointer from internal storage.
-	void														FreeBufferBlockFromStorage(
-		vk2d::_internal::MeshBufferBlock<vk2d::Vertex>		*	buffer_block );
+	void										FreeBufferBlockFromStorage(
+		MeshBufferBlock<Vertex>				*	buffer_block );
 
 	// Removes a buffer block with matching pointer from internal storage.
-	void														FreeBufferBlockFromStorage(
-		vk2d::_internal::MeshBufferBlock<float>				*	buffer_block );
+	void										FreeBufferBlockFromStorage(
+		MeshBufferBlock<float>				*	buffer_block );
 
 	// Removes a buffer block with matching pointer from internal storage.
-	void														FreeBufferBlockFromStorage(
-		vk2d::_internal::MeshBufferBlock<glm::mat4>			*	buffer_block );
+	void										FreeBufferBlockFromStorage(
+		MeshBufferBlock<glm::mat4>			*	buffer_block );
 
-	vk2d::_internal::InstanceImpl							*	instance									= {};
-	VkDevice													device										= {};
-	VkPhysicalDeviceLimits										physicald_device_limits						= {};
-	vk2d::_internal::DeviceMemoryPool						*	device_memory_pool							= {};
+	InstanceImpl							*	instance									= {};
+	VkDevice									device										= {};
+	VkPhysicalDeviceLimits						physicald_device_limits						= {};
+	DeviceMemoryPool						*	device_memory_pool							= {};
 
-	bool														first_draw									= {};
+	bool										first_draw									= {};
 
-	uint32_t													pushed_mesh_count							= {};
-	uint32_t													pushed_index_count							= {};
-	uint32_t													pushed_vertex_count							= {};
-	uint32_t													pushed_texture_channel_weight_count			= {};
-	uint32_t													pushed_transformation_count					= {};
+	uint32_t									pushed_mesh_count							= {};
+	uint32_t									pushed_index_count							= {};
+	uint32_t									pushed_vertex_count							= {};
+	uint32_t									pushed_texture_channel_weight_count			= {};
+	uint32_t									pushed_transformation_count					= {};
 
-	vk2d::_internal::MeshBufferBlock<uint32_t>				*	bound_index_buffer_block					= {};
-	vk2d::_internal::MeshBufferBlock<vk2d::Vertex>			*	bound_vertex_buffer_block					= {};
-	vk2d::_internal::MeshBufferBlock<float>					*	bound_texture_channel_weight_buffer_block	= {};
-	vk2d::_internal::MeshBufferBlock<glm::mat4>				*	bound_transformation_buffer_block			= {};
+	MeshBufferBlock<uint32_t>				*	bound_index_buffer_block					= {};
+	MeshBufferBlock<Vertex>					*	bound_vertex_buffer_block					= {};
+	MeshBufferBlock<float>					*	bound_texture_channel_weight_buffer_block	= {};
+	MeshBufferBlock<glm::mat4>				*	bound_transformation_buffer_block			= {};
 
-	vk2d::_internal::IndexBufferBlocks							index_buffer_blocks							= {};
-	vk2d::_internal::VertexBufferBlocks							vertex_buffer_blocks						= {};
-	vk2d::_internal::TextureChannelBufferBlocks					texture_channel_weight_buffer_blocks		= {};
-	vk2d::_internal::TransformationBufferBlocks					transformation_buffer_blocks				= {};
+	IndexBufferBlocks							index_buffer_blocks							= {};
+	VertexBufferBlocks							vertex_buffer_blocks						= {};
+	TextureChannelBufferBlocks					texture_channel_weight_buffer_blocks		= {};
+	TransformationBufferBlocks					transformation_buffer_blocks				= {};
 
-	vk2d::_internal::IndexBufferBlocks::iterator				current_index_buffer_block					= {};
-	vk2d::_internal::VertexBufferBlocks::iterator				current_vertex_buffer_block					= {};
-	vk2d::_internal::TextureChannelBufferBlocks::iterator		current_texture_channel_weight_buffer_block	= {};
-	vk2d::_internal::TransformationBufferBlocks					current_transformation_buffer_block			= {};
+	IndexBufferBlocks::iterator					current_index_buffer_block					= {};
+	VertexBufferBlocks::iterator				current_vertex_buffer_block					= {};
+	TextureChannelBufferBlocks::iterator		current_texture_channel_weight_buffer_block	= {};
+	TransformationBufferBlocks					current_transformation_buffer_block			= {};
 };
 
 
@@ -216,14 +216,14 @@ private:
 
 template<typename T>
 class MeshBufferBlock {
-	friend class vk2d::_internal::MeshBuffer;
+	friend class MeshBuffer;
 
 public:
 	MeshBufferBlock(
-		vk2d::_internal::MeshBuffer						*	mesh_buffer,
-		VkDeviceSize										buffer_byte_size,
-		VkBufferUsageFlags									buffer_usage_flags,
-		vk2d::_internal::MeshBufferDescriptorSetType		descriptor_set_type
+		MeshBuffer							*	mesh_buffer,
+		VkDeviceSize							buffer_byte_size,
+		VkBufferUsageFlags						buffer_usage_flags,
+		MeshBufferDescriptorSetType				descriptor_set_type
 	)
 	{
 		assert( mesh_buffer );
@@ -234,7 +234,7 @@ public:
 		auto instance				= mesh_buffer_parent->instance;
 		auto memory_pool			= instance->GetDeviceMemoryPool();
 
-		total_byte_size				= vk2d::_internal::CalculateAlignmentForBuffer(
+		total_byte_size				= CalculateAlignmentForBuffer(
 			buffer_byte_size,
 			instance->GetVulkanPhysicalDeviceProperties().limits
 		);
@@ -257,7 +257,7 @@ public:
 				VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT
 			);
 			if( staging_buffer != VK_SUCCESS ) {
-				instance->Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot create MeshBufferBlock, cannot create staging buffer!" );
+				instance->Report( ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot create MeshBufferBlock, cannot create staging buffer!" );
 				return;
 			}
 		}
@@ -278,7 +278,7 @@ public:
 				VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT
 			);
 			if( device_buffer != VK_SUCCESS ) {
-				instance->Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot create MeshBufferBlock, cannot create device buffer!" );
+				instance->Report( ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot create MeshBufferBlock, cannot create device buffer!" );
 				return;
 			}
 		}
@@ -286,9 +286,9 @@ public:
 		// Create descriptor set
 		{
 			switch( descriptor_set_type ) {
-			case vk2d::_internal::MeshBufferDescriptorSetType::NONE:
+			case MeshBufferDescriptorSetType::NONE:
 				break;
-			case vk2d::_internal::MeshBufferDescriptorSetType::UNIFORM:
+			case MeshBufferDescriptorSetType::UNIFORM:
 			{
 				// TODO: MeshBufferBlock::descriptor_set allocation and freeing needs to be thread specific instead of allocating from the instance.
 				descriptor_set			= instance->AllocateDescriptorSet( instance->GetGraphicsUniformBufferDescriptorSetLayout() );
@@ -315,7 +315,7 @@ public:
 				);
 			}
 				break;
-			case vk2d::_internal::MeshBufferDescriptorSetType::STORAGE:
+			case MeshBufferDescriptorSetType::STORAGE:
 			{
 				// WARNING: MeshBufferBlock::descriptor_set allocation and freeing needs to be thread specific if we ever start doing multithreaded rendering.
 				descriptor_set			= instance->AllocateDescriptorSet( instance->GetGraphicsStorageBufferDescriptorSetLayout() );
@@ -364,7 +364,7 @@ public:
 	{
 		auto mapped_memory	= staging_buffer.memory.Map<T>();
 		if( !mapped_memory ) {
-			mesh_buffer_parent->instance->Report( vk2d::ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot copy mesh buffer block to  map staging buffer memory" );
+			mesh_buffer_parent->instance->Report( ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot copy mesh buffer block to  map staging buffer memory" );
 			return false;
 		} else {
 			std::memcpy( mapped_memory, host_data.data(), used_byte_size );
@@ -379,8 +379,8 @@ public:
 	// Checks if something fits into this MeshBufferBlock.
 	// Parameter count is not in byte size, if this MeshBufferBlock is type
 	// float and parameter count is 1 then space for 4 bytes is checked for.
-	bool													CheckDataFits(
-		uint32_t											count
+	bool										CheckDataFits(
+		uint32_t								count
 	)
 	{
 		VkDeviceSize	reserve_size		= count * sizeof( T );
@@ -395,8 +395,8 @@ public:
 	// Returns the location in bytes to the beginning of the reserved space.
 	// Parameter count is not in byte size, if this MeshBufferBlock is type
 	// float and parameter count is 1 then space for 4 bytes is reserved.
-	VkDeviceSize											ReserveSpace(
-		uint32_t											count
+	VkDeviceSize								ReserveSpace(
+		uint32_t								count
 	)
 	{
 		VkDeviceSize reserve_size	= count * sizeof( T );
@@ -406,32 +406,32 @@ public:
 		return ret;
 	}
 
-	bool													IsGood()
+	bool										IsGood()
 	{
 		return is_good;
 	}
 
 private:
-	vk2d::_internal::MeshBuffer							*	mesh_buffer_parent			= {};
+	MeshBuffer								*	mesh_buffer_parent			= {};
 
 	// TODO: Get rid of extra data copying in MeshBuffer, either double buffer it or just force users to create MeshBuffer per swap.
 	// Might be a bit clumbersome to introduce double buffering here so consider making this single access only, so that the data
 	// is used by the GPU or the host and disallow simultaneous use.
 	// Regardless, get rid of host_data vector.
-	std::vector<T>											host_data					= {};
+	std::vector<T>								host_data					= {};
 
-	VkDeviceSize											total_byte_size				= {};	// Total size of buffer in bytes.
-	VkDeviceSize											used_byte_size				= {};	// Used size of uint data in bytes.
+	VkDeviceSize								total_byte_size				= {};	// Total size of buffer in bytes.
+	VkDeviceSize								used_byte_size				= {};	// Used size of uint data in bytes.
 
-	vk2d::_internal::CompleteBufferResource					staging_buffer				= {};
-	vk2d::_internal::CompleteBufferResource					device_buffer				= {};
-	vk2d::_internal::PoolDescriptorSet						descriptor_set				= {};
+	CompleteBufferResource						staging_buffer				= {};
+	CompleteBufferResource						device_buffer				= {};
+	PoolDescriptorSet							descriptor_set				= {};
 
-	bool													is_good						= {};
+	bool										is_good						= {};
 };
 
 
 
-} // _internal
+} // vk2d_internal
 
 } // vk2d

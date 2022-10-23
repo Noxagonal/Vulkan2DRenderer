@@ -28,9 +28,9 @@ public:
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Bottom right coordinates.
 	///
-	///				This is not size but a coordinate on the same coordinate space as vk2d::Rect2Base::top_left so this value can be
-	///				right of or above vk2d::Rect2Base::top_left, depending on the situation this may be okay, in situations where
-	///				top left and bottom right order matters you can use vk2d::Rect2Base::GetOrganized().
+	///				This is not size but a coordinate on the same coordinate space as Rect2Base::top_left so this value can be
+	///				right of or above Rect2Base::top_left, depending on the situation this may be okay, in situations where
+	///				top left and bottom right order matters you can use Rect2Base::GetOrganized().
 	glm::vec<2, T, glm::packed_highp>		bottom_right		= {};
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -42,7 +42,7 @@ public:
 	/// 
 	/// @param		other
 	///				Copy contents from.
-	Rect2Base( const vk2d::Rect2Base<T> & other )	= default;
+	Rect2Base( const Rect2Base<T> & other )	= default;
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Construct manually.
@@ -88,7 +88,7 @@ public:
 	///				Copy contents from.
 	/// 
 	/// @return		Reference to this.
-	vk2d::Rect2Base<T> & operator=( const vk2d::Rect2Base<T> & other )	= default;
+	Rect2Base<T> & operator=( const Rect2Base<T> & other )	= default;
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Move position of the rectangle by a vector.
@@ -100,7 +100,7 @@ public:
 	///				Vector telling where the resulting rectangle should be translated.
 	/// 
 	/// @return		A new rectangle.
-	vk2d::Rect2Base<T> operator+( glm::vec<2, T, glm::packed_highp> other ) const
+	Rect2Base<T> operator+( glm::vec<2, T, glm::packed_highp> other ) const
 	{
 		return { top_left + other, bottom_right + other };
 	}
@@ -108,7 +108,7 @@ public:
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Move position of the rectangle by a vector.
 	///
-	///				This works exactly the same way as vk2d::Rect2Base::operator+(). Adding this way effectively moves the rectangle
+	///				This works exactly the same way as Rect2Base::operator+(). Adding this way effectively moves the rectangle
 	///				in the coordinate space to a new location without changing it's size, except the vector values are substracted
 	///				instead of added.
 	/// 
@@ -116,7 +116,7 @@ public:
 	///				Vector telling where the resulting rectangle should be translated away from.
 	/// 
 	/// @return		A new rectangle.
-	vk2d::Rect2Base<T> operator-( glm::vec<2, T, glm::packed_highp> other ) const
+	Rect2Base<T> operator-( glm::vec<2, T, glm::packed_highp> other ) const
 	{
 		return { top_left - other, bottom_right - other };
 	}
@@ -131,7 +131,7 @@ public:
 	///				Vector telling where this rectangle should be translated.
 	/// 
 	/// @return		Reference to this.
-	vk2d::Rect2Base<T> & operator+=( glm::vec<2, T, glm::packed_highp> other )
+	Rect2Base<T> & operator+=( glm::vec<2, T, glm::packed_highp> other )
 	{
 		top_left += other;
 		bottom_right += other;
@@ -141,7 +141,7 @@ public:
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Move position of the rectangle by a vector.
 	///
-	///				This works exactly the same way as vk2d::Rect2Base::operator+(). Adding this way effectively moves the rectangle
+	///				This works exactly the same way as Rect2Base::operator+(). Adding this way effectively moves the rectangle
 	///				in the coordinate space to a new location without changing it's size, except the vector values are substracted
 	///				instead of added.
 	/// 
@@ -149,7 +149,7 @@ public:
 	///				Vector telling where this rectangle should be translated away from.
 	/// 
 	/// @return		Reference to this.
-	vk2d::Rect2Base<T> & operator-=( glm::vec<2, T, glm::packed_highp> other )
+	Rect2Base<T> & operator-=( glm::vec<2, T, glm::packed_highp> other )
 	{
 		top_left -= other;
 		bottom_right -= other;
@@ -163,7 +163,7 @@ public:
 	///				Other rectangle to test with.
 	/// 
 	/// @return		true if rectangles perfectly overlap, false otherwise.
-	bool operator==( vk2d::Rect2Base<T> other )
+	bool operator==( Rect2Base<T> other )
 	{
 		return top_left == other.top_left && bottom_right == other.bottom_right;
 	}
@@ -175,7 +175,7 @@ public:
 	///				Other rectangle to test with.
 	/// 
 	/// @return		true if rectangles do not perfectly overlap, false if they do.
-	bool operator!=( vk2d::Rect2Base<T> other )
+	bool operator!=( Rect2Base<T> other )
 	{
 		return top_left != other.top_left || bottom_right != other.bottom_right;
 	}
@@ -220,9 +220,9 @@ public:
 	///				always be top left of "bottom right".
 	/// 
 	/// @return		New organized rectangle.
-	vk2d::Rect2Base<T> GetOrganized()
+	Rect2Base<T> GetOrganized()
 	{
-		vk2d::Rect2Base<T> ret = *this;
+		Rect2Base<T> ret = *this;
 		if( ret.bottom_right.x < ret.top_left.x ) std::swap( ret.bottom_right.x, ret.top_left.x );
 		if( ret.bottom_right.y < ret.top_left.y ) std::swap( ret.bottom_right.y, ret.top_left.y );
 	}

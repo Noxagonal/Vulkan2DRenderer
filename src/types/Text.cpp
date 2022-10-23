@@ -36,14 +36,14 @@ VK2D_API vk2d::Text::Text(
 }
 
 VK2D_API vk2d::Text::Text(
-	const vk2d::Text	&	other
+	const Text	&	other
 )
 {
 	CopyOther( other );
 }
 
 VK2D_API vk2d::Text::Text(
-	vk2d::Text			&&	other
+	Text			&&	other
 )
 {
 	MoveOther( std::move( other ) );
@@ -55,7 +55,7 @@ VK2D_API vk2d::Text::~Text()
 }
 
 VK2D_API vk2d::Text & VK2D_APIENTRY vk2d::Text::operator=(
-	const vk2d::Text	&	other
+	const Text	&	other
 )
 {
 	CopyOther( other );
@@ -63,7 +63,7 @@ VK2D_API vk2d::Text & VK2D_APIENTRY vk2d::Text::operator=(
 }
 
 VK2D_API vk2d::Text & VK2D_APIENTRY vk2d::Text::operator=(
-	vk2d::Text			&&	other
+	Text			&&	other
 )
 {
 	MoveOther( std::move( other ) );
@@ -134,7 +134,7 @@ VK2D_API int32_t * VK2D_APIENTRY vk2d::Text::end()
 	return &str_data[ str_size ];
 }
 
-VK2D_API void VK2D_APIENTRY vk2d::Text::CopyOther( const vk2d::Text & other )
+VK2D_API void VK2D_APIENTRY vk2d::Text::CopyOther( const Text & other )
 {
 	Resize( other.str_size );
 	for( size_t i = 0; i < other.str_size; ++i ) {
@@ -144,7 +144,7 @@ VK2D_API void VK2D_APIENTRY vk2d::Text::CopyOther( const vk2d::Text & other )
 	str_data[ str_size ] = '\0';
 }
 
-VK2D_API void VK2D_APIENTRY vk2d::Text::MoveOther( vk2d::Text && other )
+VK2D_API void VK2D_APIENTRY vk2d::Text::MoveOther( Text && other )
 {
 	std::swap( str_data,		other.str_data );
 	std::swap( str_size,		other.str_size );

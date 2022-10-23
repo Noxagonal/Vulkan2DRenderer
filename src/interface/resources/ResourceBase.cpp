@@ -62,7 +62,7 @@ VK2D_API bool VK2D_APIENTRY vk2d::ResourceBase::IsFromFile() const
 	return resource_impl->IsFromFile();
 }
 
-VK2D_API const std::vector<std::filesystem::path>&VK2D_APIENTRY vk2d::ResourceBase::GetFilePaths() const
+VK2D_API const std::vector<std::filesystem::path> & VK2D_APIENTRY vk2d::ResourceBase::GetFilePaths() const
 {
 	assert( resource_impl );
 	return resource_impl->GetFilePaths();
@@ -94,11 +94,11 @@ VK2D_API bool VK2D_APIENTRY vk2d::ResourceBase::IsGood() const
 
 
 
-vk2d::_internal::ResourceImplBase::ResourceImplBase(
-	vk2d::ResourceBase							*	my_interface,
-	uint32_t										loader_thread,
-	vk2d::_internal::ResourceManagerImpl		*	resource_manager,
-	vk2d::ResourceBase							*	parent_resource
+vk2d::vk2d_internal::ResourceImplBase::ResourceImplBase(
+	ResourceBase			*	my_interface,
+	uint32_t					loader_thread,
+	ResourceManagerImpl		*	resource_manager,
+	ResourceBase			*	parent_resource
 )
 {
 	this->my_interface				= my_interface;
@@ -113,11 +113,11 @@ vk2d::_internal::ResourceImplBase::ResourceImplBase(
 	}
 }
 
-vk2d::_internal::ResourceImplBase::ResourceImplBase(
-	vk2d::ResourceBase							*	my_interface,
+vk2d::vk2d_internal::ResourceImplBase::ResourceImplBase(
+	ResourceBase								*	my_interface,
 	uint32_t										loader_thread,
-	vk2d::_internal::ResourceManagerImpl		*	resource_manager,
-	vk2d::ResourceBase							*	parent_resource,
+	ResourceManagerImpl							*	resource_manager,
+	ResourceBase								*	parent_resource,
 	const std::vector<std::filesystem::path>	&	paths
 )
 {
@@ -133,7 +133,7 @@ vk2d::_internal::ResourceImplBase::ResourceImplBase(
 	}
 }
 
-void vk2d::_internal::ResourceImplBase::DestroySubresources()
+void vk2d::vk2d_internal::ResourceImplBase::DestroySubresources()
 {
 	std::lock_guard<std::mutex> lock_guard( subresources_mutex );
 
@@ -144,8 +144,8 @@ void vk2d::_internal::ResourceImplBase::DestroySubresources()
 	subresources.clear();
 }
 
-void vk2d::_internal::ResourceImplBase::AddSubresource(
-	vk2d::ResourceBase		*	subresource
+void vk2d::vk2d_internal::ResourceImplBase::AddSubresource(
+	ResourceBase		*	subresource
 )
 {
 	std::lock_guard<std::mutex> lock_guard( subresources_mutex );
@@ -153,27 +153,27 @@ void vk2d::_internal::ResourceImplBase::AddSubresource(
 	subresources.push_back( subresource );
 }
 
-vk2d::ResourceBase * VK2D_APIENTRY vk2d::_internal::ResourceImplBase::GetParentResource()
+vk2d::ResourceBase * VK2D_APIENTRY vk2d::vk2d_internal::ResourceImplBase::GetParentResource()
 {
 	return parent_resource;
 }
 
-uint32_t vk2d::_internal::ResourceImplBase::GetLoaderThread()
+uint32_t vk2d::vk2d_internal::ResourceImplBase::GetLoaderThread()
 {
 	return loader_thread;
 }
 
-bool vk2d::_internal::ResourceImplBase::IsFromFile() const
+bool vk2d::vk2d_internal::ResourceImplBase::IsFromFile() const
 {
 	return is_from_file;
 }
 
-const std::vector<std::filesystem::path> & vk2d::_internal::ResourceImplBase::GetFilePaths() const
+const std::vector<std::filesystem::path> & vk2d::vk2d_internal::ResourceImplBase::GetFilePaths() const
 {
 	return file_paths;
 }
 
-bool vk2d::_internal::ResourceImplBase::IsSubResource() const
+bool vk2d::vk2d_internal::ResourceImplBase::IsSubResource() const
 {
 	return !!parent_resource;
 }
