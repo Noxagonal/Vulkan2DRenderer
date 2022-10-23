@@ -3443,7 +3443,7 @@ bool vk2d::_internal::RenderTargetTextureImpl::CmdUpdateFrameData(
 			window_coordinate_scaling.offset		= { 0.0f, 0.0f };
 		}
 		break;
-		case vk2d::RenderCoordinateSpace::NORMALIZED_VULKAN:
+		case vk2d::RenderCoordinateSpace::LINEAR_SPACE:
 			window_coordinate_scaling.multiplier	= { 1.0f, 1.0f };
 			window_coordinate_scaling.offset		= { 0.0f, 0.0f };
 			break;

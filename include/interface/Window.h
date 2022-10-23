@@ -40,12 +40,16 @@ class Sampler;
 
 
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/// @brief		Tells what action happened with a button.
 enum class ButtonAction : int32_t {
 	RELEASE				= 0,	///< Button was lift up.
 	PRESS				= 1,	///< Button was pressed down.
 	REPEAT				= 2,	///< Button was held down long and is being repeated by the OS, this is used in text input when user wants to insert same character multiple times.
 };
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/// @brief		Tells which mouse button was pressed or released.
 enum class MouseButton : int32_t {
 	BUTTON_1			= 0,		///< Left mouse button
 	BUTTON_2			= 1,		///< Right mouse button
@@ -61,6 +65,8 @@ enum class MouseButton : int32_t {
 	BUTTON_MIDDLE		= BUTTON_3,	///< Middle mouse button
 };
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/// @brief		Tells which modifier keys were held down during an action.
 enum class ModifierKeyFlags : int32_t {
 	SHIFT				= 0x0001,	///< Shift key, either left or right
 	CONTROL				= 0x0002,	///< Ctrl key, either left or right
@@ -76,6 +82,7 @@ inline ModifierKeyFlags operator&( ModifierKeyFlags f1, ModifierKeyFlags f2 )
 	return ModifierKeyFlags( int32_t( f1 ) & int32_t( f2 ) );
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /// @brief		Cursor state dictates the behavior with window.
 enum class CursorState : int32_t {
 	NORMAL,		///< Normal cursor, allowed to leave the window area and is visible at all times.
@@ -83,7 +90,8 @@ enum class CursorState : int32_t {
 	LOCKED		///< Cursor is locked to the window, it's not visible and it's typically not allowed to leave the window area.
 };
 
-/// @brief		These are the key codes for each and every individual keyboard button.
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/// @brief		Key codes for each individual keyboard button.
 enum class KeyboardButton : int32_t {
 	KEY_UNKNOWN			= -1,	///< Unrecognized keyboard button
 
@@ -212,30 +220,89 @@ enum class KeyboardButton : int32_t {
 	KEY_LAST			= KEY_MENU,	///< Used to get the number of total key entries.
 };
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /// @brief		Parameters to construct a vk2d::Window.
 struct WindowCreateInfo {
-	bool								resizeable					= true;											///< Can we use the cursor to resize the window.
-	bool								visible						= true;											///< Is the window visible after created.
-	bool								decorated					= true;											///< Does the window have default OS borders and buttons.
-	bool								focused						= true;											///< Is the window focused and brought forth when created.
-	bool								maximized					= false;										///< Is the window maximized to fill the screen when created.
-	bool								transparent_framebuffer		= false;										///< Is the alpha value of the render interpreted as a transparent window background.
-	vk2d::RenderCoordinateSpace			coordinate_space			= vk2d::RenderCoordinateSpace::TEXEL_SPACE;		///< Coordinate system to be used, see vk2d::RenderCoordinateSpace.
-	glm::uvec2							size						= { 800, 600 };									///< Window content initial pixel size
-	glm::uvec2							min_size					= { 32, 32 };									///< Minimum size of the window. (also works when drag resizing, this value may be adjusted to suit the hardware)
-	glm::uvec2							max_size					= { UINT32_MAX, UINT32_MAX };					///< Maximum size of the window. (also works when drag resizing, this value may be adjusted to suit the hardware)
-	vk2d::Monitor					*	fullscreen_monitor			= {};											///< Fullscreen monitor pointer, nullptr is windowed, use Instance::GetPrimaryMonitor() to use primary monitor for fullscreen.
-	uint32_t							fullscreen_refresh_rate		= UINT32_MAX;									///< Refresh rate in fullscreen mode, UINT32_MAX uses maximum refresh rate available.
-	bool								vsync						= true;											///< Vertical synchronization, works in both windowed and fullscreen modes, usually best left on for 2d graphics.
-	vk2d::Multisamples					samples						= vk2d::Multisamples::SAMPLE_COUNT_1;			///< Multisampling, must be a single value from vk2d::Multisamples. Uses more GPU resources if higher than 1.
-	std::string							title						= "";											///< Window title text.
-	vk2d::WindowEventHandler		*	event_handler				= nullptr;										///< Pointer to a custom event handler that will be used with this window (input events, keyboard, mouse...) See vk2d::WindowEventHandler.
+
+	/// @brief		Is window resizeable.
+	bool								resizeable					= true;
+
+	/// @brief		Is the window visible after it's been created.
+	bool								visible						= true;
+
+	/// @brief		Does the window have default OS borders and buttons.
+	///
+	///				If set to false, only window contents are displayed, no borders, minimize/maximize/close buttons.
+	bool								decorated					= true;
+
+	/// @brief		Is the window focused and brought forth by the OS when created.
+	bool								focused						= true;
+
+	/// @brief		Is the window maximized to fill the screen when created.
+	bool								maximized					= false;
+
+	/// @brief		Is the alpha value of the render interpreted as a transparent window background.
+	bool								transparent_framebuffer		= false;
+
+	/// @brief		Coordinate system to be used.
+	///
+	/// @see		vk2d::RenderCoordinateSpace
+	vk2d::RenderCoordinateSpace			coordinate_space			= vk2d::RenderCoordinateSpace::TEXEL_SPACE;
+
+	/// @brief		Window content initial size in pixels.
+	glm::uvec2							size						= { 800, 600 };
+
+	/// @brief		Minimum size of the window.
+	///
+	///				This also works when resizing with the mouse. Your OS may have an absolute minimum size which is used as a
+	///				limit of how small of a window you can create.
+	glm::uvec2							min_size					= { 32, 32 };
+
+	/// @brief		Maximum size of the window.
+	///
+	///				This also works when resizing with the mouse. Your OS may have an absolute maximum size which is used as a
+	///				limit of how big of a window you can create.
+	glm::uvec2							max_size					= { UINT32_MAX, UINT32_MAX };
+
+	/// @brief		Fullscreen monitor.
+	///
+	///				nullptr is windowed, use vk2d::Instance::GetPrimaryMonitor() to use primary monitor for fullscreen, or use
+	///				vk2d::Instance::GetMonitors to choose which monitor you wish display this window in fullscreen mode.
+	vk2d::Monitor					*	fullscreen_monitor			= {};
+
+	/// @brief		Refresh rate in fullscreen mode, UINT32_MAX is unlimited.
+	uint32_t							fullscreen_refresh_rate		= UINT32_MAX;
+
+	/// @brief		Vertical synchronization.
+	///
+	///				This works in both windowed and fullscreen modes, 2d graphics are rarely demanding so you should always
+	///				leave this on.
+	///
+	/// @warning	Disabling vsync in 2D graphics has caused certain GPUs to overheat, damaging hardware. Drawing 2D is
+	///				usually not too demanding, by not limiting the speed, you may stress the GPU a lot more than usual
+	///				which in rare cases may cause physical damage.
+	bool								vsync						= true;
+
+	/// @brief		Multisampling.
+	///
+	///				Must be a single value from vk2d::Multisamples. Uses more GPU resources if higher than 1 but gets rid of
+	///				jagged edges of polygons, the higher the samples, the smoother the edge and higher the demand of the GPU.
+	vk2d::Multisamples					samples						= vk2d::Multisamples::SAMPLE_COUNT_1;
+
+	/// @brief		Window title text.
+	std::string							title						= "";
+
+	/// @brief		Pointer to an event handler.
+	///
+	///				Allows capturing keyboard and mouse events that happened to this window.
+	///
+	/// @see		vk2d::WindowEventHandler
+	vk2d::WindowEventHandler		*	event_handler				= nullptr;
 };
 
 
 
-
-
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /// @brief		Video mode the monitor can natively work in.
 struct MonitorVideoMode {
 	glm::uvec2			resolution;
@@ -245,14 +312,13 @@ struct MonitorVideoMode {
 	uint32_t			refresh_rate;
 };
 
-/// @brief		Gamma ramp for manual gamma adjustment on the monitor at different
-///				intensity levels per color.
-///				Ramp is made out of nodes that are evenly spaced from lowest to
-///				highest value. Input must have at least 2 nodes, values are linearly
-///				interpolated inbetween nodes to fill the entire range.
-///				This gamma ramp is applied in addition to the hardware or OS
-///				gamma correction (usually approximation of sRGB gamma) so setting
-///				a linear gamma ramp will result in already gamma corrected image.
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/// @brief		Gamma ramp for manual gamma adjustment on the monitor at different intensity levels per color.
+/// 
+///				Ramp is made out of nodes that are evenly spaced from lowest to highest value. Input must have at least 2 nodes,
+///				values are linearly interpolated inbetween nodes to fill the entire range. This gamma ramp is applied in
+///				addition to the hardware or OS gamma correction (usually approximation of sRGB gamma) so setting a linear gamma
+///				ramp will result in already gamma corrected image.
 struct GammaRampNode {
 	float	red;
 	float	green;
@@ -261,39 +327,48 @@ struct GammaRampNode {
 
 
 
-
-
-
-
-// Monitor object holds information about the physical monitor
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/// @brief		Holds information about a physical monitor.
 class Monitor {
 	friend class vk2d::Window;
 	friend class vk2d::_internal::WindowImpl;
 	friend void vk2d::_internal::UpdateMonitorLists( bool globals_locked );
 
-	/// @brief		This object should not be directly constructed, it is created and
-	///				destroyed automatically by VK2D.
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	/// @brief		Constructor. This object should not be directly constructed.
+	///
+	///				This object should not be directly constructed, it is created and destroyed automatically by VK2D whenever a new
+	///				instance is created or if monitor is connected or disconnected while the application is running.
+	/// 
 	/// @note		Multithreading: Main thread only.
+	/// 
 	/// @param[in]	preconstructed_impl
-	///				This is the actual implementation details given to this interface by
-	///				VK2D.
+	///				This is the actual implementation details given to this interface by VK2D.
 	VK2D_API																				Monitor(
 		std::unique_ptr<vk2d::_internal::MonitorImpl>	&&	preconstructed_impl );
 
 public:
-	/// @brief		Monitor constructor for a null monitor, needed for default
-	///				initialization.
-	///				This object should not be directly constructed, it is created and
-	///				destroyed automatically by VK2D whenever a new instance is created
-	///				or if monitor is connected or disconnected while the application is
-	///				running.
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	/// @brief		Monitor constructor for a null monitor.
+	///
+	///				needed for default initialization.
+	/// 
+	///				This object should not be directly constructed, it is created and destroyed automatically by VK2D whenever a new
+	///				instance is created or if monitor is connected or disconnected while the application is running.
+	/// 
 	/// @note		Multithreading: Main thread only.
 	VK2D_API																				Monitor();
 
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	/// @brief		Copy constructor.
+	/// 
 	/// @note		Multithreading: Main thread only.
 	VK2D_API																				Monitor(
 		const vk2d::Monitor								&	other );
 
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	/// @brief		Move constructor.
+	/// 
 	/// @note		Multithreading: Main thread only.
 	VK2D_API																				Monitor(
 		vk2d::Monitor									&&	other )							noexcept;
@@ -301,50 +376,67 @@ public:
 	/// @note		Multithreading: Main thread only.
 	VK2D_API																				~Monitor();
 
-	/// @brief		Get current video mode, resolution, bits per color and refresh rate.
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	/// @brief		Get current video mode of this monitor.
+	///
+	///				Get resolution, bits per color and refresh rate.
+	/// 
 	/// @note		Multithreading: Main thread only.
+	/// 
 	/// @return		Current monitor video mode.
 	VK2D_API vk2d::MonitorVideoMode							VK2D_APIENTRY					GetCurrentVideoMode() const;
 
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Get all video modes supported by the monitor.
+	/// 
 	/// @note		Multithreading: Main thread only.
+	/// 
 	/// @return		A vector of video modes supported by the monitor.
 	VK2D_API std::vector<vk2d::MonitorVideoMode>			VK2D_APIENTRY					GetVideoModes() const;
 
-	/// @brief		Set monitor gamma. Automatically generates a gamma ramp from this value
-	///				and uses it to set the gamma. This value is in addition to the hardware
-	///				or OS gamma correction value so 1.0 (linear) is considered already gamma
-	///				corrected.
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	/// @brief		Set monitor gamma.
+	///
+	///				Automatically generates a gamma ramp from this value and uses it to set the gamma. This value is in addition to
+	///				the hardware or OS gamma correction value so 1.0 (linear) is considered already gamma corrected.
+	/// 
 	/// @note		Multithreading: Main thread only.
+	/// 
 	/// @param[in]	gamma
-	///				Value greater than 0.0. Default/original gamma value is 1.0 which
-	///				produces linear gamma.
+	///				Value greater than 0.0. Default/original gamma value is 1.0 which produces linear gamma.
 	VK2D_API void											VK2D_APIENTRY					SetGamma(
 		float												gamma );
 
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Get monitor gamma ramp.
+	/// 
 	/// @note		Multithreading: Main thread only.
-	/// @see		vk2d::GammaRampNode.
-	/// @return		A vector of gamma ramp nodes at equal spacing where first node is minimum
-	///				brightness and last node is maximum brightness.
+	/// 
+	/// @see		vk2d::GammaRampNode
+	/// 
+	/// @return		A vector of gamma ramp nodes at equal spacing where first node is minimum brightness and last node is maximum
+	///				brightness.
 	VK2D_API std::vector<vk2d::GammaRampNode>				VK2D_APIENTRY					GetGammaRamp();
 
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Set monitor gamma manually with gamma ramp.
+	/// 
 	/// @note		Multithreading: Main thread only.
-	/// @see		vk2d::GammaRampNode.
+	/// 
+	/// @see		vk2d::GammaRampNode
+	/// 
 	/// @param[in]	ramp
-	///				A vector of gamma nodes where all nodes are considered
-	///				evenly spaced. First node is minimum brightness, last node
-	///				is maximum brightness. Number of gamma ramp nodes must be
-	///				2 or more. Values inbetween nodes are automatically
-	///				linearly interpolated so number of nodes only effects
-	///				quality of the gamma ramp.
+	///				A vector of gamma nodes where all nodes are considered evenly spaced. First node is minimum brightness, last
+	///				node is maximum brightness. Number of gamma ramp nodes must be 2 or more. Values inbetween nodes are
+	///				automatically linearly interpolated so number of nodes only effects quality of the gamma ramp.
 	VK2D_API void											VK2D_APIENTRY					SetGammaRamp(
 		const std::vector<vk2d::GammaRampNode>			&	ramp );
 
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	VK2D_API vk2d::Monitor								&	VK2D_APIENTRY					operator=(
 		const vk2d::Monitor								&	other );
 
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	VK2D_API vk2d::Monitor								&	VK2D_APIENTRY					operator=(
 		vk2d::Monitor									&&	other )							noexcept;
 
@@ -357,6 +449,8 @@ public:
 	VK2D_API bool											VK2D_APIENTRY					IsGood() const;
 
 private:
+
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	std::unique_ptr<vk2d::_internal::MonitorImpl>			impl;
 };
 
@@ -366,58 +460,65 @@ private:
 
 
 
-/// @brief		Mouse cursor is nothing more than an image that represents the
-///				location of the mouse on window, just like on the desktop environment.
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/// @brief		OS cursor image representation.
+///
+///				Mouse cursor is nothing more than an image that represents the location of the mouse on window, just like on the
+///				desktop environment.
 /// 
-///				This cursor object is used to swap out the OS cursor image to another
-///				while the cursor is hovering over the window.
-///				This is sometimes called "hardware" cursor in many applications.
-///				On "software" cursor implementations your application would hide this
-///				type of cursor and implement it's own using a texture that's drawn at
-///				cursor location inside the game loop.
-///				As "hardware" cursor is updated separately from your application it's
-///				usually a good idea to use it in case your application has framerate
-///				issues or it locks up completely.
+///				This cursor object is used to swap out the OS cursor image to another while the cursor is hovering over a
+///				window. This is sometimes called "hardware" cursor in many applications. On "software" cursor implementations
+///				your application would hide this type of cursor and implement it's own using a texture that's drawn at cursor
+///				location inside the game loop. As "hardware" cursor is updated separately from your application it's usually a
+///				good idea to use it in case your application has framerate issues or it locks up completely.
 class Cursor {
 	friend class vk2d::_internal::InstanceImpl;
 	friend class vk2d::Window;
 	friend class vk2d::_internal::WindowImpl;
 
-	/// @brief		This object should not be directly constructed, it is created by
-	///				vk2d::Instance::CreateCursor().
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	/// @brief		Constructor. This object should not be directly constructed
+	///
+	///				Cursor is created by vk2d::Instance::CreateCursor().
+	/// 
 	/// @note		Multithreading: Main thread only.
+	/// 
 	/// @param[in]	instance
 	///				A pointer to instance that owns this cursor.
+	/// 
 	/// @param[in]	image_path
 	///				Path to an image file that will be used as a cursor.
+	/// 
 	/// @param[in]	hot_spot
-	///				Hot spot is the texel offset from the top left corner of the image
-	///				to where the actual pointing tip of the cursor is located.
-	///				For example if the cursor is a 64*64 texel image of a circle where
-	///				the circle is exactly centered and the center of the circle is the
-	///				"tip" of the cursor, then the cursor's hot spot is 32*32.
+	///				Hot spot is the texel offset from the top left corner of the image to where the actual pointing tip of the cursor
+	///				is located. For example if the cursor is a 64*64 texel image of a circle where the circle is exactly centered and
+	///				the center of the circle is the "tip" of the cursor, then the cursor's hot spot is 32*32.
 	VK2D_API																		Cursor(
 		vk2d::_internal::InstanceImpl		*	instance,
 		const std::filesystem::path			&	image_path,
 		glm::ivec2								hot_spot );
 
-	/// @brief		This object should not be directly constructed, it is created by
-	///				vk2d::Instance::CreateCursor().
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	/// @brief		Constructor. This object should not be directly constructed
+	///
+	///				Cursor is created with vk2d::Instance::CreateCursor().
+	/// 
 	/// @note		Multithreading: Main thread only.
+	/// 
 	/// @param[in]	instance
 	///				A pointer to instance that owns this cursor.
+	/// 
 	/// @param[in]	image_size
 	///				Size of the image in texels.
+	/// 
 	/// @param[in]	image_data
-	///				Image texel data, from left to right, top to bottom order. Input
-	///				vector size must be large enough to contain all texels at given
-	///				texel size.
+	///				Image texel data, from left to right, top to bottom order. Input vector size must be large enough to contain all
+	///				texels at given texel size.
+	/// 
 	/// @param[in]	hot_spot
-	///				Hot spot is the texel offset from the top left corner of the image
-	///				to where the actual pointing tip of the cursor is located.
-	///				For example if the cursor is a 64*64 texel image of a circle where
-	///				the circle is exactly centered and the center of the circle is the
-	///				"tip" of the cursor, then the cursor's hot spot is 32*32.
+	///				Hot spot is the texel offset from the top left corner of the image to where the actual pointing tip of the
+	///				cursor is located. For example if the cursor is a 64*64 texel image of a circle where the circle is exactly
+	///				centered and the center of the circle is the "tip" of the cursor, then the cursor's hot spot is 32*32.
 	VK2D_API																		Cursor(
 		vk2d::_internal::InstanceImpl		*	instance,
 		glm::uvec2								image_size,
@@ -425,42 +526,63 @@ class Cursor {
 		glm::ivec2								hot_spot );
 
 public:
+
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	/// @brief		Copy constructor.
+	/// 
 	/// @note		Multithreading: Main thread only.
 	VK2D_API																		Cursor(
 		vk2d::Cursor						&	other );
 
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	/// @brief		Move constructor.
+	/// 
 	/// @note		Multithreading: Main thread only.
 	VK2D_API																		Cursor(
 		vk2d::Cursor						&&	other )								noexcept;
 
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @note		Multithreading: Main thread only.
 	VK2D_API									VK2D_APIENTRY						~Cursor();
 
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	/// @brief		Copy operator.
+	/// 
 	/// @note		Multithreading: Main thread only.
 	VK2D_API vk2d::Cursor					&	VK2D_APIENTRY						operator=(
 		vk2d::Cursor						&	other );
 
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	/// @brief		Move operator.
+	/// 
 	/// @note		Multithreading: Main thread only.
 	VK2D_API vk2d::Cursor					&	VK2D_APIENTRY						operator=(
 		vk2d::Cursor						&&	other )								noexcept;
 
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Get cursor image texel size.
+	/// 
 	/// @note		Multithreading: Main thread only.
+	/// 
 	/// @return		Size of the cursor image in texels.
 	VK2D_API glm::uvec2							VK2D_APIENTRY						GetSize();
 
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Get hot spot location in texels.
+	/// 
 	/// @note		Multithreading: Main thread only.
-	/// @return		The hot spot of the cursor image.
-	///				Hot spot is the offset of the image to the "tip" of the cursor
-	///				starting from top left of the image.
+	/// 
+	/// @return		The hot spot of the cursor image. Hot spot is the offset of the image to the "tip" of the cursor starting from
+	///				top left of the image.
 	VK2D_API glm::ivec2							VK2D_APIENTRY						GetHotSpot();
 
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Get texel data of the cursor image.
+	/// 
 	/// @note		Multithreading: Main thread only.
-	/// @return		A vector of texels in left to right, top to bottom order.
-	///				You will also need to use vk2d::Cursor::GetSize() in order to correctly
-	///				interpret the texels.
+	/// 
+	/// @return		A vector of texels in left to right, top to bottom order. You will also need to use vk2d::Cursor::GetSize() in
+	///				order to correctly interpret the texels.
 	VK2D_API std::vector<vk2d::Color8>			VK2D_APIENTRY						GetTexelData();
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -472,24 +594,30 @@ public:
 	VK2D_API bool								VK2D_APIENTRY						IsGood() const;
 
 private:
+
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	std::unique_ptr<vk2d::_internal::CursorImpl>	impl;
 };
 
 
 
-
-
-
-
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/// @brief		Represents an OS window and its render surface.
 class Window {
 	friend class vk2d::_internal::InstanceImpl;
 
 private:
-	/// @brief		This object should not be directly constructed, it is created by
-	///				vk2d::Instance::CreateOutputWindow().
+
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	/// @brief		Constructor. This object should not be directly constructed
+	///
+	///				Window is created with vk2d::Instance::CreateOutputWindow().
+	/// 
 	/// @note		Multithreading: Main thread only.
+	/// 
 	/// @param[in]	instance
 	///				A pointer to instance that owns this window.
+	/// 
 	/// @param[in]	window_create_info
 	///				Window creation parameters.
 	VK2D_API																		Window(
@@ -497,26 +625,39 @@ private:
 		const vk2d::WindowCreateInfo				&	window_create_info );
 
 public:
+
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @note		Multithreading: Main thread only.
 	VK2D_API																		~Window();
 
-	/// @brief		Signal that the window should now close. This function does not actually
-	///				close the window but rather just sets a flag that it should close, the
-	///				main program will have to manually remove the window from Instance.
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	/// @brief		Signal that the window should now close.
+	///
+	///				This function does not actually close the window but rather just sets a flag that it should close, the main
+	///				program will have to manually remove the window from Instance with vk2d::Instance::DestroyOutputWindow().
+	///
 	/// @note		Multithreading: Main thread only.
 	VK2D_API void										VK2D_APIENTRY				CloseWindow();
 
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Checks if the window wants to close.
+	///
+	///				Used to check if window should be closed, if the user presses the close button of the window in OS, then every
+	///				to this function afterwards will return true.
+	/// 
 	/// @note		Multithreading: Main thread only.
+	/// 
 	/// @return		true if window close is requested, false if window close has not been requestd.
 	VK2D_API bool										VK2D_APIENTRY				ShouldClose();
 
-	/// @brief		Takes a screenshot of the next image that will be rendered
-	///				and saves it into a file.
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	/// @brief		Takes a screenshot of the next image that will be rendered and saves it into a file.
+	/// 
 	/// @note		Multithreading: Main thread only.
+	/// 
 	/// @param[in]	save_path
-	///				Path where the file will be saved. Extension will determine the file
-	///				format used. Supported file formats are: <br>
+	///				Path where the file will be saved. Extension will determine the file format used. Supported file formats are:
+	///				<br>
 	///				<table>
 	///				<tr><th> Format												<th> Extension
 	///				<tr><td> Portable network graphics (RGBA) or (RGB)			<td> <tt>.png</tt>
@@ -524,54 +665,72 @@ public:
 	///				<tr><td> Truevision Targa (RGBA) or (RGB) RLE compressed	<td> <tt>.tga</tt>
 	///				<tr><td> JPEG (RGB)											<td> <tt>.jpg</tt> or <tt>.jpeg</tt>
 	///				</table>
+	///				<br>
 	///				Unsupported or unknown extensions will be saved as PNG.
+	/// 
 	/// @param[in]	include_alpha
-	///				Include transparency of the scene in the saved image.
-	///				true if you want transparency channel included, false otherwise.
-	///				Note that not all formats can save transparency, in which case this
-	///				parameter is ignored.
+	///				Include transparency of the scene in the saved image. true if you want transparency channel included, false
+	///				otherwise. Note that not all formats can save transparency, in which case this parameter is ignored.
 	VK2D_API void										VK2D_APIENTRY				TakeScreenshotToFile(
 		const std::filesystem::path					&	save_path,
 		bool											include_alpha				= false );
 
-	/// @brief		Takes a screenshot of the next image that will be rendered
-	///				and calls an event callback to give the data to the application.
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	/// @brief		Takes a screenshot of the next image that will be rendered and saves it into a memory.
+	///
+	///				Calls an event callback to give the data to the application.
+	/// 
 	/// @note		Multithreading: Main thread only.
+	/// 
 	/// @param[in]	include_alpha
-	///				Include transparency of the scene in the saved image.
-	///				true if you want transparency channel included, false if you want
-	///				transparency channel set to opaque.
+	///				Include transparency of the scene in the saved image. true if you want transparency channel included, false if
+	///				you want transparency channel set to opaque.
 	VK2D_API void										VK2D_APIENTRY				TakeScreenshotToData(
 		bool											include_alpha);
 
-	/// @brief		Sets focus to this window, should be called before entering
-	///				fullscreen mode from windowed mode.
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	/// @brief		Sets focus to this window.
+	///
+	/// @note		You should call this function before entering fullscreen mode from windowed mode.
+	/// 
 	/// @note		Multithreading: Main thread only.
 	VK2D_API void										VK2D_APIENTRY				Focus();
 
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Set window opacity.
+	/// 
 	/// @note		Multithreading: Main thread only.
+	/// 
 	/// @param[in]	opacity
-	///				Value between 0.0 and 1.0 where 0.0 is completely transparent and
-	///				1.0 is completely opaque.
+	///				Value between 0.0 and 1.0 where 0.0 is completely transparent and 1.0 is completely opaque.
 	VK2D_API void										VK2D_APIENTRY				SetOpacity(
 		float											opacity );
 
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Gets the current opacity of this window.
+	/// 
 	/// @note		Multithreading: Main thread only.
-	/// @return		Current opacity value between 0.0 and 1.0 where 0.0 is completely
-	///				transparent and 1.0 is completely opaque.
+	/// 
+	/// @return		Current opacity value between 0.0 and 1.0 where 0.0 is completely transparent and 1.0 is completely opaque.
 	VK2D_API float										VK2D_APIENTRY				GetOpacity();
 
-	/// @brief		Hides or un-hides the window. Hidden windows do not receive user input.
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	/// @brief		Hides or un-hides the window.
+	///
+	/// @note		Hidden windows do not receive user input.
+	/// 
 	/// @note		Multithreading: Main thread only.
+	/// 
 	/// @param[in]	hidden
 	///				true to hide the window, false to un-hide.
 	VK2D_API void										VK2D_APIENTRY				Hide(
 		bool											hidden );
 
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Gets the hidden status of the window.
+	/// 
 	/// @note		Multithreading: Main thread only.
+	/// 
 	/// @return		true if window is hidden, false if it's visible.
 	VK2D_API bool										VK2D_APIENTRY				IsHidden();
 
@@ -582,83 +741,112 @@ public:
 	VK2D_API void										VK2D_APIENTRY				DisableEvents(
 		bool											disable_events );
 
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Checks if events are enabled or disabled.
-	/// @see		vk2d::Window::DisableEvents().
+	/// 
+	/// @see		vk2d::Window::DisableEvents()
+	/// 
 	/// @note		Multithreading: Main thread only.
+	/// 
 	/// @return		true if events are disabled, false if events are enabled.
 	VK2D_API bool										VK2D_APIENTRY				AreEventsDisabled();
 
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Enter fullscreen or windowed mode.
+	/// 
 	/// @note		Multithreading: Main thread only.
+	/// 
 	/// @param[in]	monitor
-	///				A pointer to a monitor where you wish to display the contents of
-	///				this window in fullscreen mode.
+	///				A pointer to a monitor where you wish to display the contents of this window in fullscreen mode.
 	///				<tt>nullptr</tt> if you wish to enter windowed mode.
+	/// 
 	/// @param[in]	frequency
-	///				Target refresh rate of the monitor when entering fullscreen mode.
-	///				Ignored when entering windowed mode.
+	///				Target refresh rate of the monitor when entering fullscreen mode. Ignored when entering windowed mode.
 	VK2D_API void										VK2D_APIENTRY				SetFullscreen(
 		vk2d::Monitor								*	monitor,
 		uint32_t										frequency );
 
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Checks if we're in fullscreen or windowed mode.
+	/// 
 	/// @note		Multithreading: Main thread only.
-	/// @return		true if this window has entered fullscreen mode on any monitor,
-	///				false if windowed.
+	/// 
+	/// @return		true if this window has entered fullscreen mode on any monitor, false if windowed.
 	VK2D_API bool										VK2D_APIENTRY				IsFullscreen();
 
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Get cursor position on window surface without using events.
+	/// 
 	/// @note		Multithreading: Main thread only.
-	/// @return		The cursor position on window surface in texels where 0*0 coordinate
-	///				is top left corner of the window.
+	/// 
+	/// @return		The cursor position on window surface in texels where 0*0 coordinate is top left corner of the window.
 	VK2D_API glm::dvec2									VK2D_APIENTRY				GetCursorPosition();
 
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Set cursor position in relation to this window.
+	/// 
 	/// @note		Multithreading: Main thread only.
+	/// 
 	/// @param[in]	new_position
-	///				New mouse cursor position. This changes the position of the OS or
-	///				the "hardware" cursor.
+	///				New mouse cursor position. This changes the position of the OS or the "hardware" cursor.
 	VK2D_API void										VK2D_APIENTRY				SetCursorPosition(
 		glm::dvec2										new_position );
 
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Sets the OS or "hardware" cursor image to something else.
+	/// 
 	/// @note		Multithreading: Main thread only.
+	/// 
 	/// @param[in]	cursor
-	///				A pointer to cursor object to use from now on while the OS cursor
-	///				is located inside this window.
+	///				A pointer to cursor object to use from now on while the OS cursor is located inside this window.
 	VK2D_API void										VK2D_APIENTRY				SetCursor(
 		vk2d::Cursor								*	cursor );
 
-	/// @brief		Get last contents of the OS clipboard if it's a string. This way
-	///				you can copy from another application and paste it right inside yours.
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	/// @brief		Get last contents of the OS clipboard if it's a string.
+	///
+	///				Allows you to copy from another application and paste it right inside yours.
+	/// 
 	/// @note		Multithreading: Main thread only.
+	/// 
 	/// @return		Last clipboard contents if it was text.
 	VK2D_API std::string								VK2D_APIENTRY				GetClipboardString();
 
-	/// @brief		Set OS clipboard last entry to some string. This is useful if you
-	///				wish to enable copying text from your application and allowing
-	///				user to paste it some other application.
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	/// @brief		Set OS clipboard last entry to some string.
+	///
+	///				Allows you to copy text from your application paste it another application.
+	/// 
 	/// @note		Multithreading: Main thread only.
+	/// 
 	/// @param[in]	str
 	///				Text to send to the OS clipboard.
 	VK2D_API void										VK2D_APIENTRY				SetClipboardString(
 		const std::string							&	str );
 
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Set window title that shows up on the title bar of the window.
+	/// 
 	/// @note		Multithreading: Main thread only.
+	/// 
 	/// @param[in]	title
 	///				New title text of the window.
 	VK2D_API void										VK2D_APIENTRY				SetTitle(
 		const std::string							&	title );
 
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Gets title of the window.
+	/// 
 	/// @note		Multithreading: Main thread only.
+	/// 
 	/// @return		Current title of the window.
 	VK2D_API std::string								VK2D_APIENTRY				GetTitle();
 
-	/// @brief		Set window icon that shows up in OS taskbar/toolbar when the
-	///				application is running.
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	/// @brief		Set window icon that shows up in OS taskbar/toolbar when the application is running.
+	/// 
 	/// @note		Multithreading: Main thread only.
+	/// 
 	/// @param		image_paths
 	///				Path to image to use. Supported formats are: <br>
 	///				<table>
@@ -690,123 +878,185 @@ public:
 	VK2D_API void										VK2D_APIENTRY				SetIcon(
 		const std::vector<std::filesystem::path>	&	image_paths );
 
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Sets window position on the virtual screen space.
+	/// 
 	/// @note		Multithreading: Main thread only.
+	/// 
 	/// @param[in]	new_position
-	///				New position in the virtual monitor space. Virtual in this case
-	///				means that if the user has 2 or more monitor setup and the desktop
-	///				is set to be continuous from one monitor to the next, the window
-	///				coordinates determine in which monitor the window will appear,
-	///				this depends on the user's monitor setup however.
+	///				New position in the virtual monitor space. Virtual in this case means that if the user has 2 or more monitor
+	///				setup and the desktop is set to be continuous from one monitor to the next, the window coordinates determine in
+	///				which monitor the window will appear, this depends on the user's monitor setup however.
 	VK2D_API void										VK2D_APIENTRY				SetPosition(
 		glm::ivec2										new_position );
 
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Get window current position on the virtual screen space.
+	/// 
 	/// @note		Multithreading: Main thread only.
-	/// @return		Position of the window.
+	///
+	/// @see		vk2d::Window::SetPosition()
+	/// 
+	/// @return		Position of the window in the virtual monitor space.
 	VK2D_API glm::ivec2									VK2D_APIENTRY				GetPosition();
 
-	/// @brief		Set size of the window. More specifically this sets the framebuffer
-	///				size or the content size of the window to a new size, window decorators
-	///				are extended to fit the new content size.
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	/// @brief		Set size of the window.
+	///
+	///				More specifically this sets the framebuffer size or the content size of the window to a new size, window
+	///				decorators are extended to fit the new content size.
+	/// 
 	/// @note		Multithreading: Main thread only.
+	/// 
 	/// @param[in]	new_size
 	///				New size of the window.
 	VK2D_API void										VK2D_APIENTRY				SetSize(
 		glm::uvec2										new_size );
 
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Get content/framebuffer size of the window.
+	/// 
 	/// @note		Multithreading: Main thread only.
+	/// 
 	/// @return		Size of the window.
 	VK2D_API glm::uvec2									VK2D_APIENTRY				GetSize();
 
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Iconifies the window to the taskbar or restores it back into a window.
+	/// 
 	/// @note		Multithreading: Main thread only.
+	/// 
 	/// @param[in]	minimized
 	///				true if window should be iconified, false if restored from iconified state.
 	VK2D_API void										VK2D_APIENTRY				Iconify(
 		bool											minimized );
 
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Checks if the window is currently iconified.
-	/// @see		vk2d::Window::Iconify().
+	/// 
+	/// @see		vk2d::Window::Iconify()
+	/// 
 	/// @note		Multithreading: Main thread only.
-	/// @return		true if window is iconified to the task/tool-bar, false if window is fully
-	///				visible.
+	/// 
+	/// @return		true if window is iconified to the task/tool-bar, false if window is fully visible.
 	VK2D_API bool										VK2D_APIENTRY				IsIconified();
 
-	/// @brief		Sets the window to be maximized or normal. When maximized the window will
-	///				be sized to fill the entire workable space of the desktop monitor so that
-	///				the window edges, top bar and the OS task/tool-bar is not covered.
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	/// @brief		Sets the window to be maximized or normal.
+	///
+	///				When maximized the window will be sized to fill the entire workable space of the desktop monitor so that the
+	///				window edges, top bar and the OS task/tool-bar is not covered.
+	///
 	/// @note		Multithreading: Main thread only.
+	/// 
 	/// @param[in]	maximized
 	///				true if you wish to maximize the window, false if you want floating window.
 	VK2D_API void										VK2D_APIENTRY				SetMaximized(
 		bool											maximized );
 
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Gets the maximized status.
+	/// 
 	/// @see		vk2d::Window::SetMaximized()
+	/// 
 	/// @note		Multithreading: Main thread only.
+	/// 
 	/// @return		true if the window is maximized, false if it's floating.
 	VK2D_API bool										VK2D_APIENTRY				GetMaximized();
 
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Set the cursor to be visible, invisible or constrained inside the window.
+	/// 
 	/// @see		vk2d::CursorState
+	/// 
 	/// @note		Multithreading: Main thread only.
+	/// 
 	/// @param[in]	new_state
 	///				New state of the cursor to be used from now on.
 	VK2D_API void										VK2D_APIENTRY				SetCursorState(
 		vk2d::CursorState								new_state );
 
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Returns the current state of the cursor, either normal, hidden, or constrained.
+	/// 
 	/// @see		vk2d::CursorState
+	/// 
 	/// @note		Multithreading: Main thread only.
+	/// 
 	/// @return		Current state of the cursor.
 	VK2D_API vk2d::CursorState							VK2D_APIENTRY				GetCursorState();
 
-	/// @brief		Begins the render operations. This signals the beginning of the render block and
-	///				you must call this before using any drawing commands.
-	///				For best performance you should calculate game logic first, when you're ready to draw
-	///				call this function just before your first draw command. Every draw call must be
-	///				between this and vk2d::Window::EndRender().
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	/// @brief		Begins the render operations.
+	///
+	///				This signals the beginning of the render block and you must call this before using any drawing commands. For
+	///				best performance you should calculate game logic first, when you're ready to draw call this function just before
+	///				your first draw command. Every draw call must be between this and vk2d::Window::EndRender().
+	///
+	///				Calling this will wait for the previous frame to finish rendering, to maximize the asynchronous usage of the CPU
+	///				and the GPU, you should call this function as late as possible in your application.
+	/// 
 	/// @see		vk2d::Window::EndRender()
+	/// 
 	/// @note		Multithreading: Main thread only.
+	/// 
 	/// @return		true if operation was successful, false on error and if you should quit.
 	VK2D_API bool										VK2D_APIENTRY				BeginRender();
 
-	/// @brief		Ends the rendering operations. This signals the end of the render block and you must
-	///				call this after you're done drawing everything in order to display the results on the
-	///				window surface.
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	/// @brief		Ends the rendering operations.
+	///
+	///				This signals the end of the render block and you must call this after you're done drawing everything in order to
+	///				display the results on the window surface.
+	///
+	///				This will actually send everything to the GPU to be rendered. This function returns as soon as the work has been
+	///				submitted to the GPU so rendering will be done by the GPU asynchronously to your application. The completed
+	///				render will automatically be displayed on the window surface as soon as the GPU finishes with the frame.
+	/// 
 	/// @see		vk2d::Window::BeginRender()
+	/// 
 	/// @note		Multithreading: Main thread only.
+	/// 
 	/// @return		true if operation was successful, false on error and if you should quit.
 	VK2D_API bool										VK2D_APIENTRY				EndRender();
 
-	/// @brief		Switch render coordinate space. Can be set at any time, but will not take effect until
-	///				starting next frame.
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	/// @brief		Switch render coordinate space.
+	///
+	///				Can be set at any time, but will not take effect until starting next frame.
+	/// 
 	/// @param[in]	coordinate_space
 	///				Coordinate space to switch to.
 	VK2D_API void										VK2D_APIENTRY				SetRenderCoordinateSpace(
 		vk2d::RenderCoordinateSpace						coordinate_space );
 
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Draw triangles directly.
+	/// 
 	///				Best used if you want to manipulate and draw vertices directly.
+	/// 
 	/// @note		Multithreading: Main thread only.
+	/// 
 	/// @param[in]	indices
 	///				List of indices telling how to form triangles between vertices.
+	/// 
 	/// @param[in]	vertices
 	///				List of vertices that define the shape.
+	/// 
 	/// @param[in]	texture_layer_weights
-	///				Only has effect if provided texture has more than 1 layer.
-	///				This tell how much weight each texture layer has on each vertex.
-	///				TODO: Need to check formatting... Yank Niko, he forgot...
+	///				Only has effect if provided texture has more than 1 layer. This tell how much weight each texture layer has on
+	///				each vertex. TODO: Need to check formatting... Yank Niko, he forgot...
+	/// 
 	/// @param[in]	filled
 	///				If true, renders filled polygons, if false renders as wireframe.
+	/// 
 	/// @param[in]	texture
-	///				Pointer to texture, see vk2d::Vertex for UV mapping details.
-	///				Can be nullptr in which case a white texture is used (vertex colors only).
+	///				Pointer to texture, see vk2d::Vertex for UV mapping details. Can be nullptr in which case a white texture is
+	///				used (vertex colors only).
+	/// 
 	/// @param[in]	sampler
-	///				Pointer to sampler which determines how the texture is drawn.
-	///				Can be nullptr in which case the default sampler is used.
+	///				Pointer to sampler which determines how the texture is drawn. Can be nullptr in which case the default sampler
+	///				is used.
 	VK2D_API void										VK2D_APIENTRY				DrawTriangleList(
 		const std::vector<vk2d::VertexIndex_3>		&	indices,
 		const std::vector<vk2d::Vertex>				&	vertices,
@@ -816,23 +1066,30 @@ public:
 		vk2d::Texture								*	texture						= nullptr,
 		vk2d::Sampler								*	sampler						= nullptr );
 
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Draws lines directly.
+	/// 
 	///				Best used if you want to manipulate and draw vertices directly.
+	/// 
 	/// @note		Multithreading: Main thread only.
+	/// 
 	/// @param[in]	indices
 	///				List of indices telling how to form lines between vertices.
-	/// @param[in]	vertices 
+	/// 
+	/// @param[in]	vertices
 	///				List of vertices that define the shape.
+	/// 
 	/// @param[in]	texture_layer_weights 
-	///				Only has effect if provided texture has more than 1 layer.
-	///				This tell how much weight each texture layer has on each vertex.
-	///				TODO: Need to check formatting... Yank Niko, he forgot...
-	/// @param[in]	texture 
-	///				Pointer to texture, see vk2d::Vertex for UV mapping details.
-	///				Can be nullptr in which case a white texture is used (vertex colors only).
-	/// @param[in]	sampler 
-	///				Pointer to sampler which determines how the texture is drawn.
-	///				Can be nullptr in which case the default sampler is used.
+	///				Only has effect if provided texture has more than 1 layer. This tell how much weight each texture layer has on
+	///				each vertex. TODO: Need to check formatting... Yank Niko, he forgot...
+	/// 
+	/// @param[in]	texture
+	///				Pointer to texture, see vk2d::Vertex for UV mapping details. Can be nullptr in which case a white texture is
+	///				used (vertex colors only).
+	/// 
+	/// @param[in]	sampler
+	///				Pointer to sampler which determines how the texture is drawn. Can be nullptr in which case the default sampler
+	///				is used.
 	VK2D_API void										VK2D_APIENTRY				DrawLineList(
 		const std::vector<vk2d::VertexIndex_2>		&	indices,
 		const std::vector<vk2d::Vertex>				&	vertices,
@@ -842,21 +1099,27 @@ public:
 		vk2d::Sampler								*	sampler						= nullptr,
 		float											line_width					= 1.0f );
 
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Draws points directly.
+	/// 
 	///				Best used if you want to manipulate and draw vertices directly.
+	/// 
 	/// @note		Multithreading: Main thread only.
+	/// 
 	/// @param[in]	vertices 
 	///				List of vertices that define where and how points are drawn.
+	/// 
 	/// @param[in]	texture_layer_weights 
-	///				Only has effect if provided texture has more than 1 layer.
-	///				This tell how much weight each texture layer has on each vertex.
-	///				TODO: Need to check formatting... Yank Niko, he forgot...
+	///				Only has effect if provided texture has more than 1 layer. This tell how much weight each texture layer has on
+	///				each vertex. TODO: Need to check formatting... Yank Niko, he forgot...
+	/// 
 	/// @param[in]	texture 
-	///				Pointer to texture, see vk2d::Vertex for UV mapping details.
-	///				Can be nullptr in which case a white texture is used (vertex colors only).
+	///				Pointer to texture, see vk2d::Vertex for UV mapping details. Can be nullptr in which case a white texture is
+	///				used (vertex colors only).
+	/// 
 	/// @param[in]	sampler 
-	///				Pointer to sampler which determines how the texture is drawn.
-	///				Can be nullptr in which case the default sampler is used.
+	///				Pointer to sampler which determines how the texture is drawn. Can be nullptr in which case the default sampler
+	///				is used.
 	VK2D_API void										VK2D_APIENTRY				DrawPointList(
 		const std::vector<vk2d::Vertex>				&	vertices,
 		const std::vector<float>					&	texture_layer_weights,
@@ -864,14 +1127,20 @@ public:
 		vk2d::Texture								*	texture						= nullptr,
 		vk2d::Sampler								*	sampler						= nullptr );
 
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Draws an individual point.
-	///				Inefficient, for when you really just need a single point drawn without extra information.
-	///				As soon as you need to draw 2 or more points, use vk2d::Window::DrawPointList() instead.
+	/// 
+	///				Inefficient, for when you really just need a single point drawn without extra information. As soon as you need
+	///				to draw 2 or more points, use vk2d::Window::DrawPointList() instead.
+	/// 
 	/// @note		Multithreading: Main thread only.
+	/// 
 	/// @param[in]	location
 	///				Where to draw the point to, depends on the coordinate system. See vk2d::RenderCoordinateSpace for more info.
+	/// 
 	/// @param[in]	color
 	///				Color of the point to be drawn.
+	/// 
 	/// @param[in]	size
 	///				Size of the point to be drawn, sizes larger than 1.0f will appear as a rectangle.
 	VK2D_API void										VK2D_APIENTRY				DrawPoint(
@@ -879,14 +1148,20 @@ public:
 		vk2d::Colorf									color						= { 1.0f, 1.0f, 1.0f, 1.0f },
 		float											size						= 1.0f );
 
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Draws an individual line.
-	///				Inefficient, for when you really just need a single line drawn without extra information.
-	///				As soon as you need to draw 2 or more lines, use vk2d::Window::DrawLineList() instead.
+	/// 
+	///				Inefficient, for when you really just need a single line drawn without extra information. As soon as you need to
+	///				draw 2 or more lines, use vk2d::Window::DrawLineList() instead.
+	/// 
 	/// @note		Multithreading: Main thread only.
+	/// 
 	/// @param[in]	point_1
 	///				Coordinates of the starting point of the line, depends on the coordinate system. See vk2d::RenderCoordinateSpace for more info.
+	/// 
 	/// @param[in]	point_2
 	///				Coordinates of the ending point of the line, depends on the coordinate system. See vk2d::RenderCoordinateSpace for more info.
+	/// 
 	/// @param[in]	color 
 	///				Color of the line to be drawn.
 	VK2D_API void										VK2D_APIENTRY				DrawLine(
@@ -895,13 +1170,18 @@ public:
 		vk2d::Colorf									color						= { 1.0f, 1.0f, 1.0f, 1.0f },
 		float											line_width					= 1.0f );
 
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Draws a rectangle.
+	/// 
 	/// @note		Multithreading: Main thread only.
+	/// 
 	/// @param[in]	area
-	///				Area of the rectangle that will be covered, depends on the coordinate system. See
-	///				vk2d::RenderCoordinateSpace for more info about what scale is used.
+	///				Area of the rectangle that will be covered, depends on the coordinate system. See vk2d::RenderCoordinateSpace
+	///				for more info about what scale is used.
+	/// 
 	/// @param[in]	filled
 	///				true if the inside of the rectangle is drawn, false for the outline only.
+	/// 
 	/// @param[in]	color
 	///				Color of the rectangle to be drawn.
 	VK2D_API void										VK2D_APIENTRY				DrawRectangle(
@@ -909,16 +1189,22 @@ public:
 		bool											filled						= true,
 		vk2d::Colorf									color						= { 1.0f, 1.0f, 1.0f, 1.0f } );
 
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Draws an ellipse or a circle.
+	/// 
 	/// @note		Multithreading: Main thread only.
+	/// 
 	/// @param[in]	area
-	///				Rectangle area in which the ellipse must fit. See vk2d::RenderCoordinateSpace for
-	///				more info about what scale is used.
+	///				Rectangle area in which the ellipse must fit. See vk2d::RenderCoordinateSpace for more info about what scale is
+	///				used.
+	/// 
 	/// @param[in]	filled
 	///				true to draw the inside of the ellipse/circle, false to draw the outline only.
+	/// 
 	/// @param[in]	edge_count
-	///				How many corners this ellipse should have, or quality if you prefer. This is a float value for
-	///				"smoother" transitions between amount of corners, in case this value is animated.
+	///				How many corners this ellipse should have, or quality if you prefer. This is a float value for "smoother"
+	///				transitions between amount of corners, in case this value is animated.
+	/// 
 	/// @param[in]	color
 	///				Color of the ellipse/circle to be drawn.
 	VK2D_API void										VK2D_APIENTRY				DrawEllipse(
@@ -927,23 +1213,29 @@ public:
 		float											edge_count					= 64.0f,
 		vk2d::Colorf									color						= { 1.0f, 1.0f, 1.0f, 1.0f } );
 
-	/// @brief		Draws an ellipse or a circle that has a "slice" cut out, similar to usual pie graphs.
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	/// @brief		Draws an ellipse or a circle that has a "slice" cut out, similar to pie graphs.
+	/// 
 	/// @note		Multithreading: Main thread only.
+	/// 
 	/// @param[in]	area
-	///				Rectangle area in which the ellipse must fit. See vk2d::RenderCoordinateSpace for
-	///				more info about what scale is be used.
+	///				Rectangle area in which the ellipse must fit. See vk2d::RenderCoordinateSpace for more info about what scale is
+	///				be used.
+	/// 
 	/// @param[in]	begin_angle_radians
 	///				Angle (in radians) where the slice cut should start. (towards positive is clockwise direction)
+	/// 
 	/// @param[in]	coverage
-	///				Size of the slice, value is between 0 to 1 where 0 is not visible and 1 draws the
-	///				full ellipse. Moving value from 0 to 1 makes "whole" pie visible in clockwise
-	///				direction.
+	///				Size of the slice, value is between 0 to 1 where 0 is not visible and 1 draws the full ellipse. Moving value
+	///				from 0 to 1 makes "whole" pie visible in clockwise direction.
+	/// 
 	/// @param[in]	filled
 	///				true to draw the inside of the pie, false to draw the outline only.
+	/// 
 	/// @param[in]	edge_count 
-	///				How many corners the complete ellipse should have, or quality if you prefer.
-	///				This is a float value for "smoother" transitions between amount of corners,
-	///				in case this value is animated.
+	///				How many corners the complete ellipse should have, or quality if you prefer. This is a float value for
+	///				"smoother" transitions between amount of corners, in case this value is animated.
+	/// 
 	/// @param[in]	color 
 	///				Color of the pie to be drawn.
 	VK2D_API void										VK2D_APIENTRY				DrawEllipsePie(
@@ -954,19 +1246,24 @@ public:
 		float											edge_count					= 64.0f,
 		vk2d::Colorf									color						= { 1.0f, 1.0f, 1.0f, 1.0f } );
 
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Draw a rectangular pie, similar to drawing a rectangle but which has a pie slice cut out.
+	/// 
 	/// @note		Multithreading: Main thread only.
+	///
 	/// @param[in]	area
-	///				Area of the rectangle to be drawn. See vk2d::RenderCoordinateSpace for
-	///				more info about what scale is used.
+	///				Area of the rectangle to be drawn. See vk2d::RenderCoordinateSpace for more info about what scale is used.
+	/// 
 	/// @param[in]	begin_angle_radians
 	///				Angle (in radians) where the slice cut should start. (towards positive is clockwise direction)
+	/// 
 	/// @param[in]	coverage 
-	///				Size of the slice, value is between 0 to 1 where 0 is not visible and 1 draws the
-	///				full rectangle. Moving value from 0 to 1 makes "whole" pie visible in clockwise
-	///				direction.
+	///				Size of the slice, value is between 0 to 1 where 0 is not visible and 1 draws the full rectangle. Moving value
+	///				from 0 to 1 makes "whole" pie visible in clockwise direction.
+	/// 
 	/// @param[in]	filled
 	///				true to draw the inside of the pie rectangle, false to draw the outline only.
+	/// 
 	/// @param[in]	color 
 	///				Color of the pie rectangle to be drawn.
 	VK2D_API void										VK2D_APIENTRY				DrawRectanglePie(
@@ -976,67 +1273,100 @@ public:
 		bool											filled						= true,
 		vk2d::Colorf									color						= { 1.0f, 1.0f, 1.0f, 1.0f } );
 
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Draws a rectangle with texture and use the size of the texture to determine size of the rectangle.
-	/// @warning	!! If window surface coordinate space is normalized, this will not work properly as bottom
-	///				right coordinates are offsetted by the texture size !! See vk2d::RenderCoordinateSpace for more info.
+	/// 
+	/// @warning	!! If window surface coordinate space is normalized, this will not work properly as bottom right coordinates are
+	///				offsetted by the texture size !! See vk2d::RenderCoordinateSpace for more info.
+	/// 
 	/// @param[in]	location
-	///				Draw location of the texture, this is the top left corner of the texture,
-	///				depends on the coordinate system. See vk2d::RenderCoordinateSpace for more info.
+	///				Draw location of the texture, this is the top left corner of the texture, depends on the coordinate system. See
+	///				vk2d::RenderCoordinateSpace for more info.
+	/// 
 	/// @param[in]	texture
 	///				Texture to draw.
+	/// 
 	/// @param[in]	color 
-	///				Color multiplier of the texture texel color, eg. If Red color is 0.0 then texture will
-	///				lack all Red color, or if alpha channel of the color is 0.5 then texture appears half transparent.
+	///				Color multiplier of the texture texel color, eg. If Red color is 0.0 then texture will lack all Red color, or if
+	///				alpha channel of the color is 0.5 then texture appears half transparent.
 	VK2D_API void										VK2D_APIENTRY				DrawTexture(
 		glm::vec2										location,
 		vk2d::Texture								*	texture,
 		vk2d::Colorf									color						= { 1.0f, 1.0f, 1.0f, 1.0f } );
 
-	/// @brief		The most useful drawing method. Draws vk2d::Mesh which contains all information needed for the render.
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	/// @brief		Draws vk2d::Mesh which contains all information needed for the render.
+	///
+	///				Consider using this method of drawing as often as possible. Meshes can be reused, which lowers the overhead
+	///				needed to calculate them all the time.
+	/// 
 	/// @note		Multithreading: Main thread only.
+	/// 
 	/// @see		vk2d::Mesh
+	/// 
 	/// @param[in]	mesh
 	///				Mesh object to draw.
+	/// 
 	/// @param[in]	transformation
 	///				Draw using transformation.
 	VK2D_API void										VK2D_APIENTRY				DrawMesh(
 		const vk2d::Mesh							&	mesh,
 		const vk2d::Transform						&	transformations				= {} );
 
-	/// @brief		The most useful drawing method. Draws vk2d::Mesh which contains all information needed for the render.
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	/// @brief		Draws vk2d::Mesh which contains all information needed for the render.
+	/// 
+	///				Consider using this method of drawing as often as possible. Meshes can be reused, which lowers the overhead
+	///				needed to calculate them all the time.
+	/// 
 	/// @note		Multithreading: Main thread only.
+	/// 
 	/// @see		vk2d::Mesh
+	/// 
 	/// @param[in]	mesh
 	///				Mesh object to draw.
+	/// 
 	/// @param[in]	transformations
-	///				Draw using transformation. This is a std::vector where each element equals one draw.
-	///				Using multiple transformations results the mesh being drawn multiple times using
-	///				different transformations. This is also called instanced drawing.
+	///				Draw using transformation. This is a std::vector where each element equals one draw. Using multiple
+	///				transformations results the mesh being drawn multiple times using different transformations. This is also called
+	///				instanced rendering.
 	VK2D_API void										VK2D_APIENTRY				DrawMesh(
 		const vk2d::Mesh							&	mesh,
 		const std::vector<vk2d::Transform>			&	transformation );
 
-	/// @brief		The most useful drawing method. Draws vk2d::Mesh which contains all information needed for the render.
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	/// @brief		Draws vk2d::Mesh which contains all information needed for the render.
+	/// 
+	///				Consider using this method of drawing as often as possible. Meshes can be reused, which lowers the overhead
+	///				needed to calculate them all the time.
+	/// 
 	/// @note		Multithreading: Main thread only.
+	/// 
 	/// @see		vk2d::Mesh
+	/// 
 	/// @param[in]	mesh
 	///				Mesh object to draw.
+	/// 
 	/// @param[in]	transformations
-	///				Draw using transformation. This is a std::vector where each element equals one draw.
-	///				Using multiple transformations results the mesh being drawn multiple times using
-	///				different transformations. This is also called instanced drawing.
+	///				Draw using transformation. This is a std::vector where each element equals one draw. Using multiple
+	///				transformations results the mesh being drawn multiple times using different transformations. This is also called
+	///				instanced rendering.
 	VK2D_API void										VK2D_APIENTRY				DrawMesh(
 		const vk2d::Mesh							&	mesh,
 		const std::vector<glm::mat4>				&	transformations );
 
-	/// @brief		VK2D class object checker function.
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	/// @brief		Checks if the object is good to be used or if a failure occurred in it's creation.
+	/// 
 	/// @note		Multithreading: Any thread.
-	/// @return		true if class object was created successfully,
-	///				false if something went wrong
+	/// 
+	/// @return		true if class object was created successfully, false if something went wrong
 	VK2D_API bool										VK2D_APIENTRY				IsGood() const;
 
 
 private:
+
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	std::unique_ptr<vk2d::_internal::WindowImpl>		impl;
 };
 
