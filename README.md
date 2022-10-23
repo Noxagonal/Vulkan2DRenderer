@@ -8,7 +8,7 @@ You only need a few lines of code to create a window and display simple shapes.
 On the other hand you can create a variety of different effects using meshes and applying different modifiers to them.
 Internally workloads are automatically grouped to create more efficient submissions to the GPU and all resource loading and saving is multithreaded.
 
-![latest screenshot](/Screenshots/GaussianBlur.png)
+![latest screenshot](/screenshots/GaussianBlur.png)
 
 ### Motivation
 
