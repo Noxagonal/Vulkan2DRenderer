@@ -8,11 +8,22 @@
 
 namespace vk2d {
 
+/// @brief		Class for managing version information.
 class Version {
 public:
 	inline					Version()
 	{};
 
+	/// @brief		Construct with version information.
+	/// 
+	/// @param[in]	major
+	///				Major version number.
+	///
+	/// @param[in]	minor
+	///				Minor version number.
+	/// 
+	/// @param[in]	patch
+	///				Patch version number.
 	inline					Version(
 		uint32_t			major,
 		uint32_t			minor,
@@ -23,15 +34,12 @@ public:
 		patch( patch )
 	{};
 
-	inline					Version(
-		std::array<uint32_t, 3>		init_list
-	)
-	{
-		major				= init_list[ 0 ];
-		minor				= init_list[ 1 ];
-		patch				= init_list[ 2 ];
-	}
-
+	/// @brief		Convert version into Vulkan version format.
+	///
+	///				Vulkan version is a packed 32 bit integer where the first 10 bits are major, the next 10 bits are minor
+	///				and the last 12 bits are the patch number.
+	/// 
+	/// @return		Vulkan formatted version number.
 	inline uint32_t			ToVulkanVersion()
 	{
 		return ( ( ( major ) << 22 ) | ( ( minor ) << 12 ) | ( patch ) );

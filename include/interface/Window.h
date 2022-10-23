@@ -348,10 +348,12 @@ public:
 	VK2D_API vk2d::Monitor								&	VK2D_APIENTRY					operator=(
 		vk2d::Monitor									&&	other )							noexcept;
 
-	/// @brief		VK2D class object checker function.
-	/// @note		Multithreading: Main thread only.
-	/// @return		true if class object was created successfully,
-	///				false if something went wrong
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	/// @brief		Checks if the object is good to be used or if a failure occurred in it's creation.
+	/// 
+	/// @note		Multithreading: Any thread.
+	/// 
+	/// @return		true if class object was created successfully, false if something went wrong
 	VK2D_API bool											VK2D_APIENTRY					IsGood() const;
 
 private:
@@ -461,10 +463,12 @@ public:
 	///				interpret the texels.
 	VK2D_API std::vector<vk2d::Color8>			VK2D_APIENTRY						GetTexelData();
 
-	/// @brief		VK2D class object checker function.
-	/// @note		Multithreading: Main thread only.
-	/// @return		true if class object was created successfully,
-	///				false if something went wrong
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	/// @brief		Checks if the object is good to be used or if a failure occurred in it's creation.
+	/// 
+	/// @note		Multithreading: Any thread.
+	/// 
+	/// @return		true if class object was created successfully, false if something went wrong
 	VK2D_API bool								VK2D_APIENTRY						IsGood() const;
 
 private:

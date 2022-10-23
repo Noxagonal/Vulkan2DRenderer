@@ -24,26 +24,40 @@ class ResourceManager;
 
 
 
-
-
-
-
-
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /// @brief		Nature and severity of the reported action.
+/// 
 /// @see		vk2d::PFN_VK2D_ReportFunction()
 enum class ReportSeverity : uint32_t {
-	NONE					= 0,	///< Not valid severity value, used to detect invalid severity values.
-	VERBOSE,						///< Reports everything, usually too much information.
-	INFO,							///< Useful to know what the application is doing.
-	PERFORMANCE_WARNING,			///< Serious bottlenecks in performance somewhere, you should check it out.
-	WARNING,						///< Failed to load a resource so something might be missing but can still continue with visual defects.
-	NON_CRITICAL_ERROR,				///< Error that still allows the application to continue running, might not get a picture though.
-	CRITICAL_ERROR,					///< Critical error, application has no option but to terminate immediately.
-	DEVICE_LOST,					///< Similar to critical error, this means the GPU crashed and we need to terminate immediately.
+
+	/// @brief		Not valid severity value, used to detect invalid severity values.
+	NONE					= 0,
+
+	/// @brief		Reports everything, usually too much information.
+	VERBOSE,
+
+	/// @brief		Useful to know what the application is doing.
+	INFO,
+
+	/// @brief		Serious bottlenecks in performance somewhere, you should check it out.
+	PERFORMANCE_WARNING,
+
+	/// @brief		Failed to load a resource so something might be missing but can still continue with visual defects.
+	WARNING,
+
+	/// @brief		Error that still allows the application to continue running, might not get a picture though.
+	NON_CRITICAL_ERROR,
+
+	/// @brief		Critical error, application has no option but to terminate immediately.
+	CRITICAL_ERROR,
+
+	/// @brief		 Similar to critical error, this means the GPU crashed and we need to terminate immediately.
+	DEVICE_LOST,
 };
 
 
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /// @brief		Enumerator to indicate specific gamepad.
 enum class Gamepad : int32_t {
 	GAMEPAD_1				= 0,
@@ -67,16 +81,23 @@ enum class Gamepad : int32_t {
 
 
 
-/// @brief		Gamepads only have two different types of events we can handle,
-///				Connected and disconnected. Button presses and joystick states
-///				are handled via vk2d::Instance::QueryGamepadState().
-/// @see		vk2d::Instance::GetGamepadEventCallback(), vk2d::Instance::SetGamepadEventCallback().
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/// @brief		Gamepad connection events.
+///
+///				This lets you know if a gamepad was connected to the system or disconnected.
+///
+/// @see		vk2d::Instance::QueryGamepadState()
+/// @see		vk2d::Instance::GetGamepadEventCallback()
+/// @see		vk2d::Instance::SetGamepadEventCallback()
 enum class GamepadConnectionEvent : int32_t {
 	CONNECTED				= 0x00040001,
 	DISCONNECTED			= 0x00040002,
 };
 
-/// @brief		This mapping includes both XBox and PS style layouts.
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/// @brief		Enumerator for gamepad buttons.
+///
+///				This mapping includes both XBox and PS style layouts.
 enum class GamepadButtons : int32_t {
 	A						= 0,			///< XBox A button
 	B						= 1,			///< XBox B button
@@ -101,7 +122,10 @@ enum class GamepadButtons : int32_t {
 	TRIANGLE				= Y,			///< PS triangle
 };
 
-/// @brief		This mapping includes both XBox and PS style layouts.
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/// @brief		Enumerator for gamepad axis.
+///
+///				This mapping includes both XBox and PS style layouts.
 enum class GamepadAxis : int32_t {
 	LEFT_X					= 0,			///< Left joystick X axis rotation
 	LEFT_Y					= 1,			///< Left joystick Y axis rotation
@@ -112,75 +136,89 @@ enum class GamepadAxis : int32_t {
 	LAST					= RIGHT_TRIGGER	///< (NOT AN AXIS, just tells the amount of axis)
 };
 
-/// @brief		This represents the gamepad state at a given time. You can query
-///				the current state of the gamepad at any given moment with
-///				vk2d::Instance::QueryGamepadState(), the results are stored
-///				inside this class.
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/// @brief		This represents the gamepad state at a given time.
+///
+///				You can query the current state of the gamepad at any given moment with vk2d::Instance::QueryGamepadState(),
+///				the results are stored inside this class.
 class GamepadState {
 public:
+
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Get gamepad button state.
+	///
 	/// @param[in]	gamepad_button
 	///				Which button's state we wish to query.
-	/// @return		true if button was held down, false if button was left up.
+	///
+	/// @return		true if button was held down, false if button was up.
 	inline bool GetButton( vk2d::GamepadButtons gamepad_button )
 	{
 		assert( int32_t( gamepad_button ) <= int32_t( vk2d::GamepadButtons::LAST ) );
 		return buttons[ int32_t( gamepad_button ) ];
 	}
 
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Get gamepad axis state.
+	///
 	/// @param		gamepad_axis
 	///				Which axis state we wish to query.
-	/// @return		Floating point number telling the current rotation of the axis.
-	///				Usually for gamepad joysticks this range is from -1.0 to 1.0.
-	///				For triggers this value ranges from 0.0 to 1.0.
+	///
+	/// @return		Floating point number telling the current rotation of the axis. Usually for gamepad joysticks this range is from
+	///				-1.0 to 1.0. For triggers this value ranges from 0.0 to 1.0.
 	inline float GetAxis( vk2d::GamepadAxis gamepad_axis )
 	{
 		assert( int32_t( gamepad_axis ) <= int32_t( vk2d::GamepadAxis::LAST ) );
 		return axes[ int32_t( gamepad_axis ) ];
 	}
 
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	std::array<bool, 15>	buttons;
 	std::array<float, 6>	axes;
 };
 
 
 
-
-
-
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /// @brief		Function pointer type for VK2D report function.
-///				Report function is called every time VK2D has something to report,
-///				either errors or warnings. You can create your own in which case
-///				your report function signature must match this: <br>
+/// 
+///				Report function is called every time VK2D has something to report, either errors or warnings. You can create
+///				your own in which case your report function signature must match this:
+///				<br>
 /// @code
 ///				void VK2D_APIENTRY VK2D_ReportFunction(
 ///					vk2d::ReportSeverity					severity,
 ///					std::string_view						message
 ///				) {}
 /// @endcode
-/// @note		Multithreading: Single thread at a time per instance.
+///
 /// @param[in]	severity
-///				Tells how severe the report was, this can range from being informative,
-///				to being a critical error. See vk2d::ReportSeverity for more info.
+///				Tells how severe the report was, this can range from being informative, to being a critical error. See
+///				vk2d::ReportSeverity for more info.
+/// 
 /// @param[in]	message
 ///				Message from the VK2D that you can pass on to wherever you wish.
 using PFN_VK2D_ReportFunction				= void( VK2D_APIENTRY* )(
 	vk2d::ReportSeverity					severity,
-	std::string_view						message );
+	std::string_view						message
+);
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /// @brief		Function pointer type for monitor update callback.
-///				Whenever a new monitor is plugged in or removed VK2D can report about
-///				it through a callback function which signature matches this: <br>
+/// 
+///				Whenever a new monitor is plugged in or removed VK2D can report about it through a callback function which
+///				signature matches this:
+///				<br>
 /// @code
 ///				void VK2D_APIENTRY MonitorUpdateCallback () {}
 /// @endcode
-/// @note		Multithreading: Single thread at a time per instance.
 using PFN_MonitorUpdateCallback				= void ( VK2D_APIENTRY* )( void );
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /// @brief		Function pointer type for gamepad connection events.
-///				Whenever a gamepad is connected onto the system or removed VK2D can
-///				report about it through a callback matching this signature: <br>
+/// 
+///				Whenever a gamepad is connected onto the system or removed VK2D can report about it through a callback matching
+///				this signature:
+///				<br>
 /// @code
 ///				void VK2D_APIENTRY GamepadConnectionEventCallback(
 ///					vk2d::Gamepad						gamepad,
@@ -188,20 +226,24 @@ using PFN_MonitorUpdateCallback				= void ( VK2D_APIENTRY* )( void );
 ///					const std::string				&	gamepad_name
 ///				) {}
 /// @endcode
-/// @note		Multithreading: Single thread at a time per instance.
+/// 
 /// @param[in]	gamepad
 ///				Which gamepad was plugged in or removed.
+/// 
 /// @param[in]	event
 ///				Connection event that happened, either connected or disconnected.
+/// 
 /// @param[in]	gamepad_name
 ///				Reported name of the gamepad that was plugged in.
 using PFN_GamepadConnectionEventCallback	= void ( VK2D_APIENTRY* )(
 	vk2d::Gamepad							gamepad,
 	vk2d::GamepadConnectionEvent			event,
-	const std::string					&	gamepad_name );
+	const std::string					&	gamepad_name
+);
 
 
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /// @brief		Parameters to construct a vk2d::Instance.
 struct InstanceCreateInfo {
 	std::string								application_name				= {};			///< Name of your application, can be left empty.
@@ -212,12 +254,14 @@ struct InstanceCreateInfo {
 	uint32_t								resource_loader_thread_count	= UINT32_MAX;	///< VK2D loads all resources on a separate thread, this parameter allows the host application to control how many threads are used for this. Default = system thread count.
 };
 
-/// @brief		Before you can use VK2D for creating windows or rendering you must
-///				create a vk2d::Instance object somewhere in your application.
-///				Most other stuff is created from a vk2d::Instance object.
-///				Your application can have multiple instances if you really need it
-///				in which case objects created from an instance must not be shared
-///				between different instances.
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/// @brief		VK2D Instance which is the basis of which everything else relies on.
+///
+///				Before you can use VK2D for creating windows or rendering you must create a vk2d::Instance object somewhere in
+///				your application. Everything inside VK2D is created from a vk2d::Instance object.
+///
+///				Your application should not have more than one VK2D instance at a time, however it is possible to create more
+///				than one if you really need it. Objects created from one instance cannot be shared with another instance.
 class Instance {
 	friend VK2D_API std::unique_ptr<vk2d::Instance>		VK2D_APIENTRY						CreateInstance(
 		const vk2d::InstanceCreateInfo				&	instance_create_info
@@ -225,265 +269,382 @@ class Instance {
 	friend class vk2d::Window;
 	 
 private:
-	/// @brief		Instance constructor. Not for direct use, instead use vk2d::CreateInstance() to get an instance object.
-	///	@note		Multithreading: Any thread originally, that thread will then be
-	///				considered as the main thread for all vk2d objects created from this instance.
+
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	/// @brief		Instance constructor. Do not use directly, instead use vk2d::CreateInstance() factory function.
+	/// 
+	///	@note		Multithreading: Any thread originally, that thread will then be considered as the main thread for all vk2d
+	///				objects created from this instance.
+	/// 
 	/// @param[in]	instance_create_info
-	///				Instance creation parameters struct object. This is handy as creating some objects can require
-	///				a lot of parameters.
+	///				Instance creation parameters struct object. This is handy as creating some objects can require a lot of
+	///				parameters.
 	VK2D_API																				Instance(
 		const vk2d::InstanceCreateInfo													&	instance_create_info );
 
 public:
-	/// @brief		Destructor for an instance automatically destroys every other object created from this instance.
-	/// @note		Multithreading: Main thread only.
+
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	/// @brief		Destructor.
+	///
+	///				Automatically destroys everything that was ever created from this instance.
+	///
+	/// @note		Multithreading: Main thread only. ( The thread which created the instance initially. )
 	VK2D_API																				~Instance();
 
-	/// @brief		You should consider this function as your general instance update function.
-	///				This function should be called once every game loop, even if you don't update all window content
-	///				each frame you should still call this function in a somewhat timely manner. 60 times a second or
-	///				however fast your game loop is going. This function polls input events from the OS and gives an
-	///				opportunity for the instance to schedule resource cleanup and other housekeeping tasks.
-	///				Perfect place to call this function is in the while loop:
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	/// @brief		General instance update function.
+	///
+	///				This function should be called once every game loop, even if you don't update all window content each frame you
+	///				should still call this function in a somewhat timely manner. 60 times a second or however fast your game loop is
+	///				going. This function polls input events from the OS and gives an opportunity for the instance to schedule
+	///				resource cleanup and other housekeeping tasks. Perfect place to call this function is in the while loop:
+	///				<br>
 	/// @code
 	///				while( instance->Run() ) {
-	///					// Main game loop and rendering.
+	///					// Main loop.
 	///				}
 	/// @endcode
+	/// 
 	/// @note		Multithreading: Main thread only.
+	/// 
 	/// @return		true when instance can be kept running, false if instance should be shut down.
 	VK2D_API bool										VK2D_APIENTRY						Run();
 
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Gets the resource manager needed to load textures, fonts and other resources.
+	/// 
 	/// @note		Multithreading: Any thread.
+	/// 
 	/// @return		Resource loader created by the instance.
 	VK2D_API vk2d::ResourceManager					*	VK2D_APIENTRY						GetResourceManager();
 
-	///	@brief		Get a list of monitors connected to the system, this will be
-	///				needed later if the vk2d application is ran fullscreen mode.
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	///	@brief		Get a list of monitors connected to the system.
+	///
+	///				this will be needed later if the vk2d application is ran fullscreen mode.
+	/// 
 	/// @note		Multithreading: Main thread only.
+	/// 
 	/// @see		vk2d::Instance::SetMonitorUpdateCallback()
+	/// 
 	/// @return		A list of handles to monitors.
 	VK2D_API std::vector<vk2d::Monitor*>				VK2D_APIENTRY						GetMonitors();
 
-	/// @brief		Gets the primary monitor of the system, this will be needed
-	///				later if the vk2d application is ran fullscreen mode.
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	/// @brief		Gets the primary monitor of the system.
+	///
+	///				this will be needed later if the vk2d application is ran fullscreen mode.
+	/// 
 	/// @note		Multithreading: Main thread only.
+	/// 
 	/// @see		vk2d::Instance::SetMonitorUpdateCallback()
+	/// 
 	/// @return		A handle to the primary monitor attached to the system.
 	VK2D_API vk2d::Monitor							*	VK2D_APIENTRY						GetPrimaryMonitor();
 
-	/// @brief		Set monitor update callback, this is to notify your application that some of the
-	///				monitors got removed or new monitors were plugged into the system.
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	/// @brief		Set monitor update callback.
+	///
+	///				this is to notify your application that some of the monitors got removed or new monitors were plugged into the
+	///				system.
+	/// 
 	/// @note		Multithreading: Main thread only.
+	/// 
 	/// @param[in]	monitor_update_callback_funtion
-	///				Function pointer to callback that will be called when monitor is added or
-	///				removed from the system.
+	///				Function pointer to callback that will be called when monitor is added or removed from the system.
 	VK2D_API void										VK2D_APIENTRY						SetMonitorUpdateCallback(
 		vk2d::PFN_MonitorUpdateCallback					monitor_update_callback_funtion );
 
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Create a new cursor from an image file.
-	///				Cursor object is needed to set hardware cursor image.
+	/// 
+	///				Cursor object is needed to set OS cursor image.
+	/// 
 	/// @note		Multithreading: Main thread only.
-	/// @see		vk2d::Cursor, vk2d::Instance::DestroyCursor()
+	/// 
+	/// @see		vk2d::Cursor
+	/// @see		vk2d::Instance::DestroyCursor()
+	/// 
 	/// @param[in]	image_path
-	///				Path to the image file. Supported formats are
-	///				JPG, PNG, TGA, BMP, PSD, GIF, PIC
-	///				Relative path to the image.
+	///				Path to the image file, either absolute or relative to the working directory / executable.
+	///				Supported formats are JPG, PNG, TGA, BMP, PSD, GIF, PIC.
+	/// 
 	/// @param[in]	hot_spot
-	///				hot spot is an offset from the image 0x0 coords to the tip
-	///				of the cursor. Eg, circular cursor where you want the
-	///				exact centre of the image to be the "tip" and the the image
-	///				is 64x64 pixels, the hot spot would be 32x32 pixels.
+	///				hot spot is an offset from the image 0x0 coords to the tip of the cursor. Eg, circular cursor where you want the
+	///				exact centre of the image to be the "tip" and the the image is 64x64 pixels, the hot spot would be 32x32 pixels.
+	/// 
 	/// @return		Handle to new Cursor object.
 	VK2D_API vk2d::Cursor							*	VK2D_APIENTRY						CreateCursor(
 		const std::filesystem::path					&	image_path,
 		glm::ivec2										hot_spot );
 
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Create a new cursor from raw data directly.
-	///				Cursor object is needed to set hardware cursor image.
+	///
+	///				Cursor object is needed to set OS cursor image.
+	/// 
 	/// @note		Multithreading: Main thread only.
-	/// @see		vk2d::Cursor, vk2d::Color8, vk2d::Instance::DestroyCursor()
+	/// 
+	/// @see		vk2d::Cursor
+	/// @see		vk2d::Color8
+	/// @see		vk2d::Instance::DestroyCursor()
+	/// 
 	/// @param[in]	image_size
 	///				Size of the image in pixels. ( width * height ).
+	/// 
 	/// @param[in]	image_data
-	///				Data for the image is a vector of vk2d::Color8 objects,
-	///				input vector data should be organized from left-to-right
-	///				top-to-bottom fashion and size of this vector needs to be
-	///				at least width * height in size or no cursor object is
+	///				Data for the image is a vector of vk2d::Color8 objects, input vector data should be organized from left-to-right
+	///				top-to-bottom fashion and size of this vector needs to be at least width * height in size or no cursor object is
 	///				created.
+	/// 
 	/// @param[in]	hot_spot
-	///				hot spot is an offset from the image 0x0 coords to the tip
-	///				of the cursor. Eg, circular cursor where you want the
-	///				exact centre of the image to be the "tip" and the the image
-	///				is 64x64 pixels, the hot spot would be 32x32 pixels.
+	///				hot spot is an offset from the image 0x0 coords to the tip of the cursor. Eg, circular cursor where you want the
+	///				exact centre of the image to be the "tip" and the the image is 64x64 pixels, the hot spot would be 32x32 pixels.
+	/// 
 	/// @return		Handle to new Cursor object.
 	VK2D_API vk2d::Cursor							*	VK2D_APIENTRY						CreateCursor(
 		glm::uvec2										image_size,
 		const std::vector<vk2d::Color8>				&	image_data,
 		glm::ivec2										hot_spot );
 
-	/// @brief		Manually destroy cursor that was created with
-	///				vk2d::Instance::CreateCursor(). Cursor must be destroyed
-	///				by the same Instance that created it.
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	/// @brief		Manually destroy cursor.
+	///
+	/// @warning	Cursor must be destroyed by the same Instance that created it.
+	/// 
 	/// @note		Multithreading: Main thread only.
-	/// @see		vk2d::Cursor, vk2d::Instance::CreateCursor()
+	/// 
+	/// @see		vk2d::Cursor
+	/// @see		vk2d::Instance::CreateCursor()
+	/// 
 	/// @param[in]	cursor
 	///				Handle to Cursor object that was created by the same instance, or nullptr.
 	VK2D_API void										VK2D_APIENTRY						DestroyCursor(
 		vk2d::Cursor								*	cursor );
 
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Gets the gamepad event callback function.
+	/// 
 	/// @note		Multithreading: Main thread only.
-	/// @see		vk2d::Instance::SetGamepadEventCallback(), vk2d::PFN_GamepadConnectionEventCallback().
+	/// 
+	/// @see		vk2d::Instance::SetGamepadEventCallback()
+	/// @see		vk2d::PFN_GamepadConnectionEventCallback()
+	/// 
 	/// @return		Function pointer to the event callback function that's being called when gamepad event happened.
 	VK2D_API vk2d::PFN_GamepadConnectionEventCallback	VK2D_APIENTRY						GetGamepadEventCallback() const;
 
-	/// @brief		Set gamepad event callback function, the callback gets
-	///				called if a gamepad gets added or removed from the system.
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	/// @brief		Set gamepad event callback function.
+	///
+	///				the callback gets called if a gamepad gets added or removed from the system.
+	///
 	/// @note		Multithreading: Main thread only.
-	/// @see		vk2d::PFN_GamepadConnectionEventCallback, vk2d::Instance::IsGamepadPresent(),
-	///				vk2d::Instance::GetGamepadName(), vk2d::Instance::QueryGamepadState()
+	/// 
+	/// @see		vk2d::PFN_GamepadConnectionEventCallback
+	/// @see		vk2d::Instance::IsGamepadPresent()
+	/// @see		vk2d::Instance::GetGamepadName()
+	/// @see		vk2d::Instance::QueryGamepadState()
+	/// 
 	/// @param[in]	gamepad_event_callback_function
-	///				vk2d::PFN_GamepadConnectionEventCallback function that will be called
-	///				if a gamepad gets added or removed from the system.
+	///				vk2d::PFN_GamepadConnectionEventCallback function that will be called if a gamepad gets added or removed from
+	///				the system.
 	VK2D_API void										VK2D_APIENTRY						SetGamepadEventCallback(
 		vk2d::PFN_GamepadConnectionEventCallback		gamepad_event_callback_function );
 
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Checks if a specific gamepad is currently attached to the system.
+	/// 
 	/// @note		Multithreading: Main thread only.
+	/// 
 	/// @param[in]	gamepad
 	///				Specific gamepad to check if it's present.
+	/// 
 	/// @return		true if gamepad is connected to the system, false if not.
 	VK2D_API bool										VK2D_APIENTRY						IsGamepadPresent(
-		vk2d::Gamepad									gamepad );
+		vk2d::Gamepad									gamepad
+	);
 
-	/// @brief		Gets the name of a gamepad if it's attached to the system. This name is
-	///				reported by the OS/drivers/gamepad itself and might not be unique.
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	/// @brief		Gets the name of a gamepad if it's attached to the system.
+	///
+	///				This name is reported by the OS/drivers/gamepad itself and might not be unique.
+	/// 
 	/// @note		Multithreading: Main thread only.
+	/// 
 	/// @param[in]	gamepad
 	///				Specific gamepad to check the name for.
+	/// 
 	/// @return		Name of the specific gamepad.
 	VK2D_API std::string								VK2D_APIENTRY						GetGamepadName(
 		vk2d::Gamepad									gamepad );
 
-	/// @brief		Gets the current state of the gamepad, which buttons are held down
-	///				and the value of the axis.
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	/// @brief		Gets the current state of the gamepad.
+	///
+	///				Tells which buttons are held down and the value of the axis.
+	/// 
 	/// @note		Multithreading: Main thread only.
-	/// @see		vk2d::GamepadState.
+	/// 
+	/// @see		vk2d::GamepadState
+	/// 
 	/// @param[in]	gamepad
 	///				Specific gamepad to check the state for.
+	/// 
 	/// @return		Object which tells which buttons were pressed and state of the axis.
-	///				See vk2d::GamepadState for more info.
 	VK2D_API vk2d::GamepadState							VK2D_APIENTRY						QueryGamepadState(
 		vk2d::Gamepad									gamepad );
 	 
 	// TODO: gamepad mapping
 	//VK2D_API void										VK2D_APIENTRY						SetGamepadMapping();
 
-
-	/// @brief		Create a new window which can be used to draw to.
-	///				(CreateWindow is defined as a macro in one of Microsoft Windows APIs
-	///				so I couldn't easily use that name without risk of naming conflicts).
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	/// @brief		Create a new window.
+	/// 
+	/// @note		CreateWindow is defined as a macro in one of Microsoft Windows APIs so I couldn't easily use that name without
+	///				risk of naming conflicts.
+	/// 
 	/// @note		Multithreading: Main thread only.
-	/// @see		vk2d::Window.
+	/// 
+	/// @see		vk2d::Window
+	/// 
 	/// @param[in]	window_create_info
-	///				Window creation parameters struct object. This is handy as creating
-	///				some objects can require a lot of parameters.
+	///				Window creation parameters struct object. This is handy as creating some objects can require a lot of
+	///				parameters.
+	/// 
 	/// @return		Handle to a newly created window.
 	VK2D_API vk2d::Window							*	VK2D_APIENTRY						CreateOutputWindow(
 		const vk2d::WindowCreateInfo				&	window_create_info );
 
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Destroy a window.
+	/// 
 	/// @note		Multithreading: Main thread only.
+	/// 
 	/// @param[in]	window
-	///				Handle to vk2d::Window to destroy. Note that this window handle cannot
-	///				be used for anything afterwards, if you try, you'll crash your application.
-	///				If nullptr, then this function does nothing.
+	///				Handle to vk2d::Window to destroy. Note that this window handle cannot be used for anything afterwards, if you
+	///				try, you'll crash your application. If nullptr, then this function does nothing.
 	VK2D_API void										VK2D_APIENTRY						DestroyOutputWindow(
 		vk2d::Window								*	window );
 
-	/// @brief		Create render target texture. Render target textures are textures
-	///				which can be rendered to.
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	/// @brief		Create render target texture.
+	///
+	///				Render target textures are textures which can be rendered to.
+	/// 
 	/// @note		Multithreading: Main thread only.
-	/// @see		vk2d::RenderTargetTexture.
+	/// 
+	/// @see		vk2d::RenderTargetTexture
+	/// 
 	/// @param[in]	render_target_texture_create_info
-	///				Render target texture creation parameters struct object. This is handy
-	///				as creating some objects can require a lot of parameters.
+	///				Render target texture creation parameters struct object. This is handy as creating some objects can require a
+	///				lot of parameters.
+	/// 
 	/// @return		Handle to a newly create render target texture.
 	VK2D_API vk2d::RenderTargetTexture				*	VK2D_APIENTRY						CreateRenderTargetTexture(
 		const vk2d::RenderTargetTextureCreateInfo	&	render_target_texture_create_info );
 
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Destroy a render target texture.
+	/// 
 	/// @note		Multithreading: Main thread only.
+	/// 
 	/// @param[in]	render_target_texture
-	///				Handle to vk2d::RenderTargetTexture to destroy. Note that this handle cannot
-	///				be used for anything afterwards, if you try, you'll crash your application.
-	///				If nullptr, then this function does nothing.
+	///				Handle to vk2d::RenderTargetTexture to destroy. Note that this handle cannot be used for anything afterwards, if
+	///				you try, you'll crash your application. If nullptr, then this function does nothing.
 	VK2D_API void										VK2D_APIENTRY						DestroyRenderTargetTexture(
 		vk2d::RenderTargetTexture					*	render_target_texture );
 
-	/// @brief		Create a sampler. Samplers tell how the texture should be read.
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	/// @brief		Create a sampler.
+	///
+	///				Samplers tell how the texture should be read.
+	/// 
 	/// @note		Multithreading: Main thread only.
-	///	@see		vk2d::Sampler.
-	/// @param[in]	sampler_create_info 
-	///				Sampler creation parameters struct object. This is handy as creating some
-	///				objects can require a lot of parameters.
+	/// 
+	///	@see		vk2d::Sampler
+	/// 
+	/// @param[in]	sampler_create_info
+	///				Sampler creation parameters struct object. This is handy as creating some objects can require a lot of
+	///				parameters.
+	/// 
 	/// @return		Handle to newly created sampler.
 	VK2D_API vk2d::Sampler							*	VK2D_APIENTRY						CreateSampler(
 		const vk2d::SamplerCreateInfo				&	sampler_create_info );
 
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Destroy sampler.
+	/// 
 	/// @note		Multithreading: Main thread only.
+	/// 
 	/// @param[in]	sampler
-	///				Handle to vk2d::Sampler to destroy. Note that this handle cannob be used for
-	///				anything afterwards, if you try, you'll crash your application.
-	///				If nullptr, then this function does nothing.
+	///				Handle to vk2d::Sampler to destroy. Note that this handle cannob be used for anything afterwards, if you try,
+	///				you'll crash your application. If nullptr, then this function does nothing.
 	VK2D_API void										VK2D_APIENTRY						DestroySampler(
 		vk2d::Sampler								*	sampler );
 
-	/// @brief		Get GPU's maximum supported multisampling. Eg. if maximum supported is
-	///				8 samples then vk2d::Multisamples::SAMPLE_COUNT_8 only is returned.
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	/// @brief		Get GPU's maximum supported multisampling.
+	///
+	///				For example: If the GPU maximum supported samples is 8 samples then only vk2d::Multisamples::SAMPLE_COUNT_8
+	///				is returned.
+	/// 
 	/// @note		Multithreading: Main thread only.
-	/// @return		Maximum supported multisamples.
+	/// 
+	/// @return		Maximum supported samples.
 	VK2D_API vk2d::Multisamples							VK2D_APIENTRY						GetMaximumSupportedMultisampling();
 
-	/// @brief		Get every supported multisampling setting supported by the GPU.
-	///				In this case return value is considered a bit field, eg. If all 1 through
-	///				8 samples are supported then returned value is a combination of
-	///				1 + 2 + 4 + 8 samples. This is useful when checking if the GPU supports
-	///				a specific sample count which can be done like:
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	/// @brief		Get GPU's every supported multisampling setting.
+	/// 
+	///				In this case return value is considered a bit field, eg. If all 1 through 8 samples are supported then returned
+	///				value is a combination of 1 + 2 + 4 + 8 samples. This is useful when checking if the GPU supports a specific
+	///				sample count which can be done like:
+	///				<br>
 	/// @code
 	///				if( samples & vk2d::Multisamples::SAMPLE_COUNT_4 ) {
 	///					// Multisample count 4 is supported...
 	///				}
 	/// @endcode
+	/// 
 	/// @note		Multithreading: Main thread only.
+	/// 
 	/// @return		All supported multisamples.
 	VK2D_API vk2d::Multisamples							VK2D_APIENTRY						GetAllSupportedMultisampling();
 
-	/// @brief		VK2D class object checker function.
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	/// @brief		Checks if the object is good to be used or if a failure occurred in it's creation.
+	/// 
 	/// @note		Multithreading: Any thread.
-	/// @return		true if class object was created successfully,
-	///				false if something went wrong
+	/// 
+	/// @return		true if class object was created successfully, false if something went wrong
 	VK2D_API bool										VK2D_APIENTRY						IsGood() const;
 
 private:
+
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	std::unique_ptr<vk2d::_internal::InstanceImpl>		impl;
 };
 
 
 
-/// @brief		Factory function for vk2d::Instance. This is the only way to create the VK2D instance in
-///				your application.
-///	@note		Multithreading: Any thread originally, that thread will then be considered as the main
-///				thread for all VK2D objects created in this instance.
-/// @see		vk2d::Instance.
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/// @brief		Factory function for vk2d::Instance.
+///
+///				This is the only way to create the VK2D instance in your application.
+/// 
+///	@note		Multithreading: Any thread originally, that thread will then be considered as the main thread for all VK2D
+///				objects created from this instance. See note about multisampling for each function, if the description says
+///				"Main thread only", it means that the function may only be called from the same thread as which created this
+///				instance.
+/// 
+/// @see		vk2d::Instance
+///
 /// @param[in]	instance_create_info
-///				Instance creation parameters struct object. This is handy as creating some objects can require
-///				a lot of parameters.
-/// @return		Newly created instance encapsulated in std::unique_ptr, this is not just a handle like
-///				other objects constructed by the instance but this is the instance object itself.
+///				Instance creation parameters struct object. This is handy as creating some objects can require a lot of
+///				parameters.
+/// 
+/// @return		Newly created instance.
 VK2D_API std::unique_ptr<Instance>						VK2D_APIENTRY						CreateInstance(
 	const InstanceCreateInfo						&	instance_create_info );
 
