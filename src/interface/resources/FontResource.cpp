@@ -85,26 +85,26 @@ VK2D_API vk2d::FontResource::FontResource(
 VK2D_API vk2d::FontResource::~FontResource()
 {}
 
-VK2D_API vk2d::ResourceStatus VK2D_APIENTRY vk2d::FontResource::GetStatus()
+VK2D_API vk2d::ResourceStatus vk2d::FontResource::GetStatus()
 {
 	return impl->GetStatus();
 }
 
-VK2D_API vk2d::ResourceStatus VK2D_APIENTRY vk2d::FontResource::WaitUntilLoaded(
+VK2D_API vk2d::ResourceStatus vk2d::FontResource::WaitUntilLoaded(
 	std::chrono::nanoseconds				timeout
 )
 {
 	return impl->WaitUntilLoaded( timeout );
 }
 
-VK2D_API vk2d::ResourceStatus VK2D_APIENTRY vk2d::FontResource::WaitUntilLoaded(
+VK2D_API vk2d::ResourceStatus vk2d::FontResource::WaitUntilLoaded(
 	std::chrono::steady_clock::time_point	timeout
 )
 {
 	return impl->WaitUntilLoaded( timeout );
 }
 
-VK2D_API vk2d::Rect2f VK2D_APIENTRY vk2d::FontResource::CalculateRenderedSize(
+VK2D_API vk2d::Rect2f vk2d::FontResource::CalculateRenderedSize(
 	std::string_view	text,
 	float				kerning,
 	glm::vec2			scale,
@@ -123,7 +123,7 @@ VK2D_API vk2d::Rect2f VK2D_APIENTRY vk2d::FontResource::CalculateRenderedSize(
 	);
 }
 
-VK2D_API bool VK2D_APIENTRY vk2d::FontResource::IsGood() const
+VK2D_API bool vk2d::FontResource::IsGood() const
 {
 	return !!impl;
 }

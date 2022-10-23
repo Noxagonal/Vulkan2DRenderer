@@ -32,46 +32,46 @@ class Mesh {
 	friend class vk2d_internal::WindowImpl;
 	friend class vk2d_internal::RenderTargetTextureImpl;
 
-	friend VK2D_API Mesh							VK2D_APIENTRY					GeneratePointMeshFromList(
+	friend VK2D_API Mesh							GeneratePointMeshFromList(
 		const std::vector<glm::vec2>			&	points );
 
-	friend VK2D_API Mesh							VK2D_APIENTRY					GenerateLineMeshFromList(
+	friend VK2D_API Mesh							GenerateLineMeshFromList(
 		const std::vector<glm::vec2>			&	points,
 		const std::vector<VertexIndex_2>		&	indices );
 
-	friend VK2D_API Mesh							VK2D_APIENTRY					GenerateTriangleMeshFromList(
+	friend VK2D_API Mesh							GenerateTriangleMeshFromList(
 		const std::vector<glm::vec2>			&	points,
 		const std::vector<VertexIndex_3>		&	indices,
 		bool										filled );
 
-	friend VK2D_API Mesh							VK2D_APIENTRY					GenerateRectangleMesh(
+	friend VK2D_API Mesh							GenerateRectangleMesh(
 		Rect2f										area,
 		bool										filled );
 
-	friend VK2D_API Mesh							VK2D_APIENTRY					GenerateEllipseMesh(
+	friend VK2D_API Mesh							GenerateEllipseMesh(
 		Rect2f										area,
 		bool										filled,
 		float										edge_count );
 
-	friend VK2D_API Mesh							VK2D_APIENTRY					GenerateEllipsePieMesh(
+	friend VK2D_API Mesh							GenerateEllipsePieMesh(
 		Rect2f										area,
 		float										begin_angle_radians,
 		float										coverage,
 		bool										filled,	
 		float										edge_count );
 
-	friend VK2D_API Mesh							VK2D_APIENTRY					GenerateRectanglePieMesh(
+	friend VK2D_API Mesh							GenerateRectanglePieMesh(
 		Rect2f										area,
 		float										begin_angle_radians,
 		float										coverage,
 		bool										filled );
 
-	friend VK2D_API Mesh							VK2D_APIENTRY					GenerateLatticeMesh(
+	friend VK2D_API Mesh							GenerateLatticeMesh(
 		Rect2f										area,
 		glm::vec2									subdivisions,
 		bool										filled );
 
-	friend VK2D_API Mesh							VK2D_APIENTRY					GenerateTextMesh(
+	friend VK2D_API Mesh							GenerateTextMesh(
 		FontResource							*	font,
 		glm::vec2									origin,
 		std::string									text,
@@ -88,7 +88,7 @@ public:
 	/// 
 	/// @param[in]	movement
 	///				A math vector that will be added to each vertex position.
-	VK2D_API void									VK2D_APIENTRY					Translate(
+	VK2D_API void									Translate(
 		const glm::vec2								movement );
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -99,7 +99,7 @@ public:
 	/// 
 	/// @param[in]	origin
 	///				The pivot point of which the mesh vertices are rotated around.
-	VK2D_API void									VK2D_APIENTRY					Rotate(
+	VK2D_API void									Rotate(
 		float										rotation_amount_radians,
 		glm::vec2									origin							= {} );
 
@@ -111,7 +111,7 @@ public:
 	/// 
 	/// @param[in]	origin
 	///				Origin point of which everything is scaled towards or away from.
-	VK2D_API void									VK2D_APIENTRY					Scale(
+	VK2D_API void									Scale(
 		glm::vec2									scaling_amount,
 		glm::vec2									origin							= {} );
 
@@ -128,7 +128,7 @@ public:
 	/// 
 	/// @param[in]	origin
 	///				Origin point of which everything is scewed in relation to.
-	VK2D_API void									VK2D_APIENTRY					Scew(
+	VK2D_API void									Scew(
 		glm::vec2									scew_amount,
 		glm::vec2									origin							= {} );
 
@@ -153,7 +153,7 @@ public:
 	/// @param[in]	origin
 	///				Origin point where waves are generated from, since this is a directional wave this parameter only really matters
 	///				if you're animating the rotation of the direction of the waves.
-	VK2D_API void									VK2D_APIENTRY					DirectionalWave(
+	VK2D_API void									DirectionalWave(
 		float										direction_radians,
 		float										frequency,
 		float										animation,
@@ -168,7 +168,7 @@ public:
 	/// @param[in]	movement
 	///				Direction to move the UVs towards. Note that this is in UV coordinates which are always in range of 0.0 to 1.0,
 	///				in case a UV coordinate goes outside this range, a Sampler will determine what to do with it.
-	VK2D_API void									VK2D_APIENTRY					TranslateUV(
+	VK2D_API void									TranslateUV(
 		const glm::vec2								movement );
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -183,7 +183,7 @@ public:
 	/// @param[in]	origin
 	///				The pivot point of which the mesh UVs are rotated around. Please note that UV coordinates are always in range of
 	///				0.0 to 1.0 so origin outside this range will appear to both translate and rotate.
-	VK2D_API void									VK2D_APIENTRY					RotateUV(
+	VK2D_API void									RotateUV(
 		float										rotation_amount_radians,
 		glm::vec2									origin							= { 0.5f, 0.5f } );
 
@@ -198,7 +198,7 @@ public:
 	/// 
 	/// @param[in]	origin
 	///				Origin point of which everything is scaled towards or away from.
-	VK2D_API void									VK2D_APIENTRY					ScaleUV(
+	VK2D_API void									ScaleUV(
 		glm::vec2									scaling_amount,
 		glm::vec2									origin							= { 0.5f, 0.5f } );
 
@@ -215,7 +215,7 @@ public:
 	/// 
 	/// @param[in]	origin
 	///				Origin point of which everything is scewed in relation to.
-	VK2D_API void									VK2D_APIENTRY					ScewUV(
+	VK2D_API void									ScewUV(
 		glm::vec2									scew_amount,
 		glm::vec2									origin							= { 0.5f, 0.5f } );
 
@@ -243,7 +243,7 @@ public:
 	/// @param[in]	origin
 	///				Origin point where waves are generated from, since this is a directional wave this parameter only really matters
 	///				if you're animating the rotation of the direction of the waves.
-	VK2D_API void									VK2D_APIENTRY					DirectionalWaveUV(
+	VK2D_API void									DirectionalWaveUV(
 		float										direction_radians,
 		float										frequency,
 		float										animation,
@@ -255,7 +255,7 @@ public:
 	/// 
 	/// @param[in]	new_color
 	///				Color to apply to all vertices.
-	VK2D_API void									VK2D_APIENTRY					SetVertexColor(
+	VK2D_API void									SetVertexColor(
 		Colorf										new_color );
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -274,7 +274,7 @@ public:
 	/// 
 	/// @param[in]	coord_2
 	///				Location of the second color.
-	VK2D_API void									VK2D_APIENTRY					SetVertexColorGradient(
+	VK2D_API void									SetVertexColorGradient(
 		Colorf										color_1,
 		Colorf										color_2,
 		glm::vec2									coord_1,
@@ -284,14 +284,14 @@ public:
 	/// @brief		Recalculates new UV locations for each vertex to be within the bounding box.
 	///
 	///				This makes the uv coordinates for each vertex to be inside of the UV map.
-	VK2D_API void									VK2D_APIENTRY					RecalculateUVsToBoundingBox();
+	VK2D_API void									RecalculateUVsToBoundingBox();
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Set texture to be used when rendering this mesh object.
 	/// 
 	/// @param[in]	texture_pointer
 	///				A pointer to a texture object.
-	VK2D_API void									VK2D_APIENTRY					SetTexture(
+	VK2D_API void									SetTexture(
 		Texture									*	texture_pointer );
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -299,7 +299,7 @@ public:
 	/// 
 	/// @param[in]	sampler_pointer
 	///				A pointer to a sampler object.
-	VK2D_API void									VK2D_APIENTRY					SetSampler(
+	VK2D_API void									SetSampler(
 		Sampler									*	sampler_pointer );
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -312,7 +312,7 @@ public:
 	/// 
 	/// @param[in]	point_size
 	///				Texel size of the point to be rendered.
-	VK2D_API void									VK2D_APIENTRY					SetPointSize(
+	VK2D_API void									SetPointSize(
 		float										point_size );
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -325,7 +325,7 @@ public:
 	///
 	/// @param[in]	line_width
 	///				Width of the line.
-	VK2D_API void									VK2D_APIENTRY					SetLineWidth(
+	VK2D_API void									SetLineWidth(
 		float										line_width );
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -343,7 +343,7 @@ public:
 	///				</table>
 	/// @param[in]	type
 	///				New mesh type.
-	VK2D_API void									VK2D_APIENTRY					SetMeshType(
+	VK2D_API void									SetMeshType(
 		MeshType									type );
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -352,7 +352,7 @@ public:
 	///				Updates Mesh::aabb variable and returns reference to it.
 	/// 
 	/// @return		Reference to the interal aabb variable.
-	VK2D_API Rect2f								&	VK2D_APIENTRY					RecalculateAABBFromVertices();
+	VK2D_API Rect2f								&	RecalculateAABBFromVertices();
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Vertices list.
@@ -436,7 +436,7 @@ private:
 ///				A list of coordinates representing point locations.
 /// 
 /// @return		A new mesh object.
-VK2D_API Mesh										VK2D_APIENTRY					GeneratePointMeshFromList(
+VK2D_API Mesh										GeneratePointMeshFromList(
 	const std::vector<glm::vec2>				&	points );
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -449,7 +449,7 @@ VK2D_API Mesh										VK2D_APIENTRY					GeneratePointMeshFromList(
 ///				Indices defining which points should be connected with a line.
 /// 
 /// @return		A new mesh object.
-VK2D_API Mesh										VK2D_APIENTRY					GenerateLineMeshFromList(
+VK2D_API Mesh										GenerateLineMeshFromList(
 	const std::vector<glm::vec2>				&	points,
 	const std::vector<VertexIndex_2>			&	indices );
 
@@ -466,7 +466,7 @@ VK2D_API Mesh										VK2D_APIENTRY					GenerateLineMeshFromList(
 ///				true if triangle mesh is filled, false for wireframe.
 /// 
 /// @return		A new mesh object.
-VK2D_API Mesh										VK2D_APIENTRY					GenerateTriangleMeshFromList(
+VK2D_API Mesh										GenerateTriangleMeshFromList(
 	const std::vector<glm::vec2>				&	points,
 	const std::vector<VertexIndex_3>			&	indices,
 	bool											filled							= true );
@@ -482,7 +482,7 @@ VK2D_API Mesh										VK2D_APIENTRY					GenerateTriangleMeshFromList(
 ///				true for filled mesh, false to generate line mesh of the outline.
 /// 
 /// @return		A new mesh object.
-VK2D_API Mesh										VK2D_APIENTRY					GenerateRectangleMesh(
+VK2D_API Mesh										GenerateRectangleMesh(
 	Rect2f											area,
 	bool											filled							= true );
 
@@ -500,7 +500,7 @@ VK2D_API Mesh										VK2D_APIENTRY					GenerateRectangleMesh(
 ///				Number of outer edges, this is a floating point value to prevent popping in case it's animated.
 ///
 /// @return		A new mesh object.
-VK2D_API Mesh										VK2D_APIENTRY					GenerateEllipseMesh(
+VK2D_API Mesh										GenerateEllipseMesh(
 	Rect2f											area,
 	bool											filled							= true,
 	float											edge_count						= 64.0f );
@@ -527,7 +527,7 @@ VK2D_API Mesh										VK2D_APIENTRY					GenerateEllipseMesh(
 ///				"smoother" transitions between amount of corners, in case this value is animated.
 /// 
 /// @return		A new mesh object.
-VK2D_API Mesh										VK2D_APIENTRY					GenerateEllipsePieMesh(
+VK2D_API Mesh										GenerateEllipsePieMesh(
 	Rect2f											area,
 	float											begin_angle_radians,
 	float											coverage,
@@ -551,7 +551,7 @@ VK2D_API Mesh										VK2D_APIENTRY					GenerateEllipsePieMesh(
 ///				true to draw the inside of the pie rectangle, false to draw the outline only.
 /// 
 /// @return		A new mesh object.
-VK2D_API Mesh										VK2D_APIENTRY					GenerateRectanglePieMesh(
+VK2D_API Mesh										GenerateRectanglePieMesh(
 	Rect2f											area,
 	float											begin_angle_radians,
 	float											coverage,
@@ -572,7 +572,7 @@ VK2D_API Mesh										VK2D_APIENTRY					GenerateRectanglePieMesh(
 ///				true if the inside is filled, false to generate a lattice line mesh.
 /// 
 /// @return		A new mesh object.
-VK2D_API Mesh										VK2D_APIENTRY					GenerateLatticeMesh(
+VK2D_API Mesh										GenerateLatticeMesh(
 	Rect2f											area,
 	glm::vec2										subdivisions,
 	bool											filled							= true );
@@ -614,7 +614,7 @@ VK2D_API Mesh										VK2D_APIENTRY					GenerateLatticeMesh(
 ///				mesh until the font has been fully loaded by the resource manager.
 /// 
 /// @return		A new mesh object.
-VK2D_API Mesh										VK2D_APIENTRY					GenerateTextMesh(
+VK2D_API Mesh										GenerateTextMesh(
 	FontResource								*	font,
 	glm::vec2										origin,
 	std::string										text,

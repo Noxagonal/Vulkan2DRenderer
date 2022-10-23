@@ -75,32 +75,32 @@ public:
 
 	VK2D_API										~Text();
 
-	VK2D_API Text								&	VK2D_APIENTRY					operator=(
+	VK2D_API Text								&	operator=(
 		const Text								&	other );
 
-	VK2D_API Text								&	VK2D_APIENTRY					operator=(
+	VK2D_API Text								&	operator=(
 		Text									&&	other );
 
-	VK2D_API void									VK2D_APIENTRY					FromUTF8(
+	VK2D_API void									FromUTF8(
 		std::string									str );
 
-	VK2D_API std::string							VK2D_APIENTRY					ToUTF8();
+	VK2D_API std::string							ToUTF8();
 
-	VK2D_API void									VK2D_APIENTRY					Reserve(
+	VK2D_API void									Reserve(
 		size_t										new_capacity );
-	VK2D_API void									VK2D_APIENTRY					Resize(
+	VK2D_API void									Resize(
 		size_t										new_size );
-	VK2D_API size_t									VK2D_APIENTRY					size();
-	VK2D_API int32_t							*	VK2D_APIENTRY					data();
-	VK2D_API int32_t							*	VK2D_APIENTRY					begin();
-	VK2D_API int32_t							*	VK2D_APIENTRY					end();
+	VK2D_API size_t									size();
+	VK2D_API int32_t							*	data();
+	VK2D_API int32_t							*	begin();
+	VK2D_API int32_t							*	end();
 
 private:
-	VK2D_API void									VK2D_APIENTRY					CopyOther(
+	VK2D_API void									CopyOther(
 		const Text								&	other );
-	VK2D_API void									VK2D_APIENTRY					MoveOther(
+	VK2D_API void									MoveOther(
 		Text									&&	other );
-	VK2D_API void									VK2D_APIENTRY					Deallocate();
+	VK2D_API void									Deallocate();
 	int32_t										*	str_data						= {};
 	size_t											str_size						= {};
 	size_t											str_capacity					= {};

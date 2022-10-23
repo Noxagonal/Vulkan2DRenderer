@@ -58,8 +58,8 @@ public:
 
 	VK2D_API												~DeviceQueueResolver();
 
-	const VK2D_API std::vector<VkDeviceQueueCreateInfo>	&	VK2D_APIENTRY				GetDeviceQueueCreateInfos();
-	VK2D_API std::vector<ResolvedQueue>						VK2D_APIENTRY				GetQueues( VkDevice device );
+	const VK2D_API std::vector<VkDeviceQueueCreateInfo>	&	GetDeviceQueueCreateInfos();
+	VK2D_API std::vector<ResolvedQueue>						GetQueues( VkDevice device );
 
 	bool													IsGood();
 

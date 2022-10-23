@@ -221,7 +221,7 @@ public:
 	/// @note		Multithreading: Any thread.
 	/// 
 	/// @return		true if class object was created successfully, false if something went wrong
-	VK2D_API bool									VK2D_APIENTRY					IsGood() const;
+	VK2D_API bool									IsGood() const;
 
 private:
 

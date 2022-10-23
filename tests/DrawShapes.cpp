@@ -17,7 +17,7 @@ constexpr double RAD = PI * 2.0;
 
 class EventHandler : public vk2d::WindowEventHandler
 {
-	void VK2D_APIENTRY EventScreenshot(
+	void									EventScreenshot(
 		vk2d::Window					*	window,
 		const std::filesystem::path		&	screenshot_path,
 		const vk2d::ImageData			&	screenshot_data,

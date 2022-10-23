@@ -54,7 +54,7 @@ VK2D_API vk2d::Text::~Text()
 	Deallocate();
 }
 
-VK2D_API vk2d::Text & VK2D_APIENTRY vk2d::Text::operator=(
+VK2D_API vk2d::Text & vk2d::Text::operator=(
 	const Text	&	other
 )
 {
@@ -62,7 +62,7 @@ VK2D_API vk2d::Text & VK2D_APIENTRY vk2d::Text::operator=(
 	return *this;
 }
 
-VK2D_API vk2d::Text & VK2D_APIENTRY vk2d::Text::operator=(
+VK2D_API vk2d::Text & vk2d::Text::operator=(
 	Text			&&	other
 )
 {
@@ -72,19 +72,19 @@ VK2D_API vk2d::Text & VK2D_APIENTRY vk2d::Text::operator=(
 
 
 
-VK2D_API void VK2D_APIENTRY vk2d::Text::FromUTF8(
+VK2D_API void vk2d::Text::FromUTF8(
 	std::string		str )
 {
 	// TODO...
 }
 
-VK2D_API std::string VK2D_APIENTRY vk2d::Text::ToUTF8()
+VK2D_API std::string vk2d::Text::ToUTF8()
 {
 	// TODO...
 	return {};
 }
 
-VK2D_API void VK2D_APIENTRY vk2d::Text::Reserve(
+VK2D_API void vk2d::Text::Reserve(
 	size_t new_capacity
 )
 {
@@ -102,7 +102,7 @@ VK2D_API void VK2D_APIENTRY vk2d::Text::Reserve(
 	}
 }
 
-VK2D_API void VK2D_APIENTRY vk2d::Text::Resize(
+VK2D_API void vk2d::Text::Resize(
 	size_t new_size
 )
 {
@@ -114,27 +114,27 @@ VK2D_API void VK2D_APIENTRY vk2d::Text::Resize(
 	}
 }
 
-VK2D_API size_t VK2D_APIENTRY vk2d::Text::size()
+VK2D_API size_t vk2d::Text::size()
 {
 	return str_size;
 }
 
-VK2D_API int32_t * VK2D_APIENTRY vk2d::Text::data()
+VK2D_API int32_t * vk2d::Text::data()
 {
 	return str_data;
 }
 
-VK2D_API int32_t * VK2D_APIENTRY vk2d::Text::begin()
+VK2D_API int32_t * vk2d::Text::begin()
 {
 	return &str_data[ 0 ];
 }
 
-VK2D_API int32_t * VK2D_APIENTRY vk2d::Text::end()
+VK2D_API int32_t * vk2d::Text::end()
 {
 	return &str_data[ str_size ];
 }
 
-VK2D_API void VK2D_APIENTRY vk2d::Text::CopyOther( const Text & other )
+VK2D_API void vk2d::Text::CopyOther( const Text & other )
 {
 	Resize( other.str_size );
 	for( size_t i = 0; i < other.str_size; ++i ) {
@@ -144,14 +144,14 @@ VK2D_API void VK2D_APIENTRY vk2d::Text::CopyOther( const Text & other )
 	str_data[ str_size ] = '\0';
 }
 
-VK2D_API void VK2D_APIENTRY vk2d::Text::MoveOther( Text && other )
+VK2D_API void vk2d::Text::MoveOther( Text && other )
 {
 	std::swap( str_data,		other.str_data );
 	std::swap( str_size,		other.str_size );
 	std::swap( str_capacity,	other.str_capacity );
 }
 
-VK2D_API void VK2D_APIENTRY vk2d::Text::Deallocate()
+VK2D_API void vk2d::Text::Deallocate()
 {
 	delete[] str_data;
 	str_data		= nullptr;

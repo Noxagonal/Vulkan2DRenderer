@@ -31,7 +31,7 @@ public:
 	/// @note		Multithreading: Main thread only.
 	/// 
 	/// @return		true if texture data is ready to be used, false otherwise.
-	VK2D_API bool									VK2D_APIENTRY				IsTextureDataReady();
+	VK2D_API bool									IsTextureDataReady();
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Gets the texel size of the texture.
@@ -39,7 +39,7 @@ public:
 	/// @note		Multithreading: Main thread only.
 	/// 
 	/// @return		Size of the texture in texels.
-	VK2D_API glm::uvec2								VK2D_APIENTRY				GetSize() const;
+	VK2D_API glm::uvec2								GetSize() const;
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Gets the texture layer count.
@@ -54,7 +54,7 @@ public:
 	/// @note		Multithreading: Any thread.
 	/// 
 	/// @return		Number of layers the texture has.
-	VK2D_API uint32_t								VK2D_APIENTRY				GetLayerCount() const;
+	VK2D_API uint32_t								GetLayerCount() const;
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Checks if the object is good to be used or if a failure occurred in it's creation.
@@ -62,7 +62,7 @@ public:
 	/// @note		Multithreading: Any thread.
 	/// 
 	/// @return		true if class object was created successfully, false if something went wrong
-	VK2D_API bool									VK2D_APIENTRY				IsGood() const;
+	VK2D_API bool									IsGood() const;
 
 protected:
 

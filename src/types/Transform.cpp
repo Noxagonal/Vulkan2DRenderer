@@ -14,28 +14,28 @@ vk2d::Transform::Transform(
 	rotation( rotation )
 {}
 
-VK2D_API void VK2D_APIENTRY vk2d::Transform::Translate(
+VK2D_API void vk2d::Transform::Translate(
 	glm::vec2 movement
 )
 {
 	this->position += movement;
 }
 
-VK2D_API void VK2D_APIENTRY vk2d::Transform::Scale(
+VK2D_API void vk2d::Transform::Scale(
 	glm::vec2 scale
 )
 {
 	this->scale *= scale;
 }
 
-VK2D_API void VK2D_APIENTRY vk2d::Transform::Rotate(
+VK2D_API void vk2d::Transform::Rotate(
 	float rotation
 )
 {
 	this->rotation += rotation;
 }
 
-VK2D_API glm::mat4 VK2D_APIENTRY vk2d::Transform::CalculateTransformationMatrix() const
+VK2D_API glm::mat4 vk2d::Transform::CalculateTransformationMatrix() const
 {
 	auto position_matrix = glm::mat4( 1.0f );
 	{

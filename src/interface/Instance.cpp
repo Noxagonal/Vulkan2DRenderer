@@ -74,7 +74,7 @@ uint64_t					InstanceImpl::instance_count	= {};
 
 
 // Private function declarations.
-void VK2D_APIENTRY VK2D_default_ReportFunction(
+void VK2D_default_ReportFunction(
 	ReportSeverity			severity,
 	std::string_view		message );
 
@@ -136,17 +136,17 @@ VK2D_API vk2d::Instance::~Instance()
 {
 }
 
-VK2D_API bool VK2D_APIENTRY vk2d::Instance::Run()
+VK2D_API bool vk2d::Instance::Run()
 {
 	return impl->Run();
 }
 
-VK2D_API vk2d::ResourceManager * VK2D_APIENTRY vk2d::Instance::GetResourceManager()
+VK2D_API vk2d::ResourceManager * vk2d::Instance::GetResourceManager()
 {
 	return impl->GetResourceManager();
 }
 
-VK2D_API std::vector<vk2d::Monitor*> VK2D_APIENTRY vk2d::Instance::GetMonitors()
+VK2D_API std::vector<vk2d::Monitor*> vk2d::Instance::GetMonitors()
 {
 	if( !impl->IsThisThreadCreatorThread() ) {
 		impl->Report( ReportSeverity::WARNING, "Instance::GetMonitors() must be called from main thread only!" );
@@ -163,14 +163,14 @@ VK2D_API std::vector<vk2d::Monitor*> VK2D_APIENTRY vk2d::Instance::GetMonitors()
 	return ret;
 }
 
-VK2D_API vk2d::Monitor *VK2D_APIENTRY vk2d::Instance::GetPrimaryMonitor()
+VK2D_API vk2d::Monitor *vk2d::Instance::GetPrimaryMonitor()
 {
 	return &vk2d::vk2d_internal::primary_monitor;
 }
 
 
 
-VK2D_API void VK2D_APIENTRY vk2d::Instance::SetMonitorUpdateCallback(
+VK2D_API void vk2d::Instance::SetMonitorUpdateCallback(
 	vk2d::PFN_MonitorUpdateCallback			monitor_update_callback_funtion
 )
 {
@@ -179,7 +179,7 @@ VK2D_API void VK2D_APIENTRY vk2d::Instance::SetMonitorUpdateCallback(
 	);
 }
 
-VK2D_API vk2d::Cursor * VK2D_APIENTRY vk2d::Instance::CreateCursor(
+VK2D_API vk2d::Cursor * vk2d::Instance::CreateCursor(
 	const std::filesystem::path			&	image_path,
 	glm::ivec2								hot_spot
 )
@@ -190,7 +190,7 @@ VK2D_API vk2d::Cursor * VK2D_APIENTRY vk2d::Instance::CreateCursor(
 	);
 }
 
-VK2D_API vk2d::Cursor * VK2D_APIENTRY vk2d::Instance::CreateCursor(
+VK2D_API vk2d::Cursor * vk2d::Instance::CreateCursor(
 	glm::uvec2								image_size,
 	const std::vector<Color8>		&	image_data,
 	glm::ivec2								hot_spot
@@ -203,46 +203,46 @@ VK2D_API vk2d::Cursor * VK2D_APIENTRY vk2d::Instance::CreateCursor(
 	);
 }
 
-VK2D_API void VK2D_APIENTRY vk2d::Instance::DestroyCursor(
+VK2D_API void vk2d::Instance::DestroyCursor(
 	Cursor						*	cursor )
 {
 	impl->DestroyCursor( cursor );
 }
 
-VK2D_API vk2d::PFN_GamepadConnectionEventCallback VK2D_APIENTRY vk2d::Instance::GetGamepadEventCallback() const
+VK2D_API vk2d::PFN_GamepadConnectionEventCallback vk2d::Instance::GetGamepadEventCallback() const
 {
 	return impl->GetGamepadEventCallback();
 }
 
-VK2D_API void VK2D_APIENTRY vk2d::Instance::SetGamepadEventCallback(
+VK2D_API void vk2d::Instance::SetGamepadEventCallback(
 	PFN_GamepadConnectionEventCallback		gamepad_event_callback_function
 )
 {
 	impl->SetGamepadEventCallback( gamepad_event_callback_function );
 }
 
-VK2D_API bool VK2D_APIENTRY vk2d::Instance::IsGamepadPresent(
+VK2D_API bool vk2d::Instance::IsGamepadPresent(
 	Gamepad			gamepad
 )
 {
 	return impl->IsGamepadPresent( gamepad );
 }
 
-VK2D_API std::string VK2D_APIENTRY vk2d::Instance::GetGamepadName(
+VK2D_API std::string vk2d::Instance::GetGamepadName(
 	Gamepad		gamepad
 )
 {
 	return impl->GetGamepadName( gamepad );
 }
 
-VK2D_API vk2d::GamepadState VK2D_APIENTRY vk2d::Instance::QueryGamepadState(
+VK2D_API vk2d::GamepadState vk2d::Instance::QueryGamepadState(
 	Gamepad		gamepad
 )
 {
 	return impl->QueryGamepadState( gamepad );
 }
 
-VK2D_API vk2d::Window * VK2D_APIENTRY vk2d::Instance::CreateOutputWindow(
+VK2D_API vk2d::Window * vk2d::Instance::CreateOutputWindow(
 	const WindowCreateInfo		&	window_create_info
 )
 {
@@ -251,59 +251,59 @@ VK2D_API vk2d::Window * VK2D_APIENTRY vk2d::Instance::CreateOutputWindow(
 
 
 
-VK2D_API void VK2D_APIENTRY vk2d::Instance::DestroyOutputWindow(
+VK2D_API void vk2d::Instance::DestroyOutputWindow(
 	Window				*	window
 )
 {
 	impl->DestroyOutputWindow( window );
 }
 
-VK2D_API vk2d::RenderTargetTexture * VK2D_APIENTRY vk2d::Instance::CreateRenderTargetTexture(
+VK2D_API vk2d::RenderTargetTexture * vk2d::Instance::CreateRenderTargetTexture(
 	const RenderTargetTextureCreateInfo	&	render_target_texture_create_info
 )
 {
 	return impl->CreateRenderTargetTexture( render_target_texture_create_info );
 }
 
-VK2D_API void VK2D_APIENTRY vk2d::Instance::DestroyRenderTargetTexture(
+VK2D_API void vk2d::Instance::DestroyRenderTargetTexture(
 	RenderTargetTexture					*	render_target_texture
 )
 {
 	impl->DestroyRenderTargetTexture( render_target_texture );
 }
 
-VK2D_API vk2d::Sampler * VK2D_APIENTRY vk2d::Instance::CreateSampler(
+VK2D_API vk2d::Sampler * vk2d::Instance::CreateSampler(
 	const SamplerCreateInfo		&	sampler_create_info
 )
 {
 	return impl->CreateSampler( sampler_create_info );
 }
 
-VK2D_API void VK2D_APIENTRY vk2d::Instance::DestroySampler(
+VK2D_API void vk2d::Instance::DestroySampler(
 	Sampler						*	sampler
 )
 {
 	impl->DestroySampler( sampler );
 }
 
-VK2D_API vk2d::Multisamples VK2D_APIENTRY vk2d::Instance::GetMaximumSupportedMultisampling()
+VK2D_API vk2d::Multisamples vk2d::Instance::GetMaximumSupportedMultisampling()
 {
 	return impl->GetMaximumSupportedMultisampling();
 }
 
-VK2D_API vk2d::Multisamples VK2D_APIENTRY vk2d::Instance::GetAllSupportedMultisampling()
+VK2D_API vk2d::Multisamples vk2d::Instance::GetAllSupportedMultisampling()
 {
 	return impl->GetAllSupportedMultisampling();
 }
 
-VK2D_API bool VK2D_APIENTRY vk2d::Instance::IsGood() const
+VK2D_API bool vk2d::Instance::IsGood() const
 {
 	return !!impl;
 }
 
 
 
-VK2D_API std::unique_ptr<vk2d::Instance> VK2D_APIENTRY vk2d::CreateInstance(
+VK2D_API std::unique_ptr<vk2d::Instance> vk2d::CreateInstance(
 	const vk2d::InstanceCreateInfo		&	instance_create_info
 )
 {
@@ -2746,7 +2746,7 @@ namespace vk2d_internal {
 
 
 
-void VK2D_APIENTRY VK2D_default_ReportFunction(
+void VK2D_default_ReportFunction(
 	ReportSeverity			severity,
 	std::string_view				message
 )

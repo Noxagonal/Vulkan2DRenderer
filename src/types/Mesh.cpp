@@ -72,7 +72,7 @@ inline void ClearVerticesToDefaultValues(
 
 
 
-VK2D_API void VK2D_APIENTRY vk2d::Mesh::Translate(
+VK2D_API void vk2d::Mesh::Translate(
 	const glm::vec2			movement )
 {
 	for( auto & i : vertices ) {
@@ -80,7 +80,7 @@ VK2D_API void VK2D_APIENTRY vk2d::Mesh::Translate(
 	}
 }
 
-VK2D_API void VK2D_APIENTRY vk2d::Mesh::Rotate(
+VK2D_API void vk2d::Mesh::Rotate(
 	float					rotation_amount_radians,
 	glm::vec2				origin )
 {
@@ -93,7 +93,7 @@ VK2D_API void VK2D_APIENTRY vk2d::Mesh::Rotate(
 	}
 }
 
-VK2D_API void VK2D_APIENTRY vk2d::Mesh::Scale(
+VK2D_API void vk2d::Mesh::Scale(
 	glm::vec2				scaling_amount,
 	glm::vec2				origin
 )
@@ -105,7 +105,7 @@ VK2D_API void VK2D_APIENTRY vk2d::Mesh::Scale(
 	}
 }
 
-VK2D_API void VK2D_APIENTRY vk2d::Mesh::Scew(
+VK2D_API void vk2d::Mesh::Scew(
 	glm::vec2				scew_amount,
 	glm::vec2				origin
 )
@@ -118,7 +118,7 @@ VK2D_API void VK2D_APIENTRY vk2d::Mesh::Scew(
 	}
 }
 
-VK2D_API void VK2D_APIENTRY vk2d::Mesh::DirectionalWave(
+VK2D_API void vk2d::Mesh::DirectionalWave(
 	float						direction_radians,
 	float						frequency,
 	float						animation,
@@ -156,7 +156,7 @@ VK2D_API void VK2D_APIENTRY vk2d::Mesh::DirectionalWave(
 	}
 }
 
-VK2D_API void VK2D_APIENTRY vk2d::Mesh::TranslateUV(
+VK2D_API void vk2d::Mesh::TranslateUV(
 	const glm::vec2			movement
 )
 {
@@ -165,7 +165,7 @@ VK2D_API void VK2D_APIENTRY vk2d::Mesh::TranslateUV(
 	}
 }
 
-VK2D_API void VK2D_APIENTRY vk2d::Mesh::RotateUV(
+VK2D_API void vk2d::Mesh::RotateUV(
 	float					rotation_amount_radians,
 	glm::vec2				origin
 )
@@ -179,7 +179,7 @@ VK2D_API void VK2D_APIENTRY vk2d::Mesh::RotateUV(
 	}
 }
 
-VK2D_API void VK2D_APIENTRY vk2d::Mesh::ScaleUV(
+VK2D_API void vk2d::Mesh::ScaleUV(
 	glm::vec2				scaling_amount,
 	glm::vec2				origin
 )
@@ -191,7 +191,7 @@ VK2D_API void VK2D_APIENTRY vk2d::Mesh::ScaleUV(
 	}
 }
 
-VK2D_API void VK2D_APIENTRY vk2d::Mesh::ScewUV(
+VK2D_API void vk2d::Mesh::ScewUV(
 	glm::vec2				scew_amount,
 	glm::vec2				origin
 )
@@ -204,7 +204,7 @@ VK2D_API void VK2D_APIENTRY vk2d::Mesh::ScewUV(
 	}
 }
 
-VK2D_API void VK2D_APIENTRY vk2d::Mesh::DirectionalWaveUV(
+VK2D_API void vk2d::Mesh::DirectionalWaveUV(
 	float					direction_radians,
 	float					frequency,
 	float					animation,
@@ -240,7 +240,7 @@ VK2D_API void VK2D_APIENTRY vk2d::Mesh::DirectionalWaveUV(
 	}
 }
 
-VK2D_API void VK2D_APIENTRY vk2d::Mesh::SetVertexColor(
+VK2D_API void vk2d::Mesh::SetVertexColor(
 	Colorf				new_color )
 {
 	for( auto & v : vertices ) {
@@ -248,7 +248,7 @@ VK2D_API void VK2D_APIENTRY vk2d::Mesh::SetVertexColor(
 	}
 }
 
-VK2D_API void VK2D_APIENTRY vk2d::Mesh::SetVertexColorGradient(
+VK2D_API void vk2d::Mesh::SetVertexColorGradient(
 	Colorf			color_1,
 	Colorf			color_2,
 	glm::vec2		coord_1,
@@ -300,7 +300,7 @@ VK2D_API void VK2D_APIENTRY vk2d::Mesh::SetVertexColorGradient(
 	}
 }
 
-VK2D_API void VK2D_APIENTRY vk2d::Mesh::RecalculateUVsToBoundingBox()
+VK2D_API void vk2d::Mesh::RecalculateUVsToBoundingBox()
 {
 	auto size = aabb.bottom_right - aabb.top_left;
 	for( auto & v : vertices ) {
@@ -309,21 +309,21 @@ VK2D_API void VK2D_APIENTRY vk2d::Mesh::RecalculateUVsToBoundingBox()
 	}
 }
 
-VK2D_API void VK2D_APIENTRY vk2d::Mesh::SetTexture(
+VK2D_API void vk2d::Mesh::SetTexture(
 	Texture * texture_pointer
 )
 {
 	texture		= texture_pointer;
 }
 
-VK2D_API void VK2D_APIENTRY vk2d::Mesh::SetSampler(
+VK2D_API void vk2d::Mesh::SetSampler(
 	Sampler * sampler_pointer
 )
 {
 	sampler		= sampler_pointer;
 }
 
-VK2D_API void VK2D_APIENTRY vk2d::Mesh::SetPointSize(
+VK2D_API void vk2d::Mesh::SetPointSize(
 	float point_size
 )
 {
@@ -332,14 +332,14 @@ VK2D_API void VK2D_APIENTRY vk2d::Mesh::SetPointSize(
 	}
 }
 
-VK2D_API void VK2D_APIENTRY vk2d::Mesh::SetLineWidth(
+VK2D_API void vk2d::Mesh::SetLineWidth(
 	float line_width
 )
 {
 	this->line_width = line_width;
 }
 
-VK2D_API void VK2D_APIENTRY vk2d::Mesh::SetMeshType(
+VK2D_API void vk2d::Mesh::SetMeshType(
 	MeshType type
 )
 {
@@ -411,7 +411,7 @@ VK2D_API void VK2D_APIENTRY vk2d::Mesh::SetMeshType(
 	}
 }
 
-VK2D_API vk2d::Rect2f & VK2D_APIENTRY vk2d::Mesh::RecalculateAABBFromVertices()
+VK2D_API vk2d::Rect2f & vk2d::Mesh::RecalculateAABBFromVertices()
 {
 	if( std::size( vertices ) > 0 ) {
 		return aabb = vk2d_internal::CalculateAABBFromVertexList( vertices );
@@ -426,7 +426,7 @@ VK2D_API vk2d::Rect2f & VK2D_APIENTRY vk2d::Mesh::RecalculateAABBFromVertices()
 
 
 
-VK2D_API vk2d::Mesh VK2D_APIENTRY vk2d::GeneratePointMeshFromList(
+VK2D_API vk2d::Mesh vk2d::GeneratePointMeshFromList(
 	const std::vector<glm::vec2>		&	points
 )
 {
@@ -449,7 +449,7 @@ VK2D_API vk2d::Mesh VK2D_APIENTRY vk2d::GeneratePointMeshFromList(
 	return mesh;
 }
 
-VK2D_API vk2d::Mesh VK2D_APIENTRY vk2d::GenerateLineMeshFromList(
+VK2D_API vk2d::Mesh vk2d::GenerateLineMeshFromList(
 	const std::vector<glm::vec2>		&	points,
 	const std::vector<VertexIndex_2>	&	indices
 )
@@ -467,7 +467,7 @@ VK2D_API vk2d::Mesh VK2D_APIENTRY vk2d::GenerateLineMeshFromList(
 	return mesh;
 }
 
-VK2D_API vk2d::Mesh VK2D_APIENTRY vk2d::GenerateTriangleMeshFromList(
+VK2D_API vk2d::Mesh vk2d::GenerateTriangleMeshFromList(
 	const std::vector<glm::vec2>		&	points,
 	const std::vector<VertexIndex_3>	&	indices,
 	bool									filled
@@ -491,7 +491,7 @@ VK2D_API vk2d::Mesh VK2D_APIENTRY vk2d::GenerateTriangleMeshFromList(
 	return mesh;
 }
 
-VK2D_API vk2d::Mesh VK2D_APIENTRY vk2d::GenerateRectangleMesh(
+VK2D_API vk2d::Mesh vk2d::GenerateRectangleMesh(
 	Rect2f		area,
 	bool				filled
 )
@@ -548,7 +548,7 @@ VK2D_API vk2d::Mesh VK2D_APIENTRY vk2d::GenerateRectangleMesh(
 	return ret;
 }
 
-VK2D_API vk2d::Mesh VK2D_APIENTRY vk2d::GenerateEllipseMesh(
+VK2D_API vk2d::Mesh vk2d::GenerateEllipseMesh(
 	Rect2f		area,
 	bool		filled,
 	float		edge_count
@@ -622,7 +622,7 @@ VK2D_API vk2d::Mesh VK2D_APIENTRY vk2d::GenerateEllipseMesh(
 	return ret;
 }
 
-VK2D_API vk2d::Mesh VK2D_APIENTRY vk2d::GenerateEllipsePieMesh(
+VK2D_API vk2d::Mesh vk2d::GenerateEllipsePieMesh(
 	Rect2f		area,
 	float		begin_angle_radians,
 	float		coverage,
@@ -768,7 +768,7 @@ VK2D_API vk2d::Mesh VK2D_APIENTRY vk2d::GenerateEllipsePieMesh(
 	return ret;
 }
 
-VK2D_API vk2d::Mesh VK2D_APIENTRY vk2d::GenerateRectanglePieMesh(
+VK2D_API vk2d::Mesh vk2d::GenerateRectanglePieMesh(
 	Rect2f		area,
 	float		begin_angle_radians,
 	float		coverage,
@@ -1026,7 +1026,7 @@ VK2D_API vk2d::Mesh VK2D_APIENTRY vk2d::GenerateRectanglePieMesh(
 	return ret;
 }
 
-VK2D_API vk2d::Mesh VK2D_APIENTRY vk2d::GenerateLatticeMesh(
+VK2D_API vk2d::Mesh vk2d::GenerateLatticeMesh(
 	Rect2f		area,
 	glm::vec2	subdivisions,
 	bool		filled )
@@ -1117,7 +1117,7 @@ VK2D_API vk2d::Mesh VK2D_APIENTRY vk2d::GenerateLatticeMesh(
 	return ret;
 }
 
-VK2D_API vk2d::Mesh VK2D_APIENTRY vk2d::GenerateTextMesh(
+VK2D_API vk2d::Mesh vk2d::GenerateTextMesh(
 	FontResource	*	font,
 	glm::vec2			origin,
 	std::string			text,

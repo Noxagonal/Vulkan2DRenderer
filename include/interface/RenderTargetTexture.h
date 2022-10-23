@@ -92,7 +92,7 @@ public:
 	/// 
 	/// @param[in]	coordinate_space
 	///				Coordinate space to switch to.
-	VK2D_API void											VK2D_APIENTRY				SetRenderCoordinateSpace(
+	VK2D_API void											SetRenderCoordinateSpace(
 		RenderCoordinateSpace								coordinate_space );
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -113,7 +113,7 @@ public:
 	/// 
 	/// @param[in]	new_size
 	///				New texel size of this render target texture.
-	VK2D_API void											VK2D_APIENTRY				SetSize(
+	VK2D_API void											SetSize(
 		glm::uvec2											new_size );
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -122,7 +122,7 @@ public:
 	/// @note		Multithreading: Main thread only.
 	/// 
 	/// @return		Size of the render target texture in texels.
-	VK2D_API glm::uvec2										VK2D_APIENTRY				GetSize() const;
+	VK2D_API glm::uvec2										GetSize() const;
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Gets the texture layer count.
@@ -132,7 +132,7 @@ public:
 	/// @note		Multithreading: Any thread.
 	/// 
 	/// @return		Number of texture layers. (Render target texture always returns 1)
-	VK2D_API uint32_t										VK2D_APIENTRY				GetLayerCount() const;
+	VK2D_API uint32_t										GetLayerCount() const;
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Tells if the texture data is ready to be used.
@@ -140,7 +140,7 @@ public:
 	/// @note		Multithreading: Main thread only.
 	/// 
 	/// @return		true if texture data is ready to be used, false otherwise.
-	VK2D_API bool											VK2D_APIENTRY				IsTextureDataReady();
+	VK2D_API bool											IsTextureDataReady();
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Begins the render operations.
@@ -154,7 +154,7 @@ public:
 	/// @note		Multithreading: Main thread only.
 	/// 
 	/// @return		true on success, false if something went wrong.
-	VK2D_API bool											VK2D_APIENTRY				BeginRender();
+	VK2D_API bool											BeginRender();
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Ends and finalizes the rendering operations.
@@ -186,7 +186,7 @@ public:
 	///				Type of blur to use, see BlurType for more info.
 	/// 
 	/// @return		true on success, false if something went wrong.
-	VK2D_API bool											VK2D_APIENTRY				EndRender(
+	VK2D_API bool											EndRender(
 		glm::vec2											blur_amount					= {},
 		BlurType											blur_type					= BlurType::GAUSSIAN );
 
@@ -230,7 +230,7 @@ public:
 	/// 
 	/// @param[in]	sampler
 	///				Pointer to a sampler object that tells how to read the texture.
-	VK2D_API void											VK2D_APIENTRY				DrawTriangleList(
+	VK2D_API void											DrawTriangleList(
 		const std::vector<VertexIndex_3>				&	indices,
 		const std::vector<Vertex>						&	vertices,
 		const std::vector<float>						&	texture_layer_weights,
@@ -280,7 +280,7 @@ public:
 	/// @param[in]	line_width
 	///				Lines can be drawn thicker or thinner than 1 texel width, however this applies to all lines being drawn at once
 	///				and end points are not rounded.
-	VK2D_API void											VK2D_APIENTRY				DrawLineList(
+	VK2D_API void											DrawLineList(
 		const std::vector<VertexIndex_2>				&	indices,
 		const std::vector<Vertex>						&	vertices,
 		const std::vector<float>						&	texture_layer_weights,
@@ -323,7 +323,7 @@ public:
 	/// 
 	/// @param[in]	sampler
 	///				Pointer to a sampler object that tells how to read the texture.
-	VK2D_API void											VK2D_APIENTRY				DrawPointList(
+	VK2D_API void											DrawPointList(
 		const std::vector<Vertex>						&	vertices,
 		const std::vector<float>						&	texture_layer_weights,
 		const std::vector<glm::mat4>					&	transformations				= {},
@@ -347,7 +347,7 @@ public:
 	/// 
 	/// @param[in]	size
 	///				Size of the point we're drawing in texels.
-	VK2D_API void											VK2D_APIENTRY				DrawPoint(
+	VK2D_API void											DrawPoint(
 		glm::vec2											location,
 		Colorf												color						= { 1.0f, 1.0f, 1.0f, 1.0f },
 		float												size						= 1.0f );
@@ -369,7 +369,7 @@ public:
 	/// 
 	/// @param[in]	color
 	///				Color of the line.
-	VK2D_API void											VK2D_APIENTRY				DrawLine(
+	VK2D_API void											DrawLine(
 		glm::vec2											point_1,
 		glm::vec2											point_2,
 		Colorf												color						= { 1.0f, 1.0f, 1.0f, 1.0f },
@@ -388,7 +388,7 @@ public:
 	/// 
 	/// @param[in]	color
 	///				Color of the rectangle.
-	VK2D_API void											VK2D_APIENTRY				DrawRectangle(
+	VK2D_API void											DrawRectangle(
 		Rect2f												area,
 		bool												filled						= true,
 		Colorf												color						= { 1.0f, 1.0f, 1.0f, 1.0f } );
@@ -411,7 +411,7 @@ public:
 	/// 
 	/// @param[in]	color
 	///				Color of the ellipse.
-	VK2D_API void											VK2D_APIENTRY				DrawEllipse(
+	VK2D_API void											DrawEllipse(
 		Rect2f												area,
 		bool												filled						= true,
 		float												edge_count					= 64.0f,
@@ -444,7 +444,7 @@ public:
 	///
 	/// @param[in]	color
 	///				Color of the ellipse pie.
-	VK2D_API void											VK2D_APIENTRY				DrawEllipsePie(
+	VK2D_API void											DrawEllipsePie(
 		Rect2f												area,
 		float												begin_angle_radians,
 		float												coverage,
@@ -475,7 +475,7 @@ public:
 	/// 
 	/// @param[in]	color
 	///				Color of the rectangle pie.
-	VK2D_API void											VK2D_APIENTRY				DrawRectanglePie(
+	VK2D_API void											DrawRectanglePie(
 		Rect2f												area,
 		float												begin_angle_radians,
 		float												coverage,
@@ -504,7 +504,7 @@ public:
 	///				Multiplier for the the texture colors, eg. { 1.0, 0.0, 0.0, 1.0 } only renders the red channel of the texture,
 	///				{ 1.0, 1.0, 1.0, 0.5 } renders the texture half transparent, { 10.0, 10.0, 10.0, 1.0 } will render the texture
 	///				overexposed.
-	VK2D_API void											VK2D_APIENTRY				DrawTexture(
+	VK2D_API void											DrawTexture(
 		glm::vec2											top_left,
 		Texture											*	texture,
 		Colorf												color						= { 1.0f, 1.0f, 1.0f, 1.0f } );
@@ -519,7 +519,7 @@ public:
 	/// 
 	/// @param[in]	transformations
 	///				Optional transformations to use when drawing the mesh.
-	VK2D_API void											VK2D_APIENTRY				DrawMesh(
+	VK2D_API void											DrawMesh(
 		const Mesh										&	mesh,
 		const Transform									&	transformations				= {} );
 
@@ -534,7 +534,7 @@ public:
 	/// @param[in]	transformations
 	///				An array of transformations to use when drawing the mesh. Number of transformations tells how many times to draw
 	///				this mesh using each transformation.
-	VK2D_API void											VK2D_APIENTRY				DrawMesh(
+	VK2D_API void											DrawMesh(
 		const Mesh										&	mesh,
 		const std::vector<Transform>					&	transformations );
 
@@ -549,7 +549,7 @@ public:
 	/// @param[in]	transformations
 	///				An array of transformation matrices to use when drawing the mesh. Number of transformations tells how many times
 	///				to draw this mesh using each transformation.
-	VK2D_API void											VK2D_APIENTRY				DrawMesh(
+	VK2D_API void											DrawMesh(
 		const Mesh										&	mesh,
 		const std::vector<glm::mat4>					&	transformations );
 
@@ -559,7 +559,7 @@ public:
 	/// @note		Multithreading: Any thread.
 	/// 
 	/// @return		true if class object was created successfully, false if something went wrong
-	VK2D_API bool											VK2D_APIENTRY				IsGood() const;
+	VK2D_API bool											IsGood() const;
 
 private:
 

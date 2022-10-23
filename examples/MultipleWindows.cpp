@@ -51,7 +51,7 @@ public:
 		window_list( window_list )
 	{}
 
-	void							VK2D_APIENTRY		EventCursorPosition(
+	void							EventCursorPosition(
 		vk2d::Window			*	window,
 		glm::dvec2					position
 	) override
@@ -59,7 +59,7 @@ public:
 		*mouse_position = position;
 	};
 
-	void							VK2D_APIENTRY		EventMouseButton(
+	void							EventMouseButton(
 		vk2d::Window			*	window,
 		vk2d::MouseButton			button,
 		vk2d::ButtonAction			action,

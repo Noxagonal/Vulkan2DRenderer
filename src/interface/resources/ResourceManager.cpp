@@ -53,7 +53,7 @@ VK2D_API vk2d::ResourceManager::ResourceManager(
 VK2D_API vk2d::ResourceManager::~ResourceManager()
 {}
 
-VK2D_API vk2d::TextureResource * VK2D_APIENTRY vk2d::ResourceManager::CreateTextureResource(
+VK2D_API vk2d::TextureResource * vk2d::ResourceManager::CreateTextureResource(
 	glm::uvec2						size,
 	const std::vector<Color8>	&	texels
 )
@@ -65,7 +65,7 @@ VK2D_API vk2d::TextureResource * VK2D_APIENTRY vk2d::ResourceManager::CreateText
 	);
 }
 
-VK2D_API vk2d::TextureResource * VK2D_APIENTRY vk2d::ResourceManager::LoadTextureResource(
+VK2D_API vk2d::TextureResource * vk2d::ResourceManager::LoadTextureResource(
 	const std::filesystem::path		&	file_path
 )
 {
@@ -75,7 +75,7 @@ VK2D_API vk2d::TextureResource * VK2D_APIENTRY vk2d::ResourceManager::LoadTextur
 	);
 }
 
-VK2D_API vk2d::TextureResource * VK2D_APIENTRY vk2d::ResourceManager::CreateArrayTextureResource(
+VK2D_API vk2d::TextureResource * vk2d::ResourceManager::CreateArrayTextureResource(
 	glm::uvec2											size,
 	const std::vector<const std::vector<Color8>*>	&	texels_listing
 )
@@ -87,7 +87,7 @@ VK2D_API vk2d::TextureResource * VK2D_APIENTRY vk2d::ResourceManager::CreateArra
 	);
 }
 
-VK2D_API vk2d::TextureResource * VK2D_APIENTRY vk2d::ResourceManager::LoadArrayTextureResource(
+VK2D_API vk2d::TextureResource * vk2d::ResourceManager::LoadArrayTextureResource(
 	const std::vector<std::filesystem::path>		&	file_path_listing
 )
 {
@@ -97,7 +97,7 @@ VK2D_API vk2d::TextureResource * VK2D_APIENTRY vk2d::ResourceManager::LoadArrayT
 	);
 }
 
-VK2D_API vk2d::FontResource * VK2D_APIENTRY vk2d::ResourceManager::LoadFontResource(
+VK2D_API vk2d::FontResource * vk2d::ResourceManager::LoadFontResource(
 	const std::filesystem::path		&	file_path,
 	uint32_t							glyph_texel_size,
 	bool								use_alpha,
@@ -115,14 +115,14 @@ VK2D_API vk2d::FontResource * VK2D_APIENTRY vk2d::ResourceManager::LoadFontResou
 	);
 }
 
-VK2D_API void VK2D_APIENTRY vk2d::ResourceManager::DestroyResource(
+VK2D_API void vk2d::ResourceManager::DestroyResource(
 	ResourceBase		*	resource
 )
 {
 	impl->DestroyResource( resource );
 }
 
-VK2D_API bool VK2D_APIENTRY vk2d::ResourceManager::IsGood() const
+VK2D_API bool vk2d::ResourceManager::IsGood() const
 {
 	return !!impl;
 }

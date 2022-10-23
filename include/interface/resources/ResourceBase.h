@@ -54,7 +54,7 @@ public:
 	// TODO: Figure out how to get rid of Resource virtual destructor to improve ABI compatibility further.
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	VK2D_API virtual																	~ResourceBase()						= default;
+	VK2D_API virtual ~ResourceBase()						= default;
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Checks if the resource has been loaded, failed to load or is yet to be loaded / determined.
@@ -64,7 +64,7 @@ public:
 	/// @note		Multithreading: Any thread.
 	/// 
 	/// @return		Status of the resource, see ResourceStatus.
-	VK2D_API ResourceStatus									VK2D_APIENTRY						GetStatus();
+	VK2D_API ResourceStatus									GetStatus();
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Waits for the resource to load on the calling thread before continuing execution.
@@ -81,7 +81,7 @@ public:
 	/// 
 	/// @return		Status of the resource, see ResourceStatus.
 	///				Resource status can only be undetermined if timeout was given.
-	VK2D_API ResourceStatus									VK2D_APIENTRY						WaitUntilLoaded(
+	VK2D_API ResourceStatus									WaitUntilLoaded(
 		std::chrono::nanoseconds							timeout								= std::chrono::nanoseconds::max() );
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -97,7 +97,7 @@ public:
 	///				result will tell that the resource is still undetermined.
 	/// 
 	/// @return		Status of the resource, see ResourceStatus.
-	VK2D_API ResourceStatus									VK2D_APIENTRY						WaitUntilLoaded(
+	VK2D_API ResourceStatus									WaitUntilLoaded(
 		std::chrono::steady_clock::time_point				timeout );
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -109,7 +109,7 @@ public:
 	/// @note		Multithreading: Any thread.
 	/// 
 	/// @return		Parent resource that owns this resource.
-	VK2D_API ResourceBase								*	VK2D_APIENTRY						GetParentResource();
+	VK2D_API ResourceBase								*	GetParentResource();
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Checks if the resource was loaded from a file or from data.
@@ -118,7 +118,7 @@ public:
 	/// 
 	/// @return		true if resource origin is a file, eg. a .png image, false if resource origin is data, eg. a list of texels
 	///				given to the resource manager to create a texture from.
-	VK2D_API bool											VK2D_APIENTRY						IsFromFile() const;
+	VK2D_API bool											IsFromFile() const;
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// brief		If resource origin is a file then this returns all the file paths where to load the resource from.
@@ -132,7 +132,7 @@ public:
 	/// @see		Resource::IsFromFile()
 	/// 
 	/// @return		List of file paths.
-	VK2D_API const std::vector<std::filesystem::path>	&	VK2D_APIENTRY						GetFilePaths() const;
+	VK2D_API const std::vector<std::filesystem::path>	&	GetFilePaths() const;
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Checks if the object is good to be used or if a failure occurred in it's creation.
@@ -140,7 +140,7 @@ public:
 	/// @note		Multithreading: Any thread.
 	/// 
 	/// @return		true if class object was created successfully, false if something went wrong
-	VK2D_API bool											VK2D_APIENTRY						IsGood() const;
+	VK2D_API bool											IsGood() const;
 
 protected:
 

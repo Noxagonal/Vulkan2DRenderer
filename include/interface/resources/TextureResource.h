@@ -120,7 +120,7 @@ public:
 	/// @note		Multithreading: Any thread.
 	/// 
 	/// @return		Status of the resource, see ResourceStatus.
-	VK2D_API ResourceStatus									VK2D_APIENTRY				GetStatus();
+	VK2D_API ResourceStatus									GetStatus();
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Waits for the resource to load on the calling thread before continuing execution.
@@ -136,7 +136,7 @@ public:
 	///				makes this function wait indefinitely.
 	/// 
 	/// @return		Status of the resource, see ResourceStatus. Resource status can only be undetermined if timeout was given.
-	VK2D_API ResourceStatus									VK2D_APIENTRY				WaitUntilLoaded(
+	VK2D_API ResourceStatus									WaitUntilLoaded(
 		std::chrono::nanoseconds							timeout						= std::chrono::nanoseconds::max() );
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -152,20 +152,20 @@ public:
 	///				result will tell that the resource is still undetermined.
 	/// 
 	/// @return		Status of the resource, see ResourceStatus.
-	VK2D_API ResourceStatus									VK2D_APIENTRY				WaitUntilLoaded(
+	VK2D_API ResourceStatus									WaitUntilLoaded(
 		std::chrono::steady_clock::time_point				timeout );
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Get texel size of the texture resource.
 	/// 
 	/// @return		Texel size of the resource.
-	VK2D_API glm::uvec2										VK2D_APIENTRY				GetSize() const;
+	VK2D_API glm::uvec2										GetSize() const;
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		All VK2D textures are multi-layer textures. This returns the amount of layers in the texture.
 	/// 
 	/// @return		Number of layers in this texture.
-	VK2D_API uint32_t										VK2D_APIENTRY				GetLayerCount() const;
+	VK2D_API uint32_t										GetLayerCount() const;
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Checks if the object is good to be used or if a failure occurred in it's creation.
@@ -173,7 +173,7 @@ public:
 	/// @note		Multithreading: Any thread.
 	/// 
 	/// @return		true if class object was created successfully, false if something went wrong
-	VK2D_API bool											VK2D_APIENTRY				IsGood() const;
+	VK2D_API bool											IsGood() const;
 
 private:
 

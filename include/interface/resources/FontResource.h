@@ -15,7 +15,7 @@ class FontResource;
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-VK2D_API Mesh VK2D_APIENTRY GenerateTextMesh(
+VK2D_API Mesh					GenerateTextMesh(
 	FontResource			*	font,
 	glm::vec2					origin,
 	std::string					text,
@@ -51,7 +51,7 @@ class FontResource
 {
 	friend class vk2d_internal::ResourceManagerImpl;
 	friend class vk2d_internal::FontResourceImpl;
-	friend VK2D_API Mesh									VK2D_APIENTRY						GenerateTextMesh(
+	friend VK2D_API Mesh									GenerateTextMesh(
 		FontResource									*	font,
 		glm::vec2											origin,
 		std::string											text,
@@ -130,7 +130,7 @@ public:
 	/// @note		Multithreading: Any thread.
 	/// 
 	/// @return		Status of the resource, see ResourceStatus.
-	VK2D_API ResourceStatus									VK2D_APIENTRY						GetStatus();
+	VK2D_API ResourceStatus									GetStatus();
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Waits for the resource to load on the calling thread before continuing execution.
@@ -147,7 +147,7 @@ public:
 	/// 
 	/// @return		Status of the resource, see ResourceStatus.
 	///				Resource status can only be undetermined if timeout was given.
-	VK2D_API ResourceStatus									VK2D_APIENTRY						WaitUntilLoaded(
+	VK2D_API ResourceStatus									WaitUntilLoaded(
 		std::chrono::nanoseconds							timeout								= std::chrono::nanoseconds::max()
 	);
 
@@ -164,7 +164,7 @@ public:
 	///				result will tell that the resource is still undetermined.
 	/// 
 	/// @return		Status of the resource, see ResourceStatus.
-	VK2D_API ResourceStatus									VK2D_APIENTRY						WaitUntilLoaded(
+	VK2D_API ResourceStatus									WaitUntilLoaded(
 		std::chrono::steady_clock::time_point				timeout );
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -194,7 +194,7 @@ public:
 	///				rectangle area {} until the font has been fully loaded by the resource manager.
 	/// 
 	/// @return		Area the text would occupy if rendered.
-	VK2D_API Rect2f											VK2D_APIENTRY						CalculateRenderedSize(
+	VK2D_API Rect2f											CalculateRenderedSize(
 		std::string_view									text,
 		float												kerning								= 0.0f,
 		glm::vec2											scale								= glm::vec2( 1.0f, 1.0f ),
@@ -208,7 +208,7 @@ public:
 	/// @note		Multithreading: Any thread.
 	/// 
 	/// @return		true if class object was created successfully, false if something went wrong
-	VK2D_API bool											VK2D_APIENTRY						IsGood() const;
+	VK2D_API bool											IsGood() const;
 
 private:
 

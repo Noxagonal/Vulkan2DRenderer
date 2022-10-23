@@ -36,12 +36,12 @@ class ResourceManager {
 	/// 
 	/// @param		parent_instance
 	///				Pointer back to owner who created this object.
-	VK2D_API																				ResourceManager(
-		vk2d_internal::InstanceImpl														*	parent_instance
+	VK2D_API													ResourceManager(
+		vk2d_internal::InstanceImpl							*	parent_instance
 	);
 
 public:
-	VK2D_API																				~ResourceManager();
+	VK2D_API ~ResourceManager();
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Create a single layer texture resource from data.
@@ -57,7 +57,7 @@ public:
 	///				- This data is copied over to internal memory before returning so you do not need to keep the vector around.
 	/// 
 	/// @return		Handle to newly created texture resource you can use when rendering.
-	VK2D_API TextureResource								*	VK2D_APIENTRY				CreateTextureResource(
+	VK2D_API TextureResource								*	CreateTextureResource(
 		glm::uvec2												size,
 		const std::vector<Color8>							&	texels );
 
@@ -103,7 +103,7 @@ public:
 	///				</table>
 	///
 	/// @return		Handle to newly created texture resource you can use when rendering.
-	VK2D_API TextureResource								*	VK2D_APIENTRY				LoadTextureResource(
+	VK2D_API TextureResource								*	LoadTextureResource(
 		const std::filesystem::path							&	file_path );
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -126,7 +126,7 @@ public:
 	///				- This data is copied over to internal memory before returning so you do not need to keep the vector around.
 	/// 
 	/// @return		Handle to newly created texture resource you can use when rendering.
-	VK2D_API TextureResource								*	VK2D_APIENTRY				CreateArrayTextureResource(
+	VK2D_API TextureResource								*	CreateArrayTextureResource(
 		glm::uvec2												size,
 		const std::vector<const std::vector<Color8>*>		&	texels_listing );
 
@@ -145,7 +145,7 @@ public:
 	///				loading will fail.
 	/// 
 	/// @return		Handle to newly created texture resource you can use when rendering.
-	VK2D_API TextureResource								*	VK2D_APIENTRY				LoadArrayTextureResource(
+	VK2D_API TextureResource								*	LoadArrayTextureResource(
 		const std::vector<std::filesystem::path>			&	file_path_listing );
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -199,7 +199,7 @@ public:
 	///				between glyphs in the texture atlas here.
 	/// 
 	/// @return		Handle to newly created font resource you can use when rendering text.
-	VK2D_API FontResource									*	VK2D_APIENTRY				LoadFontResource(
+	VK2D_API FontResource									*	LoadFontResource(
 		const std::filesystem::path							&	file_path,
 		uint32_t												glyph_texel_size			= 32,
 		bool													use_alpha					= true,
@@ -219,8 +219,8 @@ public:
 	/// @param[in]	resource
 	///				Pointer to Resource to destroy. After this the resource is no longer valid and trying to use it will crash
 	///				your application.
-	VK2D_API void												VK2D_APIENTRY				DestroyResource(
-		ResourceBase																*	resource );
+	VK2D_API void												DestroyResource(
+		ResourceBase										*	resource );
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Checks if the object is good to be used or if a failure occurred in it's creation.
@@ -228,7 +228,7 @@ public:
 	/// @note		Multithreading: Any thread.
 	/// 
 	/// @return		true if class object was created successfully, false if something went wrong
-	VK2D_API bool												VK2D_APIENTRY				IsGood() const;
+	VK2D_API bool												IsGood() const;
 
 private:
 

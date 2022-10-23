@@ -16,11 +16,10 @@
 // gamepads for example are not window specific so they're handled differently.
 // Below is 3 example overridden functions but there are quite a few more. Check
 // vk2d::WindowEventHandler to see more functions that can be overridden.
-// Inclusion of the VK2D_APIENTRY macro is mandatory for proper calling convention.
 class EventHandler : public vk2d::WindowEventHandler
 {
 public:
-	void								VK2D_APIENTRY		EventMouseButton(
+	void								EventMouseButton(
 		vk2d::Window				*	window,
 		vk2d::MouseButton				button,
 		vk2d::ButtonAction				action,
@@ -37,7 +36,7 @@ public:
 		}
 	}
 
-	void								VK2D_APIENTRY		EventCursorPosition(
+	void								EventCursorPosition(
 		vk2d::Window				*	window,
 		glm::dvec2						position )			override
 	{
@@ -49,7 +48,7 @@ public:
 		}
 	}
 
-	void								VK2D_APIENTRY		EventKeyboard(
+	void								EventKeyboard(
 		vk2d::Window				*	window,
 		vk2d::KeyboardButton			button,
 		int32_t							scancode,
@@ -62,8 +61,8 @@ public:
 		}
 	}
 
-	glm::vec2						mouse_position_1	= {};
-	glm::vec2						mouse_position_2	= {};
+	glm::vec2							mouse_position_1	= {};
+	glm::vec2							mouse_position_2	= {};
 	bool								mouse_button_down	= {};
 };
 

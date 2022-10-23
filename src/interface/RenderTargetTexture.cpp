@@ -63,14 +63,14 @@ VK2D_API vk2d::RenderTargetTexture::RenderTargetTexture(
 VK2D_API vk2d::RenderTargetTexture::~RenderTargetTexture()
 {}
 
-VK2D_API void VK2D_APIENTRY vk2d::RenderTargetTexture::SetRenderCoordinateSpace(
+VK2D_API void vk2d::RenderTargetTexture::SetRenderCoordinateSpace(
 	RenderCoordinateSpace coordinate_space
 )
 {
 	impl->SetRenderCoordinateSpace( coordinate_space );
 }
 
-VK2D_API void VK2D_APIENTRY vk2d::RenderTargetTexture::SetSize(
+VK2D_API void vk2d::RenderTargetTexture::SetSize(
 	glm::uvec2		new_size
 )
 {
@@ -79,27 +79,27 @@ VK2D_API void VK2D_APIENTRY vk2d::RenderTargetTexture::SetSize(
 	);
 }
 
-VK2D_API glm::uvec2 VK2D_APIENTRY vk2d::RenderTargetTexture::GetSize() const
+VK2D_API glm::uvec2 vk2d::RenderTargetTexture::GetSize() const
 {
 	return impl->GetSize();
 }
 
-VK2D_API uint32_t VK2D_APIENTRY vk2d::RenderTargetTexture::GetLayerCount() const
+VK2D_API uint32_t vk2d::RenderTargetTexture::GetLayerCount() const
 {
 	return impl->GetLayerCount();
 }
 
-VK2D_API bool VK2D_APIENTRY vk2d::RenderTargetTexture::IsTextureDataReady()
+VK2D_API bool vk2d::RenderTargetTexture::IsTextureDataReady()
 {
 	return impl->IsTextureDataReady();
 }
 
-VK2D_API bool VK2D_APIENTRY vk2d::RenderTargetTexture::BeginRender()
+VK2D_API bool vk2d::RenderTargetTexture::BeginRender()
 {
 	return impl->BeginRender();
 }
 
-VK2D_API bool VK2D_APIENTRY vk2d::RenderTargetTexture::EndRender(
+VK2D_API bool vk2d::RenderTargetTexture::EndRender(
 	glm::vec2	blur_amount,
 	BlurType	blur_type
 )
@@ -107,7 +107,7 @@ VK2D_API bool VK2D_APIENTRY vk2d::RenderTargetTexture::EndRender(
 	return impl->EndRender( blur_type, blur_amount );
 }
 
-VK2D_API void VK2D_APIENTRY vk2d::RenderTargetTexture::DrawTriangleList(
+VK2D_API void vk2d::RenderTargetTexture::DrawTriangleList(
 	const std::vector<VertexIndex_3>	&	indices,
 	const std::vector<Vertex>			&	vertices,
 	const std::vector<float>				&	texture_layer_weights,
@@ -128,7 +128,7 @@ VK2D_API void VK2D_APIENTRY vk2d::RenderTargetTexture::DrawTriangleList(
 	);
 }
 
-VK2D_API void VK2D_APIENTRY vk2d::RenderTargetTexture::DrawLineList(
+VK2D_API void vk2d::RenderTargetTexture::DrawLineList(
 	const std::vector<VertexIndex_2>	&	indices,
 	const std::vector<Vertex>			&	vertices,
 	const std::vector<float>				&	texture_layer_weights,
@@ -149,7 +149,7 @@ VK2D_API void VK2D_APIENTRY vk2d::RenderTargetTexture::DrawLineList(
 	);
 }
 
-VK2D_API void VK2D_APIENTRY vk2d::RenderTargetTexture::DrawPointList(
+VK2D_API void vk2d::RenderTargetTexture::DrawPointList(
 	const std::vector<Vertex>			&	vertices,
 	const std::vector<float>				&	texture_layer_weights,
 	const std::vector<glm::mat4>			&	transformations,
@@ -166,7 +166,7 @@ VK2D_API void VK2D_APIENTRY vk2d::RenderTargetTexture::DrawPointList(
 	);
 }
 
-VK2D_API void VK2D_APIENTRY vk2d::RenderTargetTexture::DrawPoint(
+VK2D_API void vk2d::RenderTargetTexture::DrawPoint(
 	glm::vec2				location,
 	Colorf			color,
 	float					size
@@ -180,7 +180,7 @@ VK2D_API void VK2D_APIENTRY vk2d::RenderTargetTexture::DrawPoint(
 	impl->DrawMesh( mesh, { glm::mat4( 1.0f ) } );
 }
 
-VK2D_API void VK2D_APIENTRY vk2d::RenderTargetTexture::DrawLine(
+VK2D_API void vk2d::RenderTargetTexture::DrawLine(
 	glm::vec2						point_1,
 	glm::vec2						point_2,
 	Colorf					color,
@@ -196,7 +196,7 @@ VK2D_API void VK2D_APIENTRY vk2d::RenderTargetTexture::DrawLine(
 	impl->DrawMesh( mesh, { glm::mat4( 1.0f ) } );
 }
 
-VK2D_API void VK2D_APIENTRY vk2d::RenderTargetTexture::DrawRectangle(
+VK2D_API void vk2d::RenderTargetTexture::DrawRectangle(
 	Rect2f					area,
 	bool							filled,
 	Colorf					color
@@ -210,7 +210,7 @@ VK2D_API void VK2D_APIENTRY vk2d::RenderTargetTexture::DrawRectangle(
 	impl->DrawMesh( mesh, { glm::mat4( 1.0f ) } );
 }
 
-VK2D_API void VK2D_APIENTRY vk2d::RenderTargetTexture::DrawEllipse(
+VK2D_API void vk2d::RenderTargetTexture::DrawEllipse(
 	Rect2f					area,
 	bool							filled,
 	float							edge_count,
@@ -226,7 +226,7 @@ VK2D_API void VK2D_APIENTRY vk2d::RenderTargetTexture::DrawEllipse(
 	impl->DrawMesh( mesh, { glm::mat4( 1.0f ) } );
 }
 
-VK2D_API void VK2D_APIENTRY vk2d::RenderTargetTexture::DrawEllipsePie(
+VK2D_API void vk2d::RenderTargetTexture::DrawEllipsePie(
 	Rect2f					area,
 	float							begin_angle_radians,
 	float							coverage,
@@ -246,7 +246,7 @@ VK2D_API void VK2D_APIENTRY vk2d::RenderTargetTexture::DrawEllipsePie(
 	impl->DrawMesh( mesh, { glm::mat4( 1.0f ) } );
 }
 
-VK2D_API void VK2D_APIENTRY vk2d::RenderTargetTexture::DrawRectanglePie(
+VK2D_API void vk2d::RenderTargetTexture::DrawRectanglePie(
 	Rect2f					area,
 	float							begin_angle_radians,
 	float							coverage,
@@ -264,7 +264,7 @@ VK2D_API void VK2D_APIENTRY vk2d::RenderTargetTexture::DrawRectanglePie(
 	impl->DrawMesh( mesh, { glm::mat4( 1.0f ) } );
 }
 
-VK2D_API void VK2D_APIENTRY vk2d::RenderTargetTexture::DrawTexture(
+VK2D_API void vk2d::RenderTargetTexture::DrawTexture(
 	glm::vec2					top_left,
 	Texture			*	texture,
 	Colorf				color
@@ -282,7 +282,7 @@ VK2D_API void VK2D_APIENTRY vk2d::RenderTargetTexture::DrawTexture(
 	}
 }
 
-VK2D_API void VK2D_APIENTRY vk2d::RenderTargetTexture::DrawMesh(
+VK2D_API void vk2d::RenderTargetTexture::DrawMesh(
 	const Mesh						&	mesh,
 	const Transform					&	transformation
 )
@@ -293,7 +293,7 @@ VK2D_API void VK2D_APIENTRY vk2d::RenderTargetTexture::DrawMesh(
 	);
 }
 
-VK2D_API void VK2D_APIENTRY vk2d::RenderTargetTexture::DrawMesh(
+VK2D_API void vk2d::RenderTargetTexture::DrawMesh(
 	const Mesh						&	mesh,
 	const std::vector<Transform>		&	transformations
 )
@@ -309,7 +309,7 @@ VK2D_API void VK2D_APIENTRY vk2d::RenderTargetTexture::DrawMesh(
 	);
 }
 
-VK2D_API void VK2D_APIENTRY vk2d::RenderTargetTexture::DrawMesh(
+VK2D_API void vk2d::RenderTargetTexture::DrawMesh(
 	const Mesh						&	mesh,
 	const std::vector<glm::mat4>			&	transformations
 )
@@ -320,7 +320,7 @@ VK2D_API void VK2D_APIENTRY vk2d::RenderTargetTexture::DrawMesh(
 	);
 }
 
-VK2D_API bool VK2D_APIENTRY vk2d::RenderTargetTexture::IsGood() const
+VK2D_API bool vk2d::RenderTargetTexture::IsGood() const
 {
 	return !!impl;
 }

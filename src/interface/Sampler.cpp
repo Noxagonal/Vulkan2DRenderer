@@ -46,7 +46,7 @@ VK2D_API vk2d::Sampler::Sampler(
 VK2D_API vk2d::Sampler::~Sampler()
 {}
 
-VK2D_API bool VK2D_APIENTRY vk2d::Sampler::IsGood() const
+VK2D_API bool vk2d::Sampler::IsGood() const
 {
 	return !!impl;
 }

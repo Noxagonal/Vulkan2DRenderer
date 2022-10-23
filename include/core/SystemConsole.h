@@ -49,7 +49,7 @@ enum class ConsoleColor : uint8_t
 /// 
 /// @param[in]	background_color
 ///				Color of the background of the letters you wish to print. ( not entire console window )
-VK2D_API void VK2D_APIENTRY ConsolePrint(
+VK2D_API void				ConsolePrint(
 	std::string_view		text,
 	ConsoleColor			text_color				= ConsoleColor::DEFAULT,
 	ConsoleColor			background_color		= ConsoleColor::DEFAULT );

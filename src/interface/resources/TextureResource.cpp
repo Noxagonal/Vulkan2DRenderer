@@ -90,36 +90,36 @@ VK2D_API vk2d::TextureResource::TextureResource(
 VK2D_API vk2d::TextureResource::~TextureResource()
 {}
 
-VK2D_API vk2d::ResourceStatus VK2D_APIENTRY vk2d::TextureResource::GetStatus()
+VK2D_API vk2d::ResourceStatus vk2d::TextureResource::GetStatus()
 {
 	return impl->GetStatus();
 }
 
-VK2D_API vk2d::ResourceStatus VK2D_APIENTRY vk2d::TextureResource::WaitUntilLoaded(
+VK2D_API vk2d::ResourceStatus vk2d::TextureResource::WaitUntilLoaded(
 	std::chrono::nanoseconds				timeout
 )
 {
 	return impl->WaitUntilLoaded( timeout );
 }
 
-VK2D_API vk2d::ResourceStatus VK2D_APIENTRY vk2d::TextureResource::WaitUntilLoaded(
+VK2D_API vk2d::ResourceStatus vk2d::TextureResource::WaitUntilLoaded(
 	std::chrono::steady_clock::time_point	timeout
 )
 {
 	return impl->WaitUntilLoaded( timeout );
 }
 
-VK2D_API glm::uvec2 VK2D_APIENTRY vk2d::TextureResource::GetSize() const
+VK2D_API glm::uvec2 vk2d::TextureResource::GetSize() const
 {
 	return impl->GetSize();
 }
 
-VK2D_API uint32_t VK2D_APIENTRY vk2d::TextureResource::GetLayerCount() const
+VK2D_API uint32_t vk2d::TextureResource::GetLayerCount() const
 {
 	return impl->GetLayerCount();
 }
 
-VK2D_API bool VK2D_APIENTRY vk2d::TextureResource::IsGood() const
+VK2D_API bool vk2d::TextureResource::IsGood() const
 {
 	return !!impl;
 }

@@ -19,7 +19,7 @@ std::mutex print_mutex;
 
 
 
-VK2D_API void VK2D_APIENTRY vk2d::ConsolePrint(
+VK2D_API void vk2d::ConsolePrint(
 	std::string_view		text,
 	ConsoleColor			text_color,
 	ConsoleColor			background_color
@@ -96,7 +96,7 @@ std::map<ConsoleColor, const char*> background_color_map {
 	{ ConsoleColor::WHITE, "107" }
 };
 
-VK2D_API void VK2D_APIENTRY vk2d::ConsolePrint(
+VK2D_API void vk2d::ConsolePrint(
 	std::string_view		text,
 	ConsoleColor			text_color,
 	ConsoleColor			background_color

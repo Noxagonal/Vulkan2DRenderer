@@ -70,17 +70,17 @@ VK2D_API vk2d::Window::~Window()
 	impl	= nullptr;
 }
 
-VK2D_API void VK2D_APIENTRY vk2d::Window::CloseWindow()
+VK2D_API void vk2d::Window::CloseWindow()
 {
 	impl->CloseWindow();
 }
 
-VK2D_API bool VK2D_APIENTRY vk2d::Window::ShouldClose()
+VK2D_API bool vk2d::Window::ShouldClose()
 {
 	return impl->ShouldClose();
 }
 
-VK2D_API void VK2D_APIENTRY vk2d::Window::TakeScreenshotToFile(
+VK2D_API void vk2d::Window::TakeScreenshotToFile(
 	const std::filesystem::path		&	save_path,
 	bool								include_alpha
 )
@@ -91,167 +91,167 @@ VK2D_API void VK2D_APIENTRY vk2d::Window::TakeScreenshotToFile(
 	);
 }
 
-VK2D_API void VK2D_APIENTRY vk2d::Window::TakeScreenshotToData(
+VK2D_API void vk2d::Window::TakeScreenshotToData(
 	bool		include_alpha
 )
 {
 	impl->TakeScreenshotToData( include_alpha );
 }
 
-VK2D_API void VK2D_APIENTRY vk2d::Window::Focus()
+VK2D_API void vk2d::Window::Focus()
 {
 	impl->Focus();
 }
 
-VK2D_API void VK2D_APIENTRY vk2d::Window::SetOpacity(
+VK2D_API void vk2d::Window::SetOpacity(
 	float			opacity
 )
 {
 	impl->SetOpacity( opacity );
 }
 
-VK2D_API float VK2D_APIENTRY vk2d::Window::GetOpacity()
+VK2D_API float vk2d::Window::GetOpacity()
 {
 	return impl->GetOpacity();
 }
 
-VK2D_API void VK2D_APIENTRY vk2d::Window::Hide(
+VK2D_API void vk2d::Window::Hide(
 	bool			hidden
 )
 {
 	impl->Hide( hidden );
 }
 
-VK2D_API bool VK2D_APIENTRY vk2d::Window::IsHidden()
+VK2D_API bool vk2d::Window::IsHidden()
 {
 	return impl->IsHidden();
 }
 
-VK2D_API void VK2D_APIENTRY vk2d::Window::DisableEvents(
+VK2D_API void vk2d::Window::DisableEvents(
 	bool				disable_events
 )
 {
 	impl->DisableEvents( disable_events );
 }
 
-VK2D_API bool VK2D_APIENTRY vk2d::Window::AreEventsDisabled()
+VK2D_API bool vk2d::Window::AreEventsDisabled()
 {
 	return impl->AreEventsDisabled();
 }
 
-VK2D_API void VK2D_APIENTRY vk2d::Window::SetFullscreen(
+VK2D_API void vk2d::Window::SetFullscreen(
 	Monitor				*	monitor,
 	uint32_t				frequency )
 {
 	impl->SetFullscreen( monitor, frequency );
 }
 
-VK2D_API bool VK2D_APIENTRY vk2d::Window::IsFullscreen()
+VK2D_API bool vk2d::Window::IsFullscreen()
 {
 	return impl->IsFullscreen();
 }
 
-VK2D_API glm::dvec2 VK2D_APIENTRY vk2d::Window::GetCursorPosition()
+VK2D_API glm::dvec2 vk2d::Window::GetCursorPosition()
 {
 	return impl->GetCursorPosition();
 }
 
-VK2D_API void VK2D_APIENTRY vk2d::Window::SetCursorPosition(
+VK2D_API void vk2d::Window::SetCursorPosition(
 	glm::dvec2			new_position
 )
 {
 	impl->SetCursorPosition( new_position );
 }
 
-VK2D_API void VK2D_APIENTRY vk2d::Window::SetCursor(
+VK2D_API void vk2d::Window::SetCursor(
 	Cursor		*	cursor
 )
 {
 	impl->SetCursor( cursor );
 }
 
-VK2D_API std::string VK2D_APIENTRY vk2d::Window::GetClipboardString()
+VK2D_API std::string vk2d::Window::GetClipboardString()
 {
 	return impl->GetClipboardString();
 }
 
-VK2D_API void VK2D_APIENTRY vk2d::Window::SetClipboardString( const std::string & str )
+VK2D_API void vk2d::Window::SetClipboardString( const std::string & str )
 {
 	impl->SetClipboardString( str );
 }
 
-VK2D_API void VK2D_APIENTRY vk2d::Window::SetTitle( const std::string & title )
+VK2D_API void vk2d::Window::SetTitle( const std::string & title )
 {
 	impl->SetTitle( title );
 }
 
-VK2D_API std::string VK2D_APIENTRY vk2d::Window::GetTitle()
+VK2D_API std::string vk2d::Window::GetTitle()
 {
 	return impl->GetTitle();
 }
 
-VK2D_API void VK2D_APIENTRY vk2d::Window::SetIcon(
+VK2D_API void vk2d::Window::SetIcon(
 	const std::vector<std::filesystem::path>		&	image_paths )
 {
 	impl->SetIcon( image_paths );
 }
 
-VK2D_API void VK2D_APIENTRY vk2d::Window::SetPosition(
+VK2D_API void vk2d::Window::SetPosition(
 	glm::ivec2			new_position
 )
 {
 	impl->SetPosition( new_position );
 }
 
-VK2D_API glm::ivec2 VK2D_APIENTRY vk2d::Window::GetPosition()
+VK2D_API glm::ivec2 vk2d::Window::GetPosition()
 {
 	return impl->GetPosition();
 }
 
-VK2D_API void VK2D_APIENTRY vk2d::Window::SetSize(
+VK2D_API void vk2d::Window::SetSize(
 	glm::uvec2		new_size
 )
 {
 	impl->SetSize( new_size );
 }
 
-VK2D_API glm::uvec2 VK2D_APIENTRY vk2d::Window::GetSize()
+VK2D_API glm::uvec2 vk2d::Window::GetSize()
 {
 	return impl->GetSize();
 }
 
-VK2D_API void VK2D_APIENTRY vk2d::Window::Iconify(
+VK2D_API void vk2d::Window::Iconify(
 	bool		iconified
 )
 {
 	impl->Iconify( iconified );
 }
 
-VK2D_API bool VK2D_APIENTRY vk2d::Window::IsIconified()
+VK2D_API bool vk2d::Window::IsIconified()
 {
 	return impl->IsIconified();
 }
 
-VK2D_API void VK2D_APIENTRY vk2d::Window::SetMaximized(
+VK2D_API void vk2d::Window::SetMaximized(
 	bool		maximized
 )
 {
 	impl->SetMaximized( maximized );
 }
 
-VK2D_API bool VK2D_APIENTRY vk2d::Window::GetMaximized()
+VK2D_API bool vk2d::Window::GetMaximized()
 {
 	return impl->GetMaximized();
 }
 
-VK2D_API void VK2D_APIENTRY vk2d::Window::SetCursorState(
+VK2D_API void vk2d::Window::SetCursorState(
 	CursorState		new_state
 )
 {
 	impl->SetCursorState( new_state );
 }
 
-VK2D_API vk2d::CursorState VK2D_APIENTRY vk2d::Window::GetCursorState()
+VK2D_API vk2d::CursorState vk2d::Window::GetCursorState()
 {
 	return impl->GetCursorState();
 }
@@ -262,19 +262,19 @@ VK2D_API vk2d::CursorState VK2D_APIENTRY vk2d::Window::GetCursorState()
 
 
 
-VK2D_API bool VK2D_APIENTRY vk2d::Window::BeginRender()
+VK2D_API bool vk2d::Window::BeginRender()
 {
 	return impl->BeginRender();
 }
 
 
 
-VK2D_API bool VK2D_APIENTRY vk2d::Window::EndRender()
+VK2D_API bool vk2d::Window::EndRender()
 {
 	return impl->EndRender();
 }
 
-VK2D_API void VK2D_APIENTRY vk2d::Window::SetRenderCoordinateSpace(
+VK2D_API void vk2d::Window::SetRenderCoordinateSpace(
 	RenderCoordinateSpace coordinate_space
 )
 {
@@ -283,7 +283,7 @@ VK2D_API void VK2D_APIENTRY vk2d::Window::SetRenderCoordinateSpace(
 
 
 
-VK2D_API void VK2D_APIENTRY vk2d::Window::DrawTriangleList(
+VK2D_API void vk2d::Window::DrawTriangleList(
 	const std::vector<VertexIndex_3>	&	indices,
 	const std::vector<Vertex>			&	vertices,
 	const std::vector<float>			&	texture_layer_weights,
@@ -304,7 +304,7 @@ VK2D_API void VK2D_APIENTRY vk2d::Window::DrawTriangleList(
 	);
 }
 
-VK2D_API void VK2D_APIENTRY vk2d::Window::DrawLineList(
+VK2D_API void vk2d::Window::DrawLineList(
 	const std::vector<VertexIndex_2>	&	indices,
 	const std::vector<Vertex>			&	vertices,
 	const std::vector<float>			&	texture_layer_weights,
@@ -325,7 +325,7 @@ VK2D_API void VK2D_APIENTRY vk2d::Window::DrawLineList(
 	);
 }
 
-VK2D_API void VK2D_APIENTRY vk2d::Window::DrawPointList(
+VK2D_API void vk2d::Window::DrawPointList(
 	const std::vector<Vertex>			&	vertices,
 	const std::vector<float>			&	texture_layer_weights,
 	const std::vector<glm::mat4>		&	transformations,
@@ -342,7 +342,7 @@ VK2D_API void VK2D_APIENTRY vk2d::Window::DrawPointList(
 	);
 }
 
-VK2D_API void VK2D_APIENTRY vk2d::Window::DrawPoint(
+VK2D_API void vk2d::Window::DrawPoint(
 	glm::vec2		location,
 	Colorf			color,
 	float			size
@@ -356,7 +356,7 @@ VK2D_API void VK2D_APIENTRY vk2d::Window::DrawPoint(
 	impl->DrawMesh( mesh, { glm::mat4( 1.0f ) } );
 }
 
-VK2D_API void VK2D_APIENTRY vk2d::Window::DrawLine(
+VK2D_API void vk2d::Window::DrawLine(
 	glm::vec2		point_1,
 	glm::vec2		point_2,
 	Colorf			color,
@@ -372,7 +372,7 @@ VK2D_API void VK2D_APIENTRY vk2d::Window::DrawLine(
 	impl->DrawMesh( mesh, { glm::mat4( 1.0f ) } );
 }
 
-VK2D_API void VK2D_APIENTRY vk2d::Window::DrawRectangle(
+VK2D_API void vk2d::Window::DrawRectangle(
 	Rect2f			area,
 	bool			filled,
 	Colorf			color
@@ -386,7 +386,7 @@ VK2D_API void VK2D_APIENTRY vk2d::Window::DrawRectangle(
 	impl->DrawMesh( mesh, { glm::mat4( 1.0f ) } );
 }
 
-VK2D_API void VK2D_APIENTRY vk2d::Window::DrawEllipse(
+VK2D_API void vk2d::Window::DrawEllipse(
 	Rect2f			area,
 	bool			filled,
 	float			edge_count,
@@ -402,7 +402,7 @@ VK2D_API void VK2D_APIENTRY vk2d::Window::DrawEllipse(
 	impl->DrawMesh( mesh, { glm::mat4( 1.0f ) } );
 }
 
-VK2D_API void VK2D_APIENTRY vk2d::Window::DrawEllipsePie(
+VK2D_API void vk2d::Window::DrawEllipsePie(
 	Rect2f			area,
 	float			begin_angle_radians,
 	float			coverage,
@@ -422,7 +422,7 @@ VK2D_API void VK2D_APIENTRY vk2d::Window::DrawEllipsePie(
 	impl->DrawMesh( mesh, { glm::mat4( 1.0f ) } );
 }
 
-VK2D_API void VK2D_APIENTRY vk2d::Window::DrawRectanglePie(
+VK2D_API void vk2d::Window::DrawRectanglePie(
 	Rect2f			area,
 	float			begin_angle_radians,
 	float			coverage,
@@ -440,7 +440,7 @@ VK2D_API void VK2D_APIENTRY vk2d::Window::DrawRectanglePie(
 	impl->DrawMesh( mesh, { glm::mat4( 1.0f ) } );
 }
 
-VK2D_API void VK2D_APIENTRY vk2d::Window::DrawTexture(
+VK2D_API void vk2d::Window::DrawTexture(
 	glm::vec2		top_left,
 	Texture		*	texture,
 	Colorf			color
@@ -459,7 +459,7 @@ VK2D_API void VK2D_APIENTRY vk2d::Window::DrawTexture(
 	}
 }
 
-VK2D_API void VK2D_APIENTRY vk2d::Window::DrawMesh(
+VK2D_API void vk2d::Window::DrawMesh(
 	const Mesh						&	mesh,
 	const Transform					&	transformation
 )
@@ -470,7 +470,7 @@ VK2D_API void VK2D_APIENTRY vk2d::Window::DrawMesh(
 	);
 }
 
-VK2D_API void VK2D_APIENTRY vk2d::Window::DrawMesh(
+VK2D_API void vk2d::Window::DrawMesh(
 	const Mesh						&	mesh,
 	const std::vector<Transform>	&	transformations
 )
@@ -486,7 +486,7 @@ VK2D_API void VK2D_APIENTRY vk2d::Window::DrawMesh(
 	);
 }
 
-VK2D_API void VK2D_APIENTRY vk2d::Window::DrawMesh(
+VK2D_API void vk2d::Window::DrawMesh(
 	const Mesh						&	mesh,
 	const std::vector<glm::mat4>	&	transformations
 )
@@ -497,7 +497,7 @@ VK2D_API void VK2D_APIENTRY vk2d::Window::DrawMesh(
 	);
 }
 
-VK2D_API bool VK2D_APIENTRY vk2d::Window::IsGood() const
+VK2D_API bool vk2d::Window::IsGood() const
 {
 	if( !impl ) return false;
 	return impl->IsGood();
@@ -571,7 +571,7 @@ vk2d::Cursor::Cursor(
 VK2D_API vk2d::Cursor::~Cursor()
 {}
 
-VK2D_API vk2d::Cursor & VK2D_APIENTRY vk2d::Cursor::operator=(
+VK2D_API vk2d::Cursor & vk2d::Cursor::operator=(
 	Cursor	&	other )
 {
 	impl		= std::make_unique<vk2d_internal::CursorImpl>(
@@ -588,7 +588,7 @@ VK2D_API vk2d::Cursor & VK2D_APIENTRY vk2d::Cursor::operator=(
 	return *this;
 }
 
-VK2D_API vk2d::Cursor & VK2D_APIENTRY vk2d::Cursor::operator=(
+VK2D_API vk2d::Cursor & vk2d::Cursor::operator=(
 	Cursor	&&	other
 ) noexcept
 {
@@ -596,22 +596,22 @@ VK2D_API vk2d::Cursor & VK2D_APIENTRY vk2d::Cursor::operator=(
 	return *this;
 }
 
-VK2D_API glm::uvec2 VK2D_APIENTRY vk2d::Cursor::GetSize()
+VK2D_API glm::uvec2 vk2d::Cursor::GetSize()
 {
 	return impl->GetSize();
 }
 
-VK2D_API glm::ivec2 VK2D_APIENTRY vk2d::Cursor::GetHotSpot()
+VK2D_API glm::ivec2 vk2d::Cursor::GetHotSpot()
 {
 	return impl->GetHotSpot();
 }
 
-VK2D_API std::vector<vk2d::Color8> VK2D_APIENTRY vk2d::Cursor::GetTexelData()
+VK2D_API std::vector<vk2d::Color8> vk2d::Cursor::GetTexelData()
 {
 	return impl->GetTexelData();
 }
 
-VK2D_API bool VK2D_APIENTRY vk2d::Cursor::IsGood() const
+VK2D_API bool vk2d::Cursor::IsGood() const
 {
 	return !!impl;
 }
@@ -662,36 +662,36 @@ vk2d::Monitor::Monitor(
 VK2D_API vk2d::Monitor::~Monitor()
 {}
 
-VK2D_API vk2d::MonitorVideoMode VK2D_APIENTRY vk2d::Monitor::GetCurrentVideoMode() const
+VK2D_API vk2d::MonitorVideoMode vk2d::Monitor::GetCurrentVideoMode() const
 {
 	return impl->GetCurrentVideoMode();
 }
 
-VK2D_API std::vector<vk2d::MonitorVideoMode>VK2D_APIENTRY vk2d::Monitor::GetVideoModes() const
+VK2D_API std::vector<vk2d::MonitorVideoMode>vk2d::Monitor::GetVideoModes() const
 {
 	return impl->GetVideoModes();
 }
 
-VK2D_API void VK2D_APIENTRY vk2d::Monitor::SetGamma(
+VK2D_API void vk2d::Monitor::SetGamma(
 	float		gamma
 )
 {
 	impl->SetGamma( gamma );
 }
 
-VK2D_API std::vector<vk2d::GammaRampNode> VK2D_APIENTRY vk2d::Monitor::GetGammaRamp()
+VK2D_API std::vector<vk2d::GammaRampNode> vk2d::Monitor::GetGammaRamp()
 {
 	return impl->GetGammaRamp();
 }
 
-VK2D_API void VK2D_APIENTRY vk2d::Monitor::SetGammaRamp(
+VK2D_API void vk2d::Monitor::SetGammaRamp(
 	const std::vector<GammaRampNode>		&	ramp
 )
 {
 	impl->SetGammaRamp( ramp );
 }
 
-VK2D_API vk2d::Monitor & VK2D_APIENTRY vk2d::Monitor::operator=(
+VK2D_API vk2d::Monitor & vk2d::Monitor::operator=(
 	const Monitor		&	other
 )
 {
@@ -710,7 +710,7 @@ VK2D_API vk2d::Monitor & VK2D_APIENTRY vk2d::Monitor::operator=(
 	return *this;
 }
 
-VK2D_API vk2d::Monitor &VK2D_APIENTRY vk2d::Monitor::operator=(
+VK2D_API vk2d::Monitor &vk2d::Monitor::operator=(
 	Monitor	&&	other
 ) noexcept
 {
@@ -718,7 +718,7 @@ VK2D_API vk2d::Monitor &VK2D_APIENTRY vk2d::Monitor::operator=(
 	return *this;
 }
 
-VK2D_API bool VK2D_APIENTRY vk2d::Monitor::IsGood() const
+VK2D_API bool vk2d::Monitor::IsGood() const
 {
 	return !!impl;
 }
