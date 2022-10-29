@@ -36,8 +36,8 @@ Internally workloads are automatically grouped to create more efficient submissi
 - Does not render 3D, this is meant to be a simple library to use.
 - This is not a game engine, the purpose of this library is strictly limited to 2D drawing.
 - No HDRI image support. Didn't find any use for this in a 2D application.
-- No scene management, although transformation hierarchy is implemented so you can create your own.
-- No custom shaders, might implement these later if there's any need for these.
+- No scene management. (Planned)
+- No custom shaders. (Planned)
 - Work in progress. We'll know more about limitations later.
 - Crashes and garbage renders will likely happen frequently.
 
@@ -111,6 +111,6 @@ files and compile but it will not install this library for you.
 
 ## License
 
-Copyright (c) 2020 Niko Kauppi Noxagonal@gmail.com
+Copyright (c) 2022 Niko Kauppi Noxagonal@gmail.com
 
 This software is released under [MIT license](LICENSE.md)
