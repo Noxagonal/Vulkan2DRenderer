@@ -30,8 +30,8 @@ class ResourceThreadUnloadTask;
 ///				part of a Mesh and finally draw it by using Window::DrawMesh(). All texture resources are multi-layer
 ///				textures, meaning that a single texture can contain multiple images that can be indexed at runtime.
 class TextureResource :
-	public ResourceBase,
-	public Texture
+	public Texture,
+	public ResourceBase
 {
 	friend class vk2d_internal::TextureResourceImpl;
 	friend class vk2d_internal::ResourceManagerImpl;

@@ -31,7 +31,7 @@ void UpdateMonitorLists( bool globals_locked );
 
 class Instance;
 class Texture;
-class Mesh;
+class MeshBase;
 class WindowEventHandler;
 class Window;
 class Cursor;
@@ -1310,7 +1310,7 @@ public:
 	/// @param[in]	transformation
 	///				Draw using transformation.
 	VK2D_API void									DrawMesh(
-		const Mesh								&	mesh,
+		const MeshBase							&	mesh,
 		const Transform							&	transformations				= {} );
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1331,7 +1331,7 @@ public:
 	///				transformations results the mesh being drawn multiple times using different transformations. This is also called
 	///				instanced rendering.
 	VK2D_API void									DrawMesh(
-		const Mesh								&	mesh,
+		const MeshBase							&	mesh,
 		const std::vector<Transform>			&	transformation );
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1352,7 +1352,7 @@ public:
 	///				transformations results the mesh being drawn multiple times using different transformations. This is also called
 	///				instanced rendering.
 	VK2D_API void									DrawMesh(
-		const Mesh								&	mesh,
+		const MeshBase							&	mesh,
 		const std::vector<glm::mat4>			&	transformations );
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

@@ -57,7 +57,7 @@ struct Vertex
 	///
 	///				Texture color is multiplied by this, or if no texture is applied, determines the displayed color for this
 	///				vertex.
-	alignas( 16 )	Colorf			color					= {};
+	alignas( 16 )	Colorf					color					= {};
 
 	/// @brief		Size of the vertex.
 	///

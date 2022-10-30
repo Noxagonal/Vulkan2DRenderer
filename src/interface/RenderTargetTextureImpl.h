@@ -25,7 +25,7 @@
 
 namespace vk2d {
 
-class Mesh;
+class MeshBase;
 
 namespace vk2d_internal {
 
@@ -247,7 +247,7 @@ public:
 		Sampler											*	sampler );
 
 	void													DrawMesh(
-		const Mesh										&	mesh,
+		const MeshBase									&	mesh,
 		const std::vector<glm::mat4>					&	transformations );
 
 	bool												IsGood() const;

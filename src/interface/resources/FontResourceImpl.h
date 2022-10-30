@@ -6,13 +6,13 @@
 #include "types/Color.hpp"
 
 #include "interface/resources/ResourceImplBase.h"
+#include <interface/resources/TextureResource.h>
 
 #include <ft2build.h>
 #include FT_FREETYPE_H
 
 namespace vk2d {
 
-class TextureResource;
 class FontResource;
 
 namespace vk2d_internal {

@@ -266,8 +266,8 @@ VK2D_API void vk2d::RenderTargetTexture::DrawRectanglePie(
 
 VK2D_API void vk2d::RenderTargetTexture::DrawTexture(
 	glm::vec2					top_left,
-	Texture			*	texture,
-	Colorf				color
+	Texture					*	texture,
+	Colorf						color
 )
 {
 	if( texture ) {
@@ -283,7 +283,7 @@ VK2D_API void vk2d::RenderTargetTexture::DrawTexture(
 }
 
 VK2D_API void vk2d::RenderTargetTexture::DrawMesh(
-	const Mesh						&	mesh,
+	const MeshBase					&	mesh,
 	const Transform					&	transformation
 )
 {
@@ -294,8 +294,8 @@ VK2D_API void vk2d::RenderTargetTexture::DrawMesh(
 }
 
 VK2D_API void vk2d::RenderTargetTexture::DrawMesh(
-	const Mesh						&	mesh,
-	const std::vector<Transform>		&	transformations
+	const MeshBase					&	mesh,
+	const std::vector<Transform>	&	transformations
 )
 {
 	std::vector<glm::mat4> transformation_matrices( std::size( transformations ) );
@@ -310,8 +310,8 @@ VK2D_API void vk2d::RenderTargetTexture::DrawMesh(
 }
 
 VK2D_API void vk2d::RenderTargetTexture::DrawMesh(
-	const Mesh						&	mesh,
-	const std::vector<glm::mat4>			&	transformations
+	const MeshBase					&	mesh,
+	const std::vector<glm::mat4>	&	transformations
 )
 {
 	impl->DrawMesh(
@@ -1391,7 +1391,7 @@ void vk2d::vk2d_internal::RenderTargetTextureImpl::DrawPointList(
 }
 
 void vk2d::vk2d_internal::RenderTargetTextureImpl::DrawMesh(
-	const Mesh							&	mesh,
+	const MeshBase						&	mesh,
 	const std::vector<glm::mat4>		&	transformations
 )
 {

@@ -460,7 +460,7 @@ VK2D_API void vk2d::Window::DrawTexture(
 }
 
 VK2D_API void vk2d::Window::DrawMesh(
-	const Mesh						&	mesh,
+	const MeshBase					&	mesh,
 	const Transform					&	transformation
 )
 {
@@ -471,7 +471,7 @@ VK2D_API void vk2d::Window::DrawMesh(
 }
 
 VK2D_API void vk2d::Window::DrawMesh(
-	const Mesh						&	mesh,
+	const MeshBase					&	mesh,
 	const std::vector<Transform>	&	transformations
 )
 {
@@ -487,7 +487,7 @@ VK2D_API void vk2d::Window::DrawMesh(
 }
 
 VK2D_API void vk2d::Window::DrawMesh(
-	const Mesh						&	mesh,
+	const MeshBase					&	mesh,
 	const std::vector<glm::mat4>	&	transformations
 )
 {
@@ -2604,7 +2604,7 @@ void vk2d::vk2d_internal::WindowImpl::DrawPointList(
 }
 
 void vk2d::vk2d_internal::WindowImpl::DrawMesh(
-	const Mesh						&	mesh,
+	const MeshBase							&	mesh,
 	const std::vector<glm::mat4>			&	transformations )
 {
 	VK2D_ASSERT_MAIN_THREAD( instance );

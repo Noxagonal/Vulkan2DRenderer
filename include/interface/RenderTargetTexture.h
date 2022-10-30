@@ -16,7 +16,7 @@
 namespace vk2d {
 
 class Sampler;
-class Mesh;
+class MeshBase;
 
 namespace vk2d_internal {
 
@@ -520,7 +520,7 @@ public:
 	/// @param[in]	transformations
 	///				Optional transformations to use when drawing the mesh.
 	VK2D_API void											DrawMesh(
-		const Mesh										&	mesh,
+		const MeshBase									&	mesh,
 		const Transform									&	transformations				= {} );
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -535,7 +535,7 @@ public:
 	///				An array of transformations to use when drawing the mesh. Number of transformations tells how many times to draw
 	///				this mesh using each transformation.
 	VK2D_API void											DrawMesh(
-		const Mesh										&	mesh,
+		const MeshBase									&	mesh,
 		const std::vector<Transform>					&	transformations );
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -550,7 +550,7 @@ public:
 	///				An array of transformation matrices to use when drawing the mesh. Number of transformations tells how many times
 	///				to draw this mesh using each transformation.
 	VK2D_API void											DrawMesh(
-		const Mesh										&	mesh,
+		const MeshBase									&	mesh,
 		const std::vector<glm::mat4>					&	transformations );
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

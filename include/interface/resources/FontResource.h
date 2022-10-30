@@ -3,28 +3,15 @@
 #include "core/Common.h"
 
 #include "interface/resources/ResourceBase.h"
+#include <types/MeshGenerators.hpp>
 
 #include <filesystem>
 
 namespace vk2d {
 
 class TextureResource;
-class Mesh;
 class FontResource;
-
-
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-VK2D_API Mesh					GenerateTextMesh(
-	FontResource			*	font,
-	glm::vec2					origin,
-	std::string					text,
-	float						kerning,
-	glm::vec2					scale,
-	bool						vertical,
-	uint32_t					font_face,
-	bool						wait_for_resource_load
-);
+class MeshBase;
 
 
 
@@ -51,16 +38,19 @@ class FontResource
 {
 	friend class vk2d_internal::ResourceManagerImpl;
 	friend class vk2d_internal::FontResourceImpl;
-	friend VK2D_API Mesh									GenerateTextMesh(
-		FontResource									*	font,
-		glm::vec2											origin,
-		std::string											text,
-		float												kerning,
-		glm::vec2											scale,
-		bool												vertical,
-		uint32_t											font_face,
-		bool												wait_for_resource
+
+	friend VK2D_API void vk2d::vk2d_internal::GenerateTextMeshImpl(
+		MeshBase		&	mesh,
+		FontResource	*	font,
+		glm::vec2			origin,
+		std::string			text,
+		float				kerning,
+		glm::vec2			scale,
+		bool				vertical,
+		uint32_t			font_face,
+		bool				wait_for_resource_load
 	);
+
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		This constructor is meant for internal use only.
