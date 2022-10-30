@@ -3,8 +3,13 @@
 
 
 
+#define USER_SHADER_MAIN_CALL
+#define USER_SHADER_INTERFACE_PARAMETERS(set_number)
+
+
+
 // Vertex.
-struct			Vertex {
+struct Vertex {
 	vec2		coords;
 	vec2		UVs;
 	vec4		color;
@@ -43,6 +48,8 @@ layout(std430, set=6, binding=0) readonly buffer	TextureChannelWeights {
 	float		ssbo[];
 } texture_channel_weights;
 
+USER_SHADER_INTERFACE_PARAMETERS(7)
+
 // Push constants.
 layout(std140, push_constant) uniform PushConstants {
 	uint		transformation_offset;			// Offset into the transformation buffer.
@@ -69,9 +76,8 @@ layout(location=0) out vec4 final_fragment_color;
 ////////////////////////////////////////////////////////////////
 uvec3 GetTriangleIndices()
 {
-	uvec3 indices;
 	uint index_ssbo_position	= gl_PrimitiveID * push_constants.index_count + push_constants.index_offset;
-	indices						= uvec3(
+	uvec3 indices				= uvec3(
 		index_buffer.ssbo[ index_ssbo_position + 0 ],
 		index_buffer.ssbo[ index_ssbo_position + 1 ],
 		index_buffer.ssbo[ index_ssbo_position + 2 ]
@@ -81,9 +87,8 @@ uvec3 GetTriangleIndices()
 
 uvec2 GetLineIndices()
 {
-	uvec2 indices;
 	uint index_ssbo_position	= gl_PrimitiveID * push_constants.index_count + push_constants.index_offset;
-	indices						= uvec2(
+	uvec2 indices				= uvec2(
 		index_buffer.ssbo[ index_ssbo_position + 0 ],
 		index_buffer.ssbo[ index_ssbo_position + 1 ]
 	);
@@ -262,6 +267,8 @@ void MultitexturedFragmentTriangleWithUVBorderColor()
 	vec3	vertex_weights		= CalculateTriangleWeights( vertices );
 	vec4	texture_color		= CalculateTriangleWeightedTextureColor( indices, vertex_weights );
 	final_fragment_color		= texture_color * fragment_input_color;
+
+	USER_SHADER_MAIN_CALL
 }
 
 
@@ -275,6 +282,8 @@ void MultitexturedFragmentTriangle()
 	vec3	vertex_weights		= CalculateTriangleWeights( vertices );
 	vec4	texture_color		= CalculateTriangleWeightedTextureColor( indices, vertex_weights );
 	final_fragment_color		= texture_color * fragment_input_color;
+
+	USER_SHADER_MAIN_CALL
 }
 
 
@@ -301,6 +310,8 @@ void MultitexturedFragmentLineWithUVBorderColor()
 	vec2	vertex_weights		= CalculateLineWeights( vertices );
 	vec4	texture_color		= CalculateLineWeightedTextureColor( indices, vertex_weights );
 	final_fragment_color		= texture_color * fragment_input_color;
+
+	USER_SHADER_MAIN_CALL
 }
 
 
@@ -314,6 +325,8 @@ void MultitexturedFragmentLine()
 	vec2	vertex_weights		= CalculateLineWeights( vertices );
 	vec4	texture_color		= CalculateLineWeightedTextureColor( indices, vertex_weights );
 	final_fragment_color		= texture_color * fragment_input_color;
+
+	USER_SHADER_MAIN_CALL
 }
 
 
@@ -337,6 +350,8 @@ void MultitexturedFragmentPointWithUVBorderColor()
 
 	vec4	texture_color		= CalculatePointWeightedTextureColor();
 	final_fragment_color		= texture_color * fragment_input_color;
+
+	USER_SHADER_MAIN_CALL
 }
 
 
@@ -347,4 +362,6 @@ void MultitexturedFragmentPoint()
 {
 	vec4	texture_color		= CalculatePointWeightedTextureColor();
 	final_fragment_color		= texture_color * fragment_input_color;
+
+	USER_SHADER_MAIN_CALL
 }

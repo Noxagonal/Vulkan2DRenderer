@@ -3,6 +3,11 @@
 
 
 
+#define USER_SHADER_MAIN_CALL
+#define USER_SHADER_INTERFACE_PARAMETERS(set_number)
+
+
+
 ////////////////////////////////////////////////////////////////
 // Shader program interface.
 ////////////////////////////////////////////////////////////////
@@ -16,6 +21,8 @@ layout(std140, set=4, binding=1) uniform			image_sampler_data {
 
 // Set 5: Texture
 layout(set=5, binding=0) uniform texture2DArray		sampled_image;
+
+USER_SHADER_INTERFACE_PARAMETERS(6)
 
 // Push constants.
 layout(std140, push_constant) uniform PushConstants {
@@ -60,6 +67,8 @@ void SingleTexturedFragmentWithUVBorderColor()
 
 	vec4	texture_color		= texture( sampler2DArray( sampled_image, image_sampler ), vec3( fragment_input_UV, float( fragment_input_texture_channel ) ) );
 	final_fragment_color		= texture_color * fragment_input_color;
+	
+	USER_SHADER_MAIN_CALL
 }
 
 
@@ -70,4 +79,6 @@ void SingleTexturedFragment()
 {
 	vec4	texture_color		= texture( sampler2DArray( sampled_image, image_sampler ), vec3( fragment_input_UV, float( fragment_input_texture_channel ) ) );
 	final_fragment_color		= texture_color * fragment_input_color;
+
+	USER_SHADER_MAIN_CALL
 }
