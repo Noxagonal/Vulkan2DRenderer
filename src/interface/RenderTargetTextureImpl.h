@@ -86,11 +86,13 @@ enum class RenderTargetTextureType
 
 
 
-// Render target implementation
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 class RenderTargetTextureImpl :
 	public TextureImpl
 {
 private:
+
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	struct SwapBuffer
 	{
 		CompleteImageResource								attachment_image							= {};	// Render attachment, Multisampled, 1 mip level
@@ -128,79 +130,175 @@ private:
 	};
 
 public:
+
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	RenderTargetTextureImpl(
 		RenderTargetTexture								*	my_interface,
 		InstanceImpl									*	instance,
 		const RenderTargetTextureCreateInfo				&	create_info );
 
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	~RenderTargetTextureImpl();
 
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	void													SetRenderCoordinateSpace(
 		RenderCoordinateSpace								coordinate_space );
 
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	void													SetSize(
-		glm::uvec2											new_size );
+		glm::uvec2											new_size
+	);
+
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	glm::uvec2												GetSize() const;
+
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	uint32_t												GetLayerCount() const;
 
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	uint32_t												GetCurrentSwapBuffer() const;
+
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	VkImage													GetVulkanImage() const;
+
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	VkImageView												GetVulkanImageView() const;
+
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	VkImageLayout											GetVulkanImageLayout() const;
+
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	VkFramebuffer											GetFramebuffer(
-		RenderTargetTextureDependencyInfo				&	dependency_info ) const;
+		RenderTargetTextureDependencyInfo				&	dependency_info
+	) const;
+
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	VkSemaphore												GetAllCompleteSemaphore(
-		RenderTargetTextureDependencyInfo				&	dependency_info ) const;
+		RenderTargetTextureDependencyInfo				&	dependency_info
+	) const;
 
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	uint64_t												GetRenderCounter(
-		RenderTargetTextureDependencyInfo				&	dependency_info ) const;
+		RenderTargetTextureDependencyInfo				&	dependency_info
+	) const;
 
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	bool													IsTextureDataReady();
 
-	// Begins the render operations. You must call this before using any drawing commands.
-	// For best performance you should calculate game logic first, when you're ready to draw
-	// call this function just before your first draw command.
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	/// @brief		Begins the render of the render target texture.
+	///
+	/// @see		vk2d::Window::BeginRender()
+	///
+	/// @return		true if successful, false if something went wrong.
 	bool													BeginRender();
 
-	// Ends the rendering operations. You must call this after you're done drawing.
-	// This will display the results on screen.
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	/// @brief		Ends the render of the render target texture.
+	///
+	/// @see		vk2d::Window::EndRender()
+	///
+	/// @return		true if successful, false if something went wrong.
 	bool													EndRender(
 		BlurType											blur_type,
 		glm::vec2											blur_amount );
 
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	bool													SynchronizeFrame();
+
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	bool													WaitIdle();
 
-	// Should be called once render is definitely going to happen. When this is called,
-	// SynchronizeFrame() will start blocking until the the contents of the
-	// RenderTargerTexture have been fully rendered. BeginRender() can be called however,
-	// it will swap the buffers so 2 renders can be queued, however third call to
-	// BeginRender() will be blocked until the first BeginRender() call has been rendered.
 	// TODO: Figure out how to best track render target texture commitments, a render target can be re-used in multiple places but should only be rendered once while at the same time submissions should be grouped together.
+
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	/// @brief		Signals that the render target texture is going to be rendered.
+	///
+	///				Should be called once render is definitely going to happen.
+	///
+	/// @note		Recursively commits the all render target textures that this render target texure depends on.
+	///
+	/// @note		When this is called, SynchronizeFrame() will start blocking until the the contents of the RenderTargerTexture
+	///				have been fully rendered. BeginRender() can be called however, it will swap the buffers so 2 renders can be
+	///				queued, however third call to BeginRender() will be blocked until the first BeginRender() call has been
+	///				rendered.
+	///
+	/// @param		dependency_info
+	///				Tells which part of the render target texture should be rendered.
+	/// 
+	/// @param		collector
+	///				List of render target textures that will be rendered.
+	///
+	/// @return 
 	bool													CommitRenderTargetTextureRender(
 		RenderTargetTextureDependencyInfo				&	dependency_info,
-		RenderTargetTextureRenderCollector				&	collector );
+		RenderTargetTextureRenderCollector				&	collector
+	);
 
-	// This notifies that the render target texture has been submitted to rendering.
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	/// @brief		This sets a flag that the render target texture has been submitted for render.
+	///
+	/// @note		Recursively sets the same flag for all render target textures that this render target texure depends on.
+	///
+	/// @param		dependency_info 
+	///				Tells which part of the render target texture should be confirmed.
 	void													ConfirmRenderTargetTextureRenderSubmission(
-		RenderTargetTextureDependencyInfo				&	dependency_info );
+		RenderTargetTextureDependencyInfo				&	dependency_info
+	);
 
-	// This notifies that the render target texture has been successfully rendered.
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	/// @brief		This sets a flag that the render target texture has been successfully rendered.
+	/// 
+	/// @note		Recursively sets the same flag for all render target textures that this render target texure depends on.
+	///
+	/// @param		dependency_info 
+	///				Tells which part of the render target texture has completed rendering.
 	void													ConfirmRenderTargetTextureRenderFinished(
-		RenderTargetTextureDependencyInfo				&	dependency_info );
+		RenderTargetTextureDependencyInfo				&	dependency_info
+	);
 
-	// In case something goes wrong, allows cancelling render commission.
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	/// @brief		Aborts render target texture rendering.
+	/// 
+	/// @note		Recursively clears render target from render queue for all render target textures that this render target
+	///				texure depends on.
+	///
+	/// @param		dependency_info 
+	///				Tells which part of the render target texture is aborted.
 	void													AbortRenderTargetTextureRender(
-		RenderTargetTextureDependencyInfo				&	dependency_info );
+		RenderTargetTextureDependencyInfo				&	dependency_info
+	);
 
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	/// @brief		Resets render target texture dependencies.
+	///
+	///				This is used at the end of the render to clear all dependencies. Once the render has completed, there's no need
+	///				to keep track of which render target texture depends on another.
+	///
+	/// @note		This is not a recursive operation.
+	///
+	/// @param		swap_buffer_index
+	///				Each swap buffer tracks it's own dependencies, this tells which swap buffer should be cleared of dependencies.
 	void													ResetRenderTargetTextureRenderDependencies(
-		uint32_t											swap_buffer_index );
+		uint32_t											swap_buffer_index
+	);
 
-	// Add child dependency, child render targets must render before this.
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	/// @brief		Add dependency to another render target texture if it isn't already added.
+	///
+	///				Added dependency is rendered before this render target texture.
+	/// 
+	/// @param		swap_buffer_index
+	///				Each swap buffer tracks it's own dependencies, this tells which swap buffer the dependency should be added to.
+	/// 
+	/// @param		texture
+	///				Handle to render target texture that must render before this render target texture.
 	void													CheckAndAddRenderTargetTextureDependency(
 		uint32_t											swap_buffer_index,
-		Texture											*	texture );
+		Texture											*	texture
+	);
 
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	RenderTargetTextureDependencyInfo						GetDependencyInfo();
 
 	void													DrawTriangleList(
@@ -210,7 +308,8 @@ public:
 		const std::vector<glm::mat4>					&	transformations,
 		bool												filled,
 		Texture											*	texture,
-		Sampler											*	sampler );
+		Sampler											*	sampler
+	);
 
 	void													DrawTriangleList(
 		const std::vector<uint32_t>						&	raw_indices,
@@ -219,7 +318,8 @@ public:
 		const std::vector<glm::mat4>					&	transformations,
 		bool												filled,
 		Texture											*	texture,
-		Sampler											*	sampler );
+		Sampler											*	sampler
+	);
 
 	void													DrawLineList(
 		const std::vector<VertexIndex_2>				&	indices,
@@ -228,7 +328,8 @@ public:
 		const std::vector<glm::mat4>					&	transformations,
 		Texture											*	texture,
 		Sampler											*	sampler,
-		float												line_width );
+		float												line_width
+	);
 
 	void													DrawLineList(
 		const std::vector<uint32_t>						&	raw_indices,
@@ -237,64 +338,72 @@ public:
 		const std::vector<glm::mat4>					&	transformations,
 		Texture											*	texture,
 		Sampler											*	sampler,
-		float												line_width );
+		float												line_width
+	);
 
 	void													DrawPointList(
 		const std::vector<Vertex>						&	vertices,
 		const std::vector<float>						&	texture_layer_weights,
 		const std::vector<glm::mat4>					&	transformations,
 		Texture											*	texture,
-		Sampler											*	sampler );
+		Sampler											*	sampler
+	);
 
 	void													DrawMesh(
 		const MeshBase									&	mesh,
-		const std::vector<glm::mat4>					&	transformations );
+		const std::vector<glm::mat4>					&	transformations
+	);
 
-	bool												IsGood() const;
+	bool													IsGood() const;
 
 private:
-	bool												DetermineType();
+	bool													DetermineType();
 
-	bool												CreateCommandBuffers();
-	void												DestroyCommandBuffers();
+	bool													CreateCommandBuffers();
+	void													DestroyCommandBuffers();
 
-	bool												CreateFrameDataBuffers();
-	void												DestroyFrameDataBuffers();
+	bool													CreateFrameDataBuffers();
+	void													DestroyFrameDataBuffers();
 
-	bool												CreateImages(
-		glm::uvec2										new_size );
-	void												DestroyImages();
+	bool													CreateImages(
+		glm::uvec2											new_size );
+	void													DestroyImages();
 
-	bool												CreateRenderPasses();
-	void												DestroyRenderPasses();
+	bool													CreateRenderPasses();
+	void													DestroyRenderPasses();
 
-	bool												CreateFramebuffers();
-	void												DestroyFramebuffers();
+	bool													CreateFramebuffers();
+	void													DestroyFramebuffers();
 
-	bool												CreateSynchronizationPrimitives();
-	void												DestroySynchronizationPrimitives();
+	bool													CreateSynchronizationPrimitives();
+	void													DestroySynchronizationPrimitives();
 
-	bool												RecordTransferCommandBuffer(
-		RenderTargetTextureImpl::SwapBuffer			&	swap );
+	bool													RecordTransferCommandBuffer(
+		RenderTargetTextureImpl::SwapBuffer				&	swap
+	);
 
-	bool												UpdateSubmitInfos(
-		RenderTargetTextureImpl::SwapBuffer			&	swap,
-		const std::vector<VkSemaphore>				&	wait_for_semaphores,
-		const std::vector<uint64_t>					&	wait_for_semaphore_timeline_values,
-		const std::vector<VkPipelineStageFlags>		&	wait_for_semaphore_pipeline_stages );
+	bool													UpdateSubmitInfos(
+		RenderTargetTextureImpl::SwapBuffer				&	swap,
+		const std::vector<VkSemaphore>					&	wait_for_semaphores,
+		const std::vector<uint64_t>						&	wait_for_semaphore_timeline_values,
+		const std::vector<VkPipelineStageFlags>			&	wait_for_semaphore_pipeline_stages
+	);
 
-	TimedDescriptorPoolData							&	GetOrCreateDescriptorSetForSampler(
-		Sampler										*	sampler );
+	TimedDescriptorPoolData								&	GetOrCreateDescriptorSetForSampler(
+		Sampler											*	sampler
+	);
 
-	TimedDescriptorPoolData							&	GetOrCreateDescriptorSetForTexture(
-		Texture										*	texture );
+	TimedDescriptorPoolData								&	GetOrCreateDescriptorSetForTexture(
+		Texture											*	texture
+	);
 
-	void												CmdPushBlurTextureDescriptorWritesDirectly(
-		VkCommandBuffer									command_buffer,
-		VkPipelineLayout								use_pipeline_layout,
-		uint32_t										set_index,
-		VkImageView										source_image,
-		VkImageLayout									source_image_layout );
+	void													CmdPushBlurTextureDescriptorWritesDirectly(
+		VkCommandBuffer										command_buffer,
+		VkPipelineLayout									use_pipeline_layout,
+		uint32_t											set_index,
+		VkImageView											source_image,
+		VkImageLayout										source_image_layout
+	);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Record commands to finalize render into the sampled image.
@@ -313,7 +422,8 @@ private:
 	void													CmdFinalizeRender(
 		RenderTargetTextureImpl::SwapBuffer				&	swap,
 		BlurType											blur_type,
-		glm::vec2											blur_amount );
+		glm::vec2											blur_amount
+	);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Record commands to copy an image to the final sampled image, then generate mipmaps for it.
@@ -343,7 +453,8 @@ private:
 		CompleteImageResource							&	source_image,
 		VkImageLayout										source_image_layout,
 		VkPipelineStageFlagBits								source_image_pipeline_barrier_src_stage,
-		CompleteImageResource							&	destination_image );
+		CompleteImageResource							&	destination_image
+	);
 
 	bool													CmdRecordBlurCommands(
 		RenderTargetTextureImpl::SwapBuffer				&	swap,
@@ -354,28 +465,34 @@ private:
 		VkImageLayout										source_image_layout,
 		VkPipelineStageFlagBits								source_image_pipeline_barrier_src_stage,
 		CompleteImageResource							&	intermediate_image,
-		CompleteImageResource							&	destination_image );
+		CompleteImageResource							&	destination_image
+	);
 
 	void													CmdBindGraphicsPipelineIfDifferent(
 		VkCommandBuffer										command_buffer,
-		const GraphicsPipelineSettings					&	pipeline_settings );
+		const GraphicsPipelineSettings					&	pipeline_settings
+	);
 
 	void													CmdBindSamplerIfDifferent(
 		VkCommandBuffer										command_buffer,
 		Sampler											*	sampler,
-		VkPipelineLayout									use_pipeline_layout );
+		VkPipelineLayout									use_pipeline_layout
+	);
 
 	void													CmdBindTextureIfDifferent(
 		VkCommandBuffer										command_buffer,
 		Texture											*	texture,
-		VkPipelineLayout									use_pipeline_layout );
+		VkPipelineLayout									use_pipeline_layout
+	);
 
 	void													CmdSetLineWidthIfDifferent(
 		VkCommandBuffer										command_buffer,
-		float												line_width );
+		float												line_width
+	);
 
 	bool													CmdUpdateFrameData(
-		VkCommandBuffer										command_buffer );
+		VkCommandBuffer										command_buffer
+	);
 
 	RenderTargetTexture									*	my_interface								= {};
 	InstanceImpl										*	instance									= {};
