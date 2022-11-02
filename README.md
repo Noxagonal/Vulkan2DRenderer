@@ -3,10 +3,7 @@
 
 :exclamation: This project is a work in progress (pre-alpha). Frequent API changes, ABI changes, crashes... :exclamation:
 
-Vulkan 2D Renderer is a C++17 library designed to be easy to use, high performance 2D rendering backend for realtime applications.
-You only need a few lines of code to create a window and display simple shapes.
-On the other hand you can create a variety of different effects using meshes and applying different modifiers to them.
-Internally workloads are automatically grouped to create more efficient submissions to the GPU and all resource loading and saving is multithreaded.
+Vulkan 2D Renderer is a C++20 library designed to be easy to use, high performance 2D rendering backend for realtime applications.
 
 ![latest screenshot](/screenshots/GaussianBlur.png)
 
@@ -20,8 +17,8 @@ Internally workloads are automatically grouped to create more efficient submissi
 ### Capabilities
 
 - Easily generate and draw simple shapes. ( Box, Circle, Pie... )
-- For more control you can also draw custom shapes direcly from vertex and index lists.
-- Transformations and transformation hierarchy.
+- For more control you can also create 2D meshes and define your own shapes.
+- Transformations and scene hierarchy.
 - Instanced rendering.
 - Multi-window support.
 - Mesh modifiers to warp and distort shapes.
