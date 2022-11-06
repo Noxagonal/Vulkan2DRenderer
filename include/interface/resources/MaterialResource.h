@@ -67,14 +67,17 @@ class PipelineResourceImplBase;
 //			using IsDrawType = std::true_type;
 //		};
 //		
+//		template<typename First, typename Second>
+//		concept TestTypes = requires {
+//			typename First::IsMeshType;
+//			typename Second::IsDrawType;
+//		};
+//		
 //		template<
 //			typename First,
 //			typename Second
 //		>
-//		requires(
-//			std::is_same_v<typename First::IsMeshType, std::true_type> &&
-//			std::is_same_v<typename Second::IsDrawType, std::true_type>
-//		)
+//			requires( TestTypes<First, Second> )
 //		class Test
 //		{};
 //		
@@ -88,12 +91,10 @@ class PipelineResourceImplBase;
 //		> {};
 //		
 //		int main() {
-//		
-//			Test<Mesh<int>, Draw<int>> a;
-//		
+//			Test<Mesh<float, float>, Draw<int>> a;
 //			return 0;
 //		}
-// 
+//
 
 
 
