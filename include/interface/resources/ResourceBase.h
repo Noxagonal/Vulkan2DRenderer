@@ -82,7 +82,8 @@ public:
 	/// @return		Status of the resource, see ResourceStatus.
 	///				Resource status can only be undetermined if timeout was given.
 	VK2D_API ResourceStatus									WaitUntilLoaded(
-		std::chrono::nanoseconds							timeout								= std::chrono::nanoseconds::max() );
+		std::chrono::nanoseconds							timeout								= std::chrono::nanoseconds::max()
+	);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Waits for the resource to load on the calling thread before continuing execution.
@@ -98,7 +99,8 @@ public:
 	/// 
 	/// @return		Status of the resource, see ResourceStatus.
 	VK2D_API ResourceStatus									WaitUntilLoaded(
-		std::chrono::steady_clock::time_point				timeout );
+		std::chrono::steady_clock::time_point				timeout
+	);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Get parent resource.

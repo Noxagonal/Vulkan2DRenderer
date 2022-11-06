@@ -23,7 +23,7 @@ public:
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Top left coordinate.
-	glm::vec<2, T, glm::packed_highp>		top_left			= {};
+	glm::vec<2, T, glm::packed_highp>				top_left			= {};
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Bottom right coordinates.
@@ -31,18 +31,20 @@ public:
 	///				This is not size but a coordinate on the same coordinate space as Rect2Base::top_left so this value can be
 	///				right of or above Rect2Base::top_left, depending on the situation this may be okay, in situations where
 	///				top left and bottom right order matters you can use Rect2Base::GetOrganized().
-	glm::vec<2, T, glm::packed_highp>		bottom_right		= {};
+	glm::vec<2, T, glm::packed_highp>				bottom_right		= {};
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Default constructor.
-	Rect2Base()										= default;
+	constexpr										Rect2Base() = default;
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Copy constructor.
 	/// 
 	/// @param		other
 	///				Copy contents from.
-	Rect2Base( const Rect2Base<T> & other )	= default;
+	constexpr										Rect2Base(
+		const Rect2Base<T>						&	other
+	) = default;
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Construct manually.
@@ -58,11 +60,11 @@ public:
 	/// 
 	/// @param[in]	y2
 	///				Bottom right: y
-	Rect2Base(
-		T x1,
-		T y1,
-		T x2,
-		T y2
+	constexpr										Rect2Base(
+		T											x1,
+		T											y1,
+		T											x2,
+		T											y2
 	) :
 		top_left( { x1, y1 } ), bottom_right( { x2, y2 } )
 	{}
@@ -75,7 +77,9 @@ public:
 	/// 
 	/// @param		bottom_right
 	///				Bottom left coordinates.
-	Rect2Base( glm::vec<2, T, glm::packed_highp> top_left, glm::vec<2, T, glm::packed_highp> bottom_right
+	constexpr										Rect2Base(
+		glm::vec<2, T, glm::packed_highp>			top_left,
+		glm::vec<2, T, glm::packed_highp>			bottom_right
 	) :
 		top_left( top_left ),
 		bottom_right( bottom_right )
@@ -88,7 +92,9 @@ public:
 	///				Copy contents from.
 	/// 
 	/// @return		Reference to this.
-	Rect2Base<T> & operator=( const Rect2Base<T> & other )	= default;
+	constexpr Rect2Base<T>						&	operator=(
+		const Rect2Base<T>						&	other
+	) = default;
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Move position of the rectangle by a vector.
@@ -100,7 +106,9 @@ public:
 	///				Vector telling where the resulting rectangle should be translated.
 	/// 
 	/// @return		A new rectangle.
-	Rect2Base<T> operator+( glm::vec<2, T, glm::packed_highp> other ) const
+	constexpr Rect2Base<T>							operator+(
+		glm::vec<2, T, glm::packed_highp>			other
+	) const
 	{
 		return { top_left + other, bottom_right + other };
 	}
@@ -116,7 +124,9 @@ public:
 	///				Vector telling where the resulting rectangle should be translated away from.
 	/// 
 	/// @return		A new rectangle.
-	Rect2Base<T> operator-( glm::vec<2, T, glm::packed_highp> other ) const
+	constexpr Rect2Base<T>							operator-(
+		glm::vec<2, T, glm::packed_highp>			other
+	) const
 	{
 		return { top_left - other, bottom_right - other };
 	}
@@ -131,7 +141,9 @@ public:
 	///				Vector telling where this rectangle should be translated.
 	/// 
 	/// @return		Reference to this.
-	Rect2Base<T> & operator+=( glm::vec<2, T, glm::packed_highp> other )
+	constexpr Rect2Base<T>						&	operator+=(
+		glm::vec<2, T, glm::packed_highp>			other
+	)
 	{
 		top_left += other;
 		bottom_right += other;
@@ -149,7 +161,9 @@ public:
 	///				Vector telling where this rectangle should be translated away from.
 	/// 
 	/// @return		Reference to this.
-	Rect2Base<T> & operator-=( glm::vec<2, T, glm::packed_highp> other )
+	constexpr Rect2Base<T>						&	operator-=(
+		glm::vec<2, T, glm::packed_highp>			other
+	)
 	{
 		top_left -= other;
 		bottom_right -= other;
@@ -163,7 +177,9 @@ public:
 	///				Other rectangle to test with.
 	/// 
 	/// @return		true if rectangles perfectly overlap, false otherwise.
-	bool operator==( Rect2Base<T> other )
+	constexpr bool									operator==(
+		Rect2Base<T>								other
+	)
 	{
 		return top_left == other.top_left && bottom_right == other.bottom_right;
 	}
@@ -175,7 +191,9 @@ public:
 	///				Other rectangle to test with.
 	/// 
 	/// @return		true if rectangles do not perfectly overlap, false if they do.
-	bool operator!=( Rect2Base<T> other )
+	constexpr bool									operator!=(
+		Rect2Base<T> other
+	)
 	{
 		return top_left != other.top_left || bottom_right != other.bottom_right;
 	}
@@ -188,7 +206,7 @@ public:
 	///				This value is the absolute size so it's never negative.
 	/// 
 	/// @return		Size of the rectangle in 2 dimensions.
-	glm::vec<2, T, glm::packed_highp> GetAreaSize()
+	constexpr glm::vec<2, T, glm::packed_highp>		GetAreaSize()
 	{
 		return { std::abs( bottom_right.x - top_left.x ), std::abs( bottom_right.y - top_left.y ) };
 	}
@@ -204,7 +222,9 @@ public:
 	/// 
 	/// @return		true if point is inside this rectangle, false if point is outside.
 	template<typename PointT>
-	bool IsPointInside( glm::vec<2, PointT, glm::packed_highp> point )
+	constexpr bool									IsPointInside(
+		glm::vec<2, PointT, glm::packed_highp>		point
+	)
 	{
 		if( T( point.x ) > top_left.x && T( point.x ) < bottom_right.x &&
 			T( point.y ) > top_left.y && T( point.y ) < bottom_right.y ) {
@@ -220,7 +240,7 @@ public:
 	///				always be top left of "bottom right".
 	/// 
 	/// @return		New organized rectangle.
-	Rect2Base<T> GetOrganized()
+	constexpr Rect2Base<T>							GetOrganized()
 	{
 		Rect2Base<T> ret = *this;
 		if( ret.bottom_right.x < ret.top_left.x ) std::swap( ret.bottom_right.x, ret.top_left.x );

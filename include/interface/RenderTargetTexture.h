@@ -76,7 +76,8 @@ class RenderTargetTexture :
 	///				Reference to RenderTargetTextureCreateInfo object defining parameters for this render target texture.
 	VK2D_API												RenderTargetTexture(
 		vk2d_internal::InstanceImpl						&	instance,
-		const RenderTargetTextureCreateInfo				&	create_info );
+		const RenderTargetTextureCreateInfo				&	create_info
+	);
 
 public:
 
@@ -93,7 +94,8 @@ public:
 	/// @param[in]	coordinate_space
 	///				Coordinate space to switch to.
 	VK2D_API void											SetRenderCoordinateSpace(
-		RenderCoordinateSpace								coordinate_space );
+		RenderCoordinateSpace								coordinate_space
+	);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Sets the texel size of the render target texture.
@@ -114,7 +116,8 @@ public:
 	/// @param[in]	new_size
 	///				New texel size of this render target texture.
 	VK2D_API void											SetSize(
-		glm::uvec2											new_size );
+		glm::uvec2											new_size
+	);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Gets the texel size of the render target texture.
@@ -188,7 +191,8 @@ public:
 	/// @return		true on success, false if something went wrong.
 	VK2D_API bool											EndRender(
 		glm::vec2											blur_amount					= {},
-		BlurType											blur_type					= BlurType::GAUSSIAN );
+		BlurType											blur_type					= BlurType::GAUSSIAN
+	);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Draw triangles directly.
@@ -237,7 +241,8 @@ public:
 		const std::vector<glm::mat4>					&	transformations				= {},
 		bool												filled						= true,
 		Texture											*	texture						= nullptr,
-		Sampler											*	sampler						= nullptr );
+		Sampler											*	sampler						= nullptr
+	);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Draw lines directly.
@@ -287,7 +292,8 @@ public:
 		const std::vector<glm::mat4>					&	transformations				= {},
 		Texture											*	texture						= nullptr,
 		Sampler											*	sampler						= nullptr,
-		float												line_width					= 1.0f );
+		float												line_width					= 1.0f
+	);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Draw points directly.
@@ -328,7 +334,8 @@ public:
 		const std::vector<float>						&	texture_layer_weights,
 		const std::vector<glm::mat4>					&	transformations				= {},
 		Texture											*	texture						= nullptr,
-		Sampler											*	sampler						= nullptr );
+		Sampler											*	sampler						= nullptr
+	);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Draw a simple point with a color and size.
@@ -350,7 +357,8 @@ public:
 	VK2D_API void											DrawPoint(
 		glm::vec2											location,
 		Colorf												color						= { 1.0f, 1.0f, 1.0f, 1.0f },
-		float												size						= 1.0f );
+		float												size						= 1.0f
+	);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Draw a simple line with a color and size.
@@ -373,7 +381,8 @@ public:
 		glm::vec2											point_1,
 		glm::vec2											point_2,
 		Colorf												color						= { 1.0f, 1.0f, 1.0f, 1.0f },
-		float												line_width					= 1.0f );
+		float												line_width					= 1.0f
+	);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Draw a rectangle directly into the render target texture.
@@ -391,7 +400,8 @@ public:
 	VK2D_API void											DrawRectangle(
 		Rect2f												area,
 		bool												filled						= true,
-		Colorf												color						= { 1.0f, 1.0f, 1.0f, 1.0f } );
+		Colorf												color						= { 1.0f, 1.0f, 1.0f, 1.0f }
+	);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Draw an ellipse/circle directly into the render target texture.
@@ -415,7 +425,8 @@ public:
 		Rect2f												area,
 		bool												filled						= true,
 		float												edge_count					= 64.0f,
-		Colorf												color						= { 1.0f, 1.0f, 1.0f, 1.0f } );
+		Colorf												color						= { 1.0f, 1.0f, 1.0f, 1.0f }
+	);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Draw an ellipse/circle pie directly into the render target texture.
@@ -450,7 +461,8 @@ public:
 		float												coverage,
 		bool												filled						= true,
 		float												edge_count					= 64.0f,
-		Colorf												color						= { 1.0f, 1.0f, 1.0f, 1.0f } );
+		Colorf												color						= { 1.0f, 1.0f, 1.0f, 1.0f }
+	);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Draw a rectangular pie directly into the render target texture.
@@ -480,7 +492,8 @@ public:
 		float												begin_angle_radians,
 		float												coverage,
 		bool												filled						= true,
-		Colorf												color						= { 1.0f, 1.0f, 1.0f, 1.0f } );
+		Colorf												color						= { 1.0f, 1.0f, 1.0f, 1.0f }
+	);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Draw texture into the render target texture using the actual size of the texture.
@@ -507,7 +520,8 @@ public:
 	VK2D_API void											DrawTexture(
 		glm::vec2											top_left,
 		Texture											*	texture,
-		Colorf												color						= { 1.0f, 1.0f, 1.0f, 1.0f } );
+		Colorf												color						= { 1.0f, 1.0f, 1.0f, 1.0f }
+	);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Draw a mesh object with single optional transform.
@@ -521,7 +535,8 @@ public:
 	///				Optional transformations to use when drawing the mesh.
 	VK2D_API void											DrawMesh(
 		const MeshBase									&	mesh,
-		const Transform									&	transformations				= {} );
+		const Transform									&	transformations				= {}
+	);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Draw one or more instances of a single mesh object using transforms.
@@ -536,7 +551,8 @@ public:
 	///				this mesh using each transformation.
 	VK2D_API void											DrawMesh(
 		const MeshBase									&	mesh,
-		const std::vector<Transform>					&	transformations );
+		const std::vector<Transform>					&	transformations
+	);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Draw one or more instances of a single mesh object using transformation matrices.
@@ -551,7 +567,8 @@ public:
 	///				to draw this mesh using each transformation.
 	VK2D_API void											DrawMesh(
 		const MeshBase									&	mesh,
-		const std::vector<glm::mat4>					&	transformations );
+		const std::vector<glm::mat4>					&	transformations
+	);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Checks if the object is good to be used or if a failure occurred in it's creation.

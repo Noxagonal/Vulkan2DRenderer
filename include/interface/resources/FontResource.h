@@ -155,7 +155,8 @@ public:
 	/// 
 	/// @return		Status of the resource, see ResourceStatus.
 	VK2D_API ResourceStatus									WaitUntilLoaded(
-		std::chrono::steady_clock::time_point				timeout );
+		std::chrono::steady_clock::time_point				timeout
+	);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Calculate how much space a given text string would occupy if it was rendered.
@@ -190,7 +191,8 @@ public:
 		glm::vec2											scale								= glm::vec2( 1.0f, 1.0f ),
 		bool												vertical							= false,
 		uint32_t											font_face							= 0,
-		bool												wait_for_resource_load				= true );
+		bool												wait_for_resource_load				= true
+	);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		VK2D class object checker function.

@@ -59,7 +59,8 @@ public:
 	/// @return		Handle to newly created texture resource you can use when rendering.
 	VK2D_API TextureResource								*	CreateTextureResource(
 		glm::uvec2												size,
-		const std::vector<Color8>							&	texels );
+		const std::vector<Color8>							&	texels
+	);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Load a single layer texture resource from a file.
@@ -104,7 +105,8 @@ public:
 	///
 	/// @return		Handle to newly created texture resource you can use when rendering.
 	VK2D_API TextureResource								*	LoadTextureResource(
-		const std::filesystem::path							&	file_path );
+		const std::filesystem::path							&	file_path
+	);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Create a multi-layer texture resource from data.
@@ -128,7 +130,8 @@ public:
 	/// @return		Handle to newly created texture resource you can use when rendering.
 	VK2D_API TextureResource								*	CreateArrayTextureResource(
 		glm::uvec2												size,
-		const std::vector<const std::vector<Color8>*>		&	texels_listing );
+		const std::vector<const std::vector<Color8>*>		&	texels_listing
+	);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Load a multi-layer texture resource from files.
@@ -146,7 +149,8 @@ public:
 	/// 
 	/// @return		Handle to newly created texture resource you can use when rendering.
 	VK2D_API TextureResource								*	LoadArrayTextureResource(
-		const std::vector<std::filesystem::path>			&	file_path_listing );
+		const std::vector<std::filesystem::path>			&	file_path_listing
+	);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Load a font resource from file.
@@ -204,7 +208,8 @@ public:
 		uint32_t												glyph_texel_size			= 32,
 		bool													use_alpha					= true,
 		uint32_t												fallback_character			= '*',
-		uint32_t												glyph_atlas_padding			= 8 );
+		uint32_t												glyph_atlas_padding			= 8
+	);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Destroy a resource.
@@ -220,7 +225,8 @@ public:
 	///				Pointer to Resource to destroy. After this the resource is no longer valid and trying to use it will crash
 	///				your application.
 	VK2D_API void												DestroyResource(
-		ResourceBase										*	resource );
+		ResourceBase										*	resource
+	);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Checks if the object is good to be used or if a failure occurred in it's creation.

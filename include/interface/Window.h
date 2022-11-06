@@ -345,7 +345,8 @@ class Monitor {
 	/// @param[in]	preconstructed_impl
 	///				This is the actual implementation details given to this interface by VK2D.
 	VK2D_API Monitor(
-		std::unique_ptr<vk2d_internal::MonitorImpl>	&&	preconstructed_impl );
+		std::unique_ptr<vk2d_internal::MonitorImpl>	&&	preconstructed_impl
+	);
 
 public:
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -364,14 +365,16 @@ public:
 	/// 
 	/// @note		Multithreading: Main thread only.
 	VK2D_API Monitor(
-		const Monitor									&	other );
+		const Monitor									&	other
+	);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Move constructor.
 	/// 
 	/// @note		Multithreading: Main thread only.
 	VK2D_API Monitor(
-		Monitor											&&	other ) noexcept;
+		Monitor											&&	other
+	);
 
 	/// @note		Multithreading: Main thread only.
 	VK2D_API ~Monitor();
@@ -405,7 +408,8 @@ public:
 	/// @param[in]	gamma
 	///				Value greater than 0.0. Default/original gamma value is 1.0 which produces linear gamma.
 	VK2D_API void										SetGamma(
-		float											gamma );
+		float											gamma
+	);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Get monitor gamma ramp.
@@ -430,15 +434,18 @@ public:
 	///				node is maximum brightness. Number of gamma ramp nodes must be 2 or more. Values inbetween nodes are
 	///				automatically linearly interpolated so number of nodes only effects quality of the gamma ramp.
 	VK2D_API void										SetGammaRamp(
-		const std::vector<GammaRampNode>			&	ramp );
+		const std::vector<GammaRampNode>			&	ramp
+	);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	VK2D_API Monitor								&	operator=(
-		const Monitor								&	other );
+		const Monitor								&	other
+	);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	VK2D_API Monitor								&	operator=(
-		Monitor										&&	other )							noexcept;
+		Monitor										&&	other
+	);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Checks if the object is good to be used or if a failure occurred in it's creation.
@@ -496,7 +503,8 @@ class Cursor {
 	VK2D_API Cursor(
 		vk2d_internal::InstanceImpl			&	instance,
 		const std::filesystem::path			&	image_path,
-		glm::ivec2								hot_spot );
+		glm::ivec2								hot_spot
+	);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Constructor. This object should not be directly constructed
@@ -523,7 +531,8 @@ class Cursor {
 		vk2d_internal::InstanceImpl			&	instance,
 		glm::uvec2								image_size,
 		const std::vector<Color8>			&	image_data,
-		glm::ivec2								hot_spot );
+		glm::ivec2								hot_spot
+	);
 
 public:
 
@@ -532,14 +541,16 @@ public:
 	/// 
 	/// @note		Multithreading: Main thread only.
 	VK2D_API Cursor(
-		Cursor								&	other );
+		Cursor								&	other
+	);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Move constructor.
 	/// 
 	/// @note		Multithreading: Main thread only.
 	VK2D_API Cursor(
-		Cursor								&&	other )								noexcept;
+		Cursor								&&	other
+	);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @note		Multithreading: Main thread only.
@@ -550,14 +561,16 @@ public:
 	/// 
 	/// @note		Multithreading: Main thread only.
 	VK2D_API Cursor							&	operator=(
-		Cursor								&	other );
+		Cursor								&	other
+	);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Move operator.
 	/// 
 	/// @note		Multithreading: Main thread only.
 	VK2D_API Cursor							&	operator=(
-		Cursor								&&	other )								noexcept;
+		Cursor								&&	other
+	);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Get cursor image texel size.
@@ -622,7 +635,8 @@ private:
 	///				Window creation parameters.
 	VK2D_API Window(
 		vk2d_internal::InstanceImpl				&	instance,
-		const WindowCreateInfo					&	window_create_info );
+		const WindowCreateInfo					&	window_create_info
+	);
 
 public:
 
@@ -673,7 +687,8 @@ public:
 	///				otherwise. Note that not all formats can save transparency, in which case this parameter is ignored.
 	VK2D_API void									TakeScreenshotToFile(
 		const std::filesystem::path				&	save_path,
-		bool										include_alpha				= false );
+		bool										include_alpha				= false
+	);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Takes a screenshot of the next image that will be rendered and saves it into a memory.
@@ -686,7 +701,8 @@ public:
 	///				Include transparency of the scene in the saved image. true if you want transparency channel included, false if
 	///				you want transparency channel set to opaque.
 	VK2D_API void									TakeScreenshotToData(
-		bool										include_alpha);
+		bool										include_alpha
+	);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Sets focus to this window.
@@ -704,7 +720,8 @@ public:
 	/// @param[in]	opacity
 	///				Value between 0.0 and 1.0 where 0.0 is completely transparent and 1.0 is completely opaque.
 	VK2D_API void									SetOpacity(
-		float										opacity );
+		float										opacity
+	);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Gets the current opacity of this window.
@@ -724,7 +741,8 @@ public:
 	/// @param[in]	hidden
 	///				true to hide the window, false to un-hide.
 	VK2D_API void									Hide(
-		bool										hidden );
+		bool										hidden
+	);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Gets the hidden status of the window.
@@ -739,7 +757,8 @@ public:
 	/// @param[in]	disable_events
 	///				true to disable all events, false to enable all events.
 	VK2D_API void									DisableEvents(
-		bool										disable_events );
+		bool										disable_events
+	);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Checks if events are enabled or disabled.
@@ -764,7 +783,8 @@ public:
 	///				Target refresh rate of the monitor when entering fullscreen mode. Ignored when entering windowed mode.
 	VK2D_API void									SetFullscreen(
 		Monitor									*	monitor,
-		uint32_t									frequency );
+		uint32_t									frequency
+	);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Checks if we're in fullscreen or windowed mode.
@@ -790,7 +810,8 @@ public:
 	/// @param[in]	new_position
 	///				New mouse cursor position. This changes the position of the OS or the "hardware" cursor.
 	VK2D_API void									SetCursorPosition(
-		glm::dvec2									new_position );
+		glm::dvec2									new_position
+	);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Sets the OS or "hardware" cursor image to something else.
@@ -800,7 +821,8 @@ public:
 	/// @param[in]	cursor
 	///				A pointer to cursor object to use from now on while the OS cursor is located inside this window.
 	VK2D_API void									SetCursor(
-		Cursor									*	cursor );
+		Cursor									*	cursor
+	);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Get last contents of the OS clipboard if it's a string.
@@ -822,7 +844,8 @@ public:
 	/// @param[in]	str
 	///				Text to send to the OS clipboard.
 	VK2D_API void									SetClipboardString(
-		const std::string						&	str );
+		const std::string						&	str
+	);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Set window title that shows up on the title bar of the window.
@@ -832,7 +855,8 @@ public:
 	/// @param[in]	title
 	///				New title text of the window.
 	VK2D_API void									SetTitle(
-		const std::string						&	title );
+		const std::string						&	title
+	);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Gets title of the window.
@@ -876,7 +900,8 @@ public:
 	///					</tr>
 	///				</table>
 	VK2D_API void									SetIcon(
-		const std::vector<std::filesystem::path>&	image_paths );
+		const std::vector<std::filesystem::path>&	image_paths
+	);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Sets window position on the virtual screen space.
@@ -888,7 +913,8 @@ public:
 	///				setup and the desktop is set to be continuous from one monitor to the next, the window coordinates determine in
 	///				which monitor the window will appear, this depends on the user's monitor setup however.
 	VK2D_API void									SetPosition(
-		glm::ivec2									new_position );
+		glm::ivec2									new_position
+	);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Get window current position on the virtual screen space.
@@ -911,7 +937,8 @@ public:
 	/// @param[in]	new_size
 	///				New size of the window.
 	VK2D_API void									SetSize(
-		glm::uvec2									new_size );
+		glm::uvec2									new_size
+	);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Get content/framebuffer size of the window.
@@ -929,7 +956,8 @@ public:
 	/// @param[in]	minimized
 	///				true if window should be iconified, false if restored from iconified state.
 	VK2D_API void									Iconify(
-		bool										minimized );
+		bool										minimized
+	);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Checks if the window is currently iconified.
@@ -952,7 +980,8 @@ public:
 	/// @param[in]	maximized
 	///				true if you wish to maximize the window, false if you want floating window.
 	VK2D_API void									SetMaximized(
-		bool										maximized );
+		bool										maximized
+	);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Gets the maximized status.
@@ -974,7 +1003,8 @@ public:
 	/// @param[in]	new_state
 	///				New state of the cursor to be used from now on.
 	VK2D_API void									SetCursorState(
-		CursorState									new_state );
+		CursorState									new_state
+	);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Returns the current state of the cursor, either normal, hidden, or constrained.
@@ -1028,7 +1058,8 @@ public:
 	/// @param[in]	coordinate_space
 	///				Coordinate space to switch to.
 	VK2D_API void									SetRenderCoordinateSpace(
-		RenderCoordinateSpace						coordinate_space );
+		RenderCoordinateSpace						coordinate_space
+	);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Draw triangles directly.
@@ -1064,7 +1095,8 @@ public:
 		const std::vector<glm::mat4>			&	transformations				= {},
 		bool										filled						= true,
 		Texture									*	texture						= nullptr,
-		Sampler									*	sampler						= nullptr );
+		Sampler									*	sampler						= nullptr
+	);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Draws lines directly.
@@ -1097,7 +1129,8 @@ public:
 		const std::vector<glm::mat4>			&	transformations				= {},
 		Texture									*	texture						= nullptr,
 		Sampler									*	sampler						= nullptr,
-		float										line_width					= 1.0f );
+		float										line_width					= 1.0f
+	);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Draws points directly.
@@ -1125,7 +1158,8 @@ public:
 		const std::vector<float>				&	texture_layer_weights,
 		const std::vector<glm::mat4>			&	transformations				= {},
 		Texture									*	texture						= nullptr,
-		Sampler									*	sampler						= nullptr );
+		Sampler									*	sampler						= nullptr
+	);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Draws an individual point.
@@ -1146,7 +1180,8 @@ public:
 	VK2D_API void									DrawPoint(
 		glm::vec2									location,
 		Colorf										color						= { 1.0f, 1.0f, 1.0f, 1.0f },
-		float										size						= 1.0f );
+		float										size						= 1.0f
+	);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Draws an individual line.
@@ -1168,7 +1203,8 @@ public:
 		glm::vec2									point_1,
 		glm::vec2									point_2,
 		Colorf										color						= { 1.0f, 1.0f, 1.0f, 1.0f },
-		float										line_width					= 1.0f );
+		float										line_width					= 1.0f
+	);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Draws a rectangle.
@@ -1187,7 +1223,8 @@ public:
 	VK2D_API void									DrawRectangle(
 		Rect2f										area,
 		bool										filled						= true,
-		Colorf										color						= { 1.0f, 1.0f, 1.0f, 1.0f } );
+		Colorf										color						= { 1.0f, 1.0f, 1.0f, 1.0f }
+	);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Draws an ellipse or a circle.
@@ -1211,7 +1248,8 @@ public:
 		Rect2f										area,
 		bool										filled						= true,
 		float										edge_count					= 64.0f,
-		Colorf										color						= { 1.0f, 1.0f, 1.0f, 1.0f } );
+		Colorf										color						= { 1.0f, 1.0f, 1.0f, 1.0f }
+	);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Draws an ellipse or a circle that has a "slice" cut out, similar to pie graphs.
@@ -1244,7 +1282,8 @@ public:
 		float										coverage,
 		bool										filled						= true,
 		float										edge_count					= 64.0f,
-		Colorf										color						= { 1.0f, 1.0f, 1.0f, 1.0f } );
+		Colorf										color						= { 1.0f, 1.0f, 1.0f, 1.0f }
+	);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Draw a rectangular pie, similar to drawing a rectangle but which has a pie slice cut out.
@@ -1271,7 +1310,8 @@ public:
 		float										begin_angle_radians,
 		float										coverage,
 		bool										filled						= true,
-		Colorf										color						= { 1.0f, 1.0f, 1.0f, 1.0f } );
+		Colorf										color						= { 1.0f, 1.0f, 1.0f, 1.0f }
+	);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Draws a rectangle with texture and use the size of the texture to determine size of the rectangle.
@@ -1292,7 +1332,8 @@ public:
 	VK2D_API void									DrawTexture(
 		glm::vec2									location,
 		Texture									*	texture,
-		Colorf										color						= { 1.0f, 1.0f, 1.0f, 1.0f } );
+		Colorf										color						= { 1.0f, 1.0f, 1.0f, 1.0f }
+	);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Draws Mesh which contains all information needed for the render.
@@ -1311,7 +1352,8 @@ public:
 	///				Draw using transformation.
 	VK2D_API void									DrawMesh(
 		const MeshBase							&	mesh,
-		const Transform							&	transformations				= {} );
+		const Transform							&	transformations				= {}
+	);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Draws Mesh which contains all information needed for the render.
@@ -1332,7 +1374,8 @@ public:
 	///				instanced rendering.
 	VK2D_API void									DrawMesh(
 		const MeshBase							&	mesh,
-		const std::vector<Transform>			&	transformation );
+		const std::vector<Transform>			&	transformation
+	);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Draws Mesh which contains all information needed for the render.
@@ -1353,7 +1396,8 @@ public:
 	///				instanced rendering.
 	VK2D_API void									DrawMesh(
 		const MeshBase							&	mesh,
-		const std::vector<glm::mat4>			&	transformations );
+		const std::vector<glm::mat4>			&	transformations
+	);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Checks if the object is good to be used or if a failure occurred in it's creation.
@@ -1403,7 +1447,8 @@ public:
 	///				Where the window moved to.
 	virtual void								EventWindowPosition(
 		Window								&	window,
-		glm::ivec2								position )
+		glm::ivec2								position
+	)
 	{};
 
 	/// @brief		Window size changed.
@@ -1413,7 +1458,8 @@ public:
 	///				what's the new size of the window.
 	virtual void								EventWindowSize(
 		Window								&	window,
-		glm::uvec2								size )
+		glm::uvec2								size
+	)
 	{};
 
 	/// @brief		Window wants to close when this event runs, either the user pressed the "X", the OS
@@ -1424,7 +1470,8 @@ public:
 	/// @param[in]	window
 	///				Window that should be closed.
 	virtual void								EventWindowClose(
-		Window								&	window )
+		Window								&	window
+	)
 	{
 		window.CloseWindow();
 	};
@@ -1435,7 +1482,8 @@ public:
 	/// @param[in]	window
 	///				Window that refreshed itself.
 	virtual void								EventWindowRefresh(
-		Window								&	window )
+		Window								&	window
+	)
 	{};
 
 	/// @brief		Window gained or lost focus. Ie. Became topmost window, or lost the topmost position.
@@ -1445,7 +1493,8 @@ public:
 	///				true if the window became topmost, false if it lost the topmost position.
 	virtual void								EventWindowFocus(
 		Window								&	window,
-		bool									focused )
+		bool									focused
+	)
 	{};
 
 	/// @brief		Window was iconified to the taskbar or recovered from there.
@@ -1455,7 +1504,8 @@ public:
 	///				true if the window was iconified, false if recovered from taskbar.
 	virtual void								EventWindowIconify(
 		Window								&	window,
-		bool									iconified )
+		bool									iconified
+	)
 	{};
 
 	/// @brief		Window was maximized or recovered from maximized state.
@@ -1465,7 +1515,8 @@ public:
 	///				true if maximized or false if recevered from maximized state.
 	virtual void								EventWindowMaximize(
 		Window								&	window,
-		bool									maximized )
+		bool									maximized
+	)
 	{};
 
 
@@ -1482,7 +1533,8 @@ public:
 		Window								&	window,
 		MouseButton								button,
 		ButtonAction							action,
-		ModifierKeyFlags						modifier_keys )
+		ModifierKeyFlags						modifier_keys
+	)
 	{};
 
 	/// @brief		Mouse moved to a new position on the window.
@@ -1492,7 +1544,8 @@ public:
 	///				Tells the new mouse position.
 	virtual void								EventCursorPosition(
 		Window								&	window,
-		glm::dvec2								position )
+		glm::dvec2								position
+	)
 	{};
 
 	/// @brief		Mouse cursor moved on top of the window area, or left it.
@@ -1502,7 +1555,8 @@ public:
 	///				true if entered, false if cursor left the window area.
 	virtual void								EventCursorEnter(
 		Window								&	window,
-		bool									entered )
+		bool									entered
+	)
 	{};
 
 	/// @brief		Mouse wheel was scrolled.
@@ -1514,7 +1568,8 @@ public:
 	///				scrolling is reported in the Y axis, sideways movement in the X axis.
 	virtual void								EventScroll(
 		Window								&	window,
-		glm::ivec2								scroll )
+		glm::ivec2								scroll
+	)
 	{};
 
 	/// @brief		Keyboard button was pressed, released or kepth down (repeating).
@@ -1533,7 +1588,8 @@ public:
 		KeyboardButton							button,
 		int32_t									scancode,
 		ButtonAction							action,
-		ModifierKeyFlags						modifier_keys )
+		ModifierKeyFlags						modifier_keys
+	)
 	{};
 
 	/// @brief		Text input event, use this if you want to know the character that was received from
@@ -1549,7 +1605,8 @@ public:
 	virtual void								EventCharacter(
 		Window								&	window,
 		uint32_t								character,
-		ModifierKeyFlags						modifier_keys )
+		ModifierKeyFlags						modifier_keys
+	)
 	{};
 
 
@@ -1560,7 +1617,8 @@ public:
 	///				List of file paths.
 	virtual void								EventFileDrop(
 		Window								&	window,
-		std::vector<std::filesystem::path>		files )
+		std::vector<std::filesystem::path>		files
+	)
 	{};
 
 	/// @brief		Screenshot event, called when screenshot was successfully saved to disk
@@ -1586,7 +1644,8 @@ public:
 		const std::filesystem::path			&	screenshot_path,
 		const ImageData						&	screenshot_data,
 		bool									success,
-		const std::string					&	error_message )
+		const std::string					&	error_message
+	)
 	{};
 };
 

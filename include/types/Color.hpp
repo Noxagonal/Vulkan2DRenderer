@@ -26,11 +26,11 @@ public:
 	T b			= {};
 	T a			= {};
 
-	constexpr ColorBase()									= default;
+	constexpr							ColorBase() = default;
 
 	template<typename OtherT>
-	constexpr ColorBase(
-		const ColorBase<OtherT> & other
+	constexpr							ColorBase(
+		const ColorBase<OtherT>		&	other
 	)
 	{
 		*this = other;
@@ -46,7 +46,12 @@ public:
 	//	b = ( s >= 3 ) ? *e++ : T{};
 	//	a = ( s >= 4 ) ? *e++ : T{};
 	//}
-	constexpr ColorBase( T r, T g, T b, T a ) :
+	constexpr							ColorBase(
+		T								r,
+		T								g,
+		T								b,
+		T								a
+	) :
 		r( r ),
 		g( g ),
 		b( b ),
@@ -54,7 +59,9 @@ public:
 	{};
 
 	template<typename OtherT>
-	constexpr ColorBase<T> & operator=( const ColorBase<T> & other )
+	constexpr ColorBase<T>			&	operator=(
+		const ColorBase<T>			&	other
+	)
 	{
 		if constexpr( std::is_same_v<T, OtherT> ) {
 			r = other.r;
@@ -81,7 +88,9 @@ public:
 	///				Other color to multiply this with.
 	/// @return		Itself with multiplied color value.
 	template<typename OtherT>
-	constexpr ColorBase<T> & operator+=( const ColorBase<OtherT> & other )
+	constexpr ColorBase<T>			&	operator+=(
+		const ColorBase<OtherT>		&	other
+	)
 	{
 		auto other_converted = ConvertTo<T>( other );
 		r += T( other_converted.r );
@@ -104,7 +113,9 @@ public:
 	/// 
 	/// @return		Itself with multiplied color value.
 	template<typename OtherT>
-	constexpr ColorBase<T> & operator*=( const ColorBase<OtherT> & other )
+	constexpr ColorBase<T>			&	operator*=(
+		const ColorBase<OtherT>		&	other
+	)
 	{
 		auto other_converted = ConvertTo<T>( other );
 		r = T( r * other_converted.r );
@@ -126,7 +137,9 @@ public:
 	///				Other color to multiply this with.
 	/// @return		Itself with multiplied color value.
 	template<typename OtherT>
-	constexpr ColorBase<T> operator+( const ColorBase<OtherT> & other )
+	constexpr ColorBase<T>				operator+(
+		const ColorBase<OtherT>		&	other
+	)
 	{
 		ColorBase<T> ret = *this;
 		ret += other;
@@ -148,7 +161,9 @@ public:
 	/// 
 	/// @return		New multiplied color value.
 	template<typename OtherT>
-	constexpr ColorBase<T> operator*( const ColorBase<OtherT> & other )
+	constexpr ColorBase<T>				operator*(
+		const ColorBase<OtherT>		&	other
+	)
 	{
 		ColorBase<T> ret = *this;
 		ret *= other;
@@ -178,7 +193,9 @@ public:
 	/// 
 	/// @return		New alpha blended color between this and other.
 	template<typename OtherT>
-	constexpr ColorBase<T> BlendUsingAlpha( const ColorBase<OtherT> & other )
+	constexpr ColorBase<T>				BlendUsingAlpha(
+		const ColorBase<OtherT>		&	other
+	)
 	{
 		auto this_floating = ConvertTo<double>( *this );
 		auto other_floating = ConvertTo<double>( other );
@@ -220,7 +237,10 @@ public:
 	/// 
 	/// @return		A new linearly interpolated color value between this and other.
 	template<typename OtherT>
-	constexpr ColorBase<T> BlendLinear( const ColorBase<OtherT> & other, double amount )
+	constexpr ColorBase<T>				BlendLinear(
+		const ColorBase<OtherT>		&	other,
+		double							amount
+	)
 	{
 		auto this_floating = ConvertTo<double>( *this );
 		auto other_floating = ConvertTo<double>( other );
@@ -243,87 +263,87 @@ public:
 		return ConvertTo<T>( final_floating );
 	}
 
-	static constexpr ColorBase<T> WHITE()
+	static constexpr ColorBase<T>		WHITE()
 	{
 		return PREDEFINED_COLOR(1.0, 1.0, 1.0);
 	};
 
-	static constexpr ColorBase<T> BLACK()
+	static constexpr ColorBase<T>		BLACK()
 	{
 		return PREDEFINED_COLOR(0.0, 0.0, 0.0);
 	};
 
-	static constexpr ColorBase<T> GREY()
+	static constexpr ColorBase<T>		GREY()
 	{
 		return PREDEFINED_COLOR(0.5, 0.5, 0.5);
 	};
 
-	static constexpr ColorBase<T> RED()
+	static constexpr ColorBase<T>		RED()
 	{
 		return PREDEFINED_COLOR(1.0, 0.0, 0.0);
 	};
 
-	static constexpr ColorBase<T> SCARLET()
+	static constexpr ColorBase<T>		SCARLET()
 	{
 		return PREDEFINED_COLOR(1.0, 0.203, 0.109);
 	};
 
-	static constexpr ColorBase<T> PINK()
+	static constexpr ColorBase<T>		PINK()
 	{
 		return PREDEFINED_COLOR(1.0, 0.411, 0.705);
 	};
 
-	static constexpr ColorBase<T> MAGENTA()
+	static constexpr ColorBase<T>		MAGENTA()
 	{
 		return PREDEFINED_COLOR(1.0, 0.0, 1.0);
 	};
 
-	static constexpr ColorBase<T> PURPLE()
+	static constexpr ColorBase<T>		PURPLE()
 	{
 		return PREDEFINED_COLOR(0.627, 0.125, 0.941);
 	};
 
-	static constexpr ColorBase<T> VIOLET()
+	static constexpr ColorBase<T>		VIOLET()
 	{
 		return PREDEFINED_COLOR(0.933, 0.509, 0.933);
 	};
 
-	static constexpr ColorBase<T> GREEN()
+	static constexpr ColorBase<T>		GREEN()
 	{
 		return PREDEFINED_COLOR(0.0, 1.0, 0.0);
 	};
 
-	static constexpr ColorBase<T> LIME()
+	static constexpr ColorBase<T>		LIME()
 	{
 		return PREDEFINED_COLOR(0.196, 0.803, 0.196);
 	};
 
-	static constexpr ColorBase<T> OLIVE()
+	static constexpr ColorBase<T>		OLIVE()
 	{
 		return PREDEFINED_COLOR(0.419, 0.556, 0.137);
 	};
 
-	static constexpr ColorBase<T> BLUE()
+	static constexpr ColorBase<T>		BLUE()
 	{
 		return PREDEFINED_COLOR(0.0, 0.0, 1.0);
 	};
 
-	static constexpr ColorBase<T> NAVY()
+	static constexpr ColorBase<T>		NAVY()
 	{
 		return PREDEFINED_COLOR(0.0, 0.0, 0.5);
 	};
 
-	static constexpr ColorBase<T> CYAN()
+	static constexpr ColorBase<T>		CYAN()
 	{
 		return PREDEFINED_COLOR(0.0, 1.0, 1.0);
 	};
 
-	static constexpr ColorBase<T> TEAL()
+	static constexpr ColorBase<T>		TEAL()
 	{
 		return PREDEFINED_COLOR(0.0, 0.5, 0.5);
 	};
 
-	static constexpr ColorBase<T> YELLOW()
+	static constexpr ColorBase<T>		YELLOW()
 	{
 		return PREDEFINED_COLOR(1.0, 1.0, 0.0);
 	};
@@ -333,8 +353,8 @@ private:
 		typename ToT,
 		typename FromT
 	>
-	static constexpr ColorBase<ToT> ConvertTo(
-		const ColorBase<FromT> & from
+	static constexpr ColorBase<ToT>		ConvertTo(
+		const ColorBase<FromT>		&	from
 	)
 	{
 		static_assert( std::is_integral_v<ToT> || std::is_floating_point_v<ToT>, "To type must be either integral or flaoating point type." );
@@ -380,7 +400,11 @@ private:
 		return ret;
 	}
 
-	static constexpr ColorBase<T> PREDEFINED_COLOR(double r, double g, double b)
+	static constexpr ColorBase<T>		PREDEFINED_COLOR(
+		double							r,
+		double							g,
+		double							b
+	)
 	{
 		if constexpr( std::is_integral_v<T> ) {
 			T max = std::numeric_limits<T>::max();

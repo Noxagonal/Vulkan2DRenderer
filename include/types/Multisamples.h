@@ -40,7 +40,10 @@ enum class Multisamples : uint32_t
 ///				Second multisample value.
 /// 
 /// @return		Multisample flags that were set in both m1 and m2.
-inline Multisamples operator&( Multisamples m1, Multisamples m2 )
+inline Multisamples		operator&(
+	Multisamples		m1,
+	Multisamples		m2
+)
 {
 	return Multisamples( uint32_t( m1 ) & uint32_t( m2 ) );
 }
@@ -61,7 +64,10 @@ inline Multisamples operator&( Multisamples m1, Multisamples m2 )
 ///				Second multisample value.
 /// 
 /// @return		Combined flags in single value.
-inline Multisamples operator|( Multisamples m1, Multisamples m2 )
+inline Multisamples		operator|(
+	Multisamples		m1,
+	Multisamples		m2
+)
 {
 	return Multisamples( uint32_t( m1 ) | uint32_t( m2 ) );
 }

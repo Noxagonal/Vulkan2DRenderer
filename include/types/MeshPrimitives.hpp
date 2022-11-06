@@ -96,7 +96,7 @@ struct ImageData
 	/// @brief		A list of texel color values forming an image.
 	///
 	///				Image data is left to right, top to bottom ordered.
-	std::vector<Color8>				data;
+	std::vector<Color8>						data;
 };
 
 

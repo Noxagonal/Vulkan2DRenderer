@@ -29,7 +29,7 @@ public:
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Default constructor.
-	VK2D_API						Transform()					= default;
+	VK2D_API						Transform() = default;
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Copy constructor.
@@ -37,7 +37,8 @@ public:
 	/// @param		other
 	///				Transform to copy from.
 	VK2D_API						Transform(
-		const Transform			&	other )							= default;
+		const Transform			&	other
+	) = default;
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Construct from manual parameters.
@@ -53,7 +54,8 @@ public:
 	VK2D_API						Transform(
 		glm::vec2					position,
 		glm::vec2					scale,
-		float						rotation );
+		float						rotation
+	);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Adds movement to the transformation.
@@ -61,7 +63,8 @@ public:
 	/// @param		movement
 	///				Amount and diretion where we wish to move.
 	VK2D_API void					Translate(
-		glm::vec2					movement );
+		glm::vec2					movement
+	);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Multiplies the current size by this.
@@ -69,7 +72,8 @@ public:
 	/// @param		scale
 	///				Multiply scale by this.
 	VK2D_API void					Scale(
-		glm::vec2					scale );
+		glm::vec2					scale
+	);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Add to the rotation.
@@ -77,7 +81,8 @@ public:
 	/// @param		rotation
 	///				Rotation offset from 0 angle to be used to add to existing rotation of this transform.
 	VK2D_API void					Rotate(
-		float						rotation );
+		float						rotation
+	);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Calculate new transformation matrix from this transform.
@@ -112,8 +117,9 @@ public:
 /// 
 /// @return		Rotation matrix.
 template<typename T>
-glm::mat<2, 2, T> CreateRotationMatrix2(
-	T rotation )
+glm::mat<2, 2, T>					CreateRotationMatrix2(
+	T								rotation
+)
 {
 	auto x = T( glm::cos( rotation ) );
 	auto y = T( glm::sin( rotation ) );
@@ -137,8 +143,9 @@ glm::mat<2, 2, T> CreateRotationMatrix2(
 /// 
 /// @return		Rotation matrix.
 template<typename T>
-glm::mat<3, 3, T> CreateRotationMatrix3(
-	T rotation )
+glm::mat<3, 3, T>					CreateRotationMatrix3(
+	T								rotation
+)
 {
 	auto x = T( glm::cos( rotation ) );
 	auto y = T( glm::sin( rotation ) );
@@ -163,8 +170,9 @@ glm::mat<3, 3, T> CreateRotationMatrix3(
 /// 
 /// @return		Rotation matrix.
 template<typename T>
-glm::mat<4, 4, T> CreateRotationMatrix4(
-	T rotation )
+glm::mat<4, 4, T>					CreateRotationMatrix4(
+	T								rotation
+)
 {
 	auto x = T( glm::cos( rotation ) );
 	auto y = T( glm::sin( rotation ) );

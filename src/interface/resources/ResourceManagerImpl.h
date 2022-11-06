@@ -60,7 +60,7 @@ class ResourceManagerImpl {
 public:
 	ResourceManagerImpl(
 		ResourceManager									&	my_interface,
-		InstanceImpl									&	parent_instance
+		InstanceImpl									&	instance
 	);
 	~ResourceManagerImpl();
 

@@ -52,7 +52,8 @@ enum class ConsoleColor : uint8_t
 VK2D_API void				ConsolePrint(
 	std::string_view		text,
 	ConsoleColor			text_color				= ConsoleColor::DEFAULT,
-	ConsoleColor			background_color		= ConsoleColor::DEFAULT );
+	ConsoleColor			background_color		= ConsoleColor::DEFAULT
+);
 
 
 

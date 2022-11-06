@@ -16,25 +16,37 @@
 
 
 template<typename T>
-std::ostream & operator<<( std::ostream & os, const glm::vec<2, T> & v )
+std::ostream					&	operator<<(
+	std::ostream				&	os,
+	const glm::vec<2, T>		&	v
+)
 {
 	return os << "[" << v.x << ", " << v.y << "]";
 }
 
 template<typename T>
-std::ostream & operator<<( std::ostream & os, const glm::vec<3, T> & v )
+std::ostream					&	operator<<(
+	std::ostream				&	os,
+	const glm::vec<3, T>		&	v
+)
 {
 	return os << "[" << v.x << ", " << v.y << ", " << v.z << "]";
 }
 
 template<typename T>
-std::ostream & operator<<( std::ostream & os, const glm::vec<4, T> & v )
+std::ostream					&	operator<<(
+	std::ostream				&	os,
+	const glm::vec<4, T>		&	v
+)
 {
 	return os << "[" << v.x << ", " << v.y << ", " << v.z << ", " << v.w << "]";
 }
 
 template<typename T>
-std::ostream & operator<<( std::ostream & os, const vk2d::ColorBase<T> & v )
+std::ostream					&	operator<<(
+	std::ostream				&	os,
+	const vk2d::ColorBase<T>	&	v
+)
 {
 	return os << "[" << v.r << ", " << v.g << ", " << v.b << ", " << v.a << "]";
 }
@@ -42,7 +54,10 @@ std::ostream & operator<<( std::ostream & os, const vk2d::ColorBase<T> & v )
 
 
 template<typename T>
-std::ostream& operator<<( std::ostream & os, const vk2d::Rect2Base<T> & v )
+std::ostream					&	operator<<(
+	std::ostream				&	os,
+	const vk2d::Rect2Base<T>	&	v
+)
 {
 	return os << "[" << v.top_left << ", " << v.bottom_right << "]";
 }
@@ -50,7 +65,10 @@ std::ostream& operator<<( std::ostream & os, const vk2d::Rect2Base<T> & v )
 
 
 template<typename T>
-std::ostream & operator<<( std::ostream & os, vk2d::Array<T> & v )
+std::ostream					&	operator<<(
+	std::ostream				&	os,
+	vk2d::Array<T>				&	v
+)
 {
 	auto vs = std::size( v );
 	if( vs ) {
@@ -66,7 +84,10 @@ std::ostream & operator<<( std::ostream & os, vk2d::Array<T> & v )
 }
 
 template<typename T>
-std::ostream & operator<<( std::ostream & os, const std::vector<T> & v )
+std::ostream					&	operator<<(
+	std::ostream				&	os,
+	const std::vector<T>		&	v
+	)
 {
 	auto vs = std::size( v );
 	if( vs ) {
@@ -84,7 +105,10 @@ std::ostream & operator<<( std::ostream & os, const std::vector<T> & v )
 
 
 template<typename T>
-std::ostream & operator<<( std::ostream & os, const glm::mat<2, 2, T> & v )
+std::ostream					&	operator<<(
+	std::ostream				&	os,
+	const glm::mat<2, 2, T>		&	v
+)
 {
 	auto field_lenght = 5;
 
@@ -110,7 +134,10 @@ std::ostream & operator<<( std::ostream & os, const glm::mat<2, 2, T> & v )
 }
 
 template<typename T>
-std::ostream & operator<<( std::ostream & os, const glm::mat<3, 3, T> & v )
+std::ostream					&	operator<<(
+	std::ostream				&	os,
+	const glm::mat<3, 3, T>		&	v
+)
 {
 	auto field_lenght = 5;
 
@@ -143,7 +170,10 @@ std::ostream & operator<<( std::ostream & os, const glm::mat<3, 3, T> & v )
 }
 
 template<typename T>
-std::ostream & operator<<( std::ostream & os, const glm::mat<4, 4, T> & v )
+std::ostream					&	operator<<(
+	std::ostream				&	os,
+	const glm::mat<4, 4, T>		&	v
+)
 {
 	auto field_lenght = 5;
 

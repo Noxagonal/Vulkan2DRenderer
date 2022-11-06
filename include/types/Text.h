@@ -30,7 +30,7 @@ public:
 	VK2D_API																		Text()						=	default;
 
 	template<typename T>
-																					Text(
+													Text(
 		const std::basic_string<T>				&	str
 	)
 	{
@@ -46,7 +46,7 @@ public:
 	}
 
 	template<typename T>
-																					Text(
+													Text(
 		std::basic_string_view<T>					str
 	)
 	{

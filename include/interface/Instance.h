@@ -151,7 +151,9 @@ public:
 	///				Which button's state we wish to query.
 	///
 	/// @return		true if button was held down, false if button was up.
-	inline bool GetButton( GamepadButtons gamepad_button )
+	inline bool						GetButton(
+		GamepadButtons				gamepad_button
+	)
 	{
 		assert( int32_t( gamepad_button ) <= int32_t( GamepadButtons::LAST ) );
 		return buttons[ int32_t( gamepad_button ) ];
@@ -165,7 +167,9 @@ public:
 	///
 	/// @return		Floating point number telling the current rotation of the axis. Usually for gamepad joysticks this range is from
 	///				-1.0 to 1.0. For triggers this value ranges from 0.0 to 1.0.
-	inline float GetAxis( GamepadAxis gamepad_axis )
+	inline float					GetAxis(
+		GamepadAxis					gamepad_axis
+	)
 	{
 		assert( int32_t( gamepad_axis ) <= int32_t( GamepadAxis::LAST ) );
 		return axes[ int32_t( gamepad_axis ) ];
@@ -237,7 +241,8 @@ using PFN_MonitorUpdateCallback				= void( * )( void );
 using PFN_GamepadConnectionEventCallback	= void ( * )(
 	Gamepad									gamepad,
 	GamepadConnectionEvent					event,
-	const std::string					&	gamepad_name );
+	const std::string					&	gamepad_name
+);
 
 
 
@@ -265,7 +270,7 @@ class Instance {
 		const vk2d::InstanceCreateInfo				&	instance_create_info
 	);
 	friend class Window;
-	 
+
 private:
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -278,7 +283,8 @@ private:
 	///				Instance creation parameters struct object. This is handy as creating some objects can require a lot of
 	///				parameters.
 	VK2D_API										Instance(
-		const InstanceCreateInfo				&	instance_create_info );
+		const InstanceCreateInfo				&	instance_create_info
+	);
 
 public:
 
@@ -352,7 +358,8 @@ public:
 	/// @param[in]	monitor_update_callback_funtion
 	///				Function pointer to callback that will be called when monitor is added or removed from the system.
 	VK2D_API void									SetMonitorUpdateCallback(
-		PFN_MonitorUpdateCallback					monitor_update_callback_funtion );
+		PFN_MonitorUpdateCallback					monitor_update_callback_funtion
+	);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Create a new cursor from an image file.
@@ -375,7 +382,8 @@ public:
 	/// @return		Handle to new Cursor object.
 	VK2D_API Cursor								*	CreateCursor(
 		const std::filesystem::path				&	image_path,
-		glm::ivec2									hot_spot );
+		glm::ivec2									hot_spot
+	);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Create a new cursor from raw data directly.
@@ -404,7 +412,8 @@ public:
 	VK2D_API Cursor								*	CreateCursor(
 		glm::uvec2									image_size,
 		const std::vector<Color8>				&	image_data,
-		glm::ivec2									hot_spot );
+		glm::ivec2									hot_spot
+	);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Manually destroy cursor.
@@ -419,7 +428,8 @@ public:
 	/// @param[in]	cursor
 	///				Handle to Cursor object that was created by the same instance, or nullptr.
 	VK2D_API void									DestroyCursor(
-		Cursor									*	cursor );
+		Cursor									*	cursor
+	);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Gets the gamepad event callback function.
@@ -448,7 +458,8 @@ public:
 	///				PFN_GamepadConnectionEventCallback function that will be called if a gamepad gets added or removed from
 	///				the system.
 	VK2D_API void									SetGamepadEventCallback(
-		PFN_GamepadConnectionEventCallback			gamepad_event_callback_function );
+		PFN_GamepadConnectionEventCallback			gamepad_event_callback_function
+	);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Checks if a specific gamepad is currently attached to the system.
@@ -475,7 +486,8 @@ public:
 	/// 
 	/// @return		Name of the specific gamepad.
 	VK2D_API std::string							GetGamepadName(
-		Gamepad										gamepad );
+		Gamepad										gamepad
+	);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Gets the current state of the gamepad.
@@ -491,7 +503,8 @@ public:
 	/// 
 	/// @return		Object which tells which buttons were pressed and state of the axis.
 	VK2D_API GamepadState							QueryGamepadState(
-		Gamepad										gamepad );
+		Gamepad										gamepad
+	);
 	 
 	// TODO: gamepad mapping
 	//VK2D_API void									SetGamepadMapping();
@@ -512,7 +525,8 @@ public:
 	/// 
 	/// @return		Handle to a newly created window.
 	VK2D_API Window								*	CreateOutputWindow(
-		const WindowCreateInfo					&	window_create_info );
+		const WindowCreateInfo					&	window_create_info
+	);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Destroy a window.
@@ -523,7 +537,8 @@ public:
 	///				Handle to Window to destroy. Note that this window handle cannot be used for anything afterwards, if you
 	///				try, you'll crash your application. If nullptr, then this function does nothing.
 	VK2D_API void									DestroyOutputWindow(
-		Window									*	window );
+		Window									*	window
+	);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Create render target texture.
@@ -540,7 +555,8 @@ public:
 	/// 
 	/// @return		Handle to a newly create render target texture.
 	VK2D_API RenderTargetTexture				*	CreateRenderTargetTexture(
-		const RenderTargetTextureCreateInfo		&	render_target_texture_create_info );
+		const RenderTargetTextureCreateInfo		&	render_target_texture_create_info
+	);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Destroy a render target texture.
@@ -551,7 +567,8 @@ public:
 	///				Handle to RenderTargetTexture to destroy. Note that this handle cannot be used for anything afterwards, if
 	///				you try, you'll crash your application. If nullptr, then this function does nothing.
 	VK2D_API void									DestroyRenderTargetTexture(
-		RenderTargetTexture						*	render_target_texture );
+		RenderTargetTexture						*	render_target_texture
+	);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Create a sampler.
@@ -568,7 +585,8 @@ public:
 	/// 
 	/// @return		Handle to newly created sampler.
 	VK2D_API Sampler							*	CreateSampler(
-		const SamplerCreateInfo					&	sampler_create_info );
+		const SamplerCreateInfo					&	sampler_create_info
+	);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Destroy sampler.
@@ -579,7 +597,8 @@ public:
 	///				Handle to Sampler to destroy. Note that this handle cannob be used for anything afterwards, if you try,
 	///				you'll crash your application. If nullptr, then this function does nothing.
 	VK2D_API void									DestroySampler(
-		Sampler									*	sampler );
+		Sampler									*	sampler
+	);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Get GPU's maximum supported multisampling.
@@ -644,7 +663,8 @@ private:
 /// 
 /// @return		Newly created instance.
 VK2D_API std::unique_ptr<Instance>						CreateInstance(
-	const InstanceCreateInfo						&	instance_create_info );
+	const InstanceCreateInfo						&	instance_create_info
+);
 
 
 
