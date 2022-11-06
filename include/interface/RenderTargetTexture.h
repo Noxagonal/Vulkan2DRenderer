@@ -8,6 +8,7 @@
 #include <types/Color.hpp>
 #include <types/Multisamples.h>
 #include <types/RenderCoordinateSpace.hpp>
+#include <types/Mesh.h>
 
 #include <interface/Texture.h>
 

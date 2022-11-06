@@ -7,6 +7,8 @@
 
 #include <vector>
 
+
+
 namespace vk2d {
 
 class FontResource;

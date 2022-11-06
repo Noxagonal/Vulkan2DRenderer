@@ -5,7 +5,7 @@
 #include <types/Rect2.hpp>
 #include <types/Transform.h>
 #include <types/Color.hpp>
-#include <types/MeshPrimitives.hpp>
+#include <types/Mesh.h>
 #include <types/Multisamples.h>
 #include <types/RenderCoordinateSpace.hpp>
 

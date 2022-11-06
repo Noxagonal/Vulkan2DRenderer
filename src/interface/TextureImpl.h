@@ -2,6 +2,8 @@
 
 #include <core/SourceCommon.h>
 
+#include <interface/Texture.h>
+
 
 
 namespace vk2d {

@@ -2,9 +2,13 @@
 
 #include <core/SourceCommon.h>
 
+#include <interface/resources/ResourceManager.h>
+
 #include <system/ThreadPool.h>
 
 #include <types/Color.hpp>
+
+
 
 namespace vk2d {
 
