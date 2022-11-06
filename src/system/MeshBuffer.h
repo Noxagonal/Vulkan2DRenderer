@@ -251,7 +251,7 @@ public:
 
 		total_byte_size				= CalculateAlignmentForBuffer(
 			buffer_byte_size,
-			instance.GetVulkanPhysicalDeviceProperties().limits
+			instance.GetVulkanDevice().GetVulkanPhysicalDeviceProperties().limits
 		);
 
 		host_data.reserve( total_byte_size / sizeof( T ) + 1 );

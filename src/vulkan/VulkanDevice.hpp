@@ -23,25 +23,25 @@ public:
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	VulkanDevice(
-		const VulkanDevice									&	other
+		const VulkanDevice						&	other
 	) = delete;
 	VulkanDevice(
-		VulkanDevice										&&	other
+		VulkanDevice							&&	other
 	) = default;
 
 	VulkanDevice(
-		InstanceImpl										&	instance,
-		VkPhysicalDevice										physical_device
+		InstanceImpl							&	instance,
+		VkPhysicalDevice							physical_device
 	);
 	~VulkanDevice();
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	VulkanDevice											&	operator=(
-		const VulkanDevice									&	other
+	VulkanDevice								&	operator=(
+		const VulkanDevice						&	other
 	) = delete;
 
-	VulkanDevice											&	operator=(
-		VulkanDevice										&&	other
+	VulkanDevice								&	operator=(
+		VulkanDevice							&&	other
 	) = default;
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -67,11 +67,11 @@ public:
 	///				Queue type we wish to get.
 	///
 	/// @return		Resolved queue object.
-	ResolvedQueue											&	GetQueue(
-		VulkanQueueType											queue_type
+	ResolvedQueue								&	GetQueue(
+		VulkanQueueType								queue_type
 	);
 
-	VkDevice													GetVulkanDevice();
+	VkDevice										GetVulkanDevice();
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Get Vulkan physical device.
@@ -79,7 +79,31 @@ public:
 	/// @note		Multithreading: Any thread.
 	///
 	/// @return		Vulkan physical device handle.
-	VkPhysicalDevice											GetVulkanPhysicalDevice() const;
+	VkPhysicalDevice								GetVulkanPhysicalDevice() const;
+
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	/// @brief		Get Vulkan physical device properties.
+	///
+	/// @note		Multithreading: Any thread.
+	///
+	/// @return		Reference to internal physical device properties.
+	const VkPhysicalDeviceProperties			&	GetVulkanPhysicalDeviceProperties() const;
+
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	/// @brief		Get Vulkan physical device memory properties.
+	///
+	/// @note		Multithreading: Any thread.
+	///
+	/// @return		Reference to internal physical device memory properties.
+	const VkPhysicalDeviceMemoryProperties		&	GetVulkanPhysicalDeviceMemoryProperties() const;
+
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	/// @brief		Get Vulkan physical device features.
+	///
+	/// @note		Multithreading: Any thread.
+	///
+	/// @return		Reference to internal physical device features.
+	const VkPhysicalDeviceFeatures				&	GetVulkanPhysicalDeviceFeatures() const;
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Get device memory pool.
@@ -93,38 +117,38 @@ public:
 	/// @note		Multithreading: Any thread.
 	///
 	/// @return		Pointer to device memory pool.
-	DeviceMemoryPool										*	GetDeviceMemoryPool();
+	DeviceMemoryPool							*	GetDeviceMemoryPool();
 
-	bool														IsGood();
+	bool											IsGood();
 
 	operator VkDevice();
 
 private:
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	void														PopulatePhysicalDeviceStructs();
+	void											PopulatePhysicalDeviceStructs();
 
-	bool														CreateDeviceMemoryPool();
+	bool											CreateDeviceMemoryPool();
 
-	void														DestroyDeviceMemoryPool();
+	void											DestroyDeviceMemoryPool();
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	InstanceImpl											&	instance;
+	InstanceImpl								&	instance;
 
-	std::vector<const char*>									device_extensions;
+	std::vector<const char*>						device_extensions;
 
-	VkPhysicalDevice											vk_physical_device					= {};
-	VkDevice													vk_device							= {};
+	VkPhysicalDevice								vk_physical_device					= {};
+	VkDevice										vk_device							= {};
 
-	VkPhysicalDeviceProperties									physical_device_properties			= {};
-	VkPhysicalDeviceMemoryProperties							physical_device_memory_properties	= {};
-	VkPhysicalDeviceFeatures									physical_device_features			= {};
+	VkPhysicalDeviceProperties						physical_device_properties			= {};
+	VkPhysicalDeviceMemoryProperties				physical_device_memory_properties	= {};
+	VkPhysicalDeviceFeatures						physical_device_features			= {};
 
-	std::vector<ResolvedQueue>									resolved_queues;
+	std::vector<ResolvedQueue>						resolved_queues;
 
-	std::unique_ptr<DeviceMemoryPool>							device_memory_pool;
+	std::unique_ptr<DeviceMemoryPool>				device_memory_pool;
 
-	bool														is_good								= {};
+	bool											is_good								= {};
 };
 
 

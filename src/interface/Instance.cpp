@@ -398,23 +398,12 @@ vk2d::vk2d_internal::InstanceImpl::InstanceImpl(
 		report_function = vk2d::vk2d_internal::VK2D_default_ReportFunction;
 	}
 
-	//	Introduce layers and extensions here
-	//	instance_layers;
-	//	Instance extensions.
-	{
-		// Adding glfw instance extensions
-		uint32_t glfw_instance_extension_count = 0;
-		auto glfw_instance_extensions_ptr = glfwGetRequiredInstanceExtensions( &glfw_instance_extension_count );
-		for( uint32_t i = 0; i < glfw_instance_extension_count; ++i ) {
-			instance_extensions.push_back( glfw_instance_extensions_ptr[ i ] );
-		}
-	}
-
 	if( !CreateInstance() ) return;
 	if( !CreateDeviceAndQueues() ) return;
 
 	#if VK2D_BUILD_OPTION_VULKAN_COMMAND_BUFFER_CHECKMARKS && VK2D_BUILD_OPTION_VULKAN_VALIDATION && VK2D_DEBUG_ENABLE
 	if( instance_count == 1 ) {
+		auto & primary_render_queue = vulkan_device->GetQueue( VulkanQueueType::PRIMARY_RENDER );
 		SetCommandBufferCheckpointQueue(
 			*vulkan_device,
 			primary_render_queue.GetQueue(),
@@ -881,7 +870,7 @@ vk2d::Multisamples vk2d::vk2d_internal::InstanceImpl::GetMaximumSupportedMultisa
 {
 	VK2D_ASSERT_MAIN_THREAD( *this );
 
-	Multisamples max_samples	= Multisamples( vk_physical_device_properties.limits.framebufferColorSampleCounts );
+	Multisamples max_samples	= Multisamples( vulkan_device->GetVulkanPhysicalDeviceProperties().limits.framebufferColorSampleCounts );
 	if( uint32_t( max_samples )			& uint32_t( Multisamples::SAMPLE_COUNT_64 ) )	return Multisamples::SAMPLE_COUNT_64;
 	else if( uint32_t( max_samples )	& uint32_t( Multisamples::SAMPLE_COUNT_32 ) )	return Multisamples::SAMPLE_COUNT_32;
 	else if( uint32_t( max_samples )	& uint32_t( Multisamples::SAMPLE_COUNT_16 ) )	return Multisamples::SAMPLE_COUNT_16;
@@ -897,7 +886,7 @@ vk2d::Multisamples vk2d::vk2d_internal::InstanceImpl::GetAllSupportedMultisampli
 {
 	VK2D_ASSERT_MAIN_THREAD( *this );
 
-	return Multisamples( vk_physical_device_properties.limits.framebufferColorSampleCounts );
+	return Multisamples( vulkan_device->GetVulkanPhysicalDeviceProperties().limits.framebufferColorSampleCounts);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1066,24 +1055,6 @@ vk2d::vk2d_internal::VulkanInstance & vk2d::vk2d_internal::InstanceImpl::GetVulk
 vk2d::vk2d_internal::VulkanDevice & vk2d::vk2d_internal::InstanceImpl::GetVulkanDevice()
 {
 	return *vulkan_device;
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-const VkPhysicalDeviceProperties & vk2d::vk2d_internal::InstanceImpl::GetVulkanPhysicalDeviceProperties() const
-{
-	return vk_physical_device_properties;
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-const VkPhysicalDeviceMemoryProperties & vk2d::vk2d_internal::InstanceImpl::GetVulkanPhysicalDeviceMemoryProperties() const
-{
-	return vk_physical_device_memory_properties;
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-const VkPhysicalDeviceFeatures & vk2d::vk2d_internal::InstanceImpl::GetVulkanPhysicalDeviceFeatures() const
-{
-	return vk_physical_device_features;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1589,9 +1560,7 @@ bool vk2d::vk2d_internal::InstanceImpl::IsGood() const
 bool vk2d::vk2d_internal::InstanceImpl::CreateInstance()
 {
 	vulkan_instance.emplace(
-		VulkanInstance(
-			*this
-		)
+		*this
 	);
 	if( !vulkan_instance->IsGood() ) {
 		Report( ReportSeverity::CRITICAL_ERROR, "Cannot create Vulkan instance." );
@@ -1604,10 +1573,8 @@ bool vk2d::vk2d_internal::InstanceImpl::CreateInstance()
 bool vk2d::vk2d_internal::InstanceImpl::CreateDeviceAndQueues()
 {
 	vulkan_device.emplace(
-		VulkanDevice(
-			*this,
-			vulkan_instance->PickBestVulkanPhysicalDevice() // TODO: Make physical device user selectable.
-		)
+		*this,
+		vulkan_instance->PickBestVulkanPhysicalDevice() // TODO: Make physical device user selectable.
 	);
 	if( !vulkan_device->IsGood() ) {
 		Report( ReportSeverity::CRITICAL_ERROR, "Cannot create Vulkan device." );

@@ -303,30 +303,6 @@ public:
 	VulkanDevice										&	GetVulkanDevice();
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	/// @brief		Get Vulkan physical device properties.
-	///
-	/// @note		Multithreading: Any thread.
-	///
-	/// @return		Reference to internal physical device properties.
-	const VkPhysicalDeviceProperties					&	GetVulkanPhysicalDeviceProperties() const;
-
-	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	/// @brief		Get Vulkan physical device memory properties.
-	///
-	/// @note		Multithreading: Any thread.
-	///
-	/// @return		Reference to internal physical device memory properties.
-	const VkPhysicalDeviceMemoryProperties				&	GetVulkanPhysicalDeviceMemoryProperties() const;
-
-	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	/// @brief		Get Vulkan physical device features.
-	///
-	/// @note		Multithreading: Any thread.
-	///
-	/// @return		Reference to internal physical device features.
-	const VkPhysicalDeviceFeatures						&	GetVulkanPhysicalDeviceFeatures() const;
-
-	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Get graphics shader modules.
 	///
 	/// @note		Multithreading: Any thread.
@@ -648,9 +624,6 @@ private:
 	std::optional<VulkanInstance>							vulkan_instance							= {};
 	std::optional<VulkanDevice>								vulkan_device							= {};
 
-	std::vector<const char*>								instance_layers;
-	std::vector<const char*>								instance_extensions;
-
 	PFN_VK2D_ReportFunction									report_function							= {};
 	mutable std::mutex										report_mutex;
 
@@ -658,10 +631,6 @@ private:
 	std::unique_ptr<ThreadPool>								thread_pool;
 	std::vector<uint32_t>									loader_threads;
 	std::vector<uint32_t>									general_threads;
-
-	VkPhysicalDeviceProperties								vk_physical_device_properties			= {};
-	VkPhysicalDeviceMemoryProperties						vk_physical_device_memory_properties	= {};
-	VkPhysicalDeviceFeatures								vk_physical_device_features				= {};
 
 	std::vector<VkShaderModule>								vk_graphics_shader_modules;
 	std::vector<VkShaderModule>								vk_compute_shader_modules;
@@ -687,11 +656,6 @@ private:
 	std::unique_ptr<DescriptorSetLayout>					graphics_render_target_blur_texture_descriptor_set_layout;
 	std::unique_ptr<DescriptorSetLayout>					graphics_uniform_buffer_descriptor_set_layout;
 	std::unique_ptr<DescriptorSetLayout>					graphics_storage_buffer_descriptor_set_layout;
-
-	ResolvedQueue											primary_render_queue						= {};
-	ResolvedQueue											secondary_render_queue						= {};
-	ResolvedQueue											primary_compute_queue						= {};
-	ResolvedQueue											primary_transfer_queue						= {};
 
 	std::mutex												descriptor_pool_mutex;
 	std::unique_ptr<DescriptorAutoPool>						descriptor_pool;

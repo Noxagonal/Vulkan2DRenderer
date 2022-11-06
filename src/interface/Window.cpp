@@ -1031,7 +1031,7 @@ vk2d::vk2d_internal::WindowImpl::WindowImpl(
 	this->mesh_buffer = std::make_unique<MeshBuffer>(
 		instance,
 		vk_device,
-		instance.GetVulkanPhysicalDeviceProperties().limits,
+		instance.GetVulkanDevice().GetVulkanPhysicalDeviceProperties().limits,
 		device_memory_pool
 	);
 

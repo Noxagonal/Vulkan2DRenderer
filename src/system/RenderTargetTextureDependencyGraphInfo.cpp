@@ -54,7 +54,7 @@ vk2d::Multisamples vk2d::vk2d_internal::CheckSupportedMultisampleCount(
 		samples = max_samples;
 	}
 
-	Multisamples supported_samples	= Multisamples( instance.GetVulkanPhysicalDeviceProperties().limits.framebufferColorSampleCounts );
+	Multisamples supported_samples	= Multisamples( instance.GetVulkanDevice().GetVulkanPhysicalDeviceProperties().limits.framebufferColorSampleCounts);
 	if( !( uint32_t( samples ) & uint32_t( supported_samples ) ) ) {
 		std::stringstream ss;
 		ss << "This specific multisample count (" << uint32_t( samples ) << ") is not supported by this system.\n"

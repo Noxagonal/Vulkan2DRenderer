@@ -241,7 +241,7 @@ bool vk2d::vk2d_internal::FontResourceImpl::MTLoad(
 	auto loader_thread_resource		= static_cast<ThreadLoaderResource*>( thread_resource );
 	auto & instance					= loader_thread_resource->GetInstance();
 	auto path_str					= my_interface.impl->GetFilePaths()[ 0 ].string();
-	auto max_texture_size			= instance.GetVulkanPhysicalDeviceProperties().limits.maxImageDimension2D;
+	auto max_texture_size			= instance.GetVulkanDevice().GetVulkanPhysicalDeviceProperties().limits.maxImageDimension2D;
 	auto min_texture_size			= std::min( uint32_t( 128 ), max_texture_size );
 
 	// average_to_max_weight variable is used to estimate glyph space requirements on atlas textures.

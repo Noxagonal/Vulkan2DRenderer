@@ -14,10 +14,10 @@ namespace vk2d_internal {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 VkBool32 VKAPI_PTR DebugMessenger(
-	VkDebugUtilsMessageSeverityFlagBitsEXT           messageSeverity,
-	VkDebugUtilsMessageTypeFlagsEXT                  messageTypes,
-	const VkDebugUtilsMessengerCallbackDataEXT*      pCallbackData,
-	void*                                            pUserData )
+	VkDebugUtilsMessageSeverityFlagBitsEXT			messageSeverity,
+	VkDebugUtilsMessageTypeFlagsEXT					messageTypes,
+	const VkDebugUtilsMessengerCallbackDataEXT*		pCallbackData,
+	void*											pUserData )
 {
 	std::string str_severity;
 	ReportSeverity vk2d_severity;
@@ -99,6 +99,15 @@ vk2d::vk2d_internal::VulkanInstance::VulkanInstance(
 ) :
 	instance( instance )
 {
+	// glfw vulkan instance extensions.
+	{
+		uint32_t glfw_instance_extension_count = 0;
+		auto glfw_instance_extensions_ptr = glfwGetRequiredInstanceExtensions( &glfw_instance_extension_count );
+		for( uint32_t i = 0; i < glfw_instance_extension_count; ++i ) {
+			instance_extensions.push_back( glfw_instance_extensions_ptr[ i ] );
+		}
+	}
+
 	#if VK2D_BUILD_OPTION_VULKAN_VALIDATION && VK2D_DEBUG_ENABLE
 
 	instance_layers.push_back( "VK_LAYER_KHRONOS_validation" );
@@ -288,14 +297,6 @@ std::vector<VkPhysicalDevice> vk2d::vk2d_internal::VulkanInstance::EnumeratePhys
 
 	return physical_devices;
 }
-
-
-
-
-
-
-
-
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 VkPhysicalDevice vk2d::vk2d_internal::VulkanInstance::PickBestVulkanPhysicalDevice()

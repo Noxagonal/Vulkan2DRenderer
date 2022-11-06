@@ -377,7 +377,7 @@ vk2d::vk2d_internal::RenderTargetTextureImpl::RenderTargetTextureImpl(
 	mesh_buffer = std::make_unique<MeshBuffer>(
 		instance,
 		instance.GetVulkanDevice(),
-		instance.GetVulkanPhysicalDeviceProperties().limits,
+		instance.GetVulkanDevice().GetVulkanPhysicalDeviceProperties().limits,
 		*instance.GetVulkanDevice().GetDeviceMemoryPool()
 	);
 

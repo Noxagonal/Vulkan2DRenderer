@@ -17,47 +17,47 @@ class VulkanInstance {
 public:
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	VulkanInstance(
-		const VulkanInstance								&	other
+		const VulkanInstance					&	other
 	) = delete;
 	VulkanInstance(
-		VulkanInstance										&&	other
+		VulkanInstance							&&	other
 	) = default;
 
 	VulkanInstance(
-		InstanceImpl										&	instance
+		InstanceImpl							&	instance
 	);
 	~VulkanInstance();
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	VulkanInstance											&	operator=(
-		const VulkanInstance								&	other
+	VulkanInstance								&	operator=(
+		const VulkanInstance					&	other
 	) = delete;
 
-	VulkanInstance											&	operator=(
-		VulkanInstance										&&	other
+	VulkanInstance								&	operator=(
+		VulkanInstance							&&	other
 	) = default;
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	VkInstance													GetVulkanInstance();
+	VkInstance										GetVulkanInstance();
 
-	std::vector<VkPhysicalDevice>								EnumeratePhysicalDevices();
-	VkPhysicalDevice											PickBestVulkanPhysicalDevice();
+	std::vector<VkPhysicalDevice>					EnumeratePhysicalDevices();
+	VkPhysicalDevice								PickBestVulkanPhysicalDevice();
 
-	bool														IsGood();
+	bool											IsGood();
 
 	operator VkInstance();
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	InstanceImpl											&	instance;
+	InstanceImpl								&	instance;
 
-	std::vector<const char*>									instance_layers;
-	std::vector<const char*>									instance_extensions;
+	std::vector<const char*>						instance_layers;
+	std::vector<const char*>						instance_extensions;
 
-	VkInstance													vk_instance							= {};
+	VkInstance										vk_instance								= {};
 
-	VkDebugUtilsMessengerEXT									vk_debug_utils_messenger			= {};
+	VkDebugUtilsMessengerEXT						vk_debug_utils_messenger				= {};
 
-	bool														is_good								= {};
+	bool											is_good									= {};
 };
 
 

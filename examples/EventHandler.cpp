@@ -20,7 +20,7 @@ class EventHandler : public vk2d::WindowEventHandler
 {
 public:
 	void								EventMouseButton(
-		vk2d::Window				*	window,
+		vk2d::Window				&	window,
 		vk2d::MouseButton				button,
 		vk2d::ButtonAction				action,
 		vk2d::ModifierKeyFlags			modifier_keys )		override
@@ -37,7 +37,7 @@ public:
 	}
 
 	void								EventCursorPosition(
-		vk2d::Window				*	window,
+		vk2d::Window				&	window,
 		glm::dvec2						position )			override
 	{
 		if( mouse_button_down ) {
@@ -49,7 +49,7 @@ public:
 	}
 
 	void								EventKeyboard(
-		vk2d::Window				*	window,
+		vk2d::Window				&	window,
 		vk2d::KeyboardButton			button,
 		int32_t							scancode,
 		vk2d::ButtonAction				action,
@@ -57,7 +57,7 @@ public:
 	{
 		// Set window to close if we pressed the ESC key.
 		if( action == vk2d::ButtonAction::PRESS && button == vk2d::KeyboardButton::KEY_ESCAPE ) {
-			window->CloseWindow();
+			window.CloseWindow();
 		}
 	}
 

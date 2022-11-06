@@ -16,7 +16,7 @@ class EventHandler : public vk2d::WindowEventHandler {
 public:
 	// Keyboard button was pressed, released or kept down ( repeating ).
 	void										EventKeyboard(
-		vk2d::Window						*	window,
+		vk2d::Window						&	window,
 		vk2d::KeyboardButton					button,
 		int32_t									scancode,
 		vk2d::ButtonAction						action,
@@ -25,7 +25,7 @@ public:
 	{
 		if( action == vk2d::ButtonAction::PRESS ) {
 			if( button == vk2d::KeyboardButton::KEY_ESCAPE ) {
-				window->CloseWindow();
+				window.CloseWindow();
 			}
 			if( button == vk2d::KeyboardButton::KEY_PRINT_SCREEN ) {
 				/*
@@ -37,10 +37,10 @@ public:
 				*/
 			}
 			if( button == vk2d::KeyboardButton::KEY_1 ) {
-				window->SetRenderCoordinateSpace( vk2d::RenderCoordinateSpace::TEXEL_SPACE );
+				window.SetRenderCoordinateSpace( vk2d::RenderCoordinateSpace::TEXEL_SPACE );
 			}
 			if( button == vk2d::KeyboardButton::KEY_2 ) {
-				window->SetRenderCoordinateSpace( vk2d::RenderCoordinateSpace::TEXEL_SPACE_CENTERED );
+				window.SetRenderCoordinateSpace( vk2d::RenderCoordinateSpace::TEXEL_SPACE_CENTERED );
 			}
 		}
 	};

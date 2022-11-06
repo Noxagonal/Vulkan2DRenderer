@@ -224,7 +224,7 @@ vk2d::vk2d_internal::SamplerImpl::SamplerImpl(
 
 	float maxAnisotropy = std::min(
 		create_info.mipmap_max_anisotropy,
-		instance.GetVulkanPhysicalDeviceProperties().limits.maxSamplerAnisotropy
+		instance.GetVulkanDevice().GetVulkanPhysicalDeviceProperties().limits.maxSamplerAnisotropy
 	);
 
 	VkSamplerCreateInfo sampler_create_info {};
