@@ -1,9 +1,10 @@
 #pragma once
 
-#include "core/SourceCommon.h"
+#include <core/SourceCommon.h>
 
-#include "system/DescriptorSet.h"
-#include "system/VulkanMemoryManagement.h"
+#include <system/DescriptorSet.h>
+
+#include <vulkan/utils/VulkanMemoryManagement.hpp>
 
 namespace vk2d {
 
@@ -14,8 +15,8 @@ namespace vk2d_internal {
 class SamplerImpl {
 public:
 	SamplerImpl(
-		Sampler								*	sampler,
-		InstanceImpl						*	instance,
+		Sampler								&	sampler,
+		InstanceImpl						&	instance,
 		const SamplerCreateInfo				&	create_info );
 
 	~SamplerImpl();
@@ -35,8 +36,8 @@ public:
 	};
 
 private:
-	Sampler									*	my_interface		= {};
-	InstanceImpl							*	instance			= {};
+	Sampler									&	my_interface;
+	InstanceImpl							&	instance;
 	VkDevice									vk_device			= {};
 
 	VkSampler									vk_sampler			= {};

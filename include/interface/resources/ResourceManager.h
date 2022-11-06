@@ -34,10 +34,10 @@ class ResourceManager {
 	/// 
 	/// @note		Multithreading: Main thread only.
 	/// 
-	/// @param		parent_instance
+	/// @param		instance
 	///				Pointer back to owner who created this object.
 	VK2D_API													ResourceManager(
-		vk2d_internal::InstanceImpl							*	parent_instance
+		vk2d_internal::InstanceImpl							&	instance
 	);
 
 public:

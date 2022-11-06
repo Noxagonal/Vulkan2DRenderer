@@ -79,7 +79,7 @@ inline void								CmdInsertCommandBufferCheckpoint(
 
 #if VK2D_DEBUG_ENABLE
 
-#define VK2D_ASSERT_MAIN_THREAD( m_p_instance ) assert( m_p_instance->IsThisThreadCreatorThread() );
+#define VK2D_ASSERT_MAIN_THREAD( m_p_instance ) assert( ( m_p_instance ).IsThisThreadCreatorThread() );
 
 
 

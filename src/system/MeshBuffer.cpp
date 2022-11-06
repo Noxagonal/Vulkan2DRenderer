@@ -1,31 +1,28 @@
 
-#include "core/SourceCommon.h"
+#include <core/SourceCommon.h>
 
-#include "types/MeshPrimitives.hpp"
+#include <types/MeshPrimitives.hpp>
 
-#include "system/VulkanMemoryManagement.h"
-#include "system/VulkanMemoryManagement.h"
-#include "system/MeshBuffer.h"
+#include <vulkan/utils/VulkanMemoryManagement.hpp>
+#include <system/MeshBuffer.h>
 
-#include "interface/WindowImpl.h"
-#include "interface/InstanceImpl.h"
+#include <interface/WindowImpl.h>
+#include <interface/InstanceImpl.h>
 
 
 
 vk2d::vk2d_internal::MeshBuffer::MeshBuffer(
-	InstanceImpl	*	instance,
+	InstanceImpl					&	instance,
 	VkDevice							device,
-	const VkPhysicalDeviceLimits	&	physicald_device_limits,
-	DeviceMemoryPool				*	device_memory_pool )
+	const VkPhysicalDeviceLimits	&	physical_device_limits,
+	DeviceMemoryPool				&	device_memory_pool
+) :
+	instance( instance ),
+	device( device ),
+	physical_device_limits( physical_device_limits ),
+	device_memory_pool( device_memory_pool )
 {
-	assert( instance );
 	assert( device );
-	assert( device_memory_pool );
-
-	this->instance						= instance;
-	this->device						= device;
-	this->physicald_device_limits		= physicald_device_limits;
-	this->device_memory_pool			= device_memory_pool;
 
 	this->first_draw					= true;
 }
@@ -69,7 +66,7 @@ vk2d::vk2d_internal::MeshBuffer::PushResult vk2d::vk2d_internal::MeshBuffer::Cmd
 		vkCmdBindDescriptorSets(
 			command_buffer,
 			VK_PIPELINE_BIND_POINT_GRAPHICS,
-			instance->GetGraphicsPrimaryRenderPipelineLayout(),
+			instance.GetGraphicsPrimaryRenderPipelineLayout(),
 			GRAPHICS_DESCRIPTOR_SET_ALLOCATION_INDEX_BUFFER_AS_STORAGE_BUFFER,
 			1, &reserve_result.index_block->descriptor_set.descriptorSet,
 			0, nullptr
@@ -86,7 +83,7 @@ vk2d::vk2d_internal::MeshBuffer::PushResult vk2d::vk2d_internal::MeshBuffer::Cmd
 		vkCmdBindDescriptorSets(
 			command_buffer,
 			VK_PIPELINE_BIND_POINT_GRAPHICS,
-			instance->GetGraphicsPrimaryRenderPipelineLayout(),
+			instance.GetGraphicsPrimaryRenderPipelineLayout(),
 			GRAPHICS_DESCRIPTOR_SET_ALLOCATION_VERTEX_BUFFER_AS_STORAGE_BUFFER,
 			1, &reserve_result.vertex_block->descriptor_set.descriptorSet,
 			0, nullptr
@@ -103,7 +100,7 @@ vk2d::vk2d_internal::MeshBuffer::PushResult vk2d::vk2d_internal::MeshBuffer::Cmd
 		vkCmdBindDescriptorSets(
 			command_buffer,
 			VK_PIPELINE_BIND_POINT_GRAPHICS,
-			instance->GetGraphicsPrimaryRenderPipelineLayout(),
+			instance.GetGraphicsPrimaryRenderPipelineLayout(),
 			GRAPHICS_DESCRIPTOR_SET_ALLOCATION_texture_channel_weights,
 			1, &reserve_result.texture_channel_weight_block->descriptor_set.descriptorSet,
 			0, nullptr
@@ -120,7 +117,7 @@ vk2d::vk2d_internal::MeshBuffer::PushResult vk2d::vk2d_internal::MeshBuffer::Cmd
 		vkCmdBindDescriptorSets(
 			command_buffer,
 			VK_PIPELINE_BIND_POINT_GRAPHICS,
-			instance->GetGraphicsPrimaryRenderPipelineLayout(),
+			instance.GetGraphicsPrimaryRenderPipelineLayout(),
 			GRAPHICS_DESCRIPTOR_SET_ALLOCATION_TRANSFORMATION,
 			1, &reserve_result.transformation_block->descriptor_set.descriptorSet,
 			0, nullptr
@@ -311,7 +308,7 @@ vk2d::vk2d_internal::MeshBuffer::MeshBlockLocationInfo vk2d::vk2d_internal::Mesh
 		// Index buffer block
 		index_buffer_block					= FindIndexBufferWithEnoughSpace( index_count );
 		if( !index_buffer_block ) {
-			instance->Report( ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot reserve space for mesh in MeshBuffer, cannot find or create index MeshBufferBlock with enough free space!" );
+			instance.Report( ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot reserve space for mesh in MeshBuffer, cannot find or create index MeshBufferBlock with enough free space!" );
 			return {};
 		}
 		index_buffer_position				= index_buffer_block->ReserveSpace( index_count );
@@ -319,7 +316,7 @@ vk2d::vk2d_internal::MeshBuffer::MeshBlockLocationInfo vk2d::vk2d_internal::Mesh
 		// Vertex buffer block
 		vertex_buffer_block					= FindVertexBufferWithEnoughSpace( vertex_count );
 		if( !vertex_buffer_block ) {
-			instance->Report( ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot reserve space for mesh in MeshBuffer, cannot find or create vertex MeshBufferBlock with enough free space!" );
+			instance.Report( ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot reserve space for mesh in MeshBuffer, cannot find or create vertex MeshBufferBlock with enough free space!" );
 			return {};
 		}
 		vertex_buffer_position				= vertex_buffer_block->ReserveSpace( vertex_count );
@@ -327,7 +324,7 @@ vk2d::vk2d_internal::MeshBuffer::MeshBlockLocationInfo vk2d::vk2d_internal::Mesh
 		// Texture channel buffer block
 		texture_channel_weight_buffer_block		= FindTextureChannelBufferWithEnoughSpace( texture_channel_weight_count );
 		if( !texture_channel_weight_buffer_block ) {
-			instance->Report( ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot reserve space for mesh in MeshBuffer, cannot find or create texture channel MeshBufferBlock with enough free space!" );
+			instance.Report( ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot reserve space for mesh in MeshBuffer, cannot find or create texture channel MeshBufferBlock with enough free space!" );
 			return {};
 		}
 		texture_channel_weight_buffer_position	= texture_channel_weight_buffer_block->ReserveSpace( texture_channel_weight_count );
@@ -335,7 +332,7 @@ vk2d::vk2d_internal::MeshBuffer::MeshBlockLocationInfo vk2d::vk2d_internal::Mesh
 		// Transformation buffer block
 		transformation_buffer_block			= FindTransformationBufferWithEnoughSpace( transformation_count );
 		if( !transformation_buffer_block ) {
-			instance->Report( ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot reserve space for mesh in MeshBuffer, cannot find or create transformation MeshBufferBlock with enough free space!" );
+			instance.Report( ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot reserve space for mesh in MeshBuffer, cannot find or create transformation MeshBufferBlock with enough free space!" );
 			return {};
 		}
 		transformation_buffer_position		= transformation_buffer_block->ReserveSpace( transformation_count );
@@ -394,7 +391,7 @@ vk2d::vk2d_internal::MeshBufferBlock<uint32_t>* vk2d::vk2d_internal::MeshBuffer:
 			assert( new_block->CheckDataFits( count ) );
 			return new_block;
 		} else {
-			instance->Report( ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot create new index MeshBufferBlock!" );
+			instance.Report( ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot create new index MeshBufferBlock!" );
 			return nullptr;
 		}
 	}
@@ -423,7 +420,7 @@ vk2d::vk2d_internal::MeshBufferBlock<vk2d::Vertex>* vk2d::vk2d_internal::MeshBuf
 			assert( new_block->CheckDataFits( count ) );
 			return new_block;
 		} else {
-			instance->Report( ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot create new vertex MeshBufferBlock!" );
+			instance.Report( ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot create new vertex MeshBufferBlock!" );
 			return nullptr;
 		}
 	}
@@ -452,7 +449,7 @@ vk2d::vk2d_internal::MeshBufferBlock<float>* vk2d::vk2d_internal::MeshBuffer::Fi
 			assert( new_block->CheckDataFits( count ) );
 			return new_block;
 		} else {
-			instance->Report( ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot create new texture channel MeshBufferBlock!" );
+			instance.Report( ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot create new texture channel MeshBufferBlock!" );
 			return nullptr;
 		}
 	}
@@ -481,7 +478,7 @@ vk2d::vk2d_internal::MeshBufferBlock<glm::mat4>* vk2d::vk2d_internal::MeshBuffer
 			assert( new_block->CheckDataFits( count ) );
 			return new_block;
 		} else {
-			instance->Report( ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot create new transformation MeshBufferBlock!" );
+			instance.Report( ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot create new transformation MeshBufferBlock!" );
 			return nullptr;
 		}
 	}
@@ -493,7 +490,7 @@ vk2d::vk2d_internal::MeshBufferBlock<uint32_t>* vk2d::vk2d_internal::MeshBuffer:
 )
 {
 	auto buffer_block	= std::make_unique<MeshBufferBlock<uint32_t>>(
-		this,
+		*this,
 		byte_size,
 		VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
 		MeshBufferDescriptorSetType::STORAGE
@@ -512,7 +509,7 @@ vk2d::vk2d_internal::MeshBufferBlock<vk2d::Vertex>* vk2d::vk2d_internal::MeshBuf
 )
 {
 	auto buffer_block	= std::make_unique<MeshBufferBlock<Vertex>>(
-		this,
+		*this,
 		byte_size,
 		VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
 		MeshBufferDescriptorSetType::STORAGE
@@ -531,11 +528,11 @@ vk2d::vk2d_internal::MeshBufferBlock<float>* vk2d::vk2d_internal::MeshBuffer::Al
 )
 {
 	auto buffer_block	= std::make_unique<MeshBufferBlock<float>>(
-		this,
+		*this,
 		byte_size,
 		VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
 		MeshBufferDescriptorSetType::STORAGE
-		);
+	);
 	if( buffer_block && buffer_block->IsGood() ) {
 		auto ret		= buffer_block.get();
 		texture_channel_weight_buffer_blocks.push_back( std::move( buffer_block ) );
@@ -550,7 +547,7 @@ vk2d::vk2d_internal::MeshBufferBlock<glm::mat4>* vk2d::vk2d_internal::MeshBuffer
 )
 {
 	auto buffer_block	= std::make_unique<MeshBufferBlock<glm::mat4>>(
-		this,
+		*this,
 		byte_size,
 		VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
 		MeshBufferDescriptorSetType::STORAGE

@@ -207,7 +207,7 @@ class Sampler {
 	/// @param[in]	create_info
 	///				Reference to SamplerCreateInfo object defining parameters for this render target texture.
 	VK2D_API										Sampler(
-		vk2d_internal::InstanceImpl				*	instance,
+		vk2d_internal::InstanceImpl				&	instance,
 		const SamplerCreateInfo					&	create_info );
 
 public:

@@ -97,7 +97,7 @@ class FontResource
 	///				mix together in the final render, to decrease the amount of this "UV bleeding" you can increase the gap
 	///				between glyphs in the texture atlas here.
 	VK2D_API												FontResource(
-		vk2d_internal::ResourceManagerImpl				*	resource_manager,
+		vk2d_internal::ResourceManagerImpl				&	resource_manager,
 		uint32_t											loader_thread_index,
 		ResourceBase									*	parent_resource,
 		const std::filesystem::path						&	file_path,

@@ -1,10 +1,11 @@
 #pragma once
 
-#include "core/SourceCommon.h"
+#include <core/SourceCommon.h>
 
-#include "system/ThreadPool.h"
-#include "system/DescriptorSet.h"
-#include "system/VulkanMemoryManagement.h"
+#include <system/ThreadPool.h>
+#include <system/DescriptorSet.h>
+
+#include <vulkan/utils/VulkanMemoryManagement.hpp>
 
 #include <ft2build.h>
 #include FT_FREETYPE_H
@@ -22,15 +23,15 @@ class DeviceMemoryPool;
 class ThreadLoaderResource : public ThreadPrivateResource {
 public:
 	ThreadLoaderResource(
-		InstanceImpl						*	instance );
+		InstanceImpl						&	instance );
 
 	~ThreadLoaderResource()
 	{}
 
-	InstanceImpl							*	GetInstance() const;
-	VkDevice													GetVulkanDevice() const;
-	DeviceMemoryPool						*	GetDeviceMemoryPool() const;
-	DescriptorAutoPool						*	GetDescriptorAutoPool() const;
+	InstanceImpl							&	GetInstance();
+	VkDevice									GetVulkanDevice() const;
+	DeviceMemoryPool						*	GetDeviceMemoryPool();
+	DescriptorAutoPool						*	GetDescriptorAutoPool();
 	VkCommandPool								GetPrimaryRenderCommandPool() const;
 	VkCommandPool								GetSecondaryRenderCommandPool() const;
 	VkCommandPool								GetPrimaryTransferCommandPool() const;
@@ -41,7 +42,7 @@ protected:
 	void										ThreadEnd();
 
 private:
-	InstanceImpl							*	instance						= {};
+	InstanceImpl							&	instance;
 	VkDevice									device								= {};
 	std::unique_ptr<DescriptorAutoPool>			descriptor_auto_pool				= {};
 	std::unique_ptr<DeviceMemoryPool>			device_memory_pool					= {};

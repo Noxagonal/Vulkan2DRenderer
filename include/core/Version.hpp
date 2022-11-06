@@ -40,7 +40,7 @@ public:
 	///				and the last 12 bits are the patch number.
 	/// 
 	/// @return		Vulkan formatted version number.
-	inline uint32_t			ToVulkanVersion()
+	inline uint32_t			ToVulkanVersion() const
 	{
 		return ( ( ( major ) << 22 ) | ( ( minor ) << 12 ) | ( patch ) );
 	}

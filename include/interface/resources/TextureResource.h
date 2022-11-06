@@ -65,10 +65,11 @@ class TextureResource :
 	///				- Each texture layer must be the same size. If images in these file paths are not same size then texture loading
 	///				will fail.
 	VK2D_API													TextureResource(
-		vk2d_internal::ResourceManagerImpl					*	resource_manager,
+		vk2d_internal::ResourceManagerImpl					&	resource_manager,
 		uint32_t												loader_thread,
 		ResourceBase										*	parent_resource,
-		const std::vector<std::filesystem::path>			&	file_paths_listing );
+		const std::vector<std::filesystem::path>			&	file_paths_listing
+	);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		This constructor is meant for internal use only.
@@ -101,11 +102,12 @@ class TextureResource :
 	///				- Each texture layer must be the same size.
 	///				- This data is copied over to internal memory before returning so you do not need to keep the vector around.
 	VK2D_API												TextureResource(
-		vk2d_internal::ResourceManagerImpl				*	resource_manager,
+		vk2d_internal::ResourceManagerImpl				&	resource_manager,
 		uint32_t											loader_thread,
 		ResourceBase									*	parent_resource,
 		glm::uvec2											size,
-		const std::vector<const std::vector<Color8>*>	&	texels_listing );
+		const std::vector<const std::vector<Color8>*>	&	texels_listing
+	);
 
 public:
 
@@ -137,7 +139,8 @@ public:
 	/// 
 	/// @return		Status of the resource, see ResourceStatus. Resource status can only be undetermined if timeout was given.
 	VK2D_API ResourceStatus									WaitUntilLoaded(
-		std::chrono::nanoseconds							timeout						= std::chrono::nanoseconds::max() );
+		std::chrono::nanoseconds							timeout						= std::chrono::nanoseconds::max()
+	);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Waits for the resource to load on the calling thread before continuing execution.
@@ -153,7 +156,8 @@ public:
 	/// 
 	/// @return		Status of the resource, see ResourceStatus.
 	VK2D_API ResourceStatus									WaitUntilLoaded(
-		std::chrono::steady_clock::time_point				timeout );
+		std::chrono::steady_clock::time_point				timeout
+	);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Get texel size of the texture resource.

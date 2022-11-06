@@ -1,14 +1,14 @@
 #pragma once
 
-#include "core/SourceCommon.h"
+#include <core/SourceCommon.h>
 
-#include "types/MeshPrimitives.hpp"
+#include <types/MeshPrimitives.hpp>
 
-#include "system/VulkanMemoryManagement.h"
-#include "system/DescriptorSet.h"
+#include <vulkan/utils/VulkanMemoryManagement.hpp>
+#include <system/DescriptorSet.h>
 
-#include "interface/WindowImpl.h"
-#include "interface/InstanceImpl.h"
+#include <interface/WindowImpl.h>
+#include <interface/InstanceImpl.h>
 
 
 
@@ -77,10 +77,11 @@ public:
 	};
 
 	MeshBuffer(
-		InstanceImpl						*	instance,
+		InstanceImpl						&	instance,
 		VkDevice								device,
 		const VkPhysicalDeviceLimits		&	physicald_device_limits,
-		DeviceMemoryPool					*	device_memory_pool );
+		DeviceMemoryPool					&	device_memory_pool
+	);
 
 	// Pushes mesh into render list, dynamically allocates new buffers
 	// if needed, binds the new buffers to command buffer if needed
@@ -92,10 +93,12 @@ public:
 		const std::vector<uint32_t>			&	new_indices,
 		const std::vector<Vertex>			&	new_vertices,
 		const std::vector<float>			&	new_texture_channel_weights,
-		const std::vector<glm::mat4>		&	new_transformations );
+		const std::vector<glm::mat4>		&	new_transformations
+	);
 
 	bool										CmdUploadMeshDataToGPU(
-		VkCommandBuffer							command_buffer );
+		VkCommandBuffer							command_buffer
+	);
 
 	// Gets the total amount of individual meshes that have been pushed so far.
 	uint32_t									GetPushedMeshCount();
@@ -117,72 +120,85 @@ private:
 		uint32_t								index_count,
 		uint32_t								vertex_count,
 		uint32_t								texture_channel_weight_count,
-		uint32_t								transformation_count );
+		uint32_t								transformation_count
+	);
 
 	// Find an index buffer with enough space to hold the data, if none found
 	// this function will allocate a new buffer that will have enough space.
 	// Returns nullptr on failure.
 	MeshBufferBlock<uint32_t>				*	FindIndexBufferWithEnoughSpace(
-		uint32_t								count );
+		uint32_t								count
+	);
 
 	// Find an index buffer with enough space to hold the data, if none found
 	// this function will allocate a new buffer that will have enough space.
 	// Returns nullptr on failure.
 	MeshBufferBlock<Vertex>					*	FindVertexBufferWithEnoughSpace(
-		uint32_t								count );
+		uint32_t								count
+	);
 
 	// Find an index buffer with enough space to hold the data, if none found
 	// this function will allocate a new buffer that will have enough space.
 	// Returns nullptr on failure.
 	MeshBufferBlock<float>					*	FindTextureChannelBufferWithEnoughSpace(
-		uint32_t								count );
+		uint32_t								count
+	);
 
 	// Find a transformation buffer with enough space to hold the data, if none found
 	// this function will allocate a new buffer that will have enough space.
 	// Returns nullptr on failure.
 	MeshBufferBlock<glm::mat4>				*	FindTransformationBufferWithEnoughSpace(
-		uint32_t								count );
+		uint32_t								count
+	);
 
 	// Creates a new buffer block and stores it internally,
 	// returns a pointer to it if successful or nullptr on failure.
 	MeshBufferBlock<uint32_t>				*	AllocateIndexBufferBlockAndStore(
-		VkDeviceSize							byte_size );
+		VkDeviceSize							byte_size
+	);
 
 	// Creates a new buffer block and stores it internally,
 	// returns a pointer to it if successful or nullptr on failure.
 	MeshBufferBlock<Vertex>					*	AllocateVertexBufferBlockAndStore(
-		VkDeviceSize							byte_size );
+		VkDeviceSize							byte_size
+	);
 
 	// Creates a new buffer block and stores it internally,
 	// returns a pointer to it if successful or nullptr on failure.
 	MeshBufferBlock<float>					*	AllocateTextureChannelBufferBlockAndStore(
-		VkDeviceSize							byte_size );
+		VkDeviceSize							byte_size
+	);
 
 	// Creates a new buffer block and stores it internally,
 	// returns a pointer to it if successful or nullptr on failure.
 	MeshBufferBlock<glm::mat4>				*	AllocateTransformationBufferBlockAndStore(
-		VkDeviceSize							byte_size );
+		VkDeviceSize							byte_size
+	);
 
 	// Removes a buffer block with matching pointer from internal storage.
 	void										FreeBufferBlockFromStorage(
-		MeshBufferBlock<uint32_t>			*	buffer_block );
+		MeshBufferBlock<uint32_t>			*	buffer_block
+	);
 
 	// Removes a buffer block with matching pointer from internal storage.
 	void										FreeBufferBlockFromStorage(
-		MeshBufferBlock<Vertex>				*	buffer_block );
+		MeshBufferBlock<Vertex>				*	buffer_block
+	);
 
 	// Removes a buffer block with matching pointer from internal storage.
 	void										FreeBufferBlockFromStorage(
-		MeshBufferBlock<float>				*	buffer_block );
+		MeshBufferBlock<float>				*	buffer_block
+	);
 
 	// Removes a buffer block with matching pointer from internal storage.
 	void										FreeBufferBlockFromStorage(
-		MeshBufferBlock<glm::mat4>			*	buffer_block );
+		MeshBufferBlock<glm::mat4>			*	buffer_block
+	);
 
-	InstanceImpl							*	instance									= {};
+	InstanceImpl							&	instance;
 	VkDevice									device										= {};
-	VkPhysicalDeviceLimits						physicald_device_limits						= {};
-	DeviceMemoryPool						*	device_memory_pool							= {};
+	VkPhysicalDeviceLimits						physical_device_limits						= {};
+	DeviceMemoryPool						&	device_memory_pool;
 
 	bool										first_draw									= {};
 
@@ -220,23 +236,22 @@ class MeshBufferBlock {
 
 public:
 	MeshBufferBlock(
-		MeshBuffer							*	mesh_buffer,
+		MeshBuffer							&	mesh_buffer,
 		VkDeviceSize							buffer_byte_size,
 		VkBufferUsageFlags						buffer_usage_flags,
 		MeshBufferDescriptorSetType				descriptor_set_type
-	)
+	) :
+		mesh_buffer( mesh_buffer )
 	{
-		assert( mesh_buffer );
 		assert( buffer_byte_size );
 		assert( buffer_usage_flags );
 
-		mesh_buffer_parent			= mesh_buffer;
-		auto instance				= mesh_buffer_parent->instance;
-		auto memory_pool			= instance->GetDeviceMemoryPool();
+		auto & instance				= mesh_buffer.instance;
+		auto memory_pool			= instance.GetVulkanDevice().GetDeviceMemoryPool();
 
 		total_byte_size				= CalculateAlignmentForBuffer(
 			buffer_byte_size,
-			instance->GetVulkanPhysicalDeviceProperties().limits
+			instance.GetVulkanPhysicalDeviceProperties().limits
 		);
 
 		host_data.reserve( total_byte_size / sizeof( T ) + 1 );
@@ -252,12 +267,12 @@ public:
 			buffer_create_info.sharingMode				= VK_SHARING_MODE_EXCLUSIVE;
 			buffer_create_info.queueFamilyIndexCount	= 0;
 			buffer_create_info.pQueueFamilyIndices		= nullptr;
-			staging_buffer			= memory_pool->CreateCompleteBufferResource(
+			staging_buffer = memory_pool->CreateCompleteBufferResource(
 				&buffer_create_info,
 				VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT
 			);
 			if( staging_buffer != VK_SUCCESS ) {
-				instance->Report( ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot create MeshBufferBlock, cannot create staging buffer!" );
+				instance.Report( ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot create MeshBufferBlock, cannot create staging buffer!" );
 				return;
 			}
 		}
@@ -273,12 +288,12 @@ public:
 			buffer_create_info.sharingMode				= VK_SHARING_MODE_EXCLUSIVE;
 			buffer_create_info.queueFamilyIndexCount	= 0;
 			buffer_create_info.pQueueFamilyIndices		= nullptr;
-			device_buffer			= memory_pool->CreateCompleteBufferResource(
+			device_buffer = memory_pool->CreateCompleteBufferResource(
 				&buffer_create_info,
 				VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT
 			);
 			if( device_buffer != VK_SUCCESS ) {
-				instance->Report( ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot create MeshBufferBlock, cannot create device buffer!" );
+				instance.Report( ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot create MeshBufferBlock, cannot create device buffer!" );
 				return;
 			}
 		}
@@ -291,7 +306,7 @@ public:
 			case MeshBufferDescriptorSetType::UNIFORM:
 			{
 				// TODO: MeshBufferBlock::descriptor_set allocation and freeing needs to be thread specific instead of allocating from the instance.
-				descriptor_set			= instance->AllocateDescriptorSet( instance->GetGraphicsUniformBufferDescriptorSetLayout() );
+				descriptor_set			= instance.AllocateDescriptorSet( instance.GetGraphicsUniformBufferDescriptorSetLayout() );
 
 				VkDescriptorBufferInfo descriptor_write_buffer_info {};
 				descriptor_write_buffer_info.buffer		= device_buffer.buffer;
@@ -309,7 +324,7 @@ public:
 				descriptor_write[ 0 ].pBufferInfo		= &descriptor_write_buffer_info;
 				descriptor_write[ 0 ].pTexelBufferView	= nullptr;
 				vkUpdateDescriptorSets(
-					mesh_buffer_parent->device,
+					instance.GetVulkanDevice(),
 					uint32_t( descriptor_write.size() ), descriptor_write.data(),
 					0, nullptr
 				);
@@ -318,7 +333,9 @@ public:
 			case MeshBufferDescriptorSetType::STORAGE:
 			{
 				// WARNING: MeshBufferBlock::descriptor_set allocation and freeing needs to be thread specific if we ever start doing multithreaded rendering.
-				descriptor_set			= instance->AllocateDescriptorSet( instance->GetGraphicsStorageBufferDescriptorSetLayout() );
+				descriptor_set = instance.AllocateDescriptorSet(
+					instance.GetGraphicsStorageBufferDescriptorSetLayout()
+				);
 
 				VkDescriptorBufferInfo descriptor_write_buffer_info {};
 				descriptor_write_buffer_info.buffer		= device_buffer.buffer;
@@ -336,7 +353,7 @@ public:
 				descriptor_write[ 0 ].pBufferInfo		= &descriptor_write_buffer_info;
 				descriptor_write[ 0 ].pTexelBufferView	= nullptr;
 				vkUpdateDescriptorSets(
-					mesh_buffer_parent->device,
+					instance.GetVulkanDevice(),
 					uint32_t( descriptor_write.size() ), descriptor_write.data(),
 					0, nullptr
 				);
@@ -347,24 +364,24 @@ public:
 				break;
 			}
 		}
-		is_good			= true;
+		is_good = true;
 	}
 
 	~MeshBufferBlock()
 	{
-		auto memory_pool		= mesh_buffer_parent->instance->GetDeviceMemoryPool();
+		auto memory_pool = mesh_buffer.instance.GetVulkanDevice().GetDeviceMemoryPool();
 
 		// WARNING: MeshBufferBlock::descriptor_set allocation and freeing needs to be thread specific if we ever start doing multithreaded rendering.
-		mesh_buffer_parent->instance->FreeDescriptorSet( descriptor_set );
+		mesh_buffer.instance.FreeDescriptorSet( descriptor_set );
 		memory_pool->FreeCompleteResource( device_buffer );
 		memory_pool->FreeCompleteResource( staging_buffer );
 	}
 
-	bool													CopyVectorsToStagingBuffers()
+	bool 										CopyVectorsToStagingBuffers()
 	{
 		auto mapped_memory	= staging_buffer.memory.Map<T>();
 		if( !mapped_memory ) {
-			mesh_buffer_parent->instance->Report( ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot copy mesh buffer block to  map staging buffer memory" );
+			mesh_buffer.instance.Report( ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot copy mesh buffer block to  map staging buffer memory" );
 			return false;
 		} else {
 			std::memcpy( mapped_memory, host_data.data(), used_byte_size );
@@ -412,7 +429,7 @@ public:
 	}
 
 private:
-	MeshBuffer								*	mesh_buffer_parent			= {};
+	MeshBuffer								&	mesh_buffer;
 
 	// TODO: Get rid of extra data copying in MeshBuffer, either double buffer it or just force users to create MeshBuffer per swap.
 	// Might be a bit clumbersome to introduce double buffering here so consider making this single access only, so that the data

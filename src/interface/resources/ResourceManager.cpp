@@ -36,16 +36,16 @@
 
 
 VK2D_API vk2d::ResourceManager::ResourceManager(
-	vk2d_internal::InstanceImpl		*	parent_instance
+	vk2d_internal::InstanceImpl		&	instance
 )
 {
 	impl = std::make_unique<vk2d_internal::ResourceManagerImpl>(
-		this,
-		parent_instance
+		*this,
+		instance
 	);
 	if( !impl || !impl->IsGood() ) {
 		impl	= nullptr;
-		parent_instance->Report( ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot create resource manager implementation!" );
+		instance.Report( ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot create resource manager implementation!" );
 		return;
 	}
 }
@@ -148,7 +148,7 @@ VK2D_API bool vk2d::ResourceManager::IsGood() const
 
 
 vk2d::vk2d_internal::ResourceThreadLoadTask::ResourceThreadLoadTask(
-	ResourceManagerImpl			*	resource_manager,
+	ResourceManagerImpl			&	resource_manager,
 	ResourceBase				*	resource
 ) :
 	resource_manager( resource_manager ),
@@ -156,7 +156,7 @@ vk2d::vk2d_internal::ResourceThreadLoadTask::ResourceThreadLoadTask(
 {};
 
 void vk2d::vk2d_internal::ResourceThreadLoadTask::operator()(
-	ThreadPrivateResource	*	thread_resource
+	ThreadPrivateResource * thread_resource
 )
 {
 	// Because Vulkan often needs to do more processing afterwards resource status
@@ -165,7 +165,7 @@ void vk2d::vk2d_internal::ResourceThreadLoadTask::operator()(
 
 	if( !resource->resource_impl->MTLoad( thread_resource ) ) {
 		resource->resource_impl->status = ResourceStatus::FAILED_TO_LOAD;
-		resource_manager->GetInstance()->Report( ReportSeverity::WARNING, "Resource loading failed!" );
+		resource_manager.GetInstance().Report( ReportSeverity::WARNING, "Resource loading failed!" );
 	}
 	resource->resource_impl->load_function_run_fence.Set();
 }
@@ -173,8 +173,8 @@ void vk2d::vk2d_internal::ResourceThreadLoadTask::operator()(
 
 
 vk2d::vk2d_internal::ResourceThreadUnloadTask::ResourceThreadUnloadTask(
-	ResourceManagerImpl	*	resource_manager,
-	std::unique_ptr<ResourceBase>			resource
+	ResourceManagerImpl				&	resource_manager,
+	std::unique_ptr<ResourceBase>		resource
 ) :
 	resource_manager( resource_manager ),
 	resource( std::move( resource ) )
@@ -190,20 +190,16 @@ void vk2d::vk2d_internal::ResourceThreadUnloadTask::operator()(
 
 
 vk2d::vk2d_internal::ResourceManagerImpl::ResourceManagerImpl(
-	ResourceManager			*	my_interface,
-	InstanceImpl	*	parent_instance
-)
+	ResourceManager		&	my_interface,
+	InstanceImpl		&	instance
+) :
+	my_interface( my_interface ),
+	instance( instance ),
+	vk_device( instance.GetVulkanDevice() ),
+	thread_pool( *instance.GetThreadPool() ),
+	loader_threads( instance.GetLoaderThreads() )
 {
-	this->my_interface		= my_interface;
-	this->instance			= parent_instance;
-	this->vk_device			= instance->GetVulkanDevice();
-	this->thread_pool		= instance->GetThreadPool();
-	this->loader_threads	= instance->GetLoaderThreads();
-
-	assert( this->my_interface );
-	assert( this->instance );
 	assert( this->vk_device );
-	assert( this->thread_pool );
 	assert( std::size( this->loader_threads ) );
 
 	is_good		= true;
@@ -238,37 +234,40 @@ vk2d::vk2d_internal::ResourceManagerImpl::~ResourceManagerImpl()
 		auto it = resources.begin();
 		while( it != resources.end() ) {
 			( *it )->resource_impl->WaitUntilLoaded();
-			thread_pool->ScheduleTask(
+			thread_pool.ScheduleTask(
 				std::make_unique<ResourceThreadUnloadTask>(
-					this, std::move( *it )
-					),
+					*this,
+					std::move( *it )
+				),
 				{ ( *it )->resource_impl->GetLoaderThread() }
 			);
 			it = resources.erase( it );
 		}
 	}
 
-	thread_pool->WaitIdle();
+	thread_pool.WaitIdle();
 }
 
 
 
 vk2d::TextureResource * vk2d::vk2d_internal::ResourceManagerImpl::LoadTextureResource(
-	const std::filesystem::path			&	file_path,
-	ResourceBase					*	parent_resource )
+	const std::filesystem::path		&	file_path,
+	ResourceBase					*	parent_resource
+)
 {
-	std::lock_guard<std::recursive_mutex>		resources_lock( resources_mutex );
+	std::lock_guard<std::recursive_mutex> resources_lock( resources_mutex );
 
-	auto resource		= std::unique_ptr<TextureResource>(
+	auto resource = std::unique_ptr<TextureResource>(
 		new TextureResource(
-			this,
+			*this,
 			SelectLoaderThread(),
 			parent_resource,
-			{ file_path } )
-		);
+			std::vector<std::filesystem::path> { file_path }
+		)
+	);
 	if( !resource || !resource->IsGood() ) {
 		// Could not create resource.
-		GetInstance()->Report( ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot create texture resource handle!" );
+		instance.Report( ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot create texture resource handle!" );
 		return nullptr;
 	}
 
@@ -276,24 +275,25 @@ vk2d::TextureResource * vk2d::vk2d_internal::ResourceManagerImpl::LoadTextureRes
 }
 
 vk2d::TextureResource * vk2d::vk2d_internal::ResourceManagerImpl::CreateTextureResource(
-	glm::uvec2								size,
+	glm::uvec2							size,
 	const std::vector<Color8>		&	texture_data,
-	ResourceBase					*	parent_resource )
+	ResourceBase					*	parent_resource
+)
 {
-	std::lock_guard<std::recursive_mutex>		resources_lock( resources_mutex );
+	std::lock_guard<std::recursive_mutex> resources_lock( resources_mutex );
 
-	auto resource		= std::unique_ptr<TextureResource>(
+	auto resource = std::unique_ptr<TextureResource>(
 		new TextureResource(
-			this,
+			*this,
 			SelectLoaderThread(),
 			parent_resource,
 			size,
-			{ &texture_data }
+			std::vector<const std::vector<Color8>*>{ &texture_data }
 		)
-		);
+	);
 	if( !resource || !resource->IsGood() ) {
 		// Could not create resource.
-		GetInstance()->Report( ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot create texture resource handle!" );
+		instance.Report( ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot create texture resource handle!" );
 		return nullptr;
 	}
 
@@ -301,21 +301,23 @@ vk2d::TextureResource * vk2d::vk2d_internal::ResourceManagerImpl::CreateTextureR
 }
 
 vk2d::TextureResource * vk2d::vk2d_internal::ResourceManagerImpl::LoadArrayTextureResource(
-	const std::vector<std::filesystem::path>		&	file_path_listing,
-	ResourceBase								*	parent_resource )
+	const std::vector<std::filesystem::path>	&	file_path_listing,
+	ResourceBase								*	parent_resource
+)
 {
-	std::lock_guard<std::recursive_mutex>		resources_lock( resources_mutex );
+	std::lock_guard<std::recursive_mutex> resources_lock( resources_mutex );
 
-	auto resource		= std::unique_ptr<TextureResource>(
+	auto resource = std::unique_ptr<TextureResource>(
 		new TextureResource(
-			this,
+			*this,
 			SelectLoaderThread(),
 			parent_resource,
-			file_path_listing )
-		);
+			file_path_listing
+		)
+	);
 	if( !resource || !resource->IsGood() ) {
 		// Could not create resource.
-		GetInstance()->Report( ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot create texture resource handle!" );
+		instance.Report( ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot create texture resource handle!" );
 		return nullptr;
 	}
 
@@ -325,23 +327,23 @@ vk2d::TextureResource * vk2d::vk2d_internal::ResourceManagerImpl::LoadArrayTextu
 vk2d::TextureResource * vk2d::vk2d_internal::ResourceManagerImpl::CreateArrayTextureResource(
 	glm::uvec2											size,
 	const std::vector<const std::vector<Color8>*>	&	texture_data_listings,
-	ResourceBase									*	parent_resource )
+	ResourceBase									*	parent_resource
+)
 {
-	std::lock_guard<std::recursive_mutex>		resources_lock( resources_mutex );
+	std::lock_guard<std::recursive_mutex> resources_lock( resources_mutex );
 
-	auto resource		=
-		std::unique_ptr<TextureResource>(
-			new TextureResource(
-				this,
-				SelectLoaderThread(),
-				parent_resource,
-				size,
-				texture_data_listings
-			)
-			);
+	auto resource = std::unique_ptr<TextureResource>(
+		new TextureResource(
+			*this,
+			SelectLoaderThread(),
+			parent_resource,
+			size,
+			texture_data_listings
+		)
+	);
 	if( !resource || !resource->IsGood() ) {
 		// Could not create resource.
-		GetInstance()->Report( ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot create texture resource handle!" );
+		instance.Report( ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot create texture resource handle!" );
 		return nullptr;
 	}
 
@@ -350,19 +352,19 @@ vk2d::TextureResource * vk2d::vk2d_internal::ResourceManagerImpl::CreateArrayTex
 
 vk2d::FontResource * vk2d::vk2d_internal::ResourceManagerImpl::LoadFontResource(
 	const std::filesystem::path			&	file_path,
-	ResourceBase					*	parent_resource,
+	ResourceBase						*	parent_resource,
 	uint32_t								glyph_texel_size,
 	bool									use_alpha,
 	uint32_t								fallback_character,
 	uint32_t								glyph_atlas_padding
 )
 {
-	std::lock_guard<std::recursive_mutex>		resources_lock( resources_mutex );
+	std::lock_guard<std::recursive_mutex> resources_lock( resources_mutex );
 
 	auto resource		=
 		std::unique_ptr<FontResource>(
 			new FontResource(
-				this,
+				*this,
 				SelectLoaderThread(),
 				parent_resource,
 				file_path,
@@ -374,7 +376,7 @@ vk2d::FontResource * vk2d::vk2d_internal::ResourceManagerImpl::LoadFontResource(
 			);
 	if( !resource || !resource->IsGood() ) {
 		// Could not create resource.
-		GetInstance()->Report( ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot create font resource handle!" );
+		instance.Report( ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot create font resource handle!" );
 		return nullptr;
 	}
 
@@ -398,7 +400,13 @@ void vk2d::vk2d_internal::ResourceManagerImpl::DestroyResource(
 	while( it != resources.end() ) {
 		if( it->get() == resource ) {
 			// Found resource in the resources list
-			thread_pool->ScheduleTask( std::make_unique<ResourceThreadUnloadTask>( this, std::move( *it ) ), { resource->resource_impl->GetLoaderThread() } );
+			thread_pool.ScheduleTask(
+				std::make_unique<ResourceThreadUnloadTask>(
+					*this,
+					std::move( *it )
+				),
+				{ resource->resource_impl->GetLoaderThread() }
+			);
 			it = resources.erase( it );
 			return;
 		} else {
@@ -407,12 +415,12 @@ void vk2d::vk2d_internal::ResourceManagerImpl::DestroyResource(
 	}
 }
 
-vk2d::vk2d_internal::InstanceImpl * vk2d::vk2d_internal::ResourceManagerImpl::GetInstance() const
+vk2d::vk2d_internal::InstanceImpl & vk2d::vk2d_internal::ResourceManagerImpl::GetInstance() const
 {
 	return instance;
 }
 
-vk2d::vk2d_internal::ThreadPool * vk2d::vk2d_internal::ResourceManagerImpl::GetThreadPool() const
+vk2d::vk2d_internal::ThreadPool & vk2d::vk2d_internal::ResourceManagerImpl::GetThreadPool() const
 {
 	return thread_pool;
 }
@@ -441,11 +449,13 @@ void vk2d::vk2d_internal::ResourceManagerImpl::ScheduleResourceLoad(
 	ResourceBase * resource_ptr
 )
 {
-	thread_pool->ScheduleTask(
-		std::make_unique<ResourceThreadLoadTask>(
-			this,
-			resource_ptr
-			),
+	thread_pool.ScheduleTask(
+		std::unique_ptr<ResourceThreadLoadTask>(
+			new ResourceThreadLoadTask(
+				*this,
+				resource_ptr
+			)
+		),
 		{ resource_ptr->resource_impl->loader_thread }
 	);
 }

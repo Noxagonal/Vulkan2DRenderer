@@ -1,18 +1,18 @@
 #pragma once
 
-#include "core/SourceCommon.h"
+#include <core/SourceCommon.h>
 
-#include "types/Synchronization.hpp"
+#include <types/Synchronization.hpp>
 
-#include "system/MeshBuffer.h"
-#include "system/QueueResolver.h"
-#include "system/VulkanMemoryManagement.h"
-#include "system/DescriptorSet.h"
-#include "system/ShaderInterface.h"
-#include "system/RenderTargetTextureDependecyGraphInfo.hpp"
+#include <system/MeshBuffer.h>
+#include <vulkan/utils/QueueResolver.hpp>
+#include <vulkan/utils/VulkanMemoryManagement.hpp>
+#include <system/DescriptorSet.h>
+#include <system/ShaderInterface.h>
+#include <system/RenderTargetTextureDependecyGraphInfo.hpp>
 
-#include "interface/Instance.h"
-#include "interface/InstanceImpl.h"
+#include <interface/Instance.h>
+#include <interface/InstanceImpl.h>
 
 #define GLFW_INCLUDE_NONE
 #include <GLFW/glfw3.h>
@@ -68,8 +68,8 @@ class WindowImpl {
 
 public:
 	WindowImpl(
-		Window												*	window,
-		InstanceImpl										*	instance,
+		Window												&	window,
+		InstanceImpl										&	instance,
 		const WindowCreateInfo								&	window_create_info
 	);
 	~WindowImpl();
@@ -266,8 +266,8 @@ private:
 	bool														CmdUpdateFrameData(
 		VkCommandBuffer											command_buffer );
 
-	Window													*	my_interface								= {};
-	InstanceImpl											*	instance									= {};
+	InstanceImpl											&	instance;
+	Window													&	my_interface;
 	WindowCreateInfo											create_info_copy							= {};
 
 	WindowEventHandler										*	event_handler								= {};
@@ -284,6 +284,8 @@ private:
 	VkInstance													vk_instance									= {};
 	VkPhysicalDevice											vk_physical_device							= {};
 	VkDevice													vk_device									= {};
+
+	DeviceMemoryPool										&	device_memory_pool;
 
 	ResolvedQueue												primary_render_queue						= {};
 	ResolvedQueue												primary_compute_queue						= {};
@@ -379,54 +381,47 @@ class CursorImpl {
 	friend class WindowImpl;
 
 public:
-												CursorImpl(
-		InstanceImpl						*	instance,
-		const std::filesystem::path			&	image_path,
-		glm::ivec2								hot_spot );
+	CursorImpl(
+		const CursorImpl					&	other
+	) = delete;
 
-	// Cursor constructor, raw data version.
-	// Image data needs to be in format RGBA, 8 bits per channel, 32 bits per pixel,
-	// in order left to right - top to bottom.
-	// [in] image_size: size of the image in pixels, x dimension.
-	// [in] image_size: size of the image in pixels, y dimension.
-	// [in] image_data: raw image data.
-	// [in] hot_spot_x: where the active location of the cursor is, x location.
-	// [in] hot_spot_y: where the active location of the cursor is, y location.
-												CursorImpl(
-		InstanceImpl						*	instance,
+	CursorImpl(
+		CursorImpl							&&	other
+	) = default;
+
+	CursorImpl(
+		InstanceImpl						&	instance,
+		const std::filesystem::path			&	image_path,
+		glm::ivec2								hot_spot
+	);
+
+	CursorImpl(
+		InstanceImpl						&	instance,
 		glm::uvec2								image_size,
 		const std::vector<Color8>			&	image_data,
-		glm::ivec2								hot_spot );
+		glm::ivec2								hot_spot
+	);
 
-	// Copy constructor from another cursor.
-												CursorImpl(
-		const CursorImpl					&	other );
+	~CursorImpl();
 
-	// Move constructor from another cursor.
-												CursorImpl(
-		CursorImpl							&&	other )							= default;
-
-	// Destructor for cursor.
-												~CursorImpl();
-
-	// Copy operator from another cursor.
 	CursorImpl								&	operator=(
-		CursorImpl							&	other );
+		const CursorImpl					&	other
+	) = delete;
 
-	// Move operator from another cursor.
 	CursorImpl								&	operator=(
-		CursorImpl							&&	other )							= default;
+		CursorImpl							&&	other
+	) = default;
 
 	bool										IsGood();
 
-	InstanceImpl							*	GetInstance();
+	InstanceImpl							&	GetInstance();
 	const std::vector<Color8>				&	GetTexelData();
 	GLFWcursor								*	GetGLFWcursor();
 	glm::uvec2									GetSize();
 	glm::ivec2									GetHotSpot();
 
 private:
-	InstanceImpl							*	instance						= {};
+	InstanceImpl							&	instance;
 	std::vector<Color8>							pixel_data						= {};
 	GLFWcursor								*	cursor							= nullptr;
 	VkExtent2D									extent							= {};

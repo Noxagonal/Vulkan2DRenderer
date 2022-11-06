@@ -52,7 +52,7 @@ uint32_t RoundToCeilingPowerOfTwo(
 
 
 VK2D_API vk2d::FontResource::FontResource(
-	vk2d_internal::ResourceManagerImpl		*	resource_manager,
+	vk2d_internal::ResourceManagerImpl		&	resource_manager,
 	uint32_t									loader_thread_index,
 	ResourceBase							*	parent_resource,
 	const std::filesystem::path				&	file_path,
@@ -63,7 +63,7 @@ VK2D_API vk2d::FontResource::FontResource(
 )
 {
 	impl = std::make_unique<vk2d_internal::FontResourceImpl>(
-		this,
+		*this,
 		resource_manager,
 		loader_thread_index,
 		parent_resource,
@@ -74,8 +74,8 @@ VK2D_API vk2d::FontResource::FontResource(
 		glyph_atlas_padding
 	);
 	if( !impl || !impl->IsGood() ) {
-		impl		= nullptr;
-		resource_manager->GetInstance()->Report( ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot create font resource implementation!" );
+		impl = nullptr;
+		resource_manager.GetInstance().Report( ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot create font resource implementation!" );
 		return;
 	}
 
@@ -149,8 +149,8 @@ VK2D_API bool vk2d::FontResource::IsGood() const
 
 
 vk2d::vk2d_internal::FontResourceImpl::FontResourceImpl(
-	FontResource							*	my_interface,
-	ResourceManagerImpl						*	resource_manager,
+	FontResource							&	my_interface,
+	ResourceManagerImpl						&	resource_manager,
 	uint32_t									loader_thread_index,
 	ResourceBase							*	parent_resource,
 	const std::filesystem::path				&	file_path,
@@ -165,19 +165,13 @@ vk2d::vk2d_internal::FontResourceImpl::FontResourceImpl(
 		resource_manager,
 		parent_resource,
 		{ file_path }
-	)
+	),
+	my_interface( my_interface ),
+	glyph_texel_size( glyph_texel_size ),
+	use_alpha( use_alpha ),
+	fallback_character( fallback_character ),
+	glyph_atlas_padding( glyph_atlas_padding )
 {
-	assert( my_interface );
-	assert( resource_manager );
-
-	this->my_interface					= my_interface;
-	this->resource_manager				= resource_manager;
-
-	this->glyph_texel_size				= glyph_texel_size;
-	this->glyph_atlas_padding			= glyph_atlas_padding;
-	this->fallback_character			= fallback_character;
-	this->use_alpha						= use_alpha;
-
 	is_good		= true;
 }
 
@@ -235,19 +229,19 @@ vk2d::ResourceStatus vk2d::vk2d_internal::FontResourceImpl::WaitUntilLoaded(
 }
 
 bool vk2d::vk2d_internal::FontResourceImpl::MTLoad(
-	ThreadPrivateResource		*	thread_resource
+	ThreadPrivateResource * thread_resource
 )
 {
 	// TODO: additional parameters:
 	// From raw file.
 
 	assert( thread_resource );
-	assert( my_interface->impl->GetFilePaths().size() );
+	assert( my_interface.impl->GetFilePaths().size() );
 
 	auto loader_thread_resource		= static_cast<ThreadLoaderResource*>( thread_resource );
-	auto instance					= loader_thread_resource->GetInstance();
-	auto path_str					= my_interface->impl->GetFilePaths()[ 0 ].string();
-	auto max_texture_size			= instance->GetVulkanPhysicalDeviceProperties().limits.maxImageDimension2D;
+	auto & instance					= loader_thread_resource->GetInstance();
+	auto path_str					= my_interface.impl->GetFilePaths()[ 0 ].string();
+	auto max_texture_size			= instance.GetVulkanPhysicalDeviceProperties().limits.maxImageDimension2D;
 	auto min_texture_size			= std::min( uint32_t( 128 ), max_texture_size );
 
 	// average_to_max_weight variable is used to estimate glyph space requirements on atlas textures.
@@ -260,7 +254,7 @@ bool vk2d::vk2d_internal::FontResourceImpl::MTLoad(
 	auto maximum_glyph_bitmap_occupancy_size	= glm::dvec2( 0.0, 0.0 );
 	auto average_glyph_bitmap_occupancy_size	= glm::dvec2( 0.0, 0.0 );
 
-	if( my_interface->impl->IsFromFile() ) {
+	if( my_interface.impl->IsFromFile() ) {
 		// Try to load from file.
 
 		// Get amount of faces in the file
@@ -282,21 +276,21 @@ bool vk2d::vk2d_internal::FontResourceImpl::MTLoad(
 					break;
 				case FT_Err_Cannot_Open_Resource:
 					// Cannot open file error
-					instance->Report(
+					instance.Report(
 						ReportSeverity::NON_CRITICAL_ERROR,
 						std::string( "Cannot load font: File not found: " ) + path_str
 					);
 					return false;
 				case FT_Err_Unknown_File_Format:
 					// Unknown file format error
-					instance->Report(
+					instance.Report(
 						ReportSeverity::NON_CRITICAL_ERROR,
 						std::string( "Cannot load font: Unknown file format: " ) + path_str
 					);
 					return false;
 				default:
 					// Other errors
-					instance->Report(
+					instance.Report(
 						ReportSeverity::NON_CRITICAL_ERROR,
 						std::string( "Cannot load font: " ) + path_str
 					);
@@ -317,7 +311,7 @@ bool vk2d::vk2d_internal::FontResourceImpl::MTLoad(
 					&face
 				);
 				if( ft_error ) {
-					instance->Report(
+					instance.Report(
 						ReportSeverity::NON_CRITICAL_ERROR,
 						std::string( "Cannot load font: " ) + path_str
 					);
@@ -331,7 +325,7 @@ bool vk2d::vk2d_internal::FontResourceImpl::MTLoad(
 					glyph_texel_size
 				);
 				if( ft_error ) {
-					instance->Report(
+					instance.Report(
 						ReportSeverity::NON_CRITICAL_ERROR,
 						std::string( "Cannot load font: " ) + path_str
 					);
@@ -345,7 +339,7 @@ bool vk2d::vk2d_internal::FontResourceImpl::MTLoad(
 
 				auto ft_load_error = FT_Load_Glyph( face, FT_UInt( i ), FT_LOAD_DEFAULT );
 				if( ft_load_error ) {
-					instance->Report( ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot load font, cannot load glyph for bitmap metrics!" );
+					instance.Report( ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot load font, cannot load glyph for bitmap metrics!" );
 					return false;
 				}
 
@@ -389,7 +383,7 @@ bool vk2d::vk2d_internal::FontResourceImpl::MTLoad(
 	}
 
 	if( !total_glyph_count ) {
-		instance->Report( ReportSeverity::NON_CRITICAL_ERROR, "Cannot load font: Font contains no glyphs!" );
+		instance.Report( ReportSeverity::NON_CRITICAL_ERROR, "Cannot load font: Font contains no glyphs!" );
 		return false;
 	}
 
@@ -419,7 +413,7 @@ bool vk2d::vk2d_internal::FontResourceImpl::MTLoad(
 
 	// Stop if we don't have any font's to work with.
 	if( !face_infos.size() ) {
-		instance->Report(
+		instance.Report(
 			ReportSeverity::NON_CRITICAL_ERROR,
 			std::string( "Internal error: Cannot load font: " ) + path_str
 		);
@@ -440,14 +434,14 @@ bool vk2d::vk2d_internal::FontResourceImpl::MTLoad(
 			{
 				auto ft_load_error = FT_Load_Glyph( face.face, glyph_index, FT_LOAD_DEFAULT );
 				if( ft_load_error ) {
-					instance->Report( ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot load font, cannot load glyph!" );
+					instance.Report( ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot load font, cannot load glyph!" );
 					return false;
 				}
 			}
 			{
 				auto ft_render_error = FT_Render_Glyph( face.face->glyph, use_alpha ? FT_RENDER_MODE_NORMAL : FT_RENDER_MODE_MONO );
 				if( ft_render_error ) {
-					instance->Report( ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot load font, cannot render glyph!" );
+					instance.Report( ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot load font, cannot render glyph!" );
 					return false;
 				}
 			}
@@ -511,7 +505,7 @@ bool vk2d::vk2d_internal::FontResourceImpl::MTLoad(
 
 				default:
 					// Unsupported
-					instance->Report( ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot load font, Unsupported pixel format!" );
+					instance.Report( ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot load font, Unsupported pixel format!" );
 					return false;
 					break;
 			}
@@ -523,7 +517,7 @@ bool vk2d::vk2d_internal::FontResourceImpl::MTLoad(
 				final_glyph_pixels
 			);
 			if( !atlas_location.atlas_ptr ) {
-				instance->Report(
+				instance.Report(
 					ReportSeverity::NON_CRITICAL_ERROR,
 					"Internal error: Cannot create font, cannot copy glyph image to font texture atlas!"
 				);
@@ -598,13 +592,13 @@ bool vk2d::vk2d_internal::FontResourceImpl::MTLoad(
 			texture_data_array[ i ]		= &atlas_textures[ i ]->data;
 		}
 
-		texture_resource = resource_manager->CreateArrayTextureResource(
+		texture_resource = resource_manager.CreateArrayTextureResource(
 			glm::uvec2( atlas_size, atlas_size ),
 			texture_data_array,
-			my_interface
+			&my_interface
 		);
 		if( !texture_resource ) {
-			instance->Report( ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot create font, cannot create texture resource for font!" );
+			instance.Report( ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot create font, cannot create texture resource for font!" );
 			return false;
 		}
 	}
@@ -613,7 +607,7 @@ bool vk2d::vk2d_internal::FontResourceImpl::MTLoad(
 }
 
 void vk2d::vk2d_internal::FontResourceImpl::MTUnload(
-	ThreadPrivateResource		*	thread_resource
+	ThreadPrivateResource * thread_resource
 )
 {
 	// Make sure font faces are destroyed.
@@ -846,7 +840,7 @@ vk2d::vk2d_internal::FontResourceImpl::AtlasLocation vk2d::vk2d_internal::FontRe
 		current_atlas_texture = CreateNewAtlasTexture();
 		if( !current_atlas_texture ) {
 			// Failed to create new atlas texture.
-			resource_manager->GetInstance()->Report( ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot create font, cannot create new atlas texture for font!" );
+			resource_manager.GetInstance().Report( ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot create font, cannot create new atlas texture for font!" );
 			return {};
 		}
 
@@ -860,7 +854,7 @@ vk2d::vk2d_internal::FontResourceImpl::AtlasLocation vk2d::vk2d_internal::FontRe
 		if( !new_location.atlas_ptr ) {
 			// Still could not find enough space, a single font face glyph is too large
 			// to fit entire atlas, this should not happen so we raise an error.
-			resource_manager->GetInstance()->Report( ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot create font, a single glyph wont fit into a new atlas." );
+			resource_manager.GetInstance().Report( ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot create font, a single glyph wont fit into a new atlas." );
 			return {};
 		}
 
@@ -904,7 +898,7 @@ vk2d::vk2d_internal::FontResourceImpl::AtlasLocation vk2d::vk2d_internal::FontRe
 		);
 		return atlas_location;
 	} else {
-		resource_manager->GetInstance()->Report( ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot create font, cannot attach glyph to atlas texture!" );
+		resource_manager.GetInstance().Report( ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot create font, cannot attach glyph to atlas texture!" );
 		return {};
 	}
 }

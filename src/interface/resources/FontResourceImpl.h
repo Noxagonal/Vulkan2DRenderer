@@ -39,8 +39,8 @@ class FontResourceImpl:
 {
 public:
 	FontResourceImpl(
-		FontResource								*	my_interface,
-		ResourceManagerImpl							*	resource_manager,
+		FontResource								&	my_interface,
+		ResourceManagerImpl							&	resource_manager,
 		uint32_t										loader_thread,
 		ResourceBase								*	parent_resource,
 		const std::filesystem::path					&	file_path,
@@ -120,8 +120,7 @@ private:
 		uint32_t										glyph_atlas_padding,
 		const std::vector<Color8>					&	converted_texture_data );
 
-	FontResource									*	my_interface						= {};
-	ResourceManagerImpl								*	resource_manager					= {};
+	FontResource									&	my_interface;
 
 	bool												use_alpha							= {};
 	uint32_t											glyph_texel_size					= {};

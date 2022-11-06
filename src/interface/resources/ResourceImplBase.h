@@ -30,22 +30,24 @@ class ResourceImplBase
 	friend class ResourceThreadUnloadTask;
 
 public:
-															ResourceImplBase()					= delete;
+	ResourceImplBase() = delete;
 
-															ResourceImplBase(
-		ResourceBase									*	my_interface,
+	ResourceImplBase(
+		ResourceBase									&	my_base_interface,
 		uint32_t											loader_thread,
-		ResourceManagerImpl								*	resource_manager,
-		ResourceBase									*	parent_resource );
+		ResourceManagerImpl								&	resource_manager,
+		ResourceBase									*	parent_resource
+	);
 
-															ResourceImplBase(
-		ResourceBase									*	my_interface,
+	ResourceImplBase(
+		ResourceBase									&	my_base_interface,
 		uint32_t											loader_thread,
-		ResourceManagerImpl								*	resource_manager,
+		ResourceManagerImpl								&	resource_manager,
 		ResourceBase									*	parent_resource,
-		const std::vector<std::filesystem::path>		&	paths );
+		const std::vector<std::filesystem::path>		&	paths
+	);
 
-	virtual													~ResourceImplBase()					= default;
+	virtual													~ResourceImplBase()				= default;
 
 	// Checks the status of the resource.
 	virtual ResourceStatus									GetStatus()						= 0;
@@ -82,7 +84,7 @@ private:
 	// Subresources can be created either in the resource constructor or MTLoad(). To create a subresource,
 	// we can create them just like regular resources, just add parent information.
 	void													AddSubresource(
-		ResourceBase									*	subresource );
+		ResourceBase									&	subresource );
 
 public:
 	ResourceBase										*	GetParentResource();
@@ -108,10 +110,10 @@ protected:
 
 	Fence													load_function_run_fence;
 	std::atomic<ResourceStatus>								status								= {};
-	ResourceBase										*	my_interface						= {};
+	ResourceBase										&	my_base_interface;
+	ResourceManagerImpl									&	resource_manager;
 
 private:
-	ResourceManagerImpl									*	resource_manager					= {};
 	uint32_t												loader_thread						= {};
 	std::vector<std::filesystem::path>						file_paths							= {};
 	std::mutex												subresources_mutex;

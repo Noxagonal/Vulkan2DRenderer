@@ -1,15 +1,15 @@
 #pragma once
 
-#include "core/Common.h"
+#include <core/Common.h>
 
-#include "types/BlurType.h"
-#include "types/Rect2.hpp"
-#include "types/Transform.h"
-#include "types/Color.hpp"
-#include "types/Multisamples.h"
-#include "types/RenderCoordinateSpace.hpp"
+#include <types/BlurType.h>
+#include <types/Rect2.hpp>
+#include <types/Transform.h>
+#include <types/Color.hpp>
+#include <types/Multisamples.h>
+#include <types/RenderCoordinateSpace.hpp>
 
-#include "interface/Texture.h"
+#include <interface/Texture.h>
 
 #include <memory>
 
@@ -70,12 +70,12 @@ class RenderTargetTexture :
 	/// @note		Multithreading: Main thread only.
 	/// 
 	/// @param[in]	instance
-	///				Pointer to instance that owns this render target texture.
+	///				Reference to instance that owns this render target texture.
 	/// 
 	/// @param[in]	create_info
 	///				Reference to RenderTargetTextureCreateInfo object defining parameters for this render target texture.
 	VK2D_API												RenderTargetTexture(
-		vk2d_internal::InstanceImpl						*	instance,
+		vk2d_internal::InstanceImpl						&	instance,
 		const RenderTargetTextureCreateInfo				&	create_info );
 
 public:

@@ -347,9 +347,10 @@ private:
 		uint64_t										chunkID,
 		uint64_t										blockID );
 
+	// TODO: DeviceMemoryPoolDataImpl is a struct, this is a useless indirection, make its members part of itself.
 	std::unique_ptr<DeviceMemoryPoolDataImpl>			data						= {};
 
-	bool												is_good								= {};
+	bool												is_good						= {};
 };
 
 

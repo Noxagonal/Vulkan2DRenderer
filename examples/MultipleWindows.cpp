@@ -52,7 +52,7 @@ public:
 	{}
 
 	void							EventCursorPosition(
-		vk2d::Window			*	window,
+		vk2d::Window			&	window,
 		glm::dvec2					position
 	) override
 	{
@@ -60,7 +60,7 @@ public:
 	};
 
 	void							EventMouseButton(
-		vk2d::Window			*	window,
+		vk2d::Window			&	window,
 		vk2d::MouseButton			button,
 		vk2d::ButtonAction			action,
 		vk2d::ModifierKeyFlags		modifier_keys

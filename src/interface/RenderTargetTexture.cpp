@@ -43,20 +43,20 @@
 
 
 VK2D_API vk2d::RenderTargetTexture::RenderTargetTexture(
-	vk2d_internal::InstanceImpl					*	instance,
+	vk2d_internal::InstanceImpl					&	instance,
 	const RenderTargetTextureCreateInfo			&	create_info
 )
 {
 	impl = std::make_unique<vk2d_internal::RenderTargetTextureImpl>(
-		this,
+		*this,
 		instance,
 		create_info
 	);
 	if( !impl || !impl->IsGood() ) {
-		impl			= nullptr;
+		impl = nullptr;
 	}
 
-	texture_impl	= impl.get();
+	texture_impl = impl.get();
 }
 
 
@@ -346,25 +346,23 @@ VK2D_API bool vk2d::RenderTargetTexture::IsGood() const
 
 
 vk2d::vk2d_internal::RenderTargetTextureImpl::RenderTargetTextureImpl(
-	RenderTargetTexture					*	my_interface,
-	InstanceImpl						*	instance,
+	RenderTargetTexture					&	my_interface,
+	InstanceImpl						&	instance,
 	const RenderTargetTextureCreateInfo	&	create_info
-)
+) :
+	my_interface( my_interface ),
+	instance( instance ),
+	create_info_copy( create_info ),
+	coordinate_space( create_info.coordinate_space )
 {
 	VK2D_ASSERT_MAIN_THREAD( instance );
 
-	assert( instance );
-	if( !instance->IsThisThreadCreatorThread() ) {
-		instance->Report( ReportSeverity::NON_CRITICAL_ERROR, "Cannot create render target texture, this needs to be created from the main thread." );
+	if( !instance.IsThisThreadCreatorThread() ) {
+		instance.Report( ReportSeverity::NON_CRITICAL_ERROR, "Cannot create render target texture, this needs to be created from the main thread." );
 		return;
 	}
 
-	this->my_interface		= my_interface;
-	this->instance			= instance;
-	this->create_info_copy	= create_info;
 	this->surface_format	= VK_FORMAT_R8G8B8A8_UNORM;
-
-	this->coordinate_space	= create_info_copy.coordinate_space;
 	this->samples			= CheckSupportedMultisampleCount( instance, create_info_copy.samples );
 
 
@@ -376,19 +374,19 @@ vk2d::vk2d_internal::RenderTargetTextureImpl::RenderTargetTextureImpl(
 	if( !CreateFramebuffers() ) return;
 	if( !CreateSynchronizationPrimitives() ) return;
 
-	mesh_buffer		= std::make_unique<MeshBuffer>(
+	mesh_buffer = std::make_unique<MeshBuffer>(
 		instance,
-		instance->GetVulkanDevice(),
-		instance->GetVulkanPhysicalDeviceProperties().limits,
-		instance->GetDeviceMemoryPool()
-		);
+		instance.GetVulkanDevice(),
+		instance.GetVulkanPhysicalDeviceProperties().limits,
+		*instance.GetVulkanDevice().GetDeviceMemoryPool()
+	);
 
 	// Initial final image layouts, change later if implementing mipmapless render target texture.
 	vk_attachment_image_final_layout	= VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
 	vk_sampled_image_final_layout		= VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 	vk_sampled_image_final_access_mask	= VK_ACCESS_SHADER_READ_BIT;
 
-	is_good					= true;
+	is_good = true;
 }
 
 
@@ -444,12 +442,12 @@ void vk2d::vk2d_internal::RenderTargetTextureImpl::SetSize(
 			using namespace std::chrono_literals;
 
 			auto result = vkWaitSemaphores(
-				instance->GetVulkanDevice(),
+				instance.GetVulkanDevice(),
 				&wait_info,
 				duration_cast<nanoseconds>( 5s ).count()
 			);
 			if( result != VK_SUCCESS ) {
-				instance->Report( result, "Internal error: Error destroying RenderTargetTexture, timeout while waiting for render to finish!" );
+				instance.Report( result, "Internal error: Error destroying RenderTargetTexture, timeout while waiting for render to finish!" );
 			}
 		}
 
@@ -557,7 +555,7 @@ bool vk2d::vk2d_internal::RenderTargetTextureImpl::BeginRender()
 		// Wait here for the semaphore to signal, this takes care of synchronization
 		// just in case buffer we're trying to modify hasn't finished rendering.
 		if( !SynchronizeFrame() ) {
-			instance->Report( ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot render to RenderTargetTexture, synchronization error!" );
+			instance.Report( ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot render to RenderTargetTexture, synchronization error!" );
 			return false;
 		}
 
@@ -582,7 +580,7 @@ bool vk2d::vk2d_internal::RenderTargetTextureImpl::BeginRender()
 			&command_buffer_begin_info
 		);
 		if( result != VK_SUCCESS ) {
-			instance->Report( result, "Internal error: Cannot render to RenderTargetTexture, Cannot record primary render command buffer!" );
+			instance.Report( result, "Internal error: Cannot render to RenderTargetTexture, Cannot record primary render command buffer!" );
 			return false;
 		}
 		CmdInsertCommandBufferCheckpoint(
@@ -624,7 +622,7 @@ bool vk2d::vk2d_internal::RenderTargetTextureImpl::BeginRender()
 			vkCmdBindDescriptorSets(
 				command_buffer,
 				VK_PIPELINE_BIND_POINT_GRAPHICS,
-				instance->GetGraphicsPrimaryRenderPipelineLayout(),
+				instance.GetGraphicsPrimaryRenderPipelineLayout(),
 				GRAPHICS_DESCRIPTOR_SET_ALLOCATION_WINDOW_FRAME_DATA,
 				1, &frame_data_descriptor_set.descriptorSet,
 				0, nullptr
@@ -702,7 +700,7 @@ bool vk2d::vk2d_internal::RenderTargetTextureImpl::EndRender(
 		render_command_buffer
 	);
 	if( result != VK_SUCCESS ) {
-		instance->Report( result, "Internal error: Cannot render to RenderTargetTexture, Cannot compile primary render command buffer!" );
+		instance.Report( result, "Internal error: Cannot render to RenderTargetTexture, Cannot compile primary render command buffer!" );
 		return false;
 	}
 
@@ -739,12 +737,12 @@ bool vk2d::vk2d_internal::RenderTargetTextureImpl::SynchronizeFrame()
 		semaphore_wait_info.pSemaphores			= &swap.vk_render_complete_semaphore;
 		semaphore_wait_info.pValues				= &swap.render_counter;
 		result = vkWaitSemaphores(
-			instance->GetVulkanDevice(),
+			instance.GetVulkanDevice(),
 			&semaphore_wait_info,
 			duration_cast<nanoseconds>( 5s ).count()
 		);
 		if( result != VK_SUCCESS ) {
-			instance->Report( result, "Cannot synchronize RenderTargetTexture frame, Semaphore wait timeout!" );
+			instance.Report( result, "Cannot synchronize RenderTargetTexture frame, Semaphore wait timeout!" );
 			return false;
 		}
 
@@ -783,12 +781,12 @@ bool vk2d::vk2d_internal::RenderTargetTextureImpl::WaitIdle()
 		using namespace std::chrono_literals;
 
 		auto result = vkWaitSemaphores(
-			instance->GetVulkanDevice(),
+			instance.GetVulkanDevice(),
 			&wait_info,
 			duration_cast<nanoseconds>( 5s ).count()
 		);
 		if( result != VK_SUCCESS ) {
-			instance->Report( result, "Error waiting RenderTargetTexture to become idle, timeout while waiting!" );
+			instance.Report( result, "Error waiting RenderTargetTexture to become idle, timeout while waiting!" );
 			return false;
 		}
 	}
@@ -1018,13 +1016,13 @@ void vk2d::vk2d_internal::RenderTargetTextureImpl::DrawTriangleList(
 	auto index_count	= uint32_t( raw_indices.size() );
 
 	if( !texture ) {
-		texture = instance->GetDefaultTexture();
+		texture = instance.GetDefaultTexture();
 	}
 	if( !texture->IsTextureDataReady() ) {
-		texture = instance->GetDefaultTexture();
+		texture = instance.GetDefaultTexture();
 	}
 	if( !sampler ) {
-		sampler = instance->GetDefaultSampler();
+		sampler = instance.GetDefaultSampler();
 	}
 
 	CheckAndAddRenderTargetTextureDependency(
@@ -1036,14 +1034,14 @@ void vk2d::vk2d_internal::RenderTargetTextureImpl::DrawTriangleList(
 		bool multitextured = texture->GetLayerCount() > 1 &&
 			texture_layer_weights.size() >= texture->GetLayerCount() * vertices.size();
 
-		auto graphics_shader_programs = instance->GetCompatibleGraphicsShaderModules(
+		auto graphics_shader_programs = instance.GetCompatibleGraphicsShaderModules(
 			multitextured,
 			sampler->impl->IsAnyBorderColorEnabled(),
 			3
 		);
 
 		GraphicsPipelineSettings pipeline_settings {};
-		pipeline_settings.vk_pipeline_layout	= instance->GetGraphicsPrimaryRenderPipelineLayout();
+		pipeline_settings.vk_pipeline_layout	= instance.GetGraphicsPrimaryRenderPipelineLayout();
 		pipeline_settings.vk_render_pass		= vk_attachment_render_pass;
 		pipeline_settings.primitive_topology	= VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
 		pipeline_settings.polygon_mode			= solid ? VK_POLYGON_MODE_FILL : VK_POLYGON_MODE_LINE;
@@ -1060,12 +1058,12 @@ void vk2d::vk2d_internal::RenderTargetTextureImpl::DrawTriangleList(
 	CmdBindSamplerIfDifferent(
 		command_buffer,
 		sampler,
-		instance->GetGraphicsPrimaryRenderPipelineLayout()
+		instance.GetGraphicsPrimaryRenderPipelineLayout()
 	);
 	CmdBindTextureIfDifferent(
 		command_buffer,
 		texture,
-		instance->GetGraphicsPrimaryRenderPipelineLayout()
+		instance.GetGraphicsPrimaryRenderPipelineLayout()
 	);
 
 	//TODO, Transformations...;
@@ -1091,7 +1089,7 @@ void vk2d::vk2d_internal::RenderTargetTextureImpl::DrawTriangleList(
 
 			vkCmdPushConstants(
 				command_buffer,
-				instance->GetGraphicsPrimaryRenderPipelineLayout(),
+				instance.GetGraphicsPrimaryRenderPipelineLayout(),
 				VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
 				0, sizeof( pc ),
 				&pc
@@ -1112,7 +1110,7 @@ void vk2d::vk2d_internal::RenderTargetTextureImpl::DrawTriangleList(
 			0
 		);
 	} else {
-		instance->Report( ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot push mesh into mesh render queue!" );
+		instance.Report( ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot push mesh into mesh render queue!" );
 	}
 
 	#if VK2D_BUILD_OPTION_DEBUG_ALWAYS_DRAW_TRIANGLES_WIREFRAME
@@ -1181,13 +1179,13 @@ void vk2d::vk2d_internal::RenderTargetTextureImpl::DrawLineList(
 	auto index_count	= uint32_t( raw_indices.size() );
 
 	if( !texture ) {
-		texture = instance->GetDefaultTexture();
+		texture = instance.GetDefaultTexture();
 	}
 	if( !texture->IsTextureDataReady() ) {
-		texture = instance->GetDefaultTexture();
+		texture = instance.GetDefaultTexture();
 	}
 	if( !sampler ) {
-		sampler = instance->GetDefaultSampler();
+		sampler = instance.GetDefaultSampler();
 	}
 
 	CheckAndAddRenderTargetTextureDependency(
@@ -1199,14 +1197,14 @@ void vk2d::vk2d_internal::RenderTargetTextureImpl::DrawLineList(
 		bool multitextured = texture->GetLayerCount() > 1 &&
 			texture_layer_weights.size() >= texture->GetLayerCount() * vertices.size();
 
-		auto graphics_shader_programs = instance->GetCompatibleGraphicsShaderModules(
+		auto graphics_shader_programs = instance.GetCompatibleGraphicsShaderModules(
 			multitextured,
 			sampler->impl->IsAnyBorderColorEnabled(),
 			2
 		);
 
 		GraphicsPipelineSettings pipeline_settings {};
-		pipeline_settings.vk_pipeline_layout	= instance->GetGraphicsPrimaryRenderPipelineLayout();
+		pipeline_settings.vk_pipeline_layout	= instance.GetGraphicsPrimaryRenderPipelineLayout();
 		pipeline_settings.vk_render_pass		= vk_attachment_render_pass;
 		pipeline_settings.primitive_topology	= VK_PRIMITIVE_TOPOLOGY_LINE_LIST;
 		pipeline_settings.polygon_mode			= VK_POLYGON_MODE_LINE;
@@ -1227,12 +1225,12 @@ void vk2d::vk2d_internal::RenderTargetTextureImpl::DrawLineList(
 	CmdBindSamplerIfDifferent(
 		command_buffer,
 		sampler,
-		instance->GetGraphicsPrimaryRenderPipelineLayout()
+		instance.GetGraphicsPrimaryRenderPipelineLayout()
 	);
 	CmdBindTextureIfDifferent(
 		command_buffer,
 		texture,
-		instance->GetGraphicsPrimaryRenderPipelineLayout()
+		instance.GetGraphicsPrimaryRenderPipelineLayout()
 	);
 
 	auto push_result = mesh_buffer->CmdPushMesh(
@@ -1255,7 +1253,7 @@ void vk2d::vk2d_internal::RenderTargetTextureImpl::DrawLineList(
 
 			vkCmdPushConstants(
 				command_buffer,
-				instance->GetGraphicsPrimaryRenderPipelineLayout(),
+				instance.GetGraphicsPrimaryRenderPipelineLayout(),
 				VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
 				0, sizeof( pc ),
 				&pc
@@ -1276,7 +1274,7 @@ void vk2d::vk2d_internal::RenderTargetTextureImpl::DrawLineList(
 			0
 		);
 	} else {
-		instance->Report( ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot push mesh into mesh render queue!" );
+		instance.Report( ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot push mesh into mesh render queue!" );
 	}
 }
 
@@ -1296,13 +1294,13 @@ void vk2d::vk2d_internal::RenderTargetTextureImpl::DrawPointList(
 	auto vertex_count	= uint32_t( vertices.size() );
 
 	if( !texture ) {
-		texture = instance->GetDefaultTexture();
+		texture = instance.GetDefaultTexture();
 	}
 	if( !texture->IsTextureDataReady() ) {
-		texture = instance->GetDefaultTexture();
+		texture = instance.GetDefaultTexture();
 	}
 	if( !sampler ) {
-		sampler = instance->GetDefaultSampler();
+		sampler = instance.GetDefaultSampler();
 	}
 
 	CheckAndAddRenderTargetTextureDependency(
@@ -1314,14 +1312,14 @@ void vk2d::vk2d_internal::RenderTargetTextureImpl::DrawPointList(
 		bool multitextured = texture->GetLayerCount() > 1 &&
 			texture_layer_weights.size() >= texture->GetLayerCount() * vertices.size();
 
-		auto graphics_shader_programs = instance->GetCompatibleGraphicsShaderModules(
+		auto graphics_shader_programs = instance.GetCompatibleGraphicsShaderModules(
 			multitextured,
 			sampler->impl->IsAnyBorderColorEnabled(),
 			1
 		);
 
 		GraphicsPipelineSettings pipeline_settings {};
-		pipeline_settings.vk_pipeline_layout	= instance->GetGraphicsPrimaryRenderPipelineLayout();
+		pipeline_settings.vk_pipeline_layout	= instance.GetGraphicsPrimaryRenderPipelineLayout();
 		pipeline_settings.vk_render_pass		= vk_attachment_render_pass;
 		pipeline_settings.primitive_topology	= VK_PRIMITIVE_TOPOLOGY_POINT_LIST;
 		pipeline_settings.polygon_mode			= VK_POLYGON_MODE_POINT;
@@ -1338,12 +1336,12 @@ void vk2d::vk2d_internal::RenderTargetTextureImpl::DrawPointList(
 	CmdBindSamplerIfDifferent(
 		command_buffer,
 		sampler,
-		instance->GetGraphicsPrimaryRenderPipelineLayout()
+		instance.GetGraphicsPrimaryRenderPipelineLayout()
 	);
 	CmdBindTextureIfDifferent(
 		command_buffer,
 		texture,
-		instance->GetGraphicsPrimaryRenderPipelineLayout()
+		instance.GetGraphicsPrimaryRenderPipelineLayout()
 	);
 
 	auto push_result = mesh_buffer->CmdPushMesh(
@@ -1366,7 +1364,7 @@ void vk2d::vk2d_internal::RenderTargetTextureImpl::DrawPointList(
 
 			vkCmdPushConstants(
 				command_buffer,
-				instance->GetGraphicsPrimaryRenderPipelineLayout(),
+				instance.GetGraphicsPrimaryRenderPipelineLayout(),
 				VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
 				0, sizeof( pc ),
 				&pc
@@ -1386,7 +1384,7 @@ void vk2d::vk2d_internal::RenderTargetTextureImpl::DrawPointList(
 			0
 		);
 	} else {
-		instance->Report( ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot push mesh into mesh render queue!" );
+		instance.Report( ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot push mesh into mesh render queue!" );
 	}
 }
 
@@ -1456,9 +1454,8 @@ bool vk2d::vk2d_internal::RenderTargetTextureImpl::DetermineType()
 {
 	VK2D_ASSERT_MAIN_THREAD( instance );
 
-	assert( instance );
 	if( samples == Multisamples( 0 ) ) {
-		instance->Report( ReportSeverity::NON_CRITICAL_ERROR, "Cannot create RenderTargetTexture, multisamples was set to 0, must be 1 or higher!" );
+		instance.Report( ReportSeverity::NON_CRITICAL_ERROR, "Cannot create RenderTargetTexture, multisamples was set to 0, must be 1 or higher!" );
 		return false;
 	}
 
@@ -1486,23 +1483,23 @@ bool vk2d::vk2d_internal::RenderTargetTextureImpl::DetermineType()
 
 bool vk2d::vk2d_internal::RenderTargetTextureImpl::CreateCommandBuffers()
 {
-	auto render_queue_family_index = instance->GetPrimaryRenderQueue().GetQueueFamilyIndex();
-	auto compute_queue_family_index = instance->GetPrimaryComputeQueue().GetQueueFamilyIndex();
+	auto render_queue	= instance.GetVulkanDevice().GetQueue( VulkanQueueType::PRIMARY_RENDER );
+	auto compute_queue	= instance.GetVulkanDevice().GetQueue( VulkanQueueType::PRIMARY_COMPUTE );
 
 	{
 		VkCommandPoolCreateInfo command_pool_create_info {};
 		command_pool_create_info.sType				= VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
 		command_pool_create_info.pNext				= nullptr;
 		command_pool_create_info.flags				= VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
-		command_pool_create_info.queueFamilyIndex	= render_queue_family_index;
+		command_pool_create_info.queueFamilyIndex	= render_queue.GetQueueFamilyIndex();
 		auto result = vkCreateCommandPool(
-			instance->GetVulkanDevice(),
+			instance.GetVulkanDevice(),
 			&command_pool_create_info,
 			nullptr,
 			&vk_graphics_command_pool
 		);
 		if( result != VK_SUCCESS ) {
-			instance->Report( result, "Internal error: Cannot create RenderTargetTexture, cannot create graphics command pool!" );
+			instance.Report( result, "Internal error: Cannot create RenderTargetTexture, cannot create graphics command pool!" );
 			return false;
 		}
 	}
@@ -1521,12 +1518,12 @@ bool vk2d::vk2d_internal::RenderTargetTextureImpl::CreateCommandBuffers()
 			command_buffer_allocate_info.level				= VK_COMMAND_BUFFER_LEVEL_PRIMARY;
 			command_buffer_allocate_info.commandBufferCount	= uint32_t( allocated_command_buffers.size() );
 			auto result = vkAllocateCommandBuffers(
-				instance->GetVulkanDevice(),
+				instance.GetVulkanDevice(),
 				&command_buffer_allocate_info,
 				allocated_command_buffers.data()
 			);
 			if( result != VK_SUCCESS ) {
-				instance->Report( result, "Internal error: Cannot create RenderTargetTexture, cannot create command pool!" );
+				instance.Report( result, "Internal error: Cannot create RenderTargetTexture, cannot create command pool!" );
 				return false;
 			}
 		}
@@ -1548,7 +1545,7 @@ bool vk2d::vk2d_internal::RenderTargetTextureImpl::CreateCommandBuffers()
 void vk2d::vk2d_internal::RenderTargetTextureImpl::DestroyCommandBuffers()
 {
 	vkDestroyCommandPool(
-		instance->GetVulkanDevice(),
+		instance.GetVulkanDevice(),
 		vk_graphics_command_pool,
 		nullptr
 	);
@@ -1569,12 +1566,12 @@ bool vk2d::vk2d_internal::RenderTargetTextureImpl::CreateFrameDataBuffers()
 		staging_buffer_create_info.sharingMode				= VK_SHARING_MODE_EXCLUSIVE;
 		staging_buffer_create_info.queueFamilyIndexCount	= 0;
 		staging_buffer_create_info.pQueueFamilyIndices		= nullptr;
-		frame_data_staging_buffer = instance->GetDeviceMemoryPool()->CreateCompleteBufferResource(
+		frame_data_staging_buffer = instance.GetVulkanDevice().GetDeviceMemoryPool()->CreateCompleteBufferResource(
 			&staging_buffer_create_info,
 			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT
 		);
 		if( frame_data_staging_buffer != VK_SUCCESS ) {
-			instance->Report( frame_data_staging_buffer.result, "Internal error. Cannot create staging buffer for FrameData!" );
+			instance.Report( frame_data_staging_buffer.result, "Internal error. Cannot create staging buffer for FrameData!" );
 			return false;
 		}
 
@@ -1587,23 +1584,23 @@ bool vk2d::vk2d_internal::RenderTargetTextureImpl::CreateFrameDataBuffers()
 		device_buffer_create_info.sharingMode				= VK_SHARING_MODE_EXCLUSIVE;
 		device_buffer_create_info.queueFamilyIndexCount		= 0;
 		device_buffer_create_info.pQueueFamilyIndices		= nullptr;
-		frame_data_device_buffer = instance->GetDeviceMemoryPool()->CreateCompleteBufferResource(
+		frame_data_device_buffer = instance.GetVulkanDevice().GetDeviceMemoryPool()->CreateCompleteBufferResource(
 			&device_buffer_create_info,
 			VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT
 		);
 		if( frame_data_device_buffer != VK_SUCCESS ) {
-			instance->Report( frame_data_device_buffer.result, "Internal error. Cannot create device local buffer for FrameData!" );
+			instance.Report( frame_data_device_buffer.result, "Internal error. Cannot create device local buffer for FrameData!" );
 			return false;
 		}
 	}
 
 	// Create descriptor set
 	{
-		frame_data_descriptor_set	= instance->AllocateDescriptorSet(
-			instance->GetGraphicsUniformBufferDescriptorSetLayout()
+		frame_data_descriptor_set	= instance.AllocateDescriptorSet(
+			instance.GetGraphicsUniformBufferDescriptorSetLayout()
 		);
 		if( frame_data_descriptor_set != VK_SUCCESS ) {
-			instance->Report( frame_data_descriptor_set.result, "Internal error: Cannot allocate descriptor set for FrameData device buffer!" );
+			instance.Report( frame_data_descriptor_set.result, "Internal error: Cannot allocate descriptor set for FrameData device buffer!" );
 			return false;
 		}
 		VkDescriptorBufferInfo descriptor_write_buffer_info {};
@@ -1622,7 +1619,7 @@ bool vk2d::vk2d_internal::RenderTargetTextureImpl::CreateFrameDataBuffers()
 		descriptor_write.pBufferInfo		= &descriptor_write_buffer_info;
 		descriptor_write.pTexelBufferView	= nullptr;
 		vkUpdateDescriptorSets(
-			instance->GetVulkanDevice(),
+			instance.GetVulkanDevice(),
 			1, &descriptor_write,
 			0, nullptr
 		);
@@ -1633,13 +1630,13 @@ bool vk2d::vk2d_internal::RenderTargetTextureImpl::CreateFrameDataBuffers()
 
 void vk2d::vk2d_internal::RenderTargetTextureImpl::DestroyFrameDataBuffers()
 {
-	instance->FreeDescriptorSet(
+	instance.FreeDescriptorSet(
 		frame_data_descriptor_set
 	);
-	instance->GetDeviceMemoryPool()->FreeCompleteResource(
+	instance.GetVulkanDevice().GetDeviceMemoryPool()->FreeCompleteResource(
 		frame_data_device_buffer
 	);
-	instance->GetDeviceMemoryPool()->FreeCompleteResource(
+	instance.GetVulkanDevice().GetDeviceMemoryPool()->FreeCompleteResource(
 		frame_data_staging_buffer
 	);
 }
@@ -1650,14 +1647,12 @@ bool vk2d::vk2d_internal::RenderTargetTextureImpl::CreateImages(
 	glm::uvec2		new_size
 )
 {
-	assert( instance );
-
 	auto CreateLocalImageResource =[ this ](
-		VkImageUsageFlags										usage,
+		VkImageUsageFlags						usage,
 		const std::vector<ResolvedQueue*>	&	used_in_queues,
-		VkSampleCountFlagBits									samples				= VK_SAMPLE_COUNT_1_BIT,
-		const std::vector<VkExtent2D>						&	mip_levels			= { { 1, 1 } },
-		bool													is_array_texture	= false
+		VkSampleCountFlagBits					samples				= VK_SAMPLE_COUNT_1_BIT,
+		const std::vector<VkExtent2D>		&	mip_levels			= { { 1, 1 } },
+		bool									is_array_texture	= false
 		) -> CompleteImageResource
 	{
 		std::vector<uint32_t> unique_queue_family_indices;
@@ -1710,25 +1705,25 @@ bool vk2d::vk2d_internal::RenderTargetTextureImpl::CreateImages(
 		image_view_create_info.subresourceRange.baseArrayLayer	= 0;
 		image_view_create_info.subresourceRange.layerCount		= 1;
 
-		CompleteImageResource image = instance->GetDeviceMemoryPool()->CreateCompleteImageResource(
+		CompleteImageResource image = instance.GetVulkanDevice().GetDeviceMemoryPool()->CreateCompleteImageResource(
 			&image_create_info,
 			VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
 			&image_view_create_info
 		);
 		if( image != VK_SUCCESS ) {
-			instance->Report( image.result, "Internal error: Cannot create RenderTargetTexture, cannot create image resource!" );
+			instance.Report( image.result, "Internal error: Cannot create RenderTargetTexture, cannot create image resource!" );
 			return {};
 		}
 
 		return image;
 	};
 
-	auto render_queue			= instance->GetPrimaryRenderQueue();
-	auto compute_queue			= instance->GetPrimaryComputeQueue();
+	auto render_queue	= instance.GetVulkanDevice().GetQueue( VulkanQueueType::PRIMARY_RENDER );
+	auto compute_queue	= instance.GetVulkanDevice().GetQueue( VulkanQueueType::PRIMARY_COMPUTE );
 
 	size						= new_size;
 
-	auto granularity			= instance->GetPrimaryRenderQueue().GetQueueFamilyProperties().minImageTransferGranularity;
+	auto granularity			= render_queue.GetQueueFamilyProperties().minImageTransferGranularity;
 	if( size.x	% granularity.width		== 0 &&
 		size.y	% granularity.height	== 0 &&
 		1		% granularity.depth		== 0 ) {
@@ -1886,7 +1881,7 @@ bool vk2d::vk2d_internal::RenderTargetTextureImpl::CreateImages(
 		}
 		default:
 		{
-			instance->Report( ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot create RenderTargetTexture, unknown type!" );
+			instance.Report( ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot create RenderTargetTexture, unknown type!" );
 			return false;
 			break;
 		}
@@ -1897,11 +1892,12 @@ bool vk2d::vk2d_internal::RenderTargetTextureImpl::CreateImages(
 
 void vk2d::vk2d_internal::RenderTargetTextureImpl::DestroyImages()
 {
+	auto vulkan_memory_pool = instance.GetVulkanDevice().GetDeviceMemoryPool();
 	for( auto & s : swap_buffers ) {
-		instance->GetDeviceMemoryPool()->FreeCompleteResource( s.attachment_image );
-		instance->GetDeviceMemoryPool()->FreeCompleteResource( s.sampled_image );
-		instance->GetDeviceMemoryPool()->FreeCompleteResource( s.buffer_1_image );
-		instance->GetDeviceMemoryPool()->FreeCompleteResource( s.buffer_2_image );
+		vulkan_memory_pool->FreeCompleteResource( s.attachment_image );
+		vulkan_memory_pool->FreeCompleteResource( s.sampled_image );
+		vulkan_memory_pool->FreeCompleteResource( s.buffer_1_image );
+		vulkan_memory_pool->FreeCompleteResource( s.buffer_2_image );
 		s.attachment_image	= {};
 		s.sampled_image		= {};
 		s.buffer_1_image	= {};
@@ -1983,13 +1979,13 @@ bool vk2d::vk2d_internal::RenderTargetTextureImpl::CreateRenderPasses()
 		render_pass_create_info.pDependencies		= dependencies.data();
 
 		auto result = vkCreateRenderPass(
-			instance->GetVulkanDevice(),
+			instance.GetVulkanDevice(),
 			&render_pass_create_info,
 			nullptr,
 			&vk_attachment_render_pass
 		);
 		if( result != VK_SUCCESS ) {
-			instance->Report( result, "Internal error: Cannot create RenderTargetTexture, cannot create render pass!" );
+			instance.Report( result, "Internal error: Cannot create RenderTargetTexture, cannot create render pass!" );
 			return false;
 		}
 	}
@@ -2040,13 +2036,13 @@ bool vk2d::vk2d_internal::RenderTargetTextureImpl::CreateRenderPasses()
 			render_pass_create_info.pDependencies		= dependencies.data();
 
 			auto result = vkCreateRenderPass(
-				instance->GetVulkanDevice(),
+				instance.GetVulkanDevice(),
 				&render_pass_create_info,
 				nullptr,
 				&vk_blur_render_pass_1
 			);
 			if( result != VK_SUCCESS ) {
-				instance->Report( result, "Internal error: Cannot create RenderTargetTexture, cannot create render pass for blur pass 1!" );
+				instance.Report( result, "Internal error: Cannot create RenderTargetTexture, cannot create render pass for blur pass 1!" );
 				return false;
 			}
 		}
@@ -2095,13 +2091,13 @@ bool vk2d::vk2d_internal::RenderTargetTextureImpl::CreateRenderPasses()
 			render_pass_create_info.pDependencies		= dependencies.data();
 
 			auto result = vkCreateRenderPass(
-				instance->GetVulkanDevice(),
+				instance.GetVulkanDevice(),
 				&render_pass_create_info,
 				nullptr,
 				&vk_blur_render_pass_2
 			);
 			if( result != VK_SUCCESS ) {
-				instance->Report( result, "Internal error: Cannot create RenderTargetTexture, cannot create render pass for blur pass 2!" );
+				instance.Report( result, "Internal error: Cannot create RenderTargetTexture, cannot create render pass for blur pass 2!" );
 				return false;
 			}
 		}
@@ -2112,7 +2108,7 @@ bool vk2d::vk2d_internal::RenderTargetTextureImpl::CreateRenderPasses()
 
 void vk2d::vk2d_internal::RenderTargetTextureImpl::DestroyRenderPasses()
 {
-	auto vk_device = instance->GetVulkanDevice();
+	VkDevice vk_device = instance.GetVulkanDevice();
 
 	vkDestroyRenderPass(
 		vk_device,
@@ -2159,13 +2155,13 @@ bool vk2d::vk2d_internal::RenderTargetTextureImpl::CreateFramebuffers()
 
 		VkFramebuffer framebuffer = VK_NULL_HANDLE;
 		auto result = vkCreateFramebuffer(
-			instance->GetVulkanDevice(),
+			instance.GetVulkanDevice(),
 			&framebuffer_create_info,
 			nullptr,
 			&framebuffer
 		);
 		if( result != VK_SUCCESS ) {
-			instance->Report( result, "Internal error: Cannot create RenderTargetTexture, cannot create framebuffer!" );
+			instance.Report( result, "Internal error: Cannot create RenderTargetTexture, cannot create framebuffer!" );
 			return {};
 		}
 
@@ -2237,21 +2233,21 @@ void vk2d::vk2d_internal::RenderTargetTextureImpl::DestroyFramebuffers()
 {
 	for( auto & s : swap_buffers ) {
 		vkDestroyFramebuffer(
-			instance->GetVulkanDevice(),
+			instance.GetVulkanDevice(),
 			s.vk_render_framebuffer,
 			nullptr
 		);
 		s.vk_render_framebuffer	= VK_NULL_HANDLE;
 
 		vkDestroyFramebuffer(
-			instance->GetVulkanDevice(),
+			instance.GetVulkanDevice(),
 			s.vk_blur_framebuffer_1,
 			nullptr
 		);
 		s.vk_blur_framebuffer_1 = VK_NULL_HANDLE;
 
 		vkDestroyFramebuffer(
-			instance->GetVulkanDevice(),
+			instance.GetVulkanDevice(),
 			s.vk_blur_framebuffer_2,
 			nullptr
 		);
@@ -2291,25 +2287,25 @@ bool vk2d::vk2d_internal::RenderTargetTextureImpl::CreateSynchronizationPrimitiv
 	for( auto & s : swap_buffers ) {
 
 		result = vkCreateSemaphore(
-			instance->GetVulkanDevice(),
+			instance.GetVulkanDevice(),
 			&binary_semaphore_create_info,
 			nullptr,
 			&s.vk_transfer_complete_semaphore
 		);
 		if( result != VK_SUCCESS ) {
-			instance->Report( result, "Internal error: Cannot create RenderTargetTexture, cannot create synchronization primitives!" );
+			instance.Report( result, "Internal error: Cannot create RenderTargetTexture, cannot create synchronization primitives!" );
 			return false;
 		}
 
 		result = vkCreateSemaphore(
-			instance->GetVulkanDevice(),
+			instance.GetVulkanDevice(),
 			//create_info_copy.enable_blur ? &binary_semaphore_create_info : &timeline_semaphore_create_info,
 			&timeline_semaphore_create_info,
 			nullptr,
 			&s.vk_render_complete_semaphore
 		);
 		if( result != VK_SUCCESS ) {
-			instance->Report( result, "Internal error: Cannot create RenderTargetTexture, cannot create synchronization primitives!" );
+			instance.Report( result, "Internal error: Cannot create RenderTargetTexture, cannot create synchronization primitives!" );
 			return false;
 		}
 	}
@@ -2320,12 +2316,12 @@ void vk2d::vk2d_internal::RenderTargetTextureImpl::DestroySynchronizationPrimiti
 {
 	for( auto & s : swap_buffers ) {
 		vkDestroySemaphore(
-			instance->GetVulkanDevice(),
+			instance.GetVulkanDevice(),
 			s.vk_transfer_complete_semaphore,
 			nullptr
 		);
 		vkDestroySemaphore(
-			instance->GetVulkanDevice(),
+			instance.GetVulkanDevice(),
 			s.vk_render_complete_semaphore,
 			nullptr
 		);
@@ -2353,7 +2349,7 @@ bool vk2d::vk2d_internal::RenderTargetTextureImpl::RecordTransferCommandBuffer(
 			&transfer_command_buffer_begin_info
 		);
 		if( result != VK_SUCCESS ) {
-			instance->Report( result, "Internal error: Cannot render to RenderTargetTexture, Cannot record mesh to GPU transfer command buffer!" );
+			instance.Report( result, "Internal error: Cannot render to RenderTargetTexture, Cannot record mesh to GPU transfer command buffer!" );
 			return false;
 		}
 	}
@@ -2363,7 +2359,7 @@ bool vk2d::vk2d_internal::RenderTargetTextureImpl::RecordTransferCommandBuffer(
 		if( !CmdUpdateFrameData(
 			command_buffer
 		) ) {
-			instance->Report( ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot render to RenderTargetTexture, Cannot record commands to transfer FrameData to GPU!" );
+			instance.Report( ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot render to RenderTargetTexture, Cannot record commands to transfer FrameData to GPU!" );
 			return false;
 		}
 	}
@@ -2373,7 +2369,7 @@ bool vk2d::vk2d_internal::RenderTargetTextureImpl::RecordTransferCommandBuffer(
 		if( !mesh_buffer->CmdUploadMeshDataToGPU(
 			command_buffer
 		) ) {
-			instance->Report( ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot render to RenderTargetTexture, Cannot record commands to transfer mesh data to GPU!" );
+			instance.Report( ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot render to RenderTargetTexture, Cannot record commands to transfer mesh data to GPU!" );
 			return false;
 		}
 	}
@@ -2384,7 +2380,7 @@ bool vk2d::vk2d_internal::RenderTargetTextureImpl::RecordTransferCommandBuffer(
 			command_buffer
 		);
 		if( result != VK_SUCCESS ) {
-			instance->Report( result, "Internal error: Cannot render to RenderTargetTexture, Cannot compile mesh to GPU transfer command buffer!" );
+			instance.Report( result, "Internal error: Cannot render to RenderTargetTexture, Cannot compile mesh to GPU transfer command buffer!" );
 			return false;
 		}
 	}
@@ -2458,8 +2454,8 @@ vk2d::vk2d_internal::TimedDescriptorPoolData & vk2d::vk2d_internal::RenderTarget
 	// If this descriptor set doesn't exist yet for this
 	// sampler texture combo, create one and update it.
 	if( set.descriptor_set.descriptorSet == VK_NULL_HANDLE ) {
-		set.descriptor_set = instance->AllocateDescriptorSet(
-			instance->GetGraphicsSamplerDescriptorSetLayout()
+		set.descriptor_set = instance.AllocateDescriptorSet(
+			instance.GetGraphicsSamplerDescriptorSetLayout()
 		);
 		if( set.descriptor_set != VK_SUCCESS ) {
 			return set;
@@ -2499,7 +2495,7 @@ vk2d::vk2d_internal::TimedDescriptorPoolData & vk2d::vk2d_internal::RenderTarget
 		descriptor_write[ 1 ].pTexelBufferView	= nullptr;
 
 		vkUpdateDescriptorSets(
-			instance->GetVulkanDevice(),
+			instance.GetVulkanDevice(),
 			uint32_t( descriptor_write.size() ), descriptor_write.data(),
 			0, nullptr
 		);
@@ -2519,8 +2515,8 @@ vk2d::vk2d_internal::TimedDescriptorPoolData & vk2d::vk2d_internal::RenderTarget
 	// If this descriptor set doesn't exist yet for this
 	// sampler texture combo, create one and update it.
 	if( set.descriptor_set.descriptorSet == VK_NULL_HANDLE ) {
-		set.descriptor_set = instance->AllocateDescriptorSet(
-			instance->GetGraphicsTextureDescriptorSetLayout()
+		set.descriptor_set = instance.AllocateDescriptorSet(
+			instance.GetGraphicsTextureDescriptorSetLayout()
 		);
 		if( set.descriptor_set != VK_SUCCESS ) {
 			return set;
@@ -2544,7 +2540,7 @@ vk2d::vk2d_internal::TimedDescriptorPoolData & vk2d::vk2d_internal::RenderTarget
 		descriptor_write[ 0 ].pTexelBufferView	= nullptr;
 
 		vkUpdateDescriptorSets(
-			instance->GetVulkanDevice(),
+			instance.GetVulkanDevice(),
 			uint32_t( descriptor_write.size() ), descriptor_write.data(),
 			0, nullptr
 		);
@@ -2578,7 +2574,7 @@ void vk2d::vk2d_internal::RenderTargetTextureImpl::CmdPushBlurTextureDescriptorW
 	descriptor_write[ 0 ].pBufferInfo		= nullptr;
 	descriptor_write[ 0 ].pTexelBufferView	= nullptr;
 
-	instance->VkFun_vkCmdPushDescriptorSetKHR(
+	instance.VkFun_vkCmdPushDescriptorSetKHR(
 		command_buffer,
 		VK_PIPELINE_BIND_POINT_GRAPHICS,
 		vk_pipeline_layout,
@@ -2666,7 +2662,7 @@ void vk2d::vk2d_internal::RenderTargetTextureImpl::CmdFinalizeRender(
 			break;
 
 		default:
-			instance->Report( ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot finalize render target texture rendering, Invalid RenderTargetTextureType!" );
+			instance.Report( ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot finalize render target texture rendering, Invalid RenderTargetTextureType!" );
 			break;
 	}
 }
@@ -2693,7 +2689,6 @@ void vk2d::vk2d_internal::RenderTargetTextureImpl::CmdBlitMipmapsToSampledImage(
 	//   and for image layout conversions.
 
 	assert( command_buffer );
-	assert( instance );
 	assert( std::size( mipmap_levels ) );
 
 	// TODO: Study different ways of blitting the mipmaps.
@@ -3139,7 +3134,7 @@ bool vk2d::vk2d_internal::RenderTargetTextureImpl::CmdRecordBlurCommands(
 				pipeline_settings.shader_programs		= graphics_shader_program;
 				pipeline_settings.samples				= VK_SAMPLE_COUNT_1_BIT;
 				pipeline_settings.enable_blending		= VK_FALSE;
-				auto pipeline = instance->GetGraphicsPipeline( pipeline_settings );
+				auto pipeline = instance.GetGraphicsPipeline( pipeline_settings );
 
 				vkCmdBindPipeline(
 					command_buffer,
@@ -3152,7 +3147,7 @@ bool vk2d::vk2d_internal::RenderTargetTextureImpl::CmdRecordBlurCommands(
 			{
 				// Bind simple sampler to set 0.
 				{
-					auto set = instance->GetBlurSamplerDescriptorSet();
+					auto set = instance.GetBlurSamplerDescriptorSet();
 
 					vkCmdBindDescriptorSets(
 						command_buffer,
@@ -3250,18 +3245,18 @@ bool vk2d::vk2d_internal::RenderTargetTextureImpl::CmdRecordBlurCommands(
 		GraphicsShaderProgram shader_program;
 		switch( blur_type ) {
 			case BlurType::BOX:
-				shader_program = instance->GetGraphicsShaderModules( GraphicsShaderProgramID::RENDER_TARGET_BOX_BLUR_HORISONTAL );
+				shader_program = instance.GetGraphicsShaderModules( GraphicsShaderProgramID::RENDER_TARGET_BOX_BLUR_HORISONTAL );
 				break;
 			case BlurType::GAUSSIAN:
-				shader_program = instance->GetGraphicsShaderModules( GraphicsShaderProgramID::RENDER_TARGET_GAUSSIAN_BLUR_HORISONTAL );
+				shader_program = instance.GetGraphicsShaderModules( GraphicsShaderProgramID::RENDER_TARGET_GAUSSIAN_BLUR_HORISONTAL );
 				break;
 			default:
-				shader_program = instance->GetGraphicsShaderModules( GraphicsShaderProgramID::RENDER_TARGET_GAUSSIAN_BLUR_HORISONTAL );
+				shader_program = instance.GetGraphicsShaderModules( GraphicsShaderProgramID::RENDER_TARGET_GAUSSIAN_BLUR_HORISONTAL );
 				break;
 		}
 
 		RecordBlurPass(
-			instance->GetGraphicsBlurPipelineLayout(),
+			instance.GetGraphicsBlurPipelineLayout(),
 			vk_blur_render_pass_1,
 			swap.vk_blur_framebuffer_1,	// This directs the render to the intermediate_image.
 			shader_program,
@@ -3303,18 +3298,18 @@ bool vk2d::vk2d_internal::RenderTargetTextureImpl::CmdRecordBlurCommands(
 		GraphicsShaderProgram shader_program;
 		switch( blur_type ) {
 			case BlurType::BOX:
-				shader_program = instance->GetGraphicsShaderModules( GraphicsShaderProgramID::RENDER_TARGET_BOX_BLUR_VERTICAL );
+				shader_program = instance.GetGraphicsShaderModules( GraphicsShaderProgramID::RENDER_TARGET_BOX_BLUR_VERTICAL );
 				break;
 			case BlurType::GAUSSIAN:
-				shader_program = instance->GetGraphicsShaderModules( GraphicsShaderProgramID::RENDER_TARGET_GAUSSIAN_BLUR_VERTICAL );
+				shader_program = instance.GetGraphicsShaderModules( GraphicsShaderProgramID::RENDER_TARGET_GAUSSIAN_BLUR_VERTICAL );
 				break;
 			default:
-				shader_program = instance->GetGraphicsShaderModules( GraphicsShaderProgramID::RENDER_TARGET_GAUSSIAN_BLUR_VERTICAL );
+				shader_program = instance.GetGraphicsShaderModules( GraphicsShaderProgramID::RENDER_TARGET_GAUSSIAN_BLUR_VERTICAL );
 				break;
 		}
 
 		RecordBlurPass(
-			instance->GetGraphicsBlurPipelineLayout(),
+			instance.GetGraphicsBlurPipelineLayout(),
 			vk_blur_render_pass_2,
 			swap.vk_blur_framebuffer_2,	// This directs the render to the destination_image.
 			shader_program,
@@ -3333,7 +3328,7 @@ void vk2d::vk2d_internal::RenderTargetTextureImpl::CmdBindGraphicsPipelineIfDiff
 )
 {
 	if( previous_graphics_pipeline_settings != pipeline_settings ) {
-		auto pipeline = instance->GetGraphicsPipeline( pipeline_settings );
+		auto pipeline = instance.GetGraphicsPipeline( pipeline_settings );
 
 		vkCmdBindPipeline(
 			command_buffer,
@@ -3457,7 +3452,7 @@ bool vk2d::vk2d_internal::RenderTargetTextureImpl::CmdUpdateFrameData(
 	{
 		auto frame_data = frame_data_staging_buffer.memory.Map<FrameData>();
 		if( !frame_data ) {
-			instance->Report( ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot map FrameData staging buffer memory!" );
+			instance.Report( ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot map FrameData staging buffer memory!" );
 			return false;
 		}
 		frame_data->coordinate_scaling		= window_coordinate_scaling;

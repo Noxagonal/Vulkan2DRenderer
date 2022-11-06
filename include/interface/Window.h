@@ -1,13 +1,13 @@
 #pragma once
 
-#include "core/Common.h"
+#include <core/Common.h>
 
-#include "types/Rect2.hpp"
-#include "types/Transform.h"
-#include "types/Color.hpp"
-#include "types/MeshPrimitives.hpp"
-#include "types/Multisamples.h"
-#include "types/RenderCoordinateSpace.hpp"
+#include <types/Rect2.hpp>
+#include <types/Transform.h>
+#include <types/Color.hpp>
+#include <types/MeshPrimitives.hpp>
+#include <types/Multisamples.h>
+#include <types/RenderCoordinateSpace.hpp>
 
 #include <memory>
 #include <string>
@@ -484,7 +484,7 @@ class Cursor {
 	/// @note		Multithreading: Main thread only.
 	/// 
 	/// @param[in]	instance
-	///				A pointer to instance that owns this cursor.
+	///				A reference to instance that owns this cursor.
 	/// 
 	/// @param[in]	image_path
 	///				Path to an image file that will be used as a cursor.
@@ -494,7 +494,7 @@ class Cursor {
 	///				is located. For example if the cursor is a 64*64 texel image of a circle where the circle is exactly centered and
 	///				the center of the circle is the "tip" of the cursor, then the cursor's hot spot is 32*32.
 	VK2D_API Cursor(
-		vk2d_internal::InstanceImpl			*	instance,
+		vk2d_internal::InstanceImpl			&	instance,
 		const std::filesystem::path			&	image_path,
 		glm::ivec2								hot_spot );
 
@@ -506,7 +506,7 @@ class Cursor {
 	/// @note		Multithreading: Main thread only.
 	/// 
 	/// @param[in]	instance
-	///				A pointer to instance that owns this cursor.
+	///				A reference to instance that owns this cursor.
 	/// 
 	/// @param[in]	image_size
 	///				Size of the image in texels.
@@ -520,7 +520,7 @@ class Cursor {
 	///				cursor is located. For example if the cursor is a 64*64 texel image of a circle where the circle is exactly
 	///				centered and the center of the circle is the "tip" of the cursor, then the cursor's hot spot is 32*32.
 	VK2D_API Cursor(
-		vk2d_internal::InstanceImpl			*	instance,
+		vk2d_internal::InstanceImpl			&	instance,
 		glm::uvec2								image_size,
 		const std::vector<Color8>			&	image_data,
 		glm::ivec2								hot_spot );
@@ -621,7 +621,7 @@ private:
 	/// @param[in]	window_create_info
 	///				Window creation parameters.
 	VK2D_API Window(
-		vk2d_internal::InstanceImpl				*	instance,
+		vk2d_internal::InstanceImpl				&	instance,
 		const WindowCreateInfo					&	window_create_info );
 
 public:
@@ -1384,7 +1384,7 @@ private:
 ///				public:
 ///					// Keyboard button was pressed, released or kept down ( repeating ).
 ///					void						EventKeyboard(
-///						Window				*	window,
+///						Window				&	window,
 ///						KeyboardButton			button,
 ///						int32_t					scancode,
 ///						ButtonAction			action,
@@ -1402,7 +1402,7 @@ public:
 	/// @param[in]	position
 	///				Where the window moved to.
 	virtual void								EventWindowPosition(
-		Window								*	window,
+		Window								&	window,
 		glm::ivec2								position )
 	{};
 
@@ -1412,7 +1412,7 @@ public:
 	/// @param[in]	size
 	///				what's the new size of the window.
 	virtual void								EventWindowSize(
-		Window								*	window,
+		Window								&	window,
 		glm::uvec2								size )
 	{};
 
@@ -1424,9 +1424,9 @@ public:
 	/// @param[in]	window
 	///				Window that should be closed.
 	virtual void								EventWindowClose(
-		Window								*	window )
+		Window								&	window )
 	{
-		window->CloseWindow();
+		window.CloseWindow();
 	};
 
 	/// @brief		Window refreshed itself. <br>
@@ -1435,7 +1435,7 @@ public:
 	/// @param[in]	window
 	///				Window that refreshed itself.
 	virtual void								EventWindowRefresh(
-		Window								*	window )
+		Window								&	window )
 	{};
 
 	/// @brief		Window gained or lost focus. Ie. Became topmost window, or lost the topmost position.
@@ -1444,7 +1444,7 @@ public:
 	/// @param[in]	focused
 	///				true if the window became topmost, false if it lost the topmost position.
 	virtual void								EventWindowFocus(
-		Window								*	window,
+		Window								&	window,
 		bool									focused )
 	{};
 
@@ -1454,7 +1454,7 @@ public:
 	/// @param[in]	iconified
 	///				true if the window was iconified, false if recovered from taskbar.
 	virtual void								EventWindowIconify(
-		Window								*	window,
+		Window								&	window,
 		bool									iconified )
 	{};
 
@@ -1464,7 +1464,7 @@ public:
 	/// @param[in]	maximized
 	///				true if maximized or false if recevered from maximized state.
 	virtual void								EventWindowMaximize(
-		Window								*	window,
+		Window								&	window,
 		bool									maximized )
 	{};
 
@@ -1479,7 +1479,7 @@ public:
 	/// @param[in]	modifier_keys
 	///				What modifier keys were also pressed down when the mouse button was clicked or released.
 	virtual void								EventMouseButton(
-		Window								*	window,
+		Window								&	window,
 		MouseButton								button,
 		ButtonAction							action,
 		ModifierKeyFlags						modifier_keys )
@@ -1491,7 +1491,7 @@ public:
 	/// @param[in]	position
 	///				Tells the new mouse position.
 	virtual void								EventCursorPosition(
-		Window								*	window,
+		Window								&	window,
 		glm::dvec2								position )
 	{};
 
@@ -1501,7 +1501,7 @@ public:
 	/// @param[in]	entered
 	///				true if entered, false if cursor left the window area.
 	virtual void								EventCursorEnter(
-		Window								*	window,
+		Window								&	window,
 		bool									entered )
 	{};
 
@@ -1513,7 +1513,7 @@ public:
 	///				This is a 2d vector because some mice have sideways scrolling. Normal vertical
 	///				scrolling is reported in the Y axis, sideways movement in the X axis.
 	virtual void								EventScroll(
-		Window								*	window,
+		Window								&	window,
 		glm::ivec2								scroll )
 	{};
 
@@ -1529,7 +1529,7 @@ public:
 	/// @param[in]	modifier_keys
 	///				What modifier keys were also kept down.
 	virtual void								EventKeyboard(
-		Window								*	window,
+		Window								&	window,
 		KeyboardButton							button,
 		int32_t									scancode,
 		ButtonAction							action,
@@ -1547,7 +1547,7 @@ public:
 	/// @param[in]	modifier_keys
 	///				What modifier keys were pressed down when character event was generated.
 	virtual void								EventCharacter(
-		Window								*	window,
+		Window								&	window,
 		uint32_t								character,
 		ModifierKeyFlags						modifier_keys )
 	{};
@@ -1559,7 +1559,7 @@ public:
 	/// @param[in]	files
 	///				List of file paths.
 	virtual void								EventFileDrop(
-		Window								*	window,
+		Window								&	window,
 		std::vector<std::filesystem::path>		files )
 	{};
 
@@ -1582,7 +1582,7 @@ public:
 	/// @param[in]	error_message
 	///				if success was false then this tells what kind of error we encountered.
 	virtual void								EventScreenshot(
-		Window								*	window,
+		Window								&	window,
 		const std::filesystem::path			&	screenshot_path,
 		const ImageData						&	screenshot_data,
 		bool									success,

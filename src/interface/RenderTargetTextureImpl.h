@@ -1,24 +1,25 @@
 #pragma once
 
-#include "core/SourceCommon.h"
+#include <core/SourceCommon.h>
 
-#include "interface/RenderTargetTexture.h"
+#include <interface/RenderTargetTexture.h>
 
-#include "types/BlurType.h"
+#include <types/BlurType.h>
 
-#include "system/CommonTools.h"
-#include "system/ShaderInterface.h"
-#include "system/MeshBuffer.h"
-#include "system/RenderTargetTextureDependecyGraphInfo.hpp"
-#include "system/DescriptorSet.h"
-#include "system/VulkanMemoryManagement.h"
+#include <system/CommonTools.h>
+#include <system/ShaderInterface.h>
+#include <system/MeshBuffer.h>
+#include <system/RenderTargetTextureDependecyGraphInfo.hpp>
+#include <system/DescriptorSet.h>
 
-#include "interface/InstanceImpl.h"
+#include <vulkan/utils/VulkanMemoryManagement.hpp>
 
-#include "interface/SamplerImpl.h"
+#include <interface/InstanceImpl.h>
 
-#include "interface/Texture.h"
-#include "interface/TextureImpl.h"
+#include <interface/SamplerImpl.h>
+
+#include <interface/Texture.h>
+#include <interface/TextureImpl.h>
 
 
 
@@ -133,8 +134,8 @@ public:
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	RenderTargetTextureImpl(
-		RenderTargetTexture								*	my_interface,
-		InstanceImpl									*	instance,
+		RenderTargetTexture								&	my_interface,
+		InstanceImpl									&	instance,
 		const RenderTargetTextureCreateInfo				&	create_info );
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -494,8 +495,8 @@ private:
 		VkCommandBuffer										command_buffer
 	);
 
-	RenderTargetTexture									*	my_interface								= {};
-	InstanceImpl										*	instance									= {};
+	RenderTargetTexture									&	my_interface;
+	InstanceImpl										&	instance;
 	RenderTargetTextureCreateInfo							create_info_copy							= {};
 
 	RenderTargetTextureType									type										= {};

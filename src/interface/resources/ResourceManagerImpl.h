@@ -27,15 +27,15 @@ class ResourceThreadLoadTask : public Task
 {
 public:
 	ResourceThreadLoadTask(
-		ResourceManagerImpl				*	resource_manager,
+		ResourceManagerImpl				&	resource_manager,
 		ResourceBase					*	resource );
 
 	void operator()(
 		ThreadPrivateResource			*	thread_resource );
 
 private:
-	ResourceManagerImpl					*	resource_manager		= {};
-	ResourceBase						*	resource				= {};
+	ResourceManagerImpl					&	resource_manager;
+	ResourceBase						*	resource;
 };
 
 // Unload task takes ownership of the task
@@ -43,15 +43,15 @@ class ResourceThreadUnloadTask : public Task
 {
 public:
 	ResourceThreadUnloadTask(
-		ResourceManagerImpl				*	resource_manager,
+		ResourceManagerImpl				&	resource_manager,
 		std::unique_ptr<ResourceBase>		resource );
 
 	void operator()(
 		ThreadPrivateResource			*	thread_resource );
 
 private:
-	ResourceManagerImpl					*	resource_manager		= {};
-	std::unique_ptr<ResourceBase>			resource				= {};
+	ResourceManagerImpl					&	resource_manager;
+	std::unique_ptr<ResourceBase>			resource;
 };
 
 
@@ -59,28 +59,32 @@ private:
 class ResourceManagerImpl {
 public:
 	ResourceManagerImpl(
-		ResourceManager									*	my_interface,
-		InstanceImpl									*	parent_instance
+		ResourceManager									&	my_interface,
+		InstanceImpl									&	parent_instance
 	);
 	~ResourceManagerImpl();
 
 	TextureResource										*	LoadTextureResource(
 		const std::filesystem::path						&	file_path,
-		ResourceBase									*	parent_resource );
+		ResourceBase									*	parent_resource
+	);
 
 	TextureResource										*	CreateTextureResource(
 		glm::uvec2											size,
 		const std::vector<Color8>						&	texture_data,
-		ResourceBase									*	parent_resource );
+		ResourceBase									*	parent_resource
+	);
 
 	TextureResource										*	LoadArrayTextureResource(
 		const std::vector<std::filesystem::path>		&	file_path_listings,
-		ResourceBase									*	parent_resource );
+		ResourceBase									*	parent_resource
+	);
 
 	TextureResource										*	CreateArrayTextureResource(
-		glm::uvec2												size,
+		glm::uvec2											size,
 		const std::vector<const std::vector<Color8>*>	&	texture_data_listings,
-		ResourceBase									*	parent_resource );
+		ResourceBase									*	parent_resource
+	);
 
 	FontResource										*	LoadFontResource(
 		const std::filesystem::path						&	file_path,
@@ -88,13 +92,15 @@ public:
 		uint32_t											glyph_texel_size,
 		bool												use_alpha,
 		uint32_t											fallback_character,
-		uint32_t											glyph_atlas_padding );
+		uint32_t											glyph_atlas_padding
+	);
 
 	void													DestroyResource(
-		ResourceBase									*	resource );
+		ResourceBase									*	resource
+	);
 
-	InstanceImpl										*	GetInstance() const;
-	ThreadPool											*	GetThreadPool() const;
+	InstanceImpl										&	GetInstance() const;
+	ThreadPool											&	GetThreadPool() const;
 	const std::vector<uint32_t>							&	GetLoaderThreads() const;
 	const std::vector<uint32_t>							&	GetGeneralThreads() const;
 	VkDevice												GetVulkanDevice() const;
@@ -129,11 +135,11 @@ private:
 		return resource_ptr;
 	}
 
-	ResourceManager										*	my_interface						= {};
-	InstanceImpl										*	instance							= {};
+	ResourceManager										&	my_interface;
+	InstanceImpl										&	instance;
 	VkDevice												vk_device							= {};
 
-	ThreadPool											*	thread_pool							= {};
+	ThreadPool											&	thread_pool;
 	std::vector<uint32_t>									loader_threads						= {};
 	std::vector<uint32_t>									general_threads						= {};
 

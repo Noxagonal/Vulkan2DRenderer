@@ -65,7 +65,7 @@ private:
 
 
 Multisamples					CheckSupportedMultisampleCount(
-	InstanceImpl			*	instance,
+	InstanceImpl			&	instance,
 	Multisamples				samples
 );
 

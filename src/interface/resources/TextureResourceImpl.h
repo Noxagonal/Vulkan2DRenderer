@@ -1,13 +1,13 @@
 #pragma once
 
-#include "core/SourceCommon.h"
+#include <core/SourceCommon.h>
 
-#include "types/Color.hpp"
+#include <types/Color.hpp>
 
-#include "system/VulkanMemoryManagement.h"
+#include <vulkan/utils/VulkanMemoryManagement.hpp>
 
-#include "interface/resources/ResourceImplBase.h"
-#include "interface/TextureImpl.h"
+#include <interface/resources/ResourceImplBase.h>
+#include <interface/TextureImpl.h>
 
 
 namespace vk2d {
@@ -33,15 +33,15 @@ class TextureResourceImpl :
 
 public:
 															TextureResourceImpl(
-		TextureResource									*	my_interface,
-		ResourceManagerImpl								*	resource_manager,
+		TextureResource									&	my_interface,
+		ResourceManagerImpl								&	resource_manager,
 		uint32_t											loader_thread,
 		ResourceBase									*	parent_resource,
 		const std::vector<std::filesystem::path>		&	file_paths_listing );
 
 															TextureResourceImpl(
-		TextureResource									*	my_interface,
-		ResourceManagerImpl								*	resource_manager,
+		TextureResource									&	my_interface,
+		ResourceManagerImpl								&	resource_manager,
 		uint32_t											loader_thread,
 		ResourceBase									*	parent_resource,
 		glm::uvec2											size,
@@ -75,8 +75,8 @@ public:
 private:
 	void													ScheduleTextureLoadResourceDestruction();
 
-	TextureResource										*	my_interface								= {};
-	ResourceManagerImpl									*	resource_manager							= {};
+	TextureResource										&	my_interface;
+	ResourceManagerImpl									&	resource_manager;
 	ThreadLoaderResource								*	loader_thread_resource						= {};
 
 	std::vector<CompleteBufferResource>						staging_buffers								= {};

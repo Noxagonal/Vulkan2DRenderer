@@ -41,25 +41,25 @@ size_t vk2d::vk2d_internal::RenderTargetTextureRenderCollector::size()
 }
 
 vk2d::Multisamples vk2d::vk2d_internal::CheckSupportedMultisampleCount(
-	InstanceImpl	*	instance,
+	InstanceImpl	&	instance,
 	Multisamples		samples
 )
 {
-	Multisamples max_samples = instance->GetMaximumSupportedMultisampling();
+	Multisamples max_samples = instance.GetMaximumSupportedMultisampling();
 	if( uint32_t( samples ) > uint32_t( max_samples ) ) {
 		std::stringstream ss;
 		ss << "Parameter samples was larger than the system supports.\n"
 			<< "Maximum supported amount for this system is: '" << uint32_t( max_samples ) << "'.";
-		instance->Report( ReportSeverity::WARNING, ss.str() );
+		instance.Report( ReportSeverity::WARNING, ss.str() );
 		samples = max_samples;
 	}
 
-	Multisamples supported_samples	= Multisamples( instance->GetVulkanPhysicalDeviceProperties().limits.framebufferColorSampleCounts );
+	Multisamples supported_samples	= Multisamples( instance.GetVulkanPhysicalDeviceProperties().limits.framebufferColorSampleCounts );
 	if( !( uint32_t( samples ) & uint32_t( supported_samples ) ) ) {
 		std::stringstream ss;
 		ss << "This specific multisample count (" << uint32_t( samples ) << ") is not supported by this system.\n"
 			<< "Reverting to sample count 1.";
-		instance->Report( ReportSeverity::WARNING, ss.str() );
+		instance.Report( ReportSeverity::WARNING, ss.str() );
 		samples = Multisamples::SAMPLE_COUNT_1;
 	}
 

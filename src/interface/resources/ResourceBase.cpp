@@ -95,41 +95,39 @@ VK2D_API bool vk2d::ResourceBase::IsGood() const
 
 
 vk2d::vk2d_internal::ResourceImplBase::ResourceImplBase(
-	ResourceBase			*	my_interface,
+	ResourceBase			&	my_base_interface,
 	uint32_t					loader_thread,
-	ResourceManagerImpl		*	resource_manager,
+	ResourceManagerImpl		&	resource_manager,
 	ResourceBase			*	parent_resource
-)
+) :
+	my_base_interface( my_base_interface ),
+	loader_thread( loader_thread ),
+	resource_manager( resource_manager ),
+	parent_resource( parent_resource ),
+	file_paths( {} ),
+	is_from_file( false )
 {
-	this->my_interface				= my_interface;
-	this->loader_thread				= loader_thread;
-	this->resource_manager	= resource_manager;
-	this->parent_resource			= parent_resource;
-	this->file_paths				= {};
-	this->is_from_file				= false;
-
 	if( this->parent_resource ) {
-		this->parent_resource->resource_impl->AddSubresource( my_interface );
+		this->parent_resource->resource_impl->AddSubresource( my_base_interface );
 	}
 }
 
 vk2d::vk2d_internal::ResourceImplBase::ResourceImplBase(
-	ResourceBase								*	my_interface,
+	ResourceBase								&	my_base_interface,
 	uint32_t										loader_thread,
-	ResourceManagerImpl							*	resource_manager,
+	ResourceManagerImpl							&	resource_manager,
 	ResourceBase								*	parent_resource,
 	const std::vector<std::filesystem::path>	&	paths
-)
+) :
+	my_base_interface( my_base_interface ),
+	loader_thread( loader_thread ),
+	resource_manager( resource_manager ),
+	parent_resource( parent_resource ),
+	file_paths( paths ),
+	is_from_file( true )
 {
-	this->my_interface		= my_interface;
-	this->loader_thread		= loader_thread;
-	this->resource_manager	= resource_manager;
-	this->parent_resource	= parent_resource;
-	this->file_paths		= paths;
-	this->is_from_file		= true;
-
 	if( this->parent_resource ) {
-		this->parent_resource->resource_impl->AddSubresource( my_interface );
+		this->parent_resource->resource_impl->AddSubresource( my_base_interface );
 	}
 }
 
@@ -139,18 +137,18 @@ void vk2d::vk2d_internal::ResourceImplBase::DestroySubresources()
 
 	for( auto s : subresources ) {
 		s->resource_impl->DestroySubresources();
-		resource_manager->DestroyResource( s );
+		resource_manager.DestroyResource( s );
 	}
 	subresources.clear();
 }
 
 void vk2d::vk2d_internal::ResourceImplBase::AddSubresource(
-	ResourceBase		*	subresource
+	ResourceBase		&	subresource
 )
 {
 	std::lock_guard<std::mutex> lock_guard( subresources_mutex );
 
-	subresources.push_back( subresource );
+	subresources.push_back( &subresource );
 }
 
 vk2d::ResourceBase * vk2d::vk2d_internal::ResourceImplBase::GetParentResource()

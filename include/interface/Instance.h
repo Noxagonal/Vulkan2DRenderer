@@ -1,13 +1,13 @@
 #pragma once
 
-#include "core/Common.h"
-#include "core/Version.hpp"
+#include <core/Common.h>
+#include <core/Version.hpp>
 
-#include "types/Color.hpp"
+#include <types/Color.hpp>
 
-#include "interface/Window.h"
-#include "interface/RenderTargetTexture.h"
-#include "interface/Sampler.h"
+#include <interface/Window.h>
+#include <interface/RenderTargetTexture.h>
+#include <interface/Sampler.h>
 
 #include <string>
 #include <memory>
