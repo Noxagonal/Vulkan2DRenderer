@@ -1,5 +1,5 @@
 
-#include "core/SourceCommon.h"
+#include <core/SourceCommon.h>
 
 #include "QueueResolver.hpp"
 

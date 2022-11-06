@@ -1,8 +1,8 @@
 #pragma once
 
-#include "core/Common.h"
+#include <core/Common.h>
 
-#include "interface/resources/ResourceBase.h"
+#include <interface/resources/ResourceBase.h>
 #include <types/MeshGenerators.hpp>
 
 #include <filesystem>

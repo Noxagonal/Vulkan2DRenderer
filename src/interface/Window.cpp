@@ -563,7 +563,7 @@ VK2D_API vk2d::Cursor::Cursor(
 
 vk2d::Cursor::Cursor(
 	Cursor	&&	other
-) noexcept
+)
 {
 	std::swap( impl, other.impl );
 }
@@ -590,7 +590,7 @@ VK2D_API vk2d::Cursor & vk2d::Cursor::operator=(
 
 VK2D_API vk2d::Cursor & vk2d::Cursor::operator=(
 	Cursor	&&	other
-) noexcept
+)
 {
 	std::swap( impl, other.impl );
 	return *this;
@@ -654,7 +654,7 @@ VK2D_API vk2d::Monitor::Monitor(
 
 vk2d::Monitor::Monitor(
 	Monitor && other
-) noexcept
+)
 {
 	std::swap( impl, other.impl );
 }
@@ -712,7 +712,7 @@ VK2D_API vk2d::Monitor & vk2d::Monitor::operator=(
 
 VK2D_API vk2d::Monitor &vk2d::Monitor::operator=(
 	Monitor	&&	other
-) noexcept
+)
 {
 	std::swap( impl, other.impl );
 	return *this;

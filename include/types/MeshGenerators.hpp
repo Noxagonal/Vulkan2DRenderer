@@ -1,9 +1,9 @@
 #pragma once
 
-#include "core/Common.h"
+#include <core/Common.h>
 
-#include "types/MeshPrimitives.hpp"
-#include "types/Rect2.hpp"
+#include <types/MeshPrimitives.hpp>
+#include <types/Rect2.hpp>
 
 #include <vector>
 

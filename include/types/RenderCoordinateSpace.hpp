@@ -1,6 +1,6 @@
 #pragma once
 
-#include "core/Common.h"
+#include <core/Common.h>
 
 
 namespace vk2d {

@@ -1,10 +1,10 @@
 #pragma once
 
-#include "core/SourceCommon.h"
+#include <core/SourceCommon.h>
 
-#include "interface/resources/ResourceBase.h"
+#include <interface/resources/ResourceBase.h>
 
-#include "types/Synchronization.hpp"
+#include <types/Synchronization.hpp>
 
 
 

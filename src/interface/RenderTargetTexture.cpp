@@ -1,26 +1,26 @@
 
-#include "core/SourceCommon.h"
+#include <core/SourceCommon.h>
 
-#include "types/BlurType.h"
-#include "types/Rect2.hpp"
-#include "types/Color.hpp"
-#include "types/Mesh.h"
+#include <types/BlurType.h>
+#include <types/Rect2.hpp>
+#include <types/Color.hpp>
+#include <types/Mesh.h>
 
-#include "system/RenderTargetTextureDependecyGraphInfo.hpp"
-#include "system/ShaderInterface.h"
-#include "system/MeshBuffer.h"
+#include <system/RenderTargetTextureDependecyGraphInfo.hpp>
+#include <system/ShaderInterface.h>
+#include <system/MeshBuffer.h>
 
-#include "interface/Instance.h"
-#include "interface/InstanceImpl.h"
+#include <interface/Instance.h>
+#include <interface/InstanceImpl.h>
 
-#include "interface/Texture.h"
-#include "interface/TextureImpl.h"
+#include <interface/Texture.h>
+#include <interface/TextureImpl.h>
 
-#include "interface/RenderTargetTexture.h"
-#include "interface/RenderTargetTextureImpl.h"
+#include <interface/RenderTargetTexture.h>
+#include <interface/RenderTargetTextureImpl.h>
 
-#include "interface/Sampler.h"
-#include "interface/SamplerImpl.h"
+#include <interface/Sampler.h>
+#include <interface/SamplerImpl.h>
 
 
 

@@ -1,8 +1,8 @@
 
-#include "core/SourceCommon.h"
+#include <core/SourceCommon.h>
 
-#include "interface/resources/PipelineResource.h"
-#include "interface/resources/PipelineResourceImpl.h"
+#include <interface/resources/PipelineResource.h>
+#include <interface/resources/PipelineResourceImpl.h>
 
 
 

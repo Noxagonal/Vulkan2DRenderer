@@ -1,8 +1,8 @@
 #pragma once
 
-#include "core/Common.h"
+#include <core/Common.h>
 
-#include "types/Color.hpp"
+#include <types/Color.hpp>
 
 #include <array>
 #include <vector>

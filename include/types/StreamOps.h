@@ -2,10 +2,10 @@
 
 
 
-#include "core/Common.h"
+#include <core/Common.h>
 
-#include "types/Rect2.hpp"
-#include "types/Color.hpp"
+#include <types/Rect2.hpp>
+#include <types/Color.hpp>
 
 #include <vector>
 

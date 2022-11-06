@@ -1,7 +1,7 @@
 
-#include "core/SourceCommon.h"
+#include <core/SourceCommon.h>
 
-#include "core/SystemConsole.h"
+#include <core/SystemConsole.h>
 
 #include <iostream>
 

@@ -1,11 +1,11 @@
 #pragma once
 
-#include "core/SourceCommon.h"
+#include <core/SourceCommon.h>
 
-#include "types/Rect2.hpp"
-#include "types/Color.hpp"
+#include <types/Rect2.hpp>
+#include <types/Color.hpp>
 
-#include "interface/resources/ResourceImplBase.h"
+#include <interface/resources/ResourceImplBase.h>
 #include <interface/resources/TextureResource.h>
 
 #include <ft2build.h>

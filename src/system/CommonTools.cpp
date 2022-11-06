@@ -1,7 +1,7 @@
 
-#include "core/SourceCommon.h"
+#include <core/SourceCommon.h>
 
-#include "system/CommonTools.h"
+#include <system/CommonTools.h>
 
 std::vector<VkExtent2D> vk2d::vk2d_internal::GenerateMipSizes(
 	glm::uvec2		full_size

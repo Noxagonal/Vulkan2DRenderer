@@ -1,10 +1,10 @@
 
-#include "core/SourceCommon.h"
+#include <core/SourceCommon.h>
 
-#include "types/MeshGenerators.hpp"
-#include "types/Mesh.h"
+#include <types/MeshGenerators.hpp>
+#include <types/Mesh.h>
 
-#include "types/MeshCommon.hpp"
+#include <types/MeshCommon.hpp>
 
 #include <interface/resources/FontResource.h>
 #include <interface/resources/FontResourceImpl.h>

@@ -4,8 +4,8 @@
 
 #include "BuildOptions.h"
 
-#include "core/PreCompiledHeader.h"
-#include "core/Common.h"
+#include <core/PreCompiledHeader.h>
+#include <core/Common.h>
 
 #include <vulkan/vulkan.h>
 
