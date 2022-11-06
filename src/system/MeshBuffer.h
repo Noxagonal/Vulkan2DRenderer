@@ -77,10 +77,7 @@ public:
 	};
 
 	MeshBuffer(
-		InstanceImpl						&	instance,
-		VkDevice								device,
-		const VkPhysicalDeviceLimits		&	physicald_device_limits,
-		DeviceMemoryPool					&	device_memory_pool
+		InstanceImpl						&	instance
 	);
 
 	// Pushes mesh into render list, dynamically allocates new buffers
@@ -196,9 +193,6 @@ private:
 	);
 
 	InstanceImpl							&	instance;
-	VkDevice									device										= {};
-	VkPhysicalDeviceLimits						physical_device_limits						= {};
-	DeviceMemoryPool						&	device_memory_pool;
 
 	bool										first_draw									= {};
 
@@ -236,17 +230,17 @@ class MeshBufferBlock {
 
 public:
 	MeshBufferBlock(
-		MeshBuffer							&	mesh_buffer,
+		MeshBuffer							&	parent,
 		VkDeviceSize							buffer_byte_size,
 		VkBufferUsageFlags						buffer_usage_flags,
 		MeshBufferDescriptorSetType				descriptor_set_type
 	) :
-		mesh_buffer( mesh_buffer )
+		parent( parent )
 	{
 		assert( buffer_byte_size );
 		assert( buffer_usage_flags );
 
-		auto & instance				= mesh_buffer.instance;
+		auto & instance				= parent.instance;
 		auto memory_pool			= instance.GetVulkanDevice().GetDeviceMemoryPool();
 
 		total_byte_size				= CalculateAlignmentForBuffer(
@@ -369,10 +363,10 @@ public:
 
 	~MeshBufferBlock()
 	{
-		auto memory_pool = mesh_buffer.instance.GetVulkanDevice().GetDeviceMemoryPool();
+		auto memory_pool = parent.instance.GetVulkanDevice().GetDeviceMemoryPool();
 
 		// WARNING: MeshBufferBlock::descriptor_set allocation and freeing needs to be thread specific if we ever start doing multithreaded rendering.
-		mesh_buffer.instance.FreeDescriptorSet( descriptor_set );
+		parent.instance.FreeDescriptorSet( descriptor_set );
 		memory_pool->FreeCompleteResource( device_buffer );
 		memory_pool->FreeCompleteResource( staging_buffer );
 	}
@@ -381,7 +375,7 @@ public:
 	{
 		auto mapped_memory	= staging_buffer.memory.Map<T>();
 		if( !mapped_memory ) {
-			mesh_buffer.instance.Report( ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot copy mesh buffer block to  map staging buffer memory" );
+			parent.instance.Report( ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot copy mesh buffer block to  map staging buffer memory" );
 			return false;
 		} else {
 			std::memcpy( mapped_memory, host_data.data(), used_byte_size );
@@ -429,7 +423,7 @@ public:
 	}
 
 private:
-	MeshBuffer								&	mesh_buffer;
+	MeshBuffer								&	parent;
 
 	// TODO: Get rid of extra data copying in MeshBuffer, either double buffer it or just force users to create MeshBuffer per swap.
 	// Might be a bit clumbersome to introduce double buffering here so consider making this single access only, so that the data

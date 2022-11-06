@@ -322,11 +322,8 @@ vk2d::vk2d_internal::WindowImpl::WindowImpl(
 	if( !CreateFrameSynchronizationPrimitives() ) return;
 	if( !CreateWindowFrameDataBuffer() ) return;
 
-	this->mesh_buffer = std::make_unique<MeshBuffer>(
-		instance,
-		vk_device,
-		instance.GetVulkanDevice().GetVulkanPhysicalDeviceProperties().limits,
-		device_memory_pool
+	mesh_buffer = std::make_unique<MeshBuffer>(
+		instance
 	);
 
 	render_target_texture_dependencies.resize( swapchain_image_count );

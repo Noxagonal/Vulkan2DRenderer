@@ -48,10 +48,7 @@ vk2d::vk2d_internal::RenderTargetTextureImpl::RenderTargetTextureImpl(
 	if( !CreateSynchronizationPrimitives() ) return;
 
 	mesh_buffer = std::make_unique<MeshBuffer>(
-		instance,
-		instance.GetVulkanDevice(),
-		instance.GetVulkanDevice().GetVulkanPhysicalDeviceProperties().limits,
-		*instance.GetVulkanDevice().GetDeviceMemoryPool()
+		instance
 	);
 
 	// Initial final image layouts, change later if implementing mipmapless render target texture.

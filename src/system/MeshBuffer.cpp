@@ -12,19 +12,11 @@
 
 
 vk2d::vk2d_internal::MeshBuffer::MeshBuffer(
-	InstanceImpl					&	instance,
-	VkDevice							device,
-	const VkPhysicalDeviceLimits	&	physical_device_limits,
-	DeviceMemoryPool				&	device_memory_pool
+	InstanceImpl					&	instance
 ) :
-	instance( instance ),
-	device( device ),
-	physical_device_limits( physical_device_limits ),
-	device_memory_pool( device_memory_pool )
+	instance( instance )
 {
-	assert( device );
-
-	this->first_draw					= true;
+	this->first_draw = true;
 }
 
 vk2d::vk2d_internal::MeshBuffer::PushResult vk2d::vk2d_internal::MeshBuffer::CmdPushMesh(
