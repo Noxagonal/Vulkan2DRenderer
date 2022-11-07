@@ -79,6 +79,15 @@ enum class MeshBufferDescriptorSetType : uint32_t {
 // tracked, old data is ignored but memory is set as availble in the pool side.
 // Per-draw data should be cleared after every draw and resent every time, completely dynamic as the MeshBuffer is right now.
 //
+// Consider removing texture channel weights and transformations. These could be added later in custom shaders, they're a little
+// heavy. Need to figure out a standard method of drawing. I was thinking of a collection of different types of shaders. Ones
+// which only do simple draws, ones which do a little more and ones which do a lot more. Maybe this is a little too confusing...
+// Basically standards of drawing. I think getting rid of texture channel weights is okay but transformations should probably
+// be a built in feature. I'm thinking about having the custom shaders be the building blocks for standard drawing. Basically
+// the Vertex would be empty by default, which on top of we introduce all of it's properties. This would need us to keep a list
+// of property names somewhere for each Vertex type, and requires a small runtime reflection. It would probably be an overkill
+// however. Still I like the idea. At least I could create a small reflection for the custom properties.
+//
 // Currently VK2D has 2 shader interfaces, one for more simple renders and another for more complicated ones, it would be nice
 // to have a single interface instead of 2. See if it would be possible. I think it is allowed to have an unbound set in shader
 // if it is never used, this should allow us to have only one shader interface. Alternatively we could just bind it to a
