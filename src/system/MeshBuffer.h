@@ -34,6 +34,69 @@ enum class MeshBufferDescriptorSetType : uint32_t {
 
 
 
+// TODO:
+// MeshBuffer needs to be updated to have more functionality.
+// New goals are:
+// - Keep data on the GPU if possible. Similar to static and dynamic meshes where dynamic meshes are updated every frame but
+//   static meshes are kept in VRAM between draws until they're manually freed.
+// - Allow custom Vertex data. Which must find it's way into the custom user made shaders.
+//
+// Another thing that must be implemented is custom mesh data. Since we're implementing custom shader with ability to pass data
+// to the shader, we must account for different sized data at runtime.
+//
+// I think this requires a total overhaul of MeshBuffer. Vertex and index blocks will not change, they're going to be reserved
+// regardless of other data. Texture channel weight data and transformation blocks may go away by default.
+//
+// Right now MeshBuffer is a bit of a mess anyhow. Should tidy it up at the very least. Currently there are 4 distinct buffers
+// for indices, vertices, texture channel weights and transformations.
+//
+// Indices, vertices, texture channel weights, transformation block all have different data rates, Vertices just define the
+// corners, indices are per number of corners to draw, texture channel weights is number of texture layers * number of vertices
+// and transformations are per instance.
+// 
+// Consider interleaving indices, vertices... and the whole mesh into a single MeshBufferBlock and add offsets to different data
+// sections, basically this would make the entire mesh strictly contained within a single range within a single buffer, this
+// would maximize the space usage.
+// Vertex could also be given the same template parameter pack as the Mesh, this way the Vertex will actually contain the
+// custom data we want to send to the shader, though this also means we need to adjust what the Vertex looks like inside the
+// shader.
+// This method requires making sure alignment for each vertex parameter is properly set and won't cause problems in different
+// GPU architectures. Also alignment must be checked between data sections, eg, between index and vertex buffers.
+//
+// On the other hand, it may be more efficient to keep indices in one list, vertices on another and so on, exactly like
+// MeshBuffer does right now. The only difference then would be a variable size Vertex list per mesh.
+// Consider having static mesh in VRAM, if we want to send per-draw data to the mesh, if we increase the number of draws, we may
+// need to migrate the whole mesh around to fit the per-draw data at the end of the mesh data.
+//
+// We could also introduce a new buffer for all custom data and interleave it just like in the Vertex buffer. This would require
+// a separate buffer binding however, which isn't a problem necessarily but may not be as efficient as adjusting Vertex size,
+// but would potentially be easier to implement... Not sure about this though.
+//
+// Currently I'm leaning on having the MeshBuffer work mostly as it is right now, except allow custom size MeshBufferBlock.
+// For custom data, either interleave custom data into Vertex class, or create a new MeshBufferBlock for custom vertex data.
+// Introduce static and dynamic storage locations. Dynamic works same as current MeshBuffer, static works more like a memory
+// pool of sorts, new uploads are tracked and recorded to command buffers once. Freeing is done manually it is not automatically
+// tracked, old data is ignored but memory is set as availble in the pool side.
+// Per-draw data should be cleared after every draw and resent every time, completely dynamic as the MeshBuffer is right now.
+//
+// Currently VK2D has 2 shader interfaces, one for more simple renders and another for more complicated ones, it would be nice
+// to have a single interface instead of 2. See if it would be possible. I think it is allowed to have an unbound set in shader
+// if it is never used, this should allow us to have only one shader interface. Alternatively we could just bind it to a
+// fallback data buffer. Combining the shader interfaces into one may have a small performance hit as we're now using the larger
+// interface for everything, mostly because the vertex and index buffers are also bound to fragment shaders.
+//
+// I think exposing vertex and index buffers for custom fragment shaders is okay, I don't think it's worth the effort to ask the
+// user about it. Implementing this would require new vulkan pipeline layout, vulkan pipeline, shaders, descriptor set layout
+// and descriptor set so it's a lot of work.
+//
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/// @brief		MeshBuffer represents a collection of all mesh data that is about to be rendered.
+///
+///				MeshBuffer consists of dynamically and automatically expanding storage, it has 2 internal buffers, one in RAM
+///				and another in VRAM, mesh buffers may be copied over to the VRAM by submitting a copy command to Vulkan command
+///				buffer.
 class MeshBuffer {
 	template<typename T>
 	friend class MeshBufferBlock;
@@ -294,62 +357,56 @@ public:
 
 		// Create descriptor set
 		{
+			auto AllocateAndUpdateDescriptorSet = [this, &instance](
+				const DescriptorSetLayout	&	descriptor_set_layout,
+				VkDescriptorType				descriptor_type
+			) -> PoolDescriptorSet
+			{
+				// WARNING: MeshBufferBlock::descriptor_set allocation and freeing needs to be thread specific if we ever start doing multithreaded rendering.
+				auto ret = instance.AllocateDescriptorSet(
+					descriptor_set_layout
+				);
+
+				VkDescriptorBufferInfo descriptor_write_buffer_info {};
+				descriptor_write_buffer_info.buffer = device_buffer.buffer;
+				descriptor_write_buffer_info.offset = 0;
+				descriptor_write_buffer_info.range = device_buffer.memory.GetSize();
+				std::array<VkWriteDescriptorSet, 1> descriptor_write {};
+				descriptor_write[ 0 ].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+				descriptor_write[ 0 ].pNext = nullptr;
+				descriptor_write[ 0 ].dstSet = ret.descriptorSet;
+				descriptor_write[ 0 ].dstBinding = 0;
+				descriptor_write[ 0 ].dstArrayElement = 0;
+				descriptor_write[ 0 ].descriptorCount = 1;
+				descriptor_write[ 0 ].descriptorType = descriptor_type;
+				descriptor_write[ 0 ].pImageInfo = nullptr;
+				descriptor_write[ 0 ].pBufferInfo = &descriptor_write_buffer_info;
+				descriptor_write[ 0 ].pTexelBufferView = nullptr;
+				vkUpdateDescriptorSets(
+					instance.GetVulkanDevice(),
+					uint32_t( descriptor_write.size() ), descriptor_write.data(),
+					0, nullptr
+				);
+
+				return ret;
+			};
+
 			switch( descriptor_set_type ) {
 			case MeshBufferDescriptorSetType::NONE:
 				break;
 			case MeshBufferDescriptorSetType::UNIFORM:
 			{
-				// TODO: MeshBufferBlock::descriptor_set allocation and freeing needs to be thread specific instead of allocating from the instance.
-				descriptor_set			= instance.AllocateDescriptorSet( instance.GetGraphicsUniformBufferDescriptorSetLayout() );
-
-				VkDescriptorBufferInfo descriptor_write_buffer_info {};
-				descriptor_write_buffer_info.buffer		= device_buffer.buffer;
-				descriptor_write_buffer_info.offset		= 0;
-				descriptor_write_buffer_info.range		= device_buffer.memory.GetSize();
-				std::array<VkWriteDescriptorSet, 1> descriptor_write {};
-				descriptor_write[ 0 ].sType				= VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-				descriptor_write[ 0 ].pNext				= nullptr;
-				descriptor_write[ 0 ].dstSet			= descriptor_set.descriptorSet;
-				descriptor_write[ 0 ].dstBinding		= 0;
-				descriptor_write[ 0 ].dstArrayElement	= 0;
-				descriptor_write[ 0 ].descriptorCount	= 1;
-				descriptor_write[ 0 ].descriptorType	= VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-				descriptor_write[ 0 ].pImageInfo		= nullptr;
-				descriptor_write[ 0 ].pBufferInfo		= &descriptor_write_buffer_info;
-				descriptor_write[ 0 ].pTexelBufferView	= nullptr;
-				vkUpdateDescriptorSets(
-					instance.GetVulkanDevice(),
-					uint32_t( descriptor_write.size() ), descriptor_write.data(),
-					0, nullptr
+				descriptor_set = AllocateAndUpdateDescriptorSet(
+					instance.GetGraphicsUniformBufferDescriptorSetLayout(),
+					VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER
 				);
 			}
 				break;
 			case MeshBufferDescriptorSetType::STORAGE:
 			{
-				// WARNING: MeshBufferBlock::descriptor_set allocation and freeing needs to be thread specific if we ever start doing multithreaded rendering.
-				descriptor_set = instance.AllocateDescriptorSet(
-					instance.GetGraphicsStorageBufferDescriptorSetLayout()
-				);
-
-				VkDescriptorBufferInfo descriptor_write_buffer_info {};
-				descriptor_write_buffer_info.buffer		= device_buffer.buffer;
-				descriptor_write_buffer_info.offset		= 0;
-				descriptor_write_buffer_info.range		= device_buffer.memory.GetSize();
-				std::array<VkWriteDescriptorSet, 1> descriptor_write {};
-				descriptor_write[ 0 ].sType				= VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-				descriptor_write[ 0 ].pNext				= nullptr;
-				descriptor_write[ 0 ].dstSet			= descriptor_set.descriptorSet;
-				descriptor_write[ 0 ].dstBinding		= 0;
-				descriptor_write[ 0 ].dstArrayElement	= 0;
-				descriptor_write[ 0 ].descriptorCount	= 1;
-				descriptor_write[ 0 ].descriptorType	= VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
-				descriptor_write[ 0 ].pImageInfo		= nullptr;
-				descriptor_write[ 0 ].pBufferInfo		= &descriptor_write_buffer_info;
-				descriptor_write[ 0 ].pTexelBufferView	= nullptr;
-				vkUpdateDescriptorSets(
-					instance.GetVulkanDevice(),
-					uint32_t( descriptor_write.size() ), descriptor_write.data(),
-					0, nullptr
+				descriptor_set = AllocateAndUpdateDescriptorSet(
+					instance.GetGraphicsStorageBufferDescriptorSetLayout(),
+					VK_DESCRIPTOR_TYPE_STORAGE_BUFFER
 				);
 			}
 				break;
@@ -425,10 +482,14 @@ public:
 private:
 	MeshBuffer								&	parent;
 
-	// TODO: Get rid of extra data copying in MeshBuffer, either double buffer it or just force users to create MeshBuffer per swap.
-	// Might be a bit clumbersome to introduce double buffering here so consider making this single access only, so that the data
-	// is used by the GPU or the host and disallow simultaneous use.
-	// Regardless, get rid of host_data vector.
+	// TODO: Get rid of host_data vector.
+	// Currently when submitting a mesh, it's contents are copied here, then they're copied to Vulkan RAM buffer, then
+	// finally into VRAM via copy command in command buffer. This is 3 copies just to submit a mesh. This is needed because
+	// currently the Vulkan RAM buffer may be read from by the GPU while we're writing to it. This could be mitigated by
+	// making Vulkan RAM buffer double buffered, so that writes won't interfere with the GPU upload.
+	// Make sure we even need a double buffering here. Window::BeginRender() should synchronize the frame and the GPU, but
+	// I don't remember how I designed it, it may be that some operations will not synchronize until Window::EndRender() is
+	// called.
 	std::vector<T>								host_data					= {};
 
 	VkDeviceSize								total_byte_size				= {};	// Total size of buffer in bytes.

@@ -56,7 +56,8 @@ struct PoolCategory {
 	uint64_t						counter							= {};
 };
 
-class DescriptorSetLayout {
+class DescriptorSetLayout
+{
 	friend std::unique_ptr<DescriptorSetLayout>		CreateDescriptorSetLayout(
 		InstanceImpl							*	instance,
 		VkDevice									device,
