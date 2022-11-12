@@ -27,3 +27,6 @@
 #include <interface/resources/ResourceBase.h>
 #include <interface/resources/TextureResource.h>
 #include <interface/resources/FontResource.h>
+
+// DEV!
+#include <types/mesh/VertexBase.hpp>
