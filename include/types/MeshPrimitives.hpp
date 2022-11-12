@@ -45,23 +45,27 @@ enum class MeshType : uint32_t
 struct Vertex
 {
 	/// @brief		Spacial coordinates of this vertex.
+	[[deprecated]]
 	alignas( 8 )	glm::vec2				vertex_coords			= {};
 
 	/// @brief		UV coordinates of this vertex.
 	///
 	///				This determines where to read from a texture. UV coordinate space is always in range from 0.0 to 1.0 where
 	///				{0.0, 0.0} is top left of texture and {1.0, 1.0} is bottom right of the texture.
+	[[deprecated]]
 	alignas( 8 )	glm::vec2				uv_coords				= {};
 
 	/// @brief		Vertex color.
 	///
 	///				Texture color is multiplied by this, or if no texture is applied, determines the displayed color for this
 	///				vertex.
+	[[deprecated]]
 	alignas( 16 )	Colorf					color					= {};
 
 	/// @brief		Size of the vertex.
 	///
 	///				This parameter is only used when rendering points.
+	[[deprecated]]
 	alignas( 4 )	float					point_size				= {};
 
 	/// @brief		Texture layer.
@@ -69,6 +73,7 @@ struct Vertex
 	///				If texture has layers, then this parameter tells which layer of that texture is to be used with this
 	///				vertex. If any texture layer weights are used, eg. Mesh::texture_layer_weights, then this
 	///				parameter is ignored.
+	[[deprecated]]
 	alignas( 4 )	uint32_t				single_texture_layer	= {};
 };
 

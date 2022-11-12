@@ -11,6 +11,8 @@
 #include <types/Transform.h>
 #include <types/Color.hpp>
 #include <types/MeshPrimitives.hpp>
+#include <types/mesh/VertexBase.hpp>
+#include <types/mesh/StandardVertex.hpp>
 #include <types/Mesh.h>
 #include <types/MeshGenerators.hpp>
 #include <types/Multisamples.h>
@@ -27,6 +29,3 @@
 #include <interface/resources/ResourceBase.h>
 #include <interface/resources/TextureResource.h>
 #include <interface/resources/FontResource.h>
-
-// DEV!
-#include <types/mesh/VertexBase.hpp>

@@ -75,40 +75,27 @@ int main()
 {
 	// TESTING!!!
 	{
-		vk2d::vk2d_internal::VertexBase<char, int, glm::vec2> test_vertex;
-		auto test_size = test_vertex.CalculateSize<char, int, glm::vec2>();
-		auto test_pos0 = test_vertex.GetOffset<0, 0, char, int, glm::vec2>();
-		auto test_pos1 = test_vertex.GetOffset<1, 0, char, int, glm::vec2>();
-		auto test_pos2 = test_vertex.GetOffset<2, 0, char, int, glm::vec2>();
-		auto test_max_alignment = test_vertex.CalculateAlignment<char, int, glm::vec2>();
-
-		auto test_arg_addr0 = reinterpret_cast<size_t>( std::addressof( test_vertex.Get<0>() ) ) - reinterpret_cast<size_t>( std::addressof( test_vertex ) );
-		auto test_arg_addr1 = reinterpret_cast<size_t>( std::addressof( test_vertex.Get<1>() ) ) - reinterpret_cast<size_t>( std::addressof( test_vertex ) );
-		auto test_arg_addr2 = reinterpret_cast<size_t>( std::addressof( test_vertex.Get<2>() ) ) - reinterpret_cast<size_t>( std::addressof( test_vertex ) );
-
-		auto test_arg0 = test_vertex.Get<0>() = 4;
-		auto test_arg1 = test_vertex.Get<1>() = 5;
-		auto test_arg2 = test_vertex.Get<2>() = { 50, 50 };
-
-		vk2d::vk2d_internal::StandardVertex std_vertex;
+		vk2d::StandardVertex std_vertex;
 		//std_vertex.position = { 50, 50 };
-		auto alignment_test = alignof( vk2d::vk2d_internal::StandardVertex );
-		auto size_test1 = sizeof( vk2d::vk2d_internal::StandardVertex );
-		auto size_test2 = sizeof( vk2d::vk2d_internal::VertexBase<glm::vec2, glm::vec2, float> );
+		auto alignment_test = alignof( vk2d::StandardVertex );
+		auto size_test1 = sizeof( vk2d::StandardVertex );
+		auto size_test2 = sizeof( vk2d::StandardVertex::Base );
 
-		std_vertex.Position() = { 50, 50 };
+		std_vertex.vertex_coords = { 50, 50 };
 
 		std::cout << "expecting size to be 20 bytes\n";
 
 		// TODO: Need reflection for proper struct implementation with member names. May be doable with a macro.
 		// On the other hand, it may be an overkill.
 		// 
-		// Proposal 1: Introduce getter functions to get a specific member, eg. std_vertex.Position() = { 50, 50 };
+		// Proposal 1: Introduce getter functions to get a specific member, eg. std_vertex.position() = { 50, 50 };
+		// Ugly, not very proper C++.
 		// 
 		// Proposal 2: We could just ignore extra members... Whatever function accepts a vertex list, could accept any type, it
 		// could then take only the VertexBase class from every element and ignore the rest, this will require base class to be
-		// typedeffed and it will be somewhat slower as we need to do some skipping around. In terms of simplicity, I think this
-		// should be the way to go.
+		// typedeffed and it will be somewhat slower as we need to only partially copy memory. In terms of simplicity, I think
+		// this should be the way to go.
+		// CANDIDATE!
 		// 
 		// Proposal 3: Whatever function taking a vertex or vertex list could only take a predetermined type, for build-in types
 		// we could use whatever members are provided, for custom types, use only Get<N>(). Not a fan of this because it makes
@@ -116,9 +103,14 @@ int main()
 		// first-party members.
 		//
 		// Proposal 4: Use union... Needs more thinking, may not work. This is kinda unsafe if it even works.
+		// WILL NOT WORK! Does not allow members from parent.
 		//
 		// Proposal 5: Use macros... Needs more thinking, may not work. A little fiddly and a little uggly but could potentially
 		// solve all problems.
+		// WILL NOT WORK! Problem extracting specific parameters.
+		//
+		// Proposal 6: See if lambdas could be used here somehow.
+		// WILL NOT WORK! Can only be invoked with parenthesis.
 		//
 	}
 
