@@ -102,11 +102,24 @@ int main()
 
 		// TODO: Need reflection for proper struct implementation with member names. May be doable with a macro.
 		// On the other hand, it may be an overkill.
-		// OR, introduce getter functions to get a specific member.
-		// OR, we could just ignore extra members... Whatever function accepts a vertex list, could accept any type, it could then
-		// take only the VertexBase class from every element and ignore the rest, this will require base class to be typedeffed
-		// and it will be somewhat slower as we need to do some skipping around. In terms of simplicity, I think this should be the
-		// way to go.
+		// 
+		// Proposal 1: Introduce getter functions to get a specific member, eg. std_vertex.Position() = { 50, 50 };
+		// 
+		// Proposal 2: We could just ignore extra members... Whatever function accepts a vertex list, could accept any type, it
+		// could then take only the VertexBase class from every element and ignore the rest, this will require base class to be
+		// typedeffed and it will be somewhat slower as we need to do some skipping around. In terms of simplicity, I think this
+		// should be the way to go.
+		// 
+		// Proposal 3: Whatever function taking a vertex or vertex list could only take a predetermined type, for build-in types
+		// we could use whatever members are provided, for custom types, use only Get<N>(). Not a fan of this because it makes
+		// things more complicated to design and it somewhat promotes the build-in types. Custom designs should feel like
+		// first-party members.
+		//
+		// Proposal 4: Use union... Needs more thinking, may not work. This is kinda unsafe if it even works.
+		//
+		// Proposal 5: Use macros... Needs more thinking, may not work. A little fiddly and a little uggly but could potentially
+		// solve all problems.
+		//
 	}
 
 
