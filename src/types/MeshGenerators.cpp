@@ -1,13 +1,17 @@
 
 #include <core/SourceCommon.h>
 
-#include <types/MeshGenerators.hpp>
-#include <types/Mesh.h>
+#include <mesh/MeshGenerators.hpp>
+#include <mesh/Mesh.hpp>
 
 #include <types/MeshCommon.hpp>
 
 #include <interface/resources/FontResource.h>
 #include <interface/resources/FontResourceImpl.h>
+
+
+
+// TODO: Move all generators into include files. Make them into template functions.
 
 
 

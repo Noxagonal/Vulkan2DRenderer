@@ -4,7 +4,7 @@
 
 #include "VertexBase.hpp"
 
-#include <types/Color.hpp>
+#include <containers/Color.hpp>
 
 
 
@@ -16,7 +16,7 @@ class StandardVertex : public VertexBase<glm::vec2, glm::vec2, Colorf, float, ui
 public:
 	using Base = VertexBase;
 
-	/// @brief		Spacial coordinates of this vertex.
+	/// @brief		Spatial coordinates of this vertex.
 	glm::vec2			&	vertex_coords			= Get<0>();
 
 	/// @brief		UV coordinates of this vertex.

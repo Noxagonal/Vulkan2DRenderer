@@ -2,10 +2,10 @@
 
 #include <core/Common.h>
 
-#include <types/MeshPrimitives.hpp>
-#include <types/MeshGenerators.hpp>
-#include <types/Rect2.hpp>
-#include <types/Color.hpp>
+#include "MeshPrimitives.hpp"
+#include "MeshGenerators.hpp"
+#include <containers/Rect2.hpp>
+#include <containers/Color.hpp>
 
 #include <vector>
 #include <string>
@@ -388,12 +388,6 @@ public:
 	/// 
 	/// @return		Reference to the interal aabb variable.
 	VK2D_API Rect2f								&	RecalculateAABBFromVertices();
-
-	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	/// @brief		Vertices list.
-	///
-	/// @see		Vertex
-	std::vector<Vertex>								vertices						= {};
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Indices list.

@@ -18,14 +18,19 @@ namespace vk2d {
 ///				- A mesh can be created using any of the mesh generator functions, or constructing it manually.
 ///				- A mesh can be modified using any of the modifier functions or by manually modifying the vertices and indices.
 ///
-/// @tparam		ShaderParamsT
-///				Additional per vertex parameters that are sent to your custom shader.
+/// @tparam		VertexT
+///				Per vertex parameters that are sent to your custom shader.
 /// @warning	Custom shader interface must have exactly the same parameters as the mesh.
-template<typename ...ShaderParamsT>
+template<typename VertexT>
 class Mesh : public MeshBase
 {
 public:
 
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	/// @brief		Vertices list.
+	///
+	/// @see		Vertex
+	std::vector<VertexT>							vertices						= {};
 };
 
 

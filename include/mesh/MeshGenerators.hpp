@@ -2,8 +2,11 @@
 
 #include <core/Common.h>
 
-#include <types/MeshPrimitives.hpp>
-#include <types/Rect2.hpp>
+#include "MeshPrimitives.hpp"
+#include "StandardVertex.hpp"
+#include "VertexDescriptor.hpp"
+
+#include <containers/Rect2.hpp>
 
 #include <vector>
 
@@ -15,7 +18,7 @@ class FontResource;
 
 class MeshBase;
 
-template<typename ...ShaderParamsT>
+template<typename VertexT>
 class Mesh;
 
 
@@ -109,20 +112,21 @@ VK2D_API void										GenerateTextMeshImpl(
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /// @brief		Generate point mesh from point list.
 ///
-/// @tparam		ShaderParamsT
-///				Additional per vertex parameters that are sent to your custom shader.
-/// @warning	Custom shader interface must have exactly the same parameters as the mesh.
+/// @tparam		VertexT
+///				Vertex type that describes vertex properties.
+/// @warning	Custom shader interface must have exactly the same vertex parameters as the vertex.
 /// 
 /// @param[in]	points
 ///				A list of coordinates representing point locations.
 /// 
 /// @return		A new mesh object.
-template<typename ...ShaderParamsT>
-Mesh<ShaderParamsT...>								GeneratePointMeshFromList(
+template<typename VertexT = vk2d::StandardVertex>
+Mesh<VertexT>										GeneratePointMeshFromList(
 	const std::vector<glm::vec2>				&	points
 )
 {
-	auto mesh = Mesh<ShaderParamsT...>();
+	auto mesh = Mesh<VertexT>();
+	auto vertex_descriptor = vk2d_internal::GetVertexDescriptorFromVertexType<VertexT>();
 	vk2d_internal::GeneratePointMeshFromListImpl(
 		mesh,
 		points
@@ -133,9 +137,9 @@ Mesh<ShaderParamsT...>								GeneratePointMeshFromList(
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /// @brief		Generate line mesh from points and connections.
 /// 
-/// @tparam		ShaderParamsT
-///				Additional per vertex parameters that are sent to your custom shader.
-/// @warning	Custom shader interface must have exactly the same parameters as the mesh.
+/// @tparam		VertexT
+///				Vertex type that describes vertex properties.
+/// @warning	Custom shader interface must have exactly the same vertex parameters as the vertex.
 /// 
 /// @param[in]	points
 ///				A list of coordinates representing end points of lines.
@@ -144,13 +148,13 @@ Mesh<ShaderParamsT...>								GeneratePointMeshFromList(
 ///				Indices defining which points should be connected with a line.
 /// 
 /// @return		A new mesh object.
-template<typename ...ShaderParamsT>
-Mesh<ShaderParamsT...>								GenerateLineMeshFromList(
+template<typename VertexT = vk2d::StandardVertex>
+Mesh<VertexT>										GenerateLineMeshFromList(
 	const std::vector<glm::vec2>				&	points,
 	const std::vector<VertexIndex_2>			&	indices
 )
 {
-	auto mesh = Mesh<ShaderParamsT...>();
+	auto mesh = Mesh<VertexT>();
 	vk2d_internal::GenerateLineMeshFromListImpl(
 		mesh,
 		points,
@@ -162,9 +166,9 @@ Mesh<ShaderParamsT...>								GenerateLineMeshFromList(
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /// @brief		Generate triangle mesh from points and connections.
 /// 
-/// @tparam		ShaderParamsT
-///				Additional per vertex parameters that are sent to your custom shader.
-/// @warning	Custom shader interface must have exactly the same parameters as the mesh.
+/// @tparam		VertexT
+///				Vertex type that describes vertex properties.
+/// @warning	Custom shader interface must have exactly the same vertex parameters as the vertex.
 /// 
 /// @param[in]	points
 ///				A list of coordinates representing corners of triangles.
@@ -176,14 +180,14 @@ Mesh<ShaderParamsT...>								GenerateLineMeshFromList(
 ///				true if triangle mesh is filled, false for wireframe.
 /// 
 /// @return		A new mesh object.
-template<typename ...ShaderParamsT>
-Mesh<ShaderParamsT...>								GenerateTriangleMeshFromList(
+template<typename VertexT = vk2d::StandardVertex>
+Mesh<VertexT>										GenerateTriangleMeshFromList(
 	const std::vector<glm::vec2>				&	points,
 	const std::vector<VertexIndex_3>			&	indices,
 	bool											filled							= true
 )
 {
-	auto mesh = Mesh<ShaderParamsT...>();
+	auto mesh = Mesh<VertexT>();
 	vk2d_internal::GenerateTriangleMeshFromListImpl(
 		mesh,
 		points,
@@ -196,9 +200,9 @@ Mesh<ShaderParamsT...>								GenerateTriangleMeshFromList(
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /// @brief		Generate rectangular mesh from rectangle coordinates.
 /// 
-/// @tparam		ShaderParamsT
-///				Additional per vertex parameters that are sent to your custom shader.
-/// @warning	Custom shader interface must have exactly the same parameters as the mesh.
+/// @tparam		VertexT
+///				Vertex type that describes vertex properties.
+/// @warning	Custom shader interface must have exactly the same vertex parameters as the vertex.
 /// 
 /// @param[in]	area
 ///				Area of the rectangle that will be covered, depends on the coordinate system. See RenderCoordinateSpace
@@ -208,13 +212,13 @@ Mesh<ShaderParamsT...>								GenerateTriangleMeshFromList(
 ///				true for filled mesh, false to generate line mesh of the outline.
 /// 
 /// @return		A new mesh object.
-template<typename ...ShaderParamsT>
-Mesh<ShaderParamsT...>								GenerateRectangleMesh(
+template<typename VertexT = vk2d::StandardVertex>
+Mesh<VertexT>									GenerateRectangleMesh(
 	Rect2f											area,
 	bool											filled							= true
 )
 {
-	auto mesh = Mesh<ShaderParamsT...>();
+	auto mesh = Mesh<VertexT>();
 	vk2d_internal::GenerateRectangleMeshImpl(
 		mesh,
 		area,
@@ -226,9 +230,9 @@ Mesh<ShaderParamsT...>								GenerateRectangleMesh(
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /// @brief		Generate ellipse mesh from rectangle area and edge count.
 /// 
-/// @tparam		ShaderParamsT
-///				Additional per vertex parameters that are sent to your custom shader.
-/// @warning	Custom shader interface must have exactly the same parameters as the mesh.
+/// @tparam		VertexT
+///				Vertex type that describes vertex properties.
+/// @warning	Custom shader interface must have exactly the same vertex parameters as the vertex.
 /// 
 /// @param[in]	area
 ///				Rectangle area in which the ellipse must fit. See RenderCoordinateSpace for more info about what scale is
@@ -241,14 +245,14 @@ Mesh<ShaderParamsT...>								GenerateRectangleMesh(
 ///				Number of outer edges, this is a floating point value to prevent popping in case it's animated.
 ///
 /// @return		A new mesh object.
-template<typename ...ShaderParamsT>
-Mesh<ShaderParamsT...>								GenerateEllipseMesh(
+template<typename VertexT = vk2d::StandardVertex>
+Mesh<VertexT>								GenerateEllipseMesh(
 	Rect2f											area,
 	bool											filled							= true,
 	float											edge_count						= 64.0f
 )
 {
-	auto mesh = Mesh<ShaderParamsT...>();
+	auto mesh = Mesh<VertexT>();
 	vk2d_internal::GenerateEllipseMeshImpl(
 		mesh,
 		area,
@@ -261,9 +265,9 @@ Mesh<ShaderParamsT...>								GenerateEllipseMesh(
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /// @brief		Generate an ellipse or a circle that has a "slice" cut out, similar to usual graphs.
 /// 
-/// @tparam		ShaderParamsT
-///				Additional per vertex parameters that are sent to your custom shader.
-/// @warning	Custom shader interface must have exactly the same parameters as the mesh.
+/// @tparam		VertexT
+///				Vertex type that describes vertex properties.
+/// @warning	Custom shader interface must have exactly the same vertex parameters as the vertex.
 /// 
 /// @param[in]	area
 ///				Rectangle area in which the ellipse must fit. See RenderCoordinateSpace for more info about what scale is
@@ -284,8 +288,8 @@ Mesh<ShaderParamsT...>								GenerateEllipseMesh(
 ///				"smoother" transitions between amount of corners, in case this value is animated.
 /// 
 /// @return		A new mesh object.
-template<typename ...ShaderParamsT>
-Mesh<ShaderParamsT...>								GenerateEllipsePieMesh(
+template<typename VertexT = vk2d::StandardVertex>
+Mesh<VertexT>										GenerateEllipsePieMesh(
 	Rect2f											area,
 	float											begin_angle_radians,
 	float											coverage,
@@ -293,7 +297,7 @@ Mesh<ShaderParamsT...>								GenerateEllipsePieMesh(
 	float											edge_count						= 64.0f
 )
 {
-	auto mesh = Mesh<ShaderParamsT...>();
+	auto mesh = Mesh<VertexT>();
 	vk2d_internal::GenerateEllipsePieMeshImpl(
 		mesh,
 		area,
@@ -308,9 +312,9 @@ Mesh<ShaderParamsT...>								GenerateEllipsePieMesh(
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /// @brief		Generate a rectangular pie, similar to drawing a rectangle but which has a pie slice cut out.
 /// 
-/// @tparam		ShaderParamsT
-///				Additional per vertex parameters that are sent to your custom shader.
-/// @warning	Custom shader interface must have exactly the same parameters as the mesh.
+/// @tparam		VertexT
+///				Vertex type that describes vertex properties.
+/// @warning	Custom shader interface must have exactly the same vertex parameters as the vertex.
 /// 
 /// @param[in]	area
 ///				Area of the rectangle. See RenderCoordinateSpace for more info about what scale is used.
@@ -326,15 +330,15 @@ Mesh<ShaderParamsT...>								GenerateEllipsePieMesh(
 ///				true to draw the inside of the pie rectangle, false to draw the outline only.
 /// 
 /// @return		A new mesh object.
-template<typename ...ShaderParamsT>
-Mesh<ShaderParamsT...>								GenerateRectanglePieMesh(
+template<typename VertexT = vk2d::StandardVertex>
+Mesh<VertexT>										GenerateRectanglePieMesh(
 	Rect2f											area,
 	float											begin_angle_radians,
 	float											coverage,
 	bool											filled							= true
 )
 {
-	auto mesh = Mesh<ShaderParamsT...>();
+	auto mesh = Mesh<VertexT>();
 	vk2d_internal::GenerateRectanglePieMeshImpl(
 		mesh,
 		area,
@@ -348,9 +352,9 @@ Mesh<ShaderParamsT...>								GenerateRectanglePieMesh(
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /// @brief		Generate a lattice mesh, this is useful for distortions.
 /// 
-/// @tparam		ShaderParamsT
-///				Additional per vertex parameters that are sent to your custom shader.
-/// @warning	Custom shader interface must have exactly the same parameters as the mesh.
+/// @tparam		VertexT
+///				Vertex type that describes vertex properties.
+/// @warning	Custom shader interface must have exactly the same vertex parameters as the vertex.
 /// 
 /// @param[in]	area
 ///				Area of the rectangle. See RenderCoordinateSpace for more info about what scale is used.
@@ -364,14 +368,14 @@ Mesh<ShaderParamsT...>								GenerateRectanglePieMesh(
 ///				true if the inside is filled, false to generate a lattice line mesh.
 /// 
 /// @return		A new mesh object.
-template<typename ...ShaderParamsT>
-Mesh<ShaderParamsT...>								GenerateLatticeMesh(
+template<typename VertexT = vk2d::StandardVertex>
+Mesh<VertexT>										GenerateLatticeMesh(
 	Rect2f											area,
 	glm::vec2										subdivisions,
 	bool											filled							= true
 )
 {
-	auto mesh = Mesh<ShaderParamsT...>();
+	auto mesh = Mesh<VertexT>();
 	vk2d_internal::GenerateLatticeMeshImpl(
 		mesh,
 		area,
@@ -384,9 +388,9 @@ Mesh<ShaderParamsT...>								GenerateLatticeMesh(
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /// @brief		Generate a text mesh that can be used to render text.
 /// 
-/// @tparam		ShaderParamsT
-///				Additional per vertex parameters that are sent to your custom shader.
-/// @warning	Custom shader interface must have exactly the same parameters as the mesh.
+/// @tparam		VertexT
+///				Vertex type that describes vertex properties.
+/// @warning	Custom shader interface must have exactly the same vertex parameters as the vertex.
 /// 
 /// @param[in]	font
 ///				A pointer to font resource to use.
@@ -422,8 +426,8 @@ Mesh<ShaderParamsT...>								GenerateLatticeMesh(
 ///				mesh until the font has been fully loaded by the resource manager.
 /// 
 /// @return		A new mesh object.
-template<typename ...ShaderParamsT>
-Mesh<ShaderParamsT...>								GenerateTextMesh(
+template<typename VertexT = vk2d::StandardVertex>
+Mesh<VertexT>										GenerateTextMesh(
 	FontResource								*	font,
 	glm::vec2										origin,
 	std::string										text,
@@ -434,7 +438,7 @@ Mesh<ShaderParamsT...>								GenerateTextMesh(
 	bool											wait_for_resource_load			= true
 )
 {
-	auto mesh = Mesh<ShaderParamsT...>();
+	auto mesh = Mesh<VertexT>();
 	vk2d_internal::GenerateTextMeshImpl(
 		mesh,
 		font,

@@ -5,6 +5,7 @@
 #include <string>
 #include <iostream>
 #include <sstream>
+#include <format>
 
 
 
@@ -71,6 +72,35 @@ public:
 
 
 
+struct VertexPropertiesOffsets
+{
+	size_t			vertex_coords			= 0;
+	size_t			uv_coords				= 0;
+	size_t			color					= 0;
+	size_t			point_size				= 0;
+	size_t			single_texture_layer	= 0;
+};
+
+template<vk2d::vk2d_internal::VertexBaseDerivedType T>
+constexpr VertexPropertiesOffsets GetVertexPropertiesOffsets()
+{
+	static_assert( vk2d::vk2d_internal::SupportedMeshVertexCoordinateTypes<decltype( T::vertex_coords )> );
+	static_assert( vk2d::vk2d_internal::SupportedMeshUVCoordinateTypes<decltype( T::uv_coords )> );
+
+	auto ret					= VertexPropertiesOffsets();
+	auto temp_vertex			= T();
+
+	ret.vertex_coords			= reinterpret_cast<const uint8_t*>( &temp_vertex.vertex_coords )		- reinterpret_cast<const uint8_t*>( &temp_vertex );
+	ret.uv_coords				= reinterpret_cast<const uint8_t*>( &temp_vertex.uv_coords )			- reinterpret_cast<const uint8_t*>( &temp_vertex );
+	ret.color					= reinterpret_cast<const uint8_t*>( &temp_vertex.color )				- reinterpret_cast<const uint8_t*>( &temp_vertex );
+	ret.point_size				= reinterpret_cast<const uint8_t*>( &temp_vertex.point_size )			- reinterpret_cast<const uint8_t*>( &temp_vertex );
+	ret.single_texture_layer	= reinterpret_cast<const uint8_t*>( &temp_vertex.single_texture_layer )	- reinterpret_cast<const uint8_t*>( &temp_vertex );
+
+	return ret;
+};
+
+
+
 int main()
 {
 	// TESTING!!!
@@ -81,9 +111,27 @@ int main()
 		auto size_test1 = sizeof( vk2d::StandardVertex );
 		auto size_test2 = sizeof( vk2d::StandardVertex::Base );
 
+		std::cout << std::format(
+			"Standard vertex alignment: {}\n"
+			"Standard vertex size:      {}\n"
+			"Standard vertex base size: {}\n\n",
+			alignment_test,
+			size_test1,
+			size_test2
+		);
+
 		std_vertex.vertex_coords = { 50, 50 };
 
-		std::cout << "expecting size to be 20 bytes\n";
+		auto offsets			= GetVertexPropertiesOffsets<vk2d::StandardVertex>();
+		auto previous_offset	= size_t( 0 );
+
+		std::cout << std::format( "vertex_coords offset from start:        {} - Offset from previous: {}\n", offsets.vertex_coords, offsets.vertex_coords - previous_offset );					previous_offset = offsets.vertex_coords;
+		std::cout << std::format( "uv_coords offset from start:            {} - Offset from previous: {}\n", offsets.uv_coords, offsets.uv_coords - previous_offset );							previous_offset = offsets.uv_coords;
+		std::cout << std::format( "color offset from start:                {} - Offset from previous: {}\n", offsets.color, offsets.color - previous_offset );									previous_offset = offsets.color;
+		std::cout << std::format( "point_size offset from start:           {} - Offset from previous: {}\n", offsets.point_size, offsets.point_size - previous_offset );						previous_offset = offsets.point_size;
+		std::cout << std::format( "single_texture_layer offset from start: {} - Offset from previous: {}\n", offsets.single_texture_layer, offsets.single_texture_layer - previous_offset );	previous_offset = offsets.single_texture_layer;
+
+		std::cout << "asdf\n";
 
 		// TODO: Need reflection for proper struct implementation with member names. May be doable with a macro.
 		// On the other hand, it may be an overkill.

@@ -2,7 +2,7 @@
 
 #include <core/Common.h>
 
-#include <types/Color.hpp>
+#include <containers/Color.hpp>
 
 #include <array>
 #include <vector>
@@ -36,48 +36,6 @@ enum class MeshType : uint32_t
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-/// @brief		A collection of data which defines a single corner of a triangle, end of a line or a point in space.
-///
-///				A vertex is a single point in space defining different parameters for that location, like color and size of this
-///				point <br>
-///				A vertex is just a point in space but it can be connected to other points via the index list, which would then
-///				form a triangle or a line between different vertices.
-struct Vertex
-{
-	/// @brief		Spacial coordinates of this vertex.
-	[[deprecated]]
-	alignas( 8 )	glm::vec2				vertex_coords			= {};
-
-	/// @brief		UV coordinates of this vertex.
-	///
-	///				This determines where to read from a texture. UV coordinate space is always in range from 0.0 to 1.0 where
-	///				{0.0, 0.0} is top left of texture and {1.0, 1.0} is bottom right of the texture.
-	[[deprecated]]
-	alignas( 8 )	glm::vec2				uv_coords				= {};
-
-	/// @brief		Vertex color.
-	///
-	///				Texture color is multiplied by this, or if no texture is applied, determines the displayed color for this
-	///				vertex.
-	[[deprecated]]
-	alignas( 16 )	Colorf					color					= {};
-
-	/// @brief		Size of the vertex.
-	///
-	///				This parameter is only used when rendering points.
-	[[deprecated]]
-	alignas( 4 )	float					point_size				= {};
-
-	/// @brief		Texture layer.
-	///
-	///				If texture has layers, then this parameter tells which layer of that texture is to be used with this
-	///				vertex. If any texture layer weights are used, eg. Mesh::texture_layer_weights, then this
-	///				parameter is ignored.
-	[[deprecated]]
-	alignas( 4 )	uint32_t				single_texture_layer	= {};
-};
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /// @brief		This is a container enforcing using 2 indices when drawing lines.
 struct VertexIndex_2
 {
@@ -91,6 +49,9 @@ struct VertexIndex_3
 	std::array<uint32_t, 3>					indices					= {};
 };
 
+
+
+// TODO: Move this on it's own file.
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /// @brief		This is a container to hold image texel size and texel data.
 struct ImageData
