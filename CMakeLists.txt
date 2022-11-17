@@ -248,16 +248,16 @@ if(MSVC)
 	#		FOLDER						"Utilities"
 	#)
 	
-	add_custom_command(
-		TARGET VK2D
-		PRE_BUILD
-		COMMAND CompileGLSLShadersToSpirV
-			"-shaderpath" "${CMAKE_CURRENT_SOURCE_DIR}/shaders/"
-		WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/shaders/"
-	)
-	add_dependencies(VK2D
-		CompileGLSLShadersToSpirV
-	)
+	#add_custom_command(
+	#	TARGET VK2D
+	#	PRE_BUILD
+	#	COMMAND CompileGLSLShadersToSpirV
+	#		"-shaderpath" "${CMAKE_CURRENT_SOURCE_DIR}/shaders/"
+	#	WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/shaders/"
+	#)
+	#add_dependencies(VK2D
+	#	CompileGLSLShadersToSpirV
+	#)
 
 else()
 	# Other than Visual Studio compilers.
