@@ -3,7 +3,7 @@
 #include <core/Common.h>
 
 #include <interface/resources/ResourceBase.h>
-#include <types/MeshGenerators.hpp>
+#include <mesh/Mesh.hpp>
 
 #include <filesystem>
 
@@ -24,6 +24,25 @@ class FontResourceImpl;
 
 
 
+template<vk2d_internal::VertexBaseDerivedType VertexT>
+requires(
+	vk2d_internal::VertexHasVertexCoords<VertexT> &&
+	vk2d_internal::VertexHasUVCoords<VertexT> &&
+	vk2d_internal::VertexHasSingleTextureLayer<VertexT>
+)
+Mesh<VertexT>										GenerateTextMesh(
+	FontResource								*	font,
+	glm::vec2										origin,
+	std::string										text,
+	float											kerning							= 0.0f,
+	glm::vec2										scale							= glm::vec2( 1.0f, 1.0f ),
+	bool											vertical						= false,
+	uint32_t										font_face						= 0,
+	bool											wait_for_resource_load			= true
+);
+
+
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /// @brief		FontResource is a resource that contains a font which is used to draw text.
 ///
@@ -39,17 +58,23 @@ class FontResource
 	friend class vk2d_internal::ResourceManagerImpl;
 	friend class vk2d_internal::FontResourceImpl;
 
-	friend VK2D_API void vk2d::vk2d_internal::GenerateTextMeshImpl(
-		MeshBase		&	mesh,
-		FontResource	*	font,
-		glm::vec2			origin,
-		std::string			text,
-		float				kerning,
-		glm::vec2			scale,
-		bool				vertical,
-		uint32_t			font_face,
-		bool				wait_for_resource_load
+	template<vk2d_internal::VertexBaseDerivedType VertexT>
+	requires(
+		vk2d_internal::VertexHasVertexCoords<VertexT> &&
+		vk2d_internal::VertexHasUVCoords<VertexT> &&
+		vk2d_internal::VertexHasSingleTextureLayer<VertexT>
+	)
+	friend Mesh<VertexT>								GenerateTextMesh(
+		FontResource								*	font,
+		glm::vec2										origin,
+		std::string										text,
+		float											kerning,
+		glm::vec2										scale,
+		bool											vertical,
+		uint32_t										font_face,
+		bool											wait_for_resource_load
 	);
+
 
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

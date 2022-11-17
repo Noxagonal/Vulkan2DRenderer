@@ -3,7 +3,7 @@
 #include <core/Common.h>
 
 #include "MeshPrimitives.hpp"
-#include "MeshGenerators.hpp"
+#include "generators/MeshGeneratorDeclarations.hpp"
 #include <containers/Rect2.hpp>
 #include <containers/Color.hpp>
 
@@ -19,7 +19,9 @@ namespace vk2d_internal {
 class WindowImpl;
 class RenderTargetTextureImpl;
 
-}
+} // vk2d_internal
+
+
 
 class FontResource;
 class Sampler;
@@ -32,71 +34,76 @@ class MeshBase
 	friend class vk2d_internal::WindowImpl;
 	friend class vk2d_internal::RenderTargetTextureImpl;
 
-	friend VK2D_API void							vk2d_internal::GeneratePointMeshFromListImpl(
-		MeshBase								&	mesh,
-		const std::vector<glm::vec2>			&	points
+	template<vk2d_internal::VertexBaseDerivedType VertexT>
+	friend Mesh<VertexT>								GeneratePointMeshFromList(
+		const std::vector<glm::vec2>				&	points
 	);
-
-	friend VK2D_API void							vk2d_internal::GenerateLineMeshFromListImpl(
-		MeshBase								&	mesh,
-		const std::vector<glm::vec2>			&	points,
-		const std::vector<VertexIndex_2>		&	indices
+	
+	template<vk2d_internal::VertexBaseDerivedType VertexT>
+	friend Mesh<VertexT>								GenerateLineMeshFromList(
+		const std::vector<glm::vec2>				&	points,
+		const std::vector<VertexIndex_2>			&	indices
 	);
-
-	friend VK2D_API void							vk2d_internal::GenerateTriangleMeshFromListImpl(
-		MeshBase								&	mesh,
-		const std::vector<glm::vec2>			&	points,
-		const std::vector<VertexIndex_3>		&	indices,
-		bool										filled
+	
+	template<vk2d_internal::VertexBaseDerivedType VertexT>
+	friend Mesh<VertexT>								GenerateTriangleMeshFromList(
+		const std::vector<glm::vec2>				&	points,
+		const std::vector<VertexIndex_3>			&	indices,
+		bool											filled = true
 	);
-
-	friend VK2D_API void							vk2d_internal::GenerateRectangleMeshImpl(
-		MeshBase								&	mesh,
-		Rect2f										area,
-		bool										filled
+	
+	template<vk2d_internal::VertexBaseDerivedType VertexT>
+	friend Mesh<VertexT>								GenerateRectangleMesh(
+		Rect2f											area,
+		bool											filled = true
 	);
-
-	friend VK2D_API void							vk2d_internal::GenerateEllipseMeshImpl(
-		MeshBase								&	mesh,
-		Rect2f										area,
-		bool										filled,
-		float										edge_count
+	
+	template<vk2d_internal::VertexBaseDerivedType VertexT>
+	friend Mesh<VertexT>								GenerateEllipseMesh(
+		Rect2f											area,
+		bool											filled = true,
+		float											edge_count = 64.0f
 	);
-
-	friend VK2D_API void							vk2d_internal::GenerateEllipsePieMeshImpl(
-		MeshBase								&	mesh,
-		Rect2f										area,
-		float										begin_angle_radians,
-		float										coverage,
-		bool										filled,
-		float										edge_count
+	
+	template<vk2d_internal::VertexBaseDerivedType VertexT>
+	friend Mesh<VertexT>								GenerateRectanglePieMesh(
+		Rect2f											area,
+		float											begin_angle_radians,
+		float											coverage,
+		bool											filled = true
 	);
-
-	friend VK2D_API void							vk2d_internal::GenerateRectanglePieMeshImpl(
-		MeshBase								&	mesh,
-		Rect2f										area,
-		float										begin_angle_radians,
-		float										coverage,
-		bool										filled
+	
+	template<vk2d_internal::VertexBaseDerivedType VertexT>
+	friend Mesh<VertexT>								GeneratePointMeshFromList(
+		const std::vector<glm::vec2>				&	points
 	);
-
-	friend VK2D_API void							vk2d_internal::GenerateLatticeMeshImpl(
-		MeshBase								&	mesh,
-		Rect2f										area,
-		glm::vec2									subdivisions,
-		bool										filled
+	
+	template<vk2d_internal::VertexBaseDerivedType VertexT>
+	friend Mesh<VertexT>								GenerateEllipsePieMesh(
+		Rect2f											area,
+		float											begin_angle_radians,
+		float											coverage,
+		bool											filled = true,
+		float											edge_count = 64.0f
 	);
-
-	friend VK2D_API void							vk2d_internal::GenerateTextMeshImpl(
-		MeshBase								&	mesh,
-		FontResource							*	font,
-		glm::vec2									origin,
-		std::string									text,
-		float										kerning,
-		glm::vec2									scale,
-		bool										vertical,
-		uint32_t									font_face,
-		bool										wait_for_resource_load
+	
+	template<vk2d_internal::VertexBaseDerivedType VertexT>
+	friend Mesh<VertexT>								GenerateLatticeMesh(
+		Rect2f											area,
+		glm::vec2										subdivisions,
+		bool											filled = true
+	);
+	
+	template<vk2d_internal::VertexBaseDerivedType VertexT>
+	friend Mesh<VertexT>								GenerateTextMesh(
+		FontResource								*	font,
+		glm::vec2										origin,
+		std::string										text,
+		float											kerning = 0.0f,
+		glm::vec2										scale = glm::vec2( 1.0f, 1.0f ),
+		bool											vertical = false,
+		uint32_t										font_face = 0,
+		bool											wait_for_resource_load = true
 	);
 
 public:

@@ -3,6 +3,7 @@
 #include <core/Common.h>
 
 #include "MeshBase.hpp"
+#include "vertex/StandardVertex.hpp"
 
 
 
@@ -19,11 +20,16 @@ namespace vk2d {
 ///				- A mesh can be modified using any of the modifier functions or by manually modifying the vertices and indices.
 ///
 /// @tparam		VertexT
-///				Per vertex parameters that are sent to your custom shader.
+///				Vertex type to be used with the mesh.
 /// @warning	Custom shader interface must have exactly the same parameters as the mesh.
-template<typename VertexT>
+template<typename VertexT = StandardVertex>
 class Mesh : public MeshBase
 {
+	static_assert(
+		vk2d_internal::VertexBaseType<VertexT> || vk2d_internal::VertexBaseDerivedType<VertexT>,
+		"Vertex type must be VertexBase or derived from it"
+	);
+
 public:
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
