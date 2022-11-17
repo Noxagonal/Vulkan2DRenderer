@@ -2,8 +2,8 @@
 #include <core/SourceCommon.h>
 
 #include <types/BlurType.h>
-#include <types/Rect2.hpp>
-#include <types/Color.hpp>
+#include <containers/Rect2.hpp>
+#include <containers/Color.hpp>
 #include <types/Mesh.h>
 
 #include <system/RenderTargetTextureDependecyGraphInfo.hpp>

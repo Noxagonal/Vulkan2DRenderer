@@ -2,12 +2,12 @@
 
 #include <core/Common.h>
 
-#include <types/Rect2.hpp>
-#include <types/Transform.h>
-#include <types/Color.hpp>
-#include <types/Mesh.h>
-#include <types/Multisamples.h>
-#include <types/RenderCoordinateSpace.hpp>
+#include <containers/Rect2.hpp>
+#include <containers/Transform.hpp>
+#include <containers/Color.hpp>
+#include <mesh/Mesh.hpp>
+#include <containers/Multisamples.h>
+#include <containers/RenderCoordinateSpace.hpp>
 
 #include <memory>
 #include <string>

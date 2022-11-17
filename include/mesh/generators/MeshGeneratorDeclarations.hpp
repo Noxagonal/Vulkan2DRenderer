@@ -4,7 +4,10 @@
 
 #include <mesh/vertex/VertexBase.hpp>
 
+#include <containers/Rect2.hpp>
+#include <mesh/MeshPrimitives.hpp>
 #include <vector>
+#include <string>
 
 
 
@@ -17,13 +20,13 @@ class FontResource;
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-template<typename VertexT = StandardVertex>
+template<typename VertexT>
 class Mesh;
 
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-template<vk2d_internal::VertexBaseDerivedType VertexT = StandardVertex>
+template<vk2d_internal::VertexBaseDerivedType VertexT>
 requires(
 	vk2d_internal::VertexHasVertexCoords<VertexT> &&
 	vk2d_internal::VertexHasUVCoords<VertexT>
@@ -33,7 +36,7 @@ Mesh<VertexT>										GeneratePointMeshFromList(
 );
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-template<vk2d_internal::VertexBaseDerivedType VertexT = StandardVertex>
+template<vk2d_internal::VertexBaseDerivedType VertexT>
 requires(
 	vk2d_internal::VertexHasVertexCoords<VertexT> &&
 	vk2d_internal::VertexHasUVCoords<VertexT>
@@ -44,7 +47,7 @@ Mesh<VertexT>										GenerateLineMeshFromList(
 );
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-template<vk2d_internal::VertexBaseDerivedType VertexT = StandardVertex>
+template<vk2d_internal::VertexBaseDerivedType VertexT>
 requires(
 	vk2d_internal::VertexHasVertexCoords<VertexT> &&
 	vk2d_internal::VertexHasUVCoords<VertexT>
@@ -56,7 +59,7 @@ Mesh<VertexT>										GenerateTriangleMeshFromList(
 );
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-template<vk2d_internal::VertexBaseDerivedType VertexT = StandardVertex>
+template<vk2d_internal::VertexBaseDerivedType VertexT>
 requires(
 	vk2d_internal::VertexHasVertexCoords<VertexT> &&
 	vk2d_internal::VertexHasUVCoords<VertexT>
@@ -67,7 +70,7 @@ Mesh<VertexT>										GenerateRectangleMesh(
 );
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-template<vk2d_internal::VertexBaseDerivedType VertexT = StandardVertex>
+template<vk2d_internal::VertexBaseDerivedType VertexT>
 requires(
 	vk2d_internal::VertexHasVertexCoords<VertexT> &&
 	vk2d_internal::VertexHasUVCoords<VertexT>
@@ -79,7 +82,7 @@ Mesh<VertexT>										GenerateEllipseMesh(
 );
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-template<vk2d_internal::VertexBaseDerivedType VertexT = StandardVertex>
+template<vk2d_internal::VertexBaseDerivedType VertexT>
 requires(
 	vk2d_internal::VertexHasVertexCoords<VertexT> &&
 	vk2d_internal::VertexHasUVCoords<VertexT>
@@ -92,7 +95,7 @@ Mesh<VertexT>										GenerateRectanglePieMesh(
 );
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-template<vk2d_internal::VertexBaseDerivedType VertexT = StandardVertex>
+template<vk2d_internal::VertexBaseDerivedType VertexT>
 requires(
 	vk2d_internal::VertexHasVertexCoords<VertexT> &&
 	vk2d_internal::VertexHasUVCoords<VertexT>
@@ -106,7 +109,7 @@ Mesh<VertexT>										GenerateEllipsePieMesh(
 );
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-template<vk2d_internal::VertexBaseDerivedType VertexT = StandardVertex>
+template<vk2d_internal::VertexBaseDerivedType VertexT>
 requires(
 	vk2d_internal::VertexHasVertexCoords<VertexT> &&
 	vk2d_internal::VertexHasUVCoords<VertexT>
@@ -118,7 +121,7 @@ Mesh<VertexT>										GenerateLatticeMesh(
 );
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-template<vk2d_internal::VertexBaseDerivedType VertexT = StandardVertex>
+template<vk2d_internal::VertexBaseDerivedType VertexT>
 requires(
 	vk2d_internal::VertexHasVertexCoords<VertexT> &&
 	vk2d_internal::VertexHasUVCoords<VertexT> &&

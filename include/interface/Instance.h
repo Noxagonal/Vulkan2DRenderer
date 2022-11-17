@@ -3,7 +3,7 @@
 #include <core/Common.h>
 #include <core/Version.hpp>
 
-#include <types/Color.hpp>
+#include <containers/Color.hpp>
 
 #include <interface/Window.h>
 #include <interface/RenderTargetTexture.h>

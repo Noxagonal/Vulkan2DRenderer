@@ -5,19 +5,21 @@
 #include <core/Version.hpp>
 #include <core/SystemConsole.h>
 
-#include <types/Array.hpp>
-#include <types/Text.h>
-#include <types/Rect2.hpp>
-#include <types/Transform.h>
-#include <types/Color.hpp>
-#include <types/MeshPrimitives.hpp>
-#include <types/mesh/VertexBase.hpp>
-#include <types/mesh/StandardVertex.hpp>
-#include <types/Mesh.h>
-#include <types/MeshGenerators.hpp>
-#include <types/Multisamples.h>
-#include <types/RenderCoordinateSpace.hpp>
-#include <types/StreamOps.h>
+#include <containers/Array.hpp>
+#include <containers/Text.h>
+#include <containers/Rect2.hpp>
+#include <containers/Transform.hpp>
+#include <containers/Color.hpp>
+#include <containers/Multisamples.h>
+#include <containers/RenderCoordinateSpace.hpp>
+#include <containers/StreamOps.h>
+
+#include <mesh/vertex/VertexBase.hpp>
+#include <mesh/vertex/StandardVertex.hpp>
+#include <mesh/MeshPrimitives.hpp>
+#include <mesh/Mesh.hpp>
+#include <mesh/generators/MeshGenerators.hpp>
+#include <mesh/modifiers/MeshModifiers.hpp>
 
 #include <interface/Instance.h>
 #include <interface/Window.h>

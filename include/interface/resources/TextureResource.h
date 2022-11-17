@@ -2,7 +2,7 @@
 
 #include <core/Common.h>
 
-#include <types/Color.hpp>
+#include <containers/Color.hpp>
 
 #include <interface/resources/ResourceBase.h>
 #include <interface/Texture.h>

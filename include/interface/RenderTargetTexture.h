@@ -3,9 +3,9 @@
 #include <core/Common.h>
 
 #include <types/BlurType.h>
-#include <types/Rect2.hpp>
-#include <types/Transform.h>
-#include <types/Color.hpp>
+#include <containers/Rect2.hpp>
+#include <containers/Transform.hpp>
+#include <containers/Color.hpp>
 #include <types/Multisamples.h>
 #include <types/RenderCoordinateSpace.hpp>
 #include <types/Mesh.h>

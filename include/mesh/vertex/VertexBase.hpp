@@ -3,6 +3,7 @@
 #include <core/Common.h>
 
 #include <utility/ParameterPackTypeInfo.hpp>
+#include <containers/Color.hpp>
 
 #include <array>
 

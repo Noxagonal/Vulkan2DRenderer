@@ -4,8 +4,8 @@
 #include <interface/Window.h>
 #include "WindowImpl.h"
 
-#include <types/Rect2.hpp>
-#include <types/Color.hpp>
+#include <containers/Rect2.hpp>
+#include <containers/Color.hpp>
 #include <types/Mesh.h>
 
 #include <system/MeshBuffer.h>

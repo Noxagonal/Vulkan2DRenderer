@@ -4,6 +4,8 @@
 
 #include <utility/EnumHelpers.hpp>
 
+#include "VertexBase.hpp"
+
 #include <vector>
 #include <type_traits>
 

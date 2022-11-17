@@ -3,6 +3,7 @@
 #include <core/Common.h>
 
 #include <interface/resources/ResourceBase.h>
+#include <mesh/generators/MeshGeneratorDeclarations.hpp>
 #include <mesh/Mesh.hpp>
 
 #include <filesystem>
@@ -21,25 +22,6 @@ class ResourceManagerImpl;
 class FontResourceImpl;
 
 } // vk2d_internal
-
-
-
-template<vk2d_internal::VertexBaseDerivedType VertexT>
-requires(
-	vk2d_internal::VertexHasVertexCoords<VertexT> &&
-	vk2d_internal::VertexHasUVCoords<VertexT> &&
-	vk2d_internal::VertexHasSingleTextureLayer<VertexT>
-)
-Mesh<VertexT>										GenerateTextMesh(
-	FontResource								*	font,
-	glm::vec2										origin,
-	std::string										text,
-	float											kerning							= 0.0f,
-	glm::vec2										scale							= glm::vec2( 1.0f, 1.0f ),
-	bool											vertical						= false,
-	uint32_t										font_face						= 0,
-	bool											wait_for_resource_load			= true
-);
 
 
 

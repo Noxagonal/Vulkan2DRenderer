@@ -2,8 +2,8 @@
 
 #include <core/SourceCommon.h>
 
-#include <types/Rect2.hpp>
-#include <types/Color.hpp>
+#include <containers/Rect2.hpp>
+#include <containers/Color.hpp>
 
 #include <interface/resources/ResourceImplBase.h>
 #include <interface/resources/TextureResource.h>
