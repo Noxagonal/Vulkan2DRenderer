@@ -8,6 +8,8 @@
 #include <mesh/Mesh.hpp>
 #include <containers/Multisamples.h>
 #include <containers/RenderCoordinateSpace.hpp>
+#include <mesh/vertex/RawVertexData.hpp>
+#include <mesh/vertex/VertexBase.hpp>
 
 #include <memory>
 #include <string>
@@ -1062,11 +1064,104 @@ public:
 	);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	/// @brief		Draws points directly.
+	/// 
+	///				Best used if you want to manipulate and draw vertices directly.
+	/// 
+	/// @note		Multithreading: Main thread only.
+	///
+	/// @tparam		VertexT
+	///				Vertex type.
+	/// 
+	/// @param[in]	vertices 
+	///				List of vertices that define where and how points are drawn.
+	/// 
+	/// @param[in]	texture_layer_weights 
+	///				Only has effect if provided texture has more than 1 layer. This tell how much weight each texture layer has on
+	///				each vertex. TODO: Need to check formatting... Yank Niko, he forgot...
+	/// 
+	/// @param[in]	texture 
+	///				Pointer to texture, see Vertex for UV mapping details. Can be nullptr in which case a white texture is
+	///				used (vertex colors only).
+	/// 
+	/// @param[in]	sampler 
+	///				Pointer to sampler which determines how the texture is drawn. Can be nullptr in which case the default sampler
+	///				is used.
+	template<vk2d_internal::VertexBaseOrDerivedType VertexT>
+	void											DrawPointList(
+		const std::vector<VertexT>				&	vertices,
+		const std::vector<float>				&	texture_layer_weights,
+		const std::vector<glm::mat4>			&	transformations				= {},
+		Texture									*	texture						= nullptr,
+		Sampler									*	sampler						= nullptr
+	)
+	{
+		DrawPointList(
+			vk2d::vk2d_internal::RawVertexData( vertices ),
+			texture_layer_weights,
+			transformations,
+			texture,
+			sampler
+		);
+	}
+
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	/// @brief		Draws lines directly.
+	/// 
+	///				Best used if you want to manipulate and draw vertices directly.
+	/// 
+	/// @note		Multithreading: Main thread only.
+	/// 
+	/// @tparam		VertexT
+	///				Vertex type.
+	/// 
+	/// @param[in]	indices
+	///				List of indices telling how to form lines between vertices.
+	/// 
+	/// @param[in]	vertices
+	///				List of vertices that define the shape.
+	/// 
+	/// @param[in]	texture_layer_weights 
+	///				Only has effect if provided texture has more than 1 layer. This tell how much weight each texture layer has on
+	///				each vertex. TODO: Need to check formatting... Yank Niko, he forgot...
+	/// 
+	/// @param[in]	texture
+	///				Pointer to texture, see Vertex for UV mapping details. Can be nullptr in which case a white texture is
+	///				used (vertex colors only).
+	/// 
+	/// @param[in]	sampler
+	///				Pointer to sampler which determines how the texture is drawn. Can be nullptr in which case the default sampler
+	///				is used.
+	template<vk2d_internal::VertexBaseOrDerivedType VertexT>
+	void											DrawLineList(
+		const std::vector<VertexIndex_2>		&	indices,
+		const std::vector<VertexT>				&	vertices,
+		const std::vector<float>				&	texture_layer_weights,
+		const std::vector<glm::mat4>			&	transformations				= {},
+		Texture									*	texture						= nullptr,
+		Sampler									*	sampler						= nullptr,
+		float										line_width					= 1.0f
+	)
+	{
+		DrawLineList(
+			indices,
+			vk2d::vk2d_internal::RawVertexData( vertices ),
+			texture_layer_weights,
+			transformations,
+			texture,
+			sampler
+		);
+	}
+
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Draw triangles directly.
 	/// 
 	///				Best used if you want to manipulate and draw vertices directly.
 	/// 
 	/// @note		Multithreading: Main thread only.
+	/// 
+	/// @tparam		VertexT
+	///				Vertex type.
 	/// 
 	/// @param[in]	indices
 	///				List of indices telling how to form triangles between vertices.
@@ -1088,78 +1183,27 @@ public:
 	/// @param[in]	sampler
 	///				Pointer to sampler which determines how the texture is drawn. Can be nullptr in which case the default sampler
 	///				is used.
-	VK2D_API void									DrawTriangleList(
+	template<vk2d_internal::VertexBaseOrDerivedType VertexT>
+	void											DrawTriangleList(
 		const std::vector<VertexIndex_3>		&	indices,
-		const std::vector<Vertex>				&	vertices,
+		const std::vector<VertexT>				&	vertices,
 		const std::vector<float>				&	texture_layer_weights,
 		const std::vector<glm::mat4>			&	transformations				= {},
 		bool										filled						= true,
 		Texture									*	texture						= nullptr,
 		Sampler									*	sampler						= nullptr
-	);
-
-	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	/// @brief		Draws lines directly.
-	/// 
-	///				Best used if you want to manipulate and draw vertices directly.
-	/// 
-	/// @note		Multithreading: Main thread only.
-	/// 
-	/// @param[in]	indices
-	///				List of indices telling how to form lines between vertices.
-	/// 
-	/// @param[in]	vertices
-	///				List of vertices that define the shape.
-	/// 
-	/// @param[in]	texture_layer_weights 
-	///				Only has effect if provided texture has more than 1 layer. This tell how much weight each texture layer has on
-	///				each vertex. TODO: Need to check formatting... Yank Niko, he forgot...
-	/// 
-	/// @param[in]	texture
-	///				Pointer to texture, see Vertex for UV mapping details. Can be nullptr in which case a white texture is
-	///				used (vertex colors only).
-	/// 
-	/// @param[in]	sampler
-	///				Pointer to sampler which determines how the texture is drawn. Can be nullptr in which case the default sampler
-	///				is used.
-	VK2D_API void									DrawLineList(
-		const std::vector<VertexIndex_2>		&	indices,
-		const std::vector<Vertex>				&	vertices,
-		const std::vector<float>				&	texture_layer_weights,
-		const std::vector<glm::mat4>			&	transformations				= {},
-		Texture									*	texture						= nullptr,
-		Sampler									*	sampler						= nullptr,
-		float										line_width					= 1.0f
-	);
-
-	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	/// @brief		Draws points directly.
-	/// 
-	///				Best used if you want to manipulate and draw vertices directly.
-	/// 
-	/// @note		Multithreading: Main thread only.
-	/// 
-	/// @param[in]	vertices 
-	///				List of vertices that define where and how points are drawn.
-	/// 
-	/// @param[in]	texture_layer_weights 
-	///				Only has effect if provided texture has more than 1 layer. This tell how much weight each texture layer has on
-	///				each vertex. TODO: Need to check formatting... Yank Niko, he forgot...
-	/// 
-	/// @param[in]	texture 
-	///				Pointer to texture, see Vertex for UV mapping details. Can be nullptr in which case a white texture is
-	///				used (vertex colors only).
-	/// 
-	/// @param[in]	sampler 
-	///				Pointer to sampler which determines how the texture is drawn. Can be nullptr in which case the default sampler
-	///				is used.
-	VK2D_API void									DrawPointList(
-		const std::vector<Vertex>				&	vertices,
-		const std::vector<float>				&	texture_layer_weights,
-		const std::vector<glm::mat4>			&	transformations				= {},
-		Texture									*	texture						= nullptr,
-		Sampler									*	sampler						= nullptr
-	);
+	)
+	{
+		DrawTriangleList(
+			indices,
+			vk2d::vk2d_internal::RawVertexData( vertices ),
+			texture_layer_weights,
+			transformations,
+			filled,
+			texture,
+			sampler
+		);
+	}
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Draws an individual point.
@@ -1409,6 +1453,37 @@ public:
 
 
 private:
+
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	VK2D_API void									DrawPointList(
+		const vk2d_internal::RawVertexData		&	raw_vertex_data,
+		const std::vector<float>				&	texture_layer_weights,
+		const std::vector<glm::mat4>			&	transformations = {},
+		Texture									*	texture = nullptr,
+		Sampler									*	sampler = nullptr
+	);
+
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	VK2D_API void									DrawLineList(
+		const std::vector<VertexIndex_2>		&	indices,
+		const vk2d_internal::RawVertexData		&	raw_vertex_data,
+		const std::vector<float>				&	texture_layer_weights,
+		const std::vector<glm::mat4>			&	transformations = {},
+		Texture									*	texture = nullptr,
+		Sampler									*	sampler = nullptr,
+		float										line_width = 1.0f
+	);
+
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	VK2D_API void									DrawTriangleList(
+		const std::vector<VertexIndex_3>		&	indices,
+		const vk2d_internal::RawVertexData		&	raw_vertex_data,
+		const std::vector<float>				&	texture_layer_weights,
+		const std::vector<glm::mat4>			&	transformations = {},
+		bool										filled = true,
+		Texture									*	texture = nullptr,
+		Sampler									*	sampler = nullptr
+	);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	std::unique_ptr<vk2d_internal::WindowImpl>		impl;

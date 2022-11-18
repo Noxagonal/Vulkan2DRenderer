@@ -1,10 +1,10 @@
 
 #include <core/SourceCommon.h>
 
-#include <types/BlurType.h>
+#include <containers/BlurType.h>
 #include <containers/Rect2.hpp>
 #include <containers/Color.hpp>
-#include <types/Mesh.h>
+#include <mesh/Mesh.hpp>
 
 #include <system/RenderTargetTextureDependecyGraphInfo.hpp>
 #include <system/ShaderInterface.h>

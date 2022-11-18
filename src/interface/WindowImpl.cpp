@@ -6,7 +6,7 @@
 
 #include <containers/Rect2.hpp>
 #include <containers/Color.hpp>
-#include <types/Mesh.h>
+#include <mesh/Mesh.hpp>
 
 #include <system/MeshBuffer.h>
 #include <system/ThreadPool.h>
@@ -1485,12 +1485,12 @@ void vk2d::vk2d_internal::WindowImpl::SetRenderCoordinateSpace(
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void vk2d::vk2d_internal::WindowImpl::DrawTriangleList(
 	const std::vector<VertexIndex_3>	&	indices,
-	const std::vector<Vertex>			&	vertices,
-	const std::vector<float>				&	texture_layer_weights,
-	const std::vector<glm::mat4>			&	transformations,
-	bool										filled,
-	Texture							*	texture,
-	Sampler							*	sampler
+	const RawVertexData					&	raw_vertex_data,
+	const std::vector<float>			&	texture_layer_weights,
+	const std::vector<glm::mat4>		&	transformations,
+	bool									filled,
+	Texture								*	texture,
+	Sampler								*	sampler
 )
 {
 	VK2D_ASSERT_MAIN_THREAD( instance );
@@ -1506,7 +1506,7 @@ void vk2d::vk2d_internal::WindowImpl::DrawTriangleList(
 
 	DrawTriangleList(
 		raw_indices,
-		vertices,
+		raw_vertex_data,
 		texture_layer_weights,
 		transformations,
 		filled,
@@ -1517,13 +1517,13 @@ void vk2d::vk2d_internal::WindowImpl::DrawTriangleList(
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void vk2d::vk2d_internal::WindowImpl::DrawTriangleList(
-	const std::vector<uint32_t>				&	raw_indices,
-	const std::vector<Vertex>			&	vertices,
-	const std::vector<float>				&	texture_layer_weights,
-	const std::vector<glm::mat4>			&	transformations,
-	bool										filled,
-	Texture							*	texture,
-	Sampler							*	sampler
+	const std::vector<uint32_t>			&	raw_indices,
+	const RawVertexData					&	raw_vertex_data,
+	const std::vector<float>			&	texture_layer_weights,
+	const std::vector<glm::mat4>		&	transformations,
+	bool									filled,
+	Texture								*	texture,
+	Sampler								*	sampler
 )
 {
 	VK2D_ASSERT_MAIN_THREAD( instance );
@@ -1533,7 +1533,7 @@ void vk2d::vk2d_internal::WindowImpl::DrawTriangleList(
 
 	auto command_buffer					= vk_render_command_buffers[ next_image ];
 
-	auto vertex_count	= uint32_t( vertices.size() );
+	auto vertex_count	= uint32_t( raw_vertex_data.vertex_count );
 	auto index_count	= uint32_t( raw_indices.size() );
 
 	if( !texture ) {
@@ -1550,7 +1550,7 @@ void vk2d::vk2d_internal::WindowImpl::DrawTriangleList(
 
 	{
 		bool multitextured = texture->GetLayerCount() > 1 &&
-			texture_layer_weights.size() >= texture->GetLayerCount() * vertices.size();
+			texture_layer_weights.size() >= texture->GetLayerCount() * vertex_count;
 
 		auto graphics_shader_programs = instance.GetCompatibleGraphicsShaderModules(
 			multitextured,
@@ -1585,7 +1585,7 @@ void vk2d::vk2d_internal::WindowImpl::DrawTriangleList(
 	auto push_result = mesh_buffer->CmdPushMesh(
 		command_buffer,
 		raw_indices,
-		vertices,
+		raw_vertex_data,
 		texture_layer_weights,
 		transformations
 	);
@@ -1645,12 +1645,12 @@ void vk2d::vk2d_internal::WindowImpl::DrawTriangleList(
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void vk2d::vk2d_internal::WindowImpl::DrawLineList(
 	const std::vector<VertexIndex_2>	&	indices,
-	const std::vector<Vertex>			&	vertices,
-	const std::vector<float>				&	texture_layer_weights,
-	const std::vector<glm::mat4>			&	transformations,
-	Texture							*	texture,
-	Sampler							*	sampler,
-	float										line_width
+	const RawVertexData					&	raw_vertex_data,
+	const std::vector<float>			&	texture_layer_weights,
+	const std::vector<glm::mat4>		&	transformations,
+	Texture								*	texture,
+	Sampler								*	sampler,
+	float									line_width
 )
 {
 	VK2D_ASSERT_MAIN_THREAD( instance );
@@ -1665,7 +1665,7 @@ void vk2d::vk2d_internal::WindowImpl::DrawLineList(
 
 	DrawLineList(
 		raw_indices,
-		vertices,
+		raw_vertex_data,
 		texture_layer_weights,
 		transformations,
 		texture,
@@ -1676,13 +1676,13 @@ void vk2d::vk2d_internal::WindowImpl::DrawLineList(
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void vk2d::vk2d_internal::WindowImpl::DrawLineList(
-	const std::vector<uint32_t>				&	raw_indices,
-	const std::vector<Vertex>			&	vertices,
-	const std::vector<float>				&	texture_layer_weights,
-	const std::vector<glm::mat4>			&	transformations,
-	Texture							*	texture,
-	Sampler							*	sampler,
-	float										line_width
+	const std::vector<uint32_t>			&	raw_indices,
+	const RawVertexData					&	raw_vertex_data,
+	const std::vector<float>			&	texture_layer_weights,
+	const std::vector<glm::mat4>		&	transformations,
+	Texture								*	texture,
+	Sampler								*	sampler,
+	float									line_width
 )
 {
 	VK2D_ASSERT_MAIN_THREAD( instance );
@@ -1692,7 +1692,7 @@ void vk2d::vk2d_internal::WindowImpl::DrawLineList(
 
 	auto command_buffer					= vk_render_command_buffers[ next_image ];
 
-	auto vertex_count	= uint32_t( vertices.size() );
+	auto vertex_count	= uint32_t( raw_vertex_data.vertex_count );
 	auto index_count	= uint32_t( raw_indices.size() );
 
 	if( !texture ) {
@@ -1709,7 +1709,7 @@ void vk2d::vk2d_internal::WindowImpl::DrawLineList(
 
 	{
 		bool multitextured = texture->GetLayerCount() > 1 &&
-			texture_layer_weights.size() >= texture->GetLayerCount() * vertices.size();
+			texture_layer_weights.size() >= texture->GetLayerCount() * vertex_count;
 
 		auto graphics_shader_programs = instance.GetCompatibleGraphicsShaderModules(
 			multitextured,
@@ -1748,7 +1748,7 @@ void vk2d::vk2d_internal::WindowImpl::DrawLineList(
 	auto push_result = mesh_buffer->CmdPushMesh(
 		command_buffer,
 		raw_indices,
-		vertices,
+		raw_vertex_data,
 		texture_layer_weights,
 		transformations
 	);
@@ -1756,12 +1756,12 @@ void vk2d::vk2d_internal::WindowImpl::DrawLineList(
 	if( push_result.success ) {
 		{
 			GraphicsPrimaryRenderPushConstants pc {};
-			pc.transformation_offset	= push_result.location_info.transformation_offset;
-			pc.index_offset				= push_result.location_info.index_offset;
-			pc.index_count				= 2;
-			pc.vertex_offset			= push_result.location_info.vertex_offset;
+			pc.transformation_offset			= push_result.location_info.transformation_offset;
+			pc.index_offset						= push_result.location_info.index_offset;
+			pc.index_count						= 2;
+			pc.vertex_offset					= push_result.location_info.vertex_offset;
 			pc.texture_channel_weight_offset	= push_result.location_info.texture_channel_weight_offset;
-			pc.texture_channel_weight_count	= texture->GetLayerCount();
+			pc.texture_channel_weight_count		= texture->GetLayerCount();
 
 			vkCmdPushConstants(
 				command_buffer,
@@ -1792,11 +1792,11 @@ void vk2d::vk2d_internal::WindowImpl::DrawLineList(
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void vk2d::vk2d_internal::WindowImpl::DrawPointList(
-	const std::vector<Vertex>			&	vertices,
-	const std::vector<float>				&	texture_layer_weights,
-	const std::vector<glm::mat4>			&	transformations,
-	Texture							*	texture,
-	Sampler							*	sampler
+	const RawVertexData					&	raw_vertex_data,
+	const std::vector<float>			&	texture_layer_weights,
+	const std::vector<glm::mat4>		&	transformations,
+	Texture								*	texture,
+	Sampler								*	sampler
 )
 {
 	VK2D_ASSERT_MAIN_THREAD( instance );
@@ -1806,7 +1806,7 @@ void vk2d::vk2d_internal::WindowImpl::DrawPointList(
 
 	auto command_buffer					= vk_render_command_buffers[ next_image ];
 
-	auto vertex_count	= uint32_t( vertices.size() );
+	auto vertex_count	= uint32_t( raw_vertex_data.vertex_count );
 
 	if( !texture ) {
 		texture = instance.GetDefaultTexture();
@@ -1822,7 +1822,7 @@ void vk2d::vk2d_internal::WindowImpl::DrawPointList(
 
 	{
 		bool multitextured = texture->GetLayerCount() > 1 &&
-			texture_layer_weights.size() >= texture->GetLayerCount() * vertices.size();
+			texture_layer_weights.size() >= texture->GetLayerCount() * vertex_count;
 
 		auto graphics_shader_programs = instance.GetCompatibleGraphicsShaderModules(
 			multitextured,
@@ -1857,7 +1857,7 @@ void vk2d::vk2d_internal::WindowImpl::DrawPointList(
 	auto push_result = mesh_buffer->CmdPushMesh(
 		command_buffer,
 		{},
-		vertices,
+		raw_vertex_data,
 		texture_layer_weights,
 		transformations
 	);

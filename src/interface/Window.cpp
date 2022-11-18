@@ -2,7 +2,8 @@
 #include <core/SourceCommon.h>
 
 #include "WindowImpl.h"
-#include <types/MeshGenerators.hpp>
+#include <mesh/generators/MeshGenerators.hpp>
+#include <mesh/modifiers/MeshModifiers.hpp>
 
 
 
@@ -266,68 +267,6 @@ VK2D_API void vk2d::Window::SetRenderCoordinateSpace(
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-VK2D_API void vk2d::Window::DrawTriangleList(
-	const std::vector<VertexIndex_3>	&	indices,
-	const std::vector<Vertex>			&	vertices,
-	const std::vector<float>			&	texture_layer_weights,
-	const std::vector<glm::mat4>		&	transformations,
-	bool									filled,
-	Texture								*	texture,
-	Sampler								*	sampler
-)
-{
-	impl->DrawTriangleList(
-		indices,
-		vertices,
-		texture_layer_weights,
-		transformations,
-		filled,
-		texture,
-		sampler
-	);
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-VK2D_API void vk2d::Window::DrawLineList(
-	const std::vector<VertexIndex_2>	&	indices,
-	const std::vector<Vertex>			&	vertices,
-	const std::vector<float>			&	texture_layer_weights,
-	const std::vector<glm::mat4>		&	transformations,
-	Texture								*	texture,
-	Sampler								*	sampler,
-	float									line_width
-)
-{
-	impl->DrawLineList(
-		indices,
-		vertices,
-		texture_layer_weights,
-		transformations,
-		texture,
-		sampler,
-		line_width
-	);
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-VK2D_API void vk2d::Window::DrawPointList(
-	const std::vector<Vertex>			&	vertices,
-	const std::vector<float>			&	texture_layer_weights,
-	const std::vector<glm::mat4>		&	transformations,
-	Texture								*	texture,
-	Sampler								*	sampler
-)
-{
-	impl->DrawPointList(
-		vertices,
-		texture_layer_weights,
-		transformations,
-		texture,
-		sampler
-	);
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 VK2D_API void vk2d::Window::DrawPoint(
 	glm::vec2		location,
 	Colorf			color,
@@ -337,8 +276,8 @@ VK2D_API void vk2d::Window::DrawPoint(
 	auto mesh = GeneratePointMeshFromList(
 		{ location }
 	);
-	mesh.SetVertexColor( color );
-	mesh.SetPointSize( size );
+	mesh_modifiers::SetVerticesColor( mesh, color );
+	mesh_modifiers::SetVerticesPointSize( mesh, size );
 	impl->DrawMesh( mesh, { glm::mat4( 1.0f ) } );
 }
 
@@ -354,7 +293,7 @@ VK2D_API void vk2d::Window::DrawLine(
 		{ point_1, point_2 },
 		{ { 0, 1 } }
 	);
-	mesh.SetVertexColor( color );
+	mesh_modifiers::SetVerticesColor( mesh, color );
 	mesh.SetLineWidth( line_width );
 	impl->DrawMesh( mesh, { glm::mat4( 1.0f ) } );
 }
@@ -370,7 +309,7 @@ VK2D_API void vk2d::Window::DrawRectangle(
 		area,
 		filled
 	);
-	mesh.SetVertexColor( color );
+	mesh_modifiers::SetVerticesColor( mesh, color );
 	impl->DrawMesh( mesh, { glm::mat4( 1.0f ) } );
 }
 
@@ -387,7 +326,7 @@ VK2D_API void vk2d::Window::DrawEllipse(
 		filled,
 		edge_count
 	);
-	mesh.SetVertexColor( color );
+	mesh_modifiers::SetVerticesColor( mesh, color );
 	impl->DrawMesh( mesh, { glm::mat4( 1.0f ) } );
 }
 
@@ -408,7 +347,7 @@ VK2D_API void vk2d::Window::DrawEllipsePie(
 		filled,
 		edge_count
 	);
-	mesh.SetVertexColor( color );
+	mesh_modifiers::SetVerticesColor( mesh, color );
 	impl->DrawMesh( mesh, { glm::mat4( 1.0f ) } );
 }
 
@@ -427,7 +366,7 @@ VK2D_API void vk2d::Window::DrawRectanglePie(
 		coverage,
 		filled
 	);
-	mesh.SetVertexColor( color );
+	mesh_modifiers::SetVerticesColor( mesh, color );
 	impl->DrawMesh( mesh, { glm::mat4( 1.0f ) } );
 }
 
@@ -446,7 +385,7 @@ VK2D_API void vk2d::Window::DrawTexture(
 			{ top_left, bottom_right }
 		);
 		mesh.SetTexture( texture );
-		mesh.SetVertexColor( color );
+		mesh_modifiers::SetVerticesColor( mesh, color );
 		impl->DrawMesh( mesh, { glm::mat4( 1.0f ) } );
 	}
 }
@@ -497,6 +436,68 @@ VK2D_API bool vk2d::Window::IsGood() const
 {
 	if( !impl ) return false;
 	return impl->IsGood();
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+VK2D_API void vk2d::Window::DrawPointList(
+	const vk2d_internal::RawVertexData	&	raw_vertex_data,
+	const std::vector<float>			&	texture_layer_weights,
+	const std::vector<glm::mat4>		&	transformations,
+	Texture								*	texture,
+	Sampler								*	sampler
+)
+{
+	impl->DrawPointList(
+		raw_vertex_data,
+		texture_layer_weights,
+		transformations,
+		texture,
+		sampler
+	);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+VK2D_API void vk2d::Window::DrawLineList(
+	const std::vector<VertexIndex_2>	&	indices,
+	const vk2d_internal::RawVertexData	&	raw_vertex_data,
+	const std::vector<float>			&	texture_layer_weights,
+	const std::vector<glm::mat4>		&	transformations,
+	Texture								*	texture,
+	Sampler								*	sampler,
+	float									line_width
+)
+{
+	impl->DrawLineList(
+		indices,
+		raw_vertex_data,
+		texture_layer_weights,
+		transformations,
+		texture,
+		sampler,
+		line_width
+	);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+VK2D_API void vk2d::Window::DrawTriangleList(
+	const std::vector<VertexIndex_3>	&	indices,
+	const vk2d_internal::RawVertexData	&	raw_vertex_data,
+	const std::vector<float>			&	texture_layer_weights,
+	const std::vector<glm::mat4>		&	transformations,
+	bool									filled,
+	Texture								*	texture,
+	Sampler								*	sampler
+)
+{
+	impl->DrawTriangleList(
+		indices,
+		raw_vertex_data,
+		texture_layer_weights,
+		transformations,
+		filled,
+		texture,
+		sampler
+	);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

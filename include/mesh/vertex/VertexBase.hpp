@@ -32,28 +32,42 @@ public:
 
 	constexpr VertexBase()
 	{
-		InitAllMembers<MembersT...>();
+		ConstructAllMembers<MembersT...>();
 	}
 
 	constexpr ~VertexBase()
 	{
-		DeinitAllMembers<MembersT...>();
+		DestructAllMembers<MembersT...>();
 	}
 
 	template<size_t Index>
 	constexpr vk2d_internal::GetTemplateTypeAtIndex<Index, MembersT...> & Get()
 	{
-		static_assert( Index < sizeof...( MembersT ), "Index out of range." );
-		size_t offset = GetOffsetFor<Index, 0, MembersT...>();
+		static_assert( Index < sizeof...( MembersT ), "Index out of range" );
+		size_t offset = GetMemberOffset<Index>();
 		return *reinterpret_cast<vk2d_internal::GetTemplateTypeAtIndex<Index, MembersT...>*>( &data[ offset ] );
 	}
 	
 	template<size_t Index>
 	constexpr const vk2d_internal::GetTemplateTypeAtIndex<Index, MembersT...> & Get() const
 	{
-		static_assert( Index < sizeof...( MembersT ), "Index out of range." );
-		size_t offset = GetOffsetFor<Index, 0, MembersT...>();
+		static_assert( Index < sizeof...( MembersT ), "Index out of range" );
+		size_t offset = GetMemberOffset<Index>();
 		return *reinterpret_cast<vk2d_internal::GetTemplateTypeAtIndex<Index, MembersT...>*>( &data[ offset ] );
+	}
+
+	template<size_t Index>
+	static consteval size_t GetMemberSize()
+	{
+		static_assert( Index < sizeof...( MembersT ), "Index out of range" );
+		return GetMemberSizeImpl<Index, 0, MembersT...>();
+	}
+
+	template<size_t Index>
+	static consteval size_t GetMemberOffset()
+	{
+		static_assert( Index < sizeof...( MembersT ), "Index out of range" );
+		return GetMemberOffsetImpl<Index, 0, MembersT...>();
 	}
 
 	static consteval size_t GetMemberCount()
@@ -63,40 +77,50 @@ public:
 
 private:
 	template<typename T>
-	static constexpr size_t GetMemberOffset( size_t current_offset )
+	static constexpr size_t GetTypeAlignmentFromOffset( size_t current_offset )
 	{
 		return ( ( current_offset - 1 ) / alignof( T ) + 1 ) * alignof( T );
 	}
 
 	template<typename FirstT, typename ...RestT>
-	constexpr void InitAllMembers( size_t offset = 0 )
+	constexpr void ConstructAllMembers( size_t offset = 0 )
 	{
-		offset = GetMemberOffset<FirstT>( offset );
+		offset = GetTypeAlignmentFromOffset<FirstT>( offset );
 		new( reinterpret_cast<FirstT*>( &data[ offset ] ) ) FirstT();
 		if constexpr( sizeof...( RestT ) > 0 )
 		{
-			InitAllMembers<RestT...>( offset + sizeof( FirstT ) );
+			ConstructAllMembers<RestT...>( offset + sizeof( FirstT ) );
 		}
 	}
 	
 	template<typename FirstT, typename ...RestT>
-	constexpr void DeinitAllMembers( size_t offset = 0 )
+	constexpr void DestructAllMembers( size_t offset = 0 )
 	{
-		offset = GetMemberOffset<FirstT>( offset );
+		offset = GetTypeAlignmentFromOffset<FirstT>( offset );
 		if constexpr( sizeof...( RestT ) > 0 )
 		{
-			DeinitAllMembers<RestT...>( offset + sizeof( FirstT ) );
+			DestructAllMembers<RestT...>( offset + sizeof( FirstT ) );
 		}
 		reinterpret_cast<FirstT*>( &data[ offset ] )->~FirstT();
 	}
 
 	template<size_t GetIndex, size_t CurrentIndex, typename FirstT, typename ...RestT>
-	static consteval size_t GetOffsetFor( size_t offset = 0 )
+	static consteval size_t GetMemberSizeImpl()
 	{
-		offset = GetMemberOffset<FirstT>( offset );
 		if constexpr( CurrentIndex < GetIndex )
 		{
-			return GetOffsetFor<GetIndex, CurrentIndex + 1, RestT...>( offset + sizeof( FirstT ) );
+			return GetMemberSizeImpl<GetIndex, CurrentIndex + 1, RestT...>();
+		}
+		return sizeof( FirstT );
+	}
+	
+	template<size_t GetIndex, size_t CurrentIndex, typename FirstT, typename ...RestT>
+	static consteval size_t GetMemberOffsetImpl( size_t offset = 0 )
+	{
+		offset = GetTypeAlignmentFromOffset<FirstT>( offset );
+		if constexpr( CurrentIndex < GetIndex )
+		{
+			return GetMemberOffsetImpl<GetIndex, CurrentIndex + 1, RestT...>( offset + sizeof( FirstT ) );
 		}
 		return offset;
 	}
@@ -116,7 +140,7 @@ private:
 	template<typename FirstT, typename ...RestT>
 	static consteval size_t CalculateMySize( size_t offset = 0 )
 	{
-		offset = GetMemberOffset<FirstT>( offset );
+		offset = GetTypeAlignmentFromOffset<FirstT>( offset );
 		offset += sizeof( FirstT );
 		if constexpr( sizeof...( RestT ) > 0 ) {
 			offset = CalculateMySize<RestT...>( offset );
@@ -155,6 +179,12 @@ concept VertexBaseDerivedType = requires
 	typename T::Base;
 	typename T::Base::IsVertexBase;
 };
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+template<typename T>
+concept VertexBaseOrDerivedType =
+VertexBaseType<T> ||
+VertexBaseDerivedType<T>;
 
 
 

@@ -10,6 +10,7 @@
 #include <system/DescriptorSet.h>
 #include <system/ShaderInterface.h>
 #include <system/RenderTargetTextureDependecyGraphInfo.hpp>
+#include <mesh/vertex/RawVertexData.hpp>
 
 #include <interface/Instance.h>
 #include <interface/InstanceImpl.h>
@@ -161,7 +162,7 @@ public:
 
 	void														DrawTriangleList(
 		const std::vector<VertexIndex_3>					&	indices,
-		const std::vector<Vertex>							&	vertices,
+		const RawVertexData									&	raw_vertex_data,
 		const std::vector<float>							&	texture_layer_weights,
 		const std::vector<glm::mat4>						&	transformations,
 		bool													solid,
@@ -170,7 +171,7 @@ public:
 
 	void														DrawTriangleList(
 		const std::vector<uint32_t>							&	raw_indices,
-		const std::vector<Vertex>							&	vertices,
+		const RawVertexData									&	raw_vertex_data,
 		const std::vector<float>							&	texture_layer_weights,
 		const std::vector<glm::mat4>						&	transformations,
 		bool													solid,
@@ -179,7 +180,7 @@ public:
 
 	void														DrawLineList(
 		const std::vector<VertexIndex_2>					&	indices,
-		const std::vector<Vertex>							&	vertices,
+		const RawVertexData									&	raw_vertex_data,
 		const std::vector<float>							&	texture_layer_weights,
 		const std::vector<glm::mat4>						&	transformations,
 		Texture												*	texture,
@@ -188,7 +189,7 @@ public:
 
 	void														DrawLineList(
 		const std::vector<uint32_t>							&	raw_indices,
-		const std::vector<Vertex>							&	vertices,
+		const RawVertexData									&	raw_vertex_data,
 		const std::vector<float>							&	texture_layer_weights,
 		const std::vector<glm::mat4>						&	transformations,
 		Texture												*	texture,
@@ -196,7 +197,7 @@ public:
 		float													line_width );
 
 	void														DrawPointList(
-		const std::vector<Vertex>							&	vertices,
+		const RawVertexData									&	raw_vertex_data,
 		const std::vector<float>							&	texture_layer_weights,
 		const std::vector<glm::mat4>						&	transformations,
 		Texture												*	texture,

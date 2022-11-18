@@ -2,7 +2,8 @@
 
 #include <core/SourceCommon.h>
 
-#include <types/MeshPrimitives.hpp>
+#include <mesh/MeshPrimitives.hpp>
+#include <mesh/vertex/RawVertexData.hpp>
 
 #include <vulkan/utils/VulkanMemoryManagement.hpp>
 #include <system/DescriptorSet.h>
@@ -21,15 +22,117 @@ class MeshBuffer;
 template<typename T>
 class MeshBufferBlock;
 
-using IndexBufferBlocks									= std::vector<std::unique_ptr<MeshBufferBlock<uint32_t>>>;
-using VertexBufferBlocks								= std::vector<std::unique_ptr<MeshBufferBlock<Vertex>>>;
-using TextureChannelBufferBlocks						= std::vector<std::unique_ptr<MeshBufferBlock<float>>>;
-using TransformationBufferBlocks						= std::vector<std::unique_ptr<MeshBufferBlock<glm::mat4>>>;
+template<typename T>
+class MeshBufferBlockList;
 
 enum class MeshBufferDescriptorSetType : uint32_t {
 	NONE,
 	UNIFORM,
 	STORAGE,
+};
+
+
+
+template<typename T>
+class MeshBufferBlockList
+{
+public:
+	using Type = T;
+
+	MeshBufferBlockList() = delete;
+	MeshBufferBlockList(
+		MeshBuffer							&	parent
+	) :
+		parent( parent )
+	{}
+
+	// Find a buffer in block_list with enough space to hold the data, if none found
+	// this function will allocate a new buffer that will have enough space.
+	// Returns nullptr on failure.
+	MeshBufferBlock<T>						*	FindMeshBufferWithEnoughSpace(
+		VkDeviceSize							byte_size,
+		VkDeviceSize							allocation_step_size,
+		VkBufferUsageFlags						usage_flags					= VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
+		MeshBufferDescriptorSetType				descriptor_set_type			= MeshBufferDescriptorSetType::STORAGE
+	)
+	{
+		for( auto & i : blocks )
+		{
+			if( i->CheckDataFits( byte_size ) )
+			{
+				return i.get();
+			}
+		}
+		// Not found in existing blocks, create new
+		{
+			auto new_block = AllocateAndStoreBufferBlock(
+				std::max( byte_size, allocation_step_size ),
+				usage_flags,
+				descriptor_set_type
+			);
+
+			if( new_block && new_block->IsGood() )
+			{
+				assert( new_block->CheckDataFits( byte_size ) );
+				return new_block;
+			}
+			else
+			{
+				parent.instance.Report( ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot create new index MeshBufferBlock!" );
+				return nullptr;
+			}
+		}
+		return {};
+	}
+
+	// Creates a new buffer block and stores it into destination buffer block list,
+	// returns a pointer to it if successful or nullptr on failure.
+	MeshBufferBlock<T>						*	AllocateAndStoreBufferBlock(
+		VkDeviceSize							byte_size,
+		VkBufferUsageFlags						buffer_usage_flags		= VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
+		MeshBufferDescriptorSetType				descriptor_set_type		= MeshBufferDescriptorSetType::STORAGE
+	)
+	{
+		auto buffer_block = std::make_unique<MeshBufferBlock<T>>(
+			*this,
+			byte_size,
+			buffer_usage_flags,
+			descriptor_set_type
+			);
+		if( buffer_block && buffer_block->IsGood() )
+		{
+			auto ret = buffer_block.get();
+			blocks.push_back( std::move( buffer_block ) );
+			return ret;
+		}
+		else
+		{
+			return {};
+		}
+	}
+
+	// Removes a buffer block with matching pointer from internal storage.
+	void										FreeBufferBlock(
+		MeshBufferBlock<T>					*	buffer_block
+	)
+	{
+		if( blocks.size() )
+		{
+			auto it = blocks.begin();
+			while( it != blocks.end() )
+			{
+				if( it->get() == buffer_block )
+				{
+					blocks.erase( it );
+					return;
+				}
+				++it;
+			}
+		}
+	}
+
+	MeshBuffer											&	parent;
+	std::vector<std::unique_ptr<MeshBufferBlock<T>>>		blocks;
 };
 
 
@@ -100,47 +203,50 @@ enum class MeshBufferDescriptorSetType : uint32_t {
 //
 
 
+
+template<typename T>
+struct MeshBufferBlockLocationInfo
+{
+	using Type = T;
+
+	MeshBufferBlock<T>					*	block						= {};
+	VkDeviceSize							byte_size					= {};	// Total size of how many bytes is taken up.
+	VkDeviceSize							byte_offset					= {};	// Offset in bytes into the buffer.
+};
+
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+struct MeshBlockLocationInfo
+{
+	bool									success						= {};
+
+	MeshBufferBlockLocationInfo<uint32_t>	index_block;
+	MeshBufferBlockLocationInfo<uint8_t>	vertex_block;
+	MeshBufferBlockLocationInfo<float>		texture_channel_weight_block;
+	MeshBufferBlockLocationInfo<glm::mat4>	transformation_block;
+};
+
+
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /// @brief		MeshBuffer represents a collection of all mesh data that is about to be rendered.
 ///
 ///				MeshBuffer consists of dynamically and automatically expanding storage, it has 2 internal buffers, one in RAM
 ///				and another in VRAM, mesh buffers may be copied over to the VRAM by submitting a copy command to Vulkan command
 ///				buffer.
-class MeshBuffer {
+class MeshBuffer
+{
 	template<typename T>
 	friend class MeshBufferBlock;
+
+	template<typename T>
+	friend class MeshBufferBlockList;
+
 public:
-	struct MeshBlockLocationInfo {
-		bool									success								= {};
-
-		MeshBufferBlock<uint32_t>			*	index_block							= {};
-		MeshBufferBlock<Vertex>				*	vertex_block						= {};
-		MeshBufferBlock<float>				*	texture_channel_weight_block		= {};
-		MeshBufferBlock<glm::mat4>			*	transformation_block				= {};
-
-		uint32_t								index_size							= {};	// size of data.
-		VkDeviceSize							index_byte_size						= {};	// size of data in bytes.
-		uint32_t								index_offset						= {};	// offset into buffer.
-		VkDeviceSize							index_byte_offset					= {};	// offset into buffer in bytes.
-
-		uint32_t								vertex_size							= {};	// size of data.
-		VkDeviceSize							vertex_byte_size					= {};	// size of data in bytes.
-		uint32_t								vertex_offset						= {};	// offset into buffer.
-		VkDeviceSize							vertex_byte_offset					= {};	// offset into buffer in bytes.
-
-		uint32_t								texture_channel_weight_size			= {};	// size of data.
-		VkDeviceSize							texture_channel_weight_byte_size	= {};	// size of data in bytes.
-		uint32_t								texture_channel_weight_offset		= {};	// offset into buffer.
-		VkDeviceSize							texture_channel_weight_byte_offset	= {};	// offset into buffer in bytes.
-
-		uint32_t								transformation_size					= {};	// size of data.
-		VkDeviceSize							transformation_byte_size			= {};	// size of data in bytes.
-		uint32_t								transformation_offset				= {};	// offset into buffer.
-		VkDeviceSize							transformation_byte_offset			= {};	// offset into buffer in bytes.
-	};
 
 	struct PushResult {
-		MeshBuffer::MeshBlockLocationInfo		location_info;
+		MeshBlockLocationInfo					location_info;
 		bool									success;
 		inline explicit operator bool()
 		{
@@ -160,7 +266,7 @@ public:
 	MeshBuffer::PushResult						CmdPushMesh(
 		VkCommandBuffer							command_buffer,
 		const std::vector<uint32_t>			&	new_indices,
-		const std::vector<Vertex>			&	new_vertices,
+		const RawVertexData					&	new_vertices,
 		const std::vector<float>			&	new_texture_channel_weights,
 		const std::vector<glm::mat4>		&	new_transformations
 	);
@@ -185,83 +291,11 @@ public:
 	uint32_t									GetTotalTransformationCount();
 
 private:
-	MeshBuffer::MeshBlockLocationInfo			ReserveSpaceForMesh(
+	MeshBlockLocationInfo						ReserveSpaceForMesh(
 		uint32_t								index_count,
-		uint32_t								vertex_count,
+		const RawVertexData					&	vertices,
 		uint32_t								texture_channel_weight_count,
 		uint32_t								transformation_count
-	);
-
-	// Find an index buffer with enough space to hold the data, if none found
-	// this function will allocate a new buffer that will have enough space.
-	// Returns nullptr on failure.
-	MeshBufferBlock<uint32_t>				*	FindIndexBufferWithEnoughSpace(
-		uint32_t								count
-	);
-
-	// Find an index buffer with enough space to hold the data, if none found
-	// this function will allocate a new buffer that will have enough space.
-	// Returns nullptr on failure.
-	MeshBufferBlock<Vertex>					*	FindVertexBufferWithEnoughSpace(
-		uint32_t								count
-	);
-
-	// Find an index buffer with enough space to hold the data, if none found
-	// this function will allocate a new buffer that will have enough space.
-	// Returns nullptr on failure.
-	MeshBufferBlock<float>					*	FindTextureChannelBufferWithEnoughSpace(
-		uint32_t								count
-	);
-
-	// Find a transformation buffer with enough space to hold the data, if none found
-	// this function will allocate a new buffer that will have enough space.
-	// Returns nullptr on failure.
-	MeshBufferBlock<glm::mat4>				*	FindTransformationBufferWithEnoughSpace(
-		uint32_t								count
-	);
-
-	// Creates a new buffer block and stores it internally,
-	// returns a pointer to it if successful or nullptr on failure.
-	MeshBufferBlock<uint32_t>				*	AllocateIndexBufferBlockAndStore(
-		VkDeviceSize							byte_size
-	);
-
-	// Creates a new buffer block and stores it internally,
-	// returns a pointer to it if successful or nullptr on failure.
-	MeshBufferBlock<Vertex>					*	AllocateVertexBufferBlockAndStore(
-		VkDeviceSize							byte_size
-	);
-
-	// Creates a new buffer block and stores it internally,
-	// returns a pointer to it if successful or nullptr on failure.
-	MeshBufferBlock<float>					*	AllocateTextureChannelBufferBlockAndStore(
-		VkDeviceSize							byte_size
-	);
-
-	// Creates a new buffer block and stores it internally,
-	// returns a pointer to it if successful or nullptr on failure.
-	MeshBufferBlock<glm::mat4>				*	AllocateTransformationBufferBlockAndStore(
-		VkDeviceSize							byte_size
-	);
-
-	// Removes a buffer block with matching pointer from internal storage.
-	void										FreeBufferBlockFromStorage(
-		MeshBufferBlock<uint32_t>			*	buffer_block
-	);
-
-	// Removes a buffer block with matching pointer from internal storage.
-	void										FreeBufferBlockFromStorage(
-		MeshBufferBlock<Vertex>				*	buffer_block
-	);
-
-	// Removes a buffer block with matching pointer from internal storage.
-	void										FreeBufferBlockFromStorage(
-		MeshBufferBlock<float>				*	buffer_block
-	);
-
-	// Removes a buffer block with matching pointer from internal storage.
-	void										FreeBufferBlockFromStorage(
-		MeshBufferBlock<glm::mat4>			*	buffer_block
 	);
 
 	InstanceImpl							&	instance;
@@ -275,19 +309,14 @@ private:
 	uint32_t									pushed_transformation_count					= {};
 
 	MeshBufferBlock<uint32_t>				*	bound_index_buffer_block					= {};
-	MeshBufferBlock<Vertex>					*	bound_vertex_buffer_block					= {};
+	MeshBufferBlock<uint8_t>				*	bound_vertex_buffer_block					= {};
 	MeshBufferBlock<float>					*	bound_texture_channel_weight_buffer_block	= {};
 	MeshBufferBlock<glm::mat4>				*	bound_transformation_buffer_block			= {};
 
-	IndexBufferBlocks							index_buffer_blocks							= {};
-	VertexBufferBlocks							vertex_buffer_blocks						= {};
-	TextureChannelBufferBlocks					texture_channel_weight_buffer_blocks		= {};
-	TransformationBufferBlocks					transformation_buffer_blocks				= {};
-
-	IndexBufferBlocks::iterator					current_index_buffer_block					= {};
-	VertexBufferBlocks::iterator				current_vertex_buffer_block					= {};
-	TextureChannelBufferBlocks::iterator		current_texture_channel_weight_buffer_block	= {};
-	TransformationBufferBlocks					current_transformation_buffer_block			= {};
+	MeshBufferBlockList<uint32_t>				index_buffer_blocks;
+	MeshBufferBlockList<uint8_t>				vertex_buffer_blocks;
+	MeshBufferBlockList<float>					texture_channel_weight_buffer_blocks;
+	MeshBufferBlockList<glm::mat4>				transformation_buffer_blocks;
 };
 
 
@@ -297,7 +326,8 @@ private:
 
 
 template<typename T>
-class MeshBufferBlock {
+class MeshBufferBlock
+{
 	friend class MeshBuffer;
 
 public:
@@ -454,14 +484,13 @@ public:
 	}
 
 	// Checks if something fits into this MeshBufferBlock.
-	// Parameter count is not in byte size, if this MeshBufferBlock is type
-	// float and parameter count is 1 then space for 4 bytes is checked for.
+	// Parameter count is in byte size, if this MeshBufferBlock is type
+	// float and parameter count is 1 then space for 1 byte is checked for regardless.
 	bool										CheckDataFits(
-		uint32_t								count
+		VkDeviceSize							byte_size
 	)
 	{
-		VkDeviceSize	reserve_size		= count * sizeof( T );
-		if( used_byte_size + reserve_size <= total_byte_size ) {
+		if( used_byte_size + byte_size <= total_byte_size ) {
 			return true;
 		} else {
 			return false;
@@ -470,16 +499,15 @@ public:
 
 	// If data fits, this will reserve space for it in the buffer.
 	// Returns the location in bytes to the beginning of the reserved space.
-	// Parameter count is not in byte size, if this MeshBufferBlock is type
-	// float and parameter count is 1 then space for 4 bytes is reserved.
+	// Parameter count is in byte size, if this MeshBufferBlock is type
+	// float and parameter count is 1 then space for 1 byte is reserved regardless.
 	VkDeviceSize								ReserveSpace(
-		uint32_t								count
+		uint32_t								byte_size
 	)
 	{
-		VkDeviceSize reserve_size	= count * sizeof( T );
-		assert( used_byte_size + reserve_size <= total_byte_size );
+		assert( used_byte_size + byte_size <= total_byte_size );
 		auto ret					= used_byte_size;
-		used_byte_size				+= reserve_size;
+		used_byte_size				+= byte_size;
 		return ret;
 	}
 

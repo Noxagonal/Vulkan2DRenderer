@@ -2,13 +2,13 @@
 
 #include <core/Common.h>
 
-#include <types/BlurType.h>
+#include <containers/BlurType.h>
 #include <containers/Rect2.hpp>
 #include <containers/Transform.hpp>
 #include <containers/Color.hpp>
-#include <types/Multisamples.h>
-#include <types/RenderCoordinateSpace.hpp>
-#include <types/Mesh.h>
+#include <containers/Multisamples.h>
+#include <containers/RenderCoordinateSpace.hpp>
+#include <mesh/Mesh.hpp>
 
 #include <interface/Texture.h>
 

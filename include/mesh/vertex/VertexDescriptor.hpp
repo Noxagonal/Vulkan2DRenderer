@@ -68,6 +68,8 @@ struct VertexMemberDescriptor
 /// @brief		Provides vertex member field info when C++ type system isn't available anymore.
 struct VertexDescriptor
 {
+	size_t									size						= {};
+	size_t									alignment					= {};
 	VertexDescriptorMemberTypeFlags			member_flags				= {};
 	std::vector<VertexMemberDescriptor>		member_descriptors;
 };
@@ -81,7 +83,7 @@ struct VertexDescriptor
 ///				Vertex type.
 ///
 /// @return		Vertex descriptor.
-template<VertexBaseDerivedType VertexT>
+template<VertexBaseOrDerivedType VertexT>
 constexpr VertexDescriptor GetVertexDescriptorStandardMembersFromVertexType()
 {
 	auto ret = VertexDescriptor();
@@ -156,6 +158,15 @@ constexpr VertexDescriptor GetVertexDescriptorStandardMembersFromVertexType()
 		ret.member_flags |= description_flag;
 		ret.member_descriptors.push_back( member_description );
 	}
+
+	ret.alignment	= alignof( VertexT );
+	ret.size		= ret.alignment;
+
+	if( !ret.member_descriptors.empty() ) {
+		auto & last	= ret.member_descriptors.back();
+		ret.size	= last.offset + last.size;
+		ret.size	= ( ( ( ret.size - 1 ) / ret.alignment ) + 1 ) * ret.alignment;
+	}
 }
 
 
@@ -165,17 +176,15 @@ namespace detail {
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-template<VertexBaseDerivedType VertexT, size_t CurrentIndex = 0>
-constexpr void GetVertexDescriptorFromVertexType_Extract(
-	const VertexT			&	temp_vertex,
+template<VertexBaseOrDerivedType VertexT, size_t CurrentIndex = 0>
+consteval void GetVertexDescriptorFromVertexType_Extract(
 	const VertexDescriptor	&	standard_types,
 	VertexDescriptor		&	out
 )
 {
 	constexpr auto member_count		= VertexT::GetMemberCount();
-	const auto & member				= temp_vertex.Get<CurrentIndex>();
-	const auto member_offset		= reinterpret_cast<const uint8_t*>( &member ) - reinterpret_cast<const uint8_t*>( &temp_vertex );
-	const auto member_size			= sizeof( std::remove_reference_t<decltype( member )> );
+	const auto member_offset		= VertexT::GetMemberOffset<CurrentIndex>();
+	const auto member_size			= VertexT::GetMemberSize<CurrentIndex>();
 
 	auto member_descriptor			= VertexMemberDescriptor();
 	member_descriptor.offset		= member_offset;
@@ -193,7 +202,6 @@ constexpr void GetVertexDescriptorFromVertexType_Extract(
 	if( CurrentIndex < VertexT::GetMemberCount() )
 	{
 		GetVertexDescriptorFromVertexType_Extract<VertexT, CurrentIndex + 1>(
-			temp_vertex,
 			standard_types,
 			out
 		);
@@ -213,7 +221,7 @@ constexpr void GetVertexDescriptorFromVertexType_Extract(
 ///				Vertex type.
 ///
 /// @return		Vertex descriptor.
-template<VertexBaseDerivedType VertexT>
+template<VertexBaseOrDerivedType VertexT>
 constexpr VertexDescriptor GetVertexDescriptorFromVertexType()
 {
 	// Idea here is to first see what standard members there are in the vertex, then populate all members in order.
@@ -221,13 +229,20 @@ constexpr VertexDescriptor GetVertexDescriptorFromVertexType()
 
 	const auto standard_members = GetVertexDescriptorStandardMembersFromVertexType<VertexT>();
 
-	auto temp_vertex = VertexT();
 	auto ret = VertexDescriptor();
 	detail::GetVertexDescriptorFromVertexType_Extract<VertexT>(
-		temp_vertex,
 		standard_members,
 		ret
 	);
+
+	ret.alignment	= alignof( VertexT );
+	ret.size		= ret.alignment;
+
+	if( !ret.member_descriptors.empty() ) {
+		auto last	= ret.member_descriptors.back();
+		ret.size	= last.offset + last.size;
+		ret.size	= ( ( ( ret.size - 1 ) / ret.alignment ) + 1 ) * ret.alignment;
+	}
 
 	return ret;
 }
