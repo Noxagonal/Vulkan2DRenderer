@@ -237,6 +237,7 @@ vk2d::vk2d_internal::MeshBlockLocationInfo vk2d::vk2d_internal::MeshBuffer::Rese
 	auto ReserveSpaceFromBufferBlock =[ this ](
 		auto						&	from_list,
 		VkDeviceSize					byte_size,
+		VkDeviceSize					byte_alignment,
 		VkDeviceSize					allocation_step_size,
 		VkBufferUsageFlags				usage_flags					= VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
 		MeshBufferDescriptorSetType		descriptor_set_type			= MeshBufferDescriptorSetType::STORAGE
@@ -244,6 +245,7 @@ vk2d::vk2d_internal::MeshBlockLocationInfo vk2d::vk2d_internal::MeshBuffer::Rese
 	{
 		auto buffer_block = from_list.FindMeshBufferWithEnoughSpace(
 			byte_size,
+			byte_alignment,
 			allocation_step_size,
 			usage_flags,
 			descriptor_set_type
@@ -254,7 +256,7 @@ vk2d::vk2d_internal::MeshBlockLocationInfo vk2d::vk2d_internal::MeshBuffer::Rese
 			return {};
 		}
 
-		auto byte_offset = buffer_block->ReserveSpace( byte_size );
+		auto byte_offset = buffer_block->ReserveSpace( byte_size , byte_alignment );
 
 		auto ret = MeshBufferBlockLocationInfo<typename std::remove_reference_t<decltype( from_list )>::Type>();
 		ret.block		= buffer_block;
@@ -268,6 +270,7 @@ vk2d::vk2d_internal::MeshBlockLocationInfo vk2d::vk2d_internal::MeshBuffer::Rese
 	location_info.index_block = ReserveSpaceFromBufferBlock(
 		index_buffer_blocks,
 		index_count * sizeof( decltype( index_buffer_blocks )::Type ),
+		sizeof( decltype( index_buffer_blocks )::Type ),
 		VK2D_BUILD_OPTION_MESH_BUFFER_BLOCK_INDEX_SIZE,
 		VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
 		MeshBufferDescriptorSetType::STORAGE
@@ -276,6 +279,7 @@ vk2d::vk2d_internal::MeshBlockLocationInfo vk2d::vk2d_internal::MeshBuffer::Rese
 	location_info.vertex_block = ReserveSpaceFromBufferBlock(
 		vertex_buffer_blocks,
 		vertices.vertex_data.size(),
+		vertices.vertex_stride,
 		VK2D_BUILD_OPTION_MESH_BUFFER_BLOCK_VERTEX_SIZE,
 		/* VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | ...VERTEX BUFFER NOT USED DIRECTLY... */ VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
 		MeshBufferDescriptorSetType::STORAGE
@@ -284,6 +288,7 @@ vk2d::vk2d_internal::MeshBlockLocationInfo vk2d::vk2d_internal::MeshBuffer::Rese
 	location_info.texture_channel_weight_block = ReserveSpaceFromBufferBlock(
 		texture_channel_weight_buffer_blocks,
 		texture_channel_weight_count * sizeof( decltype( texture_channel_weight_buffer_blocks )::Type ),
+		sizeof( decltype( texture_channel_weight_buffer_blocks )::Type ),
 		VK2D_BUILD_OPTION_MESH_BUFFER_BLOCK_texture_channel_weight_SIZE,
 		VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
 		MeshBufferDescriptorSetType::STORAGE
@@ -292,6 +297,7 @@ vk2d::vk2d_internal::MeshBlockLocationInfo vk2d::vk2d_internal::MeshBuffer::Rese
 	location_info.transformation_block = ReserveSpaceFromBufferBlock(
 		transformation_buffer_blocks,
 		transformation_count * sizeof( decltype(transformation_buffer_blocks)::Type ),
+		sizeof( decltype( transformation_buffer_blocks )::Type ),
 		VK2D_BUILD_OPTION_MESH_BUFFER_BLOCK_TRANSFORMATION_SIZE,
 		VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
 		MeshBufferDescriptorSetType::STORAGE

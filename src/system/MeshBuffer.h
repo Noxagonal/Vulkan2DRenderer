@@ -51,6 +51,7 @@ public:
 	// Returns nullptr on failure.
 	MeshBufferBlock<T>						*	FindMeshBufferWithEnoughSpace(
 		VkDeviceSize							byte_size,
+		VkDeviceSize							byte_alignment,
 		VkDeviceSize							allocation_step_size,
 		VkBufferUsageFlags						usage_flags					= VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
 		MeshBufferDescriptorSetType				descriptor_set_type			= MeshBufferDescriptorSetType::STORAGE
@@ -58,7 +59,7 @@ public:
 	{
 		for( auto & i : blocks )
 		{
-			if( i->CheckDataFits( byte_size ) )
+			if( i->CheckDataFits( byte_size, byte_alignment ) )
 			{
 				return i.get();
 			}
@@ -73,7 +74,7 @@ public:
 
 			if( new_block && new_block->IsGood() )
 			{
-				assert( new_block->CheckDataFits( byte_size ) );
+				assert( new_block->CheckDataFits( byte_size, byte_alignment ) );
 				return new_block;
 			}
 			else
@@ -487,10 +488,12 @@ public:
 	// Parameter count is in byte size, if this MeshBufferBlock is type
 	// float and parameter count is 1 then space for 1 byte is checked for regardless.
 	bool										CheckDataFits(
-		VkDeviceSize							byte_size
+		VkDeviceSize							byte_size,
+		VkDeviceSize							byte_alignment
 	)
 	{
-		if( used_byte_size + byte_size <= total_byte_size ) {
+		VkDeviceSize aligned_end = ( ( ( used_byte_size - 1 ) / byte_alignment ) + 1 ) * byte_alignment;
+		if( aligned_end + byte_size <= total_byte_size ) {
 			return true;
 		} else {
 			return false;
@@ -502,12 +505,14 @@ public:
 	// Parameter count is in byte size, if this MeshBufferBlock is type
 	// float and parameter count is 1 then space for 1 byte is reserved regardless.
 	VkDeviceSize								ReserveSpace(
-		uint32_t								byte_size
+		VkDeviceSize							byte_size,
+		VkDeviceSize							byte_alignment
 	)
 	{
-		assert( used_byte_size + byte_size <= total_byte_size );
-		auto ret					= used_byte_size;
-		used_byte_size				+= byte_size;
+		VkDeviceSize aligned_end = ( ( ( used_byte_size - 1 ) / byte_alignment ) + 1 ) * byte_alignment;
+		assert( aligned_end + byte_size <= total_byte_size );
+		auto ret					= aligned_end;
+		used_byte_size				= aligned_end + byte_size;
 		return ret;
 	}
 
