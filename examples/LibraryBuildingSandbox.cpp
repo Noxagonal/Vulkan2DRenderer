@@ -72,71 +72,8 @@ public:
 
 
 
-struct VertexPropertiesOffsets
-{
-	size_t			vertex_coords			= 0;
-	size_t			uv_coords				= 0;
-	size_t			color					= 0;
-	size_t			point_size				= 0;
-	size_t			single_texture_layer	= 0;
-};
-
-// TESTING!!!
-template<vk2d::vk2d_internal::VertexBaseDerivedType T>
-constexpr VertexPropertiesOffsets GetVertexPropertiesOffsets()
-{
-	static_assert( vk2d::vk2d_internal::VertexSupportedVertexCoordinateTypes<decltype( T::vertex_coords )> );
-	static_assert( vk2d::vk2d_internal::VertexSupportedUVCoordinateTypes<decltype( T::uv_coords )> );
-
-	auto ret					= VertexPropertiesOffsets();
-	auto temp_vertex			= T();
-
-	ret.vertex_coords			= reinterpret_cast<const uint8_t*>( &temp_vertex.vertex_coords )		- reinterpret_cast<const uint8_t*>( &temp_vertex );
-	ret.uv_coords				= reinterpret_cast<const uint8_t*>( &temp_vertex.uv_coords )			- reinterpret_cast<const uint8_t*>( &temp_vertex );
-	ret.color					= reinterpret_cast<const uint8_t*>( &temp_vertex.color )				- reinterpret_cast<const uint8_t*>( &temp_vertex );
-	ret.point_size				= reinterpret_cast<const uint8_t*>( &temp_vertex.point_size )			- reinterpret_cast<const uint8_t*>( &temp_vertex );
-	ret.single_texture_layer	= reinterpret_cast<const uint8_t*>( &temp_vertex.single_texture_layer )	- reinterpret_cast<const uint8_t*>( &temp_vertex );
-
-	return ret;
-};
-
-
-
 int main()
 {
-	// TESTING!!!
-	{
-		vk2d::StandardVertex std_vertex;
-		//std_vertex.position = { 50, 50 };
-		auto alignment_test = alignof( vk2d::StandardVertex );
-		auto size_test1 = sizeof( vk2d::StandardVertex );
-		auto size_test2 = sizeof( vk2d::StandardVertex::Base );
-
-		std::cout << std::format(
-			"Standard vertex alignment: {}\n"
-			"Standard vertex size:      {}\n"
-			"Standard vertex base size: {}\n\n",
-			alignment_test,
-			size_test1,
-			size_test2
-		);
-
-		std_vertex.vertex_coords = { 50, 50 };
-
-		auto offsets			= GetVertexPropertiesOffsets<vk2d::StandardVertex>();
-		auto previous_offset	= size_t( 0 );
-
-		std::cout << std::format( "vertex_coords offset from start:        {} - Offset from previous: {}\n", offsets.vertex_coords, offsets.vertex_coords - previous_offset );					previous_offset = offsets.vertex_coords;
-		std::cout << std::format( "uv_coords offset from start:            {} - Offset from previous: {}\n", offsets.uv_coords, offsets.uv_coords - previous_offset );							previous_offset = offsets.uv_coords;
-		std::cout << std::format( "color offset from start:                {} - Offset from previous: {}\n", offsets.color, offsets.color - previous_offset );									previous_offset = offsets.color;
-		std::cout << std::format( "point_size offset from start:           {} - Offset from previous: {}\n", offsets.point_size, offsets.point_size - previous_offset );						previous_offset = offsets.point_size;
-		std::cout << std::format( "single_texture_layer offset from start: {} - Offset from previous: {}\n", offsets.single_texture_layer, offsets.single_texture_layer - previous_offset );	previous_offset = offsets.single_texture_layer;
-
-		std::cout << "asdf\n";
-	}
-
-
-
 	vk2d::InstanceCreateInfo instance_create_info {};
 	auto instance = vk2d::CreateInstance( instance_create_info );
 	if( !instance ) return -1;
@@ -145,7 +82,7 @@ int main()
 	vk2d::WindowCreateInfo					window_create_info {};
 	window_create_info.size					= { 600, 600 };
 	window_create_info.coordinate_space		= vk2d::RenderCoordinateSpace::TEXEL_SPACE_CENTERED;
-	window_create_info.samples				= vk2d::Multisamples::SAMPLE_COUNT_8;
+	window_create_info.samples				= vk2d::Multisamples::SAMPLE_COUNT_1;
 	window_create_info.event_handler		= &event_handler;
 	auto window1 = instance->CreateOutputWindow( window_create_info );
 	if( !window1 ) return -1;
@@ -186,10 +123,6 @@ int main()
 		{
 			auto lattice_mesh = vk2d::mesh_generators::GenerateLatticeMesh( { -200, -200, 200, 200 }, { 16, 16 }, false );
 
-			//window1->DrawPoint( { -50, -50 }, { 1.0, 0.0, 0.0, 1.0 }, 16 );
-			//window1->DrawPoint( { 50, -50 }, { 0.0, 1.0, 0.0, 1.0 }, 16 );
-			//window1->DrawPoint( { -50, 50 }, { 0.0, 0.0, 1.0, 1.0 }, 16 );
-			//window1->DrawPoint( { 50, 50 }, { 1.0, 1.0, 1.0, 1.0 }, 16 );
 			//lattice_mesh.SetSampler( pixelated_sampler );
 			window1->DrawMesh( lattice_mesh );
 			window1->DrawEllipse( { -50, -50, 50, 50 } );
