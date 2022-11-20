@@ -22,6 +22,8 @@
 #include <mesh/modifiers/MeshModifiers.hpp>
 
 #include <interface/Instance.h>
+#include <interface/Monitor.hpp>
+#include <interface/Cursor.hpp>
 #include <interface/Window.h>
 #include <interface/RenderTargetTexture.h>
 #include <interface/Sampler.h>

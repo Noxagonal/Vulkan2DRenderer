@@ -3,6 +3,9 @@
 
 #include <containers/Color.hpp>
 
+#include "MonitorImpl.hpp"
+#include "CursorImpl.hpp"
+
 #include <core/SystemConsole.h>
 
 #include <vulkan/utils/QueueResolver.hpp>

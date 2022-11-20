@@ -2,6 +2,8 @@
 
 #include <core/SourceCommon.h>
 
+#include <interface/Window.h>
+
 #include <types/Synchronization.hpp>
 
 #include <system/MeshBuffer.h>
@@ -15,14 +17,14 @@
 #include <interface/Instance.h>
 #include <interface/InstanceImpl.h>
 
-#define GLFW_INCLUDE_NONE
-#include <GLFW/glfw3.h>
-
 #include <vector>
 #include <memory>
 #include <atomic>
 #include <map>
 #include <span>
+
+#define GLFW_INCLUDE_NONE
+#include <GLFW/glfw3.h>
 
 
 
@@ -371,132 +373,6 @@ private:
 
 	bool														is_good										= {};
 };
-
-
-
-
-
-
-
-class CursorImpl {
-	friend class WindowImpl;
-
-public:
-	CursorImpl(
-		const CursorImpl					&	other
-	) = delete;
-
-	CursorImpl(
-		CursorImpl							&&	other
-	) = default;
-
-	CursorImpl(
-		InstanceImpl						&	instance,
-		const std::filesystem::path			&	image_path,
-		glm::ivec2								hot_spot
-	);
-
-	CursorImpl(
-		InstanceImpl						&	instance,
-		glm::uvec2								image_size,
-		const std::vector<Color8>			&	image_data,
-		glm::ivec2								hot_spot
-	);
-
-	~CursorImpl();
-
-	CursorImpl								&	operator=(
-		const CursorImpl					&	other
-	) = delete;
-
-	CursorImpl								&	operator=(
-		CursorImpl							&&	other
-	) = default;
-
-	bool										IsGood();
-
-	InstanceImpl							&	GetInstance();
-	const std::vector<Color8>				&	GetTexelData();
-	GLFWcursor								*	GetGLFWcursor();
-	glm::uvec2									GetSize();
-	glm::ivec2									GetHotSpot();
-
-private:
-	InstanceImpl							&	instance;
-	std::vector<Color8>							pixel_data						= {};
-	GLFWcursor								*	cursor							= nullptr;
-	VkExtent2D									extent							= {};
-	VkOffset2D									hotSpot							= {};
-
-	bool										is_good							= {};
-};
-
-
-
-
-
-
-
-// Monitor object holds information about the physical monitor
-class MonitorImpl {
-	friend class Window;
-	friend class WindowImpl;
-	friend class Monitor;
-
-public:
-	MonitorImpl(
-		GLFWmonitor									*	monitor,
-		VkOffset2D										position,
-		VkExtent2D										physical_size,
-		std::string										name,
-		MonitorVideoMode								current_video_mode,
-		const std::vector<MonitorVideoMode>			&	video_modes
-	);
-
-														MonitorImpl()						= delete;
-
-														MonitorImpl(
-		const MonitorImpl							&	other )								= default;
-
-														MonitorImpl(
-		MonitorImpl									&&	other )								= default;
-
-														~MonitorImpl()						= default;
-
-	const MonitorVideoMode							&	GetCurrentVideoMode() const;
-
-	const std::vector<MonitorVideoMode>				&	GetVideoModes() const;
-
-	void												SetGamma(
-		float											gamma );
-
-	std::vector<GammaRampNode>							GetGammaRamp();
-
-	void												SetGammaRamp(
-		const std::vector<GammaRampNode>			&	ramp );
-
-	MonitorImpl										&	operator=(
-		const MonitorImpl							&	other )								= default;
-
-	MonitorImpl										&	operator=(
-		MonitorImpl									&&	other )								= default;
-
-	bool												IsGood();
-
-private:
-	GLFWmonitor										*	monitor								= {};
-	VkOffset2D											position							= {};
-	VkExtent2D											physical_size						= {};
-	std::string											name								= {};
-	MonitorVideoMode									current_video_mode					= {};
-	std::vector<MonitorVideoMode>						video_modes;
-
-	bool												is_good								= {};
-};
-
-
-
-
 
 
 
