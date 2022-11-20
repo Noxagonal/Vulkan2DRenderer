@@ -159,8 +159,8 @@ constexpr VertexDescriptor GetVertexDescriptorStandardMembersFromVertexType()
 		ret.member_descriptors.push_back( member_description );
 	}
 
-	ret.alignment	= VertexT::GetMyAlignment();
-	ret.size		= VertexT::GetMySize();
+	ret.alignment	= VertexT::GetBaseAlignment();
+	ret.size		= VertexT::GetBaseSize();
 	assert( ret.size );
 	assert( ret.size % ret.alignment == 0 );
 

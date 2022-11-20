@@ -69,8 +69,8 @@ static_assert( VertexHasColor<StandardVertex> );
 static_assert( VertexHasPointSize<StandardVertex> );
 static_assert( VertexHasSingleTextureLayer<StandardVertex> );
 
-static_assert( StandardVertex::GetMySize()				== sizeof( StandardVertexReference ) );
-static_assert( StandardVertex::GetMyAlignment()			== alignof( StandardVertexReference ) );
+static_assert( StandardVertex::GetBaseSize()			== sizeof( StandardVertexReference ) );
+static_assert( StandardVertex::GetBaseAlignment()		== alignof( StandardVertexReference ) );
 static_assert( alignof( StandardVertex )				== alignof( StandardVertexReference ) );
 
 static_assert( StandardVertex::GetMemberCount()			== 5 );

@@ -77,14 +77,14 @@ public:
 		return sizeof...( MembersT );
 	}
 
-	static consteval size_t GetMySize()
+	static consteval size_t GetBaseSize()
 	{
-		return GetMySizeImpl<0, MembersT...>();
+		return GetBaseSizeImpl<0, MembersT...>();
 	}
 
-	static consteval size_t GetMyAlignment()
+	static consteval size_t GetBaseAlignment()
 	{
-		return std::max( GetMyAlignmentImpl<MembersT...>(), size_t( 16 ) );
+		return std::max( GetBaseAlignmentImpl<MembersT...>(), size_t( 16 ) );
 	}
 
 private:
@@ -144,29 +144,29 @@ private:
 	}
 
 	template<typename FirstT, typename ...RestT>
-	static consteval size_t GetMyAlignmentImpl()
+	static consteval size_t GetBaseAlignmentImpl()
 	{
 		constexpr size_t alignment = alignof( FirstT );
 		if constexpr( sizeof...( RestT ) )
 		{
-			return std::max<size_t>( GetMyAlignmentImpl<RestT...>(), alignment );
+			return std::max<size_t>( GetBaseAlignmentImpl<RestT...>(), alignment );
 		}
 		return alignment;
 	}
 
 	template<size_t CurrentOffset, typename FirstT, typename ...RestT>
-	static consteval size_t GetMySizeImpl()
+	static consteval size_t GetBaseSizeImpl()
 	{
 		constexpr size_t new_offset = GetAlignmentForType<CurrentOffset, FirstT>();
 		if constexpr( sizeof...( RestT ) > 0 ) {
-			return GetMySizeImpl<new_offset + sizeof( FirstT ), RestT...>();
+			return GetBaseSizeImpl<new_offset + sizeof( FirstT ), RestT...>();
 		}
-		return AlignOffset<new_offset + sizeof( FirstT ), GetMyAlignment()>();
+		return AlignOffset<new_offset + sizeof( FirstT ), GetBaseAlignment()>();
 	}
 
 	// std::tuple doesn't guarantee correct ordering of template pack types and may not
 	// take into consideration the alignment so we're doing guaranteed layout manually.
-	alignas( GetMyAlignment() ) std::array<uint8_t, GetMySize()> data;
+	alignas( GetBaseAlignment() ) std::array<uint8_t, GetBaseSize()> data;
 };
 
 
