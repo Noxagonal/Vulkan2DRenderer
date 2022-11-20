@@ -19,8 +19,11 @@ namespace vk2d_internal {
 
 
 // Private function declarations.
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 uint32_t RoundToCeilingPowerOfTwo(
-	uint32_t			value );
+	uint32_t			value
+);
 
 
 
@@ -29,6 +32,7 @@ uint32_t RoundToCeilingPowerOfTwo(
 
 
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 vk2d::vk2d_internal::FontResourceImpl::FontResourceImpl(
 	FontResource							&	my_interface,
 	ResourceManagerImpl						&	resource_manager,
@@ -56,18 +60,21 @@ vk2d::vk2d_internal::FontResourceImpl::FontResourceImpl(
 	is_good		= true;
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 vk2d::vk2d_internal::FontResourceImpl::~FontResourceImpl()
 {}
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 vk2d::ResourceStatus vk2d::vk2d_internal::FontResourceImpl::GetStatus()
 {
 	if( !is_good )				return ResourceStatus::FAILED_TO_LOAD;
 
 	auto local_status = status.load();
-	if( local_status == ResourceStatus::UNDETERMINED ) {
+	if( local_status == ResourceStatus::UNDETERMINED )
+	{
 
-		if( load_function_run_fence.IsSet() ) {
-
+		if( load_function_run_fence.IsSet() )
+		{
 			// "texture_resource" is set by the MTLoad() function so we can access it
 			// without further mutex locking. ( "load_function_run_fence" is set )
 			status = local_status = texture_resource->GetStatus();
@@ -77,6 +84,7 @@ vk2d::ResourceStatus vk2d::vk2d_internal::FontResourceImpl::GetStatus()
 	return local_status;
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 vk2d::ResourceStatus vk2d::vk2d_internal::FontResourceImpl::WaitUntilLoaded(
 	std::chrono::nanoseconds timeout
 )
@@ -87,6 +95,7 @@ vk2d::ResourceStatus vk2d::vk2d_internal::FontResourceImpl::WaitUntilLoaded(
 	return WaitUntilLoaded( std::chrono::steady_clock::now() + timeout );
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 vk2d::ResourceStatus vk2d::vk2d_internal::FontResourceImpl::WaitUntilLoaded(
 	std::chrono::steady_clock::time_point timeout
 )
@@ -109,6 +118,7 @@ vk2d::ResourceStatus vk2d::vk2d_internal::FontResourceImpl::WaitUntilLoaded(
 	return local_status;
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 bool vk2d::vk2d_internal::FontResourceImpl::MTLoad(
 	ThreadPrivateResource * thread_resource
 )
@@ -392,7 +402,7 @@ bool vk2d::vk2d_internal::FontResourceImpl::MTLoad(
 			}
 
 			// Attach rendered glyph to final texture atlas.
-			auto atlas_location			= AttachGlyphToAtlas(
+			auto atlas_location = AttachGlyphToAtlas(
 				face.face->glyph,
 				glyph_atlas_padding,
 				final_glyph_pixels
@@ -407,7 +417,7 @@ bool vk2d::vk2d_internal::FontResourceImpl::MTLoad(
 
 			// Create glyph info structure for the glyph
 			{
-				Rect2f uv_coords		= {
+				Rect2f uv_coords = {
 					float( atlas_location.location.top_left.x ) / float( atlas_size ),
 					float( atlas_location.location.top_left.y ) / float( atlas_size ),
 					float( atlas_location.location.bottom_right.x ) / float( atlas_size ),
@@ -487,6 +497,7 @@ bool vk2d::vk2d_internal::FontResourceImpl::MTLoad(
 	return true;
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void vk2d::vk2d_internal::FontResourceImpl::MTUnload(
 	ThreadPrivateResource * thread_resource
 )
@@ -499,6 +510,7 @@ void vk2d::vk2d_internal::FontResourceImpl::MTUnload(
 
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 vk2d::Rect2f vk2d::vk2d_internal::FontResourceImpl::CalculateRenderedSize(
 	std::string_view	text,
 	float				kerning,
@@ -570,6 +582,7 @@ vk2d::Rect2f vk2d::vk2d_internal::FontResourceImpl::CalculateRenderedSize(
 	return ret;
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 bool vk2d::vk2d_internal::FontResourceImpl::FaceExists(
 	uint32_t font_face
 ) const
@@ -580,6 +593,7 @@ bool vk2d::vk2d_internal::FontResourceImpl::FaceExists(
 	return false;
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 vk2d::TextureResource *vk2d::vk2d_internal::FontResourceImpl::GetTextureResource()
 {
 	if( GetStatus() == ResourceStatus::LOADED ) {
@@ -588,6 +602,7 @@ vk2d::TextureResource *vk2d::vk2d_internal::FontResourceImpl::GetTextureResource
 	return {};
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 const vk2d::vk2d_internal::GlyphInfo *vk2d::vk2d_internal::FontResourceImpl::GetGlyphInfo(
 	uint32_t		font_face,
 	uint32_t		character
@@ -605,11 +620,13 @@ const vk2d::vk2d_internal::GlyphInfo *vk2d::vk2d_internal::FontResourceImpl::Get
 	return &face_info.glyph_infos[ glyph_index ];
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 bool vk2d::vk2d_internal::FontResourceImpl::IsGood() const
 {
 	return is_good;
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 vk2d::vk2d_internal::FontResourceImpl::AtlasTexture *vk2d::vk2d_internal::FontResourceImpl::CreateNewAtlasTexture()
 {
 	auto new_atlas_texture			= std::make_unique<FontResourceImpl::AtlasTexture>();
@@ -623,6 +640,7 @@ vk2d::vk2d_internal::FontResourceImpl::AtlasTexture *vk2d::vk2d_internal::FontRe
 	return new_atlas_texture_ptr;
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 vk2d::vk2d_internal::FontResourceImpl::AtlasLocation vk2d::vk2d_internal::FontResourceImpl::ReserveSpaceForGlyphFromAtlasTextures(
 	FT_GlyphSlot		glyph,
 	uint32_t			glyph_atlas_padding
@@ -671,10 +689,12 @@ vk2d::vk2d_internal::FontResourceImpl::AtlasLocation vk2d::vk2d_internal::FontRe
 			atlas_texture->current_write_location			= 0;
 
 			// Check height again.
-			if( atlas_texture->previous_row_height + glyph_height + glyph_atlas_padding < atlas_size ) {
+			if( atlas_texture->previous_row_height + glyph_height + glyph_atlas_padding < atlas_size )
+			{
 				// Fits height wise.
 
-				if( atlas_texture->current_write_location + glyph_width + glyph_atlas_padding < atlas_size ) {
+				if( atlas_texture->current_write_location + glyph_width + glyph_atlas_padding < atlas_size )
+				{
 					// Fits width wise.
 
 					FontResourceImpl::AtlasLocation new_glyph_location {};
@@ -744,18 +764,22 @@ vk2d::vk2d_internal::FontResourceImpl::AtlasLocation vk2d::vk2d_internal::FontRe
 	return new_location;
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void vk2d::vk2d_internal::FontResourceImpl::CopyGlyphTextureToAtlasLocation(
-	AtlasLocation							atlas_location,
-	const std::vector<Color8>		&	converted_texture_data )
+	AtlasLocation						atlas_location,
+	const std::vector<Color8>		&	converted_texture_data
+)
 {
 	assert( atlas_location.atlas_ptr );
 
 	auto glyph_width		= atlas_location.location.bottom_right.x - atlas_location.location.top_left.x;
 	auto glyph_height		= atlas_location.location.bottom_right.y - atlas_location.location.top_left.y;
-	glm::uvec2 location	= atlas_location.location.top_left;
+	glm::uvec2 location		= atlas_location.location.top_left;
 
-	for( uint32_t gy = 0; gy < glyph_height; ++gy ) {
-		for( uint32_t gx = 0; gx < glyph_width; ++gx ) {
+	for( uint32_t gy = 0; gy < glyph_height; ++gy )
+	{
+		for( uint32_t gx = 0; gx < glyph_width; ++gx )
+		{
 			auto ax		= location.x + gx;
 			auto ay		= location.y + gy;
 			atlas_location.atlas_ptr->data[ ay * atlas_size + ax ]	= converted_texture_data[ gy * glyph_width + gx ];
@@ -763,22 +787,27 @@ void vk2d::vk2d_internal::FontResourceImpl::CopyGlyphTextureToAtlasLocation(
 	}
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 vk2d::vk2d_internal::FontResourceImpl::AtlasLocation vk2d::vk2d_internal::FontResourceImpl::AttachGlyphToAtlas(
 	FT_GlyphSlot							glyph,
 	uint32_t								glyph_atlas_padding,
-	const std::vector<Color8>			&	converted_texture_data )
+	const std::vector<Color8>			&	converted_texture_data
+)
 {
 	auto atlas_location = ReserveSpaceForGlyphFromAtlasTextures(
 		glyph,
 		glyph_atlas_padding
 	);
-	if( atlas_location.atlas_ptr ) {
+	if( atlas_location.atlas_ptr )
+	{
 		CopyGlyphTextureToAtlasLocation(
 			atlas_location,
 			converted_texture_data
 		);
 		return atlas_location;
-	} else {
+	}
+	else
+	{
 		resource_manager.GetInstance().Report( ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot create font, cannot attach glyph to atlas texture!" );
 		return {};
 	}
@@ -786,10 +815,7 @@ vk2d::vk2d_internal::FontResourceImpl::AtlasLocation vk2d::vk2d_internal::FontRe
 
 
 
-
-
-
-
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 uint32_t vk2d::vk2d_internal::RoundToCeilingPowerOfTwo( uint32_t value )
 {
 	value--;
