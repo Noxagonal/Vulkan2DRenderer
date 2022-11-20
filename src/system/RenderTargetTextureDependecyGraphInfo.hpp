@@ -1,10 +1,10 @@
 #pragma once
 
-#include <core/SourceCommon.h>
+#include <core/SourceCommon.hpp>
 
-#include <system/DescriptorSet.h>
+#include <system/DescriptorSet.hpp>
 
-#include <containers/Multisamples.h>
+#include <containers/Multisamples.hpp>
 
 
 

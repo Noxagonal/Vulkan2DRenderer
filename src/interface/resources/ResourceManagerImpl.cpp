@@ -1,18 +1,18 @@
 
-#include <core/SourceCommon.h>
+#include <core/SourceCommon.hpp>
 
-#include <interface/resources/ResourceManager.h>
-#include "ResourceManagerImpl.h"
+#include <interface/resources/ResourceManager.hpp>
+#include "ResourceManagerImpl.hpp"
 
-#include <interface/resources/ResourceBase.h>
-#include "ResourceImplBase.h"
+#include <interface/resources/ResourceBase.hpp>
+#include "ResourceImplBase.hpp"
 
-#include <system/ThreadPool.h>
+#include <system/ThreadPool.hpp>
 
-#include <interface/InstanceImpl.h>
+#include <interface/InstanceImpl.hpp>
 
-#include <interface/resources/TextureResource.h>
-#include <interface/resources/FontResource.h>
+#include <interface/resources/TextureResource.hpp>
+#include <interface/resources/FontResource.hpp>
 
 
 

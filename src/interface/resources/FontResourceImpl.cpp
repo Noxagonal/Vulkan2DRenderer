@@ -1,14 +1,14 @@
 
-#include <core/SourceCommon.h>
+#include <core/SourceCommon.hpp>
 
-#include <interface/resources/FontResource.h>
-#include "FontResourceImpl.h"
+#include <interface/resources/FontResource.hpp>
+#include "FontResourceImpl.hpp"
 
-#include "ResourceManagerImpl.h"
+#include "ResourceManagerImpl.hpp"
 
-#include <interface/resources/TextureResource.h>
-#include <system/ThreadPrivateResources.h>
-#include <interface/InstanceImpl.h>
+#include <interface/resources/TextureResource.hpp>
+#include <system/ThreadPrivateResources.hpp>
+#include <interface/InstanceImpl.hpp>
 #include <stb_image_write.h>
 
 

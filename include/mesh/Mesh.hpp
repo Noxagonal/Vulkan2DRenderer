@@ -1,6 +1,6 @@
 #pragma once
 
-#include <core/Common.h>
+#include <core/Common.hpp>
 
 #include "MeshBase.hpp"
 #include "vertex/StandardVertex.hpp"

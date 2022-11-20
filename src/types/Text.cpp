@@ -1,7 +1,7 @@
 
-#include <core/SourceCommon.h>
+#include <core/SourceCommon.hpp>
 
-#include <containers/Text.h>
+#include <containers/Text.hpp>
 
 
 

@@ -1,12 +1,12 @@
 
-#include <core/SourceCommon.h>
+#include <core/SourceCommon.hpp>
 
-#include <interface/resources/TextureResource.h>
-#include "TextureResourceImpl.h"
+#include <interface/resources/TextureResource.hpp>
+#include "TextureResourceImpl.hpp"
 
-#include "ResourceManagerImpl.h"
+#include "ResourceManagerImpl.hpp"
 
-#include <interface/InstanceImpl.h>
+#include <interface/InstanceImpl.hpp>
 
 
 

@@ -1,7 +1,7 @@
 
-#include <core/SourceCommon.h>
+#include <core/SourceCommon.hpp>
 
-#include "WindowImpl.h"
+#include "WindowImpl.hpp"
 #include "MonitorImpl.hpp"
 #include "CursorImpl.hpp"
 
@@ -9,14 +9,14 @@
 #include <containers/Color.hpp>
 #include <mesh/Mesh.hpp>
 
-#include <system/MeshBuffer.h>
-#include <system/ThreadPool.h>
+#include <system/MeshBuffer.hpp>
+#include <system/ThreadPool.hpp>
 
-#include "InstanceImpl.h"
-#include "resources/TextureResourceImpl.h"
-#include "RenderTargetTextureImpl.h"
+#include "InstanceImpl.hpp"
+#include "resources/TextureResourceImpl.hpp"
+#include "RenderTargetTextureImpl.hpp"
 
-#include "SamplerImpl.h"
+#include "SamplerImpl.hpp"
 
 #include <mesh/AlignedMeshBufferOffsets.hpp>
 

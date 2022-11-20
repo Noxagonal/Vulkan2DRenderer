@@ -1,6 +1,6 @@
 #pragma once
 
-#include <core/Common.h>
+#include <core/Common.hpp>
 
 #include "MeshPrimitives.hpp"
 #include "generators/MeshGeneratorDeclarations.hpp"

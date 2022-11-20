@@ -1,8 +1,8 @@
 
-#include <core/SourceCommon.h>
+#include <core/SourceCommon.hpp>
 
-#include "InstanceImpl.h"
-#include "SamplerImpl.h"
+#include "InstanceImpl.hpp"
+#include "SamplerImpl.hpp"
 
 
 

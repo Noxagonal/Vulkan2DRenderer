@@ -1,8 +1,8 @@
 
-#include <core/SourceCommon.h>
+#include <core/SourceCommon.hpp>
 
-#include <interface/resources/MaterialResource.h>
-#include "MaterialResourceImpl.h"
+#include <interface/resources/MaterialResource.hpp>
+#include "MaterialResourceImpl.hpp"
 
 
 

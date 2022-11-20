@@ -1,7 +1,7 @@
 
-#include <core/SourceCommon.h>
+#include <core/SourceCommon.hpp>
 
-#include "InstanceImpl.h"
+#include "InstanceImpl.hpp"
 
 
 

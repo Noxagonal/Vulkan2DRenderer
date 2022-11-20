@@ -1,15 +1,15 @@
 
-#include <core/SourceCommon.h>
+#include <core/SourceCommon.hpp>
 
 #include <containers/Rect2.hpp>
 #include <containers/Color.hpp>
 #include <containers/Transform.hpp>
 
-#include <interface/resources/FontResource.h>
-#include <interface/resources/FontResourceImpl.h>
+#include <interface/resources/FontResource.hpp>
+#include <interface/resources/FontResourceImpl.hpp>
 
-#include <interface/resources/TextureResource.h>
-#include <interface/Texture.h>
+#include <interface/resources/TextureResource.hpp>
+#include <interface/Texture.hpp>
 
 #include <mesh/MeshBase.hpp>
 

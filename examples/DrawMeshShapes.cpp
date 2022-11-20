@@ -11,7 +11,7 @@
 // Mesh objects contain everything required for the draw, vertices,
 // polygon list, UVs, texture, sampler...
 
-#include <VK2D.h>
+#include <VK2D.hpp>
 #include <chrono>
 
 

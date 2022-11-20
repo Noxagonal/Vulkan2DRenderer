@@ -1,7 +1,7 @@
 
-#include <core/SourceCommon.h>
+#include <core/SourceCommon.hpp>
 
-#include "WindowImpl.h"
+#include "WindowImpl.hpp"
 #include <mesh/generators/MeshGenerators.hpp>
 #include <mesh/modifiers/MeshModifiers.hpp>
 

@@ -1,13 +1,13 @@
 #pragma once
 
-#include <core/Common.h>
+#include <core/Common.hpp>
 
 #include "MeshGeneratorDeclarations.hpp"
 
 #include <mesh/Mesh.hpp>
 #include <mesh/vertex/StandardVertex.hpp>
 #include <mesh/vertex/VertexTools.hpp>
-#include <interface/resources/FontResource.h>
+#include <interface/resources/FontResource.hpp>
 
 
 

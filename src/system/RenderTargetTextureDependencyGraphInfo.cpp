@@ -1,9 +1,9 @@
 
-#include <core/SourceCommon.h>
+#include <core/SourceCommon.hpp>
 
 #include <system/RenderTargetTextureDependecyGraphInfo.hpp>
 
-#include <interface/InstanceImpl.h>
+#include <interface/InstanceImpl.hpp>
 
 
 

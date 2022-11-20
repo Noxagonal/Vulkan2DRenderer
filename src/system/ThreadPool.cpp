@@ -1,7 +1,7 @@
 
-#include <core/SourceCommon.h>
+#include <core/SourceCommon.hpp>
 
-#include <system/ThreadPool.h>
+#include <system/ThreadPool.hpp>
 
 
 

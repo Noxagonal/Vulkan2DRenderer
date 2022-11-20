@@ -10,7 +10,7 @@
 // to the vertex data and can be used to define scene hierarchy.
 // VK2D transformations define location, rotation, and scale.
 
-#include <VK2D.h>
+#include <VK2D.hpp>
 #include <chrono>
 #include <iostream>
 

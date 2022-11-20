@@ -4,7 +4,7 @@
 // shapes to that window.
 
 // Include VK2D.h header to the project, this will include everything.
-#include <VK2D.h>
+#include <VK2D.hpp>
 
 
 

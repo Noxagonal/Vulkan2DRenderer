@@ -1,12 +1,12 @@
 
-#include <core/SourceCommon.h>
+#include <core/SourceCommon.hpp>
 
-#include <interface/resources/FontResource.h>
-#include "FontResourceImpl.h"
+#include <interface/resources/FontResource.hpp>
+#include "FontResourceImpl.hpp"
 
-#include "ResourceManagerImpl.h"
+#include "ResourceManagerImpl.hpp"
 
-#include <interface/InstanceImpl.h>
+#include <interface/InstanceImpl.hpp>
 
 
 

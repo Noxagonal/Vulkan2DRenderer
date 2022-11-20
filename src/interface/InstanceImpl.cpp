@@ -1,25 +1,25 @@
 
-#include <core/SourceCommon.h>
+#include <core/SourceCommon.hpp>
 
 #include <containers/Color.hpp>
 
 #include "MonitorImpl.hpp"
 #include "CursorImpl.hpp"
 
-#include <core/SystemConsole.h>
+#include <core/SystemConsole.hpp>
 
 #include <vulkan/utils/QueueResolver.hpp>
-#include <system/ThreadPool.h>
-#include <system/ThreadPrivateResources.h>
-#include <system/DescriptorSet.h>
+#include <system/ThreadPool.hpp>
+#include <system/ThreadPrivateResources.hpp>
+#include <system/DescriptorSet.hpp>
 
-#include "InstanceImpl.h"
-#include "resources/ResourceManagerImpl.h"
-#include "WindowImpl.h"
-#include "SamplerImpl.h"
-#include "resources/TextureResourceImpl.h"
+#include "InstanceImpl.hpp"
+#include "resources/ResourceManagerImpl.hpp"
+#include "WindowImpl.hpp"
+#include "SamplerImpl.hpp"
+#include "resources/TextureResourceImpl.hpp"
 
-#include <Spir-V/IncludeAllShaders.h>
+#include <Spir-V/IncludeAllShaders.hpp>
 
 #define GLFW_INCLUDE_NONE
 #include <GLFW/glfw3.h>

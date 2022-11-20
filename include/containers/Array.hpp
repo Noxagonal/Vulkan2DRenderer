@@ -1,6 +1,6 @@
 #pragma once
 
-#include <core/Common.h>
+#include <core/Common.hpp>
 
 #include <initializer_list>
 #include <ostream>

@@ -1,7 +1,7 @@
 
-#include <core/SourceCommon.h>
+#include <core/SourceCommon.hpp>
 
-#include "RenderTargetTextureImpl.h"
+#include "RenderTargetTextureImpl.hpp"
 #include <mesh/generators/MeshGenerators.hpp>
 #include <mesh/modifiers/MeshModifiers.hpp>
 

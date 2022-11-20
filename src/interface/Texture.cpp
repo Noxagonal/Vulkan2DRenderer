@@ -1,7 +1,7 @@
 
-#include <core/SourceCommon.h>
+#include <core/SourceCommon.hpp>
 
-#include "TextureImpl.h"
+#include "TextureImpl.hpp"
 
 
 

@@ -1,5 +1,5 @@
 
-#include <VK2D.h>
+#include <VK2D.hpp>
 
 #include <chrono>
 #include <string>

@@ -1,8 +1,8 @@
 
-#include <core/SourceCommon.h>
+#include <core/SourceCommon.hpp>
 
 #include "CursorImpl.hpp"
-#include "InstanceImpl.h"
+#include "InstanceImpl.hpp"
 
 #include <containers/Color.hpp>
 

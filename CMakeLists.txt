@@ -135,7 +135,7 @@ file(GLOB FILES_GLSL_SHADERS
 )
 # Compiled shaders, only really need the "IncludeAllShaders.h",
 set(FILES_COMPILED_SHADERS
-	"${CMAKE_CURRENT_SOURCE_DIR}/shaders/spir-v/IncludeAllShaders.h"
+	"${CMAKE_CURRENT_SOURCE_DIR}/shaders/spir-v/IncludeAllShaders.hpp"
 )
 
 
@@ -179,7 +179,7 @@ endif()
 
 target_precompile_headers(VK2D
 	PRIVATE
-		"${CMAKE_CURRENT_SOURCE_DIR}/src/core/PreCompiledHeader.h"
+		"${CMAKE_CURRENT_SOURCE_DIR}/src/core/PreCompiledHeader.hpp"
 )
 
 add_dependencies(VK2D
@@ -263,7 +263,7 @@ else()
 	# Other than Visual Studio compilers.
 
 	add_custom_command(
-		OUTPUT "${CMAKE_CURRENT_SOURCE_DIR}/shaders/spir-v/includeAllShaders.h"
+		OUTPUT "${CMAKE_CURRENT_SOURCE_DIR}/shaders/spir-v/includeAllShaders.hpp"
 		COMMAND CompileGLSLShadersToSpirV
 		WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/shaders/"
 		DEPENDS ${FILES_GLSL_SHADERS}

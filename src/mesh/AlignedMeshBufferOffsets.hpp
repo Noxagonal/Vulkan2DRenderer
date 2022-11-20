@@ -1,8 +1,8 @@
 #pragma once
 
-#include <core/SourceCommon.h>
+#include <core/SourceCommon.hpp>
 
-#include <system/MeshBuffer.h>
+#include <system/MeshBuffer.hpp>
 #include <mesh/vertex/RawVertexData.hpp>
 
 

@@ -1,7 +1,7 @@
 
-#include <core/SourceCommon.h>
+#include <core/SourceCommon.hpp>
 
-#include <containers/BlurType.h>
+#include <containers/BlurType.hpp>
 #include <containers/Rect2.hpp>
 #include <containers/Color.hpp>
 
@@ -9,13 +9,13 @@
 #include <mesh/AlignedMeshBufferOffsets.hpp>
 
 #include <system/RenderTargetTextureDependecyGraphInfo.hpp>
-#include <system/ShaderInterface.h>
-#include <system/MeshBuffer.h>
+#include <system/ShaderInterface.hpp>
+#include <system/MeshBuffer.hpp>
 
-#include "InstanceImpl.h"
-#include "TextureImpl.h"
-#include "RenderTargetTextureImpl.h"
-#include "SamplerImpl.h"
+#include "InstanceImpl.hpp"
+#include "TextureImpl.hpp"
+#include "RenderTargetTextureImpl.hpp"
+#include "SamplerImpl.hpp"
 
 
 

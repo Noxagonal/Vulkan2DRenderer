@@ -16,7 +16,7 @@
 // application. You can also destroy the child windows individually by pressing their
 // "X" button.
 
-#include <VK2D.h>
+#include <VK2D.hpp>
 #include <list>
 
 

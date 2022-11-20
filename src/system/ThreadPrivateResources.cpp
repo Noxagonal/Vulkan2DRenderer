@@ -1,12 +1,12 @@
 
-#include <core/SourceCommon.h>
+#include <core/SourceCommon.hpp>
 
-#include <system/ThreadPrivateResources.h>
-#include <system/DescriptorSet.h>
+#include <system/ThreadPrivateResources.hpp>
+#include <system/DescriptorSet.hpp>
 
 #include <vulkan/utils/VulkanMemoryManagement.hpp>
 
-#include <interface/InstanceImpl.h>
+#include <interface/InstanceImpl.hpp>
 
 
 

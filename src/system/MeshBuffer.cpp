@@ -1,13 +1,13 @@
 
-#include <core/SourceCommon.h>
+#include <core/SourceCommon.hpp>
 
 #include <mesh/MeshPrimitives.hpp>
 
 #include <vulkan/utils/VulkanMemoryManagement.hpp>
-#include <system/MeshBuffer.h>
+#include <system/MeshBuffer.hpp>
 
-#include <interface/WindowImpl.h>
-#include <interface/InstanceImpl.h>
+#include <interface/WindowImpl.hpp>
+#include <interface/InstanceImpl.hpp>
 
 
 

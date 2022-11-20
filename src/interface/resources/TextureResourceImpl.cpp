@@ -1,19 +1,19 @@
 
-#include <core/SourceCommon.h>
+#include <core/SourceCommon.hpp>
 
-#include <interface/resources/TextureResource.h>
-#include "TextureResourceImpl.h"
+#include <interface/resources/TextureResource.hpp>
+#include "TextureResourceImpl.hpp"
 
-#include <system/ThreadPrivateResources.h>
-#include <system/DescriptorSet.h>
-#include <system/CommonTools.h>
+#include <system/ThreadPrivateResources.hpp>
+#include <system/DescriptorSet.hpp>
+#include <system/CommonTools.hpp>
 #include <system/ImageFormatConverter.hpp>
 
-#include <interface/Instance.h>
-#include <interface/InstanceImpl.h>
+#include <interface/Instance.hpp>
+#include <interface/InstanceImpl.hpp>
 
-#include <interface/resources/ResourceManager.h>
-#include <interface/resources/ResourceManagerImpl.h>
+#include <interface/resources/ResourceManager.hpp>
+#include <interface/resources/ResourceManagerImpl.hpp>
 
 #include <stb_image.h>
 
