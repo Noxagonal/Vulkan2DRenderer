@@ -6,7 +6,7 @@
 #include <containers/Transform.hpp>
 
 #include <interface/resources/FontResource.hpp>
-#include <interface/resources/FontResourceImpl.hpp>
+#include <interface/resources/font/FontResourceImpl.hpp>
 
 #include <interface/resources/TextureResource.hpp>
 #include <interface/Texture.hpp>

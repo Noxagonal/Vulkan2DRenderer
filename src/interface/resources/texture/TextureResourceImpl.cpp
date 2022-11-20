@@ -1,7 +1,6 @@
 
 #include <core/SourceCommon.hpp>
 
-#include <interface/resources/TextureResource.hpp>
 #include "TextureResourceImpl.hpp"
 
 #include <system/ThreadPrivateResources.hpp>
@@ -10,10 +9,10 @@
 #include <system/ImageFormatConverter.hpp>
 
 #include <interface/Instance.hpp>
-#include <interface/InstanceImpl.hpp>
+#include <interface/instance/InstanceImpl.hpp>
 
 #include <interface/resources/ResourceManager.hpp>
-#include <interface/resources/ResourceManagerImpl.hpp>
+#include <interface/resource_manager/ResourceManagerImpl.hpp>
 
 #include <stb_image.h>
 

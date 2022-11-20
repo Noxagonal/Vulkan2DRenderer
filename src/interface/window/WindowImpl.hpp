@@ -15,7 +15,7 @@
 #include <mesh/vertex/RawVertexData.hpp>
 
 #include <interface/Instance.hpp>
-#include <interface/InstanceImpl.hpp>
+#include <interface/instance/InstanceImpl.hpp>
 
 #include <vector>
 #include <memory>

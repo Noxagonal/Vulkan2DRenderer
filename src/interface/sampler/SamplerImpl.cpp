@@ -1,7 +1,7 @@
 
 #include <core/SourceCommon.hpp>
 
-#include "InstanceImpl.hpp"
+#include "../instance/InstanceImpl.hpp"
 #include "SamplerImpl.hpp"
 
 

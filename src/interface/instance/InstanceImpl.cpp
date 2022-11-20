@@ -1,10 +1,10 @@
 
 #include <core/SourceCommon.hpp>
 
-#include <containers/Color.hpp>
+#include "InstanceImpl.hpp"
 
-#include "MonitorImpl.hpp"
-#include "CursorImpl.hpp"
+#include "../monitor/MonitorImpl.hpp"
+#include "../cursor/CursorImpl.hpp"
 
 #include <core/SystemConsole.hpp>
 
@@ -13,11 +13,12 @@
 #include <system/ThreadPrivateResources.hpp>
 #include <system/DescriptorSet.hpp>
 
-#include "InstanceImpl.hpp"
-#include "resources/ResourceManagerImpl.hpp"
-#include "WindowImpl.hpp"
-#include "SamplerImpl.hpp"
-#include "resources/TextureResourceImpl.hpp"
+#include "../resource_manager/ResourceManagerImpl.hpp"
+#include "../resources/texture/TextureResourceImpl.hpp"
+#include "../window/WindowImpl.hpp"
+#include "../sampler/SamplerImpl.hpp"
+
+#include <containers/Color.hpp>
 
 #include <Spir-V/IncludeAllShaders.hpp>
 

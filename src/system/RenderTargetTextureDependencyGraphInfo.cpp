@@ -3,7 +3,7 @@
 
 #include <system/RenderTargetTextureDependecyGraphInfo.hpp>
 
-#include <interface/InstanceImpl.hpp>
+#include <interface/instance/InstanceImpl.hpp>
 
 
 

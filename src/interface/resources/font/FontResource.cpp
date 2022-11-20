@@ -4,9 +4,9 @@
 #include <interface/resources/FontResource.hpp>
 #include "FontResourceImpl.hpp"
 
-#include "ResourceManagerImpl.hpp"
+#include <interface/resource_manager/ResourceManagerImpl.hpp>
 
-#include <interface/InstanceImpl.hpp>
+#include <interface/instance/InstanceImpl.hpp>
 
 
 

@@ -4,9 +4,9 @@
 #include <interface/resources/ResourceBase.hpp>
 #include "ResourceImplBase.hpp"
 
-#include <interface/InstanceImpl.hpp>
+#include <interface/instance/InstanceImpl.hpp>
 
-#include "ResourceManagerImpl.hpp"
+#include <interface/resource_manager/ResourceManagerImpl.hpp>
 
 
 

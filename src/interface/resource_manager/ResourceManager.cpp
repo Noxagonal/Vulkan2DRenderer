@@ -4,7 +4,7 @@
 #include <interface/resources/ResourceManager.hpp>
 #include "ResourceManagerImpl.hpp"
 
-#include <interface/InstanceImpl.hpp>
+#include <interface/instance/InstanceImpl.hpp>
 
 
 

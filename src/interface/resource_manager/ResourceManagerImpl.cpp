@@ -5,11 +5,11 @@
 #include "ResourceManagerImpl.hpp"
 
 #include <interface/resources/ResourceBase.hpp>
-#include "ResourceImplBase.hpp"
+#include <interface/resources/resource_base/ResourceImplBase.hpp>
 
 #include <system/ThreadPool.hpp>
 
-#include <interface/InstanceImpl.hpp>
+#include <interface/instance/InstanceImpl.hpp>
 
 #include <interface/resources/TextureResource.hpp>
 #include <interface/resources/FontResource.hpp>

@@ -3,7 +3,7 @@
 
 #include "CursorImpl.hpp"
 
-#include "InstanceImpl.hpp"
+#include "../instance/InstanceImpl.hpp"
 
 
 

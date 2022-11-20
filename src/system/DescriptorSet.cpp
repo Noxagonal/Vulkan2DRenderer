@@ -1,7 +1,7 @@
 
 #include <core/SourceCommon.hpp>
 
-#include <interface/InstanceImpl.hpp>
+#include <interface/instance/InstanceImpl.hpp>
 
 #include <system/DescriptorSet.hpp>
 

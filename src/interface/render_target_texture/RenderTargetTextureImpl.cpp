@@ -1,6 +1,8 @@
 
 #include <core/SourceCommon.hpp>
 
+#include "RenderTargetTextureImpl.hpp"
+
 #include <containers/BlurType.hpp>
 #include <containers/Rect2.hpp>
 #include <containers/Color.hpp>
@@ -12,10 +14,9 @@
 #include <system/ShaderInterface.hpp>
 #include <system/MeshBuffer.hpp>
 
-#include "InstanceImpl.hpp"
-#include "TextureImpl.hpp"
-#include "RenderTargetTextureImpl.hpp"
-#include "SamplerImpl.hpp"
+#include "../instance/InstanceImpl.hpp"
+#include "../texture/TextureImpl.hpp"
+#include "../sampler/SamplerImpl.hpp"
 
 
 

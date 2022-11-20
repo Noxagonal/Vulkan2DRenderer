@@ -3,11 +3,11 @@
 #include <core/SourceCommon.hpp>
 
 #include <system/DescriptorSet.hpp>
+#include <interface/Sampler.hpp>
 
 #include <vulkan/utils/VulkanMemoryManagement.hpp>
 
 namespace vk2d {
-
 namespace vk2d_internal {
 
 

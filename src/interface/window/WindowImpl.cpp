@@ -1,9 +1,11 @@
 
 #include <core/SourceCommon.hpp>
 
-#include "WindowImpl.hpp"
-#include "MonitorImpl.hpp"
-#include "CursorImpl.hpp"
+#include "../window/WindowImpl.hpp"
+#include "../monitor/MonitorImpl.hpp"
+#include "../cursor/CursorImpl.hpp"
+#include "../render_target_texture/RenderTargetTextureImpl.hpp"
+#include "../sampler/SamplerImpl.hpp"
 
 #include <containers/Rect2.hpp>
 #include <containers/Color.hpp>
@@ -12,11 +14,9 @@
 #include <system/MeshBuffer.hpp>
 #include <system/ThreadPool.hpp>
 
-#include "InstanceImpl.hpp"
-#include "resources/TextureResourceImpl.hpp"
-#include "RenderTargetTextureImpl.hpp"
+#include <interface/instance/InstanceImpl.hpp>
+#include <interface/resources/texture/TextureResourceImpl.hpp>
 
-#include "SamplerImpl.hpp"
 
 #include <mesh/AlignedMeshBufferOffsets.hpp>
 

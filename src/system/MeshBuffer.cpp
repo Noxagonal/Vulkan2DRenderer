@@ -6,8 +6,8 @@
 #include <vulkan/utils/VulkanMemoryManagement.hpp>
 #include <system/MeshBuffer.hpp>
 
-#include <interface/WindowImpl.hpp>
-#include <interface/InstanceImpl.hpp>
+#include <interface/window/WindowImpl.hpp>
+#include <interface/instance/InstanceImpl.hpp>
 
 
 

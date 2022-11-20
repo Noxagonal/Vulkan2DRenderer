@@ -2,7 +2,7 @@
 #include <core/SourceCommon.hpp>
 
 #include "CursorImpl.hpp"
-#include "InstanceImpl.hpp"
+#include "../instance/InstanceImpl.hpp"
 
 #include <containers/Color.hpp>
 

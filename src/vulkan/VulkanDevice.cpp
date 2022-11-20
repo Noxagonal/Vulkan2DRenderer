@@ -1,7 +1,7 @@
 
 #include "VulkanDevice.hpp"
 
-#include <interface/InstanceImpl.hpp>
+#include <interface/instance/InstanceImpl.hpp>
 
 #include "utils/QueueResolver.hpp"
 #include "utils/VulkanMemoryManagement.hpp"

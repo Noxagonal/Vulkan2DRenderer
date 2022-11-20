@@ -14,12 +14,12 @@
 
 #include <vulkan/utils/VulkanMemoryManagement.hpp>
 
-#include <interface/InstanceImpl.hpp>
-
-#include <interface/SamplerImpl.hpp>
+#include <interface/instance/InstanceImpl.hpp>
 
 #include <interface/Texture.hpp>
-#include <interface/TextureImpl.hpp>
+#include "../texture/TextureImpl.hpp"
+
+#include "../sampler/SamplerImpl.hpp"
 
 
 

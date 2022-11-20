@@ -7,7 +7,7 @@
 #include <containers/Rect2.hpp>
 #include <containers/Color.hpp>
 
-#include <interface/resources/ResourceImplBase.hpp>
+#include <interface/resources/resource_base/ResourceImplBase.hpp>
 #include <interface/resources/TextureResource.hpp>
 
 #include <ft2build.h>

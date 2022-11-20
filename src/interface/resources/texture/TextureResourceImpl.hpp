@@ -7,8 +7,8 @@
 #include <vulkan/utils/VulkanMemoryManagement.hpp>
 
 #include <interface/resources/TextureResource.hpp>
-#include "ResourceImplBase.hpp"
-#include <interface/TextureImpl.hpp>
+#include <interface/resources/resource_base/ResourceImplBase.hpp>
+#include <interface/texture/TextureImpl.hpp>
 
 
 namespace vk2d {
