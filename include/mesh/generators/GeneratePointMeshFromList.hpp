@@ -11,6 +11,7 @@
 
 
 namespace vk2d {
+namespace mesh_generators {
 
 
 
@@ -41,7 +42,8 @@ Mesh<VertexT>										GeneratePointMeshFromList(
 
 	mesh.vertices.resize( points.size() );
 	vk2d_internal::ClearVerticesToDefaultValues( mesh.vertices );
-	for( size_t i = 0; i < points.size(); ++i ) {
+	for( size_t i = 0; i < points.size(); ++i )
+	{
 		mesh.vertices[ i ].vertex_coords = points[ i ];
 		mesh.vertices[ i ].uv_coords = ( points[ i ] - aabb_origin ) / aabb_size;
 	}
@@ -56,4 +58,5 @@ Mesh<VertexT>										GeneratePointMeshFromList(
 
 
 
+} // mesh_generators
 } // vk2d

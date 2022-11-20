@@ -26,6 +26,21 @@ class FontResourceImpl;
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/// @brief		Used to tell how to draw specific character and where in atlas texture to draw it from.
+struct GlyphInfo
+{
+	uint32_t	face_index = {};
+	uint32_t	atlas_index = {};
+	Rect2f		uv_coords = {};
+	Rect2f		horisontal_coords = {};
+	Rect2f		vertical_coords = {};
+	float		horisontal_advance = {};
+	float		vertical_advance = {};
+};
+
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /// @brief		FontResource is a resource that contains a font which is used to draw text.
 ///
 ///				FontResource can be loaded with ResourceManager.
@@ -194,12 +209,57 @@ public:
 	/// @return		Area the text would occupy if rendered.
 	VK2D_API Rect2f											CalculateRenderedSize(
 		std::string_view									text,
+		size_t												font_face							= 0,
 		float												kerning								= 0.0f,
 		glm::vec2											scale								= glm::vec2( 1.0f, 1.0f ),
 		bool												vertical							= false,
-		uint32_t											font_face							= 0,
 		bool												wait_for_resource_load				= true
 	);
+
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	/// @brief		Get the number of styles this font contains.
+	///
+	///				Fonts may include multiple styles, this returns how many of them are.
+	///
+	/// @return		Number of font faces.
+	size_t													GetFontFaceCount();
+
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	/// @brief		Check if font face exists.
+	///
+	///				Fonts may include multiple styles, this checks if the font includes any one specific of them.
+	/// 
+	/// @param[in]	font_face
+	///				Which font face to check for.
+	/// 
+	/// @return		True if font face exists, false otherwise.
+	VK2D_API bool											FaceExists(
+		size_t												font_face
+	) const;
+
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	/// @brief		Get texture resource which contains all glyps.
+	/// 
+	/// @return		Glyph atlas texture.
+	VK2D_API TextureResource							*	GetTextureResource();
+
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	/// @brief		Get glyph info for a character.
+	///
+	///				Glyph info tells how to draw the character, and where it can be found in the texture atlas.
+	/// @see		GlyphInfo
+	/// 
+	/// @param[in]	character
+	///				character to get info about.
+	/// 
+	/// @param		font_face
+	///				Font face where the character is.
+	/// 
+	/// @return		Glyph info.
+	VK2D_API const GlyphInfo							&	GetGlyphInfo(
+		char32_t											character,
+		size_t												font_face				= 0
+	) const;
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		VK2D class object checker function.

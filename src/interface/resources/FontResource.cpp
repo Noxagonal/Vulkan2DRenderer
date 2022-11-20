@@ -71,20 +71,52 @@ VK2D_API vk2d::ResourceStatus vk2d::FontResource::WaitUntilLoaded(
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 VK2D_API vk2d::Rect2f vk2d::FontResource::CalculateRenderedSize(
 	std::string_view	text,
+	size_t				font_face,
 	float				kerning,
 	glm::vec2			scale,
 	bool				vertical,
-	uint32_t			font_face,
 	bool				wait_for_resource_load
 )
 {
 	return impl->CalculateRenderedSize(
 		text,
+		font_face,
 		kerning,
 		scale,
 		vertical,
-		font_face,
 		wait_for_resource_load
+	);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+size_t vk2d::FontResource::GetFontFaceCount()
+{
+	return impl->GetFontFaceCount();
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+VK2D_API bool vk2d::FontResource::FaceExists(
+	size_t font_face
+) const
+{
+	return impl->FaceExists( font_face );
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+VK2D_API vk2d::TextureResource * vk2d::FontResource::GetTextureResource()
+{
+	return impl->GetTextureResource();
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+VK2D_API const vk2d::GlyphInfo & vk2d::FontResource::GetGlyphInfo(
+	char32_t	character,
+	size_t		font_face
+) const
+{
+	return impl->GetGlyphInfo(
+		character,
+		font_face
 	);
 }
 

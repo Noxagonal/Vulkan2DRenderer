@@ -11,6 +11,7 @@
 
 
 namespace vk2d {
+namespace mesh_generators {
 
 
 
@@ -126,11 +127,12 @@ Mesh<VertexT>										GenerateLatticeMesh(
 
 	mesh.generated = true;
 	mesh.mesh_type = mesh.generated_mesh_type;
-	mesh.RecalculateAABBFromVertices();
+	mesh_modifiers::RecalculateAABBFromVertices( mesh );
 
 	return mesh;
 }
 
 
 
+} // mesh_generators
 } // vk2d

@@ -273,7 +273,7 @@ VK2D_API void vk2d::Window::DrawPoint(
 	float			size
 )
 {
-	auto mesh = GeneratePointMeshFromList(
+	auto mesh = mesh_generators::GeneratePointMeshFromList(
 		{ location }
 	);
 	mesh_modifiers::SetVerticesColor( mesh, color );
@@ -289,7 +289,7 @@ VK2D_API void vk2d::Window::DrawLine(
 	float			line_width
 )
 {
-	auto mesh = GenerateLineMeshFromList(
+	auto mesh = mesh_generators::GenerateLineMeshFromList(
 		{ point_1, point_2 },
 		{ { 0, 1 } }
 	);
@@ -305,7 +305,7 @@ VK2D_API void vk2d::Window::DrawRectangle(
 	Colorf			color
 )
 {
-	auto mesh = GenerateRectangleMesh(
+	auto mesh = mesh_generators::GenerateRectangleMesh(
 		area,
 		filled
 	);
@@ -321,7 +321,7 @@ VK2D_API void vk2d::Window::DrawEllipse(
 	Colorf			color
 )
 {
-	auto mesh = GenerateEllipseMesh(
+	auto mesh = mesh_generators::GenerateEllipseMesh(
 		area,
 		filled,
 		edge_count
@@ -340,7 +340,7 @@ VK2D_API void vk2d::Window::DrawEllipsePie(
 	Colorf			color
 )
 {
-	auto mesh = GenerateEllipsePieMesh(
+	auto mesh = mesh_generators::GenerateEllipsePieMesh(
 		area,
 		begin_angle_radians,
 		coverage,
@@ -360,7 +360,7 @@ VK2D_API void vk2d::Window::DrawRectanglePie(
 	Colorf			color
 )
 {
-	auto mesh = GenerateRectanglePieMesh(
+	auto mesh = mesh_generators::GenerateRectanglePieMesh(
 		area,
 		begin_angle_radians,
 		coverage,
@@ -381,7 +381,7 @@ VK2D_API void vk2d::Window::DrawTexture(
 		auto texture_size	= texture->GetSize();
 		auto bottom_right	= top_left + glm::vec2( float( texture_size.x ), float( texture_size.y ) );
 		texture->GetSize();
-		auto mesh = GenerateRectangleMesh(
+		auto mesh = mesh_generators::GenerateRectangleMesh(
 			{ top_left, bottom_right }
 		);
 		mesh.SetTexture( texture );

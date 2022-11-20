@@ -38,7 +38,7 @@ void						Skew(
 	glm::vec2				origin
 )
 {
-	for( auto & i : vertices ) {
+	for( auto & i : mesh.vertices ) {
 		auto c = i.vertex_coords - origin;
 		i.vertex_coords.x = c.y * scew_amount.x + c.x;
 		i.vertex_coords.y = c.x * scew_amount.y + c.y;

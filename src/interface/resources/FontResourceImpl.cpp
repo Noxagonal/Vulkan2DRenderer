@@ -139,7 +139,7 @@ bool vk2d::vk2d_internal::FontResourceImpl::MTLoad(
 	// 0 sets the estimation to average size, 1 sets the estimation to max weights. Default is 0.05
 	// which should give enough space in the atlas to contain all glyphs in 
 	auto average_to_max_weight					= 0.05;
-	auto total_glyph_count						= uint64_t( 0 );
+	auto total_glyph_count						= size_t( 0 );
 	auto maximum_glyph_size						= glm::dvec2( 0.0, 0.0 );
 	auto maximum_glyph_bitmap_size				= glm::dvec2( 0.0, 0.0 );
 	auto maximum_glyph_bitmap_occupancy_size	= glm::dvec2( 0.0, 0.0 );
@@ -149,7 +149,7 @@ bool vk2d::vk2d_internal::FontResourceImpl::MTLoad(
 		// Try to load from file.
 
 		// Get amount of faces in the file
-		uint32_t face_count = 0;
+		size_t face_count = 0;
 		{
 			FT_Face face {};
 			auto ft_error = FT_New_Face(
@@ -162,7 +162,7 @@ bool vk2d::vk2d_internal::FontResourceImpl::MTLoad(
 			switch( ft_error ) {
 				case FT_Err_Ok:
 					// All good
-					face_count = uint32_t( face->num_faces );
+					face_count = size_t( face->num_faces );
 					FT_Done_Face( face );
 					break;
 				case FT_Err_Cannot_Open_Resource:
@@ -192,13 +192,13 @@ bool vk2d::vk2d_internal::FontResourceImpl::MTLoad(
 		assert( !face_infos.size() );	// If hit, this function was called twice for some reason, should never happen.
 		face_infos.clear();
 		face_infos.resize( face_count );
-		for( uint32_t i = 0; i < face_count; ++i ) {
+		for( size_t i = 0; i < face_count; ++i ) {
 			FT_Face face {};
 			{
 				auto ft_error = FT_New_Face(
 					loader_thread_resource->GetFreeTypeInstance(),
 					path_str.c_str(),
-					i,
+					FT_Long( i ),
 					&face
 				);
 				if( ft_error ) {
@@ -225,7 +225,7 @@ bool vk2d::vk2d_internal::FontResourceImpl::MTLoad(
 			}
 
 			// Get glyph sizes
-			total_glyph_count			+= uint64_t( face->num_glyphs ) + 1;
+			total_glyph_count			+= size_t( face->num_glyphs ) + 1;
 			for( decltype( face->num_glyphs ) i = 0; i < face->num_glyphs; ++i ) {
 
 				auto ft_load_error = FT_Load_Glyph( face, FT_UInt( i ), FT_LOAD_DEFAULT );
@@ -283,21 +283,20 @@ bool vk2d::vk2d_internal::FontResourceImpl::MTLoad(
 	// created. For example if glyphs do not fit into 3 textures of size 512 * 512, a larger 1024 * 1024
 	// texture is created which should be able to contain the glyphs.
 	average_glyph_bitmap_occupancy_size	+= glm::dvec2( double( glyph_atlas_padding ), double( glyph_atlas_padding ) ) * 2.0;
-	average_glyph_bitmap_occupancy_size	/= float( total_glyph_count );
+	average_glyph_bitmap_occupancy_size	/= double( total_glyph_count );
 	{
 		auto estimated_glyph_space_requirements		= average_glyph_bitmap_occupancy_size * ( 1.0 - average_to_max_weight ) + maximum_glyph_bitmap_occupancy_size * average_to_max_weight;
 		auto estimated_average_space_requirements	= estimated_glyph_space_requirements / 1.5;	// aim to have 1 to 4 textures to optimize memory usage
 //		auto estimated_average_space_requirements	= estimated_glyph_space_requirements / 5.0;	// aim to have 1 to 4 textures to optimize memory usage
-		atlas_size			=
-			RoundToCeilingPowerOfTwo(
-				uint32_t(
-					std::sqrt(
-						std::ceil( estimated_average_space_requirements.x ) *
-						std::ceil( estimated_average_space_requirements.y ) *
-						double( total_glyph_count )
-					)
+		atlas_size = RoundToCeilingPowerOfTwo(
+			uint32_t(
+				std::sqrt(
+					std::ceil( estimated_average_space_requirements.x ) *
+					std::ceil( estimated_average_space_requirements.y ) *
+					double( total_glyph_count )
 				)
-			);
+			)
+		);
 		if( atlas_size > max_texture_size ) atlas_size = max_texture_size;
 		if( atlas_size < min_texture_size ) atlas_size = min_texture_size;
 	}
@@ -311,7 +310,7 @@ bool vk2d::vk2d_internal::FontResourceImpl::MTLoad(
 		return false;
 	}
 
-	current_atlas_texture						= CreateNewAtlasTexture();
+	current_atlas_texture = CreateNewAtlasTexture();
 
 	auto glyph_size_bitmap_size_ratio_vector	= maximum_glyph_bitmap_size / maximum_glyph_size;
 	auto glyph_size_bitmap_size_ratio			= std::max( glyph_size_bitmap_size_ratio_vector.x, glyph_size_bitmap_size_ratio_vector.y );
@@ -457,7 +456,7 @@ bool vk2d::vk2d_internal::FontResourceImpl::MTLoad(
 			charcode				= FT_Get_First_Char( face.face, &gindex );
 			fallback_glyph_index	= gindex;
 			while( gindex != 0 ) {
-				face.charmap[ uint32_t( charcode ) ] = uint32_t( gindex );
+				face.charmap[ char32_t( charcode ) ] = uint32_t( gindex );
 
 				charcode = FT_Get_Next_Char( face.face, charcode, &gindex );
 			}
@@ -507,16 +506,15 @@ void vk2d::vk2d_internal::FontResourceImpl::MTUnload(
 		FT_Done_Face( f.face );
 	}
 	face_infos.clear();
-
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 vk2d::Rect2f vk2d::vk2d_internal::FontResourceImpl::CalculateRenderedSize(
 	std::string_view	text,
+	size_t				font_face,
 	float				kerning,
 	glm::vec2			scale,
 	bool				vertical,
-	uint32_t			font_face,
 	bool				wait_for_resource_load
 )
 {
@@ -535,46 +533,46 @@ vk2d::Rect2f vk2d::vk2d_internal::FontResourceImpl::CalculateRenderedSize(
 		// Vertical text
 		// First letter sets defaults
 		auto first_gi			= GetGlyphInfo( font_face, text[ 0 ] );
-		ret.top_left.x			= first_gi->vertical_coords.top_left.x;
-		ret.bottom_right.x		= first_gi->vertical_coords.bottom_right.x;
+		ret.top_left.x			= first_gi.vertical_coords.top_left.x;
+		ret.bottom_right.x		= first_gi.vertical_coords.bottom_right.x;
 		if( std::size( text ) > 1 ) {
-			advance					+= first_gi->vertical_advance;
+			advance					+= first_gi.vertical_advance;
 		}
 		for( size_t i = 1; i < std::size( text ) - 1; ++i ) {
 			// Middle letters are spaced by "advance" value
 			auto gi				= GetGlyphInfo( font_face, text[ i ] );
-			ret.top_left.x		= std::min( ret.top_left.x, gi->vertical_coords.top_left.x );
-			ret.bottom_right.x	= std::max( ret.bottom_right.x, gi->vertical_coords.bottom_right.x );
-			advance				+= kerning + gi->vertical_advance;
+			ret.top_left.x		= std::min( ret.top_left.x, gi.vertical_coords.top_left.x );
+			ret.bottom_right.x	= std::max( ret.bottom_right.x, gi.vertical_coords.bottom_right.x );
+			advance				+= kerning + gi.vertical_advance;
 		}
 		// Need to get the size of the last letter, not the "advance"
 		auto last_gi			= GetGlyphInfo( font_face, text.back() );
-		ret.top_left.x			= std::min( ret.top_left.x, last_gi->vertical_coords.top_left.x );
-		ret.bottom_right.x		= std::max( ret.bottom_right.x, last_gi->vertical_coords.bottom_right.x );
-		ret.top_left.y			= first_gi->vertical_coords.top_left.y;
-		ret.bottom_right.y		= advance + last_gi->vertical_coords.bottom_right.y;
+		ret.top_left.x			= std::min( ret.top_left.x, last_gi.vertical_coords.top_left.x );
+		ret.bottom_right.x		= std::max( ret.bottom_right.x, last_gi.vertical_coords.bottom_right.x );
+		ret.top_left.y			= first_gi.vertical_coords.top_left.y;
+		ret.bottom_right.y		= advance + last_gi.vertical_coords.bottom_right.y;
 	} else {
 		// Horisontal text
 		// First letter sets defaults
 		auto first_gi			= GetGlyphInfo( font_face, text[ 0 ] );
-		ret.top_left.y			= first_gi->horisontal_coords.top_left.y;
-		ret.bottom_right.y		= first_gi->horisontal_coords.bottom_right.y;
+		ret.top_left.y			= first_gi.horisontal_coords.top_left.y;
+		ret.bottom_right.y		= first_gi.horisontal_coords.bottom_right.y;
 		if( std::size( text ) > 1 ) {
-			advance				+= first_gi->horisontal_advance;
+			advance				+= first_gi.horisontal_advance;
 		}
 		for( size_t i = 1; i < std::size( text ) - 1; ++i ) {
 			// Middle letters are spaced by "advance" value
 			auto gi				= GetGlyphInfo( font_face, text[ i ] );
-			ret.top_left.y		= std::min( ret.top_left.y, gi->horisontal_coords.top_left.y );
-			ret.bottom_right.y	= std::max( ret.bottom_right.y, gi->horisontal_coords.bottom_right.y );
-			advance				+= kerning + gi->horisontal_advance;
+			ret.top_left.y		= std::min( ret.top_left.y, gi.horisontal_coords.top_left.y );
+			ret.bottom_right.y	= std::max( ret.bottom_right.y, gi.horisontal_coords.bottom_right.y );
+			advance				+= kerning + gi.horisontal_advance;
 		}
 		// Need to get the size of the last letter, not the "advance"
 		auto last_gi			= GetGlyphInfo( font_face, text.back() );
-		ret.top_left.y			= std::min( ret.top_left.y, last_gi->horisontal_coords.top_left.y );
-		ret.bottom_right.y		= std::max( ret.bottom_right.y, last_gi->horisontal_coords.bottom_right.y );
-		ret.top_left.x			= first_gi->horisontal_coords.top_left.x;
-		ret.bottom_right.x		= advance + last_gi->horisontal_coords.bottom_right.x;
+		ret.top_left.y			= std::min( ret.top_left.y, last_gi.horisontal_coords.top_left.y );
+		ret.bottom_right.y		= std::max( ret.bottom_right.y, last_gi.horisontal_coords.bottom_right.y );
+		ret.top_left.x			= first_gi.horisontal_coords.top_left.x;
+		ret.bottom_right.x		= advance + last_gi.horisontal_coords.bottom_right.x;
 	}
 
 	ret.top_left		*= scale;
@@ -583,11 +581,17 @@ vk2d::Rect2f vk2d::vk2d_internal::FontResourceImpl::CalculateRenderedSize(
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+size_t vk2d::vk2d_internal::FontResourceImpl::GetFontFaceCount()
+{
+	return face_infos.size();
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 bool vk2d::vk2d_internal::FontResourceImpl::FaceExists(
-	uint32_t font_face
+	size_t font_face
 ) const
 {
-	if( size_t( font_face ) < face_infos.size() ) {
+	if( font_face < face_infos.size() ) {
 		return true;
 	}
 	return false;
@@ -603,9 +607,9 @@ vk2d::TextureResource *vk2d::vk2d_internal::FontResourceImpl::GetTextureResource
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-const vk2d::vk2d_internal::GlyphInfo *vk2d::vk2d_internal::FontResourceImpl::GetGlyphInfo(
-	uint32_t		font_face,
-	uint32_t		character
+const vk2d::GlyphInfo & vk2d::vk2d_internal::FontResourceImpl::GetGlyphInfo(
+	char32_t	character,
+	size_t		font_face
 ) const
 {
 	auto & face_info	= face_infos[ font_face ];
@@ -617,7 +621,7 @@ const vk2d::vk2d_internal::GlyphInfo *vk2d::vk2d_internal::FontResourceImpl::Get
 	} else {
 		glyph_index		= face_info.fallback_glyph_index;
 	}
-	return &face_info.glyph_infos[ glyph_index ];
+	return face_info.glyph_infos[ glyph_index ];
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

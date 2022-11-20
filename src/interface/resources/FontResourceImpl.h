@@ -2,6 +2,8 @@
 
 #include <core/SourceCommon.h>
 
+#include <interface/resources/FontResource.h>
+
 #include <containers/Rect2.hpp>
 #include <containers/Color.hpp>
 
@@ -19,19 +21,6 @@ namespace vk2d_internal {
 
 class ResourceManagerImpl;
 class ThreadPrivateResource;
-
-
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-struct GlyphInfo {
-	uint32_t	face_index			= {};
-	uint32_t	atlas_index			= {};
-	Rect2f		uv_coords			= {};
-	Rect2f		horisontal_coords	= {};
-	Rect2f		vertical_coords		= {};
-	float		horisontal_advance	= {};
-	float		vertical_advance	= {};
-};
 
 
 
@@ -83,25 +72,28 @@ public:
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	Rect2f												CalculateRenderedSize(
 		std::string_view								text,
+		size_t											font_face							= 0,
 		float											kerning								= 0.0f,
 		glm::vec2										scale								= glm::vec2( 1.0f, 1.0f ),
 		bool											vertical							= false,
-		uint32_t										font_face							= 0,
 		bool											wait_for_resource_load				= true
 	);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	size_t												GetFontFaceCount();
+
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	bool												FaceExists(
-		uint32_t										font_face
+		size_t											font_face
 	) const;
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	TextureResource									*	GetTextureResource();
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	const GlyphInfo									*	GetGlyphInfo(
-		uint32_t										font_face,
-		uint32_t										character
+	const GlyphInfo									&	GetGlyphInfo(
+		char32_t										character,
+		size_t											font_face					= 0
 	) const;
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -129,7 +121,7 @@ private:
 	struct FaceInfo {
 		FT_Face											face								= {};
 		std::vector<GlyphInfo>							glyph_infos							= {};
-		std::map<int32_t, int32_t>						charmap								= {};	// link character to a GlyphInfo vector
+		std::map<char32_t, uint32_t>					charmap								= {};	// link character to a GlyphInfo vector
 		uint32_t										fallback_glyph_index				= {};
 	};
 

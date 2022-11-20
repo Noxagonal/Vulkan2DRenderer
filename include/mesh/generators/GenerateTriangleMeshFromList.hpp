@@ -11,6 +11,7 @@
 
 
 namespace vk2d {
+namespace mesh_generators {
 
 
 
@@ -63,4 +64,5 @@ Mesh<VertexT>										GenerateTriangleMeshFromList(
 
 
 
+} // mesh_generators
 } // vk2d

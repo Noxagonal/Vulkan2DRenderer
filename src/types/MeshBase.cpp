@@ -40,8 +40,6 @@ VK2D_API void vk2d::MeshBase::SetMeshType(
 	MeshType type
 )
 {
-	assert( !generated );
-
 	switch( mesh_type ) {
 	case MeshType::TRIANGLE_FILLED:
 		switch( type ) {

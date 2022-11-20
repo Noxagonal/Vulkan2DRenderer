@@ -17,11 +17,13 @@ namespace vk2d {
 
 class FontResource;
 
-
-
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 template<typename VertexT>
 class Mesh;
+
+
+
+namespace mesh_generators {
 
 
 
@@ -138,4 +140,7 @@ Mesh<VertexT>										GenerateTextMesh(
 	bool											wait_for_resource_load = true
 );
 
+
+
+} // mesh_generators
 } // vk2d

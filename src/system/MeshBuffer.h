@@ -509,11 +509,16 @@ public:
 		VkDeviceSize							byte_alignment
 	)
 	{
-		VkDeviceSize aligned_end = ( ( ( used_byte_size - 1 ) / byte_alignment ) + 1 ) * byte_alignment;
-		assert( aligned_end + byte_size <= total_byte_size );
-		auto ret					= aligned_end;
-		used_byte_size				= aligned_end + byte_size;
-		return ret;
+		if( used_byte_size > 0 )
+		{
+			VkDeviceSize aligned_end = ( ( ( used_byte_size - 1 ) / byte_alignment ) + 1 ) * byte_alignment;
+			assert( aligned_end + byte_size <= total_byte_size );
+			auto ret = aligned_end;
+			used_byte_size = aligned_end + byte_size;
+			return ret;
+		}
+		used_byte_size = byte_size;
+		return 0;
 	}
 
 	bool										IsGood()

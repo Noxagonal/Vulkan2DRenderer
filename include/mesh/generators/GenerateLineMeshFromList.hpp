@@ -12,6 +12,7 @@
 
 
 namespace vk2d {
+namespace mesh_generators {
 
 
 
@@ -58,4 +59,5 @@ Mesh<VertexT>										GenerateLineMeshFromList(
 
 
 
+} // mesh_generators
 } // vk2d

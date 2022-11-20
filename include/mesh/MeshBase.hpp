@@ -40,38 +40,62 @@ class MeshBase
 	friend class vk2d_internal::RenderTargetTextureImpl;
 
 	template<vk2d_internal::VertexBaseDerivedType VertexT>
-	friend Mesh<VertexT>								GeneratePointMeshFromList(
+	requires(
+		vk2d_internal::VertexHasVertexCoords<VertexT> &&
+		vk2d_internal::VertexHasUVCoords<VertexT>
+	)
+	friend Mesh<VertexT>								mesh_generators::GeneratePointMeshFromList(
 		const std::vector<glm::vec2>				&	points
 	);
 	
 	template<vk2d_internal::VertexBaseDerivedType VertexT>
-	friend Mesh<VertexT>								GenerateLineMeshFromList(
+	requires(
+		vk2d_internal::VertexHasVertexCoords<VertexT> &&
+		vk2d_internal::VertexHasUVCoords<VertexT>
+	)
+	friend Mesh<VertexT>								mesh_generators::GenerateLineMeshFromList(
 		const std::vector<glm::vec2>				&	points,
 		const std::vector<VertexIndex_2>			&	indices
 	);
 	
 	template<vk2d_internal::VertexBaseDerivedType VertexT>
-	friend Mesh<VertexT>								GenerateTriangleMeshFromList(
+	requires(
+		vk2d_internal::VertexHasVertexCoords<VertexT> &&
+		vk2d_internal::VertexHasUVCoords<VertexT>
+	)
+	friend Mesh<VertexT>								mesh_generators::GenerateTriangleMeshFromList(
 		const std::vector<glm::vec2>				&	points,
 		const std::vector<VertexIndex_3>			&	indices,
 		bool											filled
 	);
 	
 	template<vk2d_internal::VertexBaseDerivedType VertexT>
-	friend Mesh<VertexT>								GenerateRectangleMesh(
+	requires(
+		vk2d_internal::VertexHasVertexCoords<VertexT> &&
+		vk2d_internal::VertexHasUVCoords<VertexT>
+	)
+	friend Mesh<VertexT>								mesh_generators::GenerateRectangleMesh(
 		Rect2f											area,
 		bool											filled
 	);
 	
 	template<vk2d_internal::VertexBaseDerivedType VertexT>
-	friend Mesh<VertexT>								GenerateEllipseMesh(
+	requires(
+		vk2d_internal::VertexHasVertexCoords<VertexT> &&
+		vk2d_internal::VertexHasUVCoords<VertexT>
+	)
+	friend Mesh<VertexT>								mesh_generators::GenerateEllipseMesh(
 		Rect2f											area,
 		bool											filled,
 		float											edge_count
 	);
 	
 	template<vk2d_internal::VertexBaseDerivedType VertexT>
-	friend Mesh<VertexT>								GenerateRectanglePieMesh(
+	requires(
+		vk2d_internal::VertexHasVertexCoords<VertexT> &&
+		vk2d_internal::VertexHasUVCoords<VertexT>
+	)
+	friend Mesh<VertexT>								mesh_generators::GenerateRectanglePieMesh(
 		Rect2f											area,
 		float											begin_angle_radians,
 		float											coverage,
@@ -79,12 +103,20 @@ class MeshBase
 	);
 	
 	template<vk2d_internal::VertexBaseDerivedType VertexT>
-	friend Mesh<VertexT>								GeneratePointMeshFromList(
+	requires(
+		vk2d_internal::VertexHasVertexCoords<VertexT> &&
+		vk2d_internal::VertexHasUVCoords<VertexT>
+	)
+	friend Mesh<VertexT>								mesh_generators::GeneratePointMeshFromList(
 		const std::vector<glm::vec2>				&	points
 	);
 	
 	template<vk2d_internal::VertexBaseDerivedType VertexT>
-	friend Mesh<VertexT>								GenerateEllipsePieMesh(
+	requires(
+		vk2d_internal::VertexHasVertexCoords<VertexT> &&
+		vk2d_internal::VertexHasUVCoords<VertexT>
+	)
+	friend Mesh<VertexT>								mesh_generators::GenerateEllipsePieMesh(
 		Rect2f											area,
 		float											begin_angle_radians,
 		float											coverage,
@@ -93,14 +125,23 @@ class MeshBase
 	);
 	
 	template<vk2d_internal::VertexBaseDerivedType VertexT>
-	friend Mesh<VertexT>								GenerateLatticeMesh(
+	requires(
+		vk2d_internal::VertexHasVertexCoords<VertexT> &&
+		vk2d_internal::VertexHasUVCoords<VertexT>
+	)
+	friend Mesh<VertexT>								mesh_generators::GenerateLatticeMesh(
 		Rect2f											area,
 		glm::vec2										subdivisions,
 		bool											filled
 	);
 	
 	template<vk2d_internal::VertexBaseDerivedType VertexT>
-	friend Mesh<VertexT>								GenerateTextMesh(
+	requires(
+		vk2d_internal::VertexHasVertexCoords<VertexT> &&
+		vk2d_internal::VertexHasUVCoords<VertexT> &&
+		vk2d_internal::VertexHasSingleTextureLayer<VertexT>
+	)
+	friend Mesh<VertexT>								mesh_generators::GenerateTextMesh(
 		FontResource								*	font,
 		glm::vec2										origin,
 		std::string										text,

@@ -33,7 +33,7 @@ public:
 		vertex_descriptor	= GetVertexDescriptorFromVertexType<VertexT>();
 		vertex_count		= vertices.size();
 		vertex_stride		= vertex_descriptor.size;
-		assert( ( vertex_stride & vertex_descriptor.size ) == 0 );
+		assert( ( vertex_stride % vertex_descriptor.size ) == 0 );
 
 		vertex_data.resize( vertices.size() * vertex_stride, 0 );
 
@@ -72,7 +72,7 @@ private:
 	>
 	constexpr void					CopyMemberData(
 		size_t						current_offset,
-		MemberT					&	data
+		const MemberT			&	data
 	)
 	{
 		*reinterpret_cast<MemberT*>( &vertex_data[ current_offset ] ) = data;

@@ -7,10 +7,12 @@
 #include <mesh/Mesh.hpp>
 #include <mesh/vertex/StandardVertex.hpp>
 #include <mesh/vertex/VertexTools.hpp>
+#include <mesh/modifiers/RecalculateAABBFromVertices.hpp>
 
 
 
 namespace vk2d {
+namespace mesh_generators {
 
 
 
@@ -107,11 +109,12 @@ Mesh<VertexT>										GenerateEllipseMesh(
 
 	mesh.generated = true;
 	mesh.mesh_type = mesh.generated_mesh_type;
-	mesh.RecalculateAABBFromVertices();
+	mesh_modifiers::RecalculateAABBFromVertices( mesh );
 
 	return mesh;
 }
 
 
 
+} // mesh_generators
 } // vk2d

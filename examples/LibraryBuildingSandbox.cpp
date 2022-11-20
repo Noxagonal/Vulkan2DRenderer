@@ -81,11 +81,12 @@ struct VertexPropertiesOffsets
 	size_t			single_texture_layer	= 0;
 };
 
+// TESTING!!!
 template<vk2d::vk2d_internal::VertexBaseDerivedType T>
 constexpr VertexPropertiesOffsets GetVertexPropertiesOffsets()
 {
-	static_assert( vk2d::vk2d_internal::SupportedMeshVertexCoordinateTypes<decltype( T::vertex_coords )> );
-	static_assert( vk2d::vk2d_internal::SupportedMeshUVCoordinateTypes<decltype( T::uv_coords )> );
+	static_assert( vk2d::vk2d_internal::VertexSupportedVertexCoordinateTypes<decltype( T::vertex_coords )> );
+	static_assert( vk2d::vk2d_internal::VertexSupportedUVCoordinateTypes<decltype( T::uv_coords )> );
 
 	auto ret					= VertexPropertiesOffsets();
 	auto temp_vertex			= T();
@@ -222,7 +223,7 @@ int main()
 		if( !window1->BeginRender() ) return -1;
 
 		{
-			auto rtt_mesh = vk2d::GenerateLatticeMesh( { -200, -200, 200, 200 }, { float( rtt_pixels_x - 1 ), float( rtt_pixels_y - 1 ) } );
+			auto rtt_mesh = vk2d::mesh_generators::GenerateLatticeMesh( { -200, -200, 200, 200 }, { float( rtt_pixels_x - 1 ), float( rtt_pixels_y - 1 ) } );
 			rtt_mesh.SetTexture( rtt );
 			rtt_mesh.SetSampler( pixelated_sampler );
 			window1->DrawMesh( rtt_mesh );

@@ -49,7 +49,7 @@ void						DirectionalWave(
 	glm::vec2				origin
 )
 {
-	auto size = aabb.bottom_right - aabb.top_left;
+	auto size = mesh.aabb.bottom_right - mesh.aabb.top_left;
 
 	glm::vec2	dir {
 		std::cos( direction_radians ),

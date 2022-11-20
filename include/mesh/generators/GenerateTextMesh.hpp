@@ -12,6 +12,7 @@
 
 
 namespace vk2d {
+namespace mesh_generators {
 
 
 
@@ -77,16 +78,15 @@ Mesh<VertexT>										GenerateTextMesh(
 
 	if( std::size( text ) <= 0 ) return;
 	if( !font ) return;
-	if( !font->impl.get() ) return;
-	auto fi = font->impl.get();
-	if( wait_for_resource_load ) {
-		fi->WaitUntilLoaded( std::chrono::nanoseconds::max() );
+	if( wait_for_resource_load )
+	{
+		font->WaitUntilLoaded( std::chrono::nanoseconds::max() );
 	}
 	else
 	{
-		if( fi->GetStatus() == ResourceStatus::UNDETERMINED ) return;
+		if( font->GetStatus() == ResourceStatus::UNDETERMINED ) return;
 	}
-	if( !fi->FaceExists( font_face ) ) return;
+	if( !font->FaceExists( font_face ) ) return;
 
 	mesh.vertices.reserve( text.size() * 4 );
 	mesh.indices.reserve( text.size() * 6 );
@@ -141,36 +141,37 @@ Mesh<VertexT>										GenerateTextMesh(
 	if( vertical ) {
 		// Writing vertical text
 		{
-			auto gi = fi->GetGlyphInfo( font_face, text[ 0 ] );
-			mesh.aabb.top_left = gi->vertical_coords.top_left * scale + location;
-			mesh.aabb.bottom_right = gi->vertical_coords.bottom_right * scale + location;
+			auto & gi = font->GetGlyphInfo( font_face, text[ 0 ] );
+			mesh.aabb.top_left = gi.vertical_coords.top_left * scale + location;
+			mesh.aabb.bottom_right = gi.vertical_coords.bottom_right * scale + location;
 		}
 		for( auto c : text ) {
-			auto gi = fi->GetGlyphInfo( font_face, c );
-			AppendBox( location, gi->vertical_coords, gi->uv_coords, gi->atlas_index );
-			location.y += ( gi->vertical_advance + kerning ) * scale.y;
+			auto & gi = font->GetGlyphInfo( font_face, c );
+			AppendBox( location, gi.vertical_coords, gi.uv_coords, gi.atlas_index );
+			location.y += ( gi.vertical_advance + kerning ) * scale.y;
 		}
 	}
 	else
 	{
 	 // Writing horisontal text
 		{
-			auto gi = fi->GetGlyphInfo( font_face, text[ 0 ] );
-			mesh.aabb.top_left = gi->horisontal_coords.top_left * scale + location;
-			mesh.aabb.bottom_right = gi->horisontal_coords.bottom_right * scale + location;
+			auto & gi = font->GetGlyphInfo( font_face, text[ 0 ] );
+			mesh.aabb.top_left = gi.horisontal_coords.top_left * scale + location;
+			mesh.aabb.bottom_right = gi.horisontal_coords.bottom_right * scale + location;
 		}
 		for( auto c : text ) {
-			auto gi = fi->GetGlyphInfo( font_face, c );
-			AppendBox( location, gi->horisontal_coords, gi->uv_coords, gi->atlas_index );
-			location.x += ( gi->horisontal_advance + kerning ) * scale.x;
+			auto & gi = font->GetGlyphInfo( font_face, c );
+			AppendBox( location, gi.horisontal_coords, gi.uv_coords, gi.atlas_index );
+			location.x += ( gi.horisontal_advance + kerning ) * scale.x;
 		}
 	}
 
-	mesh.texture = fi->GetTextureResource();
+	mesh.texture = font->GetTextureResource();
 
 	return mesh;
 }
 
 
 
+} // mesh_generators
 } // vk2d

@@ -89,12 +89,12 @@ constexpr VertexDescriptor GetVertexDescriptorStandardMembersFromVertexType()
 	auto ret = VertexDescriptor();
 	auto temp_vertex = VertexT();
 
-	auto VertexMemberOffset = [ &temp_vertex ]( auto member_variable ) -> size_t
+	auto VertexMemberOffset = [ &temp_vertex ]( auto & member_variable ) -> size_t
 	{
 		return reinterpret_cast<const uint8_t*>( &member_variable ) - reinterpret_cast<const uint8_t*>( &temp_vertex );
 	};
 
-	auto VertexMemberSize = []( auto member_variable ) -> size_t
+	auto VertexMemberSize = []( auto & member_variable ) -> size_t
 	{
 		return sizeof( std::remove_reference_t<decltype( member_variable )> );
 	};
@@ -159,14 +159,12 @@ constexpr VertexDescriptor GetVertexDescriptorStandardMembersFromVertexType()
 		ret.member_descriptors.push_back( member_description );
 	}
 
-	ret.alignment	= alignof( VertexT );
-	ret.size		= ret.alignment;
+	ret.alignment	= VertexT::GetMyAlignment();
+	ret.size		= VertexT::GetMySize();
+	assert( ret.size );
+	assert( ret.size % ret.alignment == 0 );
 
-	if( !ret.member_descriptors.empty() ) {
-		auto & last	= ret.member_descriptors.back();
-		ret.size	= last.offset + last.size;
-		ret.size	= ( ( ( ret.size - 1 ) / ret.alignment ) + 1 ) * ret.alignment;
-	}
+	return ret;
 }
 
 
@@ -184,20 +182,20 @@ constexpr void GetVertexDescriptorFromVertexType_Extract(
 {
 	if constexpr( CurrentIndex < VertexT::GetMemberCount() )
 	{
-		constexpr size_t member_offset = VertexT::template GetMemberOffset<CurrentIndex>();
-		constexpr size_t member_size = VertexT::template GetMemberSize<CurrentIndex>();
+		constexpr size_t member_offset	= VertexT::template GetMemberOffset<CurrentIndex>();
+		constexpr size_t member_size	= VertexT::template GetMemberSize<CurrentIndex>();
 
 		auto member_descriptor = VertexMemberDescriptor();
 		member_descriptor.offset = member_offset;
 		member_descriptor.size = member_size;
-		std::ranges::for_each( standard_types.member_descriptors, [ &member_descriptor ]( VertexMemberDescriptor o )
+		for( auto & o : standard_types.member_descriptors )
+		{
+			if( o.offset == member_descriptor.offset )
 			{
-				if( o.offset == member_descriptor.offset )
-				{
-					member_descriptor.type = o.type;
-				}
+				member_descriptor.type = o.type;
+				break;
 			}
-		);
+		}
 		out.member_descriptors.push_back( member_descriptor );
 
 		GetVertexDescriptorFromVertexType_Extract<VertexT, CurrentIndex + 1>(
@@ -236,17 +234,11 @@ constexpr VertexDescriptor GetVertexDescriptorFromVertexType()
 		ret
 	);
 
-	ret.alignment	= alignof( VertexT );
-	ret.size		= ret.alignment;
-
-	if( !ret.member_descriptors.empty() ) {
-		auto last	= ret.member_descriptors.back();
-		ret.size	= last.offset + last.size;
-		ret.size	= ( ( ( ret.size - 1 ) / ret.alignment ) + 1 ) * ret.alignment;
-
-		assert( ret.size );
-		assert( ret.size % ret.alignment == 0 );
-	}
+	ret.alignment		= standard_members.alignment;
+	ret.member_flags	= standard_members.member_flags;
+	ret.size			= standard_members.size;
+	assert( ret.size );
+	assert( ret.size % ret.alignment == 0 );
 
 	return ret;
 }

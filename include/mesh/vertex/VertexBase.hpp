@@ -40,6 +40,8 @@ public:
 		DestructAllMembers<0, MembersT...>();
 	}
 
+	VertexBase & operator=( const VertexBase & other ) = default;
+
 	template<size_t Index>
 	constexpr vk2d_internal::GetTemplateTypeAtIndex<Index, MembersT...> & Get()
 	{

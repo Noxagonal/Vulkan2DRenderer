@@ -16,6 +16,12 @@ class StandardVertex : public VertexBase<glm::vec2, glm::vec2, Colorf, float, ui
 public:
 	using Base = VertexBase;
 
+	inline StandardVertex & operator=( const StandardVertex & other )
+	{
+		Base::operator=( other );
+		return *this;
+	}
+
 	/// @brief		Spatial coordinates of this vertex.
 	glm::vec2			&	vertex_coords			= Get<0>();
 

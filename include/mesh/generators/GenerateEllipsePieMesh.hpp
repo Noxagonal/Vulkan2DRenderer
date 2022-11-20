@@ -7,10 +7,12 @@
 #include <mesh/Mesh.hpp>
 #include <mesh/vertex/StandardVertex.hpp>
 #include <mesh/vertex/VertexTools.hpp>
+#include <mesh/modifiers/RecalculateAABBFromVertices.hpp>
 
 
 
 namespace vk2d {
+namespace mesh_generators {
 
 
 
@@ -57,7 +59,7 @@ Mesh<VertexT>										GenerateEllipsePieMesh(
 
 	if( edge_count < 3.0f )			edge_count = 3.0f;
 	if( coverage > 1.0f )			coverage = 1.0f;
-	if( coverage <= 0.0f )			return;			// Nothing to draw
+	if( coverage <= 0.0f )			return {};			// Nothing to draw
 
 	glm::vec2 center_point = {
 		( area.top_left.x + area.bottom_right.x ) / 2.0f,
@@ -185,11 +187,12 @@ Mesh<VertexT>										GenerateEllipsePieMesh(
 
 	mesh.generated = true;
 	mesh.mesh_type = mesh.generated_mesh_type;
-	mesh.RecalculateAABBFromVertices();
+	mesh_modifiers::RecalculateAABBFromVertices( mesh );
 
 	return mesh;
 }
 
 
 
+} // mesh_generators
 } // vk2d

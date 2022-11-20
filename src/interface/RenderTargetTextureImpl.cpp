@@ -970,7 +970,7 @@ void vk2d::vk2d_internal::RenderTargetTextureImpl::DrawTriangleList(
 
 	//TODO, Transformations...;
 	// TODO: Transformations. Data path to the shader is done, just need to modify the actual shaders and add the data here.
-	// TODO: Matrix4f might not play nice with the alignment, might need to use Matrix4f, make sure alignment actually works on all GPUs.
+	// TODO: Matrix3f might not play nice with the alignment, might need to use Matrix4f, make sure alignment actually works on all GPUs.
 	auto push_result = mesh_buffer->CmdPushMesh(
 		command_buffer,
 		raw_indices,

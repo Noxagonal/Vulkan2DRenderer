@@ -53,7 +53,7 @@ vk2d::vk2d_internal::MeshBuffer::PushResult vk2d::vk2d_internal::MeshBuffer::Cmd
 												*	currently_bound_block,
 		uint32_t									bind_set,
 		CommandBufferCheckpointType					checkpoint_type,
-		bool										is_index_buffer				= false
+		bool										is_index_buffer
 	) -> decltype( currently_bound_block )
 	{
 		if( currently_bound_block != location_info.block )
@@ -98,7 +98,7 @@ vk2d::vk2d_internal::MeshBuffer::PushResult vk2d::vk2d_internal::MeshBuffer::Cmd
 		bound_vertex_buffer_block,
 		GRAPHICS_DESCRIPTOR_SET_ALLOCATION_VERTEX_BUFFER_AS_STORAGE_BUFFER,
 		CommandBufferCheckpointType::BIND_VERTEX_BUFFER,
-		true
+		false
 	);
 	
 	bound_texture_channel_weight_buffer_block = BindBuffer(
@@ -106,7 +106,7 @@ vk2d::vk2d_internal::MeshBuffer::PushResult vk2d::vk2d_internal::MeshBuffer::Cmd
 		bound_texture_channel_weight_buffer_block,
 		GRAPHICS_DESCRIPTOR_SET_ALLOCATION_texture_channel_weights,
 		CommandBufferCheckpointType::BIND_DESCRIPTOR_SET,
-		true
+		false
 	);
 	
 	bound_transformation_buffer_block = BindBuffer(
@@ -114,7 +114,7 @@ vk2d::vk2d_internal::MeshBuffer::PushResult vk2d::vk2d_internal::MeshBuffer::Cmd
 		bound_transformation_buffer_block,
 		GRAPHICS_DESCRIPTOR_SET_ALLOCATION_TRANSFORMATION,
 		CommandBufferCheckpointType::BIND_DESCRIPTOR_SET,
-		true
+		false
 	);
 
 	{
