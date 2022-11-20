@@ -133,34 +133,6 @@ int main()
 		std::cout << std::format( "single_texture_layer offset from start: {} - Offset from previous: {}\n", offsets.single_texture_layer, offsets.single_texture_layer - previous_offset );	previous_offset = offsets.single_texture_layer;
 
 		std::cout << "asdf\n";
-
-		// TODO: Need reflection for proper struct implementation with member names. May be doable with a macro.
-		// On the other hand, it may be an overkill.
-		// 
-		// Proposal 1: Introduce getter functions to get a specific member, eg. std_vertex.position() = { 50, 50 };
-		// Ugly, not very proper C++.
-		// 
-		// Proposal 2: We could just ignore extra members... Whatever function accepts a vertex list, could accept any type, it
-		// could then take only the VertexBase class from every element and ignore the rest, this will require base class to be
-		// typedeffed and it will be somewhat slower as we need to only partially copy memory. In terms of simplicity, I think
-		// this should be the way to go.
-		// CANDIDATE!
-		// 
-		// Proposal 3: Whatever function taking a vertex or vertex list could only take a predetermined type, for build-in types
-		// we could use whatever members are provided, for custom types, use only Get<N>(). Not a fan of this because it makes
-		// things more complicated to design and it somewhat promotes the build-in types. Custom designs should feel like
-		// first-party members.
-		//
-		// Proposal 4: Use union... Needs more thinking, may not work. This is kinda unsafe if it even works.
-		// WILL NOT WORK! Does not allow members from parent.
-		//
-		// Proposal 5: Use macros... Needs more thinking, may not work. A little fiddly and a little uggly but could potentially
-		// solve all problems.
-		// WILL NOT WORK! Problem extracting specific parameters.
-		//
-		// Proposal 6: See if lambdas could be used here somehow.
-		// WILL NOT WORK! Can only be invoked with parenthesis.
-		//
 	}
 
 
@@ -173,17 +145,10 @@ int main()
 	vk2d::WindowCreateInfo					window_create_info {};
 	window_create_info.size					= { 600, 600 };
 	window_create_info.coordinate_space		= vk2d::RenderCoordinateSpace::TEXEL_SPACE_CENTERED;
-	window_create_info.samples				= vk2d::Multisamples::SAMPLE_COUNT_1;
+	window_create_info.samples				= vk2d::Multisamples::SAMPLE_COUNT_8;
 	window_create_info.event_handler		= &event_handler;
 	auto window1 = instance->CreateOutputWindow( window_create_info );
 	if( !window1 ) return -1;
-
-	uint32_t rtt_pixels_x = 16;
-	uint32_t rtt_pixels_y = 16;
-	vk2d::RenderTargetTextureCreateInfo rtt_create_info {};
-	rtt_create_info.coordinate_space		= vk2d::RenderCoordinateSpace::TEXEL_SPACE_CENTERED;
-	rtt_create_info.size					= { rtt_pixels_x, rtt_pixels_y };
-	auto rtt = instance->CreateRenderTargetTexture( rtt_create_info );
 
 	vk2d::SamplerCreateInfo sampler_create_info {};
 	sampler_create_info.minification_filter		= vk2d::SamplerFilter::NEAREST;
@@ -216,22 +181,17 @@ int main()
 		glm::vec2 text_location { std::cos( seconds_since_start / 3.0f ) * 300.0f, std::sin( seconds_since_start / 3.0f ) * 300.0f };
 		glm::vec2 text_scale { std::cos( seconds_since_start * 5.0f ) * 0.5f + 1.5f, std::cos( seconds_since_start * 5.0f ) * 0.5f + 1.5f };
 
-		rtt->BeginRender();
-		rtt->DrawEllipse( { -4, -4, 4, 4 }, true, 8 );
-		rtt->EndRender();
-
 		if( !window1->BeginRender() ) return -1;
 
 		{
-			auto rtt_mesh = vk2d::mesh_generators::GenerateLatticeMesh( { -200, -200, 200, 200 }, { float( rtt_pixels_x - 1 ), float( rtt_pixels_y - 1 ) } );
-			rtt_mesh.SetTexture( rtt );
-			rtt_mesh.SetSampler( pixelated_sampler );
-			window1->DrawMesh( rtt_mesh );
+			auto lattice_mesh = vk2d::mesh_generators::GenerateLatticeMesh( { -200, -200, 200, 200 }, { 16, 16 } );
+			//lattice_mesh.SetSampler( pixelated_sampler );
+			window1->DrawMesh( lattice_mesh );
 
-			rtt_mesh.SetTexture( nullptr );
-			rtt_mesh.SetSampler( nullptr );
-			rtt_mesh.SetMeshType( vk2d::MeshType::TRIANGLE_WIREFRAME );
-			window1->DrawMesh( rtt_mesh );
+			//lattice_mesh.SetTexture( nullptr );
+			//lattice_mesh.SetSampler( nullptr );
+			//lattice_mesh.SetMeshType( vk2d::MeshType::TRIANGLE_WIREFRAME );
+			//window1->DrawMesh( lattice_mesh );
 
 			//window1->DrawRectangle( text_calculated_area + text_location, false );
 		}

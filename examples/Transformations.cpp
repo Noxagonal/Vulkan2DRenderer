@@ -54,7 +54,7 @@ int main()
 
 	// We'll create a simple rectangle mesh, note that besides drawing
 	// the mesh it's data is never touched inside the main loop.
-	auto box_mesh = vk2d::GenerateRectangleMesh(
+	auto box_mesh = vk2d::mesh_generators::GenerateRectangleMesh(
 		{ -50.0f, -50.0f, 50.0f, 50.0f }
 	);
 
@@ -151,7 +151,7 @@ int main()
 		// However the point of using only one draw command is to take advantage of instancing
 		// which is more efficient, especially in cases where you need to draw loads of small
 		// objects. So all this does is draws the same mesh twice using 2 different transformations.
-		window->DrawMesh( box_mesh, { child_transformation_matrix, sub_child_transformation_matrix } );
+		window->DrawMesh( box_mesh, std::vector{ child_transformation_matrix, sub_child_transformation_matrix } );
 
 		// Since we're actually just drawing the same mesh 3 times we could combine all draw
 		// calls into one like this:
