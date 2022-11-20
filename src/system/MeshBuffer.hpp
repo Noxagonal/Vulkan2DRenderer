@@ -224,7 +224,6 @@ struct MeshBlockLocationInfo
 
 	MeshBufferBlockLocationInfo<uint32_t>	index_block;
 	MeshBufferBlockLocationInfo<uint8_t>	vertex_block;
-	MeshBufferBlockLocationInfo<float>		texture_channel_weight_block;
 	MeshBufferBlockLocationInfo<glm::mat4>	transformation_block;
 };
 
@@ -268,7 +267,6 @@ public:
 		VkCommandBuffer							command_buffer,
 		const std::span<const uint32_t>			new_indices,
 		const RawVertexData					&	new_vertices,
-		const std::span<const float>			new_texture_channel_weights,
 		const std::span<const glm::mat4>		new_transformations
 	);
 
@@ -285,9 +283,6 @@ public:
 	// This gets the total amount of indices already pushed in
 	uint32_t									GetTotalIndexCount();
 
-	// This gets the total amount of texture channels already pushed in
-	uint32_t									GetTotalTextureChannelCount();
-
 	// This gets the total amount of transformations already pushed in
 	uint32_t									GetTotalTransformationCount();
 
@@ -295,7 +290,6 @@ private:
 	MeshBlockLocationInfo						ReserveSpaceForMesh(
 		uint32_t								index_count,
 		const RawVertexData					&	vertices,
-		uint32_t								texture_channel_weight_count,
 		uint32_t								transformation_count
 	);
 
@@ -306,17 +300,14 @@ private:
 	uint32_t									pushed_mesh_count							= {};
 	uint32_t									pushed_index_count							= {};
 	uint32_t									pushed_vertex_count							= {};
-	uint32_t									pushed_texture_channel_weight_count			= {};
 	uint32_t									pushed_transformation_count					= {};
 
 	MeshBufferBlock<uint32_t>				*	bound_index_buffer_block					= {};
 	MeshBufferBlock<uint8_t>				*	bound_vertex_buffer_block					= {};
-	MeshBufferBlock<float>					*	bound_texture_channel_weight_buffer_block	= {};
 	MeshBufferBlock<glm::mat4>				*	bound_transformation_buffer_block			= {};
 
 	MeshBufferBlockList<uint32_t>				index_buffer_blocks;
 	MeshBufferBlockList<uint8_t>				vertex_buffer_blocks;
-	MeshBufferBlockList<float>					texture_channel_weight_buffer_blocks;
 	MeshBufferBlockList<glm::mat4>				transformation_buffer_blocks;
 };
 

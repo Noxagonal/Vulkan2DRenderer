@@ -183,7 +183,6 @@ public:
 
 	void														DrawPointList(
 		const RawVertexData									&	raw_vertex_data,
-		std::span<const float>									texture_layer_weights,
 		std::span<const glm::mat4>								transformations,
 		Texture												*	texture,
 		Sampler												*	sampler
@@ -192,7 +191,6 @@ public:
 	void														DrawLineList(
 		std::span<const uint32_t>								raw_indices,
 		const RawVertexData									&	raw_vertex_data,
-		std::span<const float>									texture_layer_weights,
 		std::span<const glm::mat4>								transformations,
 		Texture												*	texture,
 		Sampler												*	sampler,
@@ -202,7 +200,6 @@ public:
 	void														DrawTriangleList(
 		std::span<const uint32_t>								raw_indices,
 		const RawVertexData									&	raw_vertex_data,
-		std::span<const float>									texture_layer_weights,
 		std::span<const glm::mat4>								transformations,
 		bool													solid,
 		Texture												*	texture,

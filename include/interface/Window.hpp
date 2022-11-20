@@ -764,14 +764,7 @@ public:
 	/// 
 	/// @param[in]	vertices 
 	///				Vertices that define where and how points, line endings and polygon corners are drawn.
-	/// 
-	/// @param[in]	texture_layer_weights
-	///				If you're using multi-layer-textures, here you can define how much weight each of those texture layers have per
-	///				vertex. The size of this vector parameter should be the number of texture layers multiplied by number of
-	///				vertices. Data should be formatted so that for each vertex, weight of each texture layer is given. <br>
-	///				For example: 2 points with texture with 2 layers should have this order: (v = vertex, t = texture layer) <br>
-	///				<tt>[v0 t0][v0 t1][v1 t0][v1 t1]</tt>
-	/// 
+	///
 	/// @param[in]	transformations
 	///				Matrices defining transformations that will be applied to all vertices prior to rendering them. If
 	///				none are provided then a default transformation is applied. If multiple transformations are provided then this
@@ -791,7 +784,6 @@ public:
 	template<vk2d_internal::VertexBaseOrDerivedType VertexT>
 	void											DrawPointList(
 		std::span<const VertexT>					vertices,
-		std::span<const float>						texture_layer_weights,
 		std::span<const glm::mat4>					transformations				= {},
 		Texture									*	texture						= nullptr,
 		Sampler									*	sampler						= nullptr
@@ -799,7 +791,6 @@ public:
 	{
 		DrawPointList(
 			vk2d::vk2d_internal::RawVertexData( vertices ),
-			texture_layer_weights,
 			transformations,
 			texture,
 			sampler
@@ -822,14 +813,7 @@ public:
 	/// 
 	/// @param[in]	vertices 
 	///				Vertices that define where and how points, line endings and polygon corners are drawn.
-	/// 
-	/// @param[in]	texture_layer_weights
-	///				If you're using multi-layer-textures, here you can define how much weight each of those texture layers have per
-	///				vertex. The size of this vector parameter should be the number of texture layers multiplied by number of
-	///				vertices. Data should be formatted so that for each vertex, weight of each texture layer is given. <br>
-	///				For example: 2 points with texture with 2 layers should have this order: (v = vertex, t = texture layer) <br>
-	///				<tt>[v0 t0][v0 t1][v1 t0][v1 t1]</tt>
-	/// 
+	///
 	/// @param[in]	transformations
 	///				Matrices defining transformations that will be applied to all vertices prior to rendering them. If
 	///				none are provided then a default transformation is applied. If multiple transformations are provided then this
@@ -850,7 +834,6 @@ public:
 	void											DrawLineList(
 		std::span<const VertexIndex_2>				indices,
 		std::span<const VertexT>					vertices,
-		std::span<const float>						texture_layer_weights,
 		std::span<const glm::mat4>					transformations				= {},
 		Texture									*	texture						= nullptr,
 		Sampler									*	sampler						= nullptr,
@@ -862,7 +845,6 @@ public:
 		DrawLineList(
 			indices_span,
 			vk2d::vk2d_internal::RawVertexData( vertices ),
-			texture_layer_weights,
 			transformations,
 			texture,
 			sampler
@@ -885,14 +867,7 @@ public:
 	/// 
 	/// @param[in]	vertices 
 	///				Vertices that define where and how points, line endings and polygon corners are drawn.
-	/// 
-	/// @param[in]	texture_layer_weights
-	///				If you're using multi-layer-textures, here you can define how much weight each of those texture layers have per
-	///				vertex. The size of this vector parameter should be the number of texture layers multiplied by number of
-	///				vertices. Data should be formatted so that for each vertex, weight of each texture layer is given. <br>
-	///				For example: 2 points with texture with 2 layers should have this order: (v = vertex, t = texture layer) <br>
-	///				<tt>[v0 t0][v0 t1][v1 t0][v1 t1]</tt>
-	/// 
+	///
 	/// @param[in]	transformations
 	///				Matrices defining transformations that will be applied to all vertices prior to rendering them. If
 	///				none are provided then a default transformation is applied. If multiple transformations are provided then this
@@ -913,7 +888,6 @@ public:
 	void											DrawTriangleList(
 		std::span<const VertexIndex_3>				indices,
 		std::span<const VertexT>					vertices,
-		std::span<const float>						texture_layer_weights,
 		std::span<const glm::mat4>					transformations				= {},
 		bool										filled						= true,
 		Texture									*	texture						= nullptr,
@@ -925,7 +899,6 @@ public:
 		DrawTriangleList(
 			indices_span,
 			vk2d::vk2d_internal::RawVertexData( vertices ),
-			texture_layer_weights,
 			transformations,
 			filled,
 			texture,
@@ -1141,7 +1114,6 @@ public:
 			DrawTriangleList(
 				mesh.indices,
 				raw_vertices,
-				mesh.texture_layer_weights,
 				transformations,
 				true,
 				mesh.texture,
@@ -1152,7 +1124,6 @@ public:
 			DrawTriangleList(
 				mesh.indices,
 				raw_vertices,
-				mesh.texture_layer_weights,
 				transformations,
 				false,
 				mesh.texture,
@@ -1163,7 +1134,6 @@ public:
 			DrawLineList(
 				mesh.indices,
 				raw_vertices,
-				mesh.texture_layer_weights,
 				transformations,
 				mesh.texture,
 				mesh.sampler,
@@ -1173,7 +1143,6 @@ public:
 		case MeshType::POINT:
 			DrawPointList(
 				raw_vertices,
-				mesh.texture_layer_weights,
 				transformations,
 				mesh.texture,
 				mesh.sampler
@@ -1267,7 +1236,6 @@ private:
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	VK2D_API void									DrawPointList(
 		const vk2d_internal::RawVertexData		&	raw_vertex_data,
-		std::span<const float>						texture_layer_weights,
 		std::span<const glm::mat4>					transformations				= {},
 		Texture									*	texture						= nullptr,
 		Sampler									*	sampler						= nullptr
@@ -1277,7 +1245,6 @@ private:
 	VK2D_API void									DrawLineList(
 		std::span<const uint32_t>					indices,
 		const vk2d_internal::RawVertexData		&	raw_vertex_data,
-		std::span<const float>						texture_layer_weights,
 		std::span<const glm::mat4>					transformations				= {},
 		Texture									*	texture						= nullptr,
 		Sampler									*	sampler						= nullptr,
@@ -1288,7 +1255,6 @@ private:
 	VK2D_API void									DrawTriangleList(
 		std::span<const uint32_t>					indices,
 		const vk2d_internal::RawVertexData		&	raw_vertex_data,
-		std::span<const float>						texture_layer_weights,
 		std::span<const glm::mat4>					transformations				= {},
 		bool										filled						= true,
 		Texture									*	texture						= nullptr,

@@ -207,7 +207,6 @@ VK2D_API void vk2d::RenderTargetTexture::DrawTexture(
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 VK2D_API void vk2d::RenderTargetTexture::DrawPointList(
 	const vk2d_internal::RawVertexData	&	raw_vertex_data,
-	std::span<const float>					texture_layer_weights,
 	std::span<const glm::mat4>				transformations,
 	Texture								*	texture,
 	Sampler								*	sampler
@@ -215,7 +214,6 @@ VK2D_API void vk2d::RenderTargetTexture::DrawPointList(
 {
 	impl->DrawPointList(
 		raw_vertex_data,
-		texture_layer_weights,
 		transformations,
 		texture,
 		sampler
@@ -226,7 +224,6 @@ VK2D_API void vk2d::RenderTargetTexture::DrawPointList(
 VK2D_API void vk2d::RenderTargetTexture::DrawLineList(
 	std::span<const uint32_t>				indices,
 	const vk2d_internal::RawVertexData	&	raw_vertex_data,
-	std::span<const float>					texture_layer_weights,
 	std::span<const glm::mat4>				transformations,
 	Texture								*	texture,
 	Sampler								*	sampler,
@@ -236,7 +233,6 @@ VK2D_API void vk2d::RenderTargetTexture::DrawLineList(
 	impl->DrawLineList(
 		indices,
 		raw_vertex_data,
-		texture_layer_weights,
 		transformations,
 		texture,
 		sampler,
@@ -248,7 +244,6 @@ VK2D_API void vk2d::RenderTargetTexture::DrawLineList(
 VK2D_API void vk2d::RenderTargetTexture::DrawTriangleList(
 	std::span<const uint32_t>				indices,
 	const vk2d_internal::RawVertexData	&	raw_vertex_data,
-	std::span<const float>					texture_layer_weights,
 	std::span<const glm::mat4>				transformations,
 	bool									filled,
 	Texture								*	texture,
@@ -258,7 +253,6 @@ VK2D_API void vk2d::RenderTargetTexture::DrawTriangleList(
 	impl->DrawTriangleList(
 		indices,
 		raw_vertex_data,
-		texture_layer_weights,
 		transformations,
 		filled,
 		texture,

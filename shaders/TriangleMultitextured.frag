@@ -43,12 +43,7 @@ layout(std140, set=4, binding=1) uniform			image_sampler_data {
 // Set 5: Texture
 layout(set=5, binding=0) uniform texture2DArray		sampled_image;
 
-// Set 6: Texture channel weights
-layout(std430, set=6, binding=0) readonly buffer	TextureChannelWeights {
-	float		ssbo[];
-} texture_channel_weights;
-
-USER_SHADER_INTERFACE_PARAMETERS(7)
+USER_SHADER_INTERFACE_PARAMETERS(6)
 
 // Push constants.
 layout(std140, push_constant) uniform PushConstants {
@@ -56,8 +51,6 @@ layout(std140, push_constant) uniform PushConstants {
 	uint		index_offset;					// Offset into the index buffer.
 	uint		index_count;					// Amount of indices this shader should handle.
 	uint		vertex_offset;					// Offset to first vertex in vertex buffer.
-	uint		texture_channel_weight_offset;	// Location of the texture channels in the texture channel weights ssbo.
-	uint		texture_channel_weight_count;	// Just the amount of texture channels.
 } push_constants;
 
 // From vertex shader.

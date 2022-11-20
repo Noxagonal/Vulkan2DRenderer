@@ -28,7 +28,6 @@ struct AlignedMeshBufferOffsets
 		auto & transformation_block = push_result.location_info.transformation_block;
 		auto & index_block = push_result.location_info.index_block;
 		auto & vertex_block = push_result.location_info.vertex_block;
-		auto & texture_channel_weight_block = push_result.location_info.texture_channel_weight_block;
 
 		transformation_offset = uint32_t( transformation_block.byte_offset / sizeof( std::remove_reference_t<decltype( transformation_block )>::Type ) );
 		assert( transformation_block.byte_offset % sizeof( std::remove_reference_t<decltype( transformation_block )>::Type ) == 0 );
@@ -38,15 +37,11 @@ struct AlignedMeshBufferOffsets
 
 		vertex_offset = uint32_t( vertex_block.byte_offset / raw_vertex_data.vertex_descriptor.size );
 		assert( vertex_block.byte_offset % raw_vertex_data.vertex_descriptor.size == 0 );
-
-		texture_channel_weight_offset = uint32_t( texture_channel_weight_block.byte_offset / sizeof( std::remove_reference_t<decltype( texture_channel_weight_block )>::Type ) );
-		assert( texture_channel_weight_block.byte_offset % sizeof( std::remove_reference_t<decltype( texture_channel_weight_block )>::Type ) == 0 );
 	}
 
 	uint32_t	transformation_offset = {};
 	uint32_t	index_offset = {};
 	uint32_t	vertex_offset = {};
-	uint32_t	texture_channel_weight_offset = {};
 };
 
 

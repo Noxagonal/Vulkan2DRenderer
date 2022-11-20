@@ -235,19 +235,19 @@ if(MSVC)
 	# ignores file dependencies. Shaders are only compiled when the
 	# library is built, and every time the library is built.
 	
-	#add_custom_target(RunTool_CompileGLSLShaderToSpirV
-	#	COMMAND
-	#		CompileGLSLShadersToSpirV
-	#		"-shaderpath" "${CMAKE_CURRENT_SOURCE_DIR}/src/shaders/"
-	#)
-	#add_dependencies(RunTool_CompileGLSLShaderToSpirV
-	#	CompileGLSLShadersToSpirV
-	#)
-	#set_target_properties(RunTool_CompileGLSLShaderToSpirV
-	#	PROPERTIES
-	#		FOLDER						"Utilities"
-	#)
-	
+	add_custom_target(RunTool_CompileGLSLShaderToSpirV
+		COMMAND
+			CompileGLSLShadersToSpirV
+			"-shaderpath" "${CMAKE_CURRENT_SOURCE_DIR}/src/shaders/"
+	)
+	add_dependencies(RunTool_CompileGLSLShaderToSpirV
+		CompileGLSLShadersToSpirV
+	)
+	set_target_properties(RunTool_CompileGLSLShaderToSpirV
+		PROPERTIES
+			FOLDER						"Utilities"
+	)
+
 	#add_custom_command(
 	#	TARGET VK2D
 	#	PRE_BUILD

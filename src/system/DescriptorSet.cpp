@@ -5,14 +5,21 @@
 
 #include <system/DescriptorSet.hpp>
 
+
+
 namespace vk2d {
 namespace vk2d_internal {
+
+
 
 constexpr float			DESCRIPTOR_AUTO_POOL_CATEGORY_MINIMUM_COMPATIBILITY		= 0.75;
 constexpr uint32_t		DESCRIPTOR_AUTO_POOL_ALLOCATION_BATCH_SIZE				= 256;
 
+
+
 } // vk2d_internal
 } // vk2d
+
 
 
 double vk2d::vk2d_internal::DescriptorPoolRequirements::CheckCompatibilityWith(

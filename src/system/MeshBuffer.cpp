@@ -17,7 +17,6 @@ vk2d::vk2d_internal::MeshBuffer::MeshBuffer(
 	instance( instance ),
 	index_buffer_blocks( *this ),
 	vertex_buffer_blocks( *this ),
-	texture_channel_weight_buffer_blocks( *this ),
 	transformation_buffer_blocks( *this )
 {
 	this->first_draw = true;
@@ -27,7 +26,6 @@ vk2d::vk2d_internal::MeshBuffer::PushResult vk2d::vk2d_internal::MeshBuffer::Cmd
 	VkCommandBuffer							command_buffer,
 	const std::span<const uint32_t>			new_indices,
 	const RawVertexData					&	new_vertices,
-	const std::span<const float>			new_texture_channel_weights,
 	const std::span<const glm::mat4>		new_transformations
 )
 {
@@ -41,7 +39,6 @@ vk2d::vk2d_internal::MeshBuffer::PushResult vk2d::vk2d_internal::MeshBuffer::Cmd
 	auto reserve_result = ReserveSpaceForMesh(
 		uint32_t( new_indices.size() ),
 		new_vertices,
-		uint32_t( new_texture_channel_weights.size() ),
 		uint32_t( new_transformations_actual.size() )
 	);
 
@@ -92,7 +89,7 @@ vk2d::vk2d_internal::MeshBuffer::PushResult vk2d::vk2d_internal::MeshBuffer::Cmd
 		CommandBufferCheckpointType::BIND_INDEX_BUFFER,
 		true
 	);
-	
+
 	bound_vertex_buffer_block = BindBuffer(
 		reserve_result.vertex_block,
 		bound_vertex_buffer_block,
@@ -100,15 +97,7 @@ vk2d::vk2d_internal::MeshBuffer::PushResult vk2d::vk2d_internal::MeshBuffer::Cmd
 		CommandBufferCheckpointType::BIND_VERTEX_BUFFER,
 		false
 	);
-	
-	bound_texture_channel_weight_buffer_block = BindBuffer(
-		reserve_result.texture_channel_weight_block,
-		bound_texture_channel_weight_buffer_block,
-		GRAPHICS_DESCRIPTOR_SET_ALLOCATION_texture_channel_weights,
-		CommandBufferCheckpointType::BIND_DESCRIPTOR_SET,
-		false
-	);
-	
+
 	bound_transformation_buffer_block = BindBuffer(
 		reserve_result.transformation_block,
 		bound_transformation_buffer_block,
@@ -120,7 +109,6 @@ vk2d::vk2d_internal::MeshBuffer::PushResult vk2d::vk2d_internal::MeshBuffer::Cmd
 	{
 		auto & index_block_data						= reserve_result.index_block.block->host_data;
 		auto & vertex_block_data					= reserve_result.vertex_block.block->host_data;
-		auto & texture_channel_weight_block_data	= reserve_result.texture_channel_weight_block.block->host_data;
 		auto & transformation_block_data			= reserve_result.transformation_block.block->host_data;
 
 		if( new_indices.size() ) {
@@ -128,9 +116,6 @@ vk2d::vk2d_internal::MeshBuffer::PushResult vk2d::vk2d_internal::MeshBuffer::Cmd
 		}
 		if( new_vertices.vertex_data.size() ) {
 			vertex_block_data.insert( vertex_block_data.end(), new_vertices.vertex_data.begin(), new_vertices.vertex_data.end() );
-		}
-		if( new_texture_channel_weights.size() ) {
-			texture_channel_weight_block_data.insert( texture_channel_weight_block_data.end(), new_texture_channel_weights.begin(), new_texture_channel_weights.end() );
 		}
 		if( new_transformations_actual.size() ) {
 			transformation_block_data.insert( transformation_block_data.end(), new_transformations_actual.begin(), new_transformations_actual.end() );
@@ -146,7 +131,6 @@ vk2d::vk2d_internal::MeshBuffer::PushResult vk2d::vk2d_internal::MeshBuffer::Cmd
 	pushed_mesh_count					+= 1;
 	pushed_index_count					+= uint32_t( new_indices.size() );
 	pushed_vertex_count					+= uint32_t( new_vertices.vertex_count );
-	pushed_texture_channel_weight_count	+= uint32_t( new_texture_channel_weights.size() );
 	pushed_transformation_count			+= uint32_t( new_transformations_actual.size() );
 
 	return ret;
@@ -185,17 +169,14 @@ bool vk2d::vk2d_internal::MeshBuffer::CmdUploadMeshDataToGPU(
 
 	CmdUploadBuffer( index_buffer_blocks );
 	CmdUploadBuffer( vertex_buffer_blocks );
-	CmdUploadBuffer( texture_channel_weight_buffer_blocks );
 	CmdUploadBuffer( transformation_buffer_blocks );
 
 	pushed_mesh_count							= 0;
 	pushed_index_count							= 0;
 	pushed_vertex_count							= 0;
-	pushed_texture_channel_weight_count			= 0;
 	pushed_transformation_count					= 0;
 	bound_index_buffer_block					= nullptr;
 	bound_vertex_buffer_block					= nullptr;
-	bound_texture_channel_weight_buffer_block	= nullptr;
 	bound_transformation_buffer_block			= nullptr;
 	first_draw									= true;
 
@@ -217,11 +198,6 @@ uint32_t vk2d::vk2d_internal::MeshBuffer::GetTotalIndexCount()
 	return pushed_index_count;
 }
 
-uint32_t vk2d::vk2d_internal::MeshBuffer::GetTotalTextureChannelCount()
-{
-	return pushed_texture_channel_weight_count;
-}
-
 uint32_t vk2d::vk2d_internal::MeshBuffer::GetTotalTransformationCount()
 {
 	return pushed_transformation_count;
@@ -230,7 +206,6 @@ uint32_t vk2d::vk2d_internal::MeshBuffer::GetTotalTransformationCount()
 vk2d::vk2d_internal::MeshBlockLocationInfo vk2d::vk2d_internal::MeshBuffer::ReserveSpaceForMesh(
 	uint32_t				index_count,
 	const RawVertexData	&	vertices,
-	uint32_t				texture_channel_weight_count,
 	uint32_t				transformation_count
 )
 {
@@ -284,16 +259,7 @@ vk2d::vk2d_internal::MeshBlockLocationInfo vk2d::vk2d_internal::MeshBuffer::Rese
 		VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, // Vertices are accessed via a storage buffer in shader.
 		MeshBufferDescriptorSetType::STORAGE
 	);
-	
-	location_info.texture_channel_weight_block = ReserveSpaceFromBufferBlock(
-		texture_channel_weight_buffer_blocks,
-		texture_channel_weight_count * sizeof( decltype( texture_channel_weight_buffer_blocks )::Type ),
-		sizeof( decltype( texture_channel_weight_buffer_blocks )::Type ),
-		VK2D_BUILD_OPTION_MESH_BUFFER_BLOCK_texture_channel_weight_SIZE,
-		VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
-		MeshBufferDescriptorSetType::STORAGE
-	);
-	
+
 	location_info.transformation_block = ReserveSpaceFromBufferBlock(
 		transformation_buffer_blocks,
 		transformation_count * sizeof( decltype(transformation_buffer_blocks)::Type ),

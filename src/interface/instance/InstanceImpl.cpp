@@ -840,42 +840,15 @@ VkShaderModule vk2d::vk2d_internal::InstanceImpl::GetComputeShaderModules(
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 vk2d::vk2d_internal::GraphicsShaderProgram vk2d::vk2d_internal::InstanceImpl::GetCompatibleGraphicsShaderModules(
-	bool				multitextured,
 	bool				custom_uv_border_color,
 	uint32_t			vertices_per_primitive
 ) const
 {
-	if( multitextured ) {
-		if( custom_uv_border_color ) {
-			if( vertices_per_primitive == 1 ) {
-				return GetGraphicsShaderModules( GraphicsShaderProgramID::MULTITEXTURED_POINT_UV_BORDER_COLOR );
-			}
-			if( vertices_per_primitive == 2 ) {
-				return GetGraphicsShaderModules( GraphicsShaderProgramID::MULTITEXTURED_LINE_UV_BORDER_COLOR );
-			}
-			if( vertices_per_primitive == 3 ) {
-				return GetGraphicsShaderModules( GraphicsShaderProgramID::MULTITEXTURED_TRIANGLE_UV_BORDER_COLOR );
-			}
-		} else {
-			if( vertices_per_primitive == 1 ) {
-				return GetGraphicsShaderModules( GraphicsShaderProgramID::MULTITEXTURED_POINT );
-			}
-			if( vertices_per_primitive == 2 ) {
-				return GetGraphicsShaderModules( GraphicsShaderProgramID::MULTITEXTURED_LINE );
-			}
-			if( vertices_per_primitive == 3 ) {
-				return GetGraphicsShaderModules( GraphicsShaderProgramID::MULTITEXTURED_TRIANGLE );
-			}
-		}
+	if( custom_uv_border_color ) {
+		return GetGraphicsShaderModules( GraphicsShaderProgramID::SINGLE_TEXTURED_UV_BORDER_COLOR );
 	} else {
-		if( custom_uv_border_color ) {
-			return GetGraphicsShaderModules( GraphicsShaderProgramID::SINGLE_TEXTURED_UV_BORDER_COLOR );
-		} else {
-			return GetGraphicsShaderModules( GraphicsShaderProgramID::SINGLE_TEXTURED );
-		}
+		return GetGraphicsShaderModules( GraphicsShaderProgramID::SINGLE_TEXTURED );
 	}
-
-	return {};
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1343,7 +1316,7 @@ bool vk2d::vk2d_internal::InstanceImpl::CreateDeviceAndQueues()
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 bool vk2d::vk2d_internal::InstanceImpl::CreateDescriptorPool()
 {
-	descriptor_pool			= CreateDescriptorAutoPool(
+	descriptor_pool = CreateDescriptorAutoPool(
 		this,
 		*vulkan_device
 	);
@@ -1353,14 +1326,6 @@ bool vk2d::vk2d_internal::InstanceImpl::CreateDescriptorPool()
 	}
 	return false;
 }
-
-
-
-
-
-
-
-
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 bool vk2d::vk2d_internal::InstanceImpl::CreateDefaultSampler()
@@ -1457,13 +1422,6 @@ bool vk2d::vk2d_internal::InstanceImpl::CreateBlurSampler()
 	return true;
 }
 
-
-
-
-
-
-
-
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 bool vk2d::vk2d_internal::InstanceImpl::CreatePipelineCache()
 {
@@ -1487,14 +1445,6 @@ bool vk2d::vk2d_internal::InstanceImpl::CreatePipelineCache()
 
 	return true;
 }
-
-
-
-
-
-
-
-
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 bool vk2d::vk2d_internal::InstanceImpl::CreateShaderModules()
@@ -1642,8 +1592,6 @@ bool vk2d::vk2d_internal::InstanceImpl::CreateShaderModules()
 		graphics_shader_programs[ GraphicsShaderProgramID::RENDER_TARGET_GAUSSIAN_BLUR_VERTICAL ]	= GraphicsShaderProgram( render_target_texture_blur_vertex, render_target_texture_fragment_gaussian_blur_vertical );
 	}
 
-
-
 	////////////////////////////////
 	// Compute shaders
 	////////////////////////////////
@@ -1652,18 +1600,8 @@ bool vk2d::vk2d_internal::InstanceImpl::CreateShaderModules()
 		// Nothing yet.
 	}
 
-
-
 	return true;
 }
-
-
-
-
-
-
-
-
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 bool vk2d::vk2d_internal::InstanceImpl::CreateDescriptorSetLayouts()
@@ -1805,14 +1743,6 @@ bool vk2d::vk2d_internal::InstanceImpl::CreateDescriptorSetLayouts()
 	return true;
 }
 
-
-
-
-
-
-
-
-
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 bool vk2d::vk2d_internal::InstanceImpl::CreatePipelineLayouts()
 {
@@ -1829,7 +1759,6 @@ bool vk2d::vk2d_internal::InstanceImpl::CreatePipelineLayouts()
 			graphics_storage_buffer_descriptor_set_layout->GetVulkanDescriptorSetLayout(),	// Pipeline set 3 is vertex buffer as storage buffer.
 			graphics_sampler_descriptor_set_layout->GetVulkanDescriptorSetLayout(),			// Pipeline set 4 is sampler and it's data uniform.
 			graphics_texture_descriptor_set_layout->GetVulkanDescriptorSetLayout(),			// Pipeline set 5 is texture.
-			graphics_storage_buffer_descriptor_set_layout->GetVulkanDescriptorSetLayout()	// Pipeline set 6 is texture channel weight data.
 		};
 
 		std::array<VkPushConstantRange, 1> push_constant_ranges {};
@@ -1974,8 +1903,6 @@ bool vk2d::vk2d_internal::InstanceImpl::PopulateNonStaticallyExposedVulkanFuncti
 	return true;
 }
 
-
-
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void vk2d::vk2d_internal::InstanceImpl::DestroyInstance()
 {
@@ -2118,10 +2045,6 @@ void vk2d::vk2d_internal::InstanceImpl::DestroyDefaultTexture()
 	resource_manager->DestroyResource( default_texture );
 	default_texture			= {};
 }
-
-
-
-
 
 
 

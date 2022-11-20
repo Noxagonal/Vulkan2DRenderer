@@ -30,8 +30,6 @@ layout(std140, push_constant) uniform PushConstants {
 	uint		index_offset;					// Offset into the index buffer.
 	uint		index_count;					// Amount of indices this shader should handle.
 	uint		vertex_offset;					// Offset to first vertex in vertex buffer.
-	uint		texture_channel_weight_offset;	// Location of the texture channels in the texture channel weights ssbo.
-	uint		texture_channel_weight_count;	// Just the amount of texture channels.
 } push_constants;
 
 // From vertex shader.

@@ -219,26 +219,6 @@ public:
 	std::vector<uint32_t>							indices							= {};
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	/// @brief		Texture channel weights are used to mix between differet texture arrays per vertex.
-	///
-	///				The size of this list should be either 0, or the amount of vertices and the amount of layers in the used texture
-	///				multiplied together. <br>
-	///				For example if a texture with 3 layers is used then the first 3 indices of this list tells how much weight each
-	///				texture layer has on the first vertex (in same order as texture layers are used). The next 3 indices of this
-	///				list tells how much each texture layer effects the second vertex and so on. <br>
-	///				For another example if a texture with 5 layers is used then the first 5 indices of this list tells how much each
-	///				texture layer effects the first vertex, and the next 5 after that tells how much weight each texture layer has
-	///				on the second vertex and so on until we cover all vertices. <br>
-	///				Texture layer weights multiply the color from the texture, for example if a 2 layer texture is used then weights
-	///				{0.0, 0.0} would result black transparent vertex, {1.0, 0.0} would show the first texture layer, {0.5, 0.5}
-	///				would blend both texture layers together, {1.0, 1.0} would add colors of both layers together. <br>
-	///				If this list is not large enough to contain all weights of all texture channels for all vertices then these
-	///				values are ignored and the texture layers is chosen based on what was set to the vertex. <br>
-	///				Texture layer weights between vertices are linearly interpolated so that if one texture layer weight is high for
-	///				one vertex and low for the neighbouring vertex, the inbetween regions are smoothly transitioned between the two.
-	std::vector<float>								texture_layer_weights			= {};
-
-	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Axis aligned bounding box.
 	///
 	///				This tells the area of within all vertex coordinates reside. It can be set manually or recalculated from

@@ -335,9 +335,6 @@ public:
 	/// 
 	/// @note		Multithreading: Any thread.
 	///
-	/// @param[in]	multitextured
-	///				Tells if the graphics shader need to support multitextured meshes.
-	/// 
 	/// @param[in]	custom_uv_border_color
 	///				Tells if the graphics shader need to support custom uv border color.
 	/// 
@@ -346,7 +343,6 @@ public:
 	///
 	/// @return		Graphics shader program.
 	GraphicsShaderProgram									GetCompatibleGraphicsShaderModules(
-		bool												multitextured,
 		bool												custom_uv_border_color,
 		uint32_t											vertices_per_primitive ) const;
 

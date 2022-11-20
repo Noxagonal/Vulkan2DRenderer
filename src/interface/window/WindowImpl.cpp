@@ -1487,7 +1487,6 @@ void vk2d::vk2d_internal::WindowImpl::SetRenderCoordinateSpace(
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void vk2d::vk2d_internal::WindowImpl::DrawPointList(
 	const RawVertexData					&	raw_vertex_data,
-	std::span<const float>					texture_layer_weights,
 	std::span<const glm::mat4>				transformations,
 	Texture								*	texture,
 	Sampler								*	sampler
@@ -1515,11 +1514,7 @@ void vk2d::vk2d_internal::WindowImpl::DrawPointList(
 	CheckAndAddRenderTargetTextureDependency( texture );
 
 	{
-		bool multitextured = texture->GetLayerCount() > 1 &&
-			texture_layer_weights.size() >= texture->GetLayerCount() * vertex_count;
-
 		auto graphics_shader_programs = instance.GetCompatibleGraphicsShaderModules(
-			multitextured,
 			sampler->impl->IsAnyBorderColorEnabled(),
 			1
 		);
@@ -1552,7 +1547,6 @@ void vk2d::vk2d_internal::WindowImpl::DrawPointList(
 		command_buffer,
 		{},
 		raw_vertex_data,
-		texture_layer_weights,
 		transformations
 	);
 
@@ -1566,8 +1560,6 @@ void vk2d::vk2d_internal::WindowImpl::DrawPointList(
 			pc.index_offset = aligned_buffer_offsets.index_offset;
 			pc.index_count = 1;
 			pc.vertex_offset = aligned_buffer_offsets.vertex_offset;
-			pc.texture_channel_weight_offset = aligned_buffer_offsets.texture_channel_weight_offset;
-			pc.texture_channel_weight_count = texture->GetLayerCount();
 
 			vkCmdPushConstants(
 				command_buffer,
@@ -1600,7 +1592,6 @@ void vk2d::vk2d_internal::WindowImpl::DrawPointList(
 void vk2d::vk2d_internal::WindowImpl::DrawLineList(
 	std::span<const uint32_t>				raw_indices,
 	const RawVertexData					&	raw_vertex_data,
-	std::span<const float>					texture_layer_weights,
 	std::span<const glm::mat4>				transformations,
 	Texture								*	texture,
 	Sampler								*	sampler,
@@ -1630,11 +1621,7 @@ void vk2d::vk2d_internal::WindowImpl::DrawLineList(
 	CheckAndAddRenderTargetTextureDependency( texture );
 
 	{
-		bool multitextured = texture->GetLayerCount() > 1 &&
-			texture_layer_weights.size() >= texture->GetLayerCount() * vertex_count;
-
 		auto graphics_shader_programs = instance.GetCompatibleGraphicsShaderModules(
-			multitextured,
 			sampler->impl->IsAnyBorderColorEnabled(),
 			2
 		);
@@ -1671,7 +1658,6 @@ void vk2d::vk2d_internal::WindowImpl::DrawLineList(
 		command_buffer,
 		raw_indices,
 		raw_vertex_data,
-		texture_layer_weights,
 		transformations
 	);
 
@@ -1685,8 +1671,6 @@ void vk2d::vk2d_internal::WindowImpl::DrawLineList(
 			pc.index_offset						= aligned_buffer_offsets.index_offset;
 			pc.index_count						= 2;
 			pc.vertex_offset					= aligned_buffer_offsets.vertex_offset;
-			pc.texture_channel_weight_offset	= aligned_buffer_offsets.texture_channel_weight_offset;
-			pc.texture_channel_weight_count		= texture->GetLayerCount();
 
 			vkCmdPushConstants(
 				command_buffer,
@@ -1719,7 +1703,6 @@ void vk2d::vk2d_internal::WindowImpl::DrawLineList(
 void vk2d::vk2d_internal::WindowImpl::DrawTriangleList(
 	std::span<const uint32_t>				raw_indices,
 	const RawVertexData					&	raw_vertex_data,
-	std::span<const float>					texture_layer_weights,
 	std::span<const glm::mat4>				transformations,
 	bool									filled,
 	Texture								*	texture,
@@ -1749,11 +1732,7 @@ void vk2d::vk2d_internal::WindowImpl::DrawTriangleList(
 	CheckAndAddRenderTargetTextureDependency( texture );
 
 	{
-		bool multitextured = texture->GetLayerCount() > 1 &&
-			texture_layer_weights.size() >= texture->GetLayerCount() * vertex_count;
-
 		auto graphics_shader_programs = instance.GetCompatibleGraphicsShaderModules(
-			multitextured,
 			sampler->impl->IsAnyBorderColorEnabled(),
 			3
 		);
@@ -1786,7 +1765,6 @@ void vk2d::vk2d_internal::WindowImpl::DrawTriangleList(
 		command_buffer,
 		raw_indices,
 		raw_vertex_data,
-		texture_layer_weights,
 		transformations
 	);
 
@@ -1799,8 +1777,6 @@ void vk2d::vk2d_internal::WindowImpl::DrawTriangleList(
 			pc.index_offset = aligned_buffer_offsets.index_offset;
 			pc.index_count = 3;
 			pc.vertex_offset = aligned_buffer_offsets.vertex_offset;
-			pc.texture_channel_weight_offset = aligned_buffer_offsets.texture_channel_weight_offset;
-			pc.texture_channel_weight_count = texture->GetLayerCount();
 
 			vkCmdPushConstants(
 				command_buffer,
