@@ -177,30 +177,29 @@ namespace detail {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 template<VertexBaseOrDerivedType VertexT, size_t CurrentIndex = 0>
-consteval void GetVertexDescriptorFromVertexType_Extract(
+constexpr void GetVertexDescriptorFromVertexType_Extract(
 	const VertexDescriptor	&	standard_types,
 	VertexDescriptor		&	out
 )
 {
-	constexpr auto member_count		= VertexT::GetMemberCount();
-	const auto member_offset		= VertexT::GetMemberOffset<CurrentIndex>();
-	const auto member_size			= VertexT::GetMemberSize<CurrentIndex>();
-
-	auto member_descriptor			= VertexMemberDescriptor();
-	member_descriptor.offset		= member_offset;
-	member_descriptor.size			= member_size;
-	std::ranges::for_each( standard_types.member_descriptors, [&member_descriptor]( VertexMemberDescriptor o )
-		{
-			if( o.offset == member_descriptor.offset )
-			{
-				member_descriptor.type = o.type;
-			}
-		}
-	);
-	out.member_descriptors.push_back( member_descriptor );
-
-	if( CurrentIndex < VertexT::GetMemberCount() )
+	if constexpr( CurrentIndex < VertexT::GetMemberCount() )
 	{
+		constexpr size_t member_offset = VertexT::template GetMemberOffset<CurrentIndex>();
+		constexpr size_t member_size = VertexT::template GetMemberSize<CurrentIndex>();
+
+		auto member_descriptor = VertexMemberDescriptor();
+		member_descriptor.offset = member_offset;
+		member_descriptor.size = member_size;
+		std::ranges::for_each( standard_types.member_descriptors, [ &member_descriptor ]( VertexMemberDescriptor o )
+			{
+				if( o.offset == member_descriptor.offset )
+				{
+					member_descriptor.type = o.type;
+				}
+			}
+		);
+		out.member_descriptors.push_back( member_descriptor );
+
 		GetVertexDescriptorFromVertexType_Extract<VertexT, CurrentIndex + 1>(
 			standard_types,
 			out
@@ -224,6 +223,8 @@ consteval void GetVertexDescriptorFromVertexType_Extract(
 template<VertexBaseOrDerivedType VertexT>
 constexpr VertexDescriptor GetVertexDescriptorFromVertexType()
 {
+	// TODO: Try to make this function consteval.
+
 	// Idea here is to first see what standard members there are in the vertex, then populate all members in order.
 	// We use the standard_members to define type information to the complete list.
 
@@ -242,6 +243,9 @@ constexpr VertexDescriptor GetVertexDescriptorFromVertexType()
 		auto last	= ret.member_descriptors.back();
 		ret.size	= last.offset + last.size;
 		ret.size	= ( ( ( ret.size - 1 ) / ret.alignment ) + 1 ) * ret.alignment;
+
+		assert( ret.size );
+		assert( ret.size % ret.alignment == 0 );
 	}
 
 	return ret;

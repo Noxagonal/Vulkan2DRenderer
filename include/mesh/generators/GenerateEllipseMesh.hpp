@@ -1,6 +1,9 @@
 #pragma once
 
 #include <core/Common.h>
+
+#include "MeshGeneratorDeclarations.hpp"
+
 #include <mesh/Mesh.hpp>
 #include <mesh/vertex/StandardVertex.hpp>
 #include <mesh/vertex/VertexTools.hpp>
@@ -36,8 +39,8 @@ requires(
 )
 Mesh<VertexT>										GenerateEllipseMesh(
 	Rect2f											area,
-	bool											filled			= true,
-	float											edge_count		= 64.0f
+	bool											filled,
+	float											edge_count
 )
 {
 	auto mesh = Mesh<VertexT>();

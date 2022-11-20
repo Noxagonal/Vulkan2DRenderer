@@ -1,6 +1,9 @@
 #pragma once
 
 #include <core/Common.h>
+
+#include "MeshGeneratorDeclarations.hpp"
+
 #include <mesh/Mesh.hpp>
 #include <mesh/vertex/StandardVertex.hpp>
 #include <mesh/vertex/VertexTools.hpp>
@@ -63,11 +66,11 @@ Mesh<VertexT>										GenerateTextMesh(
 	FontResource								*	font,
 	glm::vec2										origin,
 	std::string										text,
-	float											kerning						= 0.0f,
-	glm::vec2										scale						= glm::vec2( 1.0f, 1.0f ),
-	bool											vertical					= false,
-	uint32_t										font_face					= 0,
-	bool											wait_for_resource_load		= true
+	float											kerning,
+	glm::vec2										scale,
+	bool											vertical,
+	uint32_t										font_face,
+	bool											wait_for_resource_load
 )
 {
 	auto mesh = Mesh<VertexT>();

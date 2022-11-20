@@ -11,6 +11,11 @@ namespace vk2d {
 
 
 
+class Window;
+class RenderTargetTexture;
+
+
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /// @brief		Collection of vertices and their relations.
 ///
@@ -29,6 +34,9 @@ class Mesh : public MeshBase
 		vk2d_internal::VertexBaseType<VertexT> || vk2d_internal::VertexBaseDerivedType<VertexT>,
 		"Vertex type must be VertexBase or derived from it"
 	);
+
+	friend class Window;
+	friend class RenderTargetTexture;
 
 public:
 

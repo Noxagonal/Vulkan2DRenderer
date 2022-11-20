@@ -7,6 +7,7 @@
 #include "StandardVertex.hpp"
 
 #include <vector>
+#include <span>
 
 
 
@@ -25,8 +26,8 @@ public:
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	template<VertexBaseOrDerivedType VertexT>
-	RawVertexData(
-		const std::vector<VertexT>	&	vertices
+	explicit RawVertexData(
+		std::span<const VertexT> vertices
 	)
 	{
 		vertex_descriptor	= GetVertexDescriptorFromVertexType<VertexT>();
@@ -50,17 +51,17 @@ private:
 		VertexBaseOrDerivedType		VertexT,
 		size_t						CurrentIndex = 0
 	>
-	void							CopyMembers(
+	constexpr void					CopyMembers(
 		size_t						current_offset,
 		const VertexT			&	vertex
 	)
 	{
 		static_assert( VertexT::GetMemberCount() > 0, "Vertex must have at least one member" );
-		assert( current_offset < vertex_data.size() );
 
-		CopyMemberData( current_offset + VertexT::GetMemberOffset<CurrentIndex>(), vertex.Get<CurrentIndex>());
 		if constexpr( CurrentIndex < VertexT::GetMemberCount() )
 		{
+			assert( current_offset < vertex_data.size() );
+			CopyMemberData( current_offset + VertexT::template GetMemberOffset<CurrentIndex>(), vertex.Get<CurrentIndex>());
 			CopyMembers<VertexT, CurrentIndex + 1>( current_offset, vertex );
 		}
 	}
@@ -69,7 +70,7 @@ private:
 	template<
 		typename					MemberT
 	>
-	void							CopyMemberData(
+	constexpr void					CopyMemberData(
 		size_t						current_offset,
 		MemberT					&	data
 	)

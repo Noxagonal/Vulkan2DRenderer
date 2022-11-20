@@ -1,6 +1,9 @@
 #pragma once
 
 #include <core/Common.h>
+
+#include "MeshGeneratorDeclarations.hpp"
+
 #include <mesh/Mesh.hpp>
 #include <mesh/vertex/StandardVertex.hpp>
 #include <mesh/vertex/VertexTools.hpp>
@@ -36,7 +39,7 @@ requires(
 Mesh<VertexT>										GenerateTriangleMeshFromList(
 	const std::vector<glm::vec2>				&	points,
 	const std::vector<VertexIndex_3>			&	indices,
-	bool											filled = true
+	bool											filled
 )
 {
 	auto mesh = GeneratePointMeshFromList<VertexT>( points );

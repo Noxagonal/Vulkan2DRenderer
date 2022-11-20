@@ -17,6 +17,8 @@
 
 #include "SamplerImpl.h"
 
+#include <mesh/AlignedMeshBufferOffsets.hpp>
+
 #define GLFW_INCLUDE_NONE
 #include <GLFW/glfw3.h>
 
@@ -1482,46 +1484,13 @@ void vk2d::vk2d_internal::WindowImpl::SetRenderCoordinateSpace(
 	this->coordinate_space = coordinate_space;
 }
 
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-void vk2d::vk2d_internal::WindowImpl::DrawTriangleList(
-	const std::vector<VertexIndex_3>	&	indices,
-	const RawVertexData					&	raw_vertex_data,
-	const std::vector<float>			&	texture_layer_weights,
-	const std::vector<glm::mat4>		&	transformations,
-	bool									filled,
-	Texture								*	texture,
-	Sampler								*	sampler
-)
-{
-	VK2D_ASSERT_MAIN_THREAD( instance );
 
-	auto index_count	= uint32_t( indices.size() * 3 );
-	std::vector<uint32_t> raw_indices;
-	raw_indices.resize( index_count );
-	for( size_t i = 0, a = 0; i < indices.size(); ++i, a += 3 ) {
-		raw_indices[ a + 0 ] = indices[ i ].indices[ 0 ];
-		raw_indices[ a + 1 ] = indices[ i ].indices[ 1 ];
-		raw_indices[ a + 2 ] = indices[ i ].indices[ 2 ];
-	}
-
-	DrawTriangleList(
-		raw_indices,
-		raw_vertex_data,
-		texture_layer_weights,
-		transformations,
-		filled,
-		texture,
-		sampler
-	);
-}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-void vk2d::vk2d_internal::WindowImpl::DrawTriangleList(
-	const std::vector<uint32_t>			&	raw_indices,
+void vk2d::vk2d_internal::WindowImpl::DrawPointList(
 	const RawVertexData					&	raw_vertex_data,
-	const std::vector<float>			&	texture_layer_weights,
-	const std::vector<glm::mat4>		&	transformations,
-	bool									filled,
+	std::span<const float>					texture_layer_weights,
+	std::span<const glm::mat4>				transformations,
 	Texture								*	texture,
 	Sampler								*	sampler
 )
@@ -1531,10 +1500,9 @@ void vk2d::vk2d_internal::WindowImpl::DrawTriangleList(
 	// Skip if the window is iconified, swapchain images might not be available.
 	if( is_iconified ) return;
 
-	auto command_buffer					= vk_render_command_buffers[ next_image ];
+	auto command_buffer = vk_render_command_buffers[ next_image ];
 
-	auto vertex_count	= uint32_t( raw_vertex_data.vertex_count );
-	auto index_count	= uint32_t( raw_indices.size() );
+	auto vertex_count = uint32_t( raw_vertex_data.vertex_count );
 
 	if( !texture ) {
 		texture = instance.GetDefaultTexture();
@@ -1555,17 +1523,17 @@ void vk2d::vk2d_internal::WindowImpl::DrawTriangleList(
 		auto graphics_shader_programs = instance.GetCompatibleGraphicsShaderModules(
 			multitextured,
 			sampler->impl->IsAnyBorderColorEnabled(),
-			3
+			1
 		);
 
 		GraphicsPipelineSettings pipeline_settings {};
-		pipeline_settings.vk_pipeline_layout	= instance.GetGraphicsPrimaryRenderPipelineLayout();
-		pipeline_settings.vk_render_pass		= vk_render_pass;
-		pipeline_settings.primitive_topology	= VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
-		pipeline_settings.polygon_mode			= filled ? VK_POLYGON_MODE_FILL : VK_POLYGON_MODE_LINE;
-		pipeline_settings.shader_programs		= graphics_shader_programs;
-		pipeline_settings.samples				= VkSampleCountFlags( samples );
-		pipeline_settings.enable_blending		= VK_TRUE;
+		pipeline_settings.vk_pipeline_layout = instance.GetGraphicsPrimaryRenderPipelineLayout();
+		pipeline_settings.vk_render_pass = vk_render_pass;
+		pipeline_settings.primitive_topology = VK_PRIMITIVE_TOPOLOGY_POINT_LIST;
+		pipeline_settings.polygon_mode = VK_POLYGON_MODE_POINT;
+		pipeline_settings.shader_programs = graphics_shader_programs;
+		pipeline_settings.samples = VkSampleCountFlags( samples );
+		pipeline_settings.enable_blending = VK_TRUE;
 
 		CmdBindGraphicsPipelineIfDifferent(
 			command_buffer,
@@ -1584,21 +1552,24 @@ void vk2d::vk2d_internal::WindowImpl::DrawTriangleList(
 
 	auto push_result = mesh_buffer->CmdPushMesh(
 		command_buffer,
-		raw_indices,
+		{},
 		raw_vertex_data,
 		texture_layer_weights,
 		transformations
 	);
 
-	if( push_result.success ) {
+	if( push_result.success )
+	{
+		auto aligned_buffer_offsets = AlignedMeshBufferOffsets( push_result, raw_vertex_data );
+
 		{
 			GraphicsPrimaryRenderPushConstants pc {};
-			pc.transformation_offset	= push_result.location_info.transformation_offset;
-			pc.index_offset				= push_result.location_info.index_offset;
-			pc.index_count				= 3;
-			pc.vertex_offset			= push_result.location_info.vertex_offset;
-			pc.texture_channel_weight_offset	= push_result.location_info.texture_channel_weight_offset;
-			pc.texture_channel_weight_count	= texture->GetLayerCount();
+			pc.transformation_offset = aligned_buffer_offsets.transformation_offset;
+			pc.index_offset = aligned_buffer_offsets.index_offset;
+			pc.index_count = 1;
+			pc.vertex_offset = aligned_buffer_offsets.vertex_offset;
+			pc.texture_channel_weight_offset = aligned_buffer_offsets.texture_channel_weight_offset;
+			pc.texture_channel_weight_count = texture->GetLayerCount();
 
 			vkCmdPushConstants(
 				command_buffer,
@@ -1614,72 +1585,25 @@ void vk2d::vk2d_internal::WindowImpl::DrawTriangleList(
 			"MeshBuffer",
 			CommandBufferCheckpointType::DRAW
 		);
-		vkCmdDrawIndexed(
+		vkCmdDraw(
 			command_buffer,
-			index_count,
+			vertex_count,
 			uint32_t( std::size( transformations ) ),
-			push_result.location_info.index_offset,
-			int32_t( push_result.location_info.vertex_offset ),
+			aligned_buffer_offsets.vertex_offset,
 			0
 		);
-	} else {
+	}
+	else {
 		instance.Report( ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot push mesh into mesh render queue!" );
 	}
-
-	#if VK2D_BUILD_OPTION_DEBUG_ALWAYS_DRAW_TRIANGLES_WIREFRAME
-	if( filled ) {
-		auto vertices_copy = vertices;
-		for( auto & v : vertices_copy ) {
-			v.color = Colorf( 0.2f, 1.0f, 0.4f, 0.25f );
-		}
-		DrawTriangleList(
-			raw_indices,
-			vertices_copy,
-			{},
-			false
-		);
-	}
-	#endif
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void vk2d::vk2d_internal::WindowImpl::DrawLineList(
-	const std::vector<VertexIndex_2>	&	indices,
+	std::span<const uint32_t>				raw_indices,
 	const RawVertexData					&	raw_vertex_data,
-	const std::vector<float>			&	texture_layer_weights,
-	const std::vector<glm::mat4>		&	transformations,
-	Texture								*	texture,
-	Sampler								*	sampler,
-	float									line_width
-)
-{
-	VK2D_ASSERT_MAIN_THREAD( instance );
-
-	auto index_count	= uint32_t( indices.size() * 2 );
-	std::vector<uint32_t> raw_indices;
-	raw_indices.resize( index_count );
-	for( size_t i = 0, a = 0; i < indices.size(); ++i, a += 2 ) {
-		raw_indices[ a + 0 ] = indices[ i ].indices[ 0 ];
-		raw_indices[ a + 1 ] = indices[ i ].indices[ 1 ];
-	}
-
-	DrawLineList(
-		raw_indices,
-		raw_vertex_data,
-		texture_layer_weights,
-		transformations,
-		texture,
-		sampler,
-		line_width
-	);
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-void vk2d::vk2d_internal::WindowImpl::DrawLineList(
-	const std::vector<uint32_t>			&	raw_indices,
-	const RawVertexData					&	raw_vertex_data,
-	const std::vector<float>			&	texture_layer_weights,
-	const std::vector<glm::mat4>		&	transformations,
+	std::span<const float>					texture_layer_weights,
+	std::span<const glm::mat4>				transformations,
 	Texture								*	texture,
 	Sampler								*	sampler,
 	float									line_width
@@ -1753,14 +1677,17 @@ void vk2d::vk2d_internal::WindowImpl::DrawLineList(
 		transformations
 	);
 
-	if( push_result.success ) {
+	if( push_result.success )
+	{
+		auto aligned_buffer_offsets = AlignedMeshBufferOffsets( push_result, raw_vertex_data );
+
 		{
 			GraphicsPrimaryRenderPushConstants pc {};
-			pc.transformation_offset			= push_result.location_info.transformation_offset;
-			pc.index_offset						= push_result.location_info.index_offset;
+			pc.transformation_offset			= aligned_buffer_offsets.transformation_offset;
+			pc.index_offset						= aligned_buffer_offsets.index_offset;
 			pc.index_count						= 2;
-			pc.vertex_offset					= push_result.location_info.vertex_offset;
-			pc.texture_channel_weight_offset	= push_result.location_info.texture_channel_weight_offset;
+			pc.vertex_offset					= aligned_buffer_offsets.vertex_offset;
+			pc.texture_channel_weight_offset	= aligned_buffer_offsets.texture_channel_weight_offset;
 			pc.texture_channel_weight_count		= texture->GetLayerCount();
 
 			vkCmdPushConstants(
@@ -1781,8 +1708,8 @@ void vk2d::vk2d_internal::WindowImpl::DrawLineList(
 			command_buffer,
 			index_count,
 			uint32_t( std::size( transformations ) ),
-			push_result.location_info.index_offset,
-			int32_t( push_result.location_info.vertex_offset ),
+			aligned_buffer_offsets.index_offset,
+			int32_t( aligned_buffer_offsets.vertex_offset ),
 			0
 		);
 	} else {
@@ -1791,10 +1718,12 @@ void vk2d::vk2d_internal::WindowImpl::DrawLineList(
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-void vk2d::vk2d_internal::WindowImpl::DrawPointList(
+void vk2d::vk2d_internal::WindowImpl::DrawTriangleList(
+	std::span<const uint32_t>				raw_indices,
 	const RawVertexData					&	raw_vertex_data,
-	const std::vector<float>			&	texture_layer_weights,
-	const std::vector<glm::mat4>		&	transformations,
+	std::span<const float>					texture_layer_weights,
+	std::span<const glm::mat4>				transformations,
+	bool									filled,
 	Texture								*	texture,
 	Sampler								*	sampler
 )
@@ -1804,9 +1733,10 @@ void vk2d::vk2d_internal::WindowImpl::DrawPointList(
 	// Skip if the window is iconified, swapchain images might not be available.
 	if( is_iconified ) return;
 
-	auto command_buffer					= vk_render_command_buffers[ next_image ];
+	auto command_buffer = vk_render_command_buffers[ next_image ];
 
-	auto vertex_count	= uint32_t( raw_vertex_data.vertex_count );
+	auto vertex_count = uint32_t( raw_vertex_data.vertex_count );
+	auto index_count = uint32_t( raw_indices.size() );
 
 	if( !texture ) {
 		texture = instance.GetDefaultTexture();
@@ -1827,17 +1757,17 @@ void vk2d::vk2d_internal::WindowImpl::DrawPointList(
 		auto graphics_shader_programs = instance.GetCompatibleGraphicsShaderModules(
 			multitextured,
 			sampler->impl->IsAnyBorderColorEnabled(),
-			1
+			3
 		);
 
 		GraphicsPipelineSettings pipeline_settings {};
-		pipeline_settings.vk_pipeline_layout	= instance.GetGraphicsPrimaryRenderPipelineLayout();
-		pipeline_settings.vk_render_pass		= vk_render_pass;
-		pipeline_settings.primitive_topology	= VK_PRIMITIVE_TOPOLOGY_POINT_LIST;
-		pipeline_settings.polygon_mode			= VK_POLYGON_MODE_POINT;
-		pipeline_settings.shader_programs		= graphics_shader_programs;
-		pipeline_settings.samples				= VkSampleCountFlags( samples );
-		pipeline_settings.enable_blending		= VK_TRUE;
+		pipeline_settings.vk_pipeline_layout = instance.GetGraphicsPrimaryRenderPipelineLayout();
+		pipeline_settings.vk_render_pass = vk_render_pass;
+		pipeline_settings.primitive_topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+		pipeline_settings.polygon_mode = filled ? VK_POLYGON_MODE_FILL : VK_POLYGON_MODE_LINE;
+		pipeline_settings.shader_programs = graphics_shader_programs;
+		pipeline_settings.samples = VkSampleCountFlags( samples );
+		pipeline_settings.enable_blending = VK_TRUE;
 
 		CmdBindGraphicsPipelineIfDifferent(
 			command_buffer,
@@ -1856,21 +1786,23 @@ void vk2d::vk2d_internal::WindowImpl::DrawPointList(
 
 	auto push_result = mesh_buffer->CmdPushMesh(
 		command_buffer,
-		{},
+		raw_indices,
 		raw_vertex_data,
 		texture_layer_weights,
 		transformations
 	);
 
-	if( push_result.success ) {
+	if( push_result.success )
+	{
+		auto aligned_buffer_offsets = AlignedMeshBufferOffsets( push_result, raw_vertex_data );
 		{
 			GraphicsPrimaryRenderPushConstants pc {};
-			pc.transformation_offset			= push_result.location_info.transformation_offset;
-			pc.index_offset						= push_result.location_info.index_offset;
-			pc.index_count						= 1;
-			pc.vertex_offset					= push_result.location_info.vertex_offset;
-			pc.texture_channel_weight_offset	= push_result.location_info.texture_channel_weight_offset;
-			pc.texture_channel_weight_count		= texture->GetLayerCount();
+			pc.transformation_offset = aligned_buffer_offsets.transformation_offset;
+			pc.index_offset = aligned_buffer_offsets.index_offset;
+			pc.index_count = 3;
+			pc.vertex_offset = aligned_buffer_offsets.vertex_offset;
+			pc.texture_channel_weight_offset = aligned_buffer_offsets.texture_channel_weight_offset;
+			pc.texture_channel_weight_count = texture->GetLayerCount();
 
 			vkCmdPushConstants(
 				command_buffer,
@@ -1886,74 +1818,36 @@ void vk2d::vk2d_internal::WindowImpl::DrawPointList(
 			"MeshBuffer",
 			CommandBufferCheckpointType::DRAW
 		);
-		vkCmdDraw(
+		vkCmdDrawIndexed(
 			command_buffer,
-			vertex_count,
+			index_count,
 			uint32_t( std::size( transformations ) ),
-			push_result.location_info.vertex_offset,
+			aligned_buffer_offsets.index_offset,
+			int32_t( aligned_buffer_offsets.vertex_offset ),
 			0
 		);
-	} else {
+	}
+	else
+	{
 		instance.Report( ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot push mesh into mesh render queue!" );
 	}
-}
 
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-void vk2d::vk2d_internal::WindowImpl::DrawMesh(
-	const MeshBase							&	mesh,
-	const std::vector<glm::mat4>			&	transformations )
-{
-	VK2D_ASSERT_MAIN_THREAD( instance );
-
-	if( mesh.vertices.size() == 0 ) return;
-
-	switch( mesh.mesh_type ) {
-		case MeshType::TRIANGLE_FILLED:
-			DrawTriangleList(
-				mesh.indices,
-				mesh.vertices,
-				mesh.texture_layer_weights,
-				transformations,
-				true,
-				mesh.texture,
-				mesh.sampler
-			);
-			break;
-		case MeshType::TRIANGLE_WIREFRAME:
-			DrawTriangleList(
-				mesh.indices,
-				mesh.vertices,
-				mesh.texture_layer_weights,
-				transformations,
-				false,
-				mesh.texture,
-				mesh.sampler
-			);
-			break;
-		case MeshType::LINE:
-			DrawLineList(
-				mesh.indices,
-				mesh.vertices,
-				mesh.texture_layer_weights,
-				transformations,
-				mesh.texture,
-				mesh.sampler,
-				mesh.line_width
-			);
-			break;
-		case MeshType::POINT:
-			DrawPointList(
-				mesh.vertices,
-				mesh.texture_layer_weights,
-				transformations,
-				mesh.texture,
-				mesh.sampler
-			);
-			break;
-		default:
-			break;
+	#if VK2D_BUILD_OPTION_DEBUG_ALWAYS_DRAW_TRIANGLES_WIREFRAME
+	if( filled ) {
+		auto vertices_copy = vertices;
+		for( auto & v : vertices_copy ) {
+			v.color = Colorf( 0.2f, 1.0f, 0.4f, 0.25f );
+		}
+		DrawTriangleList(
+			raw_indices,
+			vertices_copy,
+			{},
+			false
+		);
 	}
+	#endif
 }
+
 
 
 

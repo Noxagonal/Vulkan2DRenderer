@@ -95,11 +95,11 @@ public:
 	)
 	{
 		auto buffer_block = std::make_unique<MeshBufferBlock<T>>(
-			*this,
+			parent,
 			byte_size,
 			buffer_usage_flags,
 			descriptor_set_type
-			);
+		);
 		if( buffer_block && buffer_block->IsGood() )
 		{
 			auto ret = buffer_block.get();
@@ -266,10 +266,10 @@ public:
 	// put into, needed when recording a Vulkan draw command.
 	MeshBuffer::PushResult						CmdPushMesh(
 		VkCommandBuffer							command_buffer,
-		const std::vector<uint32_t>			&	new_indices,
+		const std::span<const uint32_t>			new_indices,
 		const RawVertexData					&	new_vertices,
-		const std::vector<float>			&	new_texture_channel_weights,
-		const std::vector<glm::mat4>		&	new_transformations
+		const std::span<const float>			new_texture_channel_weights,
+		const std::span<const glm::mat4>		new_transformations
 	);
 
 	bool										CmdUploadMeshDataToGPU(

@@ -502,7 +502,7 @@ void vk2d::vk2d_internal::FontResourceImpl::MTUnload(
 vk2d::Rect2f vk2d::vk2d_internal::FontResourceImpl::CalculateRenderedSize(
 	std::string_view	text,
 	float				kerning,
-	glm::vec2		scale,
+	glm::vec2			scale,
 	bool				vertical,
 	uint32_t			font_face,
 	bool				wait_for_resource_load

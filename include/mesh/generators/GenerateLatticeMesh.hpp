@@ -1,6 +1,9 @@
 #pragma once
 
 #include <core/Common.h>
+
+#include "MeshGeneratorDeclarations.hpp"
+
 #include <mesh/Mesh.hpp>
 #include <mesh/vertex/StandardVertex.hpp>
 #include <mesh/vertex/VertexTools.hpp>
@@ -38,7 +41,7 @@ requires(
 Mesh<VertexT>										GenerateLatticeMesh(
 	Rect2f											area,
 	glm::vec2										subdivisions,
-	bool											filled				= true
+	bool											filled
 )
 {
 	auto mesh = Mesh<VertexT>();

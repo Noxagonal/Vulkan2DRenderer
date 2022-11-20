@@ -2,6 +2,8 @@
 
 #include <core/Common.h>
 
+#include "MeshGeneratorDeclarations.hpp"
+
 #include "GeneratePointMeshFromList.hpp"
 #include "GenerateLineMeshFromList.hpp"
 #include "GenerateTriangleMeshFromList.hpp"

@@ -2,7 +2,8 @@
 #include <core/SourceCommon.h>
 
 #include "RenderTargetTextureImpl.h"
-#include <types/MeshGenerators.hpp>
+#include <mesh/generators/MeshGenerators.hpp>
+#include <mesh/modifiers/MeshModifiers.hpp>
 
 
 
@@ -81,68 +82,6 @@ VK2D_API bool vk2d::RenderTargetTexture::EndRender(
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-VK2D_API void vk2d::RenderTargetTexture::DrawTriangleList(
-	const std::vector<VertexIndex_3>	&	indices,
-	const std::vector<Vertex>			&	vertices,
-	const std::vector<float>			&	texture_layer_weights,
-	const std::vector<glm::mat4>		&	transformations,
-	bool									filled,
-	Texture								*	texture,
-	Sampler								*	sampler
-)
-{
-	impl->DrawTriangleList(
-		indices,
-		vertices,
-		texture_layer_weights,
-		transformations,
-		filled,
-		texture,
-		sampler
-	);
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-VK2D_API void vk2d::RenderTargetTexture::DrawLineList(
-	const std::vector<VertexIndex_2>	&	indices,
-	const std::vector<Vertex>			&	vertices,
-	const std::vector<float>			&	texture_layer_weights,
-	const std::vector<glm::mat4>		&	transformations,
-	Texture								*	texture,
-	Sampler								*	sampler,
-	float									line_width
-)
-{
-	impl->DrawLineList(
-		indices,
-		vertices,
-		texture_layer_weights,
-		transformations,
-		texture,
-		sampler,
-		line_width
-	);
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-VK2D_API void vk2d::RenderTargetTexture::DrawPointList(
-	const std::vector<Vertex>			&	vertices,
-	const std::vector<float>			&	texture_layer_weights,
-	const std::vector<glm::mat4>		&	transformations,
-	Texture								*	texture,
-	Sampler								*	sampler
-)
-{
-	impl->DrawPointList(
-		vertices,
-		texture_layer_weights,
-		transformations,
-		texture,
-		sampler
-	);
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 VK2D_API void vk2d::RenderTargetTexture::DrawPoint(
 	glm::vec2	location,
 	Colorf		color,
@@ -152,9 +91,9 @@ VK2D_API void vk2d::RenderTargetTexture::DrawPoint(
 	auto mesh = GeneratePointMeshFromList(
 		{ location }
 	);
-	mesh.SetVertexColor( color );
-	mesh.SetPointSize( size );
-	impl->DrawMesh( mesh, { glm::mat4( 1.0f ) } );
+	mesh_modifiers::SetVerticesColor( mesh, color );
+	mesh_modifiers::SetVerticesPointSize( mesh, size );
+	DrawMesh( mesh, std::vector { glm::mat4( 1.0f ) } );
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -169,9 +108,9 @@ VK2D_API void vk2d::RenderTargetTexture::DrawLine(
 		{ point_1, point_2 },
 		{ { 0, 1 } }
 	);
-	mesh.SetVertexColor( color );
+	mesh_modifiers::SetVerticesColor( mesh, color );
 	mesh.SetLineWidth( line_width );
-	impl->DrawMesh( mesh, { glm::mat4( 1.0f ) } );
+	DrawMesh( mesh, std::vector { glm::mat4( 1.0f ) } );
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -185,8 +124,8 @@ VK2D_API void vk2d::RenderTargetTexture::DrawRectangle(
 		area,
 		filled
 	);
-	mesh.SetVertexColor( color );
-	impl->DrawMesh( mesh, { glm::mat4( 1.0f ) } );
+	mesh_modifiers::SetVerticesColor( mesh, color );
+	DrawMesh( mesh, std::vector { glm::mat4( 1.0f ) } );
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -202,8 +141,8 @@ VK2D_API void vk2d::RenderTargetTexture::DrawEllipse(
 		filled,
 		edge_count
 	);
-	mesh.SetVertexColor( color );
-	impl->DrawMesh( mesh, { glm::mat4( 1.0f ) } );
+	mesh_modifiers::SetVerticesColor( mesh, color );
+	DrawMesh( mesh, std::vector { glm::mat4( 1.0f ) } );
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -223,17 +162,17 @@ VK2D_API void vk2d::RenderTargetTexture::DrawEllipsePie(
 		filled,
 		edge_count
 	);
-	mesh.SetVertexColor( color );
-	impl->DrawMesh( mesh, { glm::mat4( 1.0f ) } );
+	mesh_modifiers::SetVerticesColor( mesh, color );
+	DrawMesh( mesh, std::vector { glm::mat4( 1.0f ) } );
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 VK2D_API void vk2d::RenderTargetTexture::DrawRectanglePie(
-	Rect2f					area,
-	float							begin_angle_radians,
-	float							coverage,
-	bool							filled,
-	Colorf					color
+	Rect2f			area,
+	float			begin_angle_radians,
+	float			coverage,
+	bool			filled,
+	Colorf			color
 )
 {
 	auto mesh = GenerateRectanglePieMesh(
@@ -242,8 +181,8 @@ VK2D_API void vk2d::RenderTargetTexture::DrawRectanglePie(
 		coverage,
 		filled
 	);
-	mesh.SetVertexColor( color );
-	impl->DrawMesh( mesh, { glm::mat4( 1.0f ) } );
+	mesh_modifiers::SetVerticesColor( mesh, color );
+	DrawMesh( mesh, std::vector { glm::mat4( 1.0f ) } );
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -260,49 +199,70 @@ VK2D_API void vk2d::RenderTargetTexture::DrawTexture(
 			{ top_left, bottom_right }
 		);
 		mesh.SetTexture( texture );
-		mesh.SetVertexColor( color );
-		impl->DrawMesh( mesh, { glm::mat4( 1.0f ) } );
+		mesh_modifiers::SetVerticesColor( mesh, color );
+		DrawMesh( mesh, std::vector{ glm::mat4( 1.0f ) } );
 	}
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-VK2D_API void vk2d::RenderTargetTexture::DrawMesh(
-	const MeshBase					&	mesh,
-	const Transform					&	transformation
+VK2D_API void vk2d::RenderTargetTexture::DrawPointList(
+	const vk2d_internal::RawVertexData	&	raw_vertex_data,
+	std::span<const float>					texture_layer_weights,
+	std::span<const glm::mat4>				transformations,
+	Texture								*	texture,
+	Sampler								*	sampler
 )
 {
-	impl->DrawMesh(
-		mesh,
-		{ transformation.CalculateTransformationMatrix() }
+	impl->DrawPointList(
+		raw_vertex_data,
+		texture_layer_weights,
+		transformations,
+		texture,
+		sampler
 	);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-VK2D_API void vk2d::RenderTargetTexture::DrawMesh(
-	const MeshBase					&	mesh,
-	const std::vector<Transform>	&	transformations
+VK2D_API void vk2d::RenderTargetTexture::DrawLineList(
+	std::span<const uint32_t>				indices,
+	const vk2d_internal::RawVertexData	&	raw_vertex_data,
+	std::span<const float>					texture_layer_weights,
+	std::span<const glm::mat4>				transformations,
+	Texture								*	texture,
+	Sampler								*	sampler,
+	float									line_width
 )
 {
-	std::vector<glm::mat4> transformation_matrices( std::size( transformations ) );
-	for( size_t i = 0; i < std::size( transformations ); ++i ) {
-		transformation_matrices[ i ]	= transformations[ i ].CalculateTransformationMatrix();
-	}
-
-	impl->DrawMesh(
-		mesh,
-		transformation_matrices
+	impl->DrawLineList(
+		indices,
+		raw_vertex_data,
+		texture_layer_weights,
+		transformations,
+		texture,
+		sampler,
+		line_width
 	);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-VK2D_API void vk2d::RenderTargetTexture::DrawMesh(
-	const MeshBase					&	mesh,
-	const std::vector<glm::mat4>	&	transformations
+VK2D_API void vk2d::RenderTargetTexture::DrawTriangleList(
+	std::span<const uint32_t>				indices,
+	const vk2d_internal::RawVertexData	&	raw_vertex_data,
+	std::span<const float>					texture_layer_weights,
+	std::span<const glm::mat4>				transformations,
+	bool									filled,
+	Texture								*	texture,
+	Sampler								*	sampler
 )
 {
-	impl->DrawMesh(
-		mesh,
-		transformations
+	impl->DrawTriangleList(
+		indices,
+		raw_vertex_data,
+		texture_layer_weights,
+		transformations,
+		filled,
+		texture,
+		sampler
 	);
 }
 

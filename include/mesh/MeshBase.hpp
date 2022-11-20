@@ -23,6 +23,8 @@ class RenderTargetTextureImpl;
 
 
 
+class Window;
+class RenderTargetTexture;
 class FontResource;
 class Sampler;
 class Texture;
@@ -31,6 +33,9 @@ class Texture;
 
 class MeshBase
 {
+	friend class Window;
+	friend class RenderTargetTexture;
+
 	friend class vk2d_internal::WindowImpl;
 	friend class vk2d_internal::RenderTargetTextureImpl;
 
@@ -49,20 +54,20 @@ class MeshBase
 	friend Mesh<VertexT>								GenerateTriangleMeshFromList(
 		const std::vector<glm::vec2>				&	points,
 		const std::vector<VertexIndex_3>			&	indices,
-		bool											filled = true
+		bool											filled
 	);
 	
 	template<vk2d_internal::VertexBaseDerivedType VertexT>
 	friend Mesh<VertexT>								GenerateRectangleMesh(
 		Rect2f											area,
-		bool											filled = true
+		bool											filled
 	);
 	
 	template<vk2d_internal::VertexBaseDerivedType VertexT>
 	friend Mesh<VertexT>								GenerateEllipseMesh(
 		Rect2f											area,
-		bool											filled = true,
-		float											edge_count = 64.0f
+		bool											filled,
+		float											edge_count
 	);
 	
 	template<vk2d_internal::VertexBaseDerivedType VertexT>
@@ -70,7 +75,7 @@ class MeshBase
 		Rect2f											area,
 		float											begin_angle_radians,
 		float											coverage,
-		bool											filled = true
+		bool											filled
 	);
 	
 	template<vk2d_internal::VertexBaseDerivedType VertexT>
@@ -83,15 +88,15 @@ class MeshBase
 		Rect2f											area,
 		float											begin_angle_radians,
 		float											coverage,
-		bool											filled = true,
-		float											edge_count = 64.0f
+		bool											filled,
+		float											edge_count
 	);
 	
 	template<vk2d_internal::VertexBaseDerivedType VertexT>
 	friend Mesh<VertexT>								GenerateLatticeMesh(
 		Rect2f											area,
 		glm::vec2										subdivisions,
-		bool											filled = true
+		bool											filled
 	);
 	
 	template<vk2d_internal::VertexBaseDerivedType VertexT>
@@ -99,11 +104,11 @@ class MeshBase
 		FontResource								*	font,
 		glm::vec2										origin,
 		std::string										text,
-		float											kerning = 0.0f,
-		glm::vec2										scale = glm::vec2( 1.0f, 1.0f ),
-		bool											vertical = false,
-		uint32_t										font_face = 0,
-		bool											wait_for_resource_load = true
+		float											kerning,
+		glm::vec2										scale,
+		bool											vertical,
+		uint32_t										font_face,
+		bool											wait_for_resource_load
 	);
 
 public:

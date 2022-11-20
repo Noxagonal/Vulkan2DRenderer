@@ -25,24 +25,24 @@ vk2d::vk2d_internal::MeshBuffer::MeshBuffer(
 
 vk2d::vk2d_internal::MeshBuffer::PushResult vk2d::vk2d_internal::MeshBuffer::CmdPushMesh(
 	VkCommandBuffer							command_buffer,
-	const std::vector<uint32_t>			&	new_indices,
+	const std::span<const uint32_t>			new_indices,
 	const RawVertexData					&	new_vertices,
-	const std::vector<float>			&	new_texture_channel_weights,
-	const std::vector<glm::mat4>		&	new_transformations
+	const std::span<const float>			new_texture_channel_weights,
+	const std::span<const glm::mat4>		new_transformations
 )
 {
 	// TODO: Could save some memory when calling CmdPushMesh with empty new_transformations, could just point to an identity matrix stored on the first index.
 	// Whenever new_transformations is empty, just submit the render once and have the transformation point to the first index.
 
 	std::vector<glm::mat4>					default_transformation		= { glm::mat4( 1.0f ) };
-	const std::vector<glm::mat4>		*	new_transformations_actual	= &default_transformation;
-	if( new_transformations.size() )		new_transformations_actual	= &new_transformations;
+	std::span<const glm::mat4>				new_transformations_actual	= default_transformation;
+	if( !new_transformations.empty() )		new_transformations_actual	= new_transformations;
 
 	auto reserve_result = ReserveSpaceForMesh(
 		uint32_t( new_indices.size() ),
 		new_vertices,
 		uint32_t( new_texture_channel_weights.size() ),
-		uint32_t( new_transformations_actual->size() )
+		uint32_t( new_transformations_actual.size() )
 	);
 
 	if( !reserve_result.success ) return {};
@@ -132,8 +132,8 @@ vk2d::vk2d_internal::MeshBuffer::PushResult vk2d::vk2d_internal::MeshBuffer::Cmd
 		if( new_texture_channel_weights.size() ) {
 			texture_channel_weight_block_data.insert( texture_channel_weight_block_data.end(), new_texture_channel_weights.begin(), new_texture_channel_weights.end() );
 		}
-		if( new_transformations_actual->size() ) {
-			transformation_block_data.insert( transformation_block_data.end(), new_transformations_actual->begin(), new_transformations_actual->end() );
+		if( new_transformations_actual.size() ) {
+			transformation_block_data.insert( transformation_block_data.end(), new_transformations_actual.begin(), new_transformations_actual.end() );
 		}
 	}
 
@@ -147,7 +147,7 @@ vk2d::vk2d_internal::MeshBuffer::PushResult vk2d::vk2d_internal::MeshBuffer::Cmd
 	pushed_index_count					+= uint32_t( new_indices.size() );
 	pushed_vertex_count					+= uint32_t( new_vertices.vertex_count );
 	pushed_texture_channel_weight_count	+= uint32_t( new_texture_channel_weights.size() );
-	pushed_transformation_count			+= uint32_t( new_transformations_actual->size() );
+	pushed_transformation_count			+= uint32_t( new_transformations_actual.size() );
 
 	return ret;
 }

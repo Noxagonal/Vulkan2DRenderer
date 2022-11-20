@@ -8,11 +8,15 @@
 #include <containers/Color.hpp>
 #include <containers/Multisamples.h>
 #include <containers/RenderCoordinateSpace.hpp>
+
 #include <mesh/Mesh.hpp>
+#include <mesh/vertex/RawVertexData.hpp>
+#include <mesh/vertex/VertexBase.hpp>
 
 #include <interface/Texture.h>
 
 #include <memory>
+#include <span>
 
 namespace vk2d {
 
@@ -196,117 +200,18 @@ public:
 	);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	/// @brief		Draw triangles directly.
-	///
-	///				This is the best option if you wish to render vertices directly. Every other VK2D draw operation internally
-	///				calls this function to do the actual drawing.
+	/// @brief		Draws points directly.
+	/// 
+	///				This option is mostly provided for completeness. This is not really useful in most cases, however if you require
+	///				absolute control over how drawing is done, this is the least overhead method of drawing in VK2D.
 	/// 
 	/// @note		Multithreading: Main thread only.
 	/// 
-	/// @param[in]	indices
-	///				Indices are the index numbers into the vertices list where each vertex is considered the corner point of the
-	///				triangle.
+	/// @tparam		VertexT
+	///				Vertex type.
 	/// 
-	/// @param[in]	vertices
-	///				Vertices are the corners of a triangle. A vertex also defines more data related to that corner and that data
-	///				gets interpolated inside the triangle.
-	/// 
-	/// @param[in]	texture_layer_weights
-	///				If you're using multi-layer-textures, here you can define how much weight each of those texture layers have per
-	///				vertex. The size of this vector parameter should be the number of texture layers multiplied by number of
-	///				vertices. Data should be formatted so that for each vertex, weight of each texture layer is given.<br>
-	///				For example: a simple triangle with texture with 2 layers should have this order:
-	///				(v = vertex, t = texture layer) <br>
-	///				<tt>[v0 t0][v0 t1][v1 t0][v1 t1][v2 t0][v2 t1]</tt>
-	/// 
-	/// @param[in]	transformations
-	///				A vector of matrices defining transformations that will be applied to all vertices prior to rendering them.
-	///				If none are provided then a default transformation is applied. If multiple transformations are provided then
-	///				this draw call will render multiple times, each time using a different transformation, this is called instanced
-	///				render. The benefit of instanced render is that it saves CPU time and memory when you need to render lots of
-	///				similar looking shapes.
-	/// 
-	/// @param[in]	filled
-	///				Tells if the inside of the triangle should be filled, true for filled, false for wireframe.
-	/// 
-	/// @param[in]	texture
-	///				Pointer to any object that implements Texture interface, such as TextureResource or
-	///				RenderTargetTexture.
-	/// 
-	/// @param[in]	sampler
-	///				Pointer to a sampler object that tells how to read the texture.
-	VK2D_API void											DrawTriangleList(
-		const std::vector<VertexIndex_3>				&	indices,
-		const std::vector<Vertex>						&	vertices,
-		const std::vector<float>						&	texture_layer_weights,
-		const std::vector<glm::mat4>					&	transformations				= {},
-		bool												filled						= true,
-		Texture											*	texture						= nullptr,
-		Sampler											*	sampler						= nullptr
-	);
-
-	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	/// @brief		Draw lines directly.
-	///
-	///				This option is useful when you want to draw simple lines. Eg. for debugging. For more sophisticated rendering
-	///				you should prefer rendering triangles. Every other VK2D draw operation internally calls this function to do the
-	///				actual drawing.
-	/// 
-	/// @note		Multithreading: Main thread only.
-	/// 
-	/// @param[in]	indices
-	///				Indices are the index numbers into the vertices list where each vertex is considered the end point of the line.
-	/// 
-	/// @param[in]	vertices
-	///				Vertices are the end points of a line. A vertex also defines more data related to that end point and that data
-	///				gets interpolated for each point along the line.
-	/// 
-	/// @param[in]	texture_layer_weights
-	///				If you're using multi-layer-textures, here you can define how much weight each of those texture layers have per
-	///				vertex. The size of this vector parameter should be the number of texture layers multiplied by number of
-	///				vertices. Data should be formatted so that for each vertex, weight of each texture layer is given. <br>
-	///				For example: a simple line with texture with 2 layers should have this order: (v = vertex, t = texture layer)
-	///				<br>
-	///				<tt>[v0 t0][v0 t1][v1 t0][v1 t1]</tt>
-	/// 
-	/// @param[in]	transformations
-	///				A vector of matrices defining transformations that will be applied to all vertices prior to rendering them. If
-	///				none are provided then a default transformation is applied. If multiple transformations are provided then this
-	///				draw call will render multiple times, each time using a different transformation, this is called instanced
-	///				render. The benefit of instanced render is that it saves CPU time and memory when you need to render lots of
-	///				similar looking shapes.
-	/// 
-	/// @param[in]	texture
-	///				Pointer to any object that implements Texture interface, such as TextureResource or
-	///				RenderTargetTexture.
-	/// 
-	/// @param[in]	sampler
-	///				Pointer to a sampler object that tells how to read the texture.
-	/// 
-	/// @param[in]	line_width
-	///				Lines can be drawn thicker or thinner than 1 texel width, however this applies to all lines being drawn at once
-	///				and end points are not rounded.
-	VK2D_API void											DrawLineList(
-		const std::vector<VertexIndex_2>				&	indices,
-		const std::vector<Vertex>						&	vertices,
-		const std::vector<float>						&	texture_layer_weights,
-		const std::vector<glm::mat4>					&	transformations				= {},
-		Texture											*	texture						= nullptr,
-		Sampler											*	sampler						= nullptr,
-		float												line_width					= 1.0f
-	);
-
-	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	/// @brief		Draw points directly.
-	///
-	///				This option is mostly provided for completeness. This is not really useful in most cases, however vertices can
-	///				have different sizes which can be used for some particle effects or similar. Every other VK2D draw operation
-	///				internally calls this function to do the actual drawing.
-	/// 
-	/// @note		Multithreading: Main thread only.
-	/// 
-	/// @param[in]	vertices
-	///				Vertices are the points to draw.
+	/// @param[in]	vertices 
+	///				Vertices that define where and how points, line endings and polygon corners are drawn.
 	/// 
 	/// @param[in]	texture_layer_weights
 	///				If you're using multi-layer-textures, here you can define how much weight each of those texture layers have per
@@ -316,7 +221,7 @@ public:
 	///				<tt>[v0 t0][v0 t1][v1 t0][v1 t1]</tt>
 	/// 
 	/// @param[in]	transformations
-	///				A vector of matrices defining transformations that will be applied to all vertices prior to rendering them. If
+	///				Matrices defining transformations that will be applied to all vertices prior to rendering them. If
 	///				none are provided then a default transformation is applied. If multiple transformations are provided then this
 	///				draw call will render multiple times, each time using a different transformation, this is called instanced
 	///				render. The benefit of instanced render is that it saves CPU time and memory when you need to render lots of
@@ -324,19 +229,157 @@ public:
 	///				transformation matrices are given then every point is also drawn multiple times, eg. 10 vertices with 2
 	///				transformations means 20 points drawn.
 	/// 
-	/// @param[in]	texture
-	///				Pointer to any object that implements Texture interface, such as TextureResource or
-	///				RenderTargetTexture.
+	/// @param[in]	texture 
+	///				Pointer to texture, see Vertex for UV mapping details. Can be nullptr in which case a white texture is
+	///				used (vertex colors only).
 	/// 
-	/// @param[in]	sampler
-	///				Pointer to a sampler object that tells how to read the texture.
-	VK2D_API void											DrawPointList(
-		const std::vector<Vertex>						&	vertices,
-		const std::vector<float>						&	texture_layer_weights,
-		const std::vector<glm::mat4>					&	transformations				= {},
-		Texture											*	texture						= nullptr,
-		Sampler											*	sampler						= nullptr
-	);
+	/// @param[in]	sampler 
+	///				Pointer to sampler which determines how the texture is drawn. Can be nullptr in which case the default sampler
+	///				is used.
+	template<vk2d_internal::VertexBaseOrDerivedType VertexT>
+	void											DrawPointList(
+		std::span<const VertexT>					vertices,
+		std::span<const float>						texture_layer_weights,
+		std::span<const glm::mat4>					transformations = {},
+		Texture									*	texture = nullptr,
+		Sampler									*	sampler = nullptr
+	)
+	{
+		DrawPointList(
+			vk2d::vk2d_internal::RawVertexData( vertices ),
+			texture_layer_weights,
+			transformations,
+			texture,
+			sampler
+		);
+	}
+
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	/// @brief		Draws lines directly.
+	/// 
+	///				This option is mostly provided for completeness. This is not really useful in most cases, however if you require
+	///				absolute control over how drawing is done, this is the least overhead method of drawing in VK2D.
+	/// 
+	/// @note		Multithreading: Main thread only.
+	/// 
+	/// @tparam		VertexT
+	///				Vertex type.
+	/// 
+	/// @param[in]	indices
+	///				List of indices telling how to form lines between vertices.
+	/// 
+	/// @param[in]	vertices 
+	///				Vertices that define where and how points, line endings and polygon corners are drawn.
+	/// 
+	/// @param[in]	texture_layer_weights
+	///				If you're using multi-layer-textures, here you can define how much weight each of those texture layers have per
+	///				vertex. The size of this vector parameter should be the number of texture layers multiplied by number of
+	///				vertices. Data should be formatted so that for each vertex, weight of each texture layer is given. <br>
+	///				For example: 2 points with texture with 2 layers should have this order: (v = vertex, t = texture layer) <br>
+	///				<tt>[v0 t0][v0 t1][v1 t0][v1 t1]</tt>
+	/// 
+	/// @param[in]	transformations
+	///				Matrices defining transformations that will be applied to all vertices prior to rendering them. If
+	///				none are provided then a default transformation is applied. If multiple transformations are provided then this
+	///				draw call will render multiple times, each time using a different transformation, this is called instanced
+	///				render. The benefit of instanced render is that it saves CPU time and memory when you need to render lots of
+	///				similar looking shapes. For clarification: In case of drawing points this also means that if multiple
+	///				transformation matrices are given then every point is also drawn multiple times, eg. 10 vertices with 2
+	///				transformations means 20 points drawn.
+	/// 
+	/// @param[in]	texture 
+	///				Pointer to texture, see Vertex for UV mapping details. Can be nullptr in which case a white texture is
+	///				used (vertex colors only).
+	/// 
+	/// @param[in]	sampler 
+	///				Pointer to sampler which determines how the texture is drawn. Can be nullptr in which case the default sampler
+	///				is used.
+	template<vk2d_internal::VertexBaseOrDerivedType VertexT>
+	void											DrawLineList(
+		std::span<const VertexIndex_2>				indices,
+		std::span<const VertexT>					vertices,
+		std::span<const float>						texture_layer_weights,
+		std::span<const glm::mat4>					transformations = {},
+		Texture									*	texture = nullptr,
+		Sampler									*	sampler = nullptr,
+		float										line_width = 1.0f
+	)
+	{
+		auto indices_span = std::span( reinterpret_cast<const uint32_t*>( indices.data() ), indices.size() * 2 );
+
+		DrawLineList(
+			indices_span,
+			vk2d::vk2d_internal::RawVertexData( vertices ),
+			texture_layer_weights,
+			transformations,
+			texture,
+			sampler
+		);
+	}
+
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	/// @brief		Draw triangles directly.
+	/// 
+	///				This option is mostly provided for completeness. This is not really useful in most cases, however if you require
+	///				absolute control over how drawing is done, this is the least overhead method of drawing in VK2D.
+	/// 
+	/// @note		Multithreading: Main thread only.
+	/// 
+	/// @tparam		VertexT
+	///				Vertex type.
+	/// 
+	/// @param[in]	indices
+	///				List of indices telling how to form lines between vertices.
+	/// 
+	/// @param[in]	vertices 
+	///				Vertices that define where and how points, line endings and polygon corners are drawn.
+	/// 
+	/// @param[in]	texture_layer_weights
+	///				If you're using multi-layer-textures, here you can define how much weight each of those texture layers have per
+	///				vertex. The size of this vector parameter should be the number of texture layers multiplied by number of
+	///				vertices. Data should be formatted so that for each vertex, weight of each texture layer is given. <br>
+	///				For example: 2 points with texture with 2 layers should have this order: (v = vertex, t = texture layer) <br>
+	///				<tt>[v0 t0][v0 t1][v1 t0][v1 t1]</tt>
+	/// 
+	/// @param[in]	transformations
+	///				Matrices defining transformations that will be applied to all vertices prior to rendering them. If
+	///				none are provided then a default transformation is applied. If multiple transformations are provided then this
+	///				draw call will render multiple times, each time using a different transformation, this is called instanced
+	///				render. The benefit of instanced render is that it saves CPU time and memory when you need to render lots of
+	///				similar looking shapes. For clarification: In case of drawing points this also means that if multiple
+	///				transformation matrices are given then every point is also drawn multiple times, eg. 10 vertices with 2
+	///				transformations means 20 points drawn.
+	/// 
+	/// @param[in]	texture 
+	///				Pointer to texture, see Vertex for UV mapping details. Can be nullptr in which case a white texture is
+	///				used (vertex colors only).
+	/// 
+	/// @param[in]	sampler 
+	///				Pointer to sampler which determines how the texture is drawn. Can be nullptr in which case the default sampler
+	///				is used.
+	template<vk2d_internal::VertexBaseOrDerivedType VertexT>
+	void											DrawTriangleList(
+		std::span<const VertexIndex_3>				indices,
+		std::span<const VertexT>					vertices,
+		std::span<const float>						texture_layer_weights,
+		std::span<const glm::mat4>					transformations = {},
+		bool										filled = true,
+		Texture									*	texture = nullptr,
+		Sampler									*	sampler = nullptr
+	)
+	{
+		auto indices_span = std::span( reinterpret_cast<const uint32_t*>( indices.data() ), indices.size() * 3 );
+
+		DrawTriangleList(
+			indices_span,
+			vk2d::vk2d_internal::RawVertexData( vertices ),
+			texture_layer_weights,
+			transformations,
+			filled,
+			texture,
+			sampler
+		);
+	}
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Draw a simple point with a color and size.
@@ -525,51 +568,150 @@ public:
 	);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	/// @brief		Draw a mesh object with single optional transform.
+	/// @brief		Draws Mesh which contains all information needed for the render.
+	/// 
+	///				Consider using this method of drawing as often as possible. Meshes can be reused, which lowers the overhead
+	///				needed to calculate them all the time.
 	/// 
 	/// @note		Multithreading: Main thread only.
 	/// 
-	/// @param[in]	mesh
-	///				Reference to a mesh object to draw.
-	/// 
-	/// @param[in]	transformations
-	///				Optional transformations to use when drawing the mesh.
-	VK2D_API void											DrawMesh(
-		const MeshBase									&	mesh,
-		const Transform									&	transformations				= {}
-	);
-
-	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	/// @brief		Draw one or more instances of a single mesh object using transforms.
-	/// 
-	/// @note		Multithreading: Main thread only.
-	/// 
-	/// @param[in]	mesh
-	///				Reference to a mesh object to draw.
-	/// 
-	/// @param[in]	transformations
-	///				An array of transformations to use when drawing the mesh. Number of transformations tells how many times to draw
-	///				this mesh using each transformation.
-	VK2D_API void											DrawMesh(
-		const MeshBase									&	mesh,
-		const std::vector<Transform>					&	transformations
-	);
-
-	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	/// @brief		Draw one or more instances of a single mesh object using transformation matrices.
+	/// @see		Mesh
 	///
-	/// @note		Multithreading: Main thread only.
+	/// @tparam		VertexT
+	///				Vertex type.
 	/// 
 	/// @param[in]	mesh
-	///				Reference to a mesh object to draw.
+	///				Mesh object to draw.
 	/// 
 	/// @param[in]	transformations
-	///				An array of transformation matrices to use when drawing the mesh. Number of transformations tells how many times
-	///				to draw this mesh using each transformation.
-	VK2D_API void											DrawMesh(
-		const MeshBase									&	mesh,
-		const std::vector<glm::mat4>					&	transformations
-	);
+	///				Draw using transformation. This is a std::vector where each element equals one draw. Using multiple
+	///				transformations results the mesh being drawn multiple times using different transformations. This is also called
+	///				instanced rendering.
+	template<vk2d_internal::VertexBaseOrDerivedType VertexT>
+	void											DrawMesh(
+		const Mesh<VertexT>						&	mesh,
+		std::span<const glm::mat4>					transformations
+	)
+	{
+		if( mesh.vertices.size() == 0 ) return;
+		auto raw_vertices = vk2d_internal::RawVertexData( std::span<const VertexT>( mesh.vertices ) );
+
+		switch( mesh.mesh_type ) {
+		case MeshType::TRIANGLE_FILLED:
+			DrawTriangleList(
+				mesh.indices,
+				raw_vertices,
+				mesh.texture_layer_weights,
+				transformations,
+				true,
+				mesh.texture,
+				mesh.sampler
+			);
+			break;
+		case MeshType::TRIANGLE_WIREFRAME:
+			DrawTriangleList(
+				mesh.indices,
+				raw_vertices,
+				mesh.texture_layer_weights,
+				transformations,
+				false,
+				mesh.texture,
+				mesh.sampler
+			);
+			break;
+		case MeshType::LINE:
+			DrawLineList(
+				mesh.indices,
+				raw_vertices,
+				mesh.texture_layer_weights,
+				transformations,
+				mesh.texture,
+				mesh.sampler,
+				mesh.line_width
+			);
+			break;
+		case MeshType::POINT:
+			DrawPointList(
+				raw_vertices,
+				mesh.texture_layer_weights,
+				transformations,
+				mesh.texture,
+				mesh.sampler
+			);
+			break;
+		default:
+			break;
+		}
+	}
+
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	/// @brief		Draws Mesh which contains all information needed for the render.
+	///
+	///				Consider using this method of drawing as often as possible. Meshes can be reused, which lowers the overhead
+	///				needed to calculate them all the time.
+	/// 
+	/// @note		Multithreading: Main thread only.
+	/// 
+	/// @see		Mesh
+	///
+	/// @tparam		VertexT
+	///				Vertex type.
+	/// 
+	/// @param[in]	mesh
+	///				Mesh object to draw.
+	/// 
+	/// @param[in]	transformation
+	///				Draw using transformation.
+	template<vk2d_internal::VertexBaseOrDerivedType VertexT>
+	void											DrawMesh(
+		const Mesh<VertexT>						&	mesh,
+		const Transform							&	transformation = {}
+	)
+	{
+		auto transformation_matrix = transformation.CalculateTransformationMatrix();
+
+		DrawMesh(
+			mesh,
+			std::span( &transformation_matrix, 1 )
+		);
+	}
+
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	/// @brief		Draws Mesh which contains all information needed for the render.
+	/// 
+	///				Consider using this method of drawing as often as possible. Meshes can be reused, which lowers the overhead
+	///				needed to calculate them all the time.
+	/// 
+	/// @note		Multithreading: Main thread only.
+	/// 
+	/// @see		Mesh
+	/// 
+	/// @tparam		VertexT
+	///				Vertex type.
+	/// 
+	/// @param[in]	mesh
+	///				Mesh object to draw.
+	/// 
+	/// @param[in]	transformations
+	///				Draw using transformation. This is a std::vector where each element equals one draw. Using multiple
+	///				transformations results the mesh being drawn multiple times using different transformations. This is also called
+	///				instanced rendering.
+	template<vk2d_internal::VertexBaseOrDerivedType VertexT>
+	void											DrawMesh(
+		const Mesh<VertexT>						&	mesh,
+		std::span<const Transform>					transformations
+	)
+	{
+		std::vector<glm::mat4> transformation_matrices( std::size( transformations ) );
+		for( size_t i = 0; i < std::size( transformations ); ++i ) {
+			transformation_matrices[ i ] = transformations[ i ].CalculateTransformationMatrix();
+		}
+
+		DrawMesh(
+			mesh,
+			transformation_matrices
+		);
+	}
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Checks if the object is good to be used or if a failure occurred in it's creation.
@@ -577,9 +719,40 @@ public:
 	/// @note		Multithreading: Any thread.
 	/// 
 	/// @return		true if class object was created successfully, false if something went wrong
-	VK2D_API bool											IsGood() const;
+	VK2D_API bool									IsGood() const;
 
 private:
+
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	VK2D_API void									DrawPointList(
+		const vk2d_internal::RawVertexData		&	raw_vertex_data,
+		std::span<const float>						texture_layer_weights,
+		std::span<const glm::mat4>					transformations = {},
+		Texture									*	texture = nullptr,
+		Sampler									*	sampler = nullptr
+	);
+
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	VK2D_API void									DrawLineList(
+		std::span<const uint32_t>					indices,
+		const vk2d_internal::RawVertexData		&	raw_vertex_data,
+		std::span<const float>						texture_layer_weights,
+		std::span<const glm::mat4>					transformations = {},
+		Texture									*	texture = nullptr,
+		Sampler									*	sampler = nullptr,
+		float										line_width = 1.0f
+	);
+
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	VK2D_API void									DrawTriangleList(
+		std::span<const uint32_t>					indices,
+		const vk2d_internal::RawVertexData		&	raw_vertex_data,
+		std::span<const float>						texture_layer_weights,
+		std::span<const glm::mat4>					transformations = {},
+		bool										filled = true,
+		Texture									*	texture = nullptr,
+		Sampler									*	sampler = nullptr
+	);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	std::unique_ptr<vk2d_internal::RenderTargetTextureImpl>	impl;

@@ -1,6 +1,9 @@
 #pragma once
 
 #include <core/Common.h>
+
+#include "MeshGeneratorDeclarations.hpp"
+
 #include <mesh/Mesh.hpp>
 #include <mesh/vertex/StandardVertex.hpp>
 #include <mesh/vertex/VertexTools.hpp>
@@ -33,7 +36,7 @@ requires(
 )
 Mesh<VertexT>										GenerateRectangleMesh(
 	Rect2f											area,
-	bool											filled = true
+	bool											filled
 )
 {
 	auto mesh = Mesh<VertexT>();

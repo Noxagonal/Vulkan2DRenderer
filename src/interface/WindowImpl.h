@@ -22,6 +22,9 @@
 #include <memory>
 #include <atomic>
 #include <map>
+#include <span>
+
+
 
 namespace vk2d {
 
@@ -83,46 +86,55 @@ public:
 
 	void														TakeScreenshotToFile(
 		const std::filesystem::path							&	save_path,
-		bool													include_alpha );
+		bool													include_alpha
+	);
 
 	void														TakeScreenshotToData(
-		bool													include_alpha);
+		bool													include_alpha
+	);
 
 	void														Focus();
 
 	void														SetOpacity(
-		float													opacity );
+		float													opacity
+	);
 
 	float														GetOpacity();
 
 	void														Hide(
-		bool													hidden );
+		bool													hidden
+	);
 
 	bool														IsHidden();
 
 	void														DisableEvents(
-		bool													disable_events );
+		bool													disable_events
+	);
 
 	bool														AreEventsDisabled();
 
 	void														SetFullscreen(
 		Monitor												*	monitor,
-		uint32_t												frequency );
+		uint32_t												frequency
+	);
 
 	bool														IsFullscreen();
 
 	glm::dvec2													GetCursorPosition();
 
 	void														SetCursorPosition(
-		glm::dvec2												new_position );
+		glm::dvec2												new_position
+	);
 
 	void														SetCursor(
-		Cursor												*	cursor );
+		Cursor												*	cursor
+	);
 
 	std::string													GetClipboardString();
 
 	void														SetClipboardString(
-		const std::string									&	str );
+		const std::string									&	str
+	);
 
 	void														SetTitle(
 		const std::string									&	title );
@@ -130,82 +142,70 @@ public:
 	std::string													GetTitle();
 
 	void														SetIcon(
-		const std::vector<std::filesystem::path>			&	image_paths );
+		const std::vector<std::filesystem::path>			&	image_paths
+	);
 
 	void														SetPosition(
-		glm::ivec2												new_position );
+		glm::ivec2												new_position
+	);
 
 	glm::ivec2													GetPosition();
 
 	void														SetSize(
-		glm::uvec2												new_size );
+		glm::uvec2												new_size
+	);
 
 	glm::uvec2													GetSize();
 
 	void														Iconify(
-		bool													minimized );
+		bool													minimized
+	);
 
 	bool														IsIconified();
 
 	void														SetMaximized(
-		bool													maximized );
+		bool													maximized
+	);
 
 	bool														GetMaximized();
 
 	void														SetCursorState(
-		CursorState												new_state );
+		CursorState												new_state
+	);
 
 	CursorState													GetCursorState();
 
 	void														SetRenderCoordinateSpace(
-		RenderCoordinateSpace									coordinate_space );
-
-	void														DrawTriangleList(
-		const std::vector<VertexIndex_3>					&	indices,
-		const RawVertexData									&	raw_vertex_data,
-		const std::vector<float>							&	texture_layer_weights,
-		const std::vector<glm::mat4>						&	transformations,
-		bool													solid,
-		Texture												*	texture,
-		Sampler												*	sampler );
-
-	void														DrawTriangleList(
-		const std::vector<uint32_t>							&	raw_indices,
-		const RawVertexData									&	raw_vertex_data,
-		const std::vector<float>							&	texture_layer_weights,
-		const std::vector<glm::mat4>						&	transformations,
-		bool													solid,
-		Texture												*	texture,
-		Sampler												*	sampler);
-
-	void														DrawLineList(
-		const std::vector<VertexIndex_2>					&	indices,
-		const RawVertexData									&	raw_vertex_data,
-		const std::vector<float>							&	texture_layer_weights,
-		const std::vector<glm::mat4>						&	transformations,
-		Texture												*	texture,
-		Sampler												*	sampler,
-		float													line_width );
-
-	void														DrawLineList(
-		const std::vector<uint32_t>							&	raw_indices,
-		const RawVertexData									&	raw_vertex_data,
-		const std::vector<float>							&	texture_layer_weights,
-		const std::vector<glm::mat4>						&	transformations,
-		Texture												*	texture,
-		Sampler												*	sampler,
-		float													line_width );
+		RenderCoordinateSpace									coordinate_space
+	);
 
 	void														DrawPointList(
 		const RawVertexData									&	raw_vertex_data,
-		const std::vector<float>							&	texture_layer_weights,
-		const std::vector<glm::mat4>						&	transformations,
+		std::span<const float>									texture_layer_weights,
+		std::span<const glm::mat4>								transformations,
 		Texture												*	texture,
-		Sampler												*	sampler );
+		Sampler												*	sampler
+	);
 
-	void														DrawMesh(
-		const MeshBase										&	mesh,
-		const std::vector<glm::mat4>						&	transformations );
+	void														DrawLineList(
+		std::span<const uint32_t>								raw_indices,
+		const RawVertexData									&	raw_vertex_data,
+		std::span<const float>									texture_layer_weights,
+		std::span<const glm::mat4>								transformations,
+		Texture												*	texture,
+		Sampler												*	sampler,
+		float													line_width
+	);
+
+	void														DrawTriangleList(
+		std::span<const uint32_t>								raw_indices,
+		const RawVertexData									&	raw_vertex_data,
+		std::span<const float>									texture_layer_weights,
+		std::span<const glm::mat4>								transformations,
+		bool													solid,
+		Texture												*	texture,
+		Sampler												*	sampler
+	);
 
 	bool														SynchronizeFrame();
 
@@ -229,7 +229,7 @@ private:
 	bool														CreateWindowFrameDataBuffer();
 
 	// Should be called once render is definitely going to happen. When this is called,
-	// SynchronizeFrame() will start blocking until the the contents of the
+	// SynchronizeFrame() will start blocking until the contents of the
 	// RenderTargerTexture have been fully rendered. BeginRender() can be called however,
 	// it will swap the buffers so 2 renders can be queued, however third call to
 	// BeginRender() will be blocked until the first BeginRender() call has been rendered.
@@ -449,36 +449,37 @@ public:
 		VkOffset2D										position,
 		VkExtent2D										physical_size,
 		std::string										name,
-		MonitorVideoMode							current_video_mode,
-		const std::vector<MonitorVideoMode>	&	video_modes );
+		MonitorVideoMode								current_video_mode,
+		const std::vector<MonitorVideoMode>			&	video_modes
+	);
 
 														MonitorImpl()						= delete;
 
 														MonitorImpl(
-		const MonitorImpl			&	other )								= default;
+		const MonitorImpl							&	other )								= default;
 
 														MonitorImpl(
-		MonitorImpl				&&	other )								= default;
+		MonitorImpl									&&	other )								= default;
 
 														~MonitorImpl()						= default;
 
-	const MonitorVideoMode					&	GetCurrentVideoMode() const;
+	const MonitorVideoMode							&	GetCurrentVideoMode() const;
 
-	const std::vector<MonitorVideoMode>		&	GetVideoModes() const;
+	const std::vector<MonitorVideoMode>				&	GetVideoModes() const;
 
 	void												SetGamma(
 		float											gamma );
 
-	std::vector<GammaRampNode>					GetGammaRamp();
+	std::vector<GammaRampNode>							GetGammaRamp();
 
 	void												SetGammaRamp(
-		const std::vector<GammaRampNode>		&	ramp );
+		const std::vector<GammaRampNode>			&	ramp );
 
-	MonitorImpl					&	operator=(
-		const MonitorImpl			&	other )								= default;
+	MonitorImpl										&	operator=(
+		const MonitorImpl							&	other )								= default;
 
-	MonitorImpl					&	operator=(
-		MonitorImpl				&&	other )								= default;
+	MonitorImpl										&	operator=(
+		MonitorImpl									&&	other )								= default;
 
 	bool												IsGood();
 

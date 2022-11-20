@@ -46,4 +46,42 @@ public:
 
 
 
+namespace vk2d_internal {
+namespace tests {
+
+struct StandardVertexReference {
+	glm::vec2	vertex_coords			= {};
+	glm::vec2	uv_coords				= {};
+	Colorf		color					= {};
+	float		point_size				= {};
+	uint32_t	single_texture_layer	= {};
+};
+
+static_assert( VertexHasVertexCoords<StandardVertex> );
+static_assert( VertexHasUVCoords<StandardVertex> );
+static_assert( VertexHasColor<StandardVertex> );
+static_assert( VertexHasPointSize<StandardVertex> );
+static_assert( VertexHasSingleTextureLayer<StandardVertex> );
+
+static_assert( StandardVertex::GetMySize()				== sizeof( StandardVertexReference ) );
+static_assert( StandardVertex::GetMyAlignment()			== alignof( StandardVertexReference ) );
+static_assert( alignof( StandardVertex )				>= alignof( StandardVertexReference ) );
+
+static_assert( StandardVertex::GetMemberCount()			== 5 );
+static_assert( StandardVertex::GetMemberOffset<0>()		== offsetof( StandardVertexReference, vertex_coords ) );
+static_assert( StandardVertex::GetMemberOffset<1>()		== offsetof( StandardVertexReference, uv_coords ) );
+static_assert( StandardVertex::GetMemberOffset<2>()		== offsetof( StandardVertexReference, color ) );
+static_assert( StandardVertex::GetMemberOffset<3>()		== offsetof( StandardVertexReference, point_size ) );
+static_assert( StandardVertex::GetMemberOffset<4>()		== offsetof( StandardVertexReference, single_texture_layer ) );
+static_assert( StandardVertex::GetMemberSize<0>()		== sizeof( StandardVertexReference::vertex_coords ) );
+static_assert( StandardVertex::GetMemberSize<1>()		== sizeof( StandardVertexReference::uv_coords ) );
+static_assert( StandardVertex::GetMemberSize<2>()		== sizeof( StandardVertexReference::color ) );
+static_assert( StandardVertex::GetMemberSize<3>()		== sizeof( StandardVertexReference::point_size ) );
+static_assert( StandardVertex::GetMemberSize<4>()		== sizeof( StandardVertexReference::single_texture_layer ) );
+
+} // tests
+} // vk2d_internal
+
+
+
 } // vk2d

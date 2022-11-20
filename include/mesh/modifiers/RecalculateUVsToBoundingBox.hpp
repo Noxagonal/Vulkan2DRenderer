@@ -30,9 +30,9 @@ void						RecalculateUVsToBoundingBox(
 	Mesh<VertexT>		&	mesh
 )
 {
-	auto size = aabb.bottom_right - aabb.top_left;
-	for( auto & v : vertices ) {
-		auto vp = v.vertex_coords - aabb.top_left;
+	auto size = mesh.aabb.bottom_right - mesh.aabb.top_left;
+	for( auto & v : mesh.vertices ) {
+		auto vp = v.vertex_coords - mesh.aabb.top_left;
 		v.uv_coords = vp / size;
 	}
 }

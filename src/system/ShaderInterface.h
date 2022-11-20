@@ -29,10 +29,10 @@ struct FrameData {
 };
 
 struct GraphicsPrimaryRenderPushConstants {
-	alignas( 4 )	uint32_t					transformation_offset	= {};	// Offset into transformations buffer.
-	alignas( 4 )	uint32_t					index_offset			= {};	// Offset into the index buffer.
-	alignas( 4 )	uint32_t					index_count				= {};	// Amount of indices this shader should handle.
-	alignas( 4 )	uint32_t					vertex_offset			= {};	// Offset to first vertex in vertex buffer.
+	alignas( 4 )	uint32_t					transformation_offset			= {};	// Offset into transformations buffer.
+	alignas( 4 )	uint32_t					index_offset					= {};	// Offset into the index buffer.
+	alignas( 4 )	uint32_t					index_count						= {};	// Amount of indices this shader should handle.
+	alignas( 4 )	uint32_t					vertex_offset					= {};	// Offset to first vertex in vertex buffer.
 	alignas( 4 )	uint32_t					texture_channel_weight_offset	= {};	// Location of the texture channels in the texture channel weights ssbo.
 	alignas( 4 )	uint32_t					texture_channel_weight_count	= {};	// Just the amount of texture channels.
 };

@@ -1,6 +1,9 @@
 #pragma once
 
 #include <core/Common.h>
+
+#include "MeshGeneratorDeclarations.hpp"
+
 #include <mesh/Mesh.hpp>
 #include <mesh/vertex/StandardVertex.hpp>
 #include <mesh/vertex/VertexTools.hpp>
@@ -42,7 +45,7 @@ Mesh<VertexT>										GenerateRectanglePieMesh(
 	Rect2f											area,
 	float											begin_angle_radians,
 	float											coverage,
-	bool											filled					= true
+	bool											filled
 )
 {
 	if( coverage >= 1.0f ) {

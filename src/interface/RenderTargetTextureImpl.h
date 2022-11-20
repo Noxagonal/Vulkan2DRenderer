@@ -4,7 +4,7 @@
 
 #include <interface/RenderTargetTexture.h>
 
-#include <types/BlurType.h>
+#include <containers/BlurType.h>
 
 #include <system/CommonTools.h>
 #include <system/ShaderInterface.h>
@@ -25,8 +25,6 @@
 
 
 namespace vk2d {
-
-class MeshBase;
 
 namespace vk2d_internal {
 
@@ -96,95 +94,95 @@ private:
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	struct SwapBuffer
 	{
-		CompleteImageResource								attachment_image							= {};	// Render attachment, Multisampled, 1 mip level
-		CompleteImageResource								buffer_1_image								= {};	// Buffer image, used as multisample resolve and blur buffer
-		CompleteImageResource								buffer_2_image								= {};	// Buffer image, used as second blur buffer
-		CompleteImageResource								sampled_image								= {};	// Output, sampled image with mip mapping
-		VkFramebuffer										vk_render_framebuffer						= {};	// Framebuffer for the main render
-		VkFramebuffer										vk_blur_framebuffer_1						= {};	// Framebuffer for blur pass 1
-		VkFramebuffer										vk_blur_framebuffer_2						= {};	// Framebuffer for blur pass 2
+		CompleteImageResource									attachment_image							= {};	// Render attachment, Multisampled, 1 mip level
+		CompleteImageResource									buffer_1_image								= {};	// Buffer image, used as multisample resolve and blur buffer
+		CompleteImageResource									buffer_2_image								= {};	// Buffer image, used as second blur buffer
+		CompleteImageResource									sampled_image								= {};	// Output, sampled image with mip mapping
+		VkFramebuffer											vk_render_framebuffer						= {};	// Framebuffer for the main render
+		VkFramebuffer											vk_blur_framebuffer_1						= {};	// Framebuffer for blur pass 1
+		VkFramebuffer											vk_blur_framebuffer_2						= {};	// Framebuffer for blur pass 2
 
-		VkCommandBuffer										vk_transfer_command_buffer					= {};	// Data transfer command buffer, this transfers vertex, index, etc... data in the primary render queue.
-		VkCommandBuffer										vk_render_command_buffer					= {};	// Primary render, if no blur is used then also embeds mipmap generation.
+		VkCommandBuffer											vk_transfer_command_buffer					= {};	// Data transfer command buffer, this transfers vertex, index, etc... data in the primary render queue.
+		VkCommandBuffer											vk_render_command_buffer					= {};	// Primary render, if no blur is used then also embeds mipmap generation.
 
-		VkSubmitInfo										vk_transfer_submit_info						= {};
-		VkSubmitInfo										vk_render_submit_info						= {};
+		VkSubmitInfo											vk_transfer_submit_info						= {};
+		VkSubmitInfo											vk_render_submit_info						= {};
 
-		VkTimelineSemaphoreSubmitInfo						vk_render_timeline_semaphore_submit_info	= {};
+		VkTimelineSemaphoreSubmitInfo							vk_render_timeline_semaphore_submit_info	= {};
 
-		std::vector<VkSemaphore>							render_wait_for_semaphores;
-		std::vector<uint64_t>								render_wait_for_semaphore_timeline_values;			// Used with render_wait_for_semaphores.
-		std::vector<VkPipelineStageFlags>					render_wait_for_pipeline_stages;
+		std::vector<VkSemaphore>								render_wait_for_semaphores;
+		std::vector<uint64_t>									render_wait_for_semaphore_timeline_values;			// Used with render_wait_for_semaphores.
+		std::vector<VkPipelineStageFlags>						render_wait_for_pipeline_stages;
 
-		VkSemaphore											vk_transfer_complete_semaphore				= {};	// Binary
-		VkSemaphore											vk_render_complete_semaphore				= {};	// Binary if blur enabled, Timeline if blur enabled.
+		VkSemaphore												vk_transfer_complete_semaphore				= {};	// Binary
+		VkSemaphore												vk_render_complete_semaphore				= {};	// Binary if blur enabled, Timeline if blur enabled.
 
-		uint64_t											render_counter								= {};	// Used with the vk_render_complete_semaphore to determine value to wait for.
+		uint64_t												render_counter								= {};	// Used with the vk_render_complete_semaphore to determine value to wait for.
 
-		std::vector<RenderTargetTextureDependencyInfo>		render_target_texture_dependencies			= {};
+		std::vector<RenderTargetTextureDependencyInfo>			render_target_texture_dependencies			= {};
 
-		uint32_t											render_commitment_request_count				= {};
-		//std::mutex										render_commitment_request_mutex				= {};
+		uint32_t												render_commitment_request_count				= {};
+		//std::mutex											render_commitment_request_mutex				= {};
 
-		bool												has_been_submitted							= {};
-		bool												contains_non_pending_sampled_image			= {};	// Sampled image ready to be used anywhere without checks or barriers.
+		bool													has_been_submitted							= {};
+		bool													contains_non_pending_sampled_image			= {};	// Sampled image ready to be used anywhere without checks or barriers.
 	};
 
 public:
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	RenderTargetTextureImpl(
-		RenderTargetTexture								&	my_interface,
-		InstanceImpl									&	instance,
-		const RenderTargetTextureCreateInfo				&	create_info );
+		RenderTargetTexture									&	my_interface,
+		InstanceImpl										&	instance,
+		const RenderTargetTextureCreateInfo					&	create_info );
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	~RenderTargetTextureImpl();
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	void													SetRenderCoordinateSpace(
-		RenderCoordinateSpace								coordinate_space );
+	void														SetRenderCoordinateSpace(
+		RenderCoordinateSpace									coordinate_space );
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	void													SetSize(
-		glm::uvec2											new_size
+	void														SetSize(
+		glm::uvec2												new_size
 	);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	glm::uvec2												GetSize() const;
+	glm::uvec2													GetSize() const;
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	uint32_t												GetLayerCount() const;
+	uint32_t													GetLayerCount() const;
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	uint32_t												GetCurrentSwapBuffer() const;
+	uint32_t													GetCurrentSwapBuffer() const;
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	VkImage													GetVulkanImage() const;
+	VkImage														GetVulkanImage() const;
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	VkImageView												GetVulkanImageView() const;
+	VkImageView													GetVulkanImageView() const;
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	VkImageLayout											GetVulkanImageLayout() const;
+	VkImageLayout												GetVulkanImageLayout() const;
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	VkFramebuffer											GetFramebuffer(
-		RenderTargetTextureDependencyInfo				&	dependency_info
+	VkFramebuffer												GetFramebuffer(
+		RenderTargetTextureDependencyInfo					&	dependency_info
 	) const;
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	VkSemaphore												GetAllCompleteSemaphore(
-		RenderTargetTextureDependencyInfo				&	dependency_info
+	VkSemaphore													GetAllCompleteSemaphore(
+		RenderTargetTextureDependencyInfo					&	dependency_info
 	) const;
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	uint64_t												GetRenderCounter(
-		RenderTargetTextureDependencyInfo				&	dependency_info
+	uint64_t													GetRenderCounter(
+		RenderTargetTextureDependencyInfo					&	dependency_info
 	) const;
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	bool													IsTextureDataReady();
+	bool														IsTextureDataReady();
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Begins the render of the render target texture.
@@ -192,7 +190,7 @@ public:
 	/// @see		vk2d::Window::BeginRender()
 	///
 	/// @return		true if successful, false if something went wrong.
-	bool													BeginRender();
+	bool														BeginRender();
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Ends the render of the render target texture.
@@ -200,15 +198,15 @@ public:
 	/// @see		vk2d::Window::EndRender()
 	///
 	/// @return		true if successful, false if something went wrong.
-	bool													EndRender(
-		BlurType											blur_type,
-		glm::vec2											blur_amount );
+	bool														EndRender(
+		BlurType												blur_type,
+		glm::vec2												blur_amount );
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	bool													SynchronizeFrame();
+	bool														SynchronizeFrame();
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	bool													WaitIdle();
+	bool														WaitIdle();
 
 	// TODO: Figure out how to best track render target texture commitments, a render target can be re-used in multiple places but should only be rendered once while at the same time submissions should be grouped together.
 
@@ -231,9 +229,9 @@ public:
 	///				List of render target textures that will be rendered.
 	///
 	/// @return 
-	bool													CommitRenderTargetTextureRender(
-		RenderTargetTextureDependencyInfo				&	dependency_info,
-		RenderTargetTextureRenderCollector				&	collector
+	bool														CommitRenderTargetTextureRender(
+		RenderTargetTextureDependencyInfo					&	dependency_info,
+		RenderTargetTextureRenderCollector					&	collector
 	);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -243,8 +241,8 @@ public:
 	///
 	/// @param		dependency_info 
 	///				Tells which part of the render target texture should be confirmed.
-	void													ConfirmRenderTargetTextureRenderSubmission(
-		RenderTargetTextureDependencyInfo				&	dependency_info
+	void														ConfirmRenderTargetTextureRenderSubmission(
+		RenderTargetTextureDependencyInfo					&	dependency_info
 	);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -254,8 +252,8 @@ public:
 	///
 	/// @param		dependency_info 
 	///				Tells which part of the render target texture has completed rendering.
-	void													ConfirmRenderTargetTextureRenderFinished(
-		RenderTargetTextureDependencyInfo				&	dependency_info
+	void														ConfirmRenderTargetTextureRenderFinished(
+		RenderTargetTextureDependencyInfo					&	dependency_info
 	);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -266,8 +264,8 @@ public:
 	///
 	/// @param		dependency_info 
 	///				Tells which part of the render target texture is aborted.
-	void													AbortRenderTargetTextureRender(
-		RenderTargetTextureDependencyInfo				&	dependency_info
+	void														AbortRenderTargetTextureRender(
+		RenderTargetTextureDependencyInfo					&	dependency_info
 	);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -280,8 +278,8 @@ public:
 	///
 	/// @param		swap_buffer_index
 	///				Each swap buffer tracks it's own dependencies, this tells which swap buffer should be cleared of dependencies.
-	void													ResetRenderTargetTextureRenderDependencies(
-		uint32_t											swap_buffer_index
+	void														ResetRenderTargetTextureRenderDependencies(
+		uint32_t												swap_buffer_index
 	);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -294,116 +292,91 @@ public:
 	/// 
 	/// @param		texture
 	///				Handle to render target texture that must render before this render target texture.
-	void													CheckAndAddRenderTargetTextureDependency(
-		uint32_t											swap_buffer_index,
-		Texture											*	texture
+	void														CheckAndAddRenderTargetTextureDependency(
+		uint32_t												swap_buffer_index,
+		Texture												*	texture
 	);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	RenderTargetTextureDependencyInfo						GetDependencyInfo();
+	RenderTargetTextureDependencyInfo							GetDependencyInfo();
 
-	void													DrawTriangleList(
-		const std::vector<VertexIndex_3>				&	indices,
-		const std::vector<Vertex>						&	vertices,
-		const std::vector<float>						&	texture_layer_weights,
-		const std::vector<glm::mat4>					&	transformations,
-		bool												filled,
-		Texture											*	texture,
-		Sampler											*	sampler
+	void														DrawPointList(
+		const RawVertexData									&	raw_vertex_data,
+		std::span<const float>									texture_layer_weights,
+		std::span<const glm::mat4>								transformations,
+		Texture												*	texture,
+		Sampler												*	sampler
 	);
 
-	void													DrawTriangleList(
-		const std::vector<uint32_t>						&	raw_indices,
-		const std::vector<Vertex>						&	vertices,
-		const std::vector<float>						&	texture_layer_weights,
-		const std::vector<glm::mat4>					&	transformations,
-		bool												filled,
-		Texture											*	texture,
-		Sampler											*	sampler
+	void														DrawLineList(
+		std::span<const uint32_t>								raw_indices,
+		const RawVertexData									&	raw_vertex_data,
+		std::span<const float>									texture_layer_weights,
+		std::span<const glm::mat4>								transformations,
+		Texture												*	texture,
+		Sampler												*	sampler,
+		float													line_width
 	);
 
-	void													DrawLineList(
-		const std::vector<VertexIndex_2>				&	indices,
-		const std::vector<Vertex>						&	vertices,
-		const std::vector<float>						&	texture_layer_weights,
-		const std::vector<glm::mat4>					&	transformations,
-		Texture											*	texture,
-		Sampler											*	sampler,
-		float												line_width
+	void														DrawTriangleList(
+		std::span<const uint32_t>								raw_indices,
+		const RawVertexData									&	raw_vertex_data,
+		std::span<const float>									texture_layer_weights,
+		std::span<const glm::mat4>								transformations,
+		bool													solid,
+		Texture												*	texture,
+		Sampler												*	sampler
 	);
 
-	void													DrawLineList(
-		const std::vector<uint32_t>						&	raw_indices,
-		const std::vector<Vertex>						&	vertices,
-		const std::vector<float>						&	texture_layer_weights,
-		const std::vector<glm::mat4>					&	transformations,
-		Texture											*	texture,
-		Sampler											*	sampler,
-		float												line_width
-	);
-
-	void													DrawPointList(
-		const std::vector<Vertex>						&	vertices,
-		const std::vector<float>						&	texture_layer_weights,
-		const std::vector<glm::mat4>					&	transformations,
-		Texture											*	texture,
-		Sampler											*	sampler
-	);
-
-	void													DrawMesh(
-		const MeshBase									&	mesh,
-		const std::vector<glm::mat4>					&	transformations
-	);
-
-	bool													IsGood() const;
+	bool														IsGood() const;
 
 private:
-	bool													DetermineType();
+	bool														DetermineType();
 
-	bool													CreateCommandBuffers();
-	void													DestroyCommandBuffers();
+	bool														CreateCommandBuffers();
+	void														DestroyCommandBuffers();
 
-	bool													CreateFrameDataBuffers();
-	void													DestroyFrameDataBuffers();
+	bool														CreateFrameDataBuffers();
+	void														DestroyFrameDataBuffers();
 
-	bool													CreateImages(
-		glm::uvec2											new_size );
-	void													DestroyImages();
+	bool														CreateImages(
+		glm::uvec2												new_size );
+	void														DestroyImages();
 
-	bool													CreateRenderPasses();
-	void													DestroyRenderPasses();
+	bool														CreateRenderPasses();
+	void														DestroyRenderPasses();
 
-	bool													CreateFramebuffers();
-	void													DestroyFramebuffers();
+	bool														CreateFramebuffers();
+	void														DestroyFramebuffers();
 
-	bool													CreateSynchronizationPrimitives();
-	void													DestroySynchronizationPrimitives();
+	bool														CreateSynchronizationPrimitives();
+	void														DestroySynchronizationPrimitives();
 
-	bool													RecordTransferCommandBuffer(
-		RenderTargetTextureImpl::SwapBuffer				&	swap
+	bool														RecordTransferCommandBuffer(
+		RenderTargetTextureImpl::SwapBuffer					&	swap
 	);
 
-	bool													UpdateSubmitInfos(
-		RenderTargetTextureImpl::SwapBuffer				&	swap,
-		const std::vector<VkSemaphore>					&	wait_for_semaphores,
-		const std::vector<uint64_t>						&	wait_for_semaphore_timeline_values,
-		const std::vector<VkPipelineStageFlags>			&	wait_for_semaphore_pipeline_stages
+	bool														UpdateSubmitInfos(
+		RenderTargetTextureImpl::SwapBuffer					&	swap,
+		const std::vector<VkSemaphore>						&	wait_for_semaphores,
+		const std::vector<uint64_t>							&	wait_for_semaphore_timeline_values,
+		const std::vector<VkPipelineStageFlags>				&	wait_for_semaphore_pipeline_stages
 	);
 
-	TimedDescriptorPoolData								&	GetOrCreateDescriptorSetForSampler(
-		Sampler											*	sampler
+	TimedDescriptorPoolData									&	GetOrCreateDescriptorSetForSampler(
+		Sampler												*	sampler
 	);
 
-	TimedDescriptorPoolData								&	GetOrCreateDescriptorSetForTexture(
-		Texture											*	texture
+	TimedDescriptorPoolData									&	GetOrCreateDescriptorSetForTexture(
+		Texture												*	texture
 	);
 
-	void													CmdPushBlurTextureDescriptorWritesDirectly(
-		VkCommandBuffer										command_buffer,
-		VkPipelineLayout									use_pipeline_layout,
-		uint32_t											set_index,
-		VkImageView											source_image,
-		VkImageLayout										source_image_layout
+	void														CmdPushBlurTextureDescriptorWritesDirectly(
+		VkCommandBuffer											command_buffer,
+		VkPipelineLayout										use_pipeline_layout,
+		uint32_t												set_index,
+		VkImageView												source_image,
+		VkImageLayout											source_image_layout
 	);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -420,10 +393,10 @@ private:
 	/// 
 	/// @param[in]	swap
 	///				Reference to internal structure which contains all the information about the current frame.
-	void													CmdFinalizeRender(
-		RenderTargetTextureImpl::SwapBuffer				&	swap,
-		BlurType											blur_type,
-		glm::vec2											blur_amount
+	void														CmdFinalizeRender(
+		RenderTargetTextureImpl::SwapBuffer					&	swap,
+		BlurType												blur_type,
+		glm::vec2												blur_amount
 	);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -449,96 +422,96 @@ private:
 	/// 
 	/// @param[in]	destination_image
 	///				Sampled image to be used as shader read only optimal, has to have correct amount of mip levels.
-	void													CmdBlitMipmapsToSampledImage(
-		VkCommandBuffer										command_buffer,
-		CompleteImageResource							&	source_image,
-		VkImageLayout										source_image_layout,
-		VkPipelineStageFlagBits								source_image_pipeline_barrier_src_stage,
-		CompleteImageResource							&	destination_image
+	void														CmdBlitMipmapsToSampledImage(
+		VkCommandBuffer											command_buffer,
+		CompleteImageResource								&	source_image,
+		VkImageLayout											source_image_layout,
+		VkPipelineStageFlagBits									source_image_pipeline_barrier_src_stage,
+		CompleteImageResource								&	destination_image
 	);
 
-	bool													CmdRecordBlurCommands(
-		RenderTargetTextureImpl::SwapBuffer				&	swap,
-		VkCommandBuffer										command_buffer,
-		BlurType											blur_type,
-		glm::vec2											blur_amount,
-		CompleteImageResource							&	source_image,
-		VkImageLayout										source_image_layout,
-		VkPipelineStageFlagBits								source_image_pipeline_barrier_src_stage,
-		CompleteImageResource							&	intermediate_image,
-		CompleteImageResource							&	destination_image
+	bool														CmdRecordBlurCommands(
+		RenderTargetTextureImpl::SwapBuffer					&	swap,
+		VkCommandBuffer											command_buffer,
+		BlurType												blur_type,
+		glm::vec2												blur_amount,
+		CompleteImageResource								&	source_image,
+		VkImageLayout											source_image_layout,
+		VkPipelineStageFlagBits									source_image_pipeline_barrier_src_stage,
+		CompleteImageResource								&	intermediate_image,
+		CompleteImageResource								&	destination_image
 	);
 
-	void													CmdBindGraphicsPipelineIfDifferent(
-		VkCommandBuffer										command_buffer,
-		const GraphicsPipelineSettings					&	pipeline_settings
+	void														CmdBindGraphicsPipelineIfDifferent(
+		VkCommandBuffer											command_buffer,
+		const GraphicsPipelineSettings						&	pipeline_settings
 	);
 
-	void													CmdBindSamplerIfDifferent(
-		VkCommandBuffer										command_buffer,
-		Sampler											*	sampler,
-		VkPipelineLayout									use_pipeline_layout
+	void														CmdBindSamplerIfDifferent(
+		VkCommandBuffer											command_buffer,
+		Sampler												*	sampler,
+		VkPipelineLayout										use_pipeline_layout
 	);
 
-	void													CmdBindTextureIfDifferent(
-		VkCommandBuffer										command_buffer,
-		Texture											*	texture,
-		VkPipelineLayout									use_pipeline_layout
+	void														CmdBindTextureIfDifferent(
+		VkCommandBuffer											command_buffer,
+		Texture												*	texture,
+		VkPipelineLayout										use_pipeline_layout
 	);
 
-	void													CmdSetLineWidthIfDifferent(
-		VkCommandBuffer										command_buffer,
-		float												line_width
+	void														CmdSetLineWidthIfDifferent(
+		VkCommandBuffer											command_buffer,
+		float													line_width
 	);
 
-	bool													CmdUpdateFrameData(
-		VkCommandBuffer										command_buffer
+	bool														CmdUpdateFrameData(
+		VkCommandBuffer											command_buffer
 	);
 
-	RenderTargetTexture									&	my_interface;
-	InstanceImpl										&	instance;
-	RenderTargetTextureCreateInfo							create_info_copy							= {};
+	RenderTargetTexture										&	my_interface;
+	InstanceImpl											&	instance;
+	RenderTargetTextureCreateInfo								create_info_copy							= {};
 
-	RenderTargetTextureType									type										= {};
+	RenderTargetTextureType										type										= {};
 
-	VkFormat												surface_format								= {};
-	glm::uvec2												size										= {};
-	RenderCoordinateSpace									coordinate_space							= {};
-	Multisamples											samples										= {};
-	std::vector<VkExtent2D>									mipmap_levels								= {};
-	bool													granularity_aligned							= {};
+	VkFormat													surface_format								= {};
+	glm::uvec2													size										= {};
+	RenderCoordinateSpace										coordinate_space							= {};
+	Multisamples												samples										= {};
+	std::vector<VkExtent2D>										mipmap_levels								= {};
+	bool														granularity_aligned							= {};
 
-	CompleteBufferResource									frame_data_staging_buffer					= {};
-	CompleteBufferResource									frame_data_device_buffer					= {};
-	PoolDescriptorSet										frame_data_descriptor_set					= {};
+	CompleteBufferResource										frame_data_staging_buffer					= {};
+	CompleteBufferResource										frame_data_device_buffer					= {};
+	PoolDescriptorSet											frame_data_descriptor_set					= {};
 
-	VkCommandPool											vk_graphics_command_pool					= {};
-	//VkCommandPool											vk_compute_command_pool						= {};
+	VkCommandPool												vk_graphics_command_pool					= {};
+	//VkCommandPool												vk_compute_command_pool						= {};
 
-	VkRenderPass											vk_attachment_render_pass					= {};
-	VkRenderPass											vk_blur_render_pass_1						= {};
-	VkRenderPass											vk_blur_render_pass_2						= {};
+	VkRenderPass												vk_attachment_render_pass					= {};
+	VkRenderPass												vk_blur_render_pass_1						= {};
+	VkRenderPass												vk_blur_render_pass_2						= {};
 
-	std::unique_ptr<MeshBuffer>								mesh_buffer;
+	std::unique_ptr<MeshBuffer>									mesh_buffer;
 
-	uint32_t												current_swap_buffer							= {};
-	std::array<RenderTargetTextureImpl::SwapBuffer, 2>		swap_buffers								= {};
+	uint32_t													current_swap_buffer							= {};
+	std::array<RenderTargetTextureImpl::SwapBuffer, 2>			swap_buffers								= {};
 
-	VkImageLayout											vk_attachment_image_final_layout			= {};
-	VkImageLayout											vk_sampled_image_final_layout				= {};
-	VkAccessFlags											vk_sampled_image_final_access_mask			= {};
+	VkImageLayout												vk_attachment_image_final_layout			= {};
+	VkImageLayout												vk_sampled_image_final_layout				= {};
+	VkAccessFlags												vk_sampled_image_final_access_mask			= {};
 
-	GraphicsPipelineSettings								previous_graphics_pipeline_settings			= {};
-	Texture												*	previous_texture							= {};
-	Sampler												*	previous_sampler							= {};
-	float													previous_line_width							= {};
+	GraphicsPipelineSettings									previous_graphics_pipeline_settings			= {};
+	Texture													*	previous_texture							= {};
+	Sampler													*	previous_sampler							= {};
+	float														previous_line_width							= {};
 
-	std::map<Sampler*, TimedDescriptorPoolData>				sampler_descriptor_sets						= {};
-	std::map<Texture*, TimedDescriptorPoolData>				texture_descriptor_sets						= {};
+	std::map<Sampler*, TimedDescriptorPoolData>					sampler_descriptor_sets						= {};
+	std::map<Texture*, TimedDescriptorPoolData>					texture_descriptor_sets						= {};
 	std::map<VkImageView, std::map<VkImageView, TimedDescriptorPoolData>>
-															image_descriptor_sets						= {};
+																image_descriptor_sets						= {};
 
-	bool													is_good										= {};
+	bool														is_good										= {};
 };
 
 

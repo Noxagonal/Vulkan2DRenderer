@@ -32,28 +32,28 @@ public:
 
 	constexpr VertexBase()
 	{
-		ConstructAllMembers<MembersT...>();
+		ConstructAllMembers<0, MembersT...>();
 	}
 
-	constexpr ~VertexBase()
+	~VertexBase()
 	{
-		DestructAllMembers<MembersT...>();
+		DestructAllMembers<0, MembersT...>();
 	}
 
 	template<size_t Index>
 	constexpr vk2d_internal::GetTemplateTypeAtIndex<Index, MembersT...> & Get()
 	{
 		static_assert( Index < sizeof...( MembersT ), "Index out of range" );
-		size_t offset = GetMemberOffset<Index>();
+		constexpr size_t offset = GetMemberOffset<Index>();
 		return *reinterpret_cast<vk2d_internal::GetTemplateTypeAtIndex<Index, MembersT...>*>( &data[ offset ] );
 	}
-	
+
 	template<size_t Index>
 	constexpr const vk2d_internal::GetTemplateTypeAtIndex<Index, MembersT...> & Get() const
 	{
 		static_assert( Index < sizeof...( MembersT ), "Index out of range" );
-		size_t offset = GetMemberOffset<Index>();
-		return *reinterpret_cast<vk2d_internal::GetTemplateTypeAtIndex<Index, MembersT...>*>( &data[ offset ] );
+		constexpr size_t offset = GetMemberOffset<Index>();
+		return *reinterpret_cast<const vk2d_internal::GetTemplateTypeAtIndex<Index, MembersT...>*>( &data[ offset ] );
 	}
 
 	template<size_t Index>
@@ -67,7 +67,7 @@ public:
 	static consteval size_t GetMemberOffset()
 	{
 		static_assert( Index < sizeof...( MembersT ), "Index out of range" );
-		return GetMemberOffsetImpl<Index, 0, MembersT...>();
+		return GetMemberOffsetImpl<0, Index, 0, MembersT...>();
 	}
 
 	static consteval size_t GetMemberCount()
@@ -75,33 +75,49 @@ public:
 		return sizeof...( MembersT );
 	}
 
-private:
-	template<typename T>
-	static constexpr size_t GetTypeAlignmentFromOffset( size_t current_offset )
+	static consteval size_t GetMySize()
 	{
-		return ( ( current_offset - 1 ) / alignof( T ) + 1 ) * alignof( T );
+		return GetMySizeImpl<0, MembersT...>();
 	}
 
-	template<typename FirstT, typename ...RestT>
-	constexpr void ConstructAllMembers( size_t offset = 0 )
+	static consteval size_t GetMyAlignment()
 	{
-		offset = GetTypeAlignmentFromOffset<FirstT>( offset );
-		new( reinterpret_cast<FirstT*>( &data[ offset ] ) ) FirstT();
+		return GetMyAlignmentImpl<MembersT...>();
+	}
+
+private:
+	template<size_t CurrentOffset, typename T>
+	static consteval size_t GetAlignmentForType()
+	{
+		return AlignOffset<CurrentOffset, alignof( T )>();
+	}
+
+	template<size_t CurrentOffset, size_t AlignmentRequirement>
+	static consteval size_t AlignOffset()
+	{
+		return ( ( CurrentOffset - 1 ) / AlignmentRequirement + 1 ) * AlignmentRequirement;
+	}
+
+	template<size_t CurrentOffset, typename FirstT, typename ...RestT>
+	constexpr void ConstructAllMembers()
+	{
+		constexpr size_t new_offset = GetAlignmentForType<CurrentOffset, FirstT>();
+		new( reinterpret_cast<FirstT*>( &data[ new_offset ] ) ) FirstT();
 		if constexpr( sizeof...( RestT ) > 0 )
 		{
-			ConstructAllMembers<RestT...>( offset + sizeof( FirstT ) );
+			ConstructAllMembers<new_offset + sizeof( FirstT ), RestT...>();
 		}
 	}
-	
-	template<typename FirstT, typename ...RestT>
-	constexpr void DestructAllMembers( size_t offset = 0 )
+
+	template<size_t CurrentOffset, typename FirstT, typename ...RestT>
+	constexpr void DestructAllMembers()
 	{
-		offset = GetTypeAlignmentFromOffset<FirstT>( offset );
+		constexpr size_t new_offset = GetAlignmentForType<CurrentOffset, FirstT>();
 		if constexpr( sizeof...( RestT ) > 0 )
 		{
-			DestructAllMembers<RestT...>( offset + sizeof( FirstT ) );
+			DestructAllMembers<new_offset + sizeof( FirstT ), RestT...>();
 		}
-		reinterpret_cast<FirstT*>( &data[ offset ] )->~FirstT();
+		reinterpret_cast<FirstT*>( &data[ new_offset ] )->~FirstT();
 	}
 
 	template<size_t GetIndex, size_t CurrentIndex, typename FirstT, typename ...RestT>
@@ -113,44 +129,42 @@ private:
 		}
 		return sizeof( FirstT );
 	}
-	
-	template<size_t GetIndex, size_t CurrentIndex, typename FirstT, typename ...RestT>
-	static consteval size_t GetMemberOffsetImpl( size_t offset = 0 )
+
+	template<size_t CurrentOffset, size_t GetIndex, size_t CurrentIndex, typename FirstT, typename ...RestT>
+	static consteval size_t GetMemberOffsetImpl()
 	{
-		offset = GetTypeAlignmentFromOffset<FirstT>( offset );
+		constexpr size_t new_offset = GetAlignmentForType<CurrentOffset, FirstT>();
 		if constexpr( CurrentIndex < GetIndex )
 		{
-			return GetMemberOffsetImpl<GetIndex, CurrentIndex + 1, RestT...>( offset + sizeof( FirstT ) );
+			return GetMemberOffsetImpl<new_offset + sizeof( FirstT ), GetIndex, CurrentIndex + 1, RestT...>();
 		}
-		return offset;
+		return new_offset;
 	}
 
 	template<typename FirstT, typename ...RestT>
-	static consteval size_t CalculateMyAlignment()
+	static consteval size_t GetMyAlignmentImpl()
 	{
-		size_t alignment = alignof( FirstT );
-		if constexpr( sizeof...( RestT ) > 0 )
+		constexpr size_t alignment = alignof( FirstT );
+		if constexpr( sizeof...( RestT ) )
 		{
-			size_t other_alignment = CalculateMyAlignment<RestT...>();
-			alignment = ( other_alignment > alignment ) ? other_alignment : alignment;
+			return std::max<size_t>( GetMyAlignmentImpl<RestT...>(), alignment );
 		}
 		return alignment;
 	}
 
-	template<typename FirstT, typename ...RestT>
-	static consteval size_t CalculateMySize( size_t offset = 0 )
+	template<size_t CurrentOffset, typename FirstT, typename ...RestT>
+	static consteval size_t GetMySizeImpl()
 	{
-		offset = GetTypeAlignmentFromOffset<FirstT>( offset );
-		offset += sizeof( FirstT );
+		constexpr size_t new_offset = GetAlignmentForType<CurrentOffset, FirstT>();
 		if constexpr( sizeof...( RestT ) > 0 ) {
-			offset = CalculateMySize<RestT...>( offset );
+			return GetMySizeImpl<new_offset + sizeof( FirstT ), RestT...>();
 		}
-		return offset;
+		return AlignOffset<new_offset + sizeof( FirstT ), GetMyAlignment()>();
 	}
 
 	// std::tuple doesn't guarantee correct ordering of template pack types and may not
 	// take into consideration the alignment so we're doing guaranteed layout manually.
-	alignas( CalculateMyAlignment<MembersT...>() ) std::array<uint8_t, CalculateMySize<MembersT...>()> data;
+	alignas( GetMyAlignment() ) std::array<uint8_t, GetMySize()> data;
 };
 
 
@@ -231,7 +245,7 @@ std::is_same_v<T, uint32_t&>;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 template<typename T>
-concept VertexHasVertexCoords = requires( T vertex, auto field_value )
+concept VertexHasVertexCoords = requires( T vertex, decltype( T::vertex_coords ) field_value )
 {
 	vertex.vertex_coords	= glm::vec2();
 	field_value				= vertex.vertex_coords;
@@ -241,7 +255,7 @@ concept VertexHasVertexCoords = requires( T vertex, auto field_value )
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 template<typename T>
-concept VertexHasUVCoords = requires( T vertex, auto field_value )
+concept VertexHasUVCoords = requires( T vertex, decltype( T::uv_coords ) field_value )
 {
 	vertex.uv_coords	= glm::vec2();
 	field_value			= vertex.uv_coords;
@@ -251,7 +265,7 @@ concept VertexHasUVCoords = requires( T vertex, auto field_value )
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 template<typename T>
-concept VertexHasColor = requires( T vertex, auto field_value )
+concept VertexHasColor = requires( T vertex, decltype( T::color ) field_value )
 {
 	vertex.color		= Colorf();
 	field_value			= vertex.color;
@@ -261,7 +275,7 @@ concept VertexHasColor = requires( T vertex, auto field_value )
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 template<typename T>
-concept VertexHasPointSize = requires( T vertex, auto field_value )
+concept VertexHasPointSize = requires( T vertex, decltype( T::point_size ) field_value )
 {
 	vertex.point_size	= float();
 	field_value			= vertex.point_size;
@@ -271,7 +285,7 @@ concept VertexHasPointSize = requires( T vertex, auto field_value )
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 template<typename T>
-concept VertexHasSingleTextureLayer = requires( T vertex, auto field_value )
+concept VertexHasSingleTextureLayer = requires( T vertex, decltype( T::single_texture_layer ) field_value )
 {
 	vertex.single_texture_layer	= uint32_t();
 	field_value					= vertex.single_texture_layer;
