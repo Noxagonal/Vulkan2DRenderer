@@ -56,13 +56,25 @@ requires( VertexBaseDerivedType<VertexT> || VertexBaseType<VertexT> )
 VertexT CreateDefaultValueVertex()
 {
 	auto v = VertexT();
+	if constexpr( VertexHasVertexCoords<VertexT> )
+	{
+		v.vertex_coords = {};
+	}
+	if constexpr( VertexHasUVCoords<VertexT> )
+	{
+		v.uv_coords = {};
+	}
 	if constexpr( VertexHasColor<VertexT> )
 	{
-		v.color			= { 1.0f, 1.0f, 1.0f, 1.0f };
+		v.color = { 1.0f, 1.0f, 1.0f, 1.0f };
 	}
 	if constexpr( VertexHasPointSize<VertexT> )
 	{
-		v.point_size	= 1.0f;
+		v.point_size = 1.0f;
+	}
+	if constexpr( VertexHasSingleTextureLayer<VertexT> )
+	{
+		v.single_texture_layer = 0;
 	}
 	return v;
 }

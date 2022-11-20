@@ -281,7 +281,7 @@ vk2d::vk2d_internal::MeshBlockLocationInfo vk2d::vk2d_internal::MeshBuffer::Rese
 		vertices.vertex_data.size(),
 		vertices.vertex_stride,
 		VK2D_BUILD_OPTION_MESH_BUFFER_BLOCK_VERTEX_SIZE,
-		/* VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | ...VERTEX BUFFER NOT USED DIRECTLY... */ VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
+		VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, // Vertices are accessed via a storage buffer in shader.
 		MeshBufferDescriptorSetType::STORAGE
 	);
 	

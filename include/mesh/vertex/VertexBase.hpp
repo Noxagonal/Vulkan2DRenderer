@@ -84,7 +84,7 @@ public:
 
 	static consteval size_t GetMyAlignment()
 	{
-		return GetMyAlignmentImpl<MembersT...>();
+		return std::max( GetMyAlignmentImpl<MembersT...>(), size_t( 16 ) );
 	}
 
 private:

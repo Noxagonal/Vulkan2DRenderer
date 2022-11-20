@@ -61,7 +61,7 @@ private:
 		if constexpr( CurrentIndex < VertexT::GetMemberCount() )
 		{
 			assert( current_offset < vertex_data.size() );
-			CopyMemberData( current_offset + VertexT::template GetMemberOffset<CurrentIndex>(), vertex.Get<CurrentIndex>());
+			CopyMemberData( current_offset + VertexT::template GetMemberOffset<CurrentIndex>(), vertex.Get<CurrentIndex>() );
 			CopyMembers<VertexT, CurrentIndex + 1>( current_offset, vertex );
 		}
 	}

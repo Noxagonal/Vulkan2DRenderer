@@ -56,11 +56,11 @@ namespace vk2d_internal {
 namespace tests {
 
 struct StandardVertexReference {
-	glm::vec2	vertex_coords			= {};
-	glm::vec2	uv_coords				= {};
-	Colorf		color					= {};
-	float		point_size				= {};
-	uint32_t	single_texture_layer	= {};
+	alignas( 16 )	glm::vec2	vertex_coords			= {};
+	alignas( 4 )	glm::vec2	uv_coords				= {};
+	alignas( 4 )	Colorf		color					= {};
+	alignas( 4 )	float		point_size				= {};
+	alignas( 4 )	uint32_t	single_texture_layer	= {};
 };
 
 static_assert( VertexHasVertexCoords<StandardVertex> );
@@ -71,7 +71,7 @@ static_assert( VertexHasSingleTextureLayer<StandardVertex> );
 
 static_assert( StandardVertex::GetMySize()				== sizeof( StandardVertexReference ) );
 static_assert( StandardVertex::GetMyAlignment()			== alignof( StandardVertexReference ) );
-static_assert( alignof( StandardVertex )				>= alignof( StandardVertexReference ) );
+static_assert( alignof( StandardVertex )				== alignof( StandardVertexReference ) );
 
 static_assert( StandardVertex::GetMemberCount()			== 5 );
 static_assert( StandardVertex::GetMemberOffset<0>()		== offsetof( StandardVertexReference, vertex_coords ) );

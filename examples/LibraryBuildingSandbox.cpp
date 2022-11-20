@@ -184,9 +184,15 @@ int main()
 		if( !window1->BeginRender() ) return -1;
 
 		{
-			auto lattice_mesh = vk2d::mesh_generators::GenerateLatticeMesh( { -200, -200, 200, 200 }, { 16, 16 } );
+			auto lattice_mesh = vk2d::mesh_generators::GenerateLatticeMesh( { -200, -200, 200, 200 }, { 16, 16 }, false );
+
+			//window1->DrawPoint( { -50, -50 }, { 1.0, 0.0, 0.0, 1.0 }, 16 );
+			//window1->DrawPoint( { 50, -50 }, { 0.0, 1.0, 0.0, 1.0 }, 16 );
+			//window1->DrawPoint( { -50, 50 }, { 0.0, 0.0, 1.0, 1.0 }, 16 );
+			//window1->DrawPoint( { 50, 50 }, { 1.0, 1.0, 1.0, 1.0 }, 16 );
 			//lattice_mesh.SetSampler( pixelated_sampler );
 			window1->DrawMesh( lattice_mesh );
+			window1->DrawEllipse( { -50, -50, 50, 50 } );
 
 			//lattice_mesh.SetTexture( nullptr );
 			//lattice_mesh.SetSampler( nullptr );
