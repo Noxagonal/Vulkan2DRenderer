@@ -15,28 +15,28 @@ namespace vulkan {
 
 
 
-class VulkanInstance {
+class Instance {
 public:
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	VulkanInstance(
-		const VulkanInstance					&	other
+	Instance(
+		const Instance							&	other
 	) = delete;
-	VulkanInstance(
-		VulkanInstance							&&	other
+	Instance(
+		Instance								&&	other
 	) = default;
 
-	VulkanInstance(
+	Instance(
 		vk2d_internal::InstanceImpl				&	instance
 	);
-	~VulkanInstance();
+	~Instance();
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	VulkanInstance								&	operator=(
-		const VulkanInstance					&	other
+	Instance									&	operator=(
+		const Instance							&	other
 	) = delete;
 
-	VulkanInstance								&	operator=(
-		VulkanInstance							&&	other
+	Instance									&	operator=(
+		Instance								&&	other
 	) = default;
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -55,7 +55,7 @@ public:
 	std::vector<const char*>						instance_layers;
 	std::vector<const char*>						instance_extensions;
 
-	VkInstance										vk_instance								= {};
+	VkInstance										vulkan_instance							= {};
 
 	VkDebugUtilsMessengerEXT						vk_debug_utils_messenger				= {};
 

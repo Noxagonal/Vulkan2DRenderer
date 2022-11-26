@@ -26,30 +26,30 @@ class DeviceMemoryPool;
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-class VulkanDevice {
+class Device {
 public:
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	VulkanDevice(
-		const VulkanDevice						&	other
+	Device(
+		const Device						&	other
 	) = delete;
-	VulkanDevice(
-		VulkanDevice							&&	other
+	Device(
+		Device								&&	other
 	) = default;
 
-	VulkanDevice(
+	Device(
 		vk2d_internal::InstanceImpl				&	instance,
 		VkPhysicalDevice							physical_device
 	);
-	~VulkanDevice();
+	~Device();
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	VulkanDevice								&	operator=(
-		const VulkanDevice						&	other
+	Device									&	operator=(
+		const Device						&	other
 	) = delete;
 
-	VulkanDevice								&	operator=(
-		VulkanDevice							&&	other
+	Device									&	operator=(
+		Device								&&	other
 	) = default;
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -75,8 +75,8 @@ public:
 	///				Queue type we wish to get.
 	///
 	/// @return		Resolved queue object.
-	Queue								&	GetQueue(
-		QueueType								queue_type
+	Queue										&	GetQueue(
+		QueueType									queue_type
 	);
 
 	VkDevice										GetVulkanDevice();
@@ -152,7 +152,7 @@ private:
 	VkPhysicalDeviceMemoryProperties				physical_device_memory_properties	= {};
 	VkPhysicalDeviceFeatures						physical_device_features			= {};
 
-	std::vector<Queue>						resolved_queues;
+	std::vector<Queue>								resolved_queues;
 
 	std::unique_ptr<DeviceMemoryPool>				device_memory_pool;
 

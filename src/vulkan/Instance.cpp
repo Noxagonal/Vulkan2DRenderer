@@ -1,5 +1,5 @@
 
-#include "VulkanInstance.hpp"
+#include "Instance.hpp"
 
 #include <interface/instance/InstanceImpl.hpp>
 
@@ -94,7 +94,7 @@ VkBool32 VKAPI_PTR DebugMessenger(
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-vk2d::vulkan::VulkanInstance::VulkanInstance(
+vk2d::vulkan::Instance::Instance(
 	vk2d_internal::InstanceImpl & instance
 ) :
 	instance( instance )
@@ -209,7 +209,7 @@ vk2d::vulkan::VulkanInstance::VulkanInstance(
 		auto result = vkCreateInstance(
 			&instance_create_info,
 			nullptr,
-			&vk_instance
+			&vulkan_instance
 		);
 		if( result != VK_SUCCESS ) {
 			instance.Report( result, "Internal error: Cannot create vulkan instance!" );
@@ -219,13 +219,16 @@ vk2d::vulkan::VulkanInstance::VulkanInstance(
 
 	#if VK2D_BUILD_OPTION_VULKAN_VALIDATION && VK2D_DEBUG_ENABLE
 	{
-		auto createDebugUtilsMessenger = (PFN_vkCreateDebugUtilsMessengerEXT)vkGetInstanceProcAddr( vk_instance, "vkCreateDebugUtilsMessengerEXT" );
+		auto createDebugUtilsMessenger = (PFN_vkCreateDebugUtilsMessengerEXT)vkGetInstanceProcAddr(
+			vulkan_instance,
+			"vkCreateDebugUtilsMessengerEXT"
+		);
 		if( !createDebugUtilsMessenger ) {
 			instance.Report( ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot create vulkan debug object!" );
 			return;
 		}
 		auto result = createDebugUtilsMessenger(
-			vk_instance,
+			vulkan_instance,
 			&debug_utils_create_info,
 			nullptr,
 			&vk_debug_utils_messenger
@@ -241,13 +244,16 @@ vk2d::vulkan::VulkanInstance::VulkanInstance(
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-vk2d::vulkan::VulkanInstance::~VulkanInstance()
+vk2d::vulkan::Instance::~Instance()
 {
 	if( vk_debug_utils_messenger ) {
-		auto destroyDebugUtilsMessenger = (PFN_vkDestroyDebugUtilsMessengerEXT)vkGetInstanceProcAddr( vk_instance, "vkDestroyDebugUtilsMessengerEXT" );
+		auto destroyDebugUtilsMessenger = (PFN_vkDestroyDebugUtilsMessengerEXT)vkGetInstanceProcAddr(
+			vulkan_instance,
+			"vkDestroyDebugUtilsMessengerEXT"
+		);
 		if( destroyDebugUtilsMessenger ) {
 			destroyDebugUtilsMessenger(
-				vk_instance,
+				vulkan_instance,
 				vk_debug_utils_messenger,
 				nullptr
 			);
@@ -257,25 +263,25 @@ vk2d::vulkan::VulkanInstance::~VulkanInstance()
 	}
 
 	vkDestroyInstance(
-		vk_instance,
+		vulkan_instance,
 		nullptr
 	);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-VkInstance vk2d::vulkan::VulkanInstance::GetVulkanInstance()
+VkInstance vk2d::vulkan::Instance::GetVulkanInstance()
 {
-	return vk_instance;
+	return vulkan_instance;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-std::vector<VkPhysicalDevice> vk2d::vulkan::VulkanInstance::EnumeratePhysicalDevices()
+std::vector<VkPhysicalDevice> vk2d::vulkan::Instance::EnumeratePhysicalDevices()
 {
 	auto result = VK_SUCCESS;
 
 	uint32_t physical_device_count = UINT32_MAX;
 	result = vkEnumeratePhysicalDevices(
-		vk_instance,
+		vulkan_instance,
 		&physical_device_count,
 		nullptr
 	);
@@ -286,7 +292,7 @@ std::vector<VkPhysicalDevice> vk2d::vulkan::VulkanInstance::EnumeratePhysicalDev
 
 	std::vector<VkPhysicalDevice> physical_devices( physical_device_count );
 	result = vkEnumeratePhysicalDevices(
-		vk_instance,
+		vulkan_instance,
 		&physical_device_count,
 		physical_devices.data()
 	);
@@ -299,7 +305,7 @@ std::vector<VkPhysicalDevice> vk2d::vulkan::VulkanInstance::EnumeratePhysicalDev
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-VkPhysicalDevice vk2d::vulkan::VulkanInstance::PickBestVulkanPhysicalDevice()
+VkPhysicalDevice vk2d::vulkan::Instance::PickBestVulkanPhysicalDevice()
 {
 	auto physicalDevices = EnumeratePhysicalDevices();
 
@@ -327,7 +333,7 @@ VkPhysicalDevice vk2d::vulkan::VulkanInstance::PickBestVulkanPhysicalDevice()
 		uint32_t	queueFamilyCount = 0;
 		vkGetPhysicalDeviceQueueFamilyProperties( pd, &queueFamilyCount, nullptr );
 		for( uint32_t i = 0; i < queueFamilyCount; ++i ) {
-			if( glfwGetPhysicalDevicePresentationSupport( vk_instance, pd, i ) ) {
+			if( glfwGetPhysicalDevicePresentationSupport( vulkan_instance, pd, i ) ) {
 				physicalDeviceCanPresent = true;
 				break;
 			}
@@ -355,13 +361,13 @@ VkPhysicalDevice vk2d::vulkan::VulkanInstance::PickBestVulkanPhysicalDevice()
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-bool vk2d::vulkan::VulkanInstance::IsGood()
+bool vk2d::vulkan::Instance::IsGood()
 {
 	return is_good;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-vk2d::vulkan::VulkanInstance::operator VkInstance()
+vk2d::vulkan::Instance::operator VkInstance()
 {
 	return GetVulkanInstance();
 }

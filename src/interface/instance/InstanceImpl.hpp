@@ -5,8 +5,8 @@
 
 #include <containers/Color.hpp>
 
-#include <vulkan/VulkanInstance.hpp>
-#include <vulkan/VulkanDevice.hpp>
+#include <vulkan/Instance.hpp>
+#include <vulkan/Device.hpp>
 #include <vulkan/Queue.hpp>
 #include <vulkan/descriptor_set/DescriptorSet.hpp>
 #include <vulkan/shaders/ShaderInterface.hpp>
@@ -314,7 +314,7 @@ public:
 	/// @note		Multithreading: Any thread.
 	///
 	/// @return		Vulkan instance.
-	vulkan::VulkanInstance								&	GetVulkanInstance();
+	vulkan::Instance								&	GetVulkanInstance();
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Get Vulkan device.
@@ -322,7 +322,7 @@ public:
 	/// @note		Multithreading: Any thread.
 	///
 	/// @return		Vulkan device.
-	vulkan::VulkanDevice								&	GetVulkanDevice();
+	vulkan::Device								&	GetVulkanDevice();
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Get graphics shader modules.
@@ -645,8 +645,8 @@ private:
 
 	InstanceCreateInfo										create_info_copy						= {};
 
-	std::optional<vulkan::VulkanInstance>					vulkan_instance							= {};
-	std::optional<vulkan::VulkanDevice>						vulkan_device							= {};
+	std::optional<vulkan::Instance>					vulkan_instance							= {};
+	std::optional<vulkan::Device>						vulkan_device							= {};
 
 	PFN_VK2D_ReportFunction									report_function							= {};
 	mutable std::mutex										report_mutex;

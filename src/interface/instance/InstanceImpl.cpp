@@ -803,13 +803,13 @@ vk2d::ResourceManager * vk2d::vk2d_internal::InstanceImpl::GetResourceManager() 
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-vk2d::vulkan::VulkanInstance & vk2d::vk2d_internal::InstanceImpl::GetVulkanInstance()
+vk2d::vulkan::Instance & vk2d::vk2d_internal::InstanceImpl::GetVulkanInstance()
 {
 	return *vulkan_instance;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-vk2d::vulkan::VulkanDevice & vk2d::vk2d_internal::InstanceImpl::GetVulkanDevice()
+vk2d::vulkan::Device & vk2d::vk2d_internal::InstanceImpl::GetVulkanDevice()
 {
 	return *vulkan_device;
 }
