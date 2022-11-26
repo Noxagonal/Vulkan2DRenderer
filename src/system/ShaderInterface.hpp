@@ -42,7 +42,7 @@ struct GraphicsBlurPushConstants
 
 
 
-enum class GraphicsShaderProgramID {
+enum class GraphicsShaderListID {
 	SINGLE_TEXTURED,
 	SINGLE_TEXTURED_UV_BORDER_COLOR,
 
@@ -68,21 +68,21 @@ enum class ComputeShaderProgramID
 
 
 
-class GraphicsShaderProgram {
+class GraphicsShaderList {
 public:
-	GraphicsShaderProgram()												= default;
+	GraphicsShaderList()												= default;
 
-	GraphicsShaderProgram(
-		const GraphicsShaderProgram		&	other )						= default;
+	GraphicsShaderList(
+		const GraphicsShaderList		&	other )						= default;
 
-	GraphicsShaderProgram(
-		GraphicsShaderProgram			&&	other )						= default;
+	GraphicsShaderList(
+		GraphicsShaderList			&&	other )							= default;
 
 	template<typename T>
-	GraphicsShaderProgram(
+	GraphicsShaderList(
 		const std::initializer_list<T>	&	init_list )					= delete;
 
-	inline GraphicsShaderProgram(
+	inline GraphicsShaderList(
 		VkShaderModule						vertex,
 		VkShaderModule						fragment
 	) :
@@ -90,24 +90,24 @@ public:
 		fragment( fragment )
 	{}
 
-	GraphicsShaderProgram				&	operator=(
-		const GraphicsShaderProgram		&	other )						= default;
+	GraphicsShaderList				&	operator=(
+		const GraphicsShaderList		&	other )						= default;
 
-	GraphicsShaderProgram				&	operator=(
-		GraphicsShaderProgram			&&	other )						= default;
+	GraphicsShaderList				&	operator=(
+		GraphicsShaderList			&&	other )							= default;
 
 	bool									operator<(
-		const GraphicsShaderProgram		&	other ) const;
+		const GraphicsShaderList		&	other ) const;
 	bool									operator>(
-		const GraphicsShaderProgram		&	other ) const;
+		const GraphicsShaderList		&	other ) const;
 	bool									operator<=(
-		const GraphicsShaderProgram		&	other ) const;
+		const GraphicsShaderList		&	other ) const;
 	bool									operator>=(
-		const GraphicsShaderProgram		&	other ) const;
+		const GraphicsShaderList		&	other ) const;
 	bool									operator==(
-		const GraphicsShaderProgram		&	other ) const;
+		const GraphicsShaderList		&	other ) const;
 	bool									operator!=(
-		const GraphicsShaderProgram		&	other ) const;
+		const GraphicsShaderList		&	other ) const;
 
 	VkShaderModule							vertex						= {};
 	VkShaderModule							fragment					= {};
@@ -148,7 +148,7 @@ public:
 	VkRenderPass							vk_render_pass				= {};
 	VkPrimitiveTopology						primitive_topology			= {};
 	VkPolygonMode							polygon_mode				= {};
-	GraphicsShaderProgram					shader_programs				= {};
+	GraphicsShaderList						shader_programs				= {};
 	VkSampleCountFlags						samples						= {};
 	VkBool32								enable_blending				= {};
 };

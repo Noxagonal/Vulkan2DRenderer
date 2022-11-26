@@ -1514,7 +1514,7 @@ void vk2d::vk2d_internal::WindowImpl::DrawPointList(
 	CheckAndAddRenderTargetTextureDependency( texture );
 
 	{
-		auto graphics_shader_programs = instance.GetCompatibleGraphicsShaderModules(
+		auto graphics_shader_programs = instance.GetCompatibleGraphicsShaderList(
 			sampler->impl->IsAnyBorderColorEnabled(),
 			1
 		);
@@ -1621,7 +1621,7 @@ void vk2d::vk2d_internal::WindowImpl::DrawLineList(
 	CheckAndAddRenderTargetTextureDependency( texture );
 
 	{
-		auto graphics_shader_programs = instance.GetCompatibleGraphicsShaderModules(
+		auto graphics_shader_programs = instance.GetCompatibleGraphicsShaderList(
 			sampler->impl->IsAnyBorderColorEnabled(),
 			2
 		);
@@ -1732,7 +1732,7 @@ void vk2d::vk2d_internal::WindowImpl::DrawTriangleList(
 	CheckAndAddRenderTargetTextureDependency( texture );
 
 	{
-		auto graphics_shader_programs = instance.GetCompatibleGraphicsShaderModules(
+		auto graphics_shader_programs = instance.GetCompatibleGraphicsShaderList(
 			sampler->impl->IsAnyBorderColorEnabled(),
 			3
 		);

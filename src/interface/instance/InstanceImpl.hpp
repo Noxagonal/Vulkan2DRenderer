@@ -48,7 +48,8 @@ public:
 	/// @see Instance::Instance()
 	InstanceImpl(
 		Instance										&	my_interface,
-		const InstanceCreateInfo						&	instance_create_info );
+		const InstanceCreateInfo						&	instance_create_info
+	);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @see Instance::~Instance()
@@ -75,25 +76,29 @@ public:
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @see Instance::SetMonitorUpdateCallback()
 	void													SetMonitorUpdateCallback(
-		PFN_MonitorUpdateCallback							monitor_update_callback_funtion );
+		PFN_MonitorUpdateCallback							monitor_update_callback_funtion
+	);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @see Instance::CreateCursor()
 	Cursor												*	CreateCursor(
 		const std::filesystem::path						&	image_path,
-		glm::ivec2											hot_spot );
+		glm::ivec2											hot_spot
+	);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @see Instance::CreateCursor()
 	Cursor												*	CreateCursor(
 		glm::uvec2											image_size,
 		const std::vector<Color8>						&	image_data,
-		glm::ivec2											hot_spot );
+		glm::ivec2											hot_spot
+	);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @see Instance::DestroyCursor()
 	void													DestroyCursor(
-		Cursor											*	cursor );
+		Cursor											*	cursor
+	);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @see Instance::GetGamepadEventCallback()
@@ -102,22 +107,26 @@ public:
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @see Instance::SetGamepadEventCallback()
 	void													SetGamepadEventCallback(
-		PFN_GamepadConnectionEventCallback					gamepad_event_callback_function );
+		PFN_GamepadConnectionEventCallback					gamepad_event_callback_function
+	);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @see Instance::IsGamepadPresent()
 	bool													IsGamepadPresent(
-		Gamepad												gamepad );
+		Gamepad												gamepad
+	);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @see Instance::GetGamepadName()
 	std::string												GetGamepadName(
-		Gamepad												gamepad );
+		Gamepad												gamepad
+	);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @see Instance::QueryGamepadState()
 	GamepadState											QueryGamepadState(
-		Gamepad												gamepad );
+		Gamepad												gamepad
+	);
 
 	// TODO: gamepad mapping
 
@@ -128,22 +137,26 @@ public:
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @see Instance::CreateOutputWindow()
 	Window												*	CreateOutputWindow(
-		const WindowCreateInfo							&	window_create_info );
+		const WindowCreateInfo							&	window_create_info
+	);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @see Instance::DestroyOutputWindow()
 	void													DestroyOutputWindow(
-		Window											*	window );
+		Window											*	window
+	);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @see Instance::CreateRenderTargetTexture()
 	RenderTargetTexture									*	CreateRenderTargetTexture(
-		const RenderTargetTextureCreateInfo				&	render_target_texture_create_info );
+		const RenderTargetTextureCreateInfo				&	render_target_texture_create_info
+	);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @see Instance::DestroyRenderTargetTexture()
 	void													DestroyRenderTargetTexture(
-		RenderTargetTexture								*	render_target_texture );
+		RenderTargetTexture								*	render_target_texture
+	);
 
 	// DescriptorAutoPool								*	GetDescriptorPool();
 
@@ -160,7 +173,8 @@ public:
 	/// 
 	/// @return		PoolDescriptorSet
 	PoolDescriptorSet										AllocateDescriptorSet(
-		const DescriptorSetLayout						&	for_descriptor_set_layout );
+		const DescriptorSetLayout						&	for_descriptor_set_layout
+	);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Free descriptor set that was directly allocated from instance.
@@ -173,17 +187,20 @@ public:
 	/// @param[in]	descriptor_set
 	///				DescriptorSet that was previously allocated from the same instance.
 	void													FreeDescriptorSet(
-		PoolDescriptorSet								&	descriptor_set );
+		PoolDescriptorSet								&	descriptor_set
+	);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @see		Instance::CreateSampler()
 	Sampler												*	CreateSampler(
-		const SamplerCreateInfo							&	sampler_create_info );
+		const SamplerCreateInfo							&	sampler_create_info
+	);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @see		Instance::DestroySampler()
 	void													DestroySampler(
-		Sampler											*	sampler );
+		Sampler											*	sampler
+	);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @see		Instance::GetMaximumSupportedMultisampling()
@@ -308,11 +325,11 @@ public:
 	/// @note		Multithreading: Any thread.
 	///
 	/// @param[in]	id
-	///				Graphics shader program ID. See GraphicsShaderProgramID for more info.
+	///				Graphics shader program ID. See GraphicsShaderListID for more info.
 	///
 	/// @return		Graphics shader program.
-	GraphicsShaderProgram									GetGraphicsShaderModules(
-		GraphicsShaderProgramID								id
+	GraphicsShaderList										GetGraphicsShaderList(
+		GraphicsShaderListID								id
 	) const;
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -342,9 +359,10 @@ public:
 	///				Tells how many vertices per primitive the shader needs to support, must be a value between 1 and 3 (inclusive).
 	///
 	/// @return		Graphics shader program.
-	GraphicsShaderProgram									GetCompatibleGraphicsShaderModules(
+	GraphicsShaderList										GetCompatibleGraphicsShaderList(
 		bool												custom_uv_border_color,
-		uint32_t											vertices_per_primitive ) const;
+		uint32_t											vertices_per_primitive
+	) const;
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Get graphics pipeline.
@@ -359,7 +377,8 @@ public:
 	///
 	/// @return		Graphics shader pipeline.
 	VkPipeline												GetGraphicsPipeline(
-		const GraphicsPipelineSettings					&	settings );
+		const GraphicsPipelineSettings					&	settings
+	);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Get compute pipeline.
@@ -374,7 +393,8 @@ public:
 	///
 	/// @return		Graphics shader pipeline.
 	VkPipeline												GetComputePipeline(
-		const ComputePipelineSettings					&	settings );
+		const ComputePipelineSettings					&	settings
+	);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Create graphics pipeline.
@@ -386,7 +406,8 @@ public:
 	///
 	/// @return		New graphics shader pipeline.
 	VkPipeline												CreateGraphicsPipeline(
-		const GraphicsPipelineSettings					&	settings );
+		const GraphicsPipelineSettings					&	settings
+	);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Create compute pipeline.
@@ -401,7 +422,8 @@ public:
 	///
 	/// @return		New compute shader pipeline.
 	VkPipeline												CreateComputePipeline(
-		const ComputePipelineSettings					&	settings );
+		const ComputePipelineSettings					&	settings
+	);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Get graphics pipeline cache.
@@ -570,7 +592,8 @@ public:
 		VkPipelineLayout									layout,
 		uint32_t											set,
 		uint32_t											descriptorWriteCount,
-		const VkWriteDescriptorSet						*	pDescriptorWrites );
+		const VkWriteDescriptorSet						*	pDescriptorWrites
+	);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Checks if the object is good to be used or if a failure occurred in it's creation.
@@ -631,7 +654,7 @@ private:
 	std::vector<VkShaderModule>								vk_graphics_shader_modules;
 	std::vector<VkShaderModule>								vk_compute_shader_modules;
 
-	std::map<GraphicsShaderProgramID, GraphicsShaderProgram>graphics_shader_programs;
+	std::map<GraphicsShaderListID, GraphicsShaderList>graphics_shader_programs;
 	std::map<ComputeShaderProgramID, VkShaderModule>
 															compute_shader_programs;
 

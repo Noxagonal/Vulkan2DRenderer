@@ -693,7 +693,7 @@ void vk2d::vk2d_internal::RenderTargetTextureImpl::DrawPointList(
 	);
 
 	{
-		auto graphics_shader_programs = instance.GetCompatibleGraphicsShaderModules(
+		auto graphics_shader_programs = instance.GetCompatibleGraphicsShaderList(
 			sampler->impl->IsAnyBorderColorEnabled(),
 			1
 		);
@@ -803,7 +803,7 @@ void vk2d::vk2d_internal::RenderTargetTextureImpl::DrawLineList(
 	);
 
 	{
-		auto graphics_shader_programs = instance.GetCompatibleGraphicsShaderModules(
+		auto graphics_shader_programs = instance.GetCompatibleGraphicsShaderList(
 			sampler->impl->IsAnyBorderColorEnabled(),
 			2
 		);
@@ -917,7 +917,7 @@ void vk2d::vk2d_internal::RenderTargetTextureImpl::DrawTriangleList(
 	);
 
 	{
-		auto graphics_shader_programs = instance.GetCompatibleGraphicsShaderModules(
+		auto graphics_shader_programs = instance.GetCompatibleGraphicsShaderList(
 			sampler->impl->IsAnyBorderColorEnabled(),
 			3
 		);
@@ -2671,7 +2671,7 @@ bool vk2d::vk2d_internal::RenderTargetTextureImpl::CmdRecordBlurCommands(
 		VkPipelineLayout			use_pipeline_layout,
 		VkRenderPass				use_render_pass,
 		VkFramebuffer				use_framebuffer,
-		GraphicsShaderProgram	&	graphics_shader_program,
+		GraphicsShaderList	&	graphics_shader_program,
 		float						blur_coverage,
 		VkImageView					vk_texture,
 		VkImageLayout				texture_image_layout
@@ -2825,16 +2825,16 @@ bool vk2d::vk2d_internal::RenderTargetTextureImpl::CmdRecordBlurCommands(
 
 	// First render pass.
 	{
-		GraphicsShaderProgram shader_program;
+		GraphicsShaderList shader_program;
 		switch( blur_type ) {
 			case BlurType::BOX:
-				shader_program = instance.GetGraphicsShaderModules( GraphicsShaderProgramID::RENDER_TARGET_BOX_BLUR_HORISONTAL );
+				shader_program = instance.GetGraphicsShaderList( GraphicsShaderListID::RENDER_TARGET_BOX_BLUR_HORISONTAL );
 				break;
 			case BlurType::GAUSSIAN:
-				shader_program = instance.GetGraphicsShaderModules( GraphicsShaderProgramID::RENDER_TARGET_GAUSSIAN_BLUR_HORISONTAL );
+				shader_program = instance.GetGraphicsShaderList( GraphicsShaderListID::RENDER_TARGET_GAUSSIAN_BLUR_HORISONTAL );
 				break;
 			default:
-				shader_program = instance.GetGraphicsShaderModules( GraphicsShaderProgramID::RENDER_TARGET_GAUSSIAN_BLUR_HORISONTAL );
+				shader_program = instance.GetGraphicsShaderList( GraphicsShaderListID::RENDER_TARGET_GAUSSIAN_BLUR_HORISONTAL );
 				break;
 		}
 
@@ -2878,16 +2878,16 @@ bool vk2d::vk2d_internal::RenderTargetTextureImpl::CmdRecordBlurCommands(
 
 	// Second render pass.
 	{
-		GraphicsShaderProgram shader_program;
+		GraphicsShaderList shader_program;
 		switch( blur_type ) {
 			case BlurType::BOX:
-				shader_program = instance.GetGraphicsShaderModules( GraphicsShaderProgramID::RENDER_TARGET_BOX_BLUR_VERTICAL );
+				shader_program = instance.GetGraphicsShaderList( GraphicsShaderListID::RENDER_TARGET_BOX_BLUR_VERTICAL );
 				break;
 			case BlurType::GAUSSIAN:
-				shader_program = instance.GetGraphicsShaderModules( GraphicsShaderProgramID::RENDER_TARGET_GAUSSIAN_BLUR_VERTICAL );
+				shader_program = instance.GetGraphicsShaderList( GraphicsShaderListID::RENDER_TARGET_GAUSSIAN_BLUR_VERTICAL );
 				break;
 			default:
-				shader_program = instance.GetGraphicsShaderModules( GraphicsShaderProgramID::RENDER_TARGET_GAUSSIAN_BLUR_VERTICAL );
+				shader_program = instance.GetGraphicsShaderList( GraphicsShaderListID::RENDER_TARGET_GAUSSIAN_BLUR_VERTICAL );
 				break;
 		}
 

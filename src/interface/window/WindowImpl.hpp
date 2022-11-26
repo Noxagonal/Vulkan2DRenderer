@@ -45,7 +45,7 @@ class CursorImpl;
 class MeshBuffer;
 class TextureResourceImpl;
 class ScreenshotSaverTask;
-class GraphicsShaderProgram;
+class GraphicsShaderList;
 
 enum class NextRenderCallFunction : uint32_t {
 	BEGIN		= 0,

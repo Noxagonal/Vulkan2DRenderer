@@ -9,8 +9,8 @@
 
 
 
-bool vk2d::vk2d_internal::GraphicsShaderProgram::operator<(
-	const GraphicsShaderProgram		&	other
+bool vk2d::vk2d_internal::GraphicsShaderList::operator<(
+	const GraphicsShaderList		&	other
 ) const
 {
 	return
@@ -24,8 +24,8 @@ bool vk2d::vk2d_internal::GraphicsShaderProgram::operator<(
 		);
 }
 
-bool vk2d::vk2d_internal::GraphicsShaderProgram::operator>(
-	const GraphicsShaderProgram		&	other
+bool vk2d::vk2d_internal::GraphicsShaderList::operator>(
+	const GraphicsShaderList		&	other
 ) const
 {
 	return
@@ -39,8 +39,8 @@ bool vk2d::vk2d_internal::GraphicsShaderProgram::operator>(
 		);
 }
 
-bool vk2d::vk2d_internal::GraphicsShaderProgram::operator<=(
-	const GraphicsShaderProgram		&	other
+bool vk2d::vk2d_internal::GraphicsShaderList::operator<=(
+	const GraphicsShaderList		&	other
 	) const
 {
 	return
@@ -54,8 +54,8 @@ bool vk2d::vk2d_internal::GraphicsShaderProgram::operator<=(
 		);
 }
 
-bool vk2d::vk2d_internal::GraphicsShaderProgram::operator>=(
-	const GraphicsShaderProgram		&	other
+bool vk2d::vk2d_internal::GraphicsShaderList::operator>=(
+	const GraphicsShaderList		&	other
 	) const
 {
 	return
@@ -69,8 +69,8 @@ bool vk2d::vk2d_internal::GraphicsShaderProgram::operator>=(
 		);
 }
 
-bool vk2d::vk2d_internal::GraphicsShaderProgram::operator==(
-	const GraphicsShaderProgram		&	other
+bool vk2d::vk2d_internal::GraphicsShaderList::operator==(
+	const GraphicsShaderList		&	other
 ) const
 {
 	return
@@ -84,8 +84,8 @@ bool vk2d::vk2d_internal::GraphicsShaderProgram::operator==(
 		);
 }
 
-bool vk2d::vk2d_internal::GraphicsShaderProgram::operator!=(
-	const GraphicsShaderProgram		&	other
+bool vk2d::vk2d_internal::GraphicsShaderList::operator!=(
+	const GraphicsShaderList		&	other
 ) const
 {
 	return

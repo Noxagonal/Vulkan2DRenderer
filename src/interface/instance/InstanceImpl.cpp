@@ -815,8 +815,8 @@ vk2d::vk2d_internal::VulkanDevice & vk2d::vk2d_internal::InstanceImpl::GetVulkan
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-vk2d::vk2d_internal::GraphicsShaderProgram vk2d::vk2d_internal::InstanceImpl::GetGraphicsShaderModules(
-	GraphicsShaderProgramID id
+vk2d::vk2d_internal::GraphicsShaderList vk2d::vk2d_internal::InstanceImpl::GetGraphicsShaderList(
+	GraphicsShaderListID id
 ) const
 {
 	auto collection = graphics_shader_programs.find( id );
@@ -839,15 +839,15 @@ VkShaderModule vk2d::vk2d_internal::InstanceImpl::GetComputeShaderModules(
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-vk2d::vk2d_internal::GraphicsShaderProgram vk2d::vk2d_internal::InstanceImpl::GetCompatibleGraphicsShaderModules(
+vk2d::vk2d_internal::GraphicsShaderList vk2d::vk2d_internal::InstanceImpl::GetCompatibleGraphicsShaderList(
 	bool				custom_uv_border_color,
 	uint32_t			vertices_per_primitive
 ) const
 {
 	if( custom_uv_border_color ) {
-		return GetGraphicsShaderModules( GraphicsShaderProgramID::SINGLE_TEXTURED_UV_BORDER_COLOR );
+		return GetGraphicsShaderList( GraphicsShaderListID::SINGLE_TEXTURED_UV_BORDER_COLOR );
 	} else {
-		return GetGraphicsShaderModules( GraphicsShaderProgramID::SINGLE_TEXTURED );
+		return GetGraphicsShaderList( GraphicsShaderListID::SINGLE_TEXTURED );
 	}
 }
 
@@ -1576,20 +1576,20 @@ bool vk2d::vk2d_internal::InstanceImpl::CreateShaderModules()
 		vk_graphics_shader_modules.push_back( render_target_texture_fragment_gaussian_blur_vertical );
 
 		// Collect a listing of shader units, which is a collection of shader modules needed to create a pipeline.
-		graphics_shader_programs[ GraphicsShaderProgramID::SINGLE_TEXTURED ]						= GraphicsShaderProgram( single_textured_vertex, single_textured_fragment );
-		graphics_shader_programs[ GraphicsShaderProgramID::SINGLE_TEXTURED_UV_BORDER_COLOR ]		= GraphicsShaderProgram( single_textured_vertex, single_textured_fragment_uv_border_color );
+		graphics_shader_programs[ GraphicsShaderListID::SINGLE_TEXTURED ]						= GraphicsShaderList( single_textured_vertex, single_textured_fragment );
+		graphics_shader_programs[ GraphicsShaderListID::SINGLE_TEXTURED_UV_BORDER_COLOR ]		= GraphicsShaderList( single_textured_vertex, single_textured_fragment_uv_border_color );
 
-		graphics_shader_programs[ GraphicsShaderProgramID::MULTITEXTURED_TRIANGLE ]					= GraphicsShaderProgram( multitextured_vertex, multitextured_fragment_triangle );
-		graphics_shader_programs[ GraphicsShaderProgramID::MULTITEXTURED_LINE ]						= GraphicsShaderProgram( multitextured_vertex, multitextured_fragment_line );
-		graphics_shader_programs[ GraphicsShaderProgramID::MULTITEXTURED_POINT ]					= GraphicsShaderProgram( multitextured_vertex, multitextured_fragment_point );
-		graphics_shader_programs[ GraphicsShaderProgramID::MULTITEXTURED_TRIANGLE_UV_BORDER_COLOR ]	= GraphicsShaderProgram( multitextured_vertex, multitextured_fragment_triangle_uv_border_color );
-		graphics_shader_programs[ GraphicsShaderProgramID::MULTITEXTURED_LINE_UV_BORDER_COLOR ]		= GraphicsShaderProgram( multitextured_vertex, multitextured_fragment_line_uv_border_color );
-		graphics_shader_programs[ GraphicsShaderProgramID::MULTITEXTURED_POINT_UV_BORDER_COLOR ]	= GraphicsShaderProgram( multitextured_vertex, multitextured_fragment_point_uv_border_color );
+		graphics_shader_programs[ GraphicsShaderListID::MULTITEXTURED_TRIANGLE ]				= GraphicsShaderList( multitextured_vertex, multitextured_fragment_triangle );
+		graphics_shader_programs[ GraphicsShaderListID::MULTITEXTURED_LINE ]					= GraphicsShaderList( multitextured_vertex, multitextured_fragment_line );
+		graphics_shader_programs[ GraphicsShaderListID::MULTITEXTURED_POINT ]					= GraphicsShaderList( multitextured_vertex, multitextured_fragment_point );
+		graphics_shader_programs[ GraphicsShaderListID::MULTITEXTURED_TRIANGLE_UV_BORDER_COLOR ]= GraphicsShaderList( multitextured_vertex, multitextured_fragment_triangle_uv_border_color );
+		graphics_shader_programs[ GraphicsShaderListID::MULTITEXTURED_LINE_UV_BORDER_COLOR ]	= GraphicsShaderList( multitextured_vertex, multitextured_fragment_line_uv_border_color );
+		graphics_shader_programs[ GraphicsShaderListID::MULTITEXTURED_POINT_UV_BORDER_COLOR ]	= GraphicsShaderList( multitextured_vertex, multitextured_fragment_point_uv_border_color );
 
-		graphics_shader_programs[ GraphicsShaderProgramID::RENDER_TARGET_BOX_BLUR_HORISONTAL ]		= GraphicsShaderProgram( render_target_texture_blur_vertex, render_target_texture_fragment_box_blur_horisontal );
-		graphics_shader_programs[ GraphicsShaderProgramID::RENDER_TARGET_BOX_BLUR_VERTICAL ]		= GraphicsShaderProgram( render_target_texture_blur_vertex, render_target_texture_fragment_box_blur_vertical );
-		graphics_shader_programs[ GraphicsShaderProgramID::RENDER_TARGET_GAUSSIAN_BLUR_HORISONTAL ]	= GraphicsShaderProgram( render_target_texture_blur_vertex, render_target_texture_fragment_gaussian_blur_horisontal );
-		graphics_shader_programs[ GraphicsShaderProgramID::RENDER_TARGET_GAUSSIAN_BLUR_VERTICAL ]	= GraphicsShaderProgram( render_target_texture_blur_vertex, render_target_texture_fragment_gaussian_blur_vertical );
+		graphics_shader_programs[ GraphicsShaderListID::RENDER_TARGET_BOX_BLUR_HORISONTAL ]		= GraphicsShaderList( render_target_texture_blur_vertex, render_target_texture_fragment_box_blur_horisontal );
+		graphics_shader_programs[ GraphicsShaderListID::RENDER_TARGET_BOX_BLUR_VERTICAL ]		= GraphicsShaderList( render_target_texture_blur_vertex, render_target_texture_fragment_box_blur_vertical );
+		graphics_shader_programs[ GraphicsShaderListID::RENDER_TARGET_GAUSSIAN_BLUR_HORISONTAL ]= GraphicsShaderList( render_target_texture_blur_vertex, render_target_texture_fragment_gaussian_blur_horisontal );
+		graphics_shader_programs[ GraphicsShaderListID::RENDER_TARGET_GAUSSIAN_BLUR_VERTICAL ]	= GraphicsShaderList( render_target_texture_blur_vertex, render_target_texture_fragment_gaussian_blur_vertical );
 	}
 
 	////////////////////////////////
