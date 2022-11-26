@@ -5,8 +5,9 @@
 
 
 namespace vk2d {
+namespace vulkan {
 
-namespace vk2d_internal {
+
 
 class DeviceMemoryPool;
 struct DeviceMemoryPoolDataImpl;
@@ -364,6 +365,5 @@ std::unique_ptr<DeviceMemoryPool>						MakeDeviceMemoryPool(
 
 
 
-} // vk2d_internal
-
+} // vulkan
 } // vk2d

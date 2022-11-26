@@ -5,8 +5,9 @@
 
 
 namespace vk2d {
+namespace vulkan {
 
-namespace vk2d_internal {
+
 
 // Descriptor set allocations.
 constexpr uint32_t GRAPHICS_DESCRIPTOR_SET_ALLOCATION_WINDOW_FRAME_DATA					= 0;
@@ -191,6 +192,5 @@ public:
 
 
 
-} // vk2d_internal
-
+} // vulkan
 } // vk2d

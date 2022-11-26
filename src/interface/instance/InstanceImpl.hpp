@@ -7,9 +7,9 @@
 
 #include <vulkan/VulkanInstance.hpp>
 #include <vulkan/VulkanDevice.hpp>
-#include <vulkan/ResolvedQueue.hpp>
-#include <system/DescriptorSet.hpp>
-#include <system/ShaderInterface.hpp>
+#include <vulkan/Queue.hpp>
+#include <vulkan/descriptor_set/DescriptorSet.hpp>
+#include <vulkan/shaders/ShaderInterface.hpp>
 
 #define GLFW_INCLUDE_NONE
 #include <GLFW/glfw3.h>
@@ -26,13 +26,18 @@ class TextureResource;
 class Sampler;
 class RenderTargetTexture;
 
+namespace vulkan {
+class DescriptorSetLayout;
+class DeviceMemoryPool;
+} // vulkan
+
 namespace vk2d_internal {
 
 class ThreadPool;
-class DescriptorSetLayout;
 class WindowImpl;
-class DeviceMemoryPool;
 class MonitorImpl;
+
+
 
 void UpdateMonitorLists( bool globals_locked );
 
@@ -172,8 +177,8 @@ public:
 	///				tells what type of a descriptor set we should allocate.
 	/// 
 	/// @return		PoolDescriptorSet
-	PoolDescriptorSet										AllocateDescriptorSet(
-		const DescriptorSetLayout						&	for_descriptor_set_layout
+	vulkan::PoolDescriptorSet								AllocateDescriptorSet(
+		const vulkan::DescriptorSetLayout				&	for_descriptor_set_layout
 	);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -187,7 +192,7 @@ public:
 	/// @param[in]	descriptor_set
 	///				DescriptorSet that was previously allocated from the same instance.
 	void													FreeDescriptorSet(
-		PoolDescriptorSet								&	descriptor_set
+		vulkan::PoolDescriptorSet						&	descriptor_set
 	);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -309,7 +314,7 @@ public:
 	/// @note		Multithreading: Any thread.
 	///
 	/// @return		Vulkan instance.
-	VulkanInstance										&	GetVulkanInstance();
+	vulkan::VulkanInstance								&	GetVulkanInstance();
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Get Vulkan device.
@@ -317,7 +322,7 @@ public:
 	/// @note		Multithreading: Any thread.
 	///
 	/// @return		Vulkan device.
-	VulkanDevice										&	GetVulkanDevice();
+	vulkan::VulkanDevice								&	GetVulkanDevice();
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Get graphics shader modules.
@@ -328,8 +333,8 @@ public:
 	///				Graphics shader program ID. See GraphicsShaderListID for more info.
 	///
 	/// @return		Graphics shader program.
-	GraphicsShaderList										GetGraphicsShaderList(
-		GraphicsShaderListID								id
+	vulkan::GraphicsShaderList								GetGraphicsShaderList(
+		vulkan::GraphicsShaderListID						id
 	) const;
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -342,7 +347,7 @@ public:
 	///
 	/// @return		Compute shader program.
 	VkShaderModule											GetComputeShaderModules(
-		ComputeShaderProgramID								id
+		vulkan::ComputeShaderProgramID						id
 	) const;
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -359,7 +364,7 @@ public:
 	///				Tells how many vertices per primitive the shader needs to support, must be a value between 1 and 3 (inclusive).
 	///
 	/// @return		Graphics shader program.
-	GraphicsShaderList										GetCompatibleGraphicsShaderList(
+	vulkan::GraphicsShaderList								GetCompatibleGraphicsShaderList(
 		bool												custom_uv_border_color,
 		uint32_t											vertices_per_primitive
 	) const;
@@ -377,7 +382,7 @@ public:
 	///
 	/// @return		Graphics shader pipeline.
 	VkPipeline												GetGraphicsPipeline(
-		const GraphicsPipelineSettings					&	settings
+		const vulkan::GraphicsPipelineSettings			&	settings
 	);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -393,7 +398,7 @@ public:
 	///
 	/// @return		Graphics shader pipeline.
 	VkPipeline												GetComputePipeline(
-		const ComputePipelineSettings					&	settings
+		const vulkan::ComputePipelineSettings			&	settings
 	);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -406,7 +411,7 @@ public:
 	///
 	/// @return		New graphics shader pipeline.
 	VkPipeline												CreateGraphicsPipeline(
-		const GraphicsPipelineSettings					&	settings
+		const vulkan::GraphicsPipelineSettings			&	settings
 	);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -422,7 +427,7 @@ public:
 	///
 	/// @return		New compute shader pipeline.
 	VkPipeline												CreateComputePipeline(
-		const ComputePipelineSettings					&	settings
+		const vulkan::ComputePipelineSettings			&	settings
 	);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -473,7 +478,7 @@ public:
 	/// @note		Multithreading: Any thread.
 	///
 	/// @return		Descriptor set layout.
-	const DescriptorSetLayout							&	GetGraphicsSamplerDescriptorSetLayout() const;
+	const vulkan::DescriptorSetLayout					&	GetGraphicsSamplerDescriptorSetLayout() const;
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Get graphics texture descriptor set layout.
@@ -483,7 +488,7 @@ public:
 	/// @note		Multithreading: Any thread.
 	///
 	/// @return		Descriptor set layout.
-	const DescriptorSetLayout							&	GetGraphicsTextureDescriptorSetLayout() const;
+	const vulkan::DescriptorSetLayout					&	GetGraphicsTextureDescriptorSetLayout() const;
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Get graphics render target blur texure descriptor set layout.
@@ -493,7 +498,7 @@ public:
 	/// @note		Multithreading: Any thread.
 	///
 	/// @return		Descriptor set layout.
-	const DescriptorSetLayout							&	GetGraphicsRenderTargetBlurTextureDescriptorSetLayout() const;
+	const vulkan::DescriptorSetLayout					&	GetGraphicsRenderTargetBlurTextureDescriptorSetLayout() const;
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Get graphics uniform buffer descriptor set layout.
@@ -503,7 +508,7 @@ public:
 	/// @note		Multithreading: Any thread.
 	///
 	/// @return		Descriptor set layout.
-	const DescriptorSetLayout							&	GetGraphicsUniformBufferDescriptorSetLayout() const;
+	const vulkan::DescriptorSetLayout					&	GetGraphicsUniformBufferDescriptorSetLayout() const;
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Get graphics storage buffer descriptor set layout.
@@ -513,7 +518,7 @@ public:
 	/// @note		Multithreading: Any thread.
 	///
 	/// @return		Descriptor set layout.
-	const DescriptorSetLayout							&	GetGraphicsStorageBufferDescriptorSetLayout() const;
+	const vulkan::DescriptorSetLayout					&	GetGraphicsStorageBufferDescriptorSetLayout() const;
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Get default texture.
@@ -640,8 +645,8 @@ private:
 
 	InstanceCreateInfo										create_info_copy						= {};
 
-	std::optional<VulkanInstance>							vulkan_instance							= {};
-	std::optional<VulkanDevice>								vulkan_device							= {};
+	std::optional<vulkan::VulkanInstance>					vulkan_instance							= {};
+	std::optional<vulkan::VulkanDevice>						vulkan_device							= {};
 
 	PFN_VK2D_ReportFunction									report_function							= {};
 	mutable std::mutex										report_mutex;
@@ -654,13 +659,13 @@ private:
 	std::vector<VkShaderModule>								vk_graphics_shader_modules;
 	std::vector<VkShaderModule>								vk_compute_shader_modules;
 
-	std::map<GraphicsShaderListID, GraphicsShaderList>graphics_shader_programs;
-	std::map<ComputeShaderProgramID, VkShaderModule>
+	std::map<vulkan::GraphicsShaderListID, vulkan::GraphicsShaderList>graphics_shader_programs;
+	std::map<vulkan::ComputeShaderProgramID, VkShaderModule>
 															compute_shader_programs;
 
-	std::map<GraphicsPipelineSettings, VkPipeline>
+	std::map<vulkan::GraphicsPipelineSettings, VkPipeline>
 															vk_graphics_pipelines;
-	std::map<ComputePipelineSettings, VkPipeline>
+	std::map<vulkan::ComputePipelineSettings, VkPipeline>
 															vk_compute_pipelines;
 
 	VkPipelineCache											vk_graphics_pipeline_cache					= {};
@@ -669,20 +674,20 @@ private:
 	VkPipelineLayout										vk_graphics_primary_render_pipeline_layout	= {};
 	VkPipelineLayout										vk_graphics_blur_pipeline_layout			= {};
 
-	std::unique_ptr<DescriptorSetLayout>					graphics_simple_sampler_descriptor_set_layout;
-	std::unique_ptr<DescriptorSetLayout>					graphics_sampler_descriptor_set_layout;
-	std::unique_ptr<DescriptorSetLayout>					graphics_texture_descriptor_set_layout;
-	std::unique_ptr<DescriptorSetLayout>					graphics_render_target_blur_texture_descriptor_set_layout;
-	std::unique_ptr<DescriptorSetLayout>					graphics_uniform_buffer_descriptor_set_layout;
-	std::unique_ptr<DescriptorSetLayout>					graphics_storage_buffer_descriptor_set_layout;
+	std::unique_ptr<vulkan::DescriptorSetLayout>			graphics_simple_sampler_descriptor_set_layout;
+	std::unique_ptr<vulkan::DescriptorSetLayout>			graphics_sampler_descriptor_set_layout;
+	std::unique_ptr<vulkan::DescriptorSetLayout>			graphics_texture_descriptor_set_layout;
+	std::unique_ptr<vulkan::DescriptorSetLayout>			graphics_render_target_blur_texture_descriptor_set_layout;
+	std::unique_ptr<vulkan::DescriptorSetLayout>			graphics_uniform_buffer_descriptor_set_layout;
+	std::unique_ptr<vulkan::DescriptorSetLayout>			graphics_storage_buffer_descriptor_set_layout;
 
 	std::mutex												descriptor_pool_mutex;
-	std::unique_ptr<DescriptorAutoPool>						descriptor_pool;
+	std::unique_ptr<vulkan::DescriptorAutoPool>				descriptor_pool;
 
 	std::unique_ptr<Sampler>								default_sampler;
 	TextureResource										*	default_texture								= {};
 	std::unique_ptr<Sampler>								blur_sampler;
-	PoolDescriptorSet										blur_sampler_descriptor_set					= {};
+	vulkan::PoolDescriptorSet								blur_sampler_descriptor_set					= {};
 
 	std::vector<std::unique_ptr<Window>>					windows;
 	std::vector<std::unique_ptr<RenderTargetTexture>>		render_target_textures;

@@ -8,7 +8,7 @@
 
 
 
-vk2d::vk2d_internal::DeviceQueueResolver::DeviceQueueResolver(
+vk2d::vulkan::DeviceQueueResolver::DeviceQueueResolver(
 	VkInstance												instance,
 	VkPhysicalDevice										physicalDevice,
 	std::vector<std::pair<VkQueueFlags, float>>				queueTypes )
@@ -142,25 +142,25 @@ vk2d::vk2d_internal::DeviceQueueResolver::DeviceQueueResolver(
 
 
 
-vk2d::vk2d_internal::DeviceQueueResolver::~DeviceQueueResolver()
+vk2d::vulkan::DeviceQueueResolver::~DeviceQueueResolver()
 {}
 
 
 
-const std::vector<VkDeviceQueueCreateInfo> & vk2d::vk2d_internal::DeviceQueueResolver::GetDeviceQueueCreateInfos()
+const std::vector<VkDeviceQueueCreateInfo> & vk2d::vulkan::DeviceQueueResolver::GetDeviceQueueCreateInfos()
 {
 	return queueCreateInfos;
 }
 
 
 
-std::vector<vk2d::vk2d_internal::ResolvedQueue> vk2d::vk2d_internal::DeviceQueueResolver::GetQueues(
+std::vector<vk2d::vulkan::Queue> vk2d::vulkan::DeviceQueueResolver::GetQueues(
 	VkDevice device
 ) const
 {
-	std::vector<ResolvedQueue> ret( queueGetInfo.size() );
+	std::vector<Queue> ret( queueGetInfo.size() );
 	for( uint32_t i=0; i < ret.size(); ++i ) {
-		ret[ i ].queue						= VK_NULL_HANDLE;
+		ret[ i ].vulkan_queue				= VK_NULL_HANDLE;
 		ret[ i ].queue_family_index			= UINT32_MAX;
 		ret[ i ].supports_presentation		= VK_FALSE;
 		ret[ i ].queue_family_properties	= {};
@@ -172,7 +172,7 @@ std::vector<vk2d::vk2d_internal::ResolvedQueue> vk2d::vk2d_internal::DeviceQueue
 	for( size_t i=0; i < queueGetInfo.size(); ++i ) {
 		if( queueGetInfo[ i ].based_on == UINT32_MAX ) {
 			if( queueGetInfo[ i ].queueFamilyIndex != UINT32_MAX ) {
-				vkGetDeviceQueue( device, queueGetInfo[ i ].queueFamilyIndex, queueGetInfo[ i ].queueIndex, &ret[ i ].queue );
+				vkGetDeviceQueue( device, queueGetInfo[ i ].queueFamilyIndex, queueGetInfo[ i ].queueIndex, &ret[ i ].vulkan_queue );
 				ret[ i ].queue_family_index			= queueGetInfo[ i ].queueFamilyIndex;
 				ret[ i ].supports_presentation		= glfwGetPhysicalDevicePresentationSupport( refInstance, refPhysicalDevice, ret[ i ].queue_family_index );
 				ret[ i ].queue_family_properties	= family_properties[ queueGetInfo[ i ].queueFamilyIndex ];
@@ -185,7 +185,7 @@ std::vector<vk2d::vk2d_internal::ResolvedQueue> vk2d::vk2d_internal::DeviceQueue
 	for( size_t i=0; i < queueGetInfo.size(); ++i ) {
 		if( queueGetInfo[ i ].based_on != UINT32_MAX ) {
 			auto based_on						= queueGetInfo[ i ].based_on;
-			ret[ i ].queue						= ret[ based_on ].queue;
+			ret[ i ].vulkan_queue				= ret[ based_on ].vulkan_queue;
 			ret[ i ].queue_family_index			= ret[ based_on ].queue_family_index;
 			ret[ i ].supports_presentation		= ret[ based_on ].supports_presentation;
 			ret[ i ].queue_family_properties	= ret[ based_on ].queue_family_properties;
@@ -199,7 +199,7 @@ std::vector<vk2d::vk2d_internal::ResolvedQueue> vk2d::vk2d_internal::DeviceQueue
 
 
 
-bool vk2d::vk2d_internal::DeviceQueueResolver::IsGood()
+bool vk2d::vulkan::DeviceQueueResolver::IsGood()
 {
 	return is_good;
 }

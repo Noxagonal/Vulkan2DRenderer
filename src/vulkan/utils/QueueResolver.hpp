@@ -2,12 +2,12 @@
 
 #include <core/SourceCommon.hpp>
 
-#include <vulkan/ResolvedQueue.hpp>
+#include <vulkan/Queue.hpp>
 
 
 
 namespace vk2d {
-namespace vk2d_internal {
+namespace vulkan {
 
 
 
@@ -22,7 +22,7 @@ public:
 	~DeviceQueueResolver();
 
 	const std::vector<VkDeviceQueueCreateInfo>			&	GetDeviceQueueCreateInfos();
-	std::vector<ResolvedQueue>								GetQueues(
+	std::vector<Queue>								GetQueues(
 		VkDevice device
 	) const;
 
@@ -48,5 +48,5 @@ private:
 
 
 
-} // vk2d_internal
+} // vulkan
 } // vk2d

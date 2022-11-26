@@ -9,11 +9,18 @@ namespace vulkan {
 
 
 
-enum class QueueType : size_t {
-	PRIMARY_RENDER = 0,
-	SECONDARY_RENDER,
-	PRIMARY_COMPUTE,
-	PRIMARY_TRANSFER,
+class Shader
+{
+public:
+	Shader() = default;
+
+private:
+	Shader( VkShaderModule shader_module );
+
+public:
+
+private:
+
 };
 
 

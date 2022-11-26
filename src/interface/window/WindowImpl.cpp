@@ -302,8 +302,8 @@ vk2d::vk2d_internal::WindowImpl::WindowImpl(
 	vk_instance( instance.GetVulkanInstance() ),
 	vk_physical_device( instance.GetVulkanDevice().GetVulkanPhysicalDevice() ),
 	vk_device( instance.GetVulkanDevice() ),
-	primary_render_queue( instance.GetVulkanDevice().GetQueue( VulkanQueueType::PRIMARY_RENDER ) ),
-	primary_compute_queue( instance.GetVulkanDevice().GetQueue( VulkanQueueType::PRIMARY_COMPUTE ) ),
+	primary_render_queue( instance.GetVulkanDevice().GetQueue( vulkan::QueueType::PRIMARY_RENDER ) ),
+	primary_compute_queue( instance.GetVulkanDevice().GetQueue( vulkan::QueueType::PRIMARY_COMPUTE ) ),
 	device_memory_pool( *instance.GetVulkanDevice().GetDeviceMemoryPool() )
 {
 	VK2D_ASSERT_MAIN_THREAD( instance );
@@ -488,7 +488,7 @@ bool vk2d::vk2d_internal::WindowImpl::BeginRender()
 		vk2d::vk2d_internal::WindowImpl		&	impl,
 		VkPhysicalDevice						physical_device,
 		VkDevice								device,
-		vk2d::vk2d_internal::ResolvedQueue	&	primary_render_queue
+		vk2d::vulkan::Queue			&	primary_render_queue
 		)
 	{
 		auto & instance = impl.instance;
@@ -690,7 +690,7 @@ bool vk2d::vk2d_internal::WindowImpl::BeginRender()
 				command_buffer,
 				VK_PIPELINE_BIND_POINT_GRAPHICS,
 				instance.GetGraphicsPrimaryRenderPipelineLayout(),
-				GRAPHICS_DESCRIPTOR_SET_ALLOCATION_WINDOW_FRAME_DATA,
+				vulkan::GRAPHICS_DESCRIPTOR_SET_ALLOCATION_WINDOW_FRAME_DATA,
 				1, &frame_data_descriptor_set.descriptorSet,
 				0, nullptr
 			);
@@ -1519,7 +1519,7 @@ void vk2d::vk2d_internal::WindowImpl::DrawPointList(
 			1
 		);
 
-		GraphicsPipelineSettings pipeline_settings {};
+		vulkan::GraphicsPipelineSettings pipeline_settings {};
 		pipeline_settings.vk_pipeline_layout = instance.GetGraphicsPrimaryRenderPipelineLayout();
 		pipeline_settings.vk_render_pass = vk_render_pass;
 		pipeline_settings.primitive_topology = VK_PRIMITIVE_TOPOLOGY_POINT_LIST;
@@ -1555,7 +1555,7 @@ void vk2d::vk2d_internal::WindowImpl::DrawPointList(
 		auto aligned_buffer_offsets = AlignedMeshBufferOffsets( push_result, raw_vertex_data );
 
 		{
-			GraphicsPrimaryRenderPushConstants pc {};
+			vulkan::GraphicsPrimaryRenderPushConstants pc {};
 			pc.transformation_offset = aligned_buffer_offsets.transformation_offset;
 			pc.index_offset = aligned_buffer_offsets.index_offset;
 			pc.index_count = 1;
@@ -1626,7 +1626,7 @@ void vk2d::vk2d_internal::WindowImpl::DrawLineList(
 			2
 		);
 
-		GraphicsPipelineSettings pipeline_settings {};
+		vulkan::GraphicsPipelineSettings pipeline_settings {};
 		pipeline_settings.vk_pipeline_layout	= instance.GetGraphicsPrimaryRenderPipelineLayout();
 		pipeline_settings.vk_render_pass		= vk_render_pass;
 		pipeline_settings.primitive_topology	= VK_PRIMITIVE_TOPOLOGY_LINE_LIST;
@@ -1666,7 +1666,7 @@ void vk2d::vk2d_internal::WindowImpl::DrawLineList(
 		auto aligned_buffer_offsets = AlignedMeshBufferOffsets( push_result, raw_vertex_data );
 
 		{
-			GraphicsPrimaryRenderPushConstants pc {};
+			vulkan::GraphicsPrimaryRenderPushConstants pc {};
 			pc.transformation_offset			= aligned_buffer_offsets.transformation_offset;
 			pc.index_offset						= aligned_buffer_offsets.index_offset;
 			pc.index_count						= 2;
@@ -1737,7 +1737,7 @@ void vk2d::vk2d_internal::WindowImpl::DrawTriangleList(
 			3
 		);
 
-		GraphicsPipelineSettings pipeline_settings {};
+		vulkan::GraphicsPipelineSettings pipeline_settings {};
 		pipeline_settings.vk_pipeline_layout = instance.GetGraphicsPrimaryRenderPipelineLayout();
 		pipeline_settings.vk_render_pass = vk_render_pass;
 		pipeline_settings.primitive_topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
@@ -1772,7 +1772,7 @@ void vk2d::vk2d_internal::WindowImpl::DrawTriangleList(
 	{
 		auto aligned_buffer_offsets = AlignedMeshBufferOffsets( push_result, raw_vertex_data );
 		{
-			GraphicsPrimaryRenderPushConstants pc {};
+			vulkan::GraphicsPrimaryRenderPushConstants pc {};
 			pc.transformation_offset = aligned_buffer_offsets.transformation_offset;
 			pc.index_offset = aligned_buffer_offsets.index_offset;
 			pc.index_count = 3;
@@ -2402,7 +2402,7 @@ bool vk2d::vk2d_internal::WindowImpl::ReCreateSwapchain()
 	auto result = VK_SUCCESS;
 
 	if( !SynchronizeFrame() ) return false;
-	vkQueueWaitIdle( primary_render_queue.GetQueue() );
+	vkQueueWaitIdle( primary_render_queue.GetVulkanQueue() );
 
 	auto old_vk_swapchain		= vk_swapchain;
 
@@ -2877,7 +2877,7 @@ bool vk2d::vk2d_internal::WindowImpl::CreateWindowFrameDataBuffer()
 		staging_buffer_create_info.sType					= VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
 		staging_buffer_create_info.pNext					= nullptr;
 		staging_buffer_create_info.flags					= 0;
-		staging_buffer_create_info.size						= sizeof( FrameData );
+		staging_buffer_create_info.size						= sizeof( vulkan::FrameData );
 		staging_buffer_create_info.usage					= VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
 		staging_buffer_create_info.sharingMode				= VK_SHARING_MODE_EXCLUSIVE;
 		staging_buffer_create_info.queueFamilyIndexCount	= 0;
@@ -2895,7 +2895,7 @@ bool vk2d::vk2d_internal::WindowImpl::CreateWindowFrameDataBuffer()
 		device_buffer_create_info.sType						= VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
 		device_buffer_create_info.pNext						= nullptr;
 		device_buffer_create_info.flags						= 0;
-		device_buffer_create_info.size						= sizeof( FrameData );
+		device_buffer_create_info.size						= sizeof( vulkan::FrameData );
 		device_buffer_create_info.usage						= VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
 		device_buffer_create_info.sharingMode				= VK_SHARING_MODE_EXCLUSIVE;
 		device_buffer_create_info.queueFamilyIndexCount		= 0;
@@ -2922,7 +2922,7 @@ bool vk2d::vk2d_internal::WindowImpl::CreateWindowFrameDataBuffer()
 		VkDescriptorBufferInfo descriptor_write_buffer_info {};
 		descriptor_write_buffer_info.buffer	= frame_data_device_buffer.buffer;
 		descriptor_write_buffer_info.offset	= 0;
-		descriptor_write_buffer_info.range	= sizeof( FrameData );
+		descriptor_write_buffer_info.range	= sizeof( vulkan::FrameData );
 		VkWriteDescriptorSet descriptor_write {};
 		descriptor_write.sType				= VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 		descriptor_write.pNext				= nullptr;
@@ -3046,8 +3046,8 @@ void vk2d::vk2d_internal::WindowImpl::HandleScreenshotEvent()
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void vk2d::vk2d_internal::WindowImpl::CmdBindGraphicsPipelineIfDifferent(
-	VkCommandBuffer											command_buffer,
-	const GraphicsPipelineSettings		&	pipeline_settings
+	VkCommandBuffer								command_buffer,
+	const vulkan::GraphicsPipelineSettings	&	pipeline_settings
 )
 {
 	if( previous_pipeline_settings != pipeline_settings ) {
@@ -3065,7 +3065,7 @@ void vk2d::vk2d_internal::WindowImpl::CmdBindGraphicsPipelineIfDifferent(
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void vk2d::vk2d_internal::WindowImpl::CmdBindSamplerIfDifferent(
 	VkCommandBuffer			command_buffer,
-	Sampler		*	sampler
+	Sampler				*	sampler
 )
 {
 	assert( sampler );
@@ -3126,7 +3126,7 @@ void vk2d::vk2d_internal::WindowImpl::CmdBindSamplerIfDifferent(
 			command_buffer,
 			VK_PIPELINE_BIND_POINT_GRAPHICS,
 			instance.GetGraphicsPrimaryRenderPipelineLayout(),
-			GRAPHICS_DESCRIPTOR_SET_ALLOCATION_SAMPLER_AND_SAMPLER_DATA,
+			vulkan::GRAPHICS_DESCRIPTOR_SET_ALLOCATION_SAMPLER_AND_SAMPLER_DATA,
 			1, &set.descriptor_set.descriptorSet,
 			0, nullptr
 		);
@@ -3183,7 +3183,7 @@ void vk2d::vk2d_internal::WindowImpl::CmdBindTextureIfDifferent(
 			command_buffer,
 			VK_PIPELINE_BIND_POINT_GRAPHICS,
 			instance.GetGraphicsPrimaryRenderPipelineLayout(),
-			GRAPHICS_DESCRIPTOR_SET_ALLOCATION_TEXTURE,
+			vulkan::GRAPHICS_DESCRIPTOR_SET_ALLOCATION_TEXTURE,
 			1, &set.descriptor_set.descriptorSet,
 			0, nullptr
 		);
@@ -3215,7 +3215,7 @@ bool vk2d::vk2d_internal::WindowImpl::CmdUpdateFrameData(
 )
 {
 	// Window coordinate system scaling
-	WindowCoordinateScaling window_coordinate_scaling {};
+	vulkan::WindowCoordinateScaling window_coordinate_scaling {};
 
 	switch( coordinate_space ) {
 		case RenderCoordinateSpace::TEXEL_SPACE:
@@ -3252,7 +3252,7 @@ bool vk2d::vk2d_internal::WindowImpl::CmdUpdateFrameData(
 
 	// Copy data to staging buffer.
 	{
-		auto frame_data = frame_data_staging_buffer.memory.Map<FrameData>();
+		auto frame_data = frame_data_staging_buffer.memory.Map<vulkan::FrameData>();
 		if( !frame_data ) {
 			instance.Report( ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot map FrameData staging buffer memory!" );
 			return false;
@@ -3265,7 +3265,7 @@ bool vk2d::vk2d_internal::WindowImpl::CmdUpdateFrameData(
 		VkBufferCopy copy_region {};
 		copy_region.srcOffset	= 0;
 		copy_region.dstOffset	= 0;
-		copy_region.size		= sizeof( FrameData );
+		copy_region.size		= sizeof( vulkan::FrameData );
 		vkCmdCopyBuffer(
 			command_buffer,
 			frame_data_staging_buffer.buffer,

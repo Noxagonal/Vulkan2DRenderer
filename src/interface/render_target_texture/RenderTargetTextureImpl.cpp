@@ -11,7 +11,7 @@
 #include <mesh/AlignedMeshBufferOffsets.hpp>
 
 #include <system/RenderTargetTextureDependecyGraphInfo.hpp>
-#include <system/ShaderInterface.hpp>
+#include <vulkan/shaders/ShaderInterface.hpp>
 #include <system/MeshBuffer.hpp>
 
 #include "../instance/InstanceImpl.hpp"
@@ -310,7 +310,7 @@ bool vk2d::vk2d_internal::RenderTargetTextureImpl::BeginRender()
 				command_buffer,
 				VK_PIPELINE_BIND_POINT_GRAPHICS,
 				instance.GetGraphicsPrimaryRenderPipelineLayout(),
-				GRAPHICS_DESCRIPTOR_SET_ALLOCATION_WINDOW_FRAME_DATA,
+				vulkan::GRAPHICS_DESCRIPTOR_SET_ALLOCATION_WINDOW_FRAME_DATA,
 				1, &frame_data_descriptor_set.descriptorSet,
 				0, nullptr
 			);
@@ -698,7 +698,7 @@ void vk2d::vk2d_internal::RenderTargetTextureImpl::DrawPointList(
 			1
 		);
 
-		GraphicsPipelineSettings pipeline_settings {};
+		vulkan::GraphicsPipelineSettings pipeline_settings {};
 		pipeline_settings.vk_pipeline_layout = instance.GetGraphicsPrimaryRenderPipelineLayout();
 		pipeline_settings.vk_render_pass = vk_attachment_render_pass;
 		pipeline_settings.primitive_topology = VK_PRIMITIVE_TOPOLOGY_POINT_LIST;
@@ -736,7 +736,7 @@ void vk2d::vk2d_internal::RenderTargetTextureImpl::DrawPointList(
 		auto aligned_buffer_offsets = AlignedMeshBufferOffsets( push_result, raw_vertex_data );
 
 		{
-			GraphicsPrimaryRenderPushConstants pc {};
+			vulkan::GraphicsPrimaryRenderPushConstants pc {};
 			pc.transformation_offset = aligned_buffer_offsets.transformation_offset;
 			pc.index_offset = aligned_buffer_offsets.index_offset;
 			pc.index_count = 1;
@@ -808,7 +808,7 @@ void vk2d::vk2d_internal::RenderTargetTextureImpl::DrawLineList(
 			2
 		);
 
-		GraphicsPipelineSettings pipeline_settings {};
+		vulkan::GraphicsPipelineSettings pipeline_settings {};
 		pipeline_settings.vk_pipeline_layout	= instance.GetGraphicsPrimaryRenderPipelineLayout();
 		pipeline_settings.vk_render_pass		= vk_attachment_render_pass;
 		pipeline_settings.primitive_topology	= VK_PRIMITIVE_TOPOLOGY_LINE_LIST;
@@ -850,7 +850,7 @@ void vk2d::vk2d_internal::RenderTargetTextureImpl::DrawLineList(
 		auto aligned_buffer_offsets = AlignedMeshBufferOffsets( push_result, raw_vertex_data );
 
 		{
-			GraphicsPrimaryRenderPushConstants pc {};
+			vulkan::GraphicsPrimaryRenderPushConstants pc {};
 			pc.transformation_offset	= aligned_buffer_offsets.transformation_offset;
 			pc.index_offset				= aligned_buffer_offsets.index_offset;
 			pc.index_count				= 2;
@@ -922,7 +922,7 @@ void vk2d::vk2d_internal::RenderTargetTextureImpl::DrawTriangleList(
 			3
 		);
 
-		GraphicsPipelineSettings pipeline_settings {};
+		vulkan::GraphicsPipelineSettings pipeline_settings {};
 		pipeline_settings.vk_pipeline_layout = instance.GetGraphicsPrimaryRenderPipelineLayout();
 		pipeline_settings.vk_render_pass = vk_attachment_render_pass;
 		pipeline_settings.primitive_topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
@@ -962,7 +962,7 @@ void vk2d::vk2d_internal::RenderTargetTextureImpl::DrawTriangleList(
 	{
 		auto aligned_buffer_offsets = AlignedMeshBufferOffsets( push_result, raw_vertex_data );
 		{
-			GraphicsPrimaryRenderPushConstants pc {};
+			vulkan::GraphicsPrimaryRenderPushConstants pc {};
 			pc.transformation_offset = aligned_buffer_offsets.transformation_offset;
 			pc.index_offset = aligned_buffer_offsets.index_offset;
 			pc.index_count = 3;
@@ -1052,8 +1052,8 @@ bool vk2d::vk2d_internal::RenderTargetTextureImpl::DetermineType()
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 bool vk2d::vk2d_internal::RenderTargetTextureImpl::CreateCommandBuffers()
 {
-	auto render_queue	= instance.GetVulkanDevice().GetQueue( VulkanQueueType::PRIMARY_RENDER );
-	auto compute_queue	= instance.GetVulkanDevice().GetQueue( VulkanQueueType::PRIMARY_COMPUTE );
+	auto render_queue	= instance.GetVulkanDevice().GetQueue( vulkan::QueueType::PRIMARY_RENDER );
+	auto compute_queue	= instance.GetVulkanDevice().GetQueue( vulkan::QueueType::PRIMARY_COMPUTE );
 
 	{
 		VkCommandPoolCreateInfo command_pool_create_info {};
@@ -1132,7 +1132,7 @@ bool vk2d::vk2d_internal::RenderTargetTextureImpl::CreateFrameDataBuffers()
 		staging_buffer_create_info.sType					= VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
 		staging_buffer_create_info.pNext					= nullptr;
 		staging_buffer_create_info.flags					= 0;
-		staging_buffer_create_info.size						= sizeof( FrameData );
+		staging_buffer_create_info.size						= sizeof( vulkan::FrameData );
 		staging_buffer_create_info.usage					= VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
 		staging_buffer_create_info.sharingMode				= VK_SHARING_MODE_EXCLUSIVE;
 		staging_buffer_create_info.queueFamilyIndexCount	= 0;
@@ -1150,7 +1150,7 @@ bool vk2d::vk2d_internal::RenderTargetTextureImpl::CreateFrameDataBuffers()
 		device_buffer_create_info.sType						= VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
 		device_buffer_create_info.pNext						= nullptr;
 		device_buffer_create_info.flags						= 0;
-		device_buffer_create_info.size						= sizeof( FrameData );
+		device_buffer_create_info.size						= sizeof( vulkan::FrameData );
 		device_buffer_create_info.usage						= VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
 		device_buffer_create_info.sharingMode				= VK_SHARING_MODE_EXCLUSIVE;
 		device_buffer_create_info.queueFamilyIndexCount		= 0;
@@ -1177,7 +1177,7 @@ bool vk2d::vk2d_internal::RenderTargetTextureImpl::CreateFrameDataBuffers()
 		VkDescriptorBufferInfo descriptor_write_buffer_info {};
 		descriptor_write_buffer_info.buffer	= frame_data_device_buffer.buffer;
 		descriptor_write_buffer_info.offset	= 0;
-		descriptor_write_buffer_info.range	= sizeof( FrameData );
+		descriptor_write_buffer_info.range	= sizeof( vulkan::FrameData );
 		VkWriteDescriptorSet descriptor_write {};
 		descriptor_write.sType				= VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 		descriptor_write.pNext				= nullptr;
@@ -1219,12 +1219,12 @@ bool vk2d::vk2d_internal::RenderTargetTextureImpl::CreateImages(
 )
 {
 	auto CreateLocalImageResource =[ this ](
-		VkImageUsageFlags						usage,
-		const std::vector<ResolvedQueue*>	&	used_in_queues,
-		VkSampleCountFlagBits					samples				= VK_SAMPLE_COUNT_1_BIT,
-		const std::vector<VkExtent2D>		&	mip_levels			= { { 1, 1 } },
-		bool									is_array_texture	= false
-		) -> CompleteImageResource
+		VkImageUsageFlags								usage,
+		const std::vector<vulkan::Queue*>	&	used_in_queues,
+		VkSampleCountFlagBits							samples				= VK_SAMPLE_COUNT_1_BIT,
+		const std::vector<VkExtent2D>				&	mip_levels			= { { 1, 1 } },
+		bool											is_array_texture	= false
+		) -> vulkan::CompleteImageResource
 	{
 		std::vector<uint32_t> unique_queue_family_indices;
 		unique_queue_family_indices.clear();
@@ -1276,7 +1276,7 @@ bool vk2d::vk2d_internal::RenderTargetTextureImpl::CreateImages(
 		image_view_create_info.subresourceRange.baseArrayLayer	= 0;
 		image_view_create_info.subresourceRange.layerCount		= 1;
 
-		CompleteImageResource image = instance.GetVulkanDevice().GetDeviceMemoryPool()->CreateCompleteImageResource(
+		vulkan::CompleteImageResource image = instance.GetVulkanDevice().GetDeviceMemoryPool()->CreateCompleteImageResource(
 			&image_create_info,
 			VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
 			&image_view_create_info
@@ -1289,8 +1289,8 @@ bool vk2d::vk2d_internal::RenderTargetTextureImpl::CreateImages(
 		return image;
 	};
 
-	auto render_queue	= instance.GetVulkanDevice().GetQueue( VulkanQueueType::PRIMARY_RENDER );
-	auto compute_queue	= instance.GetVulkanDevice().GetQueue( VulkanQueueType::PRIMARY_COMPUTE );
+	auto render_queue	= instance.GetVulkanDevice().GetQueue( vulkan::QueueType::PRIMARY_RENDER );
+	auto compute_queue	= instance.GetVulkanDevice().GetQueue( vulkan::QueueType::PRIMARY_COMPUTE );
 
 	size						= new_size;
 
@@ -2250,10 +2250,10 @@ void vk2d::vk2d_internal::RenderTargetTextureImpl::CmdFinalizeRender(
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void vk2d::vk2d_internal::RenderTargetTextureImpl::CmdBlitMipmapsToSampledImage(
 	VkCommandBuffer						command_buffer,
-	CompleteImageResource			&	source_image,
+	vulkan::CompleteImageResource	&	source_image,
 	VkImageLayout						source_image_layout,
 	VkPipelineStageFlagBits				source_image_pipeline_barrier_src_stage,
-	CompleteImageResource			&	destination_image
+	vulkan::CompleteImageResource	&	destination_image
 )
 {
 	// Source image only has 1 mip level as it's being rendered
@@ -2643,11 +2643,11 @@ bool vk2d::vk2d_internal::RenderTargetTextureImpl::CmdRecordBlurCommands(
 	VkCommandBuffer								command_buffer,
 	BlurType									blur_type,
 	glm::vec2									blur_amount,
-	CompleteImageResource					&	source_image,
+	vulkan::CompleteImageResource			&	source_image,
 	VkImageLayout								source_image_layout,
 	VkPipelineStageFlagBits						source_image_pipeline_barrier_src_stage,
-	CompleteImageResource					&	intermediate_image,
-	CompleteImageResource					&	destination_image
+	vulkan::CompleteImageResource			&	intermediate_image,
+	vulkan::CompleteImageResource			&	destination_image
 )
 {
 	// This function records commands to do 2 gaussian blur passes using the primary render queue.
@@ -2668,13 +2668,13 @@ bool vk2d::vk2d_internal::RenderTargetTextureImpl::CmdRecordBlurCommands(
 
 
 	auto RecordBlurPass =[ this, command_buffer ](
-		VkPipelineLayout			use_pipeline_layout,
-		VkRenderPass				use_render_pass,
-		VkFramebuffer				use_framebuffer,
-		GraphicsShaderList	&	graphics_shader_program,
-		float						blur_coverage,
-		VkImageView					vk_texture,
-		VkImageLayout				texture_image_layout
+		VkPipelineLayout				use_pipeline_layout,
+		VkRenderPass					use_render_pass,
+		VkFramebuffer					use_framebuffer,
+		vulkan::GraphicsShaderList	&	graphics_shader_program,
+		float							blur_coverage,
+		VkImageView						vk_texture,
+		VkImageLayout					texture_image_layout
 		) -> void
 	{
 		// Begin the render pass.
@@ -2709,7 +2709,7 @@ bool vk2d::vk2d_internal::RenderTargetTextureImpl::CmdRecordBlurCommands(
 		{
 			// Bind blur pass pipeline.
 			{
-				GraphicsPipelineSettings pipeline_settings {};
+				vulkan::GraphicsPipelineSettings pipeline_settings {};
 				pipeline_settings.vk_pipeline_layout	= use_pipeline_layout;
 				pipeline_settings.vk_render_pass		= use_render_pass;
 				pipeline_settings.primitive_topology	= VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
@@ -2756,7 +2756,7 @@ bool vk2d::vk2d_internal::RenderTargetTextureImpl::CmdRecordBlurCommands(
 			{
 				if( blur_coverage < 1.0f ) blur_coverage = 1.0f;
 
-				GraphicsBlurPushConstants push_constants {};
+				vulkan::GraphicsBlurPushConstants push_constants {};
 				push_constants.blur_info	= CalculateBlurShaderInfo( blur_coverage );
 				push_constants.pixel_size	= { 1.0f / float( size.x ), 1.0f / float( size.y ) };
 
@@ -2825,16 +2825,16 @@ bool vk2d::vk2d_internal::RenderTargetTextureImpl::CmdRecordBlurCommands(
 
 	// First render pass.
 	{
-		GraphicsShaderList shader_program;
+		vulkan::GraphicsShaderList shader_program;
 		switch( blur_type ) {
 			case BlurType::BOX:
-				shader_program = instance.GetGraphicsShaderList( GraphicsShaderListID::RENDER_TARGET_BOX_BLUR_HORISONTAL );
+				shader_program = instance.GetGraphicsShaderList( vulkan::GraphicsShaderListID::RENDER_TARGET_BOX_BLUR_HORISONTAL );
 				break;
 			case BlurType::GAUSSIAN:
-				shader_program = instance.GetGraphicsShaderList( GraphicsShaderListID::RENDER_TARGET_GAUSSIAN_BLUR_HORISONTAL );
+				shader_program = instance.GetGraphicsShaderList( vulkan::GraphicsShaderListID::RENDER_TARGET_GAUSSIAN_BLUR_HORISONTAL );
 				break;
 			default:
-				shader_program = instance.GetGraphicsShaderList( GraphicsShaderListID::RENDER_TARGET_GAUSSIAN_BLUR_HORISONTAL );
+				shader_program = instance.GetGraphicsShaderList( vulkan::GraphicsShaderListID::RENDER_TARGET_GAUSSIAN_BLUR_HORISONTAL );
 				break;
 		}
 
@@ -2878,16 +2878,16 @@ bool vk2d::vk2d_internal::RenderTargetTextureImpl::CmdRecordBlurCommands(
 
 	// Second render pass.
 	{
-		GraphicsShaderList shader_program;
+		vulkan::GraphicsShaderList shader_program;
 		switch( blur_type ) {
 			case BlurType::BOX:
-				shader_program = instance.GetGraphicsShaderList( GraphicsShaderListID::RENDER_TARGET_BOX_BLUR_VERTICAL );
+				shader_program = instance.GetGraphicsShaderList( vulkan::GraphicsShaderListID::RENDER_TARGET_BOX_BLUR_VERTICAL );
 				break;
 			case BlurType::GAUSSIAN:
-				shader_program = instance.GetGraphicsShaderList( GraphicsShaderListID::RENDER_TARGET_GAUSSIAN_BLUR_VERTICAL );
+				shader_program = instance.GetGraphicsShaderList( vulkan::GraphicsShaderListID::RENDER_TARGET_GAUSSIAN_BLUR_VERTICAL );
 				break;
 			default:
-				shader_program = instance.GetGraphicsShaderList( GraphicsShaderListID::RENDER_TARGET_GAUSSIAN_BLUR_VERTICAL );
+				shader_program = instance.GetGraphicsShaderList( vulkan::GraphicsShaderListID::RENDER_TARGET_GAUSSIAN_BLUR_VERTICAL );
 				break;
 		}
 
@@ -2907,8 +2907,8 @@ bool vk2d::vk2d_internal::RenderTargetTextureImpl::CmdRecordBlurCommands(
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void vk2d::vk2d_internal::RenderTargetTextureImpl::CmdBindGraphicsPipelineIfDifferent(
-	VkCommandBuffer						command_buffer,
-	const GraphicsPipelineSettings	&	pipeline_settings
+	VkCommandBuffer								command_buffer,
+	const vulkan::GraphicsPipelineSettings	&	pipeline_settings
 )
 {
 	if( previous_graphics_pipeline_settings != pipeline_settings ) {
@@ -2941,7 +2941,7 @@ void vk2d::vk2d_internal::RenderTargetTextureImpl::CmdBindSamplerIfDifferent(
 			command_buffer,
 			VK_PIPELINE_BIND_POINT_GRAPHICS,
 			use_pipeline_layout,
-			GRAPHICS_DESCRIPTOR_SET_ALLOCATION_SAMPLER_AND_SAMPLER_DATA,
+			vulkan::GRAPHICS_DESCRIPTOR_SET_ALLOCATION_SAMPLER_AND_SAMPLER_DATA,
 			1, &set.descriptor_set.descriptorSet,
 			0, nullptr
 		);
@@ -2968,7 +2968,7 @@ void vk2d::vk2d_internal::RenderTargetTextureImpl::CmdBindTextureIfDifferent(
 			command_buffer,
 			VK_PIPELINE_BIND_POINT_GRAPHICS,
 			use_pipeline_layout,
-			GRAPHICS_DESCRIPTOR_SET_ALLOCATION_TEXTURE,
+			vulkan::GRAPHICS_DESCRIPTOR_SET_ALLOCATION_TEXTURE,
 			1, &set.descriptor_set.descriptorSet,
 			0, nullptr
 		);
@@ -3001,7 +3001,7 @@ bool vk2d::vk2d_internal::RenderTargetTextureImpl::CmdUpdateFrameData(
 )
 {
 	// Window coordinate system scaling
-	WindowCoordinateScaling window_coordinate_scaling {};
+	vulkan::WindowCoordinateScaling window_coordinate_scaling {};
 
 	switch( coordinate_space ) {
 		case RenderCoordinateSpace::TEXEL_SPACE:
@@ -3038,7 +3038,7 @@ bool vk2d::vk2d_internal::RenderTargetTextureImpl::CmdUpdateFrameData(
 
 	// Copy data to staging buffer.
 	{
-		auto frame_data = frame_data_staging_buffer.memory.Map<FrameData>();
+		auto frame_data = frame_data_staging_buffer.memory.Map<vulkan::FrameData>();
 		if( !frame_data ) {
 			instance.Report( ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot map FrameData staging buffer memory!" );
 			return false;
@@ -3051,7 +3051,7 @@ bool vk2d::vk2d_internal::RenderTargetTextureImpl::CmdUpdateFrameData(
 		VkBufferCopy copy_region {};
 		copy_region.srcOffset	= 0;
 		copy_region.dstOffset	= 0;
-		copy_region.size		= sizeof( FrameData );
+		copy_region.size		= sizeof( vulkan::FrameData );
 		vkCmdCopyBuffer(
 			command_buffer,
 			frame_data_staging_buffer.buffer,

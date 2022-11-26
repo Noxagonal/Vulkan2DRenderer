@@ -2,17 +2,25 @@
 
 #include <core/SourceCommon.hpp>
 
-#include "ResolvedQueue.hpp"
+#include "Queue.hpp"
 #include "VulkanQueueTypes.hpp"
 
 
 
 namespace vk2d {
+
+
+
 namespace vk2d_internal {
-
-
-
 class InstanceImpl;
+} // vk2d_internal
+
+
+
+namespace vulkan {
+
+
+
 class DeviceMemoryPool;
 
 
@@ -30,7 +38,7 @@ public:
 	) = default;
 
 	VulkanDevice(
-		InstanceImpl							&	instance,
+		vk2d_internal::InstanceImpl				&	instance,
 		VkPhysicalDevice							physical_device
 	);
 	~VulkanDevice();
@@ -59,7 +67,7 @@ public:
 	///				Transfer queue is used to upload data to the GPU, this task may run asynchronously to the other GPU tasks,
 	///				allowing more asynchronous operations.
 	///
-	/// @see		VulkanQueueType
+	/// @see		QueueType
 	///
 	/// @note		Multithreading: Any thread.
 	///
@@ -67,8 +75,8 @@ public:
 	///				Queue type we wish to get.
 	///
 	/// @return		Resolved queue object.
-	ResolvedQueue								&	GetQueue(
-		VulkanQueueType								queue_type
+	Queue								&	GetQueue(
+		QueueType								queue_type
 	);
 
 	VkDevice										GetVulkanDevice();
@@ -133,7 +141,7 @@ private:
 	void											DestroyDeviceMemoryPool();
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	InstanceImpl								&	instance;
+	vk2d_internal::InstanceImpl					&	instance;
 
 	std::vector<const char*>						device_extensions;
 
@@ -144,7 +152,7 @@ private:
 	VkPhysicalDeviceMemoryProperties				physical_device_memory_properties	= {};
 	VkPhysicalDeviceFeatures						physical_device_features			= {};
 
-	std::vector<ResolvedQueue>						resolved_queues;
+	std::vector<Queue>						resolved_queues;
 
 	std::unique_ptr<DeviceMemoryPool>				device_memory_pool;
 
@@ -153,5 +161,5 @@ private:
 
 
 
-} // vk2d_internal
+} // vulkan
 } // vk2d

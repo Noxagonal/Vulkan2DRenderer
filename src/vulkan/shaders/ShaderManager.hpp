@@ -1,6 +1,7 @@
 #pragma once
 
 #include <core/SourceCommon.hpp>
+#include "ShaderCompiler.hpp"
 
 
 
@@ -9,11 +10,12 @@ namespace vulkan {
 
 
 
-enum class QueueType : size_t {
-	PRIMARY_RENDER = 0,
-	SECONDARY_RENDER,
-	PRIMARY_COMPUTE,
-	PRIMARY_TRANSFER,
+class ShaderManager
+{
+public:
+
+private:
+	ShaderCompiler					shader_compiler;
 };
 
 

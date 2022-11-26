@@ -6,7 +6,7 @@
 #include <mesh/vertex/RawVertexData.hpp>
 
 #include <vulkan/utils/VulkanMemoryManagement.hpp>
-#include <system/DescriptorSet.hpp>
+#include <vulkan/descriptor_set/DescriptorSet.hpp>
 
 #include <interface/window/WindowImpl.hpp>
 #include <interface/instance/InstanceImpl.hpp>
@@ -337,7 +337,7 @@ public:
 		auto & instance				= parent.instance;
 		auto memory_pool			= instance.GetVulkanDevice().GetDeviceMemoryPool();
 
-		total_byte_size				= CalculateAlignmentForBuffer(
+		total_byte_size				= vulkan::CalculateAlignmentForBuffer(
 			buffer_byte_size,
 			instance.GetVulkanDevice().GetVulkanPhysicalDeviceProperties().limits
 		);
@@ -389,9 +389,9 @@ public:
 		// Create descriptor set
 		{
 			auto AllocateAndUpdateDescriptorSet = [this, &instance](
-				const DescriptorSetLayout	&	descriptor_set_layout,
-				VkDescriptorType				descriptor_type
-			) -> PoolDescriptorSet
+				const vulkan::DescriptorSetLayout	&	descriptor_set_layout,
+				VkDescriptorType						descriptor_type
+			) -> vulkan::PoolDescriptorSet
 			{
 				// WARNING: MeshBufferBlock::descriptor_set allocation and freeing needs to be thread specific if we ever start doing multithreaded rendering.
 				auto ret = instance.AllocateDescriptorSet(
@@ -533,9 +533,9 @@ private:
 	VkDeviceSize								total_byte_size				= {};	// Total size of buffer in bytes.
 	VkDeviceSize								used_byte_size				= {};	// Used size of uint data in bytes.
 
-	CompleteBufferResource						staging_buffer				= {};
-	CompleteBufferResource						device_buffer				= {};
-	PoolDescriptorSet							descriptor_set				= {};
+	vulkan::CompleteBufferResource				staging_buffer				= {};
+	vulkan::CompleteBufferResource				device_buffer				= {};
+	vulkan::PoolDescriptorSet					descriptor_set				= {};
 
 	bool										is_good						= {};
 };

@@ -92,7 +92,7 @@ public:
 	std::string		key;
 	std::thread::id	thread_id;
 };
-#define VK2D_ASSERT_SINGLE_THREAD_ACCESS_SCOPE() ThreadAccessScopeTracker m_thread_scope_access_tracker_##__LINE__( __FILE__, __FUNCTION__, __LINE__ )
+#define VK2D_ASSERT_SINGLE_THREAD_ACCESS_SCOPE() ::vk2d::vk2d_internal::ThreadAccessScopeTracker m_thread_scope_access_tracker_##__LINE__( __FILE__, __FUNCTION__, __LINE__ )
 
 #else
 

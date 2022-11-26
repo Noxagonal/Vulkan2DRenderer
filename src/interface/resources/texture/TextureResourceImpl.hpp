@@ -80,8 +80,8 @@ private:
 	ResourceManagerImpl									&	resource_manager;
 	ThreadLoaderResource								*	loader_thread_resource						= {};
 
-	std::vector<CompleteBufferResource>						staging_buffers								= {};
-	CompleteImageResource									image										= {};
+	std::vector<vulkan::CompleteBufferResource>				staging_buffers								= {};
+	vulkan::CompleteImageResource							image										= {};
 	VkImageLayout											vk_image_layout								= {};
 
 	uint32_t												image_layer_count							= {};

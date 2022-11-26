@@ -4,7 +4,7 @@
 #include "TextureResourceImpl.hpp"
 
 #include <system/ThreadPrivateResources.hpp>
-#include <system/DescriptorSet.hpp>
+#include <vulkan/descriptor_set/DescriptorSet.hpp>
 #include <system/CommonTools.hpp>
 #include <system/ImageFormatConverter.hpp>
 
@@ -96,9 +96,9 @@ bool vk2d::vk2d_internal::TextureResourceImpl::MTLoad(
 
 	auto & instance		= resource_manager.GetInstance();
 
-	auto primary_render_queue		= instance.GetVulkanDevice().GetQueue( VulkanQueueType::PRIMARY_RENDER );
-	auto secondary_render_queue		= instance.GetVulkanDevice().GetQueue( VulkanQueueType::SECONDARY_RENDER );
-	auto primary_transfer_queue		= instance.GetVulkanDevice().GetQueue( VulkanQueueType::PRIMARY_TRANSFER );
+	auto primary_render_queue		= instance.GetVulkanDevice().GetQueue( vulkan::QueueType::PRIMARY_RENDER );
+	auto secondary_render_queue		= instance.GetVulkanDevice().GetQueue( vulkan::QueueType::SECONDARY_RENDER );
+	auto primary_transfer_queue		= instance.GetVulkanDevice().GetQueue( vulkan::QueueType::PRIMARY_TRANSFER );
 
 	bool is_primary_render_needed				= secondary_render_queue.GetQueueFamilyIndex() != primary_render_queue.GetQueueFamilyIndex();
 

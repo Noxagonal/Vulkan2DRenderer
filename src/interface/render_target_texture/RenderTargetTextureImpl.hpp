@@ -7,10 +7,10 @@
 #include <containers/BlurType.hpp>
 
 #include <system/CommonTools.hpp>
-#include <system/ShaderInterface.hpp>
+#include <vulkan/shaders/ShaderInterface.hpp>
 #include <system/MeshBuffer.hpp>
 #include <system/RenderTargetTextureDependecyGraphInfo.hpp>
-#include <system/DescriptorSet.hpp>
+#include <vulkan/descriptor_set/DescriptorSet.hpp>
 
 #include <vulkan/utils/VulkanMemoryManagement.hpp>
 
@@ -25,7 +25,6 @@
 
 
 namespace vk2d {
-
 namespace vk2d_internal {
 
 class InstanceImpl;
@@ -94,10 +93,10 @@ private:
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	struct SwapBuffer
 	{
-		CompleteImageResource									attachment_image							= {};	// Render attachment, Multisampled, 1 mip level
-		CompleteImageResource									buffer_1_image								= {};	// Buffer image, used as multisample resolve and blur buffer
-		CompleteImageResource									buffer_2_image								= {};	// Buffer image, used as second blur buffer
-		CompleteImageResource									sampled_image								= {};	// Output, sampled image with mip mapping
+		vulkan::CompleteImageResource							attachment_image							= {};	// Render attachment, Multisampled, 1 mip level
+		vulkan::CompleteImageResource							buffer_1_image								= {};	// Buffer image, used as multisample resolve and blur buffer
+		vulkan::CompleteImageResource							buffer_2_image								= {};	// Buffer image, used as second blur buffer
+		vulkan::CompleteImageResource							sampled_image								= {};	// Output, sampled image with mip mapping
 		VkFramebuffer											vk_render_framebuffer						= {};	// Framebuffer for the main render
 		VkFramebuffer											vk_blur_framebuffer_1						= {};	// Framebuffer for blur pass 1
 		VkFramebuffer											vk_blur_framebuffer_2						= {};	// Framebuffer for blur pass 2
@@ -424,10 +423,10 @@ private:
 	///				Sampled image to be used as shader read only optimal, has to have correct amount of mip levels.
 	void														CmdBlitMipmapsToSampledImage(
 		VkCommandBuffer											command_buffer,
-		CompleteImageResource								&	source_image,
+		vulkan::CompleteImageResource						&	source_image,
 		VkImageLayout											source_image_layout,
 		VkPipelineStageFlagBits									source_image_pipeline_barrier_src_stage,
-		CompleteImageResource								&	destination_image
+		vulkan::CompleteImageResource						&	destination_image
 	);
 
 	bool														CmdRecordBlurCommands(
@@ -435,16 +434,16 @@ private:
 		VkCommandBuffer											command_buffer,
 		BlurType												blur_type,
 		glm::vec2												blur_amount,
-		CompleteImageResource								&	source_image,
+		vulkan::CompleteImageResource						&	source_image,
 		VkImageLayout											source_image_layout,
 		VkPipelineStageFlagBits									source_image_pipeline_barrier_src_stage,
-		CompleteImageResource								&	intermediate_image,
-		CompleteImageResource								&	destination_image
+		vulkan::CompleteImageResource						&	intermediate_image,
+		vulkan::CompleteImageResource						&	destination_image
 	);
 
 	void														CmdBindGraphicsPipelineIfDifferent(
 		VkCommandBuffer											command_buffer,
-		const GraphicsPipelineSettings						&	pipeline_settings
+		const vulkan::GraphicsPipelineSettings				&	pipeline_settings
 	);
 
 	void														CmdBindSamplerIfDifferent(
@@ -481,9 +480,9 @@ private:
 	std::vector<VkExtent2D>										mipmap_levels								= {};
 	bool														granularity_aligned							= {};
 
-	CompleteBufferResource										frame_data_staging_buffer					= {};
-	CompleteBufferResource										frame_data_device_buffer					= {};
-	PoolDescriptorSet											frame_data_descriptor_set					= {};
+	vulkan::CompleteBufferResource								frame_data_staging_buffer					= {};
+	vulkan::CompleteBufferResource								frame_data_device_buffer					= {};
+	vulkan::PoolDescriptorSet									frame_data_descriptor_set					= {};
 
 	VkCommandPool												vk_graphics_command_pool					= {};
 	//VkCommandPool												vk_compute_command_pool						= {};
@@ -501,7 +500,7 @@ private:
 	VkImageLayout												vk_sampled_image_final_layout				= {};
 	VkAccessFlags												vk_sampled_image_final_access_mask			= {};
 
-	GraphicsPipelineSettings									previous_graphics_pipeline_settings			= {};
+	vulkan::GraphicsPipelineSettings							previous_graphics_pipeline_settings			= {};
 	Texture													*	previous_texture							= {};
 	Sampler													*	previous_sampler							= {};
 	float														previous_line_width							= {};

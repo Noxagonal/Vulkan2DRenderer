@@ -9,8 +9,8 @@
 #include <system/MeshBuffer.hpp>
 #include <vulkan/utils/QueueResolver.hpp>
 #include <vulkan/utils/VulkanMemoryManagement.hpp>
-#include <system/DescriptorSet.hpp>
-#include <system/ShaderInterface.hpp>
+#include <vulkan/descriptor_set/DescriptorSet.hpp>
+#include <vulkan/shaders/ShaderInterface.hpp>
 #include <system/RenderTargetTextureDependecyGraphInfo.hpp>
 #include <mesh/vertex/RawVertexData.hpp>
 
@@ -36,6 +36,10 @@ class Cursor;
 class TextureResource;
 class MeshBase;
 
+namespace vulkan {
+class GraphicsShaderList;
+} // vulkan
+
 namespace vk2d_internal {
 
 class InstanceImpl;
@@ -45,7 +49,8 @@ class CursorImpl;
 class MeshBuffer;
 class TextureResourceImpl;
 class ScreenshotSaverTask;
-class GraphicsShaderList;
+
+
 
 enum class NextRenderCallFunction : uint32_t {
 	BEGIN		= 0,
@@ -249,7 +254,7 @@ private:
 
 	void														CmdBindGraphicsPipelineIfDifferent(
 		VkCommandBuffer											command_buffer,
-		const GraphicsPipelineSettings						&	pipeline_settings );
+		const vulkan::GraphicsPipelineSettings				&	pipeline_settings );
 
 	void														CmdBindSamplerIfDifferent(
 		VkCommandBuffer											command_buffer,
@@ -285,10 +290,10 @@ private:
 	VkPhysicalDevice											vk_physical_device							= {};
 	VkDevice													vk_device									= {};
 
-	DeviceMemoryPool										&	device_memory_pool;
+	vulkan::DeviceMemoryPool								&	device_memory_pool;
 
-	ResolvedQueue												primary_render_queue						= {};
-	ResolvedQueue												primary_compute_queue						= {};
+	vulkan::Queue										primary_render_queue						= {};
+	vulkan::Queue										primary_compute_queue						= {};
 
 	PFN_VK2D_ReportFunction										report_function								= {};
 
@@ -303,7 +308,7 @@ private:
 	std::vector<VkImage>										vk_swapchain_images							= {};
 	std::vector<VkImageView>									vk_swapchain_image_views					= {};
 	VkRenderPass												vk_render_pass								= {};
-	std::vector<CompleteImageResource>							multisample_render_targets					= {};
+	std::vector<vulkan::CompleteImageResource>					multisample_render_targets					= {};
 
 	VkCommandPool												vk_command_pool								= {};
 	std::vector<VkCommandBuffer>								vk_render_command_buffers					= {};	// For more overlapped execution multiple command buffers are needed.
@@ -326,15 +331,15 @@ private:
 	std::vector<VkFence>										vk_gpu_to_cpu_frame_fences					= {};
 	bool														previous_frame_need_synchronization			= {};
 
-	CompleteBufferResource										frame_data_staging_buffer					= {};
-	CompleteBufferResource										frame_data_device_buffer					= {};
-	PoolDescriptorSet											frame_data_descriptor_set					= {};
+	vulkan::CompleteBufferResource								frame_data_staging_buffer					= {};
+	vulkan::CompleteBufferResource								frame_data_device_buffer					= {};
+	vulkan::PoolDescriptorSet									frame_data_descriptor_set					= {};
 
 	NextRenderCallFunction										next_render_call_function					= NextRenderCallFunction::BEGIN;
 	bool														should_reconstruct							= {};
 	bool														should_close								= {};
 
-	GraphicsPipelineSettings									previous_pipeline_settings					= {};
+	vulkan::GraphicsPipelineSettings							previous_pipeline_settings					= {};
 	Texture													*	previous_texture							= {};
 	Sampler													*	previous_sampler							= {};
 	float														previous_line_width							= {};
@@ -362,8 +367,8 @@ private:
 	std::filesystem::path										screenshot_save_path						= {};
 	ImageData													screenshot_save_data						= {};
 	bool														screenshot_alpha							= {};
-	CompleteImageResource										screenshot_image							= {};
-	CompleteBufferResource										screenshot_buffer							= {};
+	vulkan::CompleteImageResource								screenshot_image							= {};
+	vulkan::CompleteBufferResource								screenshot_buffer							= {};
 	uint32_t													screenshot_swapchain_id						= {};
 	bool														screenshot_event_error						= {};
 	std::string													screenshot_event_message					= {};

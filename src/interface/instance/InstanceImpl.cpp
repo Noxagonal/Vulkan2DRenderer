@@ -11,7 +11,7 @@
 #include <vulkan/utils/QueueResolver.hpp>
 #include <system/ThreadPool.hpp>
 #include <system/ThreadPrivateResources.hpp>
-#include <system/DescriptorSet.hpp>
+#include <vulkan/descriptor_set/DescriptorSet.hpp>
 
 #include "../resource_manager/ResourceManagerImpl.hpp"
 #include "../resources/texture/TextureResourceImpl.hpp"
@@ -136,10 +136,10 @@ vk2d::vk2d_internal::InstanceImpl::InstanceImpl(
 
 	#if VK2D_BUILD_OPTION_VULKAN_COMMAND_BUFFER_CHECKMARKS && VK2D_BUILD_OPTION_VULKAN_VALIDATION && VK2D_DEBUG_ENABLE
 	if( instance_count == 1 ) {
-		auto & primary_render_queue = vulkan_device->GetQueue( VulkanQueueType::PRIMARY_RENDER );
+		auto & primary_render_queue = vulkan_device->GetQueue( vulkan::QueueType::PRIMARY_RENDER );
 		SetCommandBufferCheckpointQueue(
 			*vulkan_device,
-			primary_render_queue.GetQueue(),
+			primary_render_queue.GetVulkanQueue(),
 			primary_render_queue.GetQueueMutex()
 		);
 	}
@@ -539,8 +539,8 @@ void vk2d::vk2d_internal::InstanceImpl::DestroyRenderTargetTexture(
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-vk2d::vk2d_internal::PoolDescriptorSet vk2d::vk2d_internal::InstanceImpl::AllocateDescriptorSet(
-	const DescriptorSetLayout		&	for_descriptor_set_layout
+vk2d::vulkan::PoolDescriptorSet vk2d::vk2d_internal::InstanceImpl::AllocateDescriptorSet(
+	const vulkan::DescriptorSetLayout & for_descriptor_set_layout
 )
 {
 	std::lock_guard<std::mutex> lock_guard( descriptor_pool_mutex );
@@ -552,7 +552,7 @@ vk2d::vk2d_internal::PoolDescriptorSet vk2d::vk2d_internal::InstanceImpl::Alloca
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void vk2d::vk2d_internal::InstanceImpl::FreeDescriptorSet(
-	PoolDescriptorSet & descriptor_set
+	vulkan::PoolDescriptorSet & descriptor_set
 )
 {
 	std::lock_guard<std::mutex> lock_guard( descriptor_pool_mutex );
@@ -803,20 +803,20 @@ vk2d::ResourceManager * vk2d::vk2d_internal::InstanceImpl::GetResourceManager() 
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-vk2d::vk2d_internal::VulkanInstance & vk2d::vk2d_internal::InstanceImpl::GetVulkanInstance()
+vk2d::vulkan::VulkanInstance & vk2d::vk2d_internal::InstanceImpl::GetVulkanInstance()
 {
 	return *vulkan_instance;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-vk2d::vk2d_internal::VulkanDevice & vk2d::vk2d_internal::InstanceImpl::GetVulkanDevice()
+vk2d::vulkan::VulkanDevice & vk2d::vk2d_internal::InstanceImpl::GetVulkanDevice()
 {
 	return *vulkan_device;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-vk2d::vk2d_internal::GraphicsShaderList vk2d::vk2d_internal::InstanceImpl::GetGraphicsShaderList(
-	GraphicsShaderListID id
+vk2d::vulkan::GraphicsShaderList vk2d::vk2d_internal::InstanceImpl::GetGraphicsShaderList(
+	vulkan::GraphicsShaderListID id
 ) const
 {
 	auto collection = graphics_shader_programs.find( id );
@@ -828,7 +828,7 @@ vk2d::vk2d_internal::GraphicsShaderList vk2d::vk2d_internal::InstanceImpl::GetGr
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 VkShaderModule vk2d::vk2d_internal::InstanceImpl::GetComputeShaderModules(
-	ComputeShaderProgramID id
+	vulkan::ComputeShaderProgramID id
 ) const
 {
 	auto collection = compute_shader_programs.find( id );
@@ -839,21 +839,21 @@ VkShaderModule vk2d::vk2d_internal::InstanceImpl::GetComputeShaderModules(
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-vk2d::vk2d_internal::GraphicsShaderList vk2d::vk2d_internal::InstanceImpl::GetCompatibleGraphicsShaderList(
+vk2d::vulkan::GraphicsShaderList vk2d::vk2d_internal::InstanceImpl::GetCompatibleGraphicsShaderList(
 	bool				custom_uv_border_color,
 	uint32_t			vertices_per_primitive
 ) const
 {
 	if( custom_uv_border_color ) {
-		return GetGraphicsShaderList( GraphicsShaderListID::SINGLE_TEXTURED_UV_BORDER_COLOR );
+		return GetGraphicsShaderList( vulkan::GraphicsShaderListID::SINGLE_TEXTURED_UV_BORDER_COLOR );
 	} else {
-		return GetGraphicsShaderList( GraphicsShaderListID::SINGLE_TEXTURED );
+		return GetGraphicsShaderList( vulkan::GraphicsShaderListID::SINGLE_TEXTURED );
 	}
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 VkPipeline vk2d::vk2d_internal::InstanceImpl::GetGraphicsPipeline(
-	const GraphicsPipelineSettings		&	settings
+	const vulkan::GraphicsPipelineSettings		&	settings
 )
 {
 	VK2D_ASSERT_SINGLE_THREAD_ACCESS_SCOPE();
@@ -877,7 +877,7 @@ VkPipeline vk2d::vk2d_internal::InstanceImpl::GetGraphicsPipeline(
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 VkPipeline vk2d::vk2d_internal::InstanceImpl::GetComputePipeline(
-	const ComputePipelineSettings		&	settings
+	const vulkan::ComputePipelineSettings		&	settings
 )
 {
 	VK2D_ASSERT_SINGLE_THREAD_ACCESS_SCOPE();
@@ -901,7 +901,7 @@ VkPipeline vk2d::vk2d_internal::InstanceImpl::GetComputePipeline(
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 VkPipeline vk2d::vk2d_internal::InstanceImpl::CreateGraphicsPipeline(
-	const GraphicsPipelineSettings		&	settings
+	const vulkan::GraphicsPipelineSettings		&	settings
 )
 {
 	VK2D_ASSERT_MAIN_THREAD( *this );
@@ -1114,7 +1114,7 @@ VkPipeline vk2d::vk2d_internal::InstanceImpl::CreateGraphicsPipeline(
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-VkPipeline vk2d::vk2d_internal::InstanceImpl::CreateComputePipeline( const ComputePipelineSettings & settings )
+VkPipeline vk2d::vk2d_internal::InstanceImpl::CreateComputePipeline( const vulkan::ComputePipelineSettings & settings )
 {
 	VK2D_ASSERT_MAIN_THREAD( *this );
 
@@ -1199,31 +1199,31 @@ const DescriptorSetLayout & vk2d::vk2d_internal::InstanceImpl::GetComputeBlurTex
 */
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-const vk2d::vk2d_internal::DescriptorSetLayout & vk2d::vk2d_internal::InstanceImpl::GetGraphicsSamplerDescriptorSetLayout() const
+const vk2d::vulkan::DescriptorSetLayout & vk2d::vk2d_internal::InstanceImpl::GetGraphicsSamplerDescriptorSetLayout() const
 {
 	return *graphics_sampler_descriptor_set_layout;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-const vk2d::vk2d_internal::DescriptorSetLayout & vk2d::vk2d_internal::InstanceImpl::GetGraphicsTextureDescriptorSetLayout() const
+const vk2d::vulkan::DescriptorSetLayout & vk2d::vk2d_internal::InstanceImpl::GetGraphicsTextureDescriptorSetLayout() const
 {
 	return *graphics_texture_descriptor_set_layout;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-const vk2d::vk2d_internal::DescriptorSetLayout & vk2d::vk2d_internal::InstanceImpl::GetGraphicsRenderTargetBlurTextureDescriptorSetLayout() const
+const vk2d::vulkan::DescriptorSetLayout & vk2d::vk2d_internal::InstanceImpl::GetGraphicsRenderTargetBlurTextureDescriptorSetLayout() const
 {
 	return *graphics_render_target_blur_texture_descriptor_set_layout;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-const vk2d::vk2d_internal::DescriptorSetLayout & vk2d::vk2d_internal::InstanceImpl::GetGraphicsUniformBufferDescriptorSetLayout() const
+const vk2d::vulkan::DescriptorSetLayout & vk2d::vk2d_internal::InstanceImpl::GetGraphicsUniformBufferDescriptorSetLayout() const
 {
 	return *graphics_uniform_buffer_descriptor_set_layout;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-const vk2d::vk2d_internal::DescriptorSetLayout & vk2d::vk2d_internal::InstanceImpl::GetGraphicsStorageBufferDescriptorSetLayout() const
+const vk2d::vulkan::DescriptorSetLayout & vk2d::vk2d_internal::InstanceImpl::GetGraphicsStorageBufferDescriptorSetLayout() const
 {
 	return *graphics_storage_buffer_descriptor_set_layout;
 }
@@ -1576,20 +1576,20 @@ bool vk2d::vk2d_internal::InstanceImpl::CreateShaderModules()
 		vk_graphics_shader_modules.push_back( render_target_texture_fragment_gaussian_blur_vertical );
 
 		// Collect a listing of shader units, which is a collection of shader modules needed to create a pipeline.
-		graphics_shader_programs[ GraphicsShaderListID::SINGLE_TEXTURED ]						= GraphicsShaderList( single_textured_vertex, single_textured_fragment );
-		graphics_shader_programs[ GraphicsShaderListID::SINGLE_TEXTURED_UV_BORDER_COLOR ]		= GraphicsShaderList( single_textured_vertex, single_textured_fragment_uv_border_color );
+		graphics_shader_programs[ vulkan::GraphicsShaderListID::SINGLE_TEXTURED ]						= vulkan::GraphicsShaderList( single_textured_vertex, single_textured_fragment );
+		graphics_shader_programs[ vulkan::GraphicsShaderListID::SINGLE_TEXTURED_UV_BORDER_COLOR ]		= vulkan::GraphicsShaderList( single_textured_vertex, single_textured_fragment_uv_border_color );
 
-		graphics_shader_programs[ GraphicsShaderListID::MULTITEXTURED_TRIANGLE ]				= GraphicsShaderList( multitextured_vertex, multitextured_fragment_triangle );
-		graphics_shader_programs[ GraphicsShaderListID::MULTITEXTURED_LINE ]					= GraphicsShaderList( multitextured_vertex, multitextured_fragment_line );
-		graphics_shader_programs[ GraphicsShaderListID::MULTITEXTURED_POINT ]					= GraphicsShaderList( multitextured_vertex, multitextured_fragment_point );
-		graphics_shader_programs[ GraphicsShaderListID::MULTITEXTURED_TRIANGLE_UV_BORDER_COLOR ]= GraphicsShaderList( multitextured_vertex, multitextured_fragment_triangle_uv_border_color );
-		graphics_shader_programs[ GraphicsShaderListID::MULTITEXTURED_LINE_UV_BORDER_COLOR ]	= GraphicsShaderList( multitextured_vertex, multitextured_fragment_line_uv_border_color );
-		graphics_shader_programs[ GraphicsShaderListID::MULTITEXTURED_POINT_UV_BORDER_COLOR ]	= GraphicsShaderList( multitextured_vertex, multitextured_fragment_point_uv_border_color );
+		graphics_shader_programs[ vulkan::GraphicsShaderListID::MULTITEXTURED_TRIANGLE ]				= vulkan::GraphicsShaderList( multitextured_vertex, multitextured_fragment_triangle );
+		graphics_shader_programs[ vulkan::GraphicsShaderListID::MULTITEXTURED_LINE ]					= vulkan::GraphicsShaderList( multitextured_vertex, multitextured_fragment_line );
+		graphics_shader_programs[ vulkan::GraphicsShaderListID::MULTITEXTURED_POINT ]					= vulkan::GraphicsShaderList( multitextured_vertex, multitextured_fragment_point );
+		graphics_shader_programs[ vulkan::GraphicsShaderListID::MULTITEXTURED_TRIANGLE_UV_BORDER_COLOR ]= vulkan::GraphicsShaderList( multitextured_vertex, multitextured_fragment_triangle_uv_border_color );
+		graphics_shader_programs[ vulkan::GraphicsShaderListID::MULTITEXTURED_LINE_UV_BORDER_COLOR ]	= vulkan::GraphicsShaderList( multitextured_vertex, multitextured_fragment_line_uv_border_color );
+		graphics_shader_programs[ vulkan::GraphicsShaderListID::MULTITEXTURED_POINT_UV_BORDER_COLOR ]	= vulkan::GraphicsShaderList( multitextured_vertex, multitextured_fragment_point_uv_border_color );
 
-		graphics_shader_programs[ GraphicsShaderListID::RENDER_TARGET_BOX_BLUR_HORISONTAL ]		= GraphicsShaderList( render_target_texture_blur_vertex, render_target_texture_fragment_box_blur_horisontal );
-		graphics_shader_programs[ GraphicsShaderListID::RENDER_TARGET_BOX_BLUR_VERTICAL ]		= GraphicsShaderList( render_target_texture_blur_vertex, render_target_texture_fragment_box_blur_vertical );
-		graphics_shader_programs[ GraphicsShaderListID::RENDER_TARGET_GAUSSIAN_BLUR_HORISONTAL ]= GraphicsShaderList( render_target_texture_blur_vertex, render_target_texture_fragment_gaussian_blur_horisontal );
-		graphics_shader_programs[ GraphicsShaderListID::RENDER_TARGET_GAUSSIAN_BLUR_VERTICAL ]	= GraphicsShaderList( render_target_texture_blur_vertex, render_target_texture_fragment_gaussian_blur_vertical );
+		graphics_shader_programs[ vulkan::GraphicsShaderListID::RENDER_TARGET_BOX_BLUR_HORISONTAL ]		= vulkan::GraphicsShaderList( render_target_texture_blur_vertex, render_target_texture_fragment_box_blur_horisontal );
+		graphics_shader_programs[ vulkan::GraphicsShaderListID::RENDER_TARGET_BOX_BLUR_VERTICAL ]		= vulkan::GraphicsShaderList( render_target_texture_blur_vertex, render_target_texture_fragment_box_blur_vertical );
+		graphics_shader_programs[ vulkan::GraphicsShaderListID::RENDER_TARGET_GAUSSIAN_BLUR_HORISONTAL ]= vulkan::GraphicsShaderList( render_target_texture_blur_vertex, render_target_texture_fragment_gaussian_blur_horisontal );
+		graphics_shader_programs[ vulkan::GraphicsShaderListID::RENDER_TARGET_GAUSSIAN_BLUR_VERTICAL ]	= vulkan::GraphicsShaderList( render_target_texture_blur_vertex, render_target_texture_fragment_gaussian_blur_vertical );
 	}
 
 	////////////////////////////////
@@ -1626,7 +1626,7 @@ bool vk2d::vk2d_internal::InstanceImpl::CreateDescriptorSetLayouts()
 	auto CreateLocalDescriptorSetLayout			= [this](
 		const std::vector<Binding>			&	bindings,
 		VkDescriptorSetLayoutCreateFlags		flags			= 0
-		) -> std::unique_ptr<DescriptorSetLayout>
+		) -> std::unique_ptr<vulkan::DescriptorSetLayout>
 	{
 		std::vector<VkDescriptorSetLayoutBinding> set_bindings( std::size( bindings ) );
 		for( size_t i = 0; i < std::size( bindings ); ++i ) {
@@ -1764,7 +1764,7 @@ bool vk2d::vk2d_internal::InstanceImpl::CreatePipelineLayouts()
 		std::array<VkPushConstantRange, 1> push_constant_ranges {};
 		push_constant_ranges[ 0 ].stageFlags	= VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
 		push_constant_ranges[ 0 ].offset		= 0;
-		push_constant_ranges[ 0 ].size			= uint32_t( sizeof( GraphicsPrimaryRenderPushConstants ) );
+		push_constant_ranges[ 0 ].size			= uint32_t( sizeof( vulkan::GraphicsPrimaryRenderPushConstants ) );
 
 		VkPipelineLayoutCreateInfo pipeline_layout_create_info {};
 		pipeline_layout_create_info.sType					= VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
@@ -1798,7 +1798,7 @@ bool vk2d::vk2d_internal::InstanceImpl::CreatePipelineLayouts()
 		std::array<VkPushConstantRange, 1> push_constant_ranges {};
 		push_constant_ranges[ 0 ].stageFlags	= VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
 		push_constant_ranges[ 0 ].offset		= 0;
-		push_constant_ranges[ 0 ].size			= uint32_t( sizeof( GraphicsBlurPushConstants ) );
+		push_constant_ranges[ 0 ].size			= uint32_t( sizeof( vulkan::GraphicsBlurPushConstants ) );
 
 		VkPipelineLayoutCreateInfo pipeline_layout_create_info {};
 		pipeline_layout_create_info.sType					= VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;

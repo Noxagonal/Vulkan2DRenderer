@@ -2,7 +2,7 @@
 
 #include <core/SourceCommon.hpp>
 
-#include <system/DescriptorSet.hpp>
+#include <vulkan/descriptor_set/DescriptorSet.hpp>
 
 #include <containers/Multisamples.hpp>
 
@@ -21,7 +21,7 @@ class RenderTargetTextureImpl;
 
 struct TimedDescriptorPoolData
 {
-	PoolDescriptorSet										descriptor_set								= {};
+	vulkan::PoolDescriptorSet								descriptor_set								= {};
 	std::chrono::time_point<std::chrono::steady_clock>		previous_access_time						= {};	// For cleanup
 };
 

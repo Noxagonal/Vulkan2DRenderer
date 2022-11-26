@@ -2,7 +2,7 @@
 #include <core/SourceCommon.hpp>
 
 #include <system/ThreadPrivateResources.hpp>
-#include <system/DescriptorSet.hpp>
+#include <vulkan/descriptor_set/DescriptorSet.hpp>
 
 #include <vulkan/utils/VulkanMemoryManagement.hpp>
 
@@ -27,12 +27,12 @@ VkDevice vk2d::vk2d_internal::ThreadLoaderResource::GetVulkanDevice() const
 	return device;
 }
 
-vk2d::vk2d_internal::DeviceMemoryPool * vk2d::vk2d_internal::ThreadLoaderResource::GetDeviceMemoryPool()
+vk2d::vulkan::DeviceMemoryPool * vk2d::vk2d_internal::ThreadLoaderResource::GetDeviceMemoryPool()
 {
 	return device_memory_pool.get();
 }
 
-vk2d::vk2d_internal::DescriptorAutoPool * vk2d::vk2d_internal::ThreadLoaderResource::GetDescriptorAutoPool()
+vk2d::vulkan::DescriptorAutoPool * vk2d::vk2d_internal::ThreadLoaderResource::GetDescriptorAutoPool()
 {
 	return descriptor_auto_pool.get();
 }
@@ -63,9 +63,9 @@ bool vk2d::vk2d_internal::ThreadLoaderResource::ThreadBegin()
 
 	// Command buffers
 	{
-		auto primary_render_queue_family_index			= instance.GetVulkanDevice().GetQueue( VulkanQueueType::PRIMARY_RENDER ).GetQueueFamilyIndex();
-		auto secondary_render_queue_family_index		= instance.GetVulkanDevice().GetQueue( VulkanQueueType::SECONDARY_RENDER ).GetQueueFamilyIndex();
-		auto primary_transfer_queue_family_index		= instance.GetVulkanDevice().GetQueue( VulkanQueueType::PRIMARY_TRANSFER ).GetQueueFamilyIndex();
+		auto primary_render_queue_family_index			= instance.GetVulkanDevice().GetQueue( vulkan::QueueType::PRIMARY_RENDER ).GetQueueFamilyIndex();
+		auto secondary_render_queue_family_index		= instance.GetVulkanDevice().GetQueue( vulkan::QueueType::SECONDARY_RENDER ).GetQueueFamilyIndex();
+		auto primary_transfer_queue_family_index		= instance.GetVulkanDevice().GetQueue( vulkan::QueueType::PRIMARY_TRANSFER ).GetQueueFamilyIndex();
 
 		VkCommandPoolCreateInfo command_pool_create_info {};
 		command_pool_create_info.sType		= VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
@@ -124,7 +124,7 @@ bool vk2d::vk2d_internal::ThreadLoaderResource::ThreadBegin()
 
 	// Descriptor pool
 	{
-		descriptor_auto_pool	= CreateDescriptorAutoPool(
+		descriptor_auto_pool	= vulkan::CreateDescriptorAutoPool(
 			&instance,
 			device
 		);
@@ -139,7 +139,7 @@ bool vk2d::vk2d_internal::ThreadLoaderResource::ThreadBegin()
 
 	// Device memory pool
 	{
-		device_memory_pool = MakeDeviceMemoryPool(
+		device_memory_pool = vulkan::MakeDeviceMemoryPool(
 			instance.GetVulkanDevice().GetVulkanPhysicalDevice(),
 			device
 		);

@@ -6,10 +6,12 @@
 
 namespace vk2d {
 namespace vk2d_internal {
-
-
-
 class InstanceImpl;
+} // vk2d_internal
+
+
+
+namespace vulkan {
 
 
 
@@ -24,7 +26,7 @@ public:
 	) = default;
 
 	VulkanInstance(
-		InstanceImpl							&	instance
+		vk2d_internal::InstanceImpl				&	instance
 	);
 	~VulkanInstance();
 
@@ -48,7 +50,7 @@ public:
 	operator VkInstance();
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	InstanceImpl								&	instance;
+	vk2d_internal::InstanceImpl					&	instance;
 
 	std::vector<const char*>						instance_layers;
 	std::vector<const char*>						instance_extensions;
@@ -62,5 +64,5 @@ public:
 
 
 
-} // vk2d_internal
+} // vulkan
 } // vk2d

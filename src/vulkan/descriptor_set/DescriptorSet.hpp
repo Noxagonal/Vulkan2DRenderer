@@ -2,13 +2,18 @@
 
 #include <core/SourceCommon.hpp>
 
+
+
 namespace vk2d {
 
 namespace vk2d_internal {
-
-
-
 class InstanceImpl;
+} // vk2d_internal
+
+namespace vulkan {
+
+
+
 class DescriptorPoolRequirements;
 class DescriptorSetLayout;
 class DescriptorAutoPool;
@@ -42,7 +47,8 @@ public:
 
 	// Heuristic function, 0 = will not work, 1 = 100% compatible, 0-1 = will work but there might be a better option.
 	 double															CheckCompatibilityWith(
-		const DescriptorPoolRequirements						&	other ) const;
+		const DescriptorPoolRequirements						&	other
+	 ) const;
 
 private:
 	std::array<uint32_t, VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT + 1>	bindingAmounts					= {};
@@ -59,15 +65,17 @@ struct PoolCategory {
 class DescriptorSetLayout
 {
 	friend std::unique_ptr<DescriptorSetLayout>		CreateDescriptorSetLayout(
-		InstanceImpl							*	instance,
+		vk2d_internal::InstanceImpl				*	instance,
 		VkDevice									device,
-		const VkDescriptorSetLayoutCreateInfo	*	pCreateInfo );
+		const VkDescriptorSetLayoutCreateInfo	*	pCreateInfo
+	);
 
 private:
 													DescriptorSetLayout(
-		InstanceImpl							*	instance,
+		vk2d_internal::InstanceImpl				*	instance,
 		VkDevice									device,
-		const VkDescriptorSetLayoutCreateInfo	*	pCreateInfo );
+		const VkDescriptorSetLayoutCreateInfo	*	pCreateInfo
+													);
 public:
 
 													~DescriptorSetLayout();
@@ -82,7 +90,7 @@ public:
 													operator VkDescriptorSetLayout() const;
 
 private:
-	InstanceImpl								*	instance							= {};
+	vk2d_internal::InstanceImpl					*	instance								= {};
 
 	VkDescriptorSetLayoutCreateInfo					createInfo								= {};
 	VkDevice										refDevice								= {};
@@ -94,9 +102,10 @@ private:
 
 // TODO: Remove CreateDescriptorSetLayout() function, we don't really need a factory function here.
 std::unique_ptr<DescriptorSetLayout>				CreateDescriptorSetLayout(
-	InstanceImpl								*	instance,
+	vk2d_internal::InstanceImpl					*	instance,
 	VkDevice										device,
-	const VkDescriptorSetLayoutCreateInfo		*	pCreateInfo );
+	const VkDescriptorSetLayoutCreateInfo		*	pCreateInfo
+);
 
 
 
@@ -116,24 +125,28 @@ private:
 
 class DescriptorAutoPool {
 	friend std::unique_ptr<DescriptorAutoPool>		CreateDescriptorAutoPool(
-		InstanceImpl							*	instance,
-		VkDevice									device );
+		vk2d_internal::InstanceImpl				*	instance,
+		VkDevice									device
+	);
 
 private:
 													DescriptorAutoPool(
-		InstanceImpl							*	instance,
-		VkDevice									device );
+		vk2d_internal::InstanceImpl				*	instance,
+		VkDevice									device
+													);
 public:
 													~DescriptorAutoPool();
 
 	PoolDescriptorSet								AllocateDescriptorSet(
-		const DescriptorSetLayout				&	rForDescriptorSetLayout );
+		const DescriptorSetLayout				&	rForDescriptorSetLayout
+	);
 
 	 void											FreeDescriptorSet(
-		 PoolDescriptorSet						&	pDescriptorSet );
+		 PoolDescriptorSet						&	pDescriptorSet
+	 );
 
 private:
-	InstanceImpl								*	instance				= {};
+	vk2d_internal::InstanceImpl					*	instance				= {};
 
 	VkDevice										refDevice				= {};
 	std::vector<PoolCategory>						poolCategories			= {};
@@ -143,11 +156,11 @@ private:
 
 // TODO: Remove CreateDescriptorAutoPool() function, we don't really need a factory function here.
 std::unique_ptr<DescriptorAutoPool>					CreateDescriptorAutoPool(
-	InstanceImpl								*	instance,
-	VkDevice										device );
+	vk2d_internal::InstanceImpl					*	instance,
+	VkDevice										device
+);
 
 
 
-} // vk2d_internal
-
+} // vulkan
 } // vk2d

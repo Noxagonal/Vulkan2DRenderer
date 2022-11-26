@@ -85,7 +85,7 @@ vk2d::vk2d_internal::MeshBuffer::PushResult vk2d::vk2d_internal::MeshBuffer::Cmd
 	bound_index_buffer_block = BindBuffer(
 		reserve_result.index_block,
 		bound_index_buffer_block,
-		GRAPHICS_DESCRIPTOR_SET_ALLOCATION_INDEX_BUFFER_AS_STORAGE_BUFFER,
+		vulkan::GRAPHICS_DESCRIPTOR_SET_ALLOCATION_INDEX_BUFFER_AS_STORAGE_BUFFER,
 		CommandBufferCheckpointType::BIND_INDEX_BUFFER,
 		true
 	);
@@ -93,7 +93,7 @@ vk2d::vk2d_internal::MeshBuffer::PushResult vk2d::vk2d_internal::MeshBuffer::Cmd
 	bound_vertex_buffer_block = BindBuffer(
 		reserve_result.vertex_block,
 		bound_vertex_buffer_block,
-		GRAPHICS_DESCRIPTOR_SET_ALLOCATION_VERTEX_BUFFER_AS_STORAGE_BUFFER,
+		vulkan::GRAPHICS_DESCRIPTOR_SET_ALLOCATION_VERTEX_BUFFER_AS_STORAGE_BUFFER,
 		CommandBufferCheckpointType::BIND_VERTEX_BUFFER,
 		false
 	);
@@ -101,7 +101,7 @@ vk2d::vk2d_internal::MeshBuffer::PushResult vk2d::vk2d_internal::MeshBuffer::Cmd
 	bound_transformation_buffer_block = BindBuffer(
 		reserve_result.transformation_block,
 		bound_transformation_buffer_block,
-		GRAPHICS_DESCRIPTOR_SET_ALLOCATION_TRANSFORMATION,
+		vulkan::GRAPHICS_DESCRIPTOR_SET_ALLOCATION_TRANSFORMATION,
 		CommandBufferCheckpointType::BIND_DESCRIPTOR_SET,
 		false
 	);

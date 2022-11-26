@@ -2,7 +2,7 @@
 
 #include <core/SourceCommon.hpp>
 
-#include <system/DescriptorSet.hpp>
+#include <vulkan/descriptor_set/DescriptorSet.hpp>
 #include <interface/Sampler.hpp>
 
 #include <vulkan/utils/VulkanMemoryManagement.hpp>
@@ -41,7 +41,7 @@ private:
 	VkDevice									vk_device			= {};
 
 	VkSampler									vk_sampler			= {};
-	CompleteBufferResource						sampler_data		= {};
+	vulkan::CompleteBufferResource				sampler_data		= {};
 
 	glm::uvec2									border_color_enable	= {};
 

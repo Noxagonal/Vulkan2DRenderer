@@ -19,9 +19,9 @@ const std::vector<std::pair<VkQueueFlags, float>> queue_requests {
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-vk2d::vk2d_internal::VulkanDevice::VulkanDevice(
-	InstanceImpl		&	instance,
-	VkPhysicalDevice		physical_device
+vk2d::vulkan::VulkanDevice::VulkanDevice(
+	vk2d_internal::InstanceImpl		&	instance,
+	VkPhysicalDevice					physical_device
 ) :
 	instance( instance )
 {
@@ -97,7 +97,7 @@ vk2d::vk2d_internal::VulkanDevice::VulkanDevice(
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-vk2d::vk2d_internal::VulkanDevice::~VulkanDevice()
+vk2d::vulkan::VulkanDevice::~VulkanDevice()
 {
 	DestroyDeviceMemoryPool();
 
@@ -110,63 +110,63 @@ vk2d::vk2d_internal::VulkanDevice::~VulkanDevice()
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-vk2d::vk2d_internal::ResolvedQueue & vk2d::vk2d_internal::VulkanDevice::GetQueue(
-	VulkanQueueType queue_type
+vk2d::vulkan::Queue & vk2d::vulkan::VulkanDevice::GetQueue(
+	QueueType queue_type
 )
 {
-	return resolved_queues[ std::underlying_type_t<VulkanQueueType>( queue_type ) ];
+	return resolved_queues[ std::underlying_type_t<QueueType>( queue_type ) ];
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-VkDevice vk2d::vk2d_internal::VulkanDevice::GetVulkanDevice()
+VkDevice vk2d::vulkan::VulkanDevice::GetVulkanDevice()
 {
 	return vk_device;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-VkPhysicalDevice vk2d::vk2d_internal::VulkanDevice::GetVulkanPhysicalDevice() const
+VkPhysicalDevice vk2d::vulkan::VulkanDevice::GetVulkanPhysicalDevice() const
 {
 	return vk_physical_device;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-const VkPhysicalDeviceProperties & vk2d::vk2d_internal::VulkanDevice::GetVulkanPhysicalDeviceProperties() const
+const VkPhysicalDeviceProperties & vk2d::vulkan::VulkanDevice::GetVulkanPhysicalDeviceProperties() const
 {
 	return physical_device_properties;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-const VkPhysicalDeviceMemoryProperties & vk2d::vk2d_internal::VulkanDevice::GetVulkanPhysicalDeviceMemoryProperties() const
+const VkPhysicalDeviceMemoryProperties & vk2d::vulkan::VulkanDevice::GetVulkanPhysicalDeviceMemoryProperties() const
 {
 	return physical_device_memory_properties;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-const VkPhysicalDeviceFeatures & vk2d::vk2d_internal::VulkanDevice::GetVulkanPhysicalDeviceFeatures() const
+const VkPhysicalDeviceFeatures & vk2d::vulkan::VulkanDevice::GetVulkanPhysicalDeviceFeatures() const
 {
 	return physical_device_features;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-vk2d::vk2d_internal::DeviceMemoryPool * vk2d::vk2d_internal::VulkanDevice::GetDeviceMemoryPool()
+vk2d::vulkan::DeviceMemoryPool * vk2d::vulkan::VulkanDevice::GetDeviceMemoryPool()
 {
 	return device_memory_pool.get();
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-bool vk2d::vk2d_internal::VulkanDevice::IsGood()
+bool vk2d::vulkan::VulkanDevice::IsGood()
 {
 	return is_good;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-vk2d::vk2d_internal::VulkanDevice::operator VkDevice()
+vk2d::vulkan::VulkanDevice::operator VkDevice()
 {
 	return GetVulkanDevice();
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-void vk2d::vk2d_internal::VulkanDevice::PopulatePhysicalDeviceStructs()
+void vk2d::vulkan::VulkanDevice::PopulatePhysicalDeviceStructs()
 {
 	vkGetPhysicalDeviceProperties(
 		vk_physical_device,
@@ -183,7 +183,7 @@ void vk2d::vk2d_internal::VulkanDevice::PopulatePhysicalDeviceStructs()
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-bool vk2d::vk2d_internal::VulkanDevice::CreateDeviceMemoryPool()
+bool vk2d::vulkan::VulkanDevice::CreateDeviceMemoryPool()
 {
 	device_memory_pool = MakeDeviceMemoryPool(
 		vk_physical_device,
@@ -196,7 +196,7 @@ bool vk2d::vk2d_internal::VulkanDevice::CreateDeviceMemoryPool()
 	return true;
 }
 
-void vk2d::vk2d_internal::VulkanDevice::DestroyDeviceMemoryPool()
+void vk2d::vulkan::VulkanDevice::DestroyDeviceMemoryPool()
 {
 	device_memory_pool = nullptr;
 }

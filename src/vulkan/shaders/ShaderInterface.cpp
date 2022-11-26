@@ -1,15 +1,10 @@
 
 #include <core/SourceCommon.hpp>
-
-#include <system/ShaderInterface.hpp>
-
+#include "ShaderInterface.hpp"
 
 
 
-
-
-
-bool vk2d::vk2d_internal::GraphicsShaderList::operator<(
+bool vk2d::vulkan::GraphicsShaderList::operator<(
 	const GraphicsShaderList		&	other
 ) const
 {
@@ -24,7 +19,7 @@ bool vk2d::vk2d_internal::GraphicsShaderList::operator<(
 		);
 }
 
-bool vk2d::vk2d_internal::GraphicsShaderList::operator>(
+bool vk2d::vulkan::GraphicsShaderList::operator>(
 	const GraphicsShaderList		&	other
 ) const
 {
@@ -39,7 +34,7 @@ bool vk2d::vk2d_internal::GraphicsShaderList::operator>(
 		);
 }
 
-bool vk2d::vk2d_internal::GraphicsShaderList::operator<=(
+bool vk2d::vulkan::GraphicsShaderList::operator<=(
 	const GraphicsShaderList		&	other
 	) const
 {
@@ -54,7 +49,7 @@ bool vk2d::vk2d_internal::GraphicsShaderList::operator<=(
 		);
 }
 
-bool vk2d::vk2d_internal::GraphicsShaderList::operator>=(
+bool vk2d::vulkan::GraphicsShaderList::operator>=(
 	const GraphicsShaderList		&	other
 	) const
 {
@@ -69,7 +64,7 @@ bool vk2d::vk2d_internal::GraphicsShaderList::operator>=(
 		);
 }
 
-bool vk2d::vk2d_internal::GraphicsShaderList::operator==(
+bool vk2d::vulkan::GraphicsShaderList::operator==(
 	const GraphicsShaderList		&	other
 ) const
 {
@@ -84,7 +79,7 @@ bool vk2d::vk2d_internal::GraphicsShaderList::operator==(
 		);
 }
 
-bool vk2d::vk2d_internal::GraphicsShaderList::operator!=(
+bool vk2d::vulkan::GraphicsShaderList::operator!=(
 	const GraphicsShaderList		&	other
 ) const
 {
@@ -105,7 +100,7 @@ bool vk2d::vk2d_internal::GraphicsShaderList::operator!=(
 
 
 
-bool vk2d::vk2d_internal::GraphicsPipelineSettings::operator<(
+bool vk2d::vulkan::GraphicsPipelineSettings::operator<(
 	const GraphicsPipelineSettings		&	other
 ) const
 {
@@ -132,7 +127,7 @@ bool vk2d::vk2d_internal::GraphicsPipelineSettings::operator<(
 		);
 }
 
-bool vk2d::vk2d_internal::GraphicsPipelineSettings::operator>(
+bool vk2d::vulkan::GraphicsPipelineSettings::operator>(
 	const GraphicsPipelineSettings		&	other
 ) const
 {
@@ -157,7 +152,7 @@ bool vk2d::vk2d_internal::GraphicsPipelineSettings::operator>(
 		);
 }
 
-bool vk2d::vk2d_internal::GraphicsPipelineSettings::operator<=(
+bool vk2d::vulkan::GraphicsPipelineSettings::operator<=(
 	const GraphicsPipelineSettings		&	other
 	) const
 {
@@ -182,7 +177,7 @@ bool vk2d::vk2d_internal::GraphicsPipelineSettings::operator<=(
 		);
 }
 
-bool vk2d::vk2d_internal::GraphicsPipelineSettings::operator>=(
+bool vk2d::vulkan::GraphicsPipelineSettings::operator>=(
 	const GraphicsPipelineSettings		&	other
 	) const
 {
@@ -207,7 +202,7 @@ bool vk2d::vk2d_internal::GraphicsPipelineSettings::operator>=(
 		);
 }
 
-bool vk2d::vk2d_internal::GraphicsPipelineSettings::operator==(
+bool vk2d::vulkan::GraphicsPipelineSettings::operator==(
 	const GraphicsPipelineSettings		&	other
 ) const
 {
@@ -232,7 +227,7 @@ bool vk2d::vk2d_internal::GraphicsPipelineSettings::operator==(
 		);
 }
 
-bool vk2d::vk2d_internal::GraphicsPipelineSettings::operator!=(
+bool vk2d::vulkan::GraphicsPipelineSettings::operator!=(
 	const GraphicsPipelineSettings		&	other
 	) const
 {
@@ -259,7 +254,7 @@ bool vk2d::vk2d_internal::GraphicsPipelineSettings::operator!=(
 
 
 
-bool vk2d::vk2d_internal::ComputePipelineSettings::operator<( const ComputePipelineSettings & other ) const
+bool vk2d::vulkan::ComputePipelineSettings::operator<( const ComputePipelineSettings & other ) const
 {
 	return
 		std::tie(
@@ -272,7 +267,7 @@ bool vk2d::vk2d_internal::ComputePipelineSettings::operator<( const ComputePipel
 		);
 }
 
-bool vk2d::vk2d_internal::ComputePipelineSettings::operator>( const ComputePipelineSettings & other ) const
+bool vk2d::vulkan::ComputePipelineSettings::operator>( const ComputePipelineSettings & other ) const
 {
 	return
 		std::tie(
@@ -285,7 +280,7 @@ bool vk2d::vk2d_internal::ComputePipelineSettings::operator>( const ComputePipel
 		);
 }
 
-bool vk2d::vk2d_internal::ComputePipelineSettings::operator<=( const ComputePipelineSettings & other ) const
+bool vk2d::vulkan::ComputePipelineSettings::operator<=( const ComputePipelineSettings & other ) const
 {
 	return
 		std::tie(
@@ -298,7 +293,7 @@ bool vk2d::vk2d_internal::ComputePipelineSettings::operator<=( const ComputePipe
 		);
 }
 
-bool vk2d::vk2d_internal::ComputePipelineSettings::operator>=( const ComputePipelineSettings & other ) const
+bool vk2d::vulkan::ComputePipelineSettings::operator>=( const ComputePipelineSettings & other ) const
 {
 	return
 		std::tie(
@@ -311,7 +306,7 @@ bool vk2d::vk2d_internal::ComputePipelineSettings::operator>=( const ComputePipe
 		);
 }
 
-bool vk2d::vk2d_internal::ComputePipelineSettings::operator==( const ComputePipelineSettings & other ) const
+bool vk2d::vulkan::ComputePipelineSettings::operator==( const ComputePipelineSettings & other ) const
 {
 	return
 		std::tie(
@@ -324,7 +319,7 @@ bool vk2d::vk2d_internal::ComputePipelineSettings::operator==( const ComputePipe
 		);
 }
 
-bool vk2d::vk2d_internal::ComputePipelineSettings::operator!=( const ComputePipelineSettings & other ) const
+bool vk2d::vulkan::ComputePipelineSettings::operator!=( const ComputePipelineSettings & other ) const
 {
 	return
 		std::tie(

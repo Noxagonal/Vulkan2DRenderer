@@ -8,7 +8,7 @@
 #if VK2D_BUILD_OPTION_VULKAN_VALIDATION && VK2D_DEBUG_ENABLE
 
 namespace vk2d {
-namespace vk2d_internal {
+namespace vulkan {
 
 
 
@@ -69,7 +69,7 @@ VkBool32 VKAPI_PTR DebugMessenger(
 	ss_message << "\n" << ss_title.str() << ":\n\n - " << pCallbackData->pMessage << "\n\n";
 	// TODO: labels, object, message id name / number;
 
-	auto instance = reinterpret_cast<InstanceImpl*>( pUserData );
+	auto instance = reinterpret_cast<vk2d_internal::InstanceImpl*>( pUserData );
 	assert( instance );
 
 	instance->GetReportFunction()( vk2d_severity, ss_message.str() );
@@ -86,7 +86,7 @@ VkBool32 VKAPI_PTR DebugMessenger(
 
 
 
-} // vk2d_internal
+} // vulkan
 } // vk2d
 
 #endif
@@ -94,8 +94,8 @@ VkBool32 VKAPI_PTR DebugMessenger(
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-vk2d::vk2d_internal::VulkanInstance::VulkanInstance(
-	InstanceImpl & instance
+vk2d::vulkan::VulkanInstance::VulkanInstance(
+	vk2d_internal::InstanceImpl & instance
 ) :
 	instance( instance )
 {
@@ -241,7 +241,7 @@ vk2d::vk2d_internal::VulkanInstance::VulkanInstance(
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-vk2d::vk2d_internal::VulkanInstance::~VulkanInstance()
+vk2d::vulkan::VulkanInstance::~VulkanInstance()
 {
 	if( vk_debug_utils_messenger ) {
 		auto destroyDebugUtilsMessenger = (PFN_vkDestroyDebugUtilsMessengerEXT)vkGetInstanceProcAddr( vk_instance, "vkDestroyDebugUtilsMessengerEXT" );
@@ -263,13 +263,13 @@ vk2d::vk2d_internal::VulkanInstance::~VulkanInstance()
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-VkInstance vk2d::vk2d_internal::VulkanInstance::GetVulkanInstance()
+VkInstance vk2d::vulkan::VulkanInstance::GetVulkanInstance()
 {
 	return vk_instance;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-std::vector<VkPhysicalDevice> vk2d::vk2d_internal::VulkanInstance::EnumeratePhysicalDevices()
+std::vector<VkPhysicalDevice> vk2d::vulkan::VulkanInstance::EnumeratePhysicalDevices()
 {
 	auto result = VK_SUCCESS;
 
@@ -299,7 +299,7 @@ std::vector<VkPhysicalDevice> vk2d::vk2d_internal::VulkanInstance::EnumeratePhys
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-VkPhysicalDevice vk2d::vk2d_internal::VulkanInstance::PickBestVulkanPhysicalDevice()
+VkPhysicalDevice vk2d::vulkan::VulkanInstance::PickBestVulkanPhysicalDevice()
 {
 	auto physicalDevices = EnumeratePhysicalDevices();
 
@@ -355,13 +355,13 @@ VkPhysicalDevice vk2d::vk2d_internal::VulkanInstance::PickBestVulkanPhysicalDevi
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-bool vk2d::vk2d_internal::VulkanInstance::IsGood()
+bool vk2d::vulkan::VulkanInstance::IsGood()
 {
 	return is_good;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-vk2d::vk2d_internal::VulkanInstance::operator VkInstance()
+vk2d::vulkan::VulkanInstance::operator VkInstance()
 {
 	return GetVulkanInstance();
 }
