@@ -9,18 +9,24 @@ namespace vulkan {
 
 
 
+class ShaderManager;
+
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 class Shader
 {
+	friend class ShaderManager;
+
+	Shader(
+		VkShaderModule				vulkan_shader_module
+	);
+
 public:
-	Shader() = default;
 
 private:
-	Shader( VkShaderModule shader_module );
 
-public:
-
-private:
-
+	VkShaderModule					vulkan_shader_module;
 };
 
 

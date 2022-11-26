@@ -182,11 +182,6 @@ target_precompile_headers(VK2D
 		"${CMAKE_CURRENT_SOURCE_DIR}/src/core/PreCompiledHeader.hpp"
 )
 
-add_dependencies(VK2D
-	freetype
-	glfw
-)
-
 set_target_properties(VK2D
 	PROPERTIES
 		CXX_STANDARD				20
@@ -209,9 +204,23 @@ target_include_directories(VK2D
 )
 
 target_link_libraries(VK2D
+	glslang
+	glslang-default-resource-limits
+	OGLCompiler
+	OSDependent
+	SPIRV
+	SPVRemapper
+#	HLSL
 	Vulkan::Vulkan
 	freetype
 	glfw
+)
+
+add_dependencies(VK2D
+	freetype
+	glfw
+	glslangValidator
+	spirv-remap
 )
 
 if(${VK2D_ENABLE_LIBRARY_DEBUG_FEATURES})

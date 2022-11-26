@@ -1,4 +1,12 @@
 
 #include <core/SourceCommon.hpp>
-#include "ShaderCompiler.hpp"
+#include "Shader.hpp"
 
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+vk2d::vulkan::Shader::Shader(
+	VkShaderModule vulkan_shader_module
+) :
+	vulkan_shader_module( vulkan_shader_module )
+{}
