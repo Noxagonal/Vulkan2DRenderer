@@ -786,6 +786,12 @@ const std::vector<uint32_t> & vk2d::vk2d_internal::InstanceImpl::GetLoaderThread
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+uint32_t vk2d::vk2d_internal::InstanceImpl::GetMaterialLoaderThread() const
+{
+	return material_loader_thread;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 const std::vector<uint32_t> & vk2d::vk2d_internal::InstanceImpl::GetGeneralThreads() const
 {
 	return general_threads;
@@ -1542,7 +1548,7 @@ bool vk2d::vk2d_internal::InstanceImpl::CreateThreadPool()
 {
 	uint32_t thread_count					= uint32_t( std::thread::hardware_concurrency() );
 	if( thread_count == 0 ) thread_count	= 8;
-	--thread_count;
+	thread_count -= 1;
 
 	uint32_t loader_thread_count = create_info_copy.resource_loader_thread_count;
 	if( loader_thread_count == UINT32_MAX )		loader_thread_count		= thread_count / 2;
@@ -1555,17 +1561,20 @@ bool vk2d::vk2d_internal::InstanceImpl::CreateThreadPool()
 	for( uint32_t i = 0; i < loader_thread_count; ++i ) {
 		thread_resources.push_back( std::make_unique<ThreadLoaderResource>( *this ) );
 	}
+	thread_resources.push_back( std::make_unique<ThreadMaterialLoaderResource>( *this ) );
 	for( uint32_t i = 0; i < general_thread_count; ++i ) {
 		thread_resources.push_back( std::make_unique<ThreadGeneralResource>() );
 	}
 
 	loader_threads.resize( loader_thread_count );
 	general_threads.resize( general_thread_count );
+	uint32_t thread_src_index = 0;
 	for( uint32_t i = 0; i < loader_thread_count; ++i ) {
-		loader_threads[ i ]		= i;
+		loader_threads[ i ] = thread_src_index++;
 	}
+	material_loader_thread = thread_src_index++;
 	for( uint32_t i = 0; i < general_thread_count; ++i ) {
-		general_threads[ i ]	= loader_thread_count + i;
+		general_threads[ i ] = thread_src_index++;
 	}
 
 	thread_pool.emplace( std::move( thread_resources ) );

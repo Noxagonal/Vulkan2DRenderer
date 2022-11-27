@@ -33,3 +33,4 @@
 #include <interface/resources/ResourceBase.hpp>
 #include <interface/resources/TextureResource.hpp>
 #include <interface/resources/FontResource.hpp>
+#include <interface/resources/MaterialResource.hpp>

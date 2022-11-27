@@ -209,7 +209,11 @@ VK2D_API std::unique_ptr<vk2d::Instance> vk2d::CreateInstance(
 	const vk2d::InstanceCreateInfo		&	instance_create_info
 )
 {
-	auto instance = std::unique_ptr<Instance>( new Instance( instance_create_info ) );
+	auto instance = std::unique_ptr<Instance>(
+		new Instance(
+			instance_create_info
+		)
+	);
 
 	if( instance->impl->IsGood() ) {
 		return instance;

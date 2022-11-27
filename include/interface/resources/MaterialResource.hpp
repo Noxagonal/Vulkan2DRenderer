@@ -6,14 +6,14 @@
 
 #include <filesystem>
 
+
+
 namespace vk2d {
-
-
-
 namespace vk2d_internal {
 
 class ResourceManagerImpl;
 class PipelineResourceImplBase;
+class MaterialResourceImpl;
 
 } // vk2d_internal
 
@@ -100,19 +100,80 @@ class PipelineResourceImplBase;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /// @brief		Material determines how the mesh is being drawn.
-class MaterialResource // :
-	// public ResourceBase
+class MaterialResource :
+	public ResourceBase
 {
+	friend class vk2d_internal::ResourceManagerImpl;
+	friend class vk2d_internal::ResourceThreadLoadTask;
+	friend class vk2d_internal::ResourceThreadUnloadTask;
+
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	VK2D_API													MaterialResource(
+		vk2d_internal::ResourceManagerImpl					&	resource_manager,
+		uint32_t												loader_thread,
+		ResourceBase										*	parent_resource
+	);
+
 public:
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	MaterialResource();
+	VK2D_API													~MaterialResource();
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	~MaterialResource();
+	/// @brief		Checks if the resource has been loaded or is in the process of being loaded.
+	///
+	///				This function will not wait but returns immediately with the result.
+	///
+	/// @note		Multithreading: Any thread.
+	///
+	/// @return		Status of the resource, see ResourceStatus.
+	VK2D_API ResourceStatus										GetStatus();
+
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	/// @brief		Waits for the resource to load on the calling thread before continuing execution.
+	///
+	///				For as long as the resource status is undetermined or timeout hasn't been met this function will block. As soon
+	///				as the resource state becomes determined this function will return and code execution can continue.
+	///
+	/// @note		Multithreading: Any thread.
+	///
+	/// @param[in]	timeout
+	///				Maximum time to wait. If resource is still in undetermined state at timeout it will return anyways and the
+	///				result will tell that the resource is still undetermined. Default value is std::chrono::nanoseconds::max() which
+	///				makes this function wait indefinitely.
+	///
+	/// @return		Status of the resource, see ResourceStatus. Resource status can only be undetermined if timeout was given.
+	VK2D_API ResourceStatus										WaitUntilLoaded(
+		std::chrono::nanoseconds								timeout						= std::chrono::nanoseconds::max()
+	);
+
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	/// @brief		Waits for the resource to load on the calling thread before continuing execution.
+	///
+	///				For as long as the resource status is undetermined or timeout hasn't been met this function will block. As soon
+	///				as the resource state becomes determined this function will return and code execution can continue.
+	///
+	/// @note		Multithreading: Any thread.
+	///
+	/// @param[in]	timeout
+	///				Maximum time to wait. If resource is still in undetermined state at timeout it will return anyways and the
+	///				result will tell that the resource is still undetermined.
+	///
+	/// @return		Status of the resource, see ResourceStatus.
+	VK2D_API ResourceStatus										WaitUntilLoaded(
+		std::chrono::steady_clock::time_point					timeout
+	);
+
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	/// @brief		Checks if the object is good to be used or if a failure occurred in it's creation.
+	///
+	/// @note		Multithreading: Any thread.
+	///
+	/// @return		true if class object was created successfully, false if something went wrong
+	VK2D_API bool												IsGood() const;
 
 private:
-
+	std::unique_ptr<vk2d_internal::MaterialResourceImpl>		impl;
 };
 
 

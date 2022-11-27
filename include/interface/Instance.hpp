@@ -667,7 +667,7 @@ private:
 /// 
 /// @return		Newly created instance.
 VK2D_API std::unique_ptr<Instance>						CreateInstance(
-	const InstanceCreateInfo						&	instance_create_info
+	const InstanceCreateInfo						&	instance_create_info		= {}
 );
 
 

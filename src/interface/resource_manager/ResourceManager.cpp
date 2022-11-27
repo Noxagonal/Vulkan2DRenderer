@@ -8,6 +8,7 @@
 
 
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 VK2D_API vk2d::ResourceManager::ResourceManager(
 	vk2d_internal::InstanceImpl		&	instance
 )
@@ -23,9 +24,11 @@ VK2D_API vk2d::ResourceManager::ResourceManager(
 	}
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 VK2D_API vk2d::ResourceManager::~ResourceManager()
 {}
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 VK2D_API vk2d::TextureResource * vk2d::ResourceManager::CreateTextureResource(
 	glm::uvec2						size,
 	const std::vector<Color8>	&	texels
@@ -38,6 +41,7 @@ VK2D_API vk2d::TextureResource * vk2d::ResourceManager::CreateTextureResource(
 	);
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 VK2D_API vk2d::TextureResource * vk2d::ResourceManager::LoadTextureResource(
 	const std::filesystem::path		&	file_path
 )
@@ -48,6 +52,7 @@ VK2D_API vk2d::TextureResource * vk2d::ResourceManager::LoadTextureResource(
 	);
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 VK2D_API vk2d::TextureResource * vk2d::ResourceManager::CreateArrayTextureResource(
 	glm::uvec2											size,
 	const std::vector<const std::vector<Color8>*>	&	texels_listing
@@ -60,6 +65,7 @@ VK2D_API vk2d::TextureResource * vk2d::ResourceManager::CreateArrayTextureResour
 	);
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 VK2D_API vk2d::TextureResource * vk2d::ResourceManager::LoadArrayTextureResource(
 	const std::vector<std::filesystem::path>		&	file_path_listing
 )
@@ -70,6 +76,7 @@ VK2D_API vk2d::TextureResource * vk2d::ResourceManager::LoadArrayTextureResource
 	);
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 VK2D_API vk2d::FontResource * vk2d::ResourceManager::LoadFontResource(
 	const std::filesystem::path		&	file_path,
 	uint32_t							glyph_texel_size,
@@ -88,6 +95,15 @@ VK2D_API vk2d::FontResource * vk2d::ResourceManager::LoadFontResource(
 	);
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+VK2D_API vk2d::MaterialResource * vk2d::ResourceManager::CreateMaterialResource()
+{
+	return impl->CreateMaterialResource(
+		nullptr
+	);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 VK2D_API void vk2d::ResourceManager::DestroyResource(
 	ResourceBase		*	resource
 )
@@ -95,6 +111,7 @@ VK2D_API void vk2d::ResourceManager::DestroyResource(
 	impl->DestroyResource( resource );
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 VK2D_API bool vk2d::ResourceManager::IsGood() const
 {
 	return !!impl;

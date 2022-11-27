@@ -74,9 +74,14 @@ public:
 
 int main()
 {
-	vk2d::InstanceCreateInfo instance_create_info {};
-	auto instance = vk2d::CreateInstance( instance_create_info );
-	if( !instance ) return -1;
+	auto instance			= vk2d::CreateInstance();
+	auto resource_manager	= instance->GetResourceManager();
+
+	/// !!! TESTING !!!
+	{
+		auto material = resource_manager->CreateMaterialResource();
+		resource_manager->DestroyResource( material );
+	}
 
 	EventHandler event_handler;
 	vk2d::WindowCreateInfo					window_create_info {};
@@ -91,8 +96,6 @@ int main()
 	sampler_create_info.minification_filter		= vk2d::SamplerFilter::NEAREST;
 	sampler_create_info.magnification_filter	= vk2d::SamplerFilter::NEAREST;
 	auto pixelated_sampler = instance->CreateSampler( sampler_create_info );
-
-	auto resource_manager		= instance->GetResourceManager();
 
 	auto delta_time_counter		= DeltaTimeCounter();
 	auto delta_time				= 0.0f;

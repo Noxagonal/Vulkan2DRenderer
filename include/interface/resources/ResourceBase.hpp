@@ -8,13 +8,14 @@
 
 
 namespace vk2d {
-
 namespace vk2d_internal {
+
 class ResourceManagerImpl;
 class ResourceImplBase;
 class ResourceThreadLoadTask;
 class ResourceThreadUnloadTask;
-}
+
+} // vk2d_internal
 
 
 
@@ -57,7 +58,7 @@ public:
 	// TODO: Figure out how to get rid of Resource virtual destructor to improve ABI compatibility further.
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	VK2D_API virtual ~ResourceBase()						= default;
+	VK2D_API virtual										~ResourceBase()						= default;
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Checks if the resource has been loaded, failed to load or is yet to be loaded / determined.
@@ -149,7 +150,7 @@ public:
 
 protected:
 
-	vk2d_internal::ResourceImplBase						*	resource_impl						= {};
+	vk2d_internal::ResourceImplBase						*	resource_impl;
 };
 
 

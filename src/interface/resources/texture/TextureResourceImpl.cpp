@@ -18,6 +18,7 @@
 
 
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 vk2d::vk2d_internal::TextureResourceImpl::TextureResourceImpl(
 	TextureResource								&	my_interface,
 	ResourceManagerImpl							&	resource_manager,
@@ -38,6 +39,7 @@ vk2d::vk2d_internal::TextureResourceImpl::TextureResourceImpl(
 	is_good						= true;
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 vk2d::vk2d_internal::TextureResourceImpl::TextureResourceImpl(
 	TextureResource									&	my_interface,
 	ResourceManagerImpl								&	resource_manager,
@@ -64,6 +66,7 @@ vk2d::vk2d_internal::TextureResourceImpl::TextureResourceImpl(
 	is_good						= true;
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 bool vk2d::vk2d_internal::TextureResourceImpl::MTLoad(
 	ThreadPrivateResource	*	thread_resource
 )
@@ -796,6 +799,7 @@ bool vk2d::vk2d_internal::TextureResourceImpl::MTLoad(
 	return true;
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void vk2d::vk2d_internal::TextureResourceImpl::MTUnload(
 	ThreadPrivateResource	*	thread_resource
 )
@@ -807,6 +811,7 @@ void vk2d::vk2d_internal::TextureResourceImpl::MTUnload(
 
 	auto memory_pool		= loader_thread_resource->GetDeviceMemoryPool();
 
+	// TODO: Is this check necessary? resource should be loaded by this point, make sure and remove this call if possible.
 	// Check if loaded successfully, no need to check for failure as this thread was
 	// responsible for loading it, it's either loaded or failed to load but it'll
 	// definitely be either or. MTUnload() does not ever get called before MTLoad().
@@ -852,6 +857,7 @@ void vk2d::vk2d_internal::TextureResourceImpl::MTUnload(
 	staging_buffers.clear();
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 vk2d::ResourceStatus vk2d::vk2d_internal::TextureResourceImpl::GetStatus()
 {
 	if( !is_good ) return ResourceStatus::FAILED_TO_LOAD;
@@ -872,7 +878,7 @@ vk2d::ResourceStatus vk2d::vk2d_internal::TextureResourceImpl::GetStatus()
 			if( result == VK_SUCCESS ) {
 				// Loaded, free some resources used to load
 				status = local_status = ResourceStatus::LOADED;
-				ScheduleTextureLoadResourceDestruction();
+				SchedulePostLoadCleanup();
 			} else if( result == VK_NOT_READY ) {
 				return local_status;
 			} else {
@@ -884,6 +890,7 @@ vk2d::ResourceStatus vk2d::vk2d_internal::TextureResourceImpl::GetStatus()
 	return local_status;
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 vk2d::ResourceStatus vk2d::vk2d_internal::TextureResourceImpl::WaitUntilLoaded(
 	std::chrono::nanoseconds				timeout
 )
@@ -894,6 +901,7 @@ vk2d::ResourceStatus vk2d::vk2d_internal::TextureResourceImpl::WaitUntilLoaded(
 	return WaitUntilLoaded( std::chrono::steady_clock::now() + timeout );
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 vk2d::ResourceStatus vk2d::vk2d_internal::TextureResourceImpl::WaitUntilLoaded(
 	std::chrono::steady_clock::time_point	timeout
 )
@@ -925,12 +933,12 @@ vk2d::ResourceStatus vk2d::vk2d_internal::TextureResourceImpl::WaitUntilLoaded(
 			);
 			if( result == VK_SUCCESS ) {
 				status = local_status = ResourceStatus::LOADED;
-				ScheduleTextureLoadResourceDestruction();
+				SchedulePostLoadCleanup();
 			} else if( result == VK_TIMEOUT ) {
 				return local_status;
 			} else {
 				status = local_status = ResourceStatus::FAILED_TO_LOAD;
-				ScheduleTextureLoadResourceDestruction();
+				SchedulePostLoadCleanup();
 			}
 		} // Else timeout and return local_status.
 	}
@@ -938,21 +946,25 @@ vk2d::ResourceStatus vk2d::vk2d_internal::TextureResourceImpl::WaitUntilLoaded(
 	return local_status;
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 VkImage vk2d::vk2d_internal::TextureResourceImpl::GetVulkanImage() const
 {
 	return image.image;
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 VkImageView vk2d::vk2d_internal::TextureResourceImpl::GetVulkanImageView() const
 {
 	return image.view;
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 VkImageLayout vk2d::vk2d_internal::TextureResourceImpl::GetVulkanImageLayout() const
 {
 	return vk_image_layout;
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 glm::uvec2 vk2d::vk2d_internal::TextureResourceImpl::GetSize() const
 {
 	return glm::uvec2( extent.width, extent.height );
@@ -963,11 +975,13 @@ uint32_t vk2d::vk2d_internal::TextureResourceImpl::GetLayerCount() const
 	return image_layer_count;
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 bool vk2d::vk2d_internal::TextureResourceImpl::IsTextureDataReady()
 {
 	return GetStatus() == ResourceStatus::LOADED;
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 bool vk2d::vk2d_internal::TextureResourceImpl::IsGood() const
 {
 	return is_good;
@@ -978,6 +992,9 @@ bool vk2d::vk2d_internal::TextureResourceImpl::IsGood() const
 namespace vk2d {
 namespace vk2d_internal {
 
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Handles the texture destruction
 class DestroyTextureLoadResources :
 	public Task
@@ -1045,10 +1062,15 @@ private:
 	TextureResourceImpl		*	texture;
 };
 
+
+
 } // vk2d_internal
 } // vk2d
 
-void vk2d::vk2d_internal::TextureResourceImpl::ScheduleTextureLoadResourceDestruction()
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+void vk2d::vk2d_internal::TextureResourceImpl::SchedulePostLoadCleanup()
 {
 	resource_manager.GetThreadPool().ScheduleTask(
 		std::make_unique<DestroyTextureLoadResources>( this ),

@@ -293,6 +293,20 @@ public:
 	const std::vector<uint32_t>							&	GetLoaderThreads() const;
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	/// @brief		Get material loader thread.
+	///
+	///				Material loader thread is a singular thread that is used to load materials. It has the same capabilities as a
+	///				normal loader thread but is reserved specifically for materials. This is mostly because glslang is not
+	///				multithreaded so this thread is kept separate.
+	///
+	/// @see		ThreadPool
+	/// 
+	/// @note		Multithreading: Any thread.
+	///
+	/// @return		Material loader thread index.
+	uint32_t												GetMaterialLoaderThread() const;
+
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Get general threads.
 	///
 	///				General threads are meant to do heavy lifting like translating data and decoding packed image files like png
@@ -603,6 +617,7 @@ private:
 	std::unique_ptr<ResourceManager>						resource_manager;
 	std::optional<ThreadPool>								thread_pool;
 	std::vector<uint32_t>									loader_threads;
+	uint32_t												material_loader_thread					= {};
 	std::vector<uint32_t>									general_threads;
 
 	std::vector<VkShaderModule>								vk_graphics_shader_modules_DEPRICATED;
