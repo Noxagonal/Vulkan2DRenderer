@@ -61,6 +61,10 @@
 // Used only if VK2D_BUILD_OPTION_VULKAN_VALIDATION == 1
 #define VK2D_BUILD_OPTION_VULKAN_VALIDATION_SEVERITY_ERROR				1
 
+// Print out GLSL shader before it is compiled. This is needed because GLSL shader code
+// is generated on the fly and stitched together along with the user provided GLSL code.
+#define VK2D_BUILD_OPTION_VULKAN_PRINT_GLSL_BEFORE_COMPILATION			1
+
 // Mesh buffer object handles getting meshes into the GPU.
 // This system handles meshes in batches. These defines
 // control the allocation batch size that is Allocated

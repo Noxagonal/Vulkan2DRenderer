@@ -22,6 +22,9 @@
 
 #include <Spir-V/IncludeAllShaders.hpp>
 
+/// !!! TESTING !!!
+#include <vulkan/shaders/glsl/GLSLGenerators.hpp>
+
 #define GLFW_INCLUDE_NONE
 #include <GLFW/glfw3.h>
 
@@ -158,6 +161,15 @@ vk2d::vk2d_internal::InstanceImpl::InstanceImpl(
 	if( !CreateBlurSampler() ) return;
 
 	instance_listeners.push_back( this );
+
+	// !!! TESTING !!!
+	auto shader_info = ShaderInfo(
+		ShaderStage::VERTEX,
+		"TestShader",
+		vulkan::glsl::GenerateVertexDefaultMain()
+	);
+	auto shader = vulkan_device->GetShaderManager()->CreateShader( shader_info );
+	vulkan_device->GetShaderManager()->DestroyShader( shader );
 
 	is_good				= true;
 }
@@ -664,17 +676,16 @@ vk2d::PFN_VK2D_ReportFunction vk2d::vk2d_internal::InstanceImpl::GetReportFuncti
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void vk2d::vk2d_internal::InstanceImpl::Report(
-	VkResult					vk_result,
-	ReportSeverity				severity,
-	const std::string		&	message
+	VkResult				vk_result,
+	ReportSeverity			severity,
+	std::string_view		message
 ) const
 {
-	if( report_function ) {
-		std::lock_guard<std::mutex> report_lock( report_mutex );
-
+	if( report_function )
+	{
 		if( vk_result == VK_ERROR_DEVICE_LOST ) severity = ReportSeverity::DEVICE_LOST;
 
-		report_function(
+		Report(
 			severity,
 			message
 		);
@@ -683,13 +694,12 @@ void vk2d::vk2d_internal::InstanceImpl::Report(
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void vk2d::vk2d_internal::InstanceImpl::Report(
-	VkResult					vk_result,
-	const std::string		&	message
+	VkResult				vk_result,
+	std::string_view		message
 ) const
 {
-	if( report_function ) {
-		std::lock_guard<std::mutex> report_lock( report_mutex );
-
+	if( report_function )
+	{
 		auto severity = ReportSeverity::NONE;
 
 		switch( vk_result ) {
@@ -755,7 +765,7 @@ void vk2d::vk2d_internal::InstanceImpl::Report(
 				break;
 		}
 
-		report_function(
+		Report(
 			severity,
 			message
 		);
@@ -764,8 +774,8 @@ void vk2d::vk2d_internal::InstanceImpl::Report(
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void vk2d::vk2d_internal::InstanceImpl::Report(
-	ReportSeverity severity,
-	const std::string & message
+	ReportSeverity			severity,
+	std::string_view		message
 ) const
 {
 	if( report_function ) {
@@ -2056,7 +2066,7 @@ namespace vk2d_internal {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void VK2D_default_ReportFunction(
 	ReportSeverity			severity,
-	std::string_view				message
+	std::string_view		message
 )
 {
 	VK2D_ASSERT_SINGLE_THREAD_ACCESS_SCOPE();
@@ -2065,33 +2075,33 @@ void VK2D_default_ReportFunction(
 	auto background_color	= ConsoleColor::DEFAULT;
 
 	switch( severity ) {
-		case ReportSeverity::NONE:
-			break;
-		case ReportSeverity::VERBOSE:
-			text_color = ConsoleColor::DARK_GRAY;
-			break;
-		case ReportSeverity::INFO:
-			text_color = ConsoleColor::DARK_GREEN;
-			break;
-		case ReportSeverity::PERFORMANCE_WARNING:
-			text_color = ConsoleColor::BLUE;
-			break;
-		case ReportSeverity::WARNING:
-			text_color = ConsoleColor::DARK_YELLOW;
-			break;
-		case ReportSeverity::NON_CRITICAL_ERROR:
-			text_color = ConsoleColor::RED;
-			break;
-		case ReportSeverity::CRITICAL_ERROR:
-		case ReportSeverity::DEVICE_LOST:
-			text_color			= ConsoleColor::WHITE;
-			background_color	= ConsoleColor::DARK_RED;
-			break;
+	case ReportSeverity::NONE:
+		break;
+	case ReportSeverity::VERBOSE:
+		text_color = ConsoleColor::DARK_GRAY;
+		break;
+	case ReportSeverity::INFO:
+		text_color = ConsoleColor::DARK_GREEN;
+		break;
+	case ReportSeverity::PERFORMANCE_WARNING:
+		text_color = ConsoleColor::BLUE;
+		break;
+	case ReportSeverity::WARNING:
+		text_color = ConsoleColor::DARK_YELLOW;
+		break;
+	case ReportSeverity::NON_CRITICAL_ERROR:
+		text_color = ConsoleColor::RED;
+		break;
+	case ReportSeverity::CRITICAL_ERROR:
+	case ReportSeverity::DEVICE_LOST:
+		text_color			= ConsoleColor::WHITE;
+		background_color	= ConsoleColor::DARK_RED;
+		break;
 	case ReportSeverity::DEBUG:
 		text_color			= ConsoleColor::CYAN;
 		break;
-		default:
-			break;
+	default:
+		break;
 	}
 
 	auto editable_message = std::string();
@@ -2159,11 +2169,14 @@ void VK2D_default_ReportFunction(
 	}
 	#endif
 
-	if( severity >= ReportSeverity::NON_CRITICAL_ERROR ) {
+	if( severity == ReportSeverity::NON_CRITICAL_ERROR ||
+		severity == ReportSeverity::CRITICAL_ERROR ||
+		severity == ReportSeverity::DEVICE_LOST )
+	{
 		#ifdef _WIN32
-		MessageBox( NULL, message_editable.c_str(), "Critical error!", MB_OK | MB_ICONERROR );
+		MessageBox( NULL, editable_message.c_str(), "Critical error!", MB_OK | MB_ICONERROR );
 		#endif
-		if( severity >= ReportSeverity::CRITICAL_ERROR ) {
+		if( severity == ReportSeverity::CRITICAL_ERROR || severity == ReportSeverity::DEVICE_LOST ) {
 			std::exit( -1 );
 		}
 	}

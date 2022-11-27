@@ -51,8 +51,11 @@ enum class ReportSeverity : uint32_t {
 	/// @brief		Critical error, application has no option but to terminate immediately.
 	CRITICAL_ERROR,
 
-	/// @brief		 Similar to critical error, this means the GPU crashed and we need to terminate immediately.
+	/// @brief		Similar to critical error, this means the GPU crashed and we need to terminate immediately.
 	DEVICE_LOST,
+
+	/// @brief		 This has the highest print priority but will not raise an error, used only with debug printouts.
+	DEBUG,
 };
 
 
@@ -203,7 +206,8 @@ public:
 ///				Message from the VK2D that you can pass on to wherever you wish.
 using PFN_VK2D_ReportFunction				= void( * )(
 	ReportSeverity							severity,
-	std::string_view						message );
+	std::string_view						message
+);
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /// @brief		Function pointer type for monitor update callback.

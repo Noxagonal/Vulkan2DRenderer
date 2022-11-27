@@ -1,10 +1,4 @@
 #version 450
-#extension GL_KHR_vulkan_glsl : enable
-
-
-
-// Defines position where user main function will be imported.
-#define USER_SHADER_VERT_MAIN_CALL
 
 
 
@@ -52,6 +46,7 @@ layout(location=0) out		vec2	fragment_output_UV;
 layout(location=1) out		vec4	fragment_output_color;
 layout(location=2) out		vec2	fragment_output_original_coords;
 layout(location=3) out flat	uint	fragment_output_vertex_index;
+layout(location=4) out flat	uint	fragment_output_texture_channel;
 
 
 
@@ -67,6 +62,7 @@ void main()
 	fragment_output_color			= vertex_buffer.ssbo[ gl_VertexIndex ].color;
 	fragment_output_original_coords	= raw_vertex_coords.xy;
 	fragment_output_vertex_index	= gl_VertexIndex;
+	fragment_output_texture_channel	= vertex_buffer.ssbo[ gl_VertexIndex ].single_texture_channel;
 
 	mat4 transformation_matrix		= transformation_buffer.ssbo[ gl_InstanceIndex + push_constants.transformation_offset ];
 

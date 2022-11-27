@@ -15,6 +15,8 @@
 #include <glslang/SPIRV/GLSL.std.450.h>
 #include <glslang/SPIRV/GlslangToSpv.h>
 
+#include "glsl/GLSLGenerators.hpp"
+
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -32,6 +34,7 @@ VkShaderModule vk2d::vulkan::ShaderCompiler::CreateShaderModule(
 	auto spir_v_code = CompileSpirV(
 		user_shader_info
 	);
+	if( spir_v_code.empty() ) return {};
 
 	VkShaderModuleCreateInfo create_info {};
 	create_info.sType		= VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
@@ -54,11 +57,8 @@ VkShaderModule vk2d::vulkan::ShaderCompiler::CreateShaderModule(
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-auto temp_build_in_glsl = std::string();
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 std::vector<uint32_t> vk2d::vulkan::ShaderCompiler::CompileSpirV(
-	const ShaderInfo	&	user_shader_info
+	const ShaderInfo & user_shader_info
 )
 {
 	VK2D_ASSERT_SINGLE_THREAD_ACCESS_SCOPE();
@@ -89,39 +89,84 @@ std::vector<uint32_t> vk2d::vulkan::ShaderCompiler::CompileSpirV(
 	// glslang::GetGlslVersionString();
 
 	struct {
-		std::vector<const char*>	texts;
-		std::vector<int>			lenghts;
+		std::vector<const char*>	codes;
+		std::vector<int>			code_lenghts;
 		std::vector<const char*>	names;
-		size_t						size;
+		size_t						size				= {};
 
+		std::vector<std::string>	codes_storage;
 		std::vector<std::string>	names_storage;
+
+		void Finalize()
+		{
+			codes.resize( size );
+			code_lenghts.resize( size );
+			names.resize( size );
+			for( size_t i = 0; i < size; ++i ) {
+				codes[ i ]			= codes_storage[ i ].c_str();
+				code_lenghts[ i ]	= codes_storage[ i ].length();
+				names[ i ]			= names_storage[ i ].c_str();
+			}
+		}
 	} glsl_sources;
 
 	auto AddGLSLSource = [ &glsl_sources ](
-		std::string_view		code_text,
-		std::string_view		code_name
+		std::string_view		code,
+		std::string_view		name		= "<build-in-glsl>"
 	)
 	{
-		glsl_sources.texts.push_back( code_text.data() );
-		glsl_sources.lenghts.push_back( code_text.length() );
-
-		glsl_sources.names_storage.push_back( std::string( code_name ) );
-		glsl_sources.names.push_back( glsl_sources.names_storage.back().c_str() );
-
+		glsl_sources.codes_storage.push_back( std::string( code ) );
+		glsl_sources.names_storage.push_back( std::string( name ) );
 		++glsl_sources.size;
+	};
+
+	auto AddGLSLCommonSources = [ AddGLSLSource ]()
+	{
+		AddGLSLSource( glsl::GenerateInterfaceVersion( 450 ) );
+		AddGLSLSource( glsl::GenerateInterfaceVertex() );
+	};
+
+	auto AddGLSLVertexShaderSpecificSources = [ AddGLSLSource ]()
+	{
+		AddGLSLSource( glsl::GenerateInterfaceWindowFrameData() );
+		AddGLSLSource( glsl::GenerateInterfaceTransformationBuffer() );
+		AddGLSLSource( glsl::GenerateInterfaceVertexBuffer() );
+		AddGLSLSource( glsl::GenerateInterfacePushConstants() );
+		AddGLSLSource( glsl::GenerateInterfaceVertexOutput() );
+	};
+
+	auto AddGLSLFragmentShaderSpecificSources = [ AddGLSLSource ]()
+	{
+		AddGLSLSource( glsl::GenerateInterfaceIndexBuffer() );
+		AddGLSLSource( glsl::GenerateInterfaceVertexBuffer() );
+		AddGLSLSource( glsl::GenerateInterfaceSampler() );
+		AddGLSLSource( glsl::GenerateInterfaceSampledImage() );
+		AddGLSLSource( glsl::GenerateInterfacePushConstants() );
+		AddGLSLSource( glsl::GenerateInterfaceFragmentInput() );
+		AddGLSLSource( glsl::GenerateInterfaceFragmentOutput() );
 	};
 
 	// You may add build-in glsl include sources here. Just add a call to AddGLSLInclude().
 	// Order matters, first included codes should also be added first.
-	// 
-	// !!! WARNING !!! GLSL CODE MUST BE STORED OUTSIDE OF THIS FUNCTION CALL.
-	// GLSL source code is not copied to internal storage.
-	// 
-	// Name is copied to internal storage and may be temporary.
-	AddGLSLSource( temp_build_in_glsl, "<build_in_glsl>" );
+	AddGLSLCommonSources();
+	if( user_shader_info.GetStage() == ShaderStage::VERTEX ) AddGLSLVertexShaderSpecificSources();
+	if( user_shader_info.GetStage() == ShaderStage::FRAGMENT ) AddGLSLFragmentShaderSpecificSources();
 	AddGLSLSource( user_shader_info.GetCode(), user_shader_info.GetName() );
 
 
+
+	glsl_sources.Finalize();
+
+	#if VK2D_BUILD_OPTION_VULKAN_PRINT_GLSL_BEFORE_COMPILATION && VK2D_DEBUG_ENABLE
+	{
+		auto debug_print = std::string( "GLSL debug printout: \n" );
+		for( size_t i = 0; i < glsl_sources.size; ++i ) {
+			debug_print += glsl_sources.codes[ i ];
+		}
+		debug_print += std::string( "\nGLSL debug printout end." );
+		instance.Report( ReportSeverity::DEBUG, debug_print );
+	}
+	#endif
 
 	// Automate InitializeProcess() and FinalizeProcess().
 	struct GLSLANG
@@ -136,8 +181,8 @@ std::vector<uint32_t> vk2d::vulkan::ShaderCompiler::CompileSpirV(
 		ShaderStageToEShLanguage( user_shader_info.GetStage() )
 	);
 	shader.setStringsWithLengthsAndNames(
-		glsl_sources.texts.data(),
-		glsl_sources.lenghts.data(),
+		glsl_sources.codes.data(),
+		glsl_sources.code_lenghts.data(),
 		glsl_sources.names.data(),
 		glsl_sources.size
 	);
@@ -149,7 +194,7 @@ std::vector<uint32_t> vk2d::vulkan::ShaderCompiler::CompileSpirV(
 
 	if( shader.getInfoLog() && std::strlen( shader.getInfoLog() ) ) {
 		instance.Report(
-			ReportSeverity::INFO,
+			compile_success ? ReportSeverity::WARNING : ReportSeverity::NON_CRITICAL_ERROR,
 			std::string( "Shader compiler: " ) + shader.getInfoLog()
 		);
 	}
@@ -177,7 +222,7 @@ std::vector<uint32_t> vk2d::vulkan::ShaderCompiler::CompileSpirV(
 
 	if( program.getInfoLog() && std::strlen( program.getInfoLog() ) ) {
 		instance.Report(
-			ReportSeverity::INFO,
+			link_success ? ReportSeverity::WARNING : ReportSeverity::NON_CRITICAL_ERROR,
 			std::string( "Shader linker: " ) + program.getInfoLog()
 		);
 	}

@@ -236,7 +236,7 @@ public:
 	void													Report(
 		VkResult											vk_result,
 		ReportSeverity										severity,
-		const std::string								&	message
+		std::string_view									message
 	) const;
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -251,7 +251,7 @@ public:
 	///				Message.
 	void													Report(
 		VkResult											vk_result,
-		const std::string								&	message
+		std::string_view									message
 	) const;
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -266,7 +266,7 @@ public:
 	///				Message.
 	void													Report(
 		ReportSeverity										severity,
-		const std::string								&	message
+		std::string_view									message
 	) const;
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

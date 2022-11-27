@@ -1,10 +1,4 @@
 #version 450
-#extension GL_KHR_vulkan_glsl : enable
-
-
-
-// Defines position where user main function will be imported.
-#define USER_SHADER_FRAG_MAIN_CALL
 
 
 
@@ -56,6 +50,7 @@ layout(location=0) in		vec2	fragment_input_UV;
 layout(location=1) in		vec4	fragment_input_color;
 layout(location=2) in		vec2	fragment_input_original_coords;
 layout(location=3) in flat	uint	fragment_input_vertex_index;
+layout(location=4) in flat	uint	fragment_input_texture_channel;
 
 // Color output.
 layout(location=0) out vec4 final_fragment_color;
@@ -171,3 +166,23 @@ vec2 CalculateLineWeights( Vertex[ 2 ] vertices )
 	return vec2( 1.0, 0.0 );
 }
 
+void main()
+{
+	if( sampler_data.border_color_enable.x > 0 ) {
+		if( fragment_input_UV.x < 0.0 || fragment_input_UV.x > 1.0 ) {
+			final_fragment_color	= sampler_data.border_color;
+			return;
+		}
+	}
+	if( sampler_data.border_color_enable.y > 0 ) {
+		if( fragment_input_UV.y < 0.0 || fragment_input_UV.y > 1.0 ) {
+			final_fragment_color	= sampler_data.border_color;
+			return;
+		}
+	}
+
+	vec4	texture_color		= texture( sampler2DArray( sampled_image, image_sampler ), vec3( fragment_input_UV, float( fragment_input_texture_channel ) ) );
+	final_fragment_color		= texture_color * fragment_input_color;
+
+	USER_SHADER_MAIN_CALL
+}

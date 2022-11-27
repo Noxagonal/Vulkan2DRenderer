@@ -163,7 +163,8 @@ public:
 	// Main thread only!
 	// 'thread_resources' IS CONSUMED!
 	ThreadPool(
-		std::vector<std::unique_ptr<ThreadPrivateResource>>		&&	thread_resources );
+		std::vector<std::unique_ptr<ThreadPrivateResource>>		&&	thread_resources
+	);
 
 	// MAIN THREAD ONLY!
 	virtual ~ThreadPool();

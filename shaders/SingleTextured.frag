@@ -65,7 +65,7 @@ void SingleTexturedFragmentWithUVBorderColor()
 
 	vec4	texture_color		= texture( sampler2DArray( sampled_image, image_sampler ), vec3( fragment_input_UV, float( fragment_input_texture_channel ) ) );
 	final_fragment_color		= texture_color * fragment_input_color;
-	
+
 	USER_SHADER_MAIN_CALL
 }
 
