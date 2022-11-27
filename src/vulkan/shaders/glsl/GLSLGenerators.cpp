@@ -40,6 +40,7 @@ layout(std140, set=0, binding=0) uniform WindowFrameData {
 )glsl";
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 std::string vk2d::vulkan::glsl::GenerateInterfaceTransformationBuffer()
 {
 	return
@@ -50,6 +51,7 @@ layout( std430, set=1, binding=0 ) readonly buffer TransformationBuffer {
 )glsl";
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 std::string vk2d::vulkan::glsl::GenerateInterfaceIndexBuffer()
 {
 	return
@@ -60,6 +62,7 @@ layout( std430, set=2, binding=0 ) readonly buffer IndexBuffer {
 )glsl";
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 std::string vk2d::vulkan::glsl::GenerateInterfaceVertexBuffer()
 {
 	return
@@ -70,6 +73,7 @@ layout( std430, set=3, binding=0 ) readonly buffer VertexBuffer {
 )glsl";
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 std::string vk2d::vulkan::glsl::GenerateInterfaceSampler()
 {
 	return
@@ -82,6 +86,7 @@ layout(std140, set=4, binding=1) uniform image_sampler_data {
 )glsl";
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 std::string vk2d::vulkan::glsl::GenerateInterfaceSampledImage()
 {
 	return
@@ -90,6 +95,7 @@ layout(set=5, binding=0) uniform texture2DArray sampled_image;
 )glsl";
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 std::string vk2d::vulkan::glsl::GenerateInterfacePushConstants()
 {
 	return
@@ -103,6 +109,7 @@ layout(std140, push_constant) uniform PushConstants {
 )glsl";
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 std::string vk2d::vulkan::glsl::GenerateInterfaceVertexOutput()
 {
 	return
@@ -115,6 +122,7 @@ layout(location=4) out flat	uint	vertex_output_texture_channel;
 )glsl";
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 std::string vk2d::vulkan::glsl::GenerateInterfaceFragmentInput()
 {
 	return
@@ -127,6 +135,7 @@ layout(location=4) in flat	uint	fragment_input_texture_channel;
 )glsl";
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 std::string vk2d::vulkan::glsl::GenerateInterfaceFragmentOutput()
 {
 	return
@@ -135,13 +144,13 @@ layout(location=0) out		vec4	fragment_output_color;
 )glsl";
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 std::string vk2d::vulkan::glsl::GenerateVertexDefaultMain()
 {
 	return
 R"glsl(
 void main()
 {
-	// These are always done.
 	vec4 raw_vertex_coords			= vec4( vertex_buffer.data[ gl_VertexIndex ].coords, 0.0, 1.0 );
 	vertex_output_UV				= vertex_buffer.data[ gl_VertexIndex ].UVs;
 	vertex_output_color				= vertex_buffer.data[ gl_VertexIndex ].color;
@@ -151,10 +160,6 @@ void main()
 
 	mat4 transformation_matrix		= transformation_buffer.data[ gl_InstanceIndex + push_constants.transformation_offset ];
 
-	// User main call goes here.
-	// These may be user provided. Current code is the fallback if user does not provide vertex shader. 
-	// Does the user write to gl_Position or return the position from main?
-	// - User may want to modify multiple values... So it's probably a good idea to let the user write to gl_Position and others directly.
 	vec2 transformed_vertex_coords	= ( transformation_matrix * raw_vertex_coords ).xy;
 	vec2 viewport_vertex_coords		= transformed_vertex_coords * window_frame_data.multiplier + window_frame_data.offset;
 
@@ -164,6 +169,7 @@ void main()
 )glsl";
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 std::string vk2d::vulkan::glsl::GenerateFragmentDefaultMain()
 {
 	return

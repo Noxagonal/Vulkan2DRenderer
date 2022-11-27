@@ -8,11 +8,18 @@
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 vk2d::vulkan::ShaderManager::ShaderManager(
-	vk2d_internal::InstanceImpl & instance
+	vk2d_internal::InstanceImpl		&	instance,
+	Device							&	vulkan_device
 ) :
 	instance( instance ),
-	shader_compiler( instance )
+	vulkan_device( vulkan_device ),
+	shader_compiler( instance, vulkan_device )
 {}
+
+vk2d::vulkan::ShaderManager::~ShaderManager()
+{
+	DestroyShaders();
+}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 VkShaderModule vk2d::vulkan::ShaderManager::FindShader(
@@ -61,7 +68,7 @@ void vk2d::vulkan::ShaderManager::DestroyShader(
 				shader_list.erase( it );
 
 				vkDestroyShaderModule(
-					instance.GetVulkanDevice(),
+					vulkan_device,
 					shader_module,
 					nullptr
 				);
@@ -72,4 +79,17 @@ void vk2d::vulkan::ShaderManager::DestroyShader(
 			++it;
 		}
 	}
+}
+
+void vk2d::vulkan::ShaderManager::DestroyShaders()
+{
+	for( auto & o : shader_list )
+	{
+		vkDestroyShaderModule(
+			vulkan_device,
+			o.second,
+			nullptr
+		);
+	}
+	shader_list.clear();
 }

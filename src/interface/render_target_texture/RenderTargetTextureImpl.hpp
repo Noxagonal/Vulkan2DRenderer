@@ -300,7 +300,7 @@ public:
 	RenderTargetTextureDependencyInfo							GetDependencyInfo();
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	void														DrawPointList(
+	void														DrawPointList_DEPRICATED(
 		const RawVertexData									&	raw_vertex_data,
 		std::span<const glm::mat4>								transformations,
 		Texture												*	texture,
@@ -308,7 +308,7 @@ public:
 	);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	void														DrawLineList(
+	void														DrawLineList_DEPRICATED(
 		std::span<const uint32_t>								raw_indices,
 		const RawVertexData									&	raw_vertex_data,
 		std::span<const glm::mat4>								transformations,
@@ -318,11 +318,11 @@ public:
 	);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	void														DrawTriangleList(
+	void														DrawTriangleList_DEPRICATED(
 		std::span<const uint32_t>								raw_indices,
 		const RawVertexData									&	raw_vertex_data,
 		std::span<const glm::mat4>								transformations,
-		bool													solid,
+		bool													filled,
 		Texture												*	texture,
 		Sampler												*	sampler
 	);
@@ -443,7 +443,7 @@ private:
 
 	void														CmdBindGraphicsPipelineIfDifferent(
 		VkCommandBuffer											command_buffer,
-		const vulkan::GraphicsPipelineSettings				&	pipeline_settings
+		const vulkan::GraphicsPipelineInfo					&	graphics_pipeline_info
 	);
 
 	void														CmdBindSamplerIfDifferent(
@@ -500,7 +500,7 @@ private:
 	VkImageLayout												vk_sampled_image_final_layout				= {};
 	VkAccessFlags												vk_sampled_image_final_access_mask			= {};
 
-	vulkan::GraphicsPipelineSettings							previous_graphics_pipeline_settings			= {};
+	vulkan::GraphicsPipelineInfo								previous_graphics_pipeline_info				= {};
 	Texture													*	previous_texture							= {};
 	Sampler													*	previous_sampler							= {};
 	float														previous_line_width							= {};

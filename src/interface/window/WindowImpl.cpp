@@ -304,7 +304,7 @@ vk2d::vk2d_internal::WindowImpl::WindowImpl(
 	vk_device( instance.GetVulkanDevice() ),
 	primary_render_queue( instance.GetVulkanDevice().GetQueue( vulkan::QueueType::PRIMARY_RENDER ) ),
 	primary_compute_queue( instance.GetVulkanDevice().GetQueue( vulkan::QueueType::PRIMARY_COMPUTE ) ),
-	device_memory_pool( *instance.GetVulkanDevice().GetDeviceMemoryPool() )
+	device_memory_pool( instance.GetVulkanDevice().GetDeviceMemoryPool() )
 {
 	VK2D_ASSERT_MAIN_THREAD( instance );
 
@@ -384,7 +384,7 @@ vk2d::vk2d_internal::WindowImpl::~WindowImpl()
 
 	mesh_buffer		= nullptr;
 
-	instance.FreeDescriptorSet( frame_data_descriptor_set );
+	instance.FreeDescriptorSet_DEPRICATED( frame_data_descriptor_set );
 	device_memory_pool.FreeCompleteResource( frame_data_device_buffer );
 	device_memory_pool.FreeCompleteResource( frame_data_staging_buffer );
 
@@ -689,7 +689,7 @@ bool vk2d::vk2d_internal::WindowImpl::BeginRender()
 			vkCmdBindDescriptorSets(
 				command_buffer,
 				VK_PIPELINE_BIND_POINT_GRAPHICS,
-				instance.GetGraphicsPrimaryRenderPipelineLayout(),
+				instance.GetGraphicsPrimaryRenderPipelineLayout_MOVE(),
 				vulkan::GRAPHICS_DESCRIPTOR_SET_ALLOCATION_WINDOW_FRAME_DATA,
 				1, &frame_data_descriptor_set.descriptorSet,
 				0, nullptr
@@ -1108,7 +1108,7 @@ bool vk2d::vk2d_internal::WindowImpl::EndRender()
 
 	previous_image						= next_image;
 	previous_frame_need_synchronization	= true;
-	previous_pipeline_settings			= {};
+	previous_graphics_pipeline_info		= {};
 	previous_sampler					= {};
 	previous_texture					= {};
 	previous_line_width					= {};
@@ -1485,7 +1485,7 @@ void vk2d::vk2d_internal::WindowImpl::SetRenderCoordinateSpace(
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-void vk2d::vk2d_internal::WindowImpl::DrawPointList(
+void vk2d::vk2d_internal::WindowImpl::DrawPointList_DEPRICATED(
 	const RawVertexData					&	raw_vertex_data,
 	std::span<const glm::mat4>				transformations,
 	Texture								*	texture,
@@ -1514,23 +1514,23 @@ void vk2d::vk2d_internal::WindowImpl::DrawPointList(
 	CheckAndAddRenderTargetTextureDependency( texture );
 
 	{
-		auto graphics_shader_programs = instance.GetCompatibleGraphicsShaderList(
+		auto graphics_shader_programs_DEPRICATED = instance.GetCompatibleGraphicsShaderList_DEPRICATED(
 			sampler->impl->IsAnyBorderColorEnabled(),
 			1
 		);
 
-		vulkan::GraphicsPipelineSettings pipeline_settings {};
-		pipeline_settings.vk_pipeline_layout = instance.GetGraphicsPrimaryRenderPipelineLayout();
-		pipeline_settings.vk_render_pass = vk_render_pass;
-		pipeline_settings.primitive_topology = VK_PRIMITIVE_TOPOLOGY_POINT_LIST;
-		pipeline_settings.polygon_mode = VK_POLYGON_MODE_POINT;
-		pipeline_settings.shader_programs = graphics_shader_programs;
-		pipeline_settings.samples = VkSampleCountFlags( samples );
-		pipeline_settings.enable_blending = VK_TRUE;
-
+		auto pipeline_info = vulkan::GraphicsPipelineInfo(
+			instance.GetGraphicsPrimaryRenderPipelineLayout_MOVE(),
+			vk_render_pass,
+			VK_PRIMITIVE_TOPOLOGY_POINT_LIST,
+			VK_POLYGON_MODE_POINT,
+			graphics_shader_programs_DEPRICATED,
+			VkSampleCountFlags( samples ),
+			VK_TRUE
+		);
 		CmdBindGraphicsPipelineIfDifferent(
 			command_buffer,
-			pipeline_settings
+			pipeline_info
 		);
 	}
 
@@ -1563,7 +1563,7 @@ void vk2d::vk2d_internal::WindowImpl::DrawPointList(
 
 			vkCmdPushConstants(
 				command_buffer,
-				instance.GetGraphicsPrimaryRenderPipelineLayout(),
+				instance.GetGraphicsPrimaryRenderPipelineLayout_MOVE(),
 				VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
 				0, sizeof( pc ),
 				&pc
@@ -1589,7 +1589,7 @@ void vk2d::vk2d_internal::WindowImpl::DrawPointList(
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-void vk2d::vk2d_internal::WindowImpl::DrawLineList(
+void vk2d::vk2d_internal::WindowImpl::DrawLineList_DEPRICATED(
 	std::span<const uint32_t>				raw_indices,
 	const RawVertexData					&	raw_vertex_data,
 	std::span<const glm::mat4>				transformations,
@@ -1621,23 +1621,23 @@ void vk2d::vk2d_internal::WindowImpl::DrawLineList(
 	CheckAndAddRenderTargetTextureDependency( texture );
 
 	{
-		auto graphics_shader_programs = instance.GetCompatibleGraphicsShaderList(
+		auto graphics_shader_programs_DEPRICATED = instance.GetCompatibleGraphicsShaderList_DEPRICATED(
 			sampler->impl->IsAnyBorderColorEnabled(),
 			2
 		);
 
-		vulkan::GraphicsPipelineSettings pipeline_settings {};
-		pipeline_settings.vk_pipeline_layout	= instance.GetGraphicsPrimaryRenderPipelineLayout();
-		pipeline_settings.vk_render_pass		= vk_render_pass;
-		pipeline_settings.primitive_topology	= VK_PRIMITIVE_TOPOLOGY_LINE_LIST;
-		pipeline_settings.polygon_mode			= VK_POLYGON_MODE_LINE;
-		pipeline_settings.shader_programs		= graphics_shader_programs;
-		pipeline_settings.samples				= VkSampleCountFlags( samples );
-		pipeline_settings.enable_blending		= VK_TRUE;
-
+		auto pipeline_info = vulkan::GraphicsPipelineInfo(
+			instance.GetGraphicsPrimaryRenderPipelineLayout_MOVE(),
+			vk_render_pass,
+			VK_PRIMITIVE_TOPOLOGY_LINE_LIST,
+			VK_POLYGON_MODE_LINE,
+			graphics_shader_programs_DEPRICATED,
+			VkSampleCountFlags( samples ),
+			VK_TRUE
+		);
 		CmdBindGraphicsPipelineIfDifferent(
 			command_buffer,
-			pipeline_settings
+			pipeline_info
 		);
 	}
 
@@ -1674,7 +1674,7 @@ void vk2d::vk2d_internal::WindowImpl::DrawLineList(
 
 			vkCmdPushConstants(
 				command_buffer,
-				instance.GetGraphicsPrimaryRenderPipelineLayout(),
+				instance.GetGraphicsPrimaryRenderPipelineLayout_MOVE(),
 				VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
 				0, sizeof( pc ),
 				&pc
@@ -1700,7 +1700,7 @@ void vk2d::vk2d_internal::WindowImpl::DrawLineList(
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-void vk2d::vk2d_internal::WindowImpl::DrawTriangleList(
+void vk2d::vk2d_internal::WindowImpl::DrawTriangleList_DEPRICATED(
 	std::span<const uint32_t>				raw_indices,
 	const RawVertexData					&	raw_vertex_data,
 	std::span<const glm::mat4>				transformations,
@@ -1732,23 +1732,23 @@ void vk2d::vk2d_internal::WindowImpl::DrawTriangleList(
 	CheckAndAddRenderTargetTextureDependency( texture );
 
 	{
-		auto graphics_shader_programs = instance.GetCompatibleGraphicsShaderList(
+		auto graphics_shader_programs_DEPRICATED = instance.GetCompatibleGraphicsShaderList_DEPRICATED(
 			sampler->impl->IsAnyBorderColorEnabled(),
 			3
 		);
 
-		vulkan::GraphicsPipelineSettings pipeline_settings {};
-		pipeline_settings.vk_pipeline_layout = instance.GetGraphicsPrimaryRenderPipelineLayout();
-		pipeline_settings.vk_render_pass = vk_render_pass;
-		pipeline_settings.primitive_topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
-		pipeline_settings.polygon_mode = filled ? VK_POLYGON_MODE_FILL : VK_POLYGON_MODE_LINE;
-		pipeline_settings.shader_programs = graphics_shader_programs;
-		pipeline_settings.samples = VkSampleCountFlags( samples );
-		pipeline_settings.enable_blending = VK_TRUE;
-
+		auto pipeline_info = vulkan::GraphicsPipelineInfo(
+			instance.GetGraphicsPrimaryRenderPipelineLayout_MOVE(),
+			vk_render_pass,
+			VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
+			filled ? VK_POLYGON_MODE_FILL : VK_POLYGON_MODE_LINE,
+			graphics_shader_programs_DEPRICATED,
+			VkSampleCountFlags( samples ),
+			VK_TRUE
+		);
 		CmdBindGraphicsPipelineIfDifferent(
 			command_buffer,
-			pipeline_settings
+			pipeline_info
 		);
 	}
 
@@ -1780,7 +1780,7 @@ void vk2d::vk2d_internal::WindowImpl::DrawTriangleList(
 
 			vkCmdPushConstants(
 				command_buffer,
-				instance.GetGraphicsPrimaryRenderPipelineLayout(),
+				instance.GetGraphicsPrimaryRenderPipelineLayout_MOVE(),
 				VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
 				0, sizeof( pc ),
 				&pc
@@ -1812,7 +1812,7 @@ void vk2d::vk2d_internal::WindowImpl::DrawTriangleList(
 		for( auto & v : vertices_copy ) {
 			v.color = Colorf( 0.2f, 1.0f, 0.4f, 0.25f );
 		}
-		DrawTriangleList(
+		DrawTriangleList_DEPRICATED(
 			raw_indices,
 			vertices_copy,
 			{},
@@ -2912,8 +2912,8 @@ bool vk2d::vk2d_internal::WindowImpl::CreateWindowFrameDataBuffer()
 
 	// Create descriptor set
 	{
-		frame_data_descriptor_set	= instance.AllocateDescriptorSet(
-			instance.GetGraphicsUniformBufferDescriptorSetLayout()
+		frame_data_descriptor_set	= instance.AllocateDescriptorSet_DEPRICATED(
+			instance.GetGraphicsUniformBufferDescriptorSetLayout_MOVE()
 		);
 		if( frame_data_descriptor_set != VK_SUCCESS ) {
 			instance.Report( frame_data_descriptor_set.result, "Internal error: Cannot allocate descriptor set for FrameData device buffer!" );
@@ -3046,19 +3046,19 @@ void vk2d::vk2d_internal::WindowImpl::HandleScreenshotEvent()
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void vk2d::vk2d_internal::WindowImpl::CmdBindGraphicsPipelineIfDifferent(
-	VkCommandBuffer								command_buffer,
-	const vulkan::GraphicsPipelineSettings	&	pipeline_settings
+	VkCommandBuffer							command_buffer,
+	const vulkan::GraphicsPipelineInfo	&	graphics_pipeline_info
 )
 {
-	if( previous_pipeline_settings != pipeline_settings ) {
-		auto pipeline = instance.GetGraphicsPipeline( pipeline_settings );
+	if( previous_graphics_pipeline_info.GetHash() != graphics_pipeline_info.GetHash() ) {
+		auto pipeline = instance.GetGraphicsPipeline_DEPRICATED( graphics_pipeline_info );
 
 		vkCmdBindPipeline(
 			command_buffer,
 			VK_PIPELINE_BIND_POINT_GRAPHICS,
 			pipeline
 		);
-		previous_pipeline_settings	= pipeline_settings;
+		previous_graphics_pipeline_info	= graphics_pipeline_info;
 	}
 }
 
@@ -3077,8 +3077,8 @@ void vk2d::vk2d_internal::WindowImpl::CmdBindSamplerIfDifferent(
 		// If this descriptor set doesn't exist yet for this
 		// sampler texture combo, create one and update it.
 		if( set.descriptor_set.descriptorSet == VK_NULL_HANDLE ) {
-			set.descriptor_set = instance.AllocateDescriptorSet(
-				instance.GetGraphicsSamplerDescriptorSetLayout()
+			set.descriptor_set = instance.AllocateDescriptorSet_DEPRICATED(
+				instance.GetGraphicsSamplerDescriptorSetLayout_MOVE()
 			);
 
 			VkDescriptorImageInfo image_info {};
@@ -3125,7 +3125,7 @@ void vk2d::vk2d_internal::WindowImpl::CmdBindSamplerIfDifferent(
 		vkCmdBindDescriptorSets(
 			command_buffer,
 			VK_PIPELINE_BIND_POINT_GRAPHICS,
-			instance.GetGraphicsPrimaryRenderPipelineLayout(),
+			instance.GetGraphicsPrimaryRenderPipelineLayout_MOVE(),
 			vulkan::GRAPHICS_DESCRIPTOR_SET_ALLOCATION_SAMPLER_AND_SAMPLER_DATA,
 			1, &set.descriptor_set.descriptorSet,
 			0, nullptr
@@ -3150,8 +3150,8 @@ void vk2d::vk2d_internal::WindowImpl::CmdBindTextureIfDifferent(
 		// If this descriptor set doesn't exist yet for this
 		// sampler texture combo, create one and update it.
 		if( set.descriptor_set.descriptorSet == VK_NULL_HANDLE ) {
-			set.descriptor_set = instance.AllocateDescriptorSet(
-				instance.GetGraphicsTextureDescriptorSetLayout()
+			set.descriptor_set = instance.AllocateDescriptorSet_DEPRICATED(
+				instance.GetGraphicsTextureDescriptorSetLayout_MOVE()
 			);
 
 			VkDescriptorImageInfo image_info {};
@@ -3182,7 +3182,7 @@ void vk2d::vk2d_internal::WindowImpl::CmdBindTextureIfDifferent(
 		vkCmdBindDescriptorSets(
 			command_buffer,
 			VK_PIPELINE_BIND_POINT_GRAPHICS,
-			instance.GetGraphicsPrimaryRenderPipelineLayout(),
+			instance.GetGraphicsPrimaryRenderPipelineLayout_MOVE(),
 			vulkan::GRAPHICS_DESCRIPTOR_SET_ALLOCATION_TEXTURE,
 			1, &set.descriptor_set.descriptorSet,
 			0, nullptr

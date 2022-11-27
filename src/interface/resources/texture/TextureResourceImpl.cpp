@@ -1027,7 +1027,7 @@ public:
 		);
 
 		for( auto & sb : texture->staging_buffers ) {
-			texture->resource_manager.GetInstance().GetVulkanDevice().GetDeviceMemoryPool()->FreeCompleteResource(
+			texture->resource_manager.GetInstance().GetVulkanDevice().GetDeviceMemoryPool().FreeCompleteResource(
 				sb
 			);
 		}

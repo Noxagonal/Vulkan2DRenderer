@@ -2,6 +2,8 @@
 
 #include <core/SourceCommon.hpp>
 
+#include <utility/Hasher.hpp>
+
 
 
 namespace vk2d {
@@ -43,7 +45,7 @@ struct GraphicsBlurPushConstants
 
 
 
-enum class GraphicsShaderListID {
+enum class GraphicsShaderListID_DEPRICATED {
 	SINGLE_TEXTURED,
 	SINGLE_TEXTURED_UV_BORDER_COLOR,
 
@@ -62,7 +64,7 @@ enum class GraphicsShaderListID {
 	SHADER_STAGE_ID_COUNT
 };
 
-enum class ComputeShaderProgramID
+enum class ComputeShaderProgramID_DEPRICATED
 {
 	SHADER_STAGE_ID_COUNT
 };
@@ -71,123 +73,68 @@ enum class ComputeShaderProgramID
 
 class GraphicsShaderList {
 public:
-	GraphicsShaderList()												= default;
+	inline									GraphicsShaderList() = default;
 
-	GraphicsShaderList(
-		const GraphicsShaderList		&	other )						= default;
-
-	GraphicsShaderList(
-		GraphicsShaderList				&&	other )						= default;
+	inline									GraphicsShaderList(
+		const GraphicsShaderList		&	other
+	) = default;
 
 	template<typename T>
-	GraphicsShaderList(
-		const std::initializer_list<T>	&	init_list )					= delete;
+	inline									GraphicsShaderList(
+		const std::initializer_list<T>	&	init_list
+	) = delete;
 
-	inline GraphicsShaderList(
+	inline									GraphicsShaderList(
 		VkShaderModule						vertex,
 		VkShaderModule						fragment
 	) :
 		vertex( vertex ),
 		fragment( fragment )
-	{}
+	{
+		hash = CalculateHash();
+	}
 
-	GraphicsShaderList					&	operator=(
-		const GraphicsShaderList		&	other )						= default;
+	inline GraphicsShaderList			&	operator=(
+		const GraphicsShaderList		&	other
+	) = default;
 
-	GraphicsShaderList					&	operator=(
-		GraphicsShaderList				&&	other )						= default;
+	inline bool								operator<(
+		const GraphicsShaderList		&	other
+	) const
+	{
+		return hash < other.GetHash();
+	}
 
-	bool									operator<(
-		const GraphicsShaderList		&	other ) const;
-	bool									operator>(
-		const GraphicsShaderList		&	other ) const;
-	bool									operator<=(
-		const GraphicsShaderList		&	other ) const;
-	bool									operator>=(
-		const GraphicsShaderList		&	other ) const;
-	bool									operator==(
-		const GraphicsShaderList		&	other ) const;
-	bool									operator!=(
-		const GraphicsShaderList		&	other ) const;
+	inline VkShaderModule					GetVertexShader() const
+	{
+		return vertex;
+	}
+
+	inline VkShaderModule					GetFragmentShader() const
+	{
+		return fragment;
+	}
+
+	inline size_t							GetHash() const
+	{
+		return hash;
+	}
+
+private:
+
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	inline constexpr size_t					CalculateHash() const
+	{
+		Hasher hasher;
+		hasher.Hash( reinterpret_cast<size_t>( vertex ) );
+		hasher.Hash( reinterpret_cast<size_t>( fragment ) );
+		return hasher.GetHash();
+	}
 
 	VkShaderModule							vertex						= {};
 	VkShaderModule							fragment					= {};
-};
 
-
-
-class GraphicsPipelineSettings {
-public:
-	GraphicsPipelineSettings()											= default;
-	GraphicsPipelineSettings(
-		const GraphicsPipelineSettings	&	other )						= default;
-	GraphicsPipelineSettings(
-		GraphicsPipelineSettings		&&	other )						= default;
-	template<typename T>
-	GraphicsPipelineSettings(
-		const std::initializer_list<T>	&	init_list )					= delete;
-
-	GraphicsPipelineSettings			&	operator=(
-		const GraphicsPipelineSettings	&	other )						= default;
-	GraphicsPipelineSettings			&	operator=(
-		GraphicsPipelineSettings		&&	other )						= default;
-
-	bool									operator<(
-		const GraphicsPipelineSettings	&	other ) const;
-	bool									operator>(
-		const GraphicsPipelineSettings	&	other ) const;
-	bool									operator<=(
-		const GraphicsPipelineSettings	&	other ) const;
-	bool									operator>=(
-		const GraphicsPipelineSettings	&	other ) const;
-	bool									operator==(
-		const GraphicsPipelineSettings	&	other ) const;
-	bool									operator!=(
-		const GraphicsPipelineSettings	&	other ) const;
-
-	VkPipelineLayout						vk_pipeline_layout			= {};
-	VkRenderPass							vk_render_pass				= {};
-	VkPrimitiveTopology						primitive_topology			= {};
-	VkPolygonMode							polygon_mode				= {};
-	GraphicsShaderList						shader_programs				= {};
-	VkSampleCountFlags						samples						= {};
-	VkBool32								enable_blending				= {};
-};
-
-
-
-class ComputePipelineSettings
-{
-public:
-	ComputePipelineSettings()											= default;
-	ComputePipelineSettings(
-		const ComputePipelineSettings	&	other )						= default;
-	ComputePipelineSettings(
-		ComputePipelineSettings			&&	other )						= default;
-	template<typename T>
-	ComputePipelineSettings(
-		const std::initializer_list<T>	&	init_list )					= delete;
-
-	ComputePipelineSettings				&	operator=(
-		const ComputePipelineSettings	&	other )						= default;
-	ComputePipelineSettings				&	operator=(
-		ComputePipelineSettings			&&	other )						= default;
-
-	bool									operator<(
-		const ComputePipelineSettings	&	other ) const;
-	bool									operator>(
-		const ComputePipelineSettings	&	other ) const;
-	bool									operator<=(
-		const ComputePipelineSettings	&	other ) const;
-	bool									operator>=(
-		const ComputePipelineSettings	&	other ) const;
-	bool									operator==(
-		const ComputePipelineSettings	&	other ) const;
-	bool									operator!=(
-		const ComputePipelineSettings	&	other ) const;
-
-	VkPipelineLayout						vk_pipeline_layout			= {};
-	VkShaderModule							vk_shader_program			= {};
+	size_t									hash						= {};
 };
 
 

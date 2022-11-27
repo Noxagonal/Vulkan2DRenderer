@@ -186,14 +186,14 @@ public:
 		RenderCoordinateSpace									coordinate_space
 	);
 
-	void														DrawPointList(
+	void														DrawPointList_DEPRICATED(
 		const RawVertexData									&	raw_vertex_data,
 		std::span<const glm::mat4>								transformations,
 		Texture												*	texture,
 		Sampler												*	sampler
 	);
 
-	void														DrawLineList(
+	void														DrawLineList_DEPRICATED(
 		std::span<const uint32_t>								raw_indices,
 		const RawVertexData									&	raw_vertex_data,
 		std::span<const glm::mat4>								transformations,
@@ -202,7 +202,7 @@ public:
 		float													line_width
 	);
 
-	void														DrawTriangleList(
+	void														DrawTriangleList_DEPRICATED(
 		std::span<const uint32_t>								raw_indices,
 		const RawVertexData									&	raw_vertex_data,
 		std::span<const glm::mat4>								transformations,
@@ -254,7 +254,7 @@ private:
 
 	void														CmdBindGraphicsPipelineIfDifferent(
 		VkCommandBuffer											command_buffer,
-		const vulkan::GraphicsPipelineSettings				&	pipeline_settings );
+		const vulkan::GraphicsPipelineInfo					&	graphics_pipeline_info );
 
 	void														CmdBindSamplerIfDifferent(
 		VkCommandBuffer											command_buffer,
@@ -292,8 +292,8 @@ private:
 
 	vulkan::DeviceMemoryPool								&	device_memory_pool;
 
-	vulkan::Queue										primary_render_queue						= {};
-	vulkan::Queue										primary_compute_queue						= {};
+	vulkan::Queue												primary_render_queue						= {};
+	vulkan::Queue												primary_compute_queue						= {};
 
 	PFN_VK2D_ReportFunction										report_function								= {};
 
@@ -339,16 +339,13 @@ private:
 	bool														should_reconstruct							= {};
 	bool														should_close								= {};
 
-	vulkan::GraphicsPipelineSettings							previous_pipeline_settings					= {};
+	vulkan::GraphicsPipelineInfo								previous_graphics_pipeline_info				= {};
 	Texture													*	previous_texture							= {};
 	Sampler													*	previous_sampler							= {};
 	float														previous_line_width							= {};
 
-	std::map<Sampler*, TimedDescriptorPoolData>
-																sampler_descriptor_sets						= {};
-
-	std::map<Texture*, TimedDescriptorPoolData>
-																texture_descriptor_sets						= {};
+	std::map<Sampler*, TimedDescriptorPoolData>					sampler_descriptor_sets						= {};
+	std::map<Texture*, TimedDescriptorPoolData>					texture_descriptor_sets						= {};
 
 	std::unique_ptr<MeshBuffer>									mesh_buffer									= {};
 

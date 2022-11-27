@@ -21,9 +21,11 @@
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 vk2d::vulkan::ShaderCompiler::ShaderCompiler(
-	vk2d_internal::InstanceImpl	&	instance
+	vk2d_internal::InstanceImpl		&	instance,
+	Device							&	vulkan_device
 ) :
-	instance( instance )
+	instance( instance ),
+	vulkan_device( vulkan_device )
 {}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -44,7 +46,7 @@ VkShaderModule vk2d::vulkan::ShaderCompiler::CreateShaderModule(
 	create_info.pCode		= spir_v_code.data();
 	VkShaderModule shader_module = {};
 	auto result = vkCreateShaderModule(
-		instance.GetVulkanDevice(),
+		vulkan_device,
 		&create_info,
 		nullptr,
 		&shader_module

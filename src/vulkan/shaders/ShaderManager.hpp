@@ -27,8 +27,11 @@ class ShaderManager
 public:
 
 	ShaderManager(
-		vk2d_internal::InstanceImpl		&	instance
+		vk2d_internal::InstanceImpl		&	instance,
+		Device							&	vulkan_device
 	);
+
+	~ShaderManager();
 
 	VkShaderModule							FindShader(
 		const ShaderInfo				&	shader_info
@@ -47,7 +50,11 @@ public:
 	);
 
 private:
+
+	void									DestroyShaders();
+
 	vk2d_internal::InstanceImpl			&	instance;
+	Device								&	vulkan_device;
 
 	ShaderCompiler							shader_compiler;
 

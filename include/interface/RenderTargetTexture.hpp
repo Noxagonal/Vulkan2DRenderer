@@ -230,14 +230,14 @@ public:
 	///				Pointer to sampler which determines how the texture is drawn. Can be nullptr in which case the default sampler
 	///				is used.
 	template<vk2d_internal::VertexBaseOrDerivedType VertexT>
-	void											DrawPointList(
+	void											DrawPointList_DEPRICATED(
 		std::span<const VertexT>					vertices,
 		std::span<const glm::mat4>					transformations = {},
 		Texture									*	texture = nullptr,
 		Sampler									*	sampler = nullptr
 	)
 	{
-		DrawPointList(
+		DrawPointList_DEPRICATED(
 			vk2d::vk2d_internal::RawVertexData( vertices ),
 			transformations,
 			texture,
@@ -279,7 +279,7 @@ public:
 	///				Pointer to sampler which determines how the texture is drawn. Can be nullptr in which case the default sampler
 	///				is used.
 	template<vk2d_internal::VertexBaseOrDerivedType VertexT>
-	void											DrawLineList(
+	void											DrawLineList_DEPRICATED(
 		std::span<const VertexIndex_2>				indices,
 		std::span<const VertexT>					vertices,
 		std::span<const glm::mat4>					transformations = {},
@@ -290,7 +290,7 @@ public:
 	{
 		auto indices_span = std::span( reinterpret_cast<const uint32_t*>( indices.data() ), indices.size() * 2 );
 
-		DrawLineList(
+		DrawLineList_DEPRICATED(
 			indices_span,
 			vk2d::vk2d_internal::RawVertexData( vertices ),
 			transformations,
@@ -333,7 +333,7 @@ public:
 	///				Pointer to sampler which determines how the texture is drawn. Can be nullptr in which case the default sampler
 	///				is used.
 	template<vk2d_internal::VertexBaseOrDerivedType VertexT>
-	void											DrawTriangleList(
+	void											DrawTriangleList_DEPRICATED(
 		std::span<const VertexIndex_3>				indices,
 		std::span<const VertexT>					vertices,
 		std::span<const glm::mat4>					transformations = {},
@@ -344,7 +344,7 @@ public:
 	{
 		auto indices_span = std::span( reinterpret_cast<const uint32_t*>( indices.data() ), indices.size() * 3 );
 
-		DrawTriangleList(
+		DrawTriangleList_DEPRICATED(
 			indices_span,
 			vk2d::vk2d_internal::RawVertexData( vertices ),
 			transformations,
@@ -571,7 +571,7 @@ public:
 
 		switch( mesh.mesh_type ) {
 		case MeshType::TRIANGLE_FILLED:
-			DrawTriangleList(
+			DrawTriangleList_DEPRICATED(
 				mesh.indices,
 				raw_vertices,
 				transformations,
@@ -581,7 +581,7 @@ public:
 			);
 			break;
 		case MeshType::TRIANGLE_WIREFRAME:
-			DrawTriangleList(
+			DrawTriangleList_DEPRICATED(
 				mesh.indices,
 				raw_vertices,
 				transformations,
@@ -591,7 +591,7 @@ public:
 			);
 			break;
 		case MeshType::LINE:
-			DrawLineList(
+			DrawLineList_DEPRICATED(
 				mesh.indices,
 				raw_vertices,
 				transformations,
@@ -601,7 +601,7 @@ public:
 			);
 			break;
 		case MeshType::POINT:
-			DrawPointList(
+			DrawPointList_DEPRICATED(
 				raw_vertices,
 				transformations,
 				mesh.texture,
@@ -693,7 +693,7 @@ public:
 private:
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	VK2D_API void									DrawPointList(
+	VK2D_API void									DrawPointList_DEPRICATED(
 		const vk2d_internal::RawVertexData		&	raw_vertex_data,
 		std::span<const glm::mat4>					transformations = {},
 		Texture									*	texture = nullptr,
@@ -701,7 +701,7 @@ private:
 	);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	VK2D_API void									DrawLineList(
+	VK2D_API void									DrawLineList_DEPRICATED(
 		std::span<const uint32_t>					indices,
 		const vk2d_internal::RawVertexData		&	raw_vertex_data,
 		std::span<const glm::mat4>					transformations = {},
@@ -711,7 +711,7 @@ private:
 	);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	VK2D_API void									DrawTriangleList(
+	VK2D_API void									DrawTriangleList_DEPRICATED(
 		std::span<const uint32_t>					indices,
 		const vk2d_internal::RawVertexData		&	raw_vertex_data,
 		std::span<const glm::mat4>					transformations = {},

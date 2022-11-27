@@ -202,7 +202,7 @@ vk2d::vk2d_internal::SamplerImpl::SamplerImpl(
 	buffer_create_info.sharingMode				= VK_SHARING_MODE_EXCLUSIVE;
 	buffer_create_info.queueFamilyIndexCount	= 0;
 	buffer_create_info.pQueueFamilyIndices		= nullptr;
-	sampler_data = instance.GetVulkanDevice().GetDeviceMemoryPool()->CreateCompleteBufferResource(
+	sampler_data = instance.GetVulkanDevice().GetDeviceMemoryPool().CreateCompleteBufferResource(
 		&buffer_create_info,
 		VkMemoryPropertyFlagBits::VK_MEMORY_PROPERTY_HOST_CACHED_BIT
 	);
@@ -228,13 +228,13 @@ vk2d::vk2d_internal::SamplerImpl::~SamplerImpl()
 {
 	VK2D_ASSERT_MAIN_THREAD( instance );
 
-	instance.GetVulkanDevice().GetDeviceMemoryPool()->FreeCompleteResource(sampler_data);
+	instance.GetVulkanDevice().GetDeviceMemoryPool().FreeCompleteResource( sampler_data );
 	vkDestroySampler(
 		vk_device,
 		vk_sampler,
 		nullptr
 	);
-//	instance->GetDescriptorPool()->FreeDescriptorSet( descriptor_set );
+//	instance->GetDescriptorPool()->FreeDescriptorSet_DEPRICATED( descriptor_set );
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

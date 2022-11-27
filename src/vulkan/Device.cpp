@@ -93,6 +93,7 @@ vk2d::vulkan::Device::Device(
 	PopulatePhysicalDeviceStructs();
 	if( !CreateDeviceMemoryPool() ) return;
 	if( !CreateShaderManager() ) return;
+	if( !CreatePipelineManager() ) return;
 
 	is_good = true;
 }
@@ -100,6 +101,7 @@ vk2d::vulkan::Device::Device(
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 vk2d::vulkan::Device::~Device()
 {
+	DestroyPipelineManager();
 	DestroyShaderManager();
 	DestroyDeviceMemoryPool();
 
@@ -150,14 +152,19 @@ const VkPhysicalDeviceFeatures & vk2d::vulkan::Device::GetVulkanPhysicalDeviceFe
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-vk2d::vulkan::DeviceMemoryPool * vk2d::vulkan::Device::GetDeviceMemoryPool()
+vk2d::vulkan::DeviceMemoryPool & vk2d::vulkan::Device::GetDeviceMemoryPool()
 {
-	return &device_memory_pool.value();
+	return device_memory_pool.value();
 }
 
-vk2d::vulkan::ShaderManager * vk2d::vulkan::Device::GetShaderManager()
+vk2d::vulkan::ShaderManager & vk2d::vulkan::Device::GetShaderManager()
 {
-	return &shader_manager.value();
+	return shader_manager.value();
+}
+
+vk2d::vulkan::PipelineManager & vk2d::vulkan::Device::GetPipelineManager()
+{
+	return pipeline_manager.value();
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -196,24 +203,39 @@ bool vk2d::vulkan::Device::CreateDeviceMemoryPool()
 		vk_physical_device,
 		vk_device
 	);
-
 	if( !device_memory_pool ) {
 		instance.Report( ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot create memory pool!" );
 		return false;
 	}
+
 	return true;
 }
 
 bool vk2d::vulkan::Device::CreateShaderManager()
 {
 	shader_manager.emplace(
-		instance
+		instance,
+		*this
 	);
-
 	if( !shader_manager ) {
 		instance.Report( ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot create shader manager!" );
 		return false;
 	}
+
+	return true;
+}
+
+bool vk2d::vulkan::Device::CreatePipelineManager()
+{
+	pipeline_manager.emplace(
+		instance,
+		*this
+	);
+	if( !pipeline_manager ) {
+		instance.Report( ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot create pipeline manager!" );
+		return false;
+	}
+
 	return true;
 }
 
@@ -225,4 +247,9 @@ void vk2d::vulkan::Device::DestroyDeviceMemoryPool()
 void vk2d::vulkan::Device::DestroyShaderManager()
 {
 	shader_manager.reset();
+}
+
+void vk2d::vulkan::Device::DestroyPipelineManager()
+{
+	pipeline_manager.reset();
 }

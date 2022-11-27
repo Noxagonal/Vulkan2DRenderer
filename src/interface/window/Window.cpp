@@ -398,14 +398,14 @@ VK2D_API bool vk2d::Window::IsGood() const
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-VK2D_API void vk2d::Window::DrawPointList(
+VK2D_API void vk2d::Window::DrawPointList_DEPRICATED(
 	const vk2d_internal::RawVertexData	&	raw_vertex_data,
 	std::span<const glm::mat4>				transformations,
 	Texture								*	texture,
 	Sampler								*	sampler
 )
 {
-	impl->DrawPointList(
+	impl->DrawPointList_DEPRICATED(
 		raw_vertex_data,
 		transformations,
 		texture,
@@ -414,7 +414,7 @@ VK2D_API void vk2d::Window::DrawPointList(
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-VK2D_API void vk2d::Window::DrawLineList(
+VK2D_API void vk2d::Window::DrawLineList_DEPRICATED(
 	std::span<const uint32_t>				indices,
 	const vk2d_internal::RawVertexData	&	raw_vertex_data,
 	std::span<const glm::mat4>				transformations,
@@ -423,7 +423,7 @@ VK2D_API void vk2d::Window::DrawLineList(
 	float									line_width
 )
 {
-	impl->DrawLineList(
+	impl->DrawLineList_DEPRICATED(
 		indices,
 		raw_vertex_data,
 		transformations,
@@ -434,7 +434,7 @@ VK2D_API void vk2d::Window::DrawLineList(
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-VK2D_API void vk2d::Window::DrawTriangleList(
+VK2D_API void vk2d::Window::DrawTriangleList_DEPRICATED(
 	std::span<const uint32_t>				indices,
 	const vk2d_internal::RawVertexData	&	raw_vertex_data,
 	std::span<const glm::mat4>				transformations,
@@ -443,7 +443,7 @@ VK2D_API void vk2d::Window::DrawTriangleList(
 	Sampler								*	sampler
 )
 {
-	impl->DrawTriangleList(
+	impl->DrawTriangleList_DEPRICATED(
 		indices,
 		raw_vertex_data,
 		transformations,

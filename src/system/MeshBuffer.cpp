@@ -72,7 +72,7 @@ vk2d::vk2d_internal::MeshBuffer::PushResult vk2d::vk2d_internal::MeshBuffer::Cmd
 			vkCmdBindDescriptorSets(
 				command_buffer,
 				VK_PIPELINE_BIND_POINT_GRAPHICS,
-				instance.GetGraphicsPrimaryRenderPipelineLayout(),
+				instance.GetGraphicsPrimaryRenderPipelineLayout_MOVE(),
 				bind_set,
 				1, &location_info.block->descriptor_set.descriptorSet,
 				0, nullptr

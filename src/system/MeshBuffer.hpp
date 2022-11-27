@@ -335,7 +335,7 @@ public:
 		assert( buffer_usage_flags );
 
 		auto & instance				= parent.instance;
-		auto memory_pool			= instance.GetVulkanDevice().GetDeviceMemoryPool();
+		auto & memory_pool			= instance.GetVulkanDevice().GetDeviceMemoryPool();
 
 		total_byte_size				= vulkan::CalculateAlignmentForBuffer(
 			buffer_byte_size,
@@ -355,7 +355,7 @@ public:
 			buffer_create_info.sharingMode				= VK_SHARING_MODE_EXCLUSIVE;
 			buffer_create_info.queueFamilyIndexCount	= 0;
 			buffer_create_info.pQueueFamilyIndices		= nullptr;
-			staging_buffer = memory_pool->CreateCompleteBufferResource(
+			staging_buffer = memory_pool.CreateCompleteBufferResource(
 				&buffer_create_info,
 				VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT
 			);
@@ -376,7 +376,7 @@ public:
 			buffer_create_info.sharingMode				= VK_SHARING_MODE_EXCLUSIVE;
 			buffer_create_info.queueFamilyIndexCount	= 0;
 			buffer_create_info.pQueueFamilyIndices		= nullptr;
-			device_buffer = memory_pool->CreateCompleteBufferResource(
+			device_buffer = memory_pool.CreateCompleteBufferResource(
 				&buffer_create_info,
 				VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT
 			);
@@ -394,7 +394,7 @@ public:
 			) -> vulkan::PoolDescriptorSet
 			{
 				// WARNING: MeshBufferBlock::descriptor_set allocation and freeing needs to be thread specific if we ever start doing multithreaded rendering.
-				auto ret = instance.AllocateDescriptorSet(
+				auto ret = instance.AllocateDescriptorSet_DEPRICATED(
 					descriptor_set_layout
 				);
 
@@ -428,7 +428,7 @@ public:
 			case MeshBufferDescriptorSetType::UNIFORM:
 			{
 				descriptor_set = AllocateAndUpdateDescriptorSet(
-					instance.GetGraphicsUniformBufferDescriptorSetLayout(),
+					instance.GetGraphicsUniformBufferDescriptorSetLayout_MOVE(),
 					VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER
 				);
 			}
@@ -436,7 +436,7 @@ public:
 			case MeshBufferDescriptorSetType::STORAGE:
 			{
 				descriptor_set = AllocateAndUpdateDescriptorSet(
-					instance.GetGraphicsStorageBufferDescriptorSetLayout(),
+					instance.GetGraphicsStorageBufferDescriptorSetLayout_MOVE(),
 					VK_DESCRIPTOR_TYPE_STORAGE_BUFFER
 				);
 			}
@@ -451,12 +451,12 @@ public:
 
 	~MeshBufferBlock()
 	{
-		auto memory_pool = parent.instance.GetVulkanDevice().GetDeviceMemoryPool();
+		auto & memory_pool = parent.instance.GetVulkanDevice().GetDeviceMemoryPool();
 
 		// WARNING: MeshBufferBlock::descriptor_set allocation and freeing needs to be thread specific if we ever start doing multithreaded rendering.
-		parent.instance.FreeDescriptorSet( descriptor_set );
-		memory_pool->FreeCompleteResource( device_buffer );
-		memory_pool->FreeCompleteResource( staging_buffer );
+		parent.instance.FreeDescriptorSet_DEPRICATED( descriptor_set );
+		memory_pool.FreeCompleteResource( device_buffer );
+		memory_pool.FreeCompleteResource( staging_buffer );
 	}
 
 	bool 										CopyVectorsToStagingBuffers()
