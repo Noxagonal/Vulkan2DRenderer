@@ -2,8 +2,7 @@
 
 #include <core/SourceCommon.hpp>
 
-#include <containers/ShaderText.hpp>
-#include <vulkan/shaders/ShaderStage.hpp>
+#include <containers/ShaderInfo.hpp>
 
 
 
@@ -37,15 +36,14 @@ public:
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Compile and create Vulkan shader module.
 	///
-	/// @note		Multithreading: Single thread at a time.
+	/// @note		Multithreading: Not thread safe.
 	///
-	/// @param[in]	user_shader_text
+	/// @param[in]	user_shader_info
 	///				User provided shader text.
 	///
 	/// @return		Vulkan shader module.
 	VkShaderModule							CreateShaderModule(
-		ShaderStage							stage,
-		const ShaderText				&	user_shader_text
+		const ShaderInfo				&	user_shader_info
 	);
 
 private:
@@ -53,24 +51,18 @@ private:
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Compiles SpirV shader module from GLSL code.
 	///
-	/// @note		Multithreading: Single thread at a time.
+	/// @note		Multithreading: Not thread safe.
 	///
-	/// @param[in]	stage
-	///				Shader stage we're compiling the shader for.
-	///
-	/// @param[in]	user_shader_text
-	///				Shader text provided by the user.
+	/// @param[in]	user_shader_info
+	///				Shader info provided by the user.
 	///
 	/// @return		SpirV shader.
 	std::vector<uint32_t>					CompileSpirV(
-		ShaderStage							stage,
-		const ShaderText				&	user_shader_text
+		const ShaderInfo				&	user_shader_info
 	);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	vk2d_internal::InstanceImpl			&	instance;
-
-	bool									is_good					= {};
 };
 
 

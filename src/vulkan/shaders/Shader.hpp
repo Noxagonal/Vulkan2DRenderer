@@ -24,6 +24,10 @@ class Shader
 
 public:
 
+	Shader() = delete;
+	Shader( const Shader & other ) = delete;
+	Shader( Shader && other ) = delete;
+
 private:
 
 	VkShaderModule					vulkan_shader_module;

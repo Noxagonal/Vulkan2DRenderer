@@ -22,19 +22,15 @@ vk2d::vulkan::ShaderCompiler::ShaderCompiler(
 	vk2d_internal::InstanceImpl	&	instance
 ) :
 	instance( instance )
-{
-	is_good = true;
-}
+{}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 VkShaderModule vk2d::vulkan::ShaderCompiler::CreateShaderModule(
-	ShaderStage					stage,
-	const ShaderText		&	user_shader_text
+	const ShaderInfo		&	user_shader_info
 )
 {
 	auto spir_v_code = CompileSpirV(
-		stage,
-		user_shader_text
+		user_shader_info
 	);
 
 	VkShaderModuleCreateInfo create_info {};
@@ -62,8 +58,7 @@ auto temp_build_in_glsl = std::string();
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 std::vector<uint32_t> vk2d::vulkan::ShaderCompiler::CompileSpirV(
-	ShaderStage				stage,
-	const ShaderText	&	user_shader_text
+	const ShaderInfo	&	user_shader_info
 )
 {
 	VK2D_ASSERT_SINGLE_THREAD_ACCESS_SCOPE();
@@ -72,17 +67,17 @@ std::vector<uint32_t> vk2d::vulkan::ShaderCompiler::CompileSpirV(
 	{
 		switch( stage )
 		{
-		case vk2d::vulkan::ShaderStage::VERTEX:
+		case vk2d::ShaderStage::VERTEX:
 			return EShLanguage::EShLangVertex;
-		case vk2d::vulkan::ShaderStage::TESSELLATION_CONTROL:
+		case vk2d::ShaderStage::TESSELLATION_CONTROL:
 			return EShLanguage::EShLangTessControl;
-		case vk2d::vulkan::ShaderStage::TESSELLATION_EVALUATION:
+		case vk2d::ShaderStage::TESSELLATION_EVALUATION:
 			return EShLanguage::EShLangTessEvaluation;
-		case vk2d::vulkan::ShaderStage::GEOMETRY:
+		case vk2d::ShaderStage::GEOMETRY:
 			return EShLanguage::EShLangGeometry;
-		case vk2d::vulkan::ShaderStage::FRAGMENT:
+		case vk2d::ShaderStage::FRAGMENT:
 			return EShLanguage::EShLangFragment;
-		case vk2d::vulkan::ShaderStage::COMPUTE:
+		case vk2d::ShaderStage::COMPUTE:
 			return EShLanguage::EShLangCompute;
 		default:
 			assert( 0 && "Invalid stage." );
@@ -124,7 +119,7 @@ std::vector<uint32_t> vk2d::vulkan::ShaderCompiler::CompileSpirV(
 	// 
 	// Name is copied to internal storage and may be temporary.
 	AddGLSLSource( temp_build_in_glsl, "<build_in_glsl>" );
-	AddGLSLSource( user_shader_text.GetCode(), user_shader_text.GetName() );
+	AddGLSLSource( user_shader_info.GetCode(), user_shader_info.GetName() );
 
 
 
@@ -138,7 +133,7 @@ std::vector<uint32_t> vk2d::vulkan::ShaderCompiler::CompileSpirV(
 	auto build_in_resource = glslang::DefaultTBuiltInResource;
 
 	auto shader = glslang::TShader(
-		ShaderStageToEShLanguage( stage )
+		ShaderStageToEShLanguage( user_shader_info.GetStage() )
 	);
 	shader.setStringsWithLengthsAndNames(
 		glsl_sources.texts.data(),

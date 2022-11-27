@@ -7,7 +7,6 @@
 
 
 namespace vk2d {
-namespace vk2d_internal {
 
 
 
@@ -102,5 +101,4 @@ constexpr bool EnumHasFields( EnumT first, EnumT second )
 
 
 
-} // vk2d_internal
 } // vk2d
