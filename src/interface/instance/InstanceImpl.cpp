@@ -2087,14 +2087,39 @@ void VK2D_default_ReportFunction(
 			text_color			= ConsoleColor::WHITE;
 			background_color	= ConsoleColor::DARK_RED;
 			break;
+	case ReportSeverity::DEBUG:
+		text_color			= ConsoleColor::CYAN;
+		break;
 		default:
 			break;
 	}
 
-	std::string message_editable;
-	message_editable.append( message );
-	message_editable += "\n";
-	ConsolePrint( message_editable, text_color, background_color );
+	auto editable_message = std::string();
+	editable_message.reserve( size_t( message.size() * 1.2f + 10 ) );
+	{
+		auto tab_size = size_t( 4 );
+		auto cursor_pos = size_t();
+		for( auto c : message ) {
+			if( c == '\t' )
+			{
+				auto add_spaces = ( cursor_pos / tab_size + 1 ) * tab_size - cursor_pos;
+				editable_message.append( add_spaces, ' ' );
+				cursor_pos += add_spaces;
+			}
+			else if( c == '\n' )
+			{
+				editable_message.push_back( c );
+				cursor_pos = 0;
+			}
+			else
+			{
+				editable_message.push_back( c );
+				++cursor_pos;
+			}
+		}
+	}
+	editable_message += "\n";
+	ConsolePrint( editable_message, text_color, background_color );
 
 	#if VK2D_BUILD_OPTION_VULKAN_COMMAND_BUFFER_CHECKMARKS && VK2D_BUILD_OPTION_VULKAN_VALIDATION && VK2D_DEBUG_ENABLE
 	if( severity == ReportSeverity::DEVICE_LOST ) {
