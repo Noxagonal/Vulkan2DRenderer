@@ -10,6 +10,7 @@
 #include <vulkan/Queue.hpp>
 #include <vulkan/descriptor_set/DescriptorSet.hpp>
 #include <vulkan/shaders/ShaderInterface.hpp>
+#include <system/ThreadPool.hpp>
 
 #define GLFW_INCLUDE_NONE
 #include <GLFW/glfw3.h>
@@ -276,7 +277,7 @@ public:
 	/// @note		Multithreading: Any thread.
 	///
 	/// @return		Pointer to thread pool.
-	ThreadPool											*	GetThreadPool() const;
+	ThreadPool											*	GetThreadPool();
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Get loader threads.
@@ -645,14 +646,14 @@ private:
 
 	InstanceCreateInfo										create_info_copy						= {};
 
-	std::optional<vulkan::Instance>					vulkan_instance							= {};
-	std::optional<vulkan::Device>						vulkan_device							= {};
+	std::optional<vulkan::Instance>							vulkan_instance							= {};
+	std::optional<vulkan::Device>							vulkan_device							= {};
 
 	PFN_VK2D_ReportFunction									report_function							= {};
 	mutable std::mutex										report_mutex;
 
 	std::unique_ptr<ResourceManager>						resource_manager;
-	std::unique_ptr<ThreadPool>								thread_pool;
+	std::optional<ThreadPool>								thread_pool;
 	std::vector<uint32_t>									loader_threads;
 	std::vector<uint32_t>									general_threads;
 
@@ -660,13 +661,10 @@ private:
 	std::vector<VkShaderModule>								vk_compute_shader_modules;
 
 	std::map<vulkan::GraphicsShaderListID, vulkan::GraphicsShaderList>graphics_shader_programs;
-	std::map<vulkan::ComputeShaderProgramID, VkShaderModule>
-															compute_shader_programs;
+	std::map<vulkan::ComputeShaderProgramID, VkShaderModule>compute_shader_programs;
 
-	std::map<vulkan::GraphicsPipelineSettings, VkPipeline>
-															vk_graphics_pipelines;
-	std::map<vulkan::ComputePipelineSettings, VkPipeline>
-															vk_compute_pipelines;
+	std::map<vulkan::GraphicsPipelineSettings, VkPipeline>	vk_graphics_pipelines;
+	std::map<vulkan::ComputePipelineSettings, VkPipeline>	vk_compute_pipelines;
 
 	VkPipelineCache											vk_graphics_pipeline_cache					= {};
 	VkPipelineCache											vk_compute_pipeline_cache					= {};

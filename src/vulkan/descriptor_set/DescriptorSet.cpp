@@ -124,22 +124,6 @@ vk2d::vulkan::DescriptorSetLayout::operator VkDescriptorSetLayout() const
 
 
 
-std::unique_ptr<vk2d::vulkan::DescriptorSetLayout> vk2d::vulkan::CreateDescriptorSetLayout(
-	vk2d_internal::InstanceImpl				*	instance,
-	VkDevice									device,
-	const VkDescriptorSetLayoutCreateInfo	*	pCreateInfo
-)
-{
-	auto unique_object = std::unique_ptr<DescriptorSetLayout>( new DescriptorSetLayout(
-		instance,
-		device,
-		pCreateInfo ) );
-	if( unique_object && unique_object->is_good ) return unique_object;
-	return {};
-}
-
-
-
 vk2d::vulkan::PoolDescriptorSet::operator VkResult() const
 {
 	return result;
@@ -353,21 +337,4 @@ void vk2d::vulkan::DescriptorAutoPool::FreeDescriptorSet(
 		}
 		rDescriptorSet			= {};
 	}
-}
-
-
-std::unique_ptr<vk2d::vulkan::DescriptorAutoPool> vk2d::vulkan::CreateDescriptorAutoPool(
-	vk2d_internal::InstanceImpl	*	instance,
-	VkDevice						device
-)
-{
-	auto unique_object = std::unique_ptr<DescriptorAutoPool>( new DescriptorAutoPool(
-		instance,
-		device ) );
-	if( unique_object && unique_object->is_good ) {
-		return unique_object;
-	} else {
-		instance->Report( ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot create descriptor auto pool!" );
-	}
-	return {};
 }

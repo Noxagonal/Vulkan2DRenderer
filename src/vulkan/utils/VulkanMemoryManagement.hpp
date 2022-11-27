@@ -177,25 +177,19 @@ public:
 	}
 };
 
-class DeviceMemoryPool {
+class DeviceMemoryPool
+{
 	friend class PoolMemory;
 	friend struct DeviceMemoryPoolDataImpl;
-	friend std::unique_ptr<DeviceMemoryPool>		MakeDeviceMemoryPool(
-		VkPhysicalDevice							physicalDevice,
-		VkDevice									device,
-		VkDeviceSize								linearAllocationChunkSize,
-		VkDeviceSize								nonLinearAllocationChunkSize
-	);
 
-private:
-	// Only accessible through MakeDeviceMemoryPool
+public:
+
 	DeviceMemoryPool(
 		VkPhysicalDevice							physicalDevice,
 		VkDevice									device,
 		VkDeviceSize								linearAllocationChunkSize			= uint64_t( 1024 ) * 1024 * 64,
 		VkDeviceSize								nonLinearAllocationChunkSize		= uint64_t( 1024 ) * 1024 * 256 );
 
-public:
 	~DeviceMemoryPool();
 
 	// Allocates memory for a buffer
@@ -353,15 +347,6 @@ private:
 
 	bool												is_good						= {};
 };
-
-
-
-std::unique_ptr<DeviceMemoryPool>						MakeDeviceMemoryPool(
-	VkPhysicalDevice									physicalDevice,
-	VkDevice											device,
-	VkDeviceSize										linearAllocationChunkSize			= VkDeviceSize( 1024 ) * 1024 * 64,
-	VkDeviceSize										nonLinearAllocationChunkSize		= VkDeviceSize( 1024 ) * 1024 * 256
-);
 
 
 

@@ -29,12 +29,12 @@ VkDevice vk2d::vk2d_internal::ThreadLoaderResource::GetVulkanDevice() const
 
 vk2d::vulkan::DeviceMemoryPool * vk2d::vk2d_internal::ThreadLoaderResource::GetDeviceMemoryPool()
 {
-	return device_memory_pool.get();
+	return &device_memory_pool.value();
 }
 
 vk2d::vulkan::DescriptorAutoPool * vk2d::vk2d_internal::ThreadLoaderResource::GetDescriptorAutoPool()
 {
-	return descriptor_auto_pool.get();
+	return &descriptor_auto_pool.value();
 }
 
 VkCommandPool vk2d::vk2d_internal::ThreadLoaderResource::GetPrimaryRenderCommandPool() const
@@ -124,7 +124,7 @@ bool vk2d::vk2d_internal::ThreadLoaderResource::ThreadBegin()
 
 	// Descriptor pool
 	{
-		descriptor_auto_pool	= vulkan::CreateDescriptorAutoPool(
+		descriptor_auto_pool.emplace(
 			&instance,
 			device
 		);
@@ -139,7 +139,7 @@ bool vk2d::vk2d_internal::ThreadLoaderResource::ThreadBegin()
 
 	// Device memory pool
 	{
-		device_memory_pool = vulkan::MakeDeviceMemoryPool(
+		device_memory_pool.emplace(
 			instance.GetVulkanDevice().GetVulkanPhysicalDevice(),
 			device
 		);
@@ -174,8 +174,8 @@ void vk2d::vk2d_internal::ThreadLoaderResource::ThreadEnd()
 	freetype_instance		= nullptr;
 
 	// De-initialize Vulkan stuff here
-	device_memory_pool		= nullptr;
-	descriptor_auto_pool	= nullptr;
+	device_memory_pool.reset();
+	descriptor_auto_pool.reset();
 
 	vkDestroyCommandPool(
 		device,

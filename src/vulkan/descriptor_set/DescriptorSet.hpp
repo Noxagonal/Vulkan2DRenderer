@@ -64,21 +64,14 @@ struct PoolCategory {
 
 class DescriptorSetLayout
 {
-	friend std::unique_ptr<DescriptorSetLayout>		CreateDescriptorSetLayout(
+public:
+
+	DescriptorSetLayout(
 		vk2d_internal::InstanceImpl				*	instance,
 		VkDevice									device,
 		const VkDescriptorSetLayoutCreateInfo	*	pCreateInfo
 	);
-
-private:
-													DescriptorSetLayout(
-		vk2d_internal::InstanceImpl				*	instance,
-		VkDevice									device,
-		const VkDescriptorSetLayoutCreateInfo	*	pCreateInfo
-													);
-public:
-
-													~DescriptorSetLayout();
+	~DescriptorSetLayout();
 
 	 VkDescriptorSetLayout							GetVulkanDescriptorSetLayout() const;
 	 const VkDescriptorSetLayoutCreateInfo		&	GetDescriptorSetLayoutCreateInfo() const;
@@ -100,15 +93,6 @@ private:
 	bool											is_good									= {};
 };
 
-// TODO: Remove CreateDescriptorSetLayout() function, we don't really need a factory function here.
-std::unique_ptr<DescriptorSetLayout>				CreateDescriptorSetLayout(
-	vk2d_internal::InstanceImpl					*	instance,
-	VkDevice										device,
-	const VkDescriptorSetLayoutCreateInfo		*	pCreateInfo
-);
-
-
-
 
 
 struct PoolDescriptorSet {
@@ -123,27 +107,22 @@ private:
 	bool											allocated								= {};
 };
 
-class DescriptorAutoPool {
-	friend std::unique_ptr<DescriptorAutoPool>		CreateDescriptorAutoPool(
+class DescriptorAutoPool
+{
+public:
+	DescriptorAutoPool(
 		vk2d_internal::InstanceImpl				*	instance,
 		VkDevice									device
 	);
-
-private:
-													DescriptorAutoPool(
-		vk2d_internal::InstanceImpl				*	instance,
-		VkDevice									device
-													);
-public:
-													~DescriptorAutoPool();
+	~DescriptorAutoPool();
 
 	PoolDescriptorSet								AllocateDescriptorSet(
 		const DescriptorSetLayout				&	rForDescriptorSetLayout
 	);
 
-	 void											FreeDescriptorSet(
-		 PoolDescriptorSet						&	pDescriptorSet
-	 );
+	void											FreeDescriptorSet(
+		PoolDescriptorSet						&	pDescriptorSet
+	);
 
 private:
 	vk2d_internal::InstanceImpl					*	instance				= {};
@@ -153,12 +132,6 @@ private:
 
 	bool											is_good					= {};
 };
-
-// TODO: Remove CreateDescriptorAutoPool() function, we don't really need a factory function here.
-std::unique_ptr<DescriptorAutoPool>					CreateDescriptorAutoPool(
-	vk2d_internal::InstanceImpl					*	instance,
-	VkDevice										device
-);
 
 
 

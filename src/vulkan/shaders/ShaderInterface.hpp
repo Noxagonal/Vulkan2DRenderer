@@ -77,7 +77,7 @@ public:
 		const GraphicsShaderList		&	other )						= default;
 
 	GraphicsShaderList(
-		GraphicsShaderList			&&	other )							= default;
+		GraphicsShaderList				&&	other )						= default;
 
 	template<typename T>
 	GraphicsShaderList(
@@ -91,11 +91,11 @@ public:
 		fragment( fragment )
 	{}
 
-	GraphicsShaderList				&	operator=(
+	GraphicsShaderList					&	operator=(
 		const GraphicsShaderList		&	other )						= default;
 
-	GraphicsShaderList				&	operator=(
-		GraphicsShaderList			&&	other )							= default;
+	GraphicsShaderList					&	operator=(
+		GraphicsShaderList				&&	other )						= default;
 
 	bool									operator<(
 		const GraphicsShaderList		&	other ) const;

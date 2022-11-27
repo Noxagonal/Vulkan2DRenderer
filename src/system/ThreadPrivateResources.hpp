@@ -6,6 +6,7 @@
 #include <vulkan/descriptor_set/DescriptorSet.hpp>
 
 #include <vulkan/utils/VulkanMemoryManagement.hpp>
+#include <vulkan/descriptor_set/DescriptorSet.hpp>
 
 #include <ft2build.h>
 #include FT_FREETYPE_H
@@ -46,8 +47,8 @@ protected:
 private:
 	InstanceImpl							&	instance;
 	VkDevice									device								= {};
-	std::unique_ptr<vulkan::DescriptorAutoPool>	descriptor_auto_pool				= {};
-	std::unique_ptr<vulkan::DeviceMemoryPool>	device_memory_pool					= {};
+	std::optional<vulkan::DescriptorAutoPool>	descriptor_auto_pool				= {};
+	std::optional<vulkan::DeviceMemoryPool>		device_memory_pool					= {};
 
 	VkCommandPool								primary_render_command_pool			= {};
 	VkCommandPool								secondary_render_command_pool		= {};

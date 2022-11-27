@@ -92,6 +92,7 @@ vk2d::vulkan::Device::Device(
 
 	PopulatePhysicalDeviceStructs();
 	if( !CreateDeviceMemoryPool() ) return;
+	if( !CreateShaderManager() ) return;
 
 	is_good = true;
 }
@@ -99,6 +100,7 @@ vk2d::vulkan::Device::Device(
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 vk2d::vulkan::Device::~Device()
 {
+	DestroyShaderManager();
 	DestroyDeviceMemoryPool();
 
 	vkDestroyDevice(
@@ -150,7 +152,12 @@ const VkPhysicalDeviceFeatures & vk2d::vulkan::Device::GetVulkanPhysicalDeviceFe
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 vk2d::vulkan::DeviceMemoryPool * vk2d::vulkan::Device::GetDeviceMemoryPool()
 {
-	return device_memory_pool.get();
+	return &device_memory_pool.value();
+}
+
+vk2d::vulkan::ShaderManager * vk2d::vulkan::Device::GetShaderManager()
+{
+	return &shader_manager.value();
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -185,10 +192,11 @@ void vk2d::vulkan::Device::PopulatePhysicalDeviceStructs()
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 bool vk2d::vulkan::Device::CreateDeviceMemoryPool()
 {
-	device_memory_pool = MakeDeviceMemoryPool(
+	device_memory_pool.emplace(
 		vk_physical_device,
 		vk_device
 	);
+
 	if( !device_memory_pool ) {
 		instance.Report( ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot create memory pool!" );
 		return false;
@@ -196,7 +204,25 @@ bool vk2d::vulkan::Device::CreateDeviceMemoryPool()
 	return true;
 }
 
+bool vk2d::vulkan::Device::CreateShaderManager()
+{
+	shader_manager.emplace(
+		instance
+	);
+
+	if( !shader_manager ) {
+		instance.Report( ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot create shader manager!" );
+		return false;
+	}
+	return true;
+}
+
 void vk2d::vulkan::Device::DestroyDeviceMemoryPool()
 {
-	device_memory_pool = nullptr;
+	device_memory_pool.reset();
+}
+
+void vk2d::vulkan::Device::DestroyShaderManager()
+{
+	shader_manager.reset();
 }

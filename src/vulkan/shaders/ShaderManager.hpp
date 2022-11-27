@@ -5,8 +5,6 @@
 #include "Shader.hpp"
 #include <containers/ShaderInfo.hpp>
 
-#include <map>
-
 
 
 namespace vk2d {

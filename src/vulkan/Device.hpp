@@ -4,6 +4,8 @@
 
 #include "Queue.hpp"
 #include "VulkanQueueTypes.hpp"
+#include "utils/VulkanMemoryManagement.hpp"
+#include "shaders/ShaderManager.hpp"
 
 
 
@@ -127,8 +129,13 @@ public:
 	/// @return		Pointer to device memory pool.
 	DeviceMemoryPool							*	GetDeviceMemoryPool();
 
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	ShaderManager								*	GetShaderManager();
+
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	bool											IsGood();
 
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	operator VkDevice();
 
 private:
@@ -137,8 +144,10 @@ private:
 	void											PopulatePhysicalDeviceStructs();
 
 	bool											CreateDeviceMemoryPool();
+	bool											CreateShaderManager();
 
 	void											DestroyDeviceMemoryPool();
+	void											DestroyShaderManager();
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	vk2d_internal::InstanceImpl					&	instance;
@@ -154,7 +163,8 @@ private:
 
 	std::vector<Queue>								resolved_queues;
 
-	std::unique_ptr<DeviceMemoryPool>				device_memory_pool;
+	std::optional<DeviceMemoryPool>					device_memory_pool;
+	std::optional<ShaderManager>					shader_manager;
 
 	bool											is_good								= {};
 };

@@ -36,10 +36,10 @@ public:
 	///				Data to hash.
 	template<typename T>
 	constexpr inline void		Hash(
-		T && value
+		T value
 	)
 	{
-		auto new_hash = std::hash<T> {}( std::forward<T>( value ) );
+		auto new_hash = std::hash<T> {}( value );
 		hash ^= ( new_hash << 1 );
 	}
 

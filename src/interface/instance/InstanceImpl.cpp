@@ -779,9 +779,9 @@ void vk2d::vk2d_internal::InstanceImpl::Report(
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-vk2d::vk2d_internal::ThreadPool * vk2d::vk2d_internal::InstanceImpl::GetThreadPool() const
+vk2d::vk2d_internal::ThreadPool * vk2d::vk2d_internal::InstanceImpl::GetThreadPool()
 {
-	return thread_pool.get();
+	return &thread_pool.value();
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1316,7 +1316,7 @@ bool vk2d::vk2d_internal::InstanceImpl::CreateDeviceAndQueues()
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 bool vk2d::vk2d_internal::InstanceImpl::CreateDescriptorPool()
 {
-	descriptor_pool = CreateDescriptorAutoPool(
+	descriptor_pool = std::make_unique<vulkan::DescriptorAutoPool>(
 		this,
 		*vulkan_device
 	);
@@ -1648,7 +1648,7 @@ bool vk2d::vk2d_internal::InstanceImpl::CreateDescriptorSetLayouts()
 		descriptor_set_layout_create_info.bindingCount	= uint32_t( std::size( set_bindings ) );
 		descriptor_set_layout_create_info.pBindings		= set_bindings.data();
 
-		auto descriptor_set_layout = CreateDescriptorSetLayout(
+		auto descriptor_set_layout = std::make_unique<vulkan::DescriptorSetLayout>(
 			this,
 			*vulkan_device,
 			&descriptor_set_layout_create_info
@@ -1855,7 +1855,7 @@ bool vk2d::vk2d_internal::InstanceImpl::CreateThreadPool()
 		general_threads[ i ]	= loader_thread_count + i;
 	}
 
-	thread_pool				= std::make_unique<ThreadPool>( std::move( thread_resources ) );
+	thread_pool.emplace( std::move( thread_resources ) );
 	if( thread_pool && thread_pool->IsGood() ) {
 		return true;
 	} else {
@@ -2030,7 +2030,7 @@ void vk2d::vk2d_internal::InstanceImpl::DestroyPipelineLayouts()
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void vk2d::vk2d_internal::InstanceImpl::DestroyThreadPool()
 {
-	thread_pool				= {};
+	thread_pool.reset();
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

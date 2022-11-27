@@ -580,24 +580,3 @@ void vk2d::vulkan::DeviceMemoryPool::FreeBlock(
 		FreeChunk( chunkGroup, selectedChunk );
 	}
 }
-
-
-
-std::unique_ptr<vk2d::vulkan::DeviceMemoryPool> vk2d::vulkan::MakeDeviceMemoryPool(
-	VkPhysicalDevice		physicalDevice,
-	VkDevice				device,
-	VkDeviceSize			linearAllocationChunkSize,
-	VkDeviceSize			nonLinearAllocationChunkSize )
-{
-	auto device_memory_pool = std::unique_ptr<DeviceMemoryPool>(
-		new DeviceMemoryPool(
-			physicalDevice,
-			device,
-			linearAllocationChunkSize,
-			nonLinearAllocationChunkSize
-		) );
-	if( device_memory_pool->is_good ) {
-		return device_memory_pool;
-	}
-	return {};
-}
