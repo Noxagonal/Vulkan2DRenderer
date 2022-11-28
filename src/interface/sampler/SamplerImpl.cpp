@@ -7,8 +7,8 @@
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-vk2d::vk2d_internal::SamplerImpl::SamplerImpl(
-	Sampler					&	my_interface,
+vk2d::vk2d_internal::SamplerImpl_DEPRICATED::SamplerImpl_DEPRICATED(
+	Sampler_DEPRICATED		&	my_interface,
 	InstanceImpl			&	instance,
 	const SamplerCreateInfo	&	create_info
 ) :
@@ -197,7 +197,7 @@ vk2d::vk2d_internal::SamplerImpl::SamplerImpl(
 	buffer_create_info.sType					= VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
 	buffer_create_info.pNext					= nullptr;
 	buffer_create_info.flags					= 0;
-	buffer_create_info.size						= sizeof( vk2d::vk2d_internal::SamplerImpl::BufferData );
+	buffer_create_info.size						= sizeof( vk2d::vk2d_internal::SamplerImpl_DEPRICATED::BufferData );
 	buffer_create_info.usage					= VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
 	buffer_create_info.sharingMode				= VK_SHARING_MODE_EXCLUSIVE;
 	buffer_create_info.queueFamilyIndexCount	= 0;
@@ -214,17 +214,17 @@ vk2d::vk2d_internal::SamplerImpl::SamplerImpl(
 		border_color_enable.x		= uint32_t( create_info.address_mode_u == SamplerAddressMode::CLAMP_TO_BORDER );
 		border_color_enable.y		= uint32_t( create_info.address_mode_v == SamplerAddressMode::CLAMP_TO_BORDER );
 
-		SamplerImpl::BufferData sd;
+		SamplerImpl_DEPRICATED::BufferData sd;
 		sd.borderColor				= create_info.border_color;
 		sd.borderColorEnable		= border_color_enable;
-		sampler_data.memory.DataCopy( &sd, sizeof( vk2d::vk2d_internal::SamplerImpl::BufferData ) );
+		sampler_data.memory.DataCopy( &sd, sizeof( vk2d::vk2d_internal::SamplerImpl_DEPRICATED::BufferData ) );
 	}
 
 	is_good			= true;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-vk2d::vk2d_internal::SamplerImpl::~SamplerImpl()
+vk2d::vk2d_internal::SamplerImpl_DEPRICATED::~SamplerImpl_DEPRICATED()
 {
 	VK2D_ASSERT_MAIN_THREAD( instance );
 
@@ -238,7 +238,7 @@ vk2d::vk2d_internal::SamplerImpl::~SamplerImpl()
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-VkSampler vk2d::vk2d_internal::SamplerImpl::GetVulkanSampler() const
+VkSampler vk2d::vk2d_internal::SamplerImpl_DEPRICATED::GetVulkanSampler() const
 {
 	VK2D_ASSERT_MAIN_THREAD( instance );
 
@@ -246,7 +246,7 @@ VkSampler vk2d::vk2d_internal::SamplerImpl::GetVulkanSampler() const
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-VkBuffer vk2d::vk2d_internal::SamplerImpl::GetVulkanBufferForSamplerData() const
+VkBuffer vk2d::vk2d_internal::SamplerImpl_DEPRICATED::GetVulkanBufferForSamplerData() const
 {
 	VK2D_ASSERT_MAIN_THREAD( instance );
 
@@ -254,7 +254,7 @@ VkBuffer vk2d::vk2d_internal::SamplerImpl::GetVulkanBufferForSamplerData() const
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-glm::uvec2 vk2d::vk2d_internal::SamplerImpl::GetBorderColorEnable() const
+glm::uvec2 vk2d::vk2d_internal::SamplerImpl_DEPRICATED::GetBorderColorEnable() const
 {
 	VK2D_ASSERT_MAIN_THREAD( instance );
 
@@ -262,7 +262,7 @@ glm::uvec2 vk2d::vk2d_internal::SamplerImpl::GetBorderColorEnable() const
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-bool vk2d::vk2d_internal::SamplerImpl::IsAnyBorderColorEnabled() const
+bool vk2d::vk2d_internal::SamplerImpl_DEPRICATED::IsAnyBorderColorEnabled() const
 {
 	VK2D_ASSERT_MAIN_THREAD( instance );
 
@@ -270,7 +270,7 @@ bool vk2d::vk2d_internal::SamplerImpl::IsAnyBorderColorEnabled() const
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-bool vk2d::vk2d_internal::SamplerImpl::IsGood() const
+bool vk2d::vk2d_internal::SamplerImpl_DEPRICATED::IsGood() const
 {
 	return is_good;
 }

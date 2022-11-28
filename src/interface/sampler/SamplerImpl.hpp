@@ -12,14 +12,14 @@ namespace vk2d_internal {
 
 
 
-class SamplerImpl {
+class SamplerImpl_DEPRICATED {
 public:
-	SamplerImpl(
-		Sampler								&	sampler,
+	SamplerImpl_DEPRICATED(
+		Sampler_DEPRICATED					&	sampler,
 		InstanceImpl						&	instance,
 		const SamplerCreateInfo				&	create_info );
 
-	~SamplerImpl();
+	~SamplerImpl_DEPRICATED();
 
 	VkSampler									GetVulkanSampler() const;
 	VkBuffer									GetVulkanBufferForSamplerData() const;
@@ -36,7 +36,7 @@ public:
 	};
 
 private:
-	Sampler									&	my_interface;
+	Sampler_DEPRICATED						&	my_interface;
 	InstanceImpl							&	instance;
 	VkDevice									vk_device			= {};
 

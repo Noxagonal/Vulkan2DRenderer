@@ -190,7 +190,7 @@ public:
 		const RawVertexData									&	raw_vertex_data,
 		std::span<const glm::mat4>								transformations,
 		Texture												*	texture,
-		Sampler												*	sampler
+		Sampler_DEPRICATED												*	sampler
 	);
 
 	void														DrawLineList_DEPRICATED(
@@ -198,7 +198,7 @@ public:
 		const RawVertexData									&	raw_vertex_data,
 		std::span<const glm::mat4>								transformations,
 		Texture												*	texture,
-		Sampler												*	sampler,
+		Sampler_DEPRICATED												*	sampler,
 		float													line_width
 	);
 
@@ -208,7 +208,7 @@ public:
 		std::span<const glm::mat4>								transformations,
 		bool													solid,
 		Texture												*	texture,
-		Sampler												*	sampler
+		Sampler_DEPRICATED												*	sampler
 	);
 
 	bool														SynchronizeFrame();
@@ -258,7 +258,7 @@ private:
 
 	void														CmdBindSamplerIfDifferent(
 		VkCommandBuffer											command_buffer,
-		Sampler												*	sampler );
+		Sampler_DEPRICATED												*	sampler );
 
 	void														CmdBindTextureIfDifferent(
 		VkCommandBuffer											command_buffer,
@@ -341,10 +341,10 @@ private:
 
 	vulkan::GraphicsPipelineInfo								previous_graphics_pipeline_info				= {};
 	Texture													*	previous_texture							= {};
-	Sampler													*	previous_sampler							= {};
+	Sampler_DEPRICATED													*	previous_sampler							= {};
 	float														previous_line_width							= {};
 
-	std::map<Sampler*, TimedDescriptorPoolData>					sampler_descriptor_sets						= {};
+	std::map<Sampler_DEPRICATED*, TimedDescriptorPoolData>					sampler_descriptor_sets						= {};
 	std::map<Texture*, TimedDescriptorPoolData>					texture_descriptor_sets						= {};
 
 	std::unique_ptr<MeshBuffer>									mesh_buffer									= {};

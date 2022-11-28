@@ -26,7 +26,7 @@ class RenderTargetTextureImpl;
 class Window;
 class RenderTargetTexture;
 class FontResource;
-class Sampler;
+class Sampler_DEPRICATED;
 class Texture;
 
 
@@ -169,7 +169,7 @@ public:
 	/// @param[in]	sampler_pointer
 	///				A pointer to a sampler object.
 	VK2D_API void									SetSampler(
-		Sampler									*	sampler_pointer
+		Sampler_DEPRICATED									*	sampler_pointer
 	);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -249,7 +249,7 @@ private:
 	/// @brief		Texture sampler to be used when rendering.
 	///
 	///				Can be used in all modes. Can be nullptr for default sampler.
-	Sampler										*	sampler							= nullptr;
+	Sampler_DEPRICATED										*	sampler							= nullptr;
 };
 
 

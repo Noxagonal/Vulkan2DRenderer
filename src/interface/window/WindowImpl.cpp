@@ -1489,7 +1489,7 @@ void vk2d::vk2d_internal::WindowImpl::DrawPointList_DEPRICATED(
 	const RawVertexData					&	raw_vertex_data,
 	std::span<const glm::mat4>				transformations,
 	Texture								*	texture,
-	Sampler								*	sampler
+	Sampler_DEPRICATED								*	sampler
 )
 {
 	VK2D_ASSERT_MAIN_THREAD( instance );
@@ -1594,7 +1594,7 @@ void vk2d::vk2d_internal::WindowImpl::DrawLineList_DEPRICATED(
 	const RawVertexData					&	raw_vertex_data,
 	std::span<const glm::mat4>				transformations,
 	Texture								*	texture,
-	Sampler								*	sampler,
+	Sampler_DEPRICATED								*	sampler,
 	float									line_width
 )
 {
@@ -1706,7 +1706,7 @@ void vk2d::vk2d_internal::WindowImpl::DrawTriangleList_DEPRICATED(
 	std::span<const glm::mat4>				transformations,
 	bool									filled,
 	Texture								*	texture,
-	Sampler								*	sampler
+	Sampler_DEPRICATED								*	sampler
 )
 {
 	VK2D_ASSERT_MAIN_THREAD( instance );
@@ -3065,7 +3065,7 @@ void vk2d::vk2d_internal::WindowImpl::CmdBindGraphicsPipelineIfDifferent(
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void vk2d::vk2d_internal::WindowImpl::CmdBindSamplerIfDifferent(
 	VkCommandBuffer			command_buffer,
-	Sampler				*	sampler
+	Sampler_DEPRICATED				*	sampler
 )
 {
 	assert( sampler );
@@ -3089,7 +3089,7 @@ void vk2d::vk2d_internal::WindowImpl::CmdBindSamplerIfDifferent(
 			VkDescriptorBufferInfo buffer_info {};
 			buffer_info.buffer						= sampler->impl->GetVulkanBufferForSamplerData();
 			buffer_info.offset						= 0;
-			buffer_info.range						= sizeof( SamplerImpl::BufferData );
+			buffer_info.range						= sizeof( SamplerImpl_DEPRICATED::BufferData );
 
 			std::array<VkWriteDescriptorSet, 2> descriptor_write {};
 			descriptor_write[ 0 ].sType				= VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;

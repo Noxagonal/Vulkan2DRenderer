@@ -209,7 +209,7 @@ VK2D_API void vk2d::RenderTargetTexture::DrawPointList_DEPRICATED(
 	const vk2d_internal::RawVertexData	&	raw_vertex_data,
 	std::span<const glm::mat4>				transformations,
 	Texture								*	texture,
-	Sampler								*	sampler
+	Sampler_DEPRICATED								*	sampler
 )
 {
 	impl->DrawPointList_DEPRICATED(
@@ -226,7 +226,7 @@ VK2D_API void vk2d::RenderTargetTexture::DrawLineList_DEPRICATED(
 	const vk2d_internal::RawVertexData	&	raw_vertex_data,
 	std::span<const glm::mat4>				transformations,
 	Texture								*	texture,
-	Sampler								*	sampler,
+	Sampler_DEPRICATED								*	sampler,
 	float									line_width
 )
 {
@@ -247,7 +247,7 @@ VK2D_API void vk2d::RenderTargetTexture::DrawTriangleList_DEPRICATED(
 	std::span<const glm::mat4>				transformations,
 	bool									filled,
 	Texture								*	texture,
-	Sampler								*	sampler
+	Sampler_DEPRICATED								*	sampler
 )
 {
 	impl->DrawTriangleList_DEPRICATED(

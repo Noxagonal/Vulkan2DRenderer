@@ -169,7 +169,7 @@ VK2D_API void vk2d::Instance::DestroyRenderTargetTexture(
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-VK2D_API vk2d::Sampler * vk2d::Instance::CreateSampler(
+VK2D_API vk2d::Sampler_DEPRICATED * vk2d::Instance::CreateSampler(
 	const SamplerCreateInfo		&	sampler_create_info
 )
 {
@@ -178,7 +178,7 @@ VK2D_API vk2d::Sampler * vk2d::Instance::CreateSampler(
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 VK2D_API void vk2d::Instance::DestroySampler(
-	Sampler						*	sampler
+	Sampler_DEPRICATED						*	sampler
 )
 {
 	impl->DestroySampler( sampler );

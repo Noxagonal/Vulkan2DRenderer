@@ -581,14 +581,14 @@ public:
 	/// 
 	/// @note		Multithreading: Main thread only.
 	/// 
-	///	@see		Sampler
+	///	@see		Sampler_DEPRICATED
 	/// 
 	/// @param[in]	sampler_create_info
-	///				Sampler creation parameters struct object. This is handy as creating some objects can require a lot of
+	///				Sampler_DEPRICATED creation parameters struct object. This is handy as creating some objects can require a lot of
 	///				parameters.
 	/// 
 	/// @return		Handle to newly created sampler.
-	VK2D_API Sampler							*	CreateSampler(
+	VK2D_API Sampler_DEPRICATED							*	CreateSampler(
 		const SamplerCreateInfo					&	sampler_create_info
 	);
 
@@ -598,10 +598,10 @@ public:
 	/// @note		Multithreading: Main thread only.
 	/// 
 	/// @param[in]	sampler
-	///				Handle to Sampler to destroy. Note that this handle cannob be used for anything afterwards, if you try,
+	///				Handle to Sampler_DEPRICATED to destroy. Note that this handle cannob be used for anything afterwards, if you try,
 	///				you'll crash your application. If nullptr, then this function does nothing.
 	VK2D_API void									DestroySampler(
-		Sampler									*	sampler
+		Sampler_DEPRICATED									*	sampler
 	);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

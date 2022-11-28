@@ -667,7 +667,7 @@ void vk2d::vk2d_internal::RenderTargetTextureImpl::DrawPointList_DEPRICATED(
 	const RawVertexData				&	raw_vertex_data,
 	std::span<const glm::mat4>			transformations,
 	Texture							*	texture,
-	Sampler							*	sampler
+	Sampler_DEPRICATED				*	sampler
 )
 {
 	VK2D_ASSERT_MAIN_THREAD( instance );
@@ -775,7 +775,7 @@ void vk2d::vk2d_internal::RenderTargetTextureImpl::DrawLineList_DEPRICATED(
 	const RawVertexData				&	raw_vertex_data,
 	std::span<const glm::mat4>			transformations,
 	Texture							*	texture,
-	Sampler							*	sampler,
+	Sampler_DEPRICATED							*	sampler,
 	float								line_width
 )
 {
@@ -890,7 +890,7 @@ void vk2d::vk2d_internal::RenderTargetTextureImpl::DrawTriangleList_DEPRICATED(
 	std::span<const glm::mat4>			transformations,
 	bool								filled,
 	Texture							*	texture,
-	Sampler							*	sampler
+	Sampler_DEPRICATED							*	sampler
 )
 {
 	VK2D_ASSERT_MAIN_THREAD( instance );
@@ -2023,7 +2023,7 @@ bool vk2d::vk2d_internal::RenderTargetTextureImpl::UpdateSubmitInfos(
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 vk2d::vk2d_internal::TimedDescriptorPoolData & vk2d::vk2d_internal::RenderTargetTextureImpl::GetOrCreateDescriptorSetForSampler(
-	Sampler	*	sampler
+	Sampler_DEPRICATED	*	sampler
 )
 {
 	auto & set = sampler_descriptor_sets[ sampler ];
@@ -2046,7 +2046,7 @@ vk2d::vk2d_internal::TimedDescriptorPoolData & vk2d::vk2d_internal::RenderTarget
 		VkDescriptorBufferInfo buffer_info {};
 		buffer_info.buffer						= sampler->impl->GetVulkanBufferForSamplerData();
 		buffer_info.offset						= 0;
-		buffer_info.range						= sizeof( SamplerImpl::BufferData );
+		buffer_info.range						= sizeof( SamplerImpl_DEPRICATED::BufferData );
 
 		std::array<VkWriteDescriptorSet, 2> descriptor_write {};
 		descriptor_write[ 0 ].sType				= VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
@@ -2927,7 +2927,7 @@ void vk2d::vk2d_internal::RenderTargetTextureImpl::CmdBindGraphicsPipelineIfDiff
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void vk2d::vk2d_internal::RenderTargetTextureImpl::CmdBindSamplerIfDifferent(
 	VkCommandBuffer			command_buffer,
-	Sampler				*	sampler,
+	Sampler_DEPRICATED				*	sampler,
 	VkPipelineLayout		use_pipeline_layout
 )
 {

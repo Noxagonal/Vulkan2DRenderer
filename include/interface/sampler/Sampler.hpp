@@ -12,10 +12,12 @@ namespace vk2d_internal {
 class InstanceImpl;
 class WindowImpl;
 class RenderTargetTextureImpl;
-class SamplerImpl;
+class SamplerImpl_DEPRICATED;
 } // vk2d_internal
 
 class Instance;
+
+
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /// @brief		Used to tell the sampler which filter to use when fetching the texel from a texture.
@@ -191,7 +193,7 @@ struct SamplerCreateInfo {
 ///
 ///				A sampler is used to determine how to fetch texture color values at specific locations and what filters should
 ///				be used when fetches happen inbetween texture texels.
-class Sampler {
+class Sampler_DEPRICATED {
 	friend class vk2d_internal::InstanceImpl;
 	friend class vk2d_internal::WindowImpl;
 	friend class vk2d_internal::RenderTargetTextureImpl;
@@ -206,7 +208,7 @@ class Sampler {
 	/// 
 	/// @param[in]	create_info
 	///				Reference to SamplerCreateInfo object defining parameters for this render target texture.
-	VK2D_API										Sampler(
+	VK2D_API										Sampler_DEPRICATED(
 		vk2d_internal::InstanceImpl				&	instance,
 		const SamplerCreateInfo					&	create_info
 	);
@@ -214,7 +216,7 @@ class Sampler {
 public:
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	VK2D_API										~Sampler();
+	VK2D_API										~Sampler_DEPRICATED();
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Checks if the object is good to be used or if a failure occurred in it's creation.
@@ -227,7 +229,7 @@ public:
 private:
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	std::unique_ptr<vk2d_internal::SamplerImpl>		impl;
+	std::unique_ptr<vk2d_internal::SamplerImpl_DEPRICATED>		impl;
 };
 
 

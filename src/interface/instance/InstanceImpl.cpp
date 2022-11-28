@@ -562,7 +562,7 @@ void vk2d::vk2d_internal::InstanceImpl::FreeDescriptorSet_DEPRICATED(
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-vk2d::Sampler * vk2d::vk2d_internal::InstanceImpl::CreateSampler(
+vk2d::Sampler_DEPRICATED * vk2d::vk2d_internal::InstanceImpl::CreateSampler(
 	const SamplerCreateInfo	&	sampler_create_info
 )
 {
@@ -573,8 +573,8 @@ vk2d::Sampler * vk2d::vk2d_internal::InstanceImpl::CreateSampler(
 		return {};
 	}
 
-	auto sampler = std::unique_ptr<Sampler>(
-		new Sampler(
+	auto sampler = std::unique_ptr<Sampler_DEPRICATED>(
+		new Sampler_DEPRICATED(
 			*this,
 			sampler_create_info
 		)
@@ -591,7 +591,7 @@ vk2d::Sampler * vk2d::vk2d_internal::InstanceImpl::CreateSampler(
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void vk2d::vk2d_internal::InstanceImpl::DestroySampler(
-	Sampler					*	sampler
+	Sampler_DEPRICATED					*	sampler
 )
 {
 	VK2D_ASSERT_MAIN_THREAD( *this );
@@ -978,7 +978,7 @@ vk2d::Texture * vk2d::vk2d_internal::InstanceImpl::GetDefaultTexture() const
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-vk2d::Sampler * vk2d::vk2d_internal::InstanceImpl::GetDefaultSampler() const
+vk2d::Sampler_DEPRICATED * vk2d::vk2d_internal::InstanceImpl::GetDefaultSampler() const
 {
 	return default_sampler.get();
 }
@@ -1085,8 +1085,8 @@ bool vk2d::vk2d_internal::InstanceImpl::CreateDefaultSampler()
 	sampler_create_info.mipmap_level_of_detail_bias		= 0.0f;
 	sampler_create_info.mipmap_min_level_of_detail		= 0.0f;
 	sampler_create_info.mipmap_max_level_of_detail		= 128.0f;
-	default_sampler = std::unique_ptr<Sampler>(
-		new Sampler(
+	default_sampler = std::unique_ptr<Sampler_DEPRICATED>(
+		new Sampler_DEPRICATED(
 			*this,
 			sampler_create_info
 		)
@@ -1116,8 +1116,8 @@ bool vk2d::vk2d_internal::InstanceImpl::CreateBlurSampler_DEPRICATED()
 		sampler_create_info.mipmap_level_of_detail_bias		= 0.0f;
 		sampler_create_info.mipmap_min_level_of_detail		= 0.0f;
 		sampler_create_info.mipmap_max_level_of_detail		= 128.0f;
-		blur_sampler_DEPRICATED = std::unique_ptr<Sampler>(
-			new Sampler(
+		blur_sampler_DEPRICATED = std::unique_ptr<Sampler_DEPRICATED>(
+			new Sampler_DEPRICATED(
 				*this,
 				sampler_create_info
 			)
@@ -1381,7 +1381,7 @@ bool vk2d::vk2d_internal::InstanceImpl::CreateDescriptorSetLayouts_MOVE()
 	};
 
 	// Graphics: Descriptor set layout for simple sampler.
-	// Binding 0 = Sampler
+	// Binding 0 = Sampler_DEPRICATED
 	{
 		graphics_simple_sampler_descriptor_set_layout_MOVE = CreateLocalDescriptorSetLayout(
 			{
@@ -1394,7 +1394,7 @@ bool vk2d::vk2d_internal::InstanceImpl::CreateDescriptorSetLayouts_MOVE()
 	}
 
 	// Graphics: Descriptor set layout for sampler.
-	// Binding 0 = Sampler
+	// Binding 0 = Sampler_DEPRICATED
 	// Binding 1 = Uniform buffer for sampler data
 	{
 		graphics_sampler_descriptor_set_layout_MOVE = CreateLocalDescriptorSetLayout(

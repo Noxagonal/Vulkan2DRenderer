@@ -23,7 +23,7 @@ VK2D_API void vk2d::MeshBase::SetTexture(
 }
 
 VK2D_API void vk2d::MeshBase::SetSampler(
-	Sampler * sampler_pointer
+	Sampler_DEPRICATED * sampler_pointer
 )
 {
 	sampler		= sampler_pointer;

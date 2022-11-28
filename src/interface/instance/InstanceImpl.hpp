@@ -24,7 +24,7 @@ class Monitor;
 class Cursor;
 class ResourceManager;
 class TextureResource;
-class Sampler;
+class Sampler_DEPRICATED;
 class RenderTargetTexture;
 
 namespace vulkan {
@@ -198,14 +198,14 @@ public:
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @see		Instance::CreateSampler()
-	Sampler												*	CreateSampler(
+	Sampler_DEPRICATED												*	CreateSampler(
 		const SamplerCreateInfo							&	sampler_create_info
 	);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @see		Instance::DestroySampler()
 	void													DestroySampler(
-		Sampler											*	sampler
+		Sampler_DEPRICATED											*	sampler
 	);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -505,12 +505,12 @@ public:
 	/// @note		Multithreading: Any thread.
 	///
 	/// @return		Default sampler handle.
-	Sampler												*	GetDefaultSampler() const;
+	Sampler_DEPRICATED												*	GetDefaultSampler() const;
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Get blur sampler descriptor set.
 	///
-	///				Sampler descriptor set used with blur pass.
+	///				Sampler_DEPRICATED descriptor set used with blur pass.
 	/// 
 	/// @note		Multithreading: Any thread.
 	///
@@ -642,14 +642,14 @@ private:
 	std::mutex												descriptor_pool_mutex;
 	std::unique_ptr<vulkan::DescriptorAutoPool>				descriptor_pool;
 
-	std::unique_ptr<Sampler>								default_sampler;
+	std::unique_ptr<Sampler_DEPRICATED>								default_sampler;
 	TextureResource										*	default_texture								= {};
-	std::unique_ptr<Sampler>								blur_sampler_DEPRICATED;
+	std::unique_ptr<Sampler_DEPRICATED>								blur_sampler_DEPRICATED;
 	vulkan::PoolDescriptorSet								blur_sampler_descriptor_set_DEPRICATED					= {};
 
 	std::vector<std::unique_ptr<Window>>					windows;
 	std::vector<std::unique_ptr<RenderTargetTexture>>		render_target_textures;
-	std::vector<std::unique_ptr<Sampler>>					samplers;
+	std::vector<std::unique_ptr<Sampler_DEPRICATED>>					samplers;
 	std::vector<std::unique_ptr<Cursor>>					cursors;
 
 	PFN_GamepadConnectionEventCallback						joystick_event_callback						= {};
