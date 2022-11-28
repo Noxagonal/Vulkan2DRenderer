@@ -96,10 +96,13 @@ VK2D_API vk2d::FontResource * vk2d::ResourceManager::LoadFontResource(
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-VK2D_API vk2d::MaterialResource * vk2d::ResourceManager::CreateMaterialResource()
+VK2D_API vk2d::MaterialResource * vk2d::ResourceManager::CreateMaterialResource(
+	const MaterialCreateInfo & create_info
+)
 {
 	return impl->CreateMaterialResource(
-		nullptr
+		nullptr,
+		create_info
 	);
 }
 

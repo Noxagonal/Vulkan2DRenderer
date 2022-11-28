@@ -261,7 +261,8 @@ vk2d::FontResource * vk2d::vk2d_internal::ResourceManagerImpl::LoadFontResource(
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 vk2d::MaterialResource * vk2d::vk2d_internal::ResourceManagerImpl::CreateMaterialResource(
-	ResourceBase * parent_resource
+	ResourceBase				*	parent_resource,
+	const MaterialCreateInfo	&	create_info
 )
 {
 	std::lock_guard<std::recursive_mutex> resources_lock( resources_mutex );
@@ -270,7 +271,8 @@ vk2d::MaterialResource * vk2d::vk2d_internal::ResourceManagerImpl::CreateMateria
 		new MaterialResource(
 			*this,
 			SelectMaterialLoaderThread(),
-			parent_resource
+			parent_resource,
+			create_info
 		)
 	);
 	if( !resource || !resource->IsGood() ) {

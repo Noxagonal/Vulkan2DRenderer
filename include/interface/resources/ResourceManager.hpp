@@ -4,8 +4,12 @@
 
 #include <containers/Color.hpp>
 
+#include <interface/resources/MaterialCreateInfo.hpp>
+
 #include <memory>
 #include <filesystem>
+
+
 
 namespace vk2d {
 
@@ -215,7 +219,9 @@ public:
 	);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	VK2D_API MaterialResource								*	CreateMaterialResource();
+	VK2D_API MaterialResource								*	CreateMaterialResource(
+		const MaterialCreateInfo							&	create_info					= {}
+	);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Destroy a resource.

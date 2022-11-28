@@ -13,14 +13,16 @@
 VK2D_API vk2d::MaterialResource::MaterialResource(
 	vk2d_internal::ResourceManagerImpl	&	resource_manager,
 	uint32_t								loader_thread,
-	ResourceBase						*	parent_resource
+	ResourceBase						*	parent_resource,
+	const MaterialCreateInfo			&	create_info
 )
 {
 	impl = std::make_unique<vk2d_internal::MaterialResourceImpl>(
 		*this,
 		resource_manager,
 		loader_thread,
-		parent_resource
+		parent_resource,
+		create_info
 	);
 	if( !impl || !impl->IsGood() ) {
 		impl = nullptr;

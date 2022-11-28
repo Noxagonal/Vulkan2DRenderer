@@ -83,10 +83,13 @@ bool vk2d::vk2d_internal::TextureResourceImpl::MTLoad(
 	// 8. Submit command buffer to the GPU, get a fence handle to indicate when the image is ready to be used.
 	// 9. Allocate descriptor set that points to the image.
 
+	assert( thread_resource );
 	loader_thread_resource	= dynamic_cast<ThreadLoaderResource*>( thread_resource );
+	assert( loader_thread_resource );
+	if( !loader_thread_resource ) return false;
+
 	auto memory_pool		= loader_thread_resource->GetDeviceMemoryPool();
 
-	assert( loader_thread_resource );
 	if( !loader_thread_resource ) return false;
 
 	// Get data into a staging buffer, and create staging buffer
@@ -805,7 +808,6 @@ void vk2d::vk2d_internal::TextureResourceImpl::MTUnload(
 )
 {
 	loader_thread_resource	= dynamic_cast<ThreadLoaderResource*>( thread_resource );
-
 	assert( loader_thread_resource );
 	if( !loader_thread_resource ) return;
 

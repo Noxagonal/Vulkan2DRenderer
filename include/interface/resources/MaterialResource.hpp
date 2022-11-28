@@ -3,6 +3,7 @@
 #include <core/Common.hpp>
 
 #include <interface/resources/ResourceBase.hpp>
+#include "MaterialCreateInfo.hpp"
 
 #include <filesystem>
 
@@ -111,7 +112,8 @@ class MaterialResource :
 	VK2D_API													MaterialResource(
 		vk2d_internal::ResourceManagerImpl					&	resource_manager,
 		uint32_t												loader_thread,
-		ResourceBase										*	parent_resource
+		ResourceBase										*	parent_resource,
+		const MaterialCreateInfo							&	create_info
 	);
 
 public:

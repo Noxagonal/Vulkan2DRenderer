@@ -1,6 +1,8 @@
 #pragma once
 
 #include <core/SourceCommon.hpp>
+#include <interface/resources/MaterialResource.hpp>
+
 #include <interface/resources/resource_base/ResourceImplBase.hpp>
 
 #include <system/ThreadPrivateResources.hpp>
@@ -22,7 +24,8 @@ public:
 		MaterialResource								&	my_interface,
 		ResourceManagerImpl								&	resource_manager,
 		uint32_t											loader_thread,
-		ResourceBase									*	parent_resource
+		ResourceBase									*	parent_resource,
+		const MaterialCreateInfo						&	create_info
 	);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -63,6 +66,8 @@ private:
 	MaterialResource									&	my_interface;
 	ResourceManagerImpl									&	resource_manager;
 	ThreadMaterialLoaderResource						*	loader_thread_resource						= {};
+
+	MaterialCreateInfo										create_info_copy							= {};
 
 	bool													is_good										= {};
 };

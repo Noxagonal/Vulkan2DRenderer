@@ -10,10 +10,11 @@
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 vk2d::vk2d_internal::MaterialResourceImpl::MaterialResourceImpl(
-	MaterialResource		&	my_interface,
-	ResourceManagerImpl		&	resource_manager,
-	uint32_t					loader_thread,
-	ResourceBase			*	parent_resource
+	MaterialResource			&	my_interface,
+	ResourceManagerImpl			&	resource_manager,
+	uint32_t						loader_thread,
+	ResourceBase				*	parent_resource,
+	const MaterialCreateInfo	&	create_info
 ) :
 	ResourceImplBase(
 		my_interface,
@@ -22,8 +23,31 @@ vk2d::vk2d_internal::MaterialResourceImpl::MaterialResourceImpl(
 		parent_resource
 	),
 	my_interface( my_interface ),
-	resource_manager( resource_manager )
+	resource_manager( resource_manager ),
+	create_info_copy( create_info )
 {
+	// TODO: Material resource should fully define how the drawing actually happens, what shaders and pipelines are made for it.
+	// 
+	// What is needed of material:
+	// - Ability to be fully loaded on the background to prevent any kind of potential stutters in the main rendering thread.
+	// 
+	// - Custom vertices.
+	// 
+	// - Custon per-draw data. (Per draw instance data)
+	// 
+	// - Define pipeline fully in advance.
+	//   - This means that the material will be responsible for determining if it can draw points, lines, polygons, filled or
+	//     lined polygons.
+	//   - See which pipeline states may be defined as dynamic, and even then, keep the amount of dynamic states low.
+	// 
+	// - Mesh will no longer determine if it will be drawn as points, lines or polygons.
+	// 
+	// - Material can determine the amount of textures and samplers.
+	//   - One material with different textures and potentially different samplers may be used to keep the amount of materials
+	//     down. Allowing only one material to define how the drawing actually happens and not necessarily what resources are
+	//     tied to it.
+	//
+
 	is_good						= true;
 }
 
@@ -31,15 +55,16 @@ vk2d::vk2d_internal::MaterialResourceImpl::MaterialResourceImpl(
 vk2d::vk2d_internal::MaterialResourceImpl::~MaterialResourceImpl()
 {}
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 bool vk2d::vk2d_internal::MaterialResourceImpl::MTLoad(
 	ThreadPrivateResource * thread_resource
 )
 {
 	loader_thread_resource	= dynamic_cast<ThreadMaterialLoaderResource*>( thread_resource );
-	auto memory_pool		= loader_thread_resource->GetDeviceMemoryPool();
-
 	assert( loader_thread_resource );
 	if( !loader_thread_resource ) return false;
+
+	auto memory_pool		= loader_thread_resource->GetDeviceMemoryPool();
 
 	return true;
 }
@@ -50,7 +75,6 @@ void vk2d::vk2d_internal::MaterialResourceImpl::MTUnload(
 )
 {
 	loader_thread_resource	= dynamic_cast<ThreadMaterialLoaderResource*>( thread_resource );
-
 	assert( loader_thread_resource );
 	if( !loader_thread_resource ) return;
 
@@ -70,8 +94,8 @@ vk2d::ResourceStatus vk2d::vk2d_internal::MaterialResourceImpl::GetStatus()
 	if( !is_good ) return ResourceStatus::FAILED_TO_LOAD;
 
 	auto local_status = status.load();
-	if( local_status == ResourceStatus::UNDETERMINED ) {
-
+	if( local_status == ResourceStatus::UNDETERMINED )
+	{
 		if( load_function_run_fence.IsSet() )
 		{
 			// TODO: Determine status if it is undetermined.
@@ -99,7 +123,8 @@ vk2d::ResourceStatus vk2d::vk2d_internal::MaterialResourceImpl::WaitUntilLoaded(
 	std::chrono::nanoseconds timeout
 )
 {
-	if( timeout == std::chrono::nanoseconds::max() ) {
+	if( timeout == std::chrono::nanoseconds::max() )
+	{
 		return WaitUntilLoaded( std::chrono::steady_clock::time_point::max() );
 	}
 	return WaitUntilLoaded( std::chrono::steady_clock::now() + timeout );
@@ -119,8 +144,8 @@ vk2d::ResourceStatus vk2d::vk2d_internal::MaterialResourceImpl::WaitUntilLoaded(
 	if( !is_good ) return ResourceStatus::FAILED_TO_LOAD;
 
 	auto local_status = status.load();
-	if( local_status == ResourceStatus::UNDETERMINED ) {
-
+	if( local_status == ResourceStatus::UNDETERMINED )
+	{
 		if( load_function_run_fence.Wait( timeout ) )
 		{
 			// We can check the status of the fence in any thread,
@@ -177,8 +202,7 @@ public:
 	void operator()(
 		ThreadPrivateResource	*	thread_resource
 	)
-	{
-	}
+	{}
 
 private:
 	MaterialResourceImpl		*	material;
