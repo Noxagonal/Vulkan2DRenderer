@@ -1,7 +1,7 @@
 
 #include <core/SourceCommon.hpp>
 
-#include <interface/resources/ResourceBase.hpp>
+#include <interface/resources/resource_base/ResourceBase.hpp>
 #include "ResourceImplBase.hpp"
 
 #include <interface/resource_manager/ResourceManagerImpl.hpp>

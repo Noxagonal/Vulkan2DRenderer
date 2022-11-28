@@ -4,7 +4,7 @@
 
 #include <containers/Color.hpp>
 
-#include <interface/resources/MaterialCreateInfo.hpp>
+#include <interface/resources/material/MaterialCreateInfo.hpp>
 
 #include <memory>
 #include <filesystem>

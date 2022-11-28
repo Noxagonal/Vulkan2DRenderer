@@ -1,7 +1,7 @@
 
 #include <core/SourceCommon.hpp>
 
-#include <interface/resources/TextureResource.hpp>
+#include <interface/resources/texture/TextureResource.hpp>
 #include "TextureResourceImpl.hpp"
 
 #include <interface/resource_manager/ResourceManagerImpl.hpp>

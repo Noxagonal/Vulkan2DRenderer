@@ -2,7 +2,7 @@
 
 #include <core/SourceCommon.hpp>
 
-#include <interface/Window.hpp>
+#include <interface/window/Window.hpp>
 
 #include <types/Synchronization.hpp>
 
@@ -14,7 +14,7 @@
 #include <system/RenderTargetTextureDependecyGraphInfo.hpp>
 #include <mesh/vertex/RawVertexData.hpp>
 
-#include <interface/Instance.hpp>
+#include <interface/instance/Instance.hpp>
 #include <interface/instance/InstanceImpl.hpp>
 
 #include <vector>

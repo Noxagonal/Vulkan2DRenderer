@@ -8,10 +8,10 @@
 #include <system/CommonTools.hpp>
 #include <system/ImageFormatConverter.hpp>
 
-#include <interface/Instance.hpp>
+#include <interface/instance/Instance.hpp>
 #include <interface/instance/InstanceImpl.hpp>
 
-#include <interface/resources/ResourceManager.hpp>
+#include <interface/resource_manager/ResourceManager.hpp>
 #include <interface/resource_manager/ResourceManagerImpl.hpp>
 
 #include <stb_image.h>

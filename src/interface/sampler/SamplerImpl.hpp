@@ -3,7 +3,7 @@
 #include <core/SourceCommon.hpp>
 
 #include <vulkan/descriptor_set/DescriptorSet.hpp>
-#include <interface/Sampler.hpp>
+#include <interface/sampler/Sampler.hpp>
 
 #include <vulkan/utils/VulkanMemoryManagement.hpp>
 

@@ -1,7 +1,7 @@
 
 #include <core/SourceCommon.hpp>
 
-#include <interface/resources/FontResource.hpp>
+#include <interface/resources/font/FontResource.hpp>
 #include "FontResourceImpl.hpp"
 
 #include <interface/resource_manager/ResourceManagerImpl.hpp>

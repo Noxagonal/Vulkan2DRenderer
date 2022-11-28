@@ -1,12 +1,12 @@
 
 #include <core/SourceCommon.hpp>
 
-#include <interface/resources/FontResource.hpp>
+#include <interface/resources/font/FontResource.hpp>
 #include "FontResourceImpl.hpp"
 
 #include <interface/resource_manager/ResourceManagerImpl.hpp>
 
-#include <interface/resources/TextureResource.hpp>
+#include <interface/resources/texture/TextureResource.hpp>
 #include <system/ThreadPrivateResources.hpp>
 #include <interface/instance/InstanceImpl.hpp>
 #include <stb_image_write.h>

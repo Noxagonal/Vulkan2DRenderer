@@ -2,13 +2,13 @@
 
 #include <core/SourceCommon.hpp>
 
-#include <interface/resources/FontResource.hpp>
+#include <interface/resources/font/FontResource.hpp>
 
 #include <containers/Rect2.hpp>
 #include <containers/Color.hpp>
 
 #include <interface/resources/resource_base/ResourceImplBase.hpp>
-#include <interface/resources/TextureResource.hpp>
+#include <interface/resources/texture/TextureResource.hpp>
 
 #include <ft2build.h>
 #include FT_FREETYPE_H

@@ -1,7 +1,7 @@
 #pragma once
 
 #include <core/SourceCommon.hpp>
-#include <interface/Instance.hpp>
+#include <interface/instance/Instance.hpp>
 
 #include <containers/Color.hpp>
 

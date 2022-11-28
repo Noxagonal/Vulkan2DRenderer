@@ -2,7 +2,7 @@
 
 #include <core/Common.hpp>
 
-#include <interface/resources/ResourceBase.hpp>
+#include <interface/resources/resource_base/ResourceBase.hpp>
 #include <mesh/generators/MeshGeneratorDeclarations.hpp>
 #include <mesh/Mesh.hpp>
 

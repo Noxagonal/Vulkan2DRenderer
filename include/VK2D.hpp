@@ -21,16 +21,16 @@
 #include <mesh/generators/MeshGenerators.hpp>
 #include <mesh/modifiers/MeshModifiers.hpp>
 
-#include <interface/Instance.hpp>
-#include <interface/Monitor.hpp>
-#include <interface/Cursor.hpp>
-#include <interface/Window.hpp>
-#include <interface/RenderTargetTexture.hpp>
-#include <interface/Sampler.hpp>
-#include <interface/Texture.hpp>
+#include <interface/instance/Instance.hpp>
+#include <interface/monitor/Monitor.hpp>
+#include <interface/cursor/Cursor.hpp>
+#include <interface/window/Window.hpp>
+#include <interface/render_target_texture/RenderTargetTexture.hpp>
+#include <interface/sampler/Sampler.hpp>
+#include <interface/texture/Texture.hpp>
 
-#include <interface/resources/ResourceManager.hpp>
-#include <interface/resources/ResourceBase.hpp>
-#include <interface/resources/TextureResource.hpp>
-#include <interface/resources/FontResource.hpp>
-#include <interface/resources/MaterialResource.hpp>
+#include <interface/resource_manager/ResourceManager.hpp>
+#include <interface/resources/resource_base/ResourceBase.hpp>
+#include <interface/resources/texture/TextureResource.hpp>
+#include <interface/resources/font/FontResource.hpp>
+#include <interface/resources/material/MaterialResource.hpp>

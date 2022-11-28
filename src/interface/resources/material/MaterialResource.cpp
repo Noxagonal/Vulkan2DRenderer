@@ -1,7 +1,7 @@
 
 #include <core/SourceCommon.hpp>
 
-#include <interface/resources/MaterialResource.hpp>
+#include <interface/resources/material/MaterialResource.hpp>
 #include "MaterialResourceImpl.hpp"
 
 #include <interface/resource_manager/ResourceManagerImpl.hpp>

@@ -7,7 +7,7 @@
 #include <mesh/Mesh.hpp>
 #include <mesh/vertex/StandardVertex.hpp>
 #include <mesh/vertex/VertexTools.hpp>
-#include <interface/resources/FontResource.hpp>
+#include <interface/resources/font/FontResource.hpp>
 
 
 

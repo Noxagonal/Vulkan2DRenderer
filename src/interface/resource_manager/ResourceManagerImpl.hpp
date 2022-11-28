@@ -2,7 +2,7 @@
 
 #include <core/SourceCommon.hpp>
 
-#include <interface/resources/ResourceManager.hpp>
+#include <interface/resource_manager/ResourceManager.hpp>
 
 #include <system/ThreadPool.hpp>
 

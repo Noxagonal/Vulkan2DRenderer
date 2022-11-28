@@ -6,7 +6,7 @@
 
 #include <vulkan/utils/VulkanMemoryManagement.hpp>
 
-#include <interface/resources/TextureResource.hpp>
+#include <interface/resources/texture/TextureResource.hpp>
 #include <interface/resources/resource_base/ResourceImplBase.hpp>
 #include <interface/texture/TextureImpl.hpp>
 

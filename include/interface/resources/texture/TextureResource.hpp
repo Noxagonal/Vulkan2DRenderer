@@ -4,8 +4,8 @@
 
 #include <containers/Color.hpp>
 
-#include <interface/resources/ResourceBase.hpp>
-#include <interface/Texture.hpp>
+#include <interface/resources/resource_base/ResourceBase.hpp>
+#include <interface/texture/Texture.hpp>
 
 #include <memory>
 

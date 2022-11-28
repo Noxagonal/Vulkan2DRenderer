@@ -2,7 +2,7 @@
 
 #include <core/SourceCommon.hpp>
 
-#include <interface/Texture.hpp>
+#include <interface/texture/Texture.hpp>
 
 
 

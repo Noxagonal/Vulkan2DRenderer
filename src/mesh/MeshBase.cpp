@@ -5,11 +5,11 @@
 #include <containers/Color.hpp>
 #include <containers/Transform.hpp>
 
-#include <interface/resources/FontResource.hpp>
+#include <interface/resources/font/FontResource.hpp>
 #include <interface/resources/font/FontResourceImpl.hpp>
 
-#include <interface/resources/TextureResource.hpp>
-#include <interface/Texture.hpp>
+#include <interface/resources/texture/TextureResource.hpp>
+#include <interface/texture/Texture.hpp>
 
 #include <mesh/MeshBase.hpp>
 

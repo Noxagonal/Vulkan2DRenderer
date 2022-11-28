@@ -5,9 +5,9 @@
 
 #include <containers/Color.hpp>
 
-#include <interface/Window.hpp>
-#include <interface/RenderTargetTexture.hpp>
-#include <interface/Sampler.hpp>
+#include <interface/window/Window.hpp>
+#include <interface/render_target_texture/RenderTargetTexture.hpp>
+#include <interface/sampler/Sampler.hpp>
 
 #include <string>
 #include <memory>

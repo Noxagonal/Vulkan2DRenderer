@@ -13,7 +13,7 @@
 #include <mesh/vertex/RawVertexData.hpp>
 #include <mesh/vertex/VertexBase.hpp>
 
-#include <interface/Texture.hpp>
+#include <interface/texture/Texture.hpp>
 
 #include <memory>
 #include <span>

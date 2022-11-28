@@ -2,7 +2,7 @@
 
 #include <core/SourceCommon.hpp>
 
-#include <interface/RenderTargetTexture.hpp>
+#include <interface/render_target_texture/RenderTargetTexture.hpp>
 
 #include <containers/BlurType.hpp>
 
@@ -16,7 +16,7 @@
 
 #include <interface/instance/InstanceImpl.hpp>
 
-#include <interface/Texture.hpp>
+#include <interface/texture/Texture.hpp>
 #include "../texture/TextureImpl.hpp"
 
 #include "../sampler/SamplerImpl.hpp"
