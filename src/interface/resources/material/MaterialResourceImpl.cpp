@@ -27,25 +27,76 @@ vk2d::vk2d_internal::MaterialResourceImpl::MaterialResourceImpl(
 	create_info_copy( create_info )
 {
 	// TODO: Material resource should fully define how the drawing actually happens, what shaders and pipelines are made for it.
-	// 
+	//
 	// What is needed of material:
 	// - Ability to be fully loaded on the background to prevent any kind of potential stutters in the main rendering thread.
+	//
+	// - Shaders and vulkan pipelines may be reused. This means that they must be reference counted. Add reference counting on
+	//   these managers instead of plain create and destroy functionalities.
+	//
+	// - Custom vertices. Need to convey types and names to the shader somehow, otherwise this is done.
 	// 
-	// - Custom vertices.
-	// 
-	// - Custon per-draw data. (Per draw instance data)
-	// 
+	// - Custon per-draw data. (Per draw instance data) need a custom data struct and reflection similar to vertex for this.
+	//
+	// - Mesh will no longer determine if it will be drawn as points, lines or polygons.
+	//
+	// - Is material compatiblity with mesh checked in runtime or compile time? Can it be checked in compile time?
+	//   Most of the type info is erased when the material is actually created, because it travels accross shared library
+	//   boundaries. I think it will have to be runtime checked always. However I can definitely implement some compile time
+	//   checking whenever possible.
+	//
+	// - How to verify a vertex and its member types are compatible with the material, or other structs sent to the GPU?
+	//   - Look into std::is_same, Vertex::Base::IsVertex... For compile time checking whenever possible.
+	//   - Some runtime checking is necessary, might need to check all vertex members match expected for each and every call,
+	//     which is going to be a pretty heavy task. Maybe the vertex member types could be hashed and just the hash checked?
+	//   - This is going to be a user development issue rather than an issue resulted by having a different system. This could
+	//     probably be a check made only on debug builds, unless the final app decides to somehow mix different types of
+	//     meshes with different types of materials on the fly. (This remainds me, look into throwing errors instead of
+	//     returning error values, also look into release builds with debug features.)
+	//
 	// - Define pipeline fully in advance.
 	//   - This means that the material will be responsible for determining if it can draw points, lines, polygons, filled or
 	//     lined polygons.
 	//   - See which pipeline states may be defined as dynamic, and even then, keep the amount of dynamic states low.
-	// 
-	// - Mesh will no longer determine if it will be drawn as points, lines or polygons.
-	// 
+	//     - Vulkan 1.3 pretty much opened the entire pipeline to be dynamic if needed. This may have a lot of performance
+	//       costs.
+	//
 	// - Material can determine the amount of textures and samplers.
 	//   - One material with different textures and potentially different samplers may be used to keep the amount of materials
 	//     down. Allowing only one material to define how the drawing actually happens and not necessarily what resources are
 	//     tied to it.
+	//
+	// - Sampler info is pretty much the detail for the material instead of a separate object. (Currently regular sampler is
+	//   depricated.)
+	//   - It would further help keep the number of materials down by allowing samplers to be their own entities and reused.
+	//     This shouldn't be a performance consideration either, samplers may be switched between draw calls.
+	//   - It would be easier for the user to define the sampler inside the material.
+	//   - Consider an array of mostly similar samplers defined for a material.
+	//   - How often are different samplers actually defined for the material? Would it be easier to just use a specific one,
+	//     or create a similar one for each material.
+	//
+	// - GLSL to Spir-V compilation must happen on a single thread (glslang limitation). Consider separating shader and
+	//   pipeline building to 2 different resources, Eg. Create Shader class which holds a compiled shader.
+	//   - Pros:
+	//     - This would allow building shaders in advance and stored for later use, even saved on disk.
+	//     - Enables creating pipelines on multiple threads, or at the very least, allows staggering compiling shaders and
+	//       creating pipelines on 2 different threads.
+	//   - Cons:
+	//     - Fragments the implementation of a material into 2 parts that really should be one operation.
+	//     - Runtime check is needed to validate a material compatibility with a shader, cannot check during compile time.
+	//   - Possible fixes:
+	//     - It may not be worth separating shader compilation from material creation as a whole thread is reserved just to
+	//       material creation so it is always ready when needed.
+	//     - Using Vulkan pipeline cache requires synchronization, so only one pipeline can be created at a time anyhow,
+	//       unless each thread uses a separate pipeline cache, then it would be possible to create multiple pipelines at a
+	//       time.
+	//     - Keep CreateMaterialResource() working on a single thread for simplicity, but allow LoadMaterialResource() to use
+	//       any thread. This would allow storing already compiled Spir-V into a file. (Material saving is still a little out
+	//       in the open on how to implement it. It may reaquire a whole interface just for resource saving.)
+	//       This would also allow saving the hash of the Spir-V, which would make it faster to search for already loaded
+	//       shaders and simply increment their reference count.
+	//       (I personally prefer this option, it's somewhat demanding, but easy, to create a material but performance can be
+	//       mitigated by loading other already created materials from file faster.)
 	//
 
 	is_good						= true;
