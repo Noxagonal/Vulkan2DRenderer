@@ -2,6 +2,7 @@
 
 #include <core/SourceCommon.hpp>
 #include <interface/resources/material/MaterialResource.hpp>
+#include <interface/resources/material/ShaderMemberInfo.hpp>
 
 #include <interface/resources/resource_base/ResourceImplBase.hpp>
 
@@ -25,6 +26,7 @@ public:
 		ResourceManagerImpl								&	resource_manager,
 		uint32_t											loader_thread,
 		ResourceBase									*	parent_resource,
+		std::span<ShaderMemberInfo>							vertex_members,
 		const MaterialCreateInfo						&	create_info
 	);
 
@@ -66,6 +68,8 @@ private:
 	MaterialResource									&	my_interface;
 	ResourceManagerImpl									&	resource_manager;
 	ThreadMaterialLoaderResource						*	loader_thread_resource						= {};
+
+	std::vector<ShaderMemberInfo>							vertex_members;
 
 	MaterialCreateInfo										create_info_copy							= {};
 

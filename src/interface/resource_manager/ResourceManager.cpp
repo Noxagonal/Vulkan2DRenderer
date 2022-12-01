@@ -96,12 +96,14 @@ VK2D_API vk2d::FontResource * vk2d::ResourceManager::LoadFontResource(
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-VK2D_API vk2d::MaterialResource * vk2d::ResourceManager::CreateMaterialResource(
-	const MaterialCreateInfo & create_info
+VK2D_API vk2d::MaterialResource * vk2d::ResourceManager::DoCreateMaterialResource(
+	std::span<vk2d_internal::ShaderMemberInfo>		vertex_members,
+	const MaterialCreateInfo					&	create_info
 )
 {
-	return impl->CreateMaterialResource(
+	return impl->DoCreateMaterialResource(
 		nullptr,
+		vertex_members,
 		create_info
 	);
 }

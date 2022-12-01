@@ -10,11 +10,12 @@
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 vk2d::vk2d_internal::MaterialResourceImpl::MaterialResourceImpl(
-	MaterialResource			&	my_interface,
-	ResourceManagerImpl			&	resource_manager,
-	uint32_t						loader_thread,
-	ResourceBase				*	parent_resource,
-	const MaterialCreateInfo	&	create_info
+	MaterialResource					&	my_interface,
+	ResourceManagerImpl					&	resource_manager,
+	uint32_t								loader_thread,
+	ResourceBase						*	parent_resource,
+	std::span<ShaderMemberInfo>				vertex_members,
+	const MaterialCreateInfo			&	create_info
 ) :
 	ResourceImplBase(
 		my_interface,
@@ -24,6 +25,7 @@ vk2d::vk2d_internal::MaterialResourceImpl::MaterialResourceImpl(
 	),
 	my_interface( my_interface ),
 	resource_manager( resource_manager ),
+	vertex_members( vertex_members.begin(), vertex_members.end() ),
 	create_info_copy( create_info )
 {
 	// TODO: Material resource should fully define how the drawing actually happens, what shaders and pipelines are made for it.
@@ -46,6 +48,8 @@ vk2d::vk2d_internal::MaterialResourceImpl::MaterialResourceImpl(
 	//   checking whenever possible.
 	//
 	// - How to verify a vertex and its member types are compatible with the material, or other structs sent to the GPU?
+	//   - Resource manager could return a resource handle that automatically manages the resource lifetime. This resource
+	//     handle could be a template class.
 	//   - Look into std::is_same, Vertex::Base::IsVertex... For compile time checking whenever possible.
 	//   - Some runtime checking is necessary, might need to check all vertex members match expected for each and every call,
 	//     which is going to be a pretty heavy task. Maybe the vertex member types could be hashed and just the hash checked?

@@ -11,10 +11,11 @@
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 VK2D_API vk2d::MaterialResource::MaterialResource(
-	vk2d_internal::ResourceManagerImpl	&	resource_manager,
-	uint32_t								loader_thread,
-	ResourceBase						*	parent_resource,
-	const MaterialCreateInfo			&	create_info
+	vk2d_internal::ResourceManagerImpl			&	resource_manager,
+	uint32_t										loader_thread,
+	ResourceBase								*	parent_resource,
+	std::span<vk2d_internal::ShaderMemberInfo>		vertex_members,
+	const MaterialCreateInfo					&	create_info
 )
 {
 	impl = std::make_unique<vk2d_internal::MaterialResourceImpl>(
@@ -22,6 +23,7 @@ VK2D_API vk2d::MaterialResource::MaterialResource(
 		resource_manager,
 		loader_thread,
 		parent_resource,
+		vertex_members,
 		create_info
 	);
 	if( !impl || !impl->IsGood() ) {

@@ -4,10 +4,11 @@
 
 #include <containers/Color.hpp>
 
-#include <interface/resources/material/MaterialCreateInfo.hpp>
+#include <interface/resources/material/MaterialResourceHandle.hpp>
 
 #include <memory>
 #include <filesystem>
+#include <span>
 
 
 
@@ -17,12 +18,13 @@ class ThreadPool;
 class ResourceBase;
 class TextureResource;
 class FontResource;
-class MaterialResource;
 
 namespace vk2d_internal {
+
 class InstanceImpl;
 class ResourceManagerImpl;
-}
+
+} // vk2d_internal
 
 
 
@@ -31,8 +33,16 @@ class ResourceManagerImpl;
 ///
 ///				VK2D Is capable of loading and unloading resources in a background thread, and ResourceManager is
 ///				responsible of making it happen.
-class ResourceManager {
+class ResourceManager
+{
 	friend class vk2d_internal::InstanceImpl;
+
+	template<typename ResourceT, typename ResourceManagerT>
+	friend class ResourceHandleBase;
+
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	template<size_t Size>
+	using NameArray = std::array<std::string_view, Size>;
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		This object should not be directly constructed, it is automatically created by Instance at it's creation.
@@ -218,10 +228,67 @@ public:
 		uint32_t												glyph_atlas_padding			= 8
 	);
 
+	// TODO: Define material resource shader interface with template parameters
+
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	VK2D_API MaterialResource								*	CreateMaterialResource(
+	template<
+		vk2d_internal::VertexBaseOrDerivedType	VertexT
+		// typename								DrawT,
+		// size_t								SamplerCount,
+		// size_t								TextureCount,
+		// size_t								ColorOutCount
+	>
+	MaterialResourceHandle<VertexT>								CreateMaterialResource(
+		const NameArray<VertexT::GetMemberCount()>			&	vertex_member_names,
+		const MaterialCreateInfo							&	create_info					= {}
+	)
+	{
+		// Using this template function allows us to transfer template parameters to the resource handle, which allows us to do
+		// compile time error checking in some locations later.
+
+		auto vertex_member_types = vk2d_internal::GetShaderMemberTypesAsString<VertexT>();
+		auto vertex_members = std::vector<vk2d_internal::ShaderMemberInfo>();
+		for( size_t i = 0; i < vertex_member_types.size(); ++i )
+		{
+			if( vertex_member_names[ i ].empty() )
+			{
+				// TODO: Throw here.
+				return {};
+			}
+
+			auto shader_member_info = vk2d_internal::ShaderMemberInfo();
+			shader_member_info.type = vertex_member_types[ i ];
+			shader_member_info.name = vertex_member_names[ i ];
+			vertex_members.push_back( shader_member_info );
+		}
+
+		return MaterialResourceHandle<VertexT>(
+			this,
+			DoCreateMaterialResource(
+				vertex_members,
+				create_info
+			)
+		);
+	}
+
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	/// @brief		Checks if the object is good to be used or if a failure occurred in it's creation.
+	/// 
+	/// @note		Multithreading: Any thread.
+	/// 
+	/// @return		true if class object was created successfully, false if something went wrong
+	VK2D_API bool												IsGood() const;
+
+private:
+
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	VK2D_API MaterialResource								*	DoCreateMaterialResource(
+		std::span<vk2d_internal::ShaderMemberInfo>				vertex_members,
 		const MaterialCreateInfo							&	create_info					= {}
 	);
+
+public:
+	// TODO: Put DestroyResource() in private section after all the handles have been implemented.
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Destroy a resource.
@@ -239,14 +306,6 @@ public:
 	VK2D_API void												DestroyResource(
 		ResourceBase										*	resource
 	);
-
-	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	/// @brief		Checks if the object is good to be used or if a failure occurred in it's creation.
-	/// 
-	/// @note		Multithreading: Any thread.
-	/// 
-	/// @return		true if class object was created successfully, false if something went wrong
-	VK2D_API bool												IsGood() const;
 
 private:
 

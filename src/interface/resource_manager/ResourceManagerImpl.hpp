@@ -115,8 +115,9 @@ public:
 	);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	MaterialResource									*	CreateMaterialResource(
+	MaterialResource									*	DoCreateMaterialResource(
 		ResourceBase									*	parent_resource,
+		std::span<ShaderMemberInfo>							vertex_members,
 		const MaterialCreateInfo						&	create_info
 	);
 
