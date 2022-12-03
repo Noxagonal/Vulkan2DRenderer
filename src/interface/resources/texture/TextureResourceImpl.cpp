@@ -88,7 +88,7 @@ bool vk2d::vk2d_internal::TextureResourceImpl::MTLoad(
 	assert( loader_thread_resource );
 	if( !loader_thread_resource ) return false;
 
-	auto memory_pool		= loader_thread_resource->GetDeviceMemoryPool();
+	auto memory_pool		= loader_thread_resource->GetThreadLocalDeviceMemoryPool();
 
 	if( !loader_thread_resource ) return false;
 
@@ -811,7 +811,7 @@ void vk2d::vk2d_internal::TextureResourceImpl::MTUnload(
 	assert( loader_thread_resource );
 	if( !loader_thread_resource ) return;
 
-	auto memory_pool		= loader_thread_resource->GetDeviceMemoryPool();
+	auto memory_pool		= loader_thread_resource->GetThreadLocalDeviceMemoryPool();
 
 	// TODO: Is this check necessary? resource should be loaded by this point, make sure and remove this call if possible.
 	// Check if loaded successfully, no need to check for failure as this thread was

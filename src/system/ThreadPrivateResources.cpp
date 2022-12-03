@@ -25,19 +25,19 @@ vk2d::vk2d_internal::InstanceImpl & vk2d::vk2d_internal::ThreadLoaderResource::G
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-VkDevice vk2d::vk2d_internal::ThreadLoaderResource::GetVulkanDevice() const
+vk2d::vulkan::Device & vk2d::vk2d_internal::ThreadLoaderResource::GetVulkanDevice()
 {
 	return device;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-vk2d::vulkan::DeviceMemoryPool * vk2d::vk2d_internal::ThreadLoaderResource::GetDeviceMemoryPool()
+vk2d::vulkan::DeviceMemoryPool * vk2d::vk2d_internal::ThreadLoaderResource::GetThreadLocalDeviceMemoryPool()
 {
 	return &device_memory_pool.value();
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-vk2d::vulkan::DescriptorAutoPool * vk2d::vk2d_internal::ThreadLoaderResource::GetDescriptorAutoPool()
+vk2d::vulkan::DescriptorAutoPool * vk2d::vk2d_internal::ThreadLoaderResource::GetThreadLocalDescriptorAutoPool()
 {
 	return &descriptor_auto_pool.value();
 }
