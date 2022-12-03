@@ -79,10 +79,7 @@ int main()
 
 	/// !!! TESTING !!!
 	{
-		// !!! IMPORTANT !!!
-		// TODO: See if it would be possible to create a compile-time check to make sure the vertex member names are present.
-		auto material = resource_manager->CreateMaterialResource<vk2d::StandardVertex>( { "test" } );
-		//resource_manager->DestroyResource( &*material );
+		auto material = resource_manager->CreateMaterialResource<vk2d::StandardVertex>( { "test1", "test2", "test3", "test4", "test5" } );
 	}
 
 	EventHandler event_handler;

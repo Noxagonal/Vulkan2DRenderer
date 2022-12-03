@@ -3,6 +3,7 @@
 #include <core/Common.hpp>
 
 #include <containers/Color.hpp>
+#include <containers/NameArray.hpp>
 
 #include <interface/resources/material/MaterialResourceHandle.hpp>
 
@@ -39,10 +40,6 @@ class ResourceManager
 
 	template<typename ResourceT, typename ResourceManagerT>
 	friend class ResourceHandleBase;
-
-	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	template<size_t Size>
-	using NameArray = std::array<std::string_view, Size>;
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		This object should not be directly constructed, it is automatically created by Instance at it's creation.
@@ -239,7 +236,7 @@ public:
 		// size_t								ColorOutCount
 	>
 	MaterialResourceHandle<VertexT>								CreateMaterialResource(
-		const NameArray<VertexT::GetMemberCount()>			&	vertex_member_names,
+		NameArray<VertexT::GetMemberCount()>					vertex_member_names,
 		const MaterialCreateInfo							&	create_info					= {}
 	)
 	{
@@ -247,19 +244,18 @@ public:
 		// compile time error checking in some locations later.
 
 		auto vertex_member_types = vk2d_internal::GetShaderMemberTypesAsString<VertexT>();
-		auto vertex_members = std::vector<vk2d_internal::ShaderMemberInfo>();
+		auto vertex_members = std::array<vk2d_internal::ShaderMemberInfo, VertexT::GetMemberCount()>();
 		for( size_t i = 0; i < vertex_member_types.size(); ++i )
 		{
 			if( vertex_member_names[ i ].empty() )
 			{
-				// TODO: Throw here.
+				// TODO: Throw here instead of asserting.
+				assert( 0 && "Vertex member name must not be empty." );
 				return {};
 			}
 
-			auto shader_member_info = vk2d_internal::ShaderMemberInfo();
-			shader_member_info.type = vertex_member_types[ i ];
-			shader_member_info.name = vertex_member_names[ i ];
-			vertex_members.push_back( shader_member_info );
+			vertex_members[ i ].type = vertex_member_types[ i ];
+			vertex_members[ i ].name = vertex_member_names[ i ];
 		}
 
 		return MaterialResourceHandle<VertexT>(
