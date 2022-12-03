@@ -7,12 +7,12 @@
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-VK2D_API vk2d::Sampler_DEPRICATED::Sampler_DEPRICATED(
+VK2D_API vk2d::Sampler::Sampler(
 	vk2d_internal::InstanceImpl		&	instance,
 	const SamplerCreateInfo			&	create_info
 )
 {
-	impl = std::make_unique<vk2d_internal::SamplerImpl_DEPRICATED>(
+	impl = std::make_unique<vk2d_internal::SamplerImpl>(
 		*this,
 		instance,
 		create_info
@@ -25,11 +25,11 @@ VK2D_API vk2d::Sampler_DEPRICATED::Sampler_DEPRICATED(
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-VK2D_API vk2d::Sampler_DEPRICATED::~Sampler_DEPRICATED()
+VK2D_API vk2d::Sampler::~Sampler()
 {}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-VK2D_API bool vk2d::Sampler_DEPRICATED::IsGood() const
+VK2D_API bool vk2d::Sampler::IsGood() const
 {
 	return !!impl && impl->IsGood();
 }

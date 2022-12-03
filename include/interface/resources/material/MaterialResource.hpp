@@ -47,7 +47,7 @@ class MaterialResourceImpl;
 //   texture in the material and allow changing it at any time, it may be a little odd however to be able to change the texture
 //   but not the mesh type or shaders.
 //
-// - Where to store sampler. Same thing as textures, can be changed in the fly. Sampler_DEPRICATED is very close to what people might
+// - Where to store sampler. Same thing as textures, can be changed in the fly. Sampler is very close to what people might
 //   consider to be part of the material properties, it would be possible to introduce sampler as part of the material itself
 //   instead as a separate object.
 //

@@ -154,7 +154,7 @@ vk2d::vk2d_internal::InstanceImpl::InstanceImpl(
 	if( !CreateResourceManager() ) return;
 	if( !CreateDefaultTexture() ) return;
 	if( !CreateDefaultSampler() ) return;
-	if( !CreateBlurSampler_DEPRICATED() ) return;
+	if( !CreateBlurSampler() ) return;
 
 	instance_listeners.push_back( this );
 
@@ -176,7 +176,7 @@ vk2d::vk2d_internal::InstanceImpl::~InstanceImpl()
 	cursors.clear();
 	samplers.clear();
 
-	DestroyBlurSampler_DEPRICATED();
+	DestroyBlurSampler();
 	DestroyDefaultSampler();
 	DestroyDefaultTexture();
 	DestroyResourceManager();
@@ -562,7 +562,7 @@ void vk2d::vk2d_internal::InstanceImpl::FreeDescriptorSet_DEPRICATED(
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-vk2d::Sampler_DEPRICATED * vk2d::vk2d_internal::InstanceImpl::CreateSampler(
+vk2d::Sampler * vk2d::vk2d_internal::InstanceImpl::CreateSampler(
 	const SamplerCreateInfo	&	sampler_create_info
 )
 {
@@ -573,8 +573,8 @@ vk2d::Sampler_DEPRICATED * vk2d::vk2d_internal::InstanceImpl::CreateSampler(
 		return {};
 	}
 
-	auto sampler = std::unique_ptr<Sampler_DEPRICATED>(
-		new Sampler_DEPRICATED(
+	auto sampler = std::unique_ptr<Sampler>(
+		new Sampler(
 			*this,
 			sampler_create_info
 		)
@@ -591,7 +591,7 @@ vk2d::Sampler_DEPRICATED * vk2d::vk2d_internal::InstanceImpl::CreateSampler(
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void vk2d::vk2d_internal::InstanceImpl::DestroySampler(
-	Sampler_DEPRICATED					*	sampler
+	Sampler					*	sampler
 )
 {
 	VK2D_ASSERT_MAIN_THREAD( *this );
@@ -978,7 +978,7 @@ vk2d::Texture * vk2d::vk2d_internal::InstanceImpl::GetDefaultTexture() const
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-vk2d::Sampler_DEPRICATED * vk2d::vk2d_internal::InstanceImpl::GetDefaultSampler() const
+vk2d::Sampler * vk2d::vk2d_internal::InstanceImpl::GetDefaultSampler() const
 {
 	return default_sampler.get();
 }
@@ -1085,8 +1085,8 @@ bool vk2d::vk2d_internal::InstanceImpl::CreateDefaultSampler()
 	sampler_create_info.mipmap_level_of_detail_bias		= 0.0f;
 	sampler_create_info.mipmap_min_level_of_detail		= 0.0f;
 	sampler_create_info.mipmap_max_level_of_detail		= 128.0f;
-	default_sampler = std::unique_ptr<Sampler_DEPRICATED>(
-		new Sampler_DEPRICATED(
+	default_sampler = std::unique_ptr<Sampler>(
+		new Sampler(
 			*this,
 			sampler_create_info
 		)
@@ -1101,7 +1101,7 @@ bool vk2d::vk2d_internal::InstanceImpl::CreateDefaultSampler()
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-bool vk2d::vk2d_internal::InstanceImpl::CreateBlurSampler_DEPRICATED()
+bool vk2d::vk2d_internal::InstanceImpl::CreateBlurSampler()
 {
 	{
 		SamplerCreateInfo sampler_create_info {};
@@ -1116,14 +1116,14 @@ bool vk2d::vk2d_internal::InstanceImpl::CreateBlurSampler_DEPRICATED()
 		sampler_create_info.mipmap_level_of_detail_bias		= 0.0f;
 		sampler_create_info.mipmap_min_level_of_detail		= 0.0f;
 		sampler_create_info.mipmap_max_level_of_detail		= 128.0f;
-		blur_sampler_DEPRICATED = std::unique_ptr<Sampler_DEPRICATED>(
-			new Sampler_DEPRICATED(
+		blur_Sampler = std::unique_ptr<Sampler>(
+			new Sampler(
 				*this,
 				sampler_create_info
 			)
 		);
-		if( !blur_sampler_DEPRICATED || !blur_sampler_DEPRICATED->IsGood() ) {
-			blur_sampler_DEPRICATED		= nullptr;
+		if( !blur_Sampler || !blur_Sampler->IsGood() ) {
+			blur_Sampler		= nullptr;
 			Report( ReportSeverity::CRITICAL_ERROR, "Internal error: Cannot create blur sampler!" );
 			return false;
 		}
@@ -1140,7 +1140,7 @@ bool vk2d::vk2d_internal::InstanceImpl::CreateBlurSampler_DEPRICATED()
 
 	{
 		VkDescriptorImageInfo image_info {};
-		image_info.sampler		= blur_sampler_DEPRICATED->impl->GetVulkanSampler();
+		image_info.sampler		= blur_Sampler->impl->GetVulkanSampler();
 		image_info.imageView	= VK_NULL_HANDLE;
 		image_info.imageLayout	= VK_IMAGE_LAYOUT_UNDEFINED;
 
@@ -1381,7 +1381,7 @@ bool vk2d::vk2d_internal::InstanceImpl::CreateDescriptorSetLayouts_MOVE()
 	};
 
 	// Graphics: Descriptor set layout for simple sampler.
-	// Binding 0 = Sampler_DEPRICATED
+	// Binding 0 = Sampler
 	{
 		graphics_simple_sampler_descriptor_set_layout_MOVE = CreateLocalDescriptorSetLayout(
 			{
@@ -1394,7 +1394,7 @@ bool vk2d::vk2d_internal::InstanceImpl::CreateDescriptorSetLayouts_MOVE()
 	}
 
 	// Graphics: Descriptor set layout for sampler.
-	// Binding 0 = Sampler_DEPRICATED
+	// Binding 0 = Sampler
 	// Binding 1 = Uniform buffer for sampler data
 	{
 		graphics_sampler_descriptor_set_layout_MOVE = CreateLocalDescriptorSetLayout(
@@ -1650,10 +1650,10 @@ void vk2d::vk2d_internal::InstanceImpl::DestroyDefaultSampler()
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-void vk2d::vk2d_internal::InstanceImpl::DestroyBlurSampler_DEPRICATED()
+void vk2d::vk2d_internal::InstanceImpl::DestroyBlurSampler()
 {
 	FreeDescriptorSet_DEPRICATED( blur_sampler_descriptor_set_DEPRICATED );
-	blur_sampler_DEPRICATED			= {};
+	blur_Sampler			= {};
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

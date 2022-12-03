@@ -20,7 +20,7 @@
 
 namespace vk2d {
 
-class Sampler_DEPRICATED;
+class Sampler;
 class MeshBase;
 
 namespace vk2d_internal {
@@ -234,7 +234,7 @@ public:
 		std::span<const VertexT>					vertices,
 		std::span<const glm::mat4>					transformations = {},
 		Texture									*	texture = nullptr,
-		Sampler_DEPRICATED									*	sampler = nullptr
+		Sampler									*	sampler = nullptr
 	)
 	{
 		DrawPointList_DEPRICATED(
@@ -284,7 +284,7 @@ public:
 		std::span<const VertexT>					vertices,
 		std::span<const glm::mat4>					transformations = {},
 		Texture									*	texture = nullptr,
-		Sampler_DEPRICATED									*	sampler = nullptr,
+		Sampler									*	sampler = nullptr,
 		float										line_width = 1.0f
 	)
 	{
@@ -339,7 +339,7 @@ public:
 		std::span<const glm::mat4>					transformations = {},
 		bool										filled = true,
 		Texture									*	texture = nullptr,
-		Sampler_DEPRICATED									*	sampler = nullptr
+		Sampler									*	sampler = nullptr
 	)
 	{
 		auto indices_span = std::span( reinterpret_cast<const uint32_t*>( indices.data() ), indices.size() * 3 );
@@ -697,7 +697,7 @@ private:
 		const vk2d_internal::RawVertexData		&	raw_vertex_data,
 		std::span<const glm::mat4>					transformations = {},
 		Texture									*	texture = nullptr,
-		Sampler_DEPRICATED									*	sampler = nullptr
+		Sampler									*	sampler = nullptr
 	);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -706,7 +706,7 @@ private:
 		const vk2d_internal::RawVertexData		&	raw_vertex_data,
 		std::span<const glm::mat4>					transformations = {},
 		Texture									*	texture = nullptr,
-		Sampler_DEPRICATED									*	sampler = nullptr,
+		Sampler									*	sampler = nullptr,
 		float										line_width = 1.0f
 	);
 
@@ -717,7 +717,7 @@ private:
 		std::span<const glm::mat4>					transformations = {},
 		bool										filled = true,
 		Texture									*	texture = nullptr,
-		Sampler_DEPRICATED									*	sampler = nullptr
+		Sampler									*	sampler = nullptr
 	);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

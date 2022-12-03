@@ -24,7 +24,7 @@ class Monitor;
 class Cursor;
 class ResourceManager;
 class TextureResource;
-class Sampler_DEPRICATED;
+class Sampler;
 class RenderTargetTexture;
 
 namespace vulkan {
@@ -198,14 +198,14 @@ public:
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @see		Instance::CreateSampler()
-	Sampler_DEPRICATED												*	CreateSampler(
+	Sampler												*	CreateSampler(
 		const SamplerCreateInfo							&	sampler_create_info
 	);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @see		Instance::DestroySampler()
 	void													DestroySampler(
-		Sampler_DEPRICATED											*	sampler
+		Sampler											*	sampler
 	);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -505,12 +505,12 @@ public:
 	/// @note		Multithreading: Any thread.
 	///
 	/// @return		Default sampler handle.
-	Sampler_DEPRICATED												*	GetDefaultSampler() const;
+	Sampler												*	GetDefaultSampler() const;
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Get blur sampler descriptor set.
 	///
-	///				Sampler_DEPRICATED descriptor set used with blur pass.
+	///				Sampler descriptor set used with blur pass.
 	/// 
 	/// @note		Multithreading: Any thread.
 	///
@@ -579,7 +579,7 @@ private:
 	bool													CreateDeviceAndQueues();
 	bool													CreateDescriptorPool();
 	bool													CreateDefaultSampler();
-	bool													CreateBlurSampler_DEPRICATED();
+	bool													CreateBlurSampler();
 	bool													CreateShaderModules_DEPRICATED();
 	bool													CreateDescriptorSetLayouts_MOVE();
 	bool													CreatePipelineLayouts_MOVE();
@@ -592,7 +592,7 @@ private:
 	void													DestroyDevice();
 	void													DestroyDescriptorPool();
 	void													DestroyDefaultSampler();
-	void													DestroyBlurSampler_DEPRICATED();
+	void													DestroyBlurSampler();
 	void													DestroyShaderModules_DEPRICATED();
 	void													DestroyDescriptorSetLayouts();
 	void													DestroyPipelineLayouts_MOVE();
@@ -642,14 +642,14 @@ private:
 	std::mutex												descriptor_pool_mutex;
 	std::unique_ptr<vulkan::DescriptorAutoPool>				descriptor_pool;
 
-	std::unique_ptr<Sampler_DEPRICATED>								default_sampler;
+	std::unique_ptr<Sampler>								default_sampler;
 	TextureResource										*	default_texture								= {};
-	std::unique_ptr<Sampler_DEPRICATED>								blur_sampler_DEPRICATED;
+	std::unique_ptr<Sampler>								blur_Sampler;
 	vulkan::PoolDescriptorSet								blur_sampler_descriptor_set_DEPRICATED					= {};
 
 	std::vector<std::unique_ptr<Window>>					windows;
 	std::vector<std::unique_ptr<RenderTargetTexture>>		render_target_textures;
-	std::vector<std::unique_ptr<Sampler_DEPRICATED>>					samplers;
+	std::vector<std::unique_ptr<Sampler>>					samplers;
 	std::vector<std::unique_ptr<Cursor>>					cursors;
 
 	PFN_GamepadConnectionEventCallback						joystick_event_callback						= {};
