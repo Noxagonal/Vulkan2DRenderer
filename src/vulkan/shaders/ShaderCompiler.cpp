@@ -30,11 +30,11 @@ vk2d::vulkan::ShaderCompiler::ShaderCompiler(
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 VkShaderModule vk2d::vulkan::ShaderCompiler::CreateShaderModule(
-	const ShaderInfo		&	user_shader_info
+	const ShaderCreateInfo		&	shader_create_info
 )
 {
 	auto spir_v_code = CompileSpirV(
-		user_shader_info
+		shader_create_info
 	);
 	if( spir_v_code.empty() ) return {};
 
@@ -60,7 +60,7 @@ VkShaderModule vk2d::vulkan::ShaderCompiler::CreateShaderModule(
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 std::vector<uint32_t> vk2d::vulkan::ShaderCompiler::CompileSpirV(
-	const ShaderInfo & user_shader_info
+	const ShaderCreateInfo & shader_create_info
 )
 {
 	VK2D_ASSERT_SINGLE_THREAD_ACCESS_SCOPE();
@@ -151,9 +151,9 @@ std::vector<uint32_t> vk2d::vulkan::ShaderCompiler::CompileSpirV(
 	// You may add build-in glsl include sources here. Just add a call to AddGLSLInclude().
 	// Order matters, first included codes should also be added first.
 	AddGLSLCommonSources();
-	if( user_shader_info.GetStage() == ShaderStage::VERTEX ) AddGLSLVertexShaderSpecificSources();
-	if( user_shader_info.GetStage() == ShaderStage::FRAGMENT ) AddGLSLFragmentShaderSpecificSources();
-	AddGLSLSource( user_shader_info.GetCode(), user_shader_info.GetName() );
+	if( shader_create_info.GetStage() == ShaderStage::VERTEX ) AddGLSLVertexShaderSpecificSources();
+	if( shader_create_info.GetStage() == ShaderStage::FRAGMENT ) AddGLSLFragmentShaderSpecificSources();
+	AddGLSLSource( shader_create_info.GetCode(), shader_create_info.GetName() );
 
 
 
@@ -180,7 +180,7 @@ std::vector<uint32_t> vk2d::vulkan::ShaderCompiler::CompileSpirV(
 	auto build_in_resource = glslang::DefaultTBuiltInResource;
 
 	auto shader = glslang::TShader(
-		ShaderStageToEShLanguage( user_shader_info.GetStage() )
+		ShaderStageToEShLanguage( shader_create_info.GetStage() )
 	);
 	shader.setStringsWithLengthsAndNames(
 		glsl_sources.codes.data(),

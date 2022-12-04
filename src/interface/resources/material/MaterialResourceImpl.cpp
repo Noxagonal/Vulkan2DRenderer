@@ -6,6 +6,8 @@
 
 #include <interface/resource_manager/ResourceManagerImpl.hpp>
 
+#include <vulkan/Device.hpp>
+
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -120,6 +122,10 @@ bool vk2d::vk2d_internal::MaterialResourceImpl::MTLoad(
 	if( !loader_thread_resource ) return false;
 
 	auto memory_pool = loader_thread_resource->GetThreadLocalDeviceMemoryPool();
+
+
+
+	loader_thread_resource->GetVulkanDevice().GetShaderManager().CreateShader();
 
 	return true;
 }

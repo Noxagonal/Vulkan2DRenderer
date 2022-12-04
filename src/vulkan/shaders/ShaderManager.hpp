@@ -3,14 +3,17 @@
 #include <core/SourceCommon.hpp>
 #include "ShaderCompiler.hpp"
 #include "Shader.hpp"
-#include <containers/ShaderInfo.hpp>
+#include <interface/resources/material/ShaderCreateInfo.hpp>
 
 
 
 namespace vk2d {
 namespace vk2d_internal {
+
 class InstanceImpl;
+
 } // vk2d_internal
+
 namespace vulkan {
 
 
@@ -34,7 +37,7 @@ public:
 	~ShaderManager();
 
 	VkShaderModule							FindShader(
-		const ShaderInfo				&	shader_info
+		const ShaderCreateInfo				&	shader_info
 	);
 	
 	VkShaderModule							FindShader(
@@ -42,7 +45,7 @@ public:
 	);
 
 	VkShaderModule							CreateShader(
-		const ShaderInfo				&	user_shader_info
+		const ShaderCreateInfo			&	shader_create_info
 	);
 
 	void									DestroyShader(

@@ -2,7 +2,7 @@
 
 #include <core/SourceCommon.hpp>
 
-#include <containers/ShaderInfo.hpp>
+#include <interface/resources/material/ShaderCreateInfo.hpp>
 
 
 
@@ -39,12 +39,12 @@ public:
 	///
 	/// @note		Multithreading: Not thread safe.
 	///
-	/// @param[in]	user_shader_info
+	/// @param[in]	shader_create_info
 	///				User provided shader text.
 	///
 	/// @return		Vulkan shader module.
 	VkShaderModule							CreateShaderModule(
-		const ShaderInfo				&	user_shader_info
+		const ShaderCreateInfo			&	shader_create_info
 	);
 
 private:
@@ -54,12 +54,12 @@ private:
 	///
 	/// @note		Multithreading: Not thread safe.
 	///
-	/// @param[in]	user_shader_info
+	/// @param[in]	shader_create_info
 	///				Shader info provided by the user.
 	///
 	/// @return		SpirV shader.
 	std::vector<uint32_t>					CompileSpirV(
-		const ShaderInfo				&	user_shader_info
+		const ShaderCreateInfo			&	shader_create_info
 	);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
