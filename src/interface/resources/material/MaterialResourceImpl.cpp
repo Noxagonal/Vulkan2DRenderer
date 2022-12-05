@@ -179,6 +179,36 @@ vk2d::vk2d_internal::ResourceMTLoadResult vk2d::vk2d_internal::MaterialResourceI
 
 	auto AssignPipeline = [ this, &instance ]() -> bool
 	{
+		auto & pipeline_manager = loader_thread_resource->GetVulkanDevice().GetPipelineManager();
+
+		// TODO: Need to get the render pass here somehow. RenderPass is currently a property attached to a Window and
+		// RenderTargetTexture, but will be a property of RenderPipeline later on.
+		// This basically means that material will be tied to a Window or RenderTargetTexture (RenderPipeline later) as it is
+		// created regardless if the material is created or loaded from disk.
+		// 
+		// Might be a good idea to create a bunch of other managers as well. Eg. RenderPassManager, RenderTargetManager...
+		// We will eventually need a RenderPipeline which will determine overall rendering operations for a Window or
+		// RenderTargetTexture. RenderPipeline defines multiple GBuffers where shaders can write to, as well as the intermediate
+		// rendering steps, including custom shaders between each step.
+		//
+		// RenderPipeline defines any number of GBuffers as inputs where meshes are rendered to, any number of intermediate
+		// GBuffers, and the final output image, any number of render passes with any number of input and output GBuffers, each
+		// render pass is a shader
+		//
+		// Consider how rendering lights would work. Typically this is a task where a number of meshes are rendered as a single
+		// step in the render pass.
+		// Thoughts:
+		// - Could allow multiple GBuffers as output for a RenderPipeline and use them as a texture array.
+		// - Could allow multiple GBuffers as inputs for a RenderPipeline and use them with mesh shaders.
+		// - Typically in a lighting pass for example, GBuffers are rendered into first, after that each light is rendered one
+		//   at a time, each writing it's shading information into another GBuffer, then finally the GBuffers are combined.
+		//   This would require 2 to 3 RenderPipelines for lighting, 1 initial for scene, 1 for lighting (which has to be processed
+		//   for each draw call) and potentially 1 for post processing.
+		// - Make RenderPipeline processable for each draw call.
+		// - Make only 1 RenderPipeline but section it to multiple RenderPasses, each mesh can be drawn to any of these render
+		//   passes. ( How to select which render pass we're drawing to? )
+		//
+
 		auto pipeline_create_info = vulkan::GraphicsPipelineCreateInfo(
 		//	instance.GetGraphicsPrimaryRenderPipelineLayout_MOVE(),
 		//	render_pass,
@@ -191,8 +221,6 @@ vk2d::vk2d_internal::ResourceMTLoadResult vk2d::vk2d_internal::MaterialResourceI
 		//	VK_SAMPLE_COUNT_1_BIT, // as an example
 		//	true // as an example "enable_blending"
 		);
-
-		auto & pipeline_manager = loader_thread_resource->GetVulkanDevice().GetPipelineManager();
 		//pipeline = pipeline_manager.GetGraphicsPipeline( pipeline_create_info );
 		return true;
 	};
