@@ -17,6 +17,11 @@ VK2D_API vk2d::ResourceStatus vk2d::ResourceBase::GetStatus()
 	return resource_impl->GetStatus();
 }
 
+VK2D_API size_t vk2d::ResourceBase::GetReferenceCount() const
+{
+	return resource_impl->GetReferenceCount();
+}
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 VK2D_API vk2d::ResourceStatus vk2d::ResourceBase::WaitUntilLoaded(
 	std::chrono::nanoseconds				timeout
@@ -61,4 +66,16 @@ VK2D_API bool vk2d::ResourceBase::IsGood() const
 {
 	if( !resource_impl ) return false;
 	return resource_impl->IsGood();
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+VK2D_API void vk2d::ResourceBase::IncrementReferenceCount()
+{
+	resource_impl->IncrementReferenceCount();
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+VK2D_API void vk2d::ResourceBase::DecrementReferenceCount()
+{
+	resource_impl->DecrementReferenceCount();
 }

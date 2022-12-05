@@ -6,7 +6,7 @@
 
 #include <interface/resources/resource_base/ResourceImplBase.hpp>
 
-#include <system/ThreadPrivateResources.hpp>
+#include <system/ThreadLoaderResource.hpp>
 #include <vulkan/shaders/ShaderHandle.hpp>
 
 
@@ -36,12 +36,12 @@ public:
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	ResourceMTLoadResult									MTLoad(
-		ThreadPrivateResource							*	thread_resource
+		LocalThreadData									*	thread_resource
 	);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	void													MTUnload(
-		ThreadPrivateResource							*	thread_resource
+	ResourceMTUnloadResult									MTUnload(
+		LocalThreadData									*	thread_resource
 	);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

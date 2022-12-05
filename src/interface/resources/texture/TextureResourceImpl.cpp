@@ -3,7 +3,7 @@
 
 #include "TextureResourceImpl.hpp"
 
-#include <system/ThreadPrivateResources.hpp>
+#include <system/ThreadLoaderResource.hpp>
 #include <vulkan/descriptor_set/DescriptorSet.hpp>
 #include <system/CommonTools.hpp>
 #include <system/ImageFormatConverter.hpp>
@@ -68,7 +68,7 @@ vk2d::vk2d_internal::TextureResourceImpl::TextureResourceImpl(
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 vk2d::vk2d_internal::ResourceMTLoadResult vk2d::vk2d_internal::TextureResourceImpl::MTLoad(
-	ThreadPrivateResource	*	thread_resource
+	LocalThreadData	*	thread_resource
 )
 {
 	auto result = VK_SUCCESS;
@@ -809,21 +809,18 @@ vk2d::vk2d_internal::ResourceMTLoadResult vk2d::vk2d_internal::TextureResourceIm
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-void vk2d::vk2d_internal::TextureResourceImpl::MTUnload(
-	ThreadPrivateResource	*	thread_resource
+vk2d::vk2d_internal::ResourceMTUnloadResult vk2d::vk2d_internal::TextureResourceImpl::MTUnload(
+	LocalThreadData	*	thread_resource
 )
 {
 	loader_thread_resource	= dynamic_cast<ThreadLoaderResource*>( thread_resource );
 	assert( loader_thread_resource );
-	if( !loader_thread_resource ) return;
+	if( !loader_thread_resource ) return ResourceMTUnloadResult::FAILED;
 
 	auto memory_pool		= loader_thread_resource->GetThreadLocalDeviceMemoryPool();
 
-	// TODO: Is this check necessary? resource should be loaded by this point, make sure and remove this call if possible.
-	// Check if loaded successfully, no need to check for failure as this thread was
-	// responsible for loading it, it's either loaded or failed to load but it'll
-	// definitely be either or. MTUnload() does not ever get called before MTLoad().
-	WaitUntilLoaded( std::chrono::nanoseconds::max() );
+	// TODO: Remove once CanBeDestroyedNow() works fully.
+	if( GetStatus() == ResourceStatus::UNDETERMINED ) return ResourceMTUnloadResult::POSTPONED;
 
 	vkDestroyFence(
 		loader_thread_resource->GetVulkanDevice(),
@@ -863,6 +860,8 @@ void vk2d::vk2d_internal::TextureResourceImpl::MTUnload(
 		memory_pool->FreeCompleteResource( sb );
 	}
 	staging_buffers.clear();
+
+	return ResourceMTUnloadResult::SUCCESS;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1025,10 +1024,10 @@ public:
 		texture( texture )
 	{};
 
-	void operator()(
-		ThreadPrivateResource * thread_resource )
+	TaskInvokeResult			operator()(
+		LocalThreadData		*	thread_resource
+	)
 	{
-
 		vkDestroyFence(
 			texture->resource_manager.GetVulkanDevice(),
 			texture->vk_texture_complete_fence,
@@ -1075,6 +1074,8 @@ public:
 		texture->vk_secondary_render_command_buffer	= VK_NULL_HANDLE;
 		texture->vk_primary_transfer_command_buffer	= VK_NULL_HANDLE;
 		texture->staging_buffers.clear();
+
+		return TaskInvokeResult::SUCCESS;
 	}
 
 private:

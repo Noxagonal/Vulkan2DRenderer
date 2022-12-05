@@ -26,29 +26,44 @@ vk2d::vk2d_internal::ResourceThreadLoadTask::ResourceThreadLoadTask(
 	resource( resource )
 {};
 
-void vk2d::vk2d_internal::ResourceThreadLoadTask::operator()(
-	ThreadPrivateResource * thread_resource
+vk2d::vk2d_internal::TaskInvokeResult vk2d::vk2d_internal::ResourceThreadLoadTask::operator()(
+	LocalThreadData * thread_resource
 )
 {
 	// Because Vulkan often needs to do more processing afterwards resource status
 	// is not set to "AVAILABLE" here, it'll be determined by the resource itself.
 	// However we can set resource status to "FAILED_TO_LOAD" at any time.
 
+	// TODO: Should not need to do any processing in resource GetStatus() or WaitUntiLoaded() functions. Get rid of this special case.
+
+	auto ret = TaskInvokeResult::FAILED;
+
 	auto load_result = resource->resource_impl->MTLoad( thread_resource );
 	switch( load_result )
 	{
 	case vk2d::vk2d_internal::ResourceMTLoadResult::SUCCESS:
+	{
+		resource->resource_impl->load_function_run_fence.Set();
+		// TODO: Enable this once GetStatus() and WaitUntiLoaded() have been cleared of any loading finalizing code.
+		// resource->resource_impl->status = ResourceStatus::AVAILABLE;
+
+		ret = TaskInvokeResult::SUCCESS;
 		break;
+	}
 
 	case vk2d::vk2d_internal::ResourceMTLoadResult::SUCCESS_CONTINUED:
 	{
-		// TODO, Reschedule loading operation.
+		resource->resource_impl->load_function_run_fence.Set();
+		// TODO: Enable this once GetStatus() and WaitUntiLoaded() have been cleared of any loading finalizing code.
+		// resource->resource_impl->status = ResourceStatus::AVAILABLE;
+
+		ret = TaskInvokeResult::RESCHEDULE;
 		break;
 	}
 
 	case vk2d::vk2d_internal::ResourceMTLoadResult::POSTPONED:
 	{
-		// TODO, Reschedule loading operation.
+		ret = TaskInvokeResult::RESCHEDULE;
 		break;
 	}
 
@@ -59,6 +74,9 @@ void vk2d::vk2d_internal::ResourceThreadLoadTask::operator()(
 			ReportSeverity::WARNING,
 			"Resource loading failed!"
 		);
+		resource->resource_impl->load_function_run_fence.Set();
+
+		ret = TaskInvokeResult::FAILED;
 		break;
 	}
 
@@ -67,7 +85,7 @@ void vk2d::vk2d_internal::ResourceThreadLoadTask::operator()(
 		break;
 	}
 
-	resource->resource_impl->load_function_run_fence.Set();
+	return ret;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -80,11 +98,33 @@ vk2d::vk2d_internal::ResourceThreadUnloadTask::ResourceThreadUnloadTask(
 {};
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-void vk2d::vk2d_internal::ResourceThreadUnloadTask::operator()(
-	ThreadPrivateResource	*	thread_resource
-	)
+vk2d::vk2d_internal::TaskInvokeResult vk2d::vk2d_internal::ResourceThreadUnloadTask::operator()(
+	LocalThreadData	*	thread_resource
+)
 {
-	resource->resource_impl->MTUnload( thread_resource );
+	if( !resource->resource_impl->CanBeDestroyedNow() )
+	{
+		return TaskInvokeResult::RESCHEDULE;
+	}
+
+	auto result = resource->resource_impl->MTUnload( thread_resource );
+	switch( result )
+	{
+	case vk2d::vk2d_internal::ResourceMTUnloadResult::SUCCESS:
+		return TaskInvokeResult::SUCCESS;
+
+	case vk2d::vk2d_internal::ResourceMTUnloadResult::POSTPONED:
+		return TaskInvokeResult::RESCHEDULE;
+
+	case vk2d::vk2d_internal::ResourceMTUnloadResult::FAILED:
+		return TaskInvokeResult::FAILED;
+
+	default:
+		assert( 0 && "Unknown result." );
+		break;
+	}
+
+	return TaskInvokeResult::FAILED;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -152,7 +192,13 @@ vk2d::vk2d_internal::ResourceManagerImpl::~ResourceManagerImpl()
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-vk2d::TextureResource * vk2d::vk2d_internal::ResourceManagerImpl::LoadTextureResource(
+vk2d::ResourceManager & vk2d::vk2d_internal::ResourceManagerImpl::GetInterface()
+{
+	return my_interface;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+vk2d::TextureResource * vk2d::vk2d_internal::ResourceManagerImpl::DoLoadTextureResource(
 	const std::filesystem::path		&	file_path,
 	ResourceBase					*	parent_resource
 )
@@ -177,7 +223,7 @@ vk2d::TextureResource * vk2d::vk2d_internal::ResourceManagerImpl::LoadTextureRes
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-vk2d::TextureResource * vk2d::vk2d_internal::ResourceManagerImpl::CreateTextureResource(
+vk2d::TextureResource * vk2d::vk2d_internal::ResourceManagerImpl::DoCreateTextureResource(
 	glm::uvec2							size,
 	const std::vector<Color8>		&	texture_data,
 	ResourceBase					*	parent_resource
@@ -204,7 +250,7 @@ vk2d::TextureResource * vk2d::vk2d_internal::ResourceManagerImpl::CreateTextureR
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-vk2d::TextureResource * vk2d::vk2d_internal::ResourceManagerImpl::LoadArrayTextureResource(
+vk2d::TextureResource * vk2d::vk2d_internal::ResourceManagerImpl::DoLoadArrayTextureResource(
 	const std::vector<std::filesystem::path>	&	file_path_listing,
 	ResourceBase								*	parent_resource
 )
@@ -229,7 +275,7 @@ vk2d::TextureResource * vk2d::vk2d_internal::ResourceManagerImpl::LoadArrayTextu
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-vk2d::TextureResource * vk2d::vk2d_internal::ResourceManagerImpl::CreateArrayTextureResource(
+vk2d::TextureResource * vk2d::vk2d_internal::ResourceManagerImpl::DoCreateArrayTextureResource(
 	glm::uvec2											size,
 	const std::vector<const std::vector<Color8>*>	&	texture_data_listings,
 	ResourceBase									*	parent_resource
@@ -256,7 +302,7 @@ vk2d::TextureResource * vk2d::vk2d_internal::ResourceManagerImpl::CreateArrayTex
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-vk2d::FontResource * vk2d::vk2d_internal::ResourceManagerImpl::LoadFontResource(
+vk2d::FontResource * vk2d::vk2d_internal::ResourceManagerImpl::DoLoadFontResource(
 	const std::filesystem::path			&	file_path,
 	ResourceBase						*	parent_resource,
 	uint32_t								glyph_texel_size,
@@ -321,6 +367,9 @@ void vk2d::vk2d_internal::ResourceManagerImpl::DestroyResource(
 )
 {
 	if( !resource ) return;
+
+	// TODO: See if we can skip this step. Maybe just add the destroy task and check in thread if the resource has been loaded
+	// or not. If the resource is not loaded yet, postpone the destruction task.
 
 	// We'll have to wait until the resource is definitely loaded, or encountered an error.
 	resource->resource_impl->WaitUntilLoaded();

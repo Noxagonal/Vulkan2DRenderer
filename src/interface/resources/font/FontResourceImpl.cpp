@@ -7,7 +7,7 @@
 #include <interface/resource_manager/ResourceManagerImpl.hpp>
 
 #include <interface/resources/texture/TextureResource.hpp>
-#include <system/ThreadPrivateResources.hpp>
+#include <system/ThreadLoaderResource.hpp>
 #include <interface/instance/InstanceImpl.hpp>
 #include <stb_image_write.h>
 
@@ -119,7 +119,7 @@ vk2d::ResourceStatus vk2d::vk2d_internal::FontResourceImpl::WaitUntilLoaded(
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 vk2d::vk2d_internal::ResourceMTLoadResult vk2d::vk2d_internal::FontResourceImpl::MTLoad(
-	ThreadPrivateResource * thread_resource
+	LocalThreadData * thread_resource
 )
 {
 	// TODO: additional parameters:
@@ -482,10 +482,9 @@ vk2d::vk2d_internal::ResourceMTLoadResult vk2d::vk2d_internal::FontResourceImpl:
 			texture_data_array[ i ]		= &atlas_textures[ i ]->data;
 		}
 
-		texture_resource = resource_manager.CreateArrayTextureResource(
+		texture_resource = resource_manager.GetInterface().CreateArrayTextureResource(
 			glm::uvec2( atlas_size, atlas_size ),
-			texture_data_array,
-			&my_interface
+			texture_data_array
 		);
 		if( !texture_resource ) {
 			instance.Report( ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot create font, cannot create texture resource for font!" );
@@ -497,15 +496,20 @@ vk2d::vk2d_internal::ResourceMTLoadResult vk2d::vk2d_internal::FontResourceImpl:
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-void vk2d::vk2d_internal::FontResourceImpl::MTUnload(
-	ThreadPrivateResource * thread_resource
+vk2d::vk2d_internal::ResourceMTUnloadResult vk2d::vk2d_internal::FontResourceImpl::MTUnload(
+	LocalThreadData * thread_resource
 )
 {
+	// TODO: Remove once CanBeDestroyedNow() works fully.
+	if( GetStatus() == ResourceStatus::UNDETERMINED ) return ResourceMTUnloadResult::POSTPONED;
+
 	// Make sure font faces are destroyed.
 	for( auto f : face_infos ) {
 		FT_Done_Face( f.face );
 	}
 	face_infos.clear();
+
+	return ResourceMTUnloadResult::SUCCESS;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -601,7 +605,7 @@ bool vk2d::vk2d_internal::FontResourceImpl::FaceExists(
 vk2d::TextureResource *vk2d::vk2d_internal::FontResourceImpl::GetTextureResource()
 {
 	if( GetStatus() == ResourceStatus::AVAILABLE ) {
-		return texture_resource;
+		return &*texture_resource;
 	}
 	return {};
 }

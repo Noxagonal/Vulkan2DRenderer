@@ -10,7 +10,7 @@
 
 #include <vulkan/utils/QueueResolver.hpp>
 #include <system/ThreadPool.hpp>
-#include <system/ThreadPrivateResources.hpp>
+#include <system/ThreadLoaderResource.hpp>
 #include <vulkan/descriptor_set/DescriptorSet.hpp>
 
 #include "../resource_manager/ResourceManagerImpl.hpp"
@@ -972,13 +972,13 @@ const vk2d::vulkan::DescriptorSetLayout & vk2d::vk2d_internal::InstanceImpl::Get
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-vk2d::Texture * vk2d::vk2d_internal::InstanceImpl::GetDefaultTexture() const
+vk2d::Texture * vk2d::vk2d_internal::InstanceImpl::GetDefaultTexture()
 {
-	return default_texture;
+	return &*default_texture;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-vk2d::Sampler * vk2d::vk2d_internal::InstanceImpl::GetDefaultSampler() const
+vk2d::Sampler * vk2d::vk2d_internal::InstanceImpl::GetDefaultSampler()
 {
 	return default_sampler.get();
 }
@@ -1557,7 +1557,7 @@ bool vk2d::vk2d_internal::InstanceImpl::CreateThreadPool()
 
 	uint32_t general_thread_count = 1;
 
-	std::vector<std::unique_ptr<ThreadPrivateResource>> thread_resources;
+	std::vector<std::unique_ptr<LocalThreadData>> thread_resources;
 	for( uint32_t i = 0; i < loader_thread_count; ++i ) {
 		thread_resources.push_back( std::make_unique<ThreadLoaderResource>( *this ) );
 	}
@@ -1724,7 +1724,6 @@ void vk2d::vk2d_internal::InstanceImpl::DestroyResourceManager()
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void vk2d::vk2d_internal::InstanceImpl::DestroyDefaultTexture()
 {
-	resource_manager->DestroyResource( default_texture );
 	default_texture			= {};
 }
 

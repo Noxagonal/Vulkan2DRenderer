@@ -29,12 +29,12 @@ VK2D_API vk2d::ResourceManager::~ResourceManager()
 {}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-VK2D_API vk2d::TextureResource * vk2d::ResourceManager::CreateTextureResource(
+VK2D_API vk2d::TextureResource * vk2d::ResourceManager::DoCreateTextureResource(
 	glm::uvec2						size,
 	const std::vector<Color8>	&	texels
 )
 {
-	return impl->CreateTextureResource(
+	return impl->DoCreateTextureResource(
 		size,
 		texels,
 		nullptr
@@ -42,23 +42,23 @@ VK2D_API vk2d::TextureResource * vk2d::ResourceManager::CreateTextureResource(
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-VK2D_API vk2d::TextureResource * vk2d::ResourceManager::LoadTextureResource(
+VK2D_API vk2d::TextureResource * vk2d::ResourceManager::DoLoadTextureResource(
 	const std::filesystem::path		&	file_path
 )
 {
-	return impl->LoadTextureResource(
+	return impl->DoLoadTextureResource(
 		file_path,
 		nullptr
 	);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-VK2D_API vk2d::TextureResource * vk2d::ResourceManager::CreateArrayTextureResource(
+VK2D_API vk2d::TextureResource * vk2d::ResourceManager::DoCreateArrayTextureResource(
 	glm::uvec2											size,
 	const std::vector<const std::vector<Color8>*>	&	texels_listing
 )
 {
-	return impl->CreateArrayTextureResource(
+	return impl->DoCreateArrayTextureResource(
 		size,
 		texels_listing,
 		nullptr
@@ -66,18 +66,18 @@ VK2D_API vk2d::TextureResource * vk2d::ResourceManager::CreateArrayTextureResour
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-VK2D_API vk2d::TextureResource * vk2d::ResourceManager::LoadArrayTextureResource(
+VK2D_API vk2d::TextureResource * vk2d::ResourceManager::DoLoadArrayTextureResource(
 	const std::vector<std::filesystem::path>		&	file_path_listing
 )
 {
-	return impl->LoadArrayTextureResource(
+	return impl->DoLoadArrayTextureResource(
 		file_path_listing,
 		nullptr
 	);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-VK2D_API vk2d::FontResource * vk2d::ResourceManager::LoadFontResource(
+VK2D_API vk2d::FontResource * vk2d::ResourceManager::DoLoadFontResource(
 	const std::filesystem::path		&	file_path,
 	uint32_t							glyph_texel_size,
 	bool								use_alpha,
@@ -85,7 +85,7 @@ VK2D_API vk2d::FontResource * vk2d::ResourceManager::LoadFontResource(
 	uint32_t							glyph_atlas_padding
 )
 {
-	return impl->LoadFontResource(
+	return impl->DoLoadFontResource(
 		file_path,
 		nullptr,
 		glyph_texel_size,

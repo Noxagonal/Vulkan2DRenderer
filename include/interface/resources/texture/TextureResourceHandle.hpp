@@ -2,10 +2,7 @@
 
 #include <core/Common.hpp>
 #include <interface/resources/resource_base/ResourceHandleBase.hpp>
-#include "MaterialResource.hpp"
-#include "ShaderMemberInfo.hpp"
-
-#include <mesh/vertex/VertexBase.hpp>
+#include "TextureResource.hpp"
 
 
 
@@ -14,20 +11,19 @@ namespace vk2d {
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-template<vk2d_internal::VertexBaseOrDerivedType VertexT>
-class MaterialResourceHandle :
-	public ResourceHandleBase<MaterialResource>
+class TextureResourceHandle :
+	public ResourceHandleBase<TextureResource>
 {
 	using Base = ResourceHandleBase;
 
 public:
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	inline MaterialResourceHandle() = default;
+	inline TextureResourceHandle() = default;
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	inline MaterialResourceHandle(
-		MaterialResource			*	resource_ptr
+	inline TextureResourceHandle(
+		TextureResource				*	resource_ptr
 	) :
 		Base(
 			resource_ptr

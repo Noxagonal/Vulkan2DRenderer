@@ -34,10 +34,12 @@ class ResourceThreadLoadTask : public Task
 public:
 	ResourceThreadLoadTask(
 		ResourceManagerImpl				&	resource_manager,
-		ResourceBase					*	resource );
+		ResourceBase					*	resource
+	);
 
-	void operator()(
-		ThreadPrivateResource			*	thread_resource );
+	TaskInvokeResult						operator()(
+		LocalThreadData					*	thread_resource
+	);
 
 private:
 	ResourceManagerImpl					&	resource_manager;
@@ -53,10 +55,12 @@ class ResourceThreadUnloadTask : public Task
 public:
 	ResourceThreadUnloadTask(
 		ResourceManagerImpl				&	resource_manager,
-		std::unique_ptr<ResourceBase>		resource );
+		std::unique_ptr<ResourceBase>		resource
+	);
 
-	void operator()(
-		ThreadPrivateResource			*	thread_resource );
+	TaskInvokeResult						operator()(
+		LocalThreadData					*	thread_resource
+	);
 
 private:
 	ResourceManagerImpl					&	resource_manager;
@@ -79,33 +83,36 @@ public:
 	~ResourceManagerImpl();
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	TextureResource										*	LoadTextureResource(
+	ResourceManager										&	GetInterface();
+
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	TextureResource										*	DoLoadTextureResource(
 		const std::filesystem::path						&	file_path,
 		ResourceBase									*	parent_resource
 	);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	TextureResource										*	CreateTextureResource(
+	TextureResource										*	DoCreateTextureResource(
 		glm::uvec2											size,
 		const std::vector<Color8>						&	texture_data,
 		ResourceBase									*	parent_resource
 	);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	TextureResource										*	LoadArrayTextureResource(
+	TextureResource										*	DoLoadArrayTextureResource(
 		const std::vector<std::filesystem::path>		&	file_path_listings,
 		ResourceBase									*	parent_resource
 	);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	TextureResource										*	CreateArrayTextureResource(
+	TextureResource										*	DoCreateArrayTextureResource(
 		glm::uvec2											size,
 		const std::vector<const std::vector<Color8>*>	&	texture_data_listings,
 		ResourceBase									*	parent_resource
 	);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	FontResource										*	LoadFontResource(
+	FontResource										*	DoLoadFontResource(
 		const std::filesystem::path						&	file_path,
 		ResourceBase									*	parent_resource,
 		uint32_t											glyph_texel_size,

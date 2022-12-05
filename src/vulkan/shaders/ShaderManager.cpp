@@ -105,7 +105,7 @@ void vk2d::vulkan::ShaderManager::DecrementReferenceCount(
 
 	auto it = shader_list.find( shader_hash );
 	assert( it != shader_list.end() );
-	assert( it->second.reference_count >= 1 );
+	assert( it->second.reference_count > 0 );
 
 	it->second.reference_count -= 1;
 	if( it->second.reference_count == 0 )

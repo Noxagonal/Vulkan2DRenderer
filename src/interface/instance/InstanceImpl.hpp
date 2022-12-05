@@ -12,6 +12,8 @@
 #include <vulkan/shaders/ShaderInterface.hpp>
 #include <system/ThreadPool.hpp>
 
+#include <interface/resources/texture/TextureResourceHandle.hpp>
+
 #define GLFW_INCLUDE_NONE
 #include <GLFW/glfw3.h>
 
@@ -40,10 +42,12 @@ class MonitorImpl;
 
 
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void UpdateMonitorLists( bool globals_locked );
 
 
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 class InstanceImpl {
 	friend class Instance;
 	friend void UpdateMonitorLists( bool globals_locked );
@@ -495,7 +499,7 @@ public:
 	/// @note		Multithreading: Any thread.
 	///
 	/// @return		Default texture handle.
-	Texture												*	GetDefaultTexture() const;
+	Texture												*	GetDefaultTexture();
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Get default sampler.
@@ -505,7 +509,7 @@ public:
 	/// @note		Multithreading: Any thread.
 	///
 	/// @return		Default sampler handle.
-	Sampler												*	GetDefaultSampler() const;
+	Sampler												*	GetDefaultSampler();
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Get blur sampler descriptor set.
@@ -643,9 +647,9 @@ private:
 	std::unique_ptr<vulkan::DescriptorAutoPool>				descriptor_pool;
 
 	std::unique_ptr<Sampler>								default_sampler;
-	TextureResource										*	default_texture								= {};
+	TextureResourceHandle									default_texture;
 	std::unique_ptr<Sampler>								blur_Sampler;
-	vulkan::PoolDescriptorSet								blur_sampler_descriptor_set_DEPRICATED					= {};
+	vulkan::PoolDescriptorSet								blur_sampler_descriptor_set_DEPRICATED		= {};
 
 	std::vector<std::unique_ptr<Window>>					windows;
 	std::vector<std::unique_ptr<RenderTargetTexture>>		render_target_textures;

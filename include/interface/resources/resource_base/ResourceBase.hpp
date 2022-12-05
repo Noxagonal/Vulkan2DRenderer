@@ -8,6 +8,10 @@
 
 
 namespace vk2d {
+
+template<typename ResourceT>
+class ResourceHandleBase;
+
 namespace vk2d_internal {
 
 class ResourceManagerImpl;
@@ -59,6 +63,9 @@ class ResourceBase {
 	friend class vk2d_internal::ResourceThreadLoadTask;
 	friend class vk2d_internal::ResourceThreadUnloadTask;
 
+	template<typename ResourceT>
+	friend class ResourceHandleBase;
+
 public:
 	// TODO: Figure out how to get rid of Resource virtual destructor to improve ABI compatibility further.
 
@@ -74,6 +81,12 @@ public:
 	/// 
 	/// @return		Status of the resource, see ResourceStatus.
 	VK2D_API ResourceStatus									GetStatus();
+
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	/// @brief		Get number of references to this resource.
+	///
+	/// @return		Number of active references to this resource.
+	VK2D_API size_t											GetReferenceCount() const;
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Waits for the resource to load on the calling thread before continuing execution.
@@ -155,6 +168,13 @@ public:
 
 protected:
 
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	VK2D_API void											IncrementReferenceCount();
+
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	VK2D_API void											DecrementReferenceCount();
+
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	vk2d_internal::ResourceImplBase						*	resource_impl;
 };
 

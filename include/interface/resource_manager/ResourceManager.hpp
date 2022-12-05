@@ -5,6 +5,8 @@
 #include <containers/Color.hpp>
 #include <containers/NameArray.hpp>
 
+#include <interface/resources/texture/TextureResourceHandle.hpp>
+#include <interface/resources/font/FontResourceHandle.hpp>
 #include <interface/resources/material/MaterialResourceHandle.hpp>
 
 #include <memory>
@@ -38,7 +40,7 @@ class ResourceManager
 {
 	friend class vk2d_internal::InstanceImpl;
 
-	template<typename ResourceT, typename ResourceManagerT>
+	template<typename ResourceT>
 	friend class ResourceHandleBase;
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -71,10 +73,19 @@ public:
 	///				- This data is copied over to internal memory before returning so you do not need to keep the vector around.
 	/// 
 	/// @return		Handle to newly created texture resource you can use when rendering.
-	VK2D_API TextureResource								*	CreateTextureResource(
+	inline TextureResourceHandle								CreateTextureResource(
 		glm::uvec2												size,
 		const std::vector<Color8>							&	texels
-	);
+	)
+	{
+		auto resource = DoCreateTextureResource(
+			size,
+			texels
+		);
+		if( !resource ) return {};
+
+		return resource;
+	}
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Load a single layer texture resource from a file.
@@ -118,9 +129,17 @@ public:
 	///				</table>
 	///
 	/// @return		Handle to newly created texture resource you can use when rendering.
-	VK2D_API TextureResource								*	LoadTextureResource(
+	inline TextureResourceHandle								LoadTextureResource(
 		const std::filesystem::path							&	file_path
-	);
+	)
+	{
+		auto resource = DoLoadTextureResource(
+			file_path
+		);
+		if( !resource ) return {};
+
+		return resource;
+	}
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Create a multi-layer texture resource from data.
@@ -142,10 +161,19 @@ public:
 	///				- This data is copied over to internal memory before returning so you do not need to keep the vector around.
 	/// 
 	/// @return		Handle to newly created texture resource you can use when rendering.
-	VK2D_API TextureResource								*	CreateArrayTextureResource(
+	inline TextureResourceHandle								CreateArrayTextureResource(
 		glm::uvec2												size,
 		const std::vector<const std::vector<Color8>*>		&	texels_listing
-	);
+	)
+	{
+		auto resource = DoCreateArrayTextureResource(
+			size,
+			texels_listing
+		);
+		if( !resource ) return {};
+
+		return resource;
+	}
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Load a multi-layer texture resource from files.
@@ -162,9 +190,17 @@ public:
 	///				loading will fail.
 	/// 
 	/// @return		Handle to newly created texture resource you can use when rendering.
-	VK2D_API TextureResource								*	LoadArrayTextureResource(
+	inline TextureResourceHandle								LoadArrayTextureResource(
 		const std::vector<std::filesystem::path>			&	file_path_listing
-	);
+	)
+	{
+		auto resource = DoLoadArrayTextureResource(
+			file_path_listing
+		);
+		if( !resource ) return {};
+
+		return resource;
+	}
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Load a font resource from file.
@@ -217,23 +253,35 @@ public:
 	///				between glyphs in the texture atlas here.
 	/// 
 	/// @return		Handle to newly created font resource you can use when rendering text.
-	VK2D_API FontResource									*	LoadFontResource(
+	inline FontResourceHandle									LoadFontResource(
 		const std::filesystem::path							&	file_path,
 		uint32_t												glyph_texel_size			= 32,
 		bool													use_alpha					= true,
 		uint32_t												fallback_character			= '*',
 		uint32_t												glyph_atlas_padding			= 8
-	);
+	)
+	{
+		auto resource = DoLoadFontResource(
+			file_path,
+			glyph_texel_size,
+			use_alpha,
+			fallback_character,
+			glyph_atlas_padding
+		);
+		if( !resource ) return {};
+
+		return resource;
+	}
 
 	// TODO: Define material resource shader interface with template parameters
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	template<
-		vk2d_internal::VertexBaseOrDerivedType	VertexT
-		// typename								DrawT,
-		// size_t								SamplerCount,
-		// size_t								TextureCount,
-		// size_t								ColorOutCount
+		vk2d_internal::VertexBaseOrDerivedType					VertexT
+		// typename												DrawT,
+		// size_t												SamplerCount,
+		// size_t												TextureCount,
+		// size_t												ColorOutCount
 	>
 	MaterialResourceHandle<VertexT>								CreateMaterialResource(
 		NameArray<VertexT::GetMemberCount()>					vertex_member_names,
@@ -258,12 +306,14 @@ public:
 			vertex_members[ i ].name = vertex_member_names[ i ];
 		}
 
+		auto resource = DoCreateMaterialResource(
+			vertex_members,
+			create_info
+		);
+		if( !resource ) return {};
+
 		return MaterialResourceHandle<VertexT>(
-			this,
-			DoCreateMaterialResource(
-				vertex_members,
-				create_info
-			)
+			resource
 		);
 	}
 
@@ -276,6 +326,37 @@ public:
 	VK2D_API bool												IsGood() const;
 
 private:
+
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	VK2D_API TextureResource								*	DoCreateTextureResource(
+		glm::uvec2												size,
+		const std::vector<Color8>							&	texels
+	);
+
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	VK2D_API TextureResource								*	DoLoadTextureResource(
+		const std::filesystem::path							&	file_path
+	);
+
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	VK2D_API TextureResource								*	DoCreateArrayTextureResource(
+		glm::uvec2												size,
+		const std::vector<const std::vector<Color8>*>		&	texels_listing
+	);
+
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	VK2D_API TextureResource								*	DoLoadArrayTextureResource(
+		const std::vector<std::filesystem::path>			&	file_path_listing
+	);
+
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	VK2D_API FontResource									*	DoLoadFontResource(
+		const std::filesystem::path							&	file_path,
+		uint32_t												glyph_texel_size			= 32,
+		bool													use_alpha					= true,
+		uint32_t												fallback_character			= '*',
+		uint32_t												glyph_atlas_padding			= 8
+	);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	VK2D_API MaterialResource								*	DoCreateMaterialResource(

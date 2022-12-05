@@ -1843,8 +1843,9 @@ public:
 		window( window )
 	{}
 
-	void											operator()(
-		ThreadPrivateResource	*	thread_resource )
+	TaskInvokeResult			operator()(
+		LocalThreadData		*	thread_resource
+	)
 	{
 		assert( window->screenshot_state == vk2d::vk2d_internal::WindowImpl::ScreenshotState::WAITING_FILE_WRITE );
 
@@ -1938,6 +1939,8 @@ public:
 		}
 
 		window->screenshot_state					= vk2d::vk2d_internal::WindowImpl::ScreenshotState::WAITING_EVENT_REPORT;
+
+		return TaskInvokeResult::SUCCESS;
 	}
 
 	WindowImpl			*	window			= {};

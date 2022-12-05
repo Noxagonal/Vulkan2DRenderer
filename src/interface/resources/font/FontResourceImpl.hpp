@@ -8,7 +8,7 @@
 #include <containers/Color.hpp>
 
 #include <interface/resources/resource_base/ResourceImplBase.hpp>
-#include <interface/resources/texture/TextureResource.hpp>
+#include <interface/resources/texture/TextureResourceHandle.hpp>
 
 #include <ft2build.h>
 #include FT_FREETYPE_H
@@ -20,7 +20,7 @@ class FontResource;
 namespace vk2d_internal {
 
 class ResourceManagerImpl;
-class ThreadPrivateResource;
+class LocalThreadData;
 
 
 
@@ -61,12 +61,12 @@ public:
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	ResourceMTLoadResult								MTLoad(
-		ThreadPrivateResource						*	thread_resource
+		LocalThreadData								*	thread_resource
 	);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	void												MTUnload(
-		ThreadPrivateResource						*	thread_resource
+	ResourceMTUnloadResult								MTUnload(
+		LocalThreadData								*	thread_resource
 	);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -162,7 +162,7 @@ private:
 	std::vector<std::unique_ptr<AtlasTexture>>			atlas_textures						= {};
 	std::vector<FaceInfo>								face_infos							= {};
 
-	TextureResource									*	texture_resource					= {};
+	TextureResourceHandle								texture_resource					= {};
 
 	bool												is_good								= {};
 };

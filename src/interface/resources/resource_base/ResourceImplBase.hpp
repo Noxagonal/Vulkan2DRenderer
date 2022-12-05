@@ -17,7 +17,7 @@ namespace vk2d_internal {
 class ResourceManagerImpl;
 class ResourceThreadLoadTask;
 class ResourceThreadUnloadTask;
-class ThreadPrivateResource;
+class LocalThreadData;
 
 
 
@@ -41,11 +41,31 @@ enum class ResourceMTLoadResult
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/// @brief		Result of the multithreaded unload operation for a resource.
+enum class ResourceMTUnloadResult
+{
+	/// @brief		Successfully unloaded resource.
+	SUCCESS,
+
+	/// @brief		Unloading was postponed till later.
+	POSTPONED,
+
+	/// @brief		Unloading reported a failure.
+	///
+	///				There's usually not much we can do about this, may cause memory leaks, may cause other problems, resource
+	///				unloading is not attempted again.
+	FAILED,
+};
+
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 class ResourceImplBase
 {
 	friend class ResourceManagerImpl;
 	friend class ResourceThreadLoadTask;
 	friend class ResourceThreadUnloadTask;
+	friend class ResourceBase;
 
 public:
 
@@ -71,6 +91,12 @@ public:
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	virtual													~ResourceImplBase() = default;
+
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	size_t													GetReferenceCount() const;
+
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	bool													CanBeDestroyedNow() const;
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Check the status of the resource.
@@ -103,8 +129,9 @@ protected:
 	///				Represents a thread, collection of objects, and data attached to that specific thread.
 	///
 	/// @return		Result of the load operation.
+	[[nodiscard]]
 	virtual ResourceMTLoadResult							MTLoad(
-		ThreadPrivateResource							*	thread_resource
+		LocalThreadData									*	thread_resource
 	) = 0;
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -117,11 +144,18 @@ protected:
 	///
 	/// @param[in]	thread_resource
 	///				Represents a thread, collection of objects, and data attached to that specific thread.
-	virtual void											MTUnload(
-		ThreadPrivateResource							*	thread_resource
+	[[nodiscard]]
+	virtual ResourceMTUnloadResult							MTUnload(
+		LocalThreadData									*	thread_resource
 	) = 0;
 
 private:
+
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	void													IncrementReferenceCount();
+
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	void													DecrementReferenceCount();
 
 	// TODO: Remove resource subresources and move onto reference counting and using ResourceMTLoadResult::POSTPONED instead.
 
@@ -192,6 +226,11 @@ protected:
 	ResourceManagerImpl									&	resource_manager;
 
 private:
+	std::atomic_size_t										reference_count						= {};
+	std::atomic_size_t										reference_decrementer_thread_count	= {};
+	mutable std::mutex										destroy_resource_mutex;
+	bool													is_marked_for_destruction			= {};
+
 	uint32_t												loader_thread						= {};
 	std::vector<std::filesystem::path>						file_paths							= {};
 	std::mutex												subresources_mutex_DEPRECATED;

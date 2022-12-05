@@ -115,7 +115,7 @@ vk2d::vk2d_internal::MaterialResourceImpl::~MaterialResourceImpl()
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 vk2d::vk2d_internal::ResourceMTLoadResult vk2d::vk2d_internal::MaterialResourceImpl::MTLoad(
-	ThreadPrivateResource * thread_resource
+	LocalThreadData * thread_resource
 )
 {
 	loader_thread_resource	= dynamic_cast<ThreadMaterialLoaderResource*>( thread_resource );
@@ -184,21 +184,18 @@ vk2d::vk2d_internal::ResourceMTLoadResult vk2d::vk2d_internal::MaterialResourceI
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-void vk2d::vk2d_internal::MaterialResourceImpl::MTUnload(
-	ThreadPrivateResource * thread_resource
+vk2d::vk2d_internal::ResourceMTUnloadResult vk2d::vk2d_internal::MaterialResourceImpl::MTUnload(
+	LocalThreadData * thread_resource
 )
 {
 	loader_thread_resource	= dynamic_cast<ThreadMaterialLoaderResource*>( thread_resource );
 	assert( loader_thread_resource );
-	if( !loader_thread_resource ) return;
+	if( !loader_thread_resource ) return ResourceMTUnloadResult::SUCCESS;
 
 	auto memory_pool = loader_thread_resource->GetThreadLocalDeviceMemoryPool();
 
-	// TODO: Is this check necessary? resource should be loaded by this point, make sure and remove this call if possible.
-	// Check if loaded successfully, no need to check for failure as this thread was
-	// responsible for loading it, it's either loaded or failed to load but it'll
-	// definitely be either or. MTUnload() does not ever get called before MTLoad().
-	WaitUntilLoaded( std::chrono::nanoseconds::max() );
+	// TODO: Remove once CanBeDestroyedNow() works fully.
+	if( GetStatus() == ResourceStatus::UNDETERMINED ) return ResourceMTUnloadResult::POSTPONED;
 
 	auto DestroyShaders = [ this ]()
 	{
@@ -207,6 +204,8 @@ void vk2d::vk2d_internal::MaterialResourceImpl::MTUnload(
 	};
 
 	DestroyShaders();
+
+	return ResourceMTUnloadResult::SUCCESS;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -217,6 +216,9 @@ vk2d::ResourceStatus vk2d::vk2d_internal::MaterialResourceImpl::GetStatus()
 	auto local_status = status.load();
 	if( local_status == ResourceStatus::UNDETERMINED )
 	{
+		// !!! DEBUGGING !!!
+		status = local_status = ResourceStatus::AVAILABLE;
+
 		if( load_function_run_fence.IsSet() )
 		{
 			// TODO: Determine status if it is undetermined.
@@ -267,6 +269,9 @@ vk2d::ResourceStatus vk2d::vk2d_internal::MaterialResourceImpl::WaitUntilLoaded(
 	auto local_status = status.load();
 	if( local_status == ResourceStatus::UNDETERMINED )
 	{
+		// !!! DEBUGGING !!!
+		status = local_status = ResourceStatus::AVAILABLE;
+
 		if( load_function_run_fence.Wait( timeout ) )
 		{
 			// We can check the status of the fence in any thread,
@@ -320,10 +325,12 @@ public:
 		material( material )
 	{};
 
-	void operator()(
-		ThreadPrivateResource	*	thread_resource
+	TaskInvokeResult				operator()(
+		LocalThreadData			*	thread_resource
 	)
-	{}
+	{
+		return TaskInvokeResult::SUCCESS;
+	}
 
 private:
 	MaterialResourceImpl		*	material;

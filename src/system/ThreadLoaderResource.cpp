@@ -1,7 +1,7 @@
 
 #include <core/SourceCommon.hpp>
 
-#include <system/ThreadPrivateResources.hpp>
+#include "ThreadLoaderResource.hpp"
 #include <vulkan/descriptor_set/DescriptorSet.hpp>
 
 #include <vulkan/utils/VulkanMemoryManagement.hpp>

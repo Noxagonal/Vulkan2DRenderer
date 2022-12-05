@@ -9,22 +9,19 @@ namespace vk2d {
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-template<
-	typename ResourceT,
-	typename ResourceManagerT
->
+template<typename ResourceT>
 class ResourceHandleBase
 {
 protected:
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	ResourceHandleBase(
-		ResourceManagerT			*	resource_manager,
 		ResourceT					*	resource_ptr
 	) :
-		resource_manager( resource_manager ),
 		resource_ptr( resource_ptr )
-	{}
+	{
+		IncrementReferenceCount();
+	}
 
 public:
 
@@ -55,12 +52,18 @@ public:
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	ResourceHandleBase				&	operator=(
+		nullptr_t
+	)
+	{
+		Clear();
+		return *this;
+	}
+
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	ResourceHandleBase				&	operator=(
 		const ResourceHandleBase	&	other
 	)
 	{
-		if( other == *this ) return *this;
-
-		Clear();
 		CopyOther( other );
 		return *this;
 	}
@@ -70,27 +73,34 @@ public:
 		ResourceHandleBase			&&	other
 	)
 	{
-		if( other == *this ) return *this;
-
-		Clear();
 		MoveOther( std::move( other ) );
 		return *this;
 	}
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	template<typename OtherT>
+	requires( std::is_base_of_v<ResourceHandleBase, OtherT> )
 	bool								operator==(
-		const ResourceHandleBase	&	other
+		const OtherT				&	other
 	) const
 	{
-		return resource_manager == other.resource_manager && resource_ptr == other.resource_ptr;
+		return resource_ptr == other.resource_ptr;
 	}
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	template<typename OtherT>
+	requires( std::is_base_of_v<ResourceHandleBase, OtherT> )
 	bool								operator!=(
-		const ResourceHandleBase	&	other
+		const OtherT				&	other
 	) const
 	{
-		return !( *this == other );
+		return resource_ptr != other.resource_ptr;
+	}
+
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	const ResourceT					*	operator->() const
+	{
+		return resource_ptr;
 	}
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -100,27 +110,29 @@ public:
 	}
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	const ResourceT					&	operator*() const
+	{
+		// TODO, throw if nullptr. Need to implement exceptions for this.
+		return *resource_ptr;
+	}
+
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	ResourceT						&	operator*()
 	{
 		// TODO, throw if nullptr. Need to implement exceptions for this.
 		return *resource_ptr;
 	}
 
-	// TODO: Remove this once reference counting has been implemented.
+	operator bool()
+	{
+		return !!resource_ptr;
+	}
+
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	void								Clear()
 	{
-		assert(
-			( resource_manager == nullptr && resource_ptr == nullptr ) ||
-			( resource_manager != nullptr && resource_ptr != nullptr )
-		);
-		if( resource_manager && resource_ptr )
-		{
-			DecrementReferenceCount();
-			resource_manager->DestroyResource( resource_ptr );
-			resource_manager	= nullptr;
-			resource_ptr		= nullptr;
-		}
+		DecrementReferenceCount();
+		resource_ptr = nullptr;
 	}
 
 private:
@@ -130,8 +142,10 @@ private:
 		const ResourceHandleBase	&	other
 	)
 	{
-		resource_manager	= other.resource_manager;
-		resource_ptr		= other.resource_ptr;
+		if( other == *this ) return;
+
+		DecrementReferenceCount();
+		resource_ptr = other.resource_ptr;
 		IncrementReferenceCount();
 	}
 
@@ -140,24 +154,30 @@ private:
 		ResourceHandleBase			&&	other
 	)
 	{
-		std::swap( resource_manager, other.resource_manager );
+		if( other == *this ) return;
+
 		std::swap( resource_ptr, other.resource_ptr );
 	}
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	void								IncrementReferenceCount()
 	{
-		// TODO
+		if( resource_ptr )
+		{
+			resource_ptr->IncrementReferenceCount();
+		}
 	}
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	void								DecrementReferenceCount()
 	{
-		// TODO
+		if( resource_ptr )
+		{
+			resource_ptr->DecrementReferenceCount();
+		}
 	}
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	ResourceManagerT				*	resource_manager				= {};
 	ResourceT						*	resource_ptr					= {};
 };
 

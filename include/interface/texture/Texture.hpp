@@ -31,7 +31,7 @@ public:
 	/// @note		Multithreading: Main thread only.
 	/// 
 	/// @return		true if texture data is ready to be used, false otherwise.
-	VK2D_API bool									IsTextureDataReady();
+	VK2D_API bool									IsTextureDataReady() const;
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Gets the texel size of the texture.
