@@ -179,6 +179,10 @@ vk2d::vk2d_internal::InstanceImpl::~InstanceImpl()
 	DestroyBlurSampler();
 	DestroyDefaultSampler();
 	DestroyDefaultTexture();
+
+	vk_graphics_pipelines_DEPRICATED.clear();
+	vk_compute_pipelines_DEPRICATED.clear();
+
 	DestroyResourceManager();
 	DestroyThreadPool();
 	DestroyPipelineLayouts_MOVE();

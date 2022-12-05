@@ -5,6 +5,7 @@
 #include "Shader.hpp"
 #include <interface/resources/material/ShaderCreateInfo.hpp>
 #include "ShaderHandle.hpp"
+#include "ShaderManagerShaderEntry.hpp"
 
 
 
@@ -30,11 +31,8 @@ class ShaderManager
 public:
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	struct ShaderEntry
-	{
-		VkShaderModule								vulkan_shader_module			= {};
-		size_t										reference_count					= {};
-	};
+	// TODO: Find better ways to implement a hash map. eg. std::flat_map. Mind pointer invalidation though.
+	using ShaderList = std::map<size_t, ShaderManagerShaderEntry>;
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	ShaderManager(
@@ -118,7 +116,7 @@ private:
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	void											DestroyShader(
-		std::map<size_t, ShaderEntry>::iterator		shader_list_iterator
+		ShaderList::iterator						shader_list_iterator
 	);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -130,8 +128,7 @@ private:
 
 	ShaderCompiler									shader_compiler;
 
-	// TODO: Find better ways to implement a hash map. eg. std::flat_map. Mind pointer invalidation though.
-	std::map<size_t, ShaderEntry>					shader_list;
+	ShaderList										shader_list;
 };
 
 

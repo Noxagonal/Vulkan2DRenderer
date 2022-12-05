@@ -39,12 +39,10 @@ vk2d::vulkan::ShaderHandle vk2d::vulkan::ShaderManager::FindShader(
 
 	auto shader = shader_list.find( shader_hash );
 	if( shader == shader_list.end() ) return {};
-	shader->second.reference_count += 1; // <- Add 1 as ShaderHandle constructor will not increment the reference count.
 
 	return ShaderHandle(
 		this,
-		shader->second.vulkan_shader_module,
-		shader->first
+		&shader->second
 	);
 }
 
@@ -71,16 +69,18 @@ vk2d::vulkan::ShaderHandle vk2d::vulkan::ShaderManager::CreateShader(
 	);
 	if( shader_module == VK_NULL_HANDLE ) return {};
 
-	auto new_entry = ShaderEntry {
-		shader_module,
-		1 // <- Start with 1 as ShaderHandle constructor will not increment the reference count.
-	};
-	shader_list.emplace( shader_create_info.GetHash(), new_entry );
+	auto result_it = shader_list.emplace(
+		shader_create_info.GetHash(),
+		ShaderManagerShaderEntry {
+			shader_module,
+			0,
+			shader_create_info.GetHash()
+		}
+	);
 
 	return ShaderHandle(
 		this,
-		new_entry.vulkan_shader_module,
-		shader_create_info.GetHash()
+		&result_it.first->second
 	);
 }
 
@@ -123,7 +123,7 @@ void vk2d::vulkan::ShaderManager::DestroyShader( size_t shader_hash )
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void vk2d::vulkan::ShaderManager::DestroyShader(
-	std::map<size_t, ShaderEntry>::iterator shader_list_iterator
+	ShaderList::iterator shader_list_iterator
 )
 {
 	VK2D_ASSERT_SINGLE_THREAD_ACCESS_SCOPE();

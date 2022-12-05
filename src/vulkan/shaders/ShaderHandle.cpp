@@ -8,15 +8,13 @@
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 vk2d::vulkan::ShaderHandle::ShaderHandle(
-	ShaderManager	*	shader_manager,
-	VkShaderModule		vulkan_shader_module,
-	size_t				hash
+	ShaderManager				*	shader_manager,
+	ShaderManagerShaderEntry	*	shader_entry
 ) :
 	shader_manager( shader_manager ),
-	vulkan_shader_module( vulkan_shader_module ),
-	hash( hash )
+	shader_entry( shader_entry )
 {
-	// Do not increment reference count in this constructor.
+	IncrementReferenceCount();
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -73,7 +71,7 @@ bool vk2d::vulkan::ShaderHandle::operator==(
 	const ShaderHandle & other
 ) noexcept
 {
-	return hash == other.hash;
+	return shader_entry == other.shader_entry;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -81,19 +79,19 @@ bool vk2d::vulkan::ShaderHandle::operator!=(
 	const ShaderHandle & other
 ) noexcept
 {
-	return hash != other.hash;
+	return shader_entry != other.shader_entry;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 VkShaderModule vk2d::vulkan::ShaderHandle::GetVulkanShaderModule() const
 {
-	return vulkan_shader_module;
+	return shader_entry->vulkan_shader_module;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 size_t vk2d::vulkan::ShaderHandle::GetHash() const
 {
-	return hash;
+	return shader_entry->hash;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -101,8 +99,7 @@ void vk2d::vulkan::ShaderHandle::Clear()
 {
 	DecrementReferenceCount();
 	shader_manager			= {};
-	vulkan_shader_module	= {};
-	hash					= {};
+	shader_entry			= {};
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -114,24 +111,28 @@ vk2d::vulkan::ShaderHandle::operator VkShaderModule() const
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 vk2d::vulkan::ShaderHandle::operator bool() const
 {
-	return !!vulkan_shader_module;
+	return !!shader_entry;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void vk2d::vulkan::ShaderHandle::IncrementReferenceCount()
 {
-	if( shader_manager )
+	if( shader_entry )
 	{
-		shader_manager->IncrementReferenceCount( hash );
+		++shader_entry->reference_count;
 	}
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void vk2d::vulkan::ShaderHandle::DecrementReferenceCount()
 {
-	if( shader_manager )
+	if( shader_entry )
 	{
-		shader_manager->DecrementReferenceCount( hash );
+		--shader_entry->reference_count;
+		if( shader_entry->reference_count == 0 )
+		{
+			shader_manager->DestroyShader( shader_entry->hash );
+		}
 	}
 }
 
@@ -144,8 +145,7 @@ void vk2d::vulkan::ShaderHandle::CopyOther(
 
 	DecrementReferenceCount();
 	shader_manager			= other.shader_manager;
-	vulkan_shader_module	= other.vulkan_shader_module;
-	hash					= other.hash;
+	shader_entry			= other.shader_entry;
 	IncrementReferenceCount();
 }
 
@@ -157,6 +157,5 @@ void vk2d::vulkan::ShaderHandle::MoveOther(
 	if( other == *this ) return;
 
 	std::swap( shader_manager, other.shader_manager );
-	std::swap( vulkan_shader_module, other.vulkan_shader_module );
-	std::swap( hash, other.hash );
+	std::swap( shader_entry, other.shader_entry );
 }

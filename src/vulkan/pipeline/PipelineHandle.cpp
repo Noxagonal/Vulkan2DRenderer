@@ -8,15 +8,13 @@
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 vk2d::vulkan::PipelineHandle::PipelineHandle(
-	PipelineManager	*	pipeline_manager,
-	VkPipeline			vulkan_pipeline,
-	size_t				hash
+	PipelineManager					*	pipeline_manager,
+	PipelineManagerPipelineEntry	*	pipeline_entry
 ) :
 	pipeline_manager( pipeline_manager ),
-	vulkan_pipeline( vulkan_pipeline ),
-	hash( hash )
+	pipeline_entry( pipeline_entry )
 {
-	// Do not increment reference count in this constructor.
+	IncrementReferenceCount();
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -73,7 +71,7 @@ bool vk2d::vulkan::PipelineHandle::operator==(
 	const PipelineHandle & other
 ) noexcept
 {
-	return hash == other.hash;
+	return pipeline_entry == other.pipeline_entry;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -81,19 +79,19 @@ bool vk2d::vulkan::PipelineHandle::operator!=(
 	const PipelineHandle & other
 ) noexcept
 {
-	return hash != other.hash;
+	return pipeline_entry != other.pipeline_entry;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 VkPipeline vk2d::vulkan::PipelineHandle::GetVulkanPipeline() const
 {
-	return vulkan_pipeline;
+	return pipeline_entry->GetVulkanPipeline();
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 size_t vk2d::vulkan::PipelineHandle::GetHash() const
 {
-	return hash;
+	return pipeline_entry->GetHash();
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -101,8 +99,7 @@ void vk2d::vulkan::PipelineHandle::Clear()
 {
 	DecrementReferenceCount();
 	pipeline_manager		= {};
-	vulkan_pipeline			= {};
-	hash					= {};
+	pipeline_entry			= {};
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -114,7 +111,7 @@ vk2d::vulkan::PipelineHandle::operator VkPipeline() const
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 vk2d::vulkan::PipelineHandle::operator bool() const
 {
-	return !!vulkan_pipeline;
+	return !!pipeline_entry;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -122,7 +119,7 @@ void vk2d::vulkan::PipelineHandle::IncrementReferenceCount()
 {
 	if( pipeline_manager )
 	{
-		pipeline_manager->IncrementReferenceCount( hash );
+		pipeline_manager->IncrementReferenceCount( pipeline_entry );
 	}
 }
 
@@ -131,7 +128,7 @@ void vk2d::vulkan::PipelineHandle::DecrementReferenceCount()
 {
 	if( pipeline_manager )
 	{
-		pipeline_manager->DecrementReferenceCount( hash );
+		pipeline_manager->DecrementReferenceCount( pipeline_entry );
 	}
 }
 
@@ -144,8 +141,7 @@ void vk2d::vulkan::PipelineHandle::CopyOther(
 
 	DecrementReferenceCount();
 	pipeline_manager		= other.pipeline_manager;
-	vulkan_pipeline			= other.vulkan_pipeline;
-	hash					= other.hash;
+	pipeline_entry			= other.pipeline_entry;
 	IncrementReferenceCount();
 }
 
@@ -157,6 +153,5 @@ void vk2d::vulkan::PipelineHandle::MoveOther(
 	if( other == *this ) return;
 
 	std::swap( pipeline_manager, other.pipeline_manager );
-	std::swap( vulkan_pipeline, other.vulkan_pipeline );
-	std::swap( hash, other.hash );
+	std::swap( pipeline_entry, other.pipeline_entry );
 }
