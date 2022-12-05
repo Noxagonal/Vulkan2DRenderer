@@ -408,6 +408,7 @@ void vk2d::vulkan::PipelineManager::DestroyPipeline(
 		[ this, pipeline_hash ]( PipelineList & list )
 		{
 			auto it = list.find( pipeline_hash );
+			if( it == list.end() ) return;
 
 			vkDestroyPipeline(
 				vulkan_device,
@@ -445,6 +446,7 @@ bool vk2d::vulkan::PipelineManager::CreateGraphicsPipelineCache()
 	VkPipelineCacheCreateInfo pipeline_cache_create_info {};
 	pipeline_cache_create_info.sType				= VK_STRUCTURE_TYPE_PIPELINE_CACHE_CREATE_INFO;
 	pipeline_cache_create_info.pNext				= nullptr;
+	// TODO: Use VK_PIPELINE_CACHE_CREATE_EXTERNALLY_SYNCHRONIZED_BIT if we switch to use Vulkan 1.3 specification.
 	pipeline_cache_create_info.flags				= 0;
 	pipeline_cache_create_info.initialDataSize		= 0;
 	pipeline_cache_create_info.pInitialData			= nullptr;

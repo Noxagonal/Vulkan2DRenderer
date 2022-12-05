@@ -85,13 +85,13 @@ bool vk2d::vulkan::ShaderHandle::operator!=(
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 VkShaderModule vk2d::vulkan::ShaderHandle::GetVulkanShaderModule() const
 {
-	return shader_entry->vulkan_shader_module;
+	return shader_entry->GetVulkanShaderModule();
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 size_t vk2d::vulkan::ShaderHandle::GetHash() const
 {
-	return shader_entry->hash;
+	return shader_entry->GetHash();
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -119,7 +119,7 @@ void vk2d::vulkan::ShaderHandle::IncrementReferenceCount()
 {
 	if( shader_entry )
 	{
-		++shader_entry->reference_count;
+		shader_manager->IncrementReferenceCount( shader_entry );
 	}
 }
 
@@ -128,11 +128,7 @@ void vk2d::vulkan::ShaderHandle::DecrementReferenceCount()
 {
 	if( shader_entry )
 	{
-		--shader_entry->reference_count;
-		if( shader_entry->reference_count == 0 )
-		{
-			shader_manager->DestroyShader( shader_entry->hash );
-		}
+		shader_manager->DecrementReferenceCount( shader_entry );
 	}
 }
 

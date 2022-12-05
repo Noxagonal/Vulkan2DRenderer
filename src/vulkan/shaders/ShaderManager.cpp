@@ -35,14 +35,17 @@ vk2d::vulkan::ShaderHandle vk2d::vulkan::ShaderManager::FindShader(
 	size_t shader_hash
 )
 {
-	VK2D_ASSERT_SINGLE_THREAD_ACCESS_SCOPE();
+	return shader_list(
+		[ this, shader_hash ]( ShaderList & list ) -> ShaderHandle
+		{
+			auto shader = list.find( shader_hash );
+			if( shader == list.end() ) return {};
 
-	auto shader = shader_list.find( shader_hash );
-	if( shader == shader_list.end() ) return {};
-
-	return ShaderHandle(
-		this,
-		&shader->second
+			return ShaderHandle(
+				this,
+				&shader->second
+			);
+		}
 	);
 }
 
@@ -62,94 +65,99 @@ vk2d::vulkan::ShaderHandle vk2d::vulkan::ShaderManager::CreateShader(
 	const ShaderCreateInfo	&	shader_create_info
 )
 {
-	VK2D_ASSERT_SINGLE_THREAD_ACCESS_SCOPE();
+	return shader_list(
+		[ this, &shader_create_info ]( ShaderList & list ) -> ShaderHandle
+		{
+			auto shader_module = shader_compiler.CreateShaderModule(
+				shader_create_info
+			);
+			if( shader_module == VK_NULL_HANDLE ) return {};
 
-	auto shader_module = shader_compiler.CreateShaderModule(
-		shader_create_info
-	);
-	if( shader_module == VK_NULL_HANDLE ) return {};
+			auto result_it = list.emplace(
+				shader_create_info.GetHash(),
+				ShaderManagerShaderEntry(
+					shader_module,
+					shader_create_info.GetHash()
+				)
+			);
 
-	auto result_it = shader_list.emplace(
-		shader_create_info.GetHash(),
-		ShaderManagerShaderEntry {
-			shader_module,
-			0,
-			shader_create_info.GetHash()
+			return ShaderHandle(
+				this,
+				&result_it.first->second
+			);
 		}
-	);
-
-	return ShaderHandle(
-		this,
-		&result_it.first->second
 	);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void vk2d::vulkan::ShaderManager::IncrementReferenceCount(
-	size_t shader_hash
+	ShaderManagerShaderEntry * shader_entry
 )
 {
-	VK2D_ASSERT_SINGLE_THREAD_ACCESS_SCOPE();
-
-	auto it = shader_list.find( shader_hash );
-	assert( it != shader_list.end() );
-
-	it->second.reference_count += 1;
+	shader_entry->reference_count(
+		[]( size_t & count )
+		{
+			++count;
+		}
+	);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void vk2d::vulkan::ShaderManager::DecrementReferenceCount(
-	size_t shader_hash
+	ShaderManagerShaderEntry * shader_entry
 )
 {
-	VK2D_ASSERT_SINGLE_THREAD_ACCESS_SCOPE();
+	bool destruct = false;
 
-	auto it = shader_list.find( shader_hash );
-	assert( it != shader_list.end() );
-	assert( it->second.reference_count > 0 );
+	shader_entry->reference_count(
+		[ this, &destruct ]( size_t & count )
+		{
+			--count;
+			if( count == 0 ) destruct = true;
+		}
+	);
 
-	it->second.reference_count -= 1;
-	if( it->second.reference_count == 0 )
-	{
-		DestroyShader( it );
-	}
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-void vk2d::vulkan::ShaderManager::DestroyShader( size_t shader_hash )
-{
-	DestroyShader( shader_list.find( shader_hash ) );
+	if( destruct ) DestroyShader( shader_entry->GetHash() );
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void vk2d::vulkan::ShaderManager::DestroyShader(
-	ShaderList::iterator shader_list_iterator
+	size_t shader_hash
 )
 {
-	VK2D_ASSERT_SINGLE_THREAD_ACCESS_SCOPE();
+	shader_list(
+		[ this, shader_hash ]( ShaderList & list )
+		{
+			auto it = list.find( shader_hash );
+			if( it == list.end() ) return;
 
-	if( shader_list_iterator != shader_list.end() )
-	{
-		vkDestroyShaderModule(
-			vulkan_device,
-			shader_list_iterator->second.vulkan_shader_module,
-			nullptr
-		);
+			vkDestroyShaderModule(
+				vulkan_device,
+				it->second.GetVulkanShaderModule(),
+				nullptr
+			);
 
-		shader_list.erase( shader_list_iterator );
-	}
+			list.erase( it );
+		}
+	);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void vk2d::vulkan::ShaderManager::DestroyAllShaders()
 {
-	for( auto & o : shader_list )
-	{
-		vkDestroyShaderModule(
-			vulkan_device,
-			o.second.vulkan_shader_module,
-			nullptr
-		);
-	}
-	shader_list.clear();
+	shader_list(
+		[ this ]( ShaderList & list )
+		{
+			for( auto & p : list )
+			{
+				vkDestroyShaderModule(
+					vulkan_device,
+					p.second.GetVulkanShaderModule(),
+					nullptr
+				);
+			}
+
+			list.clear();
+		}
+	);
 }

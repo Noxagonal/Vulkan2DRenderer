@@ -6,6 +6,7 @@
 #include <interface/resources/material/ShaderCreateInfo.hpp>
 #include "ShaderHandle.hpp"
 #include "ShaderManagerShaderEntry.hpp"
+#include <types/Synchronization.hpp>
 
 
 
@@ -101,12 +102,12 @@ private:
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	void											IncrementReferenceCount(
-		size_t										shader_hash
+		ShaderManagerShaderEntry				*	shader_entry
 	);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	void											DecrementReferenceCount(
-		size_t										shader_hash
+		ShaderManagerShaderEntry				*	shader_entry
 	);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -128,7 +129,7 @@ private:
 
 	ShaderCompiler									shader_compiler;
 
-	ShaderList										shader_list;
+	MutexObject<ShaderList>							shader_list;
 };
 
 

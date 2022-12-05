@@ -37,7 +37,7 @@ public:
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Compile and create Vulkan shader module.
 	///
-	/// @note		Multithreading: Not thread safe.
+	/// @note		Multithreading: Externally synchronized.
 	///
 	/// @param[in]	shader_create_info
 	///				User provided shader text.
@@ -52,7 +52,7 @@ private:
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Compiles SpirV shader module from GLSL code.
 	///
-	/// @note		Multithreading: Not thread safe.
+	/// @note		Multithreading: Externally synchronized.
 	///
 	/// @param[in]	shader_create_info
 	///				Shader info provided by the user.
