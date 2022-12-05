@@ -401,7 +401,7 @@ public:
 	///
 	/// @return		Graphics shader pipeline.
 	VkPipeline												GetGraphicsPipeline_DEPRICATED(
-		const vulkan::GraphicsPipelineInfo				&	graphics_pipeline_info
+		const vulkan::GraphicsPipelineCreateInfo		&	graphics_pipeline_info
 	);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -417,7 +417,7 @@ public:
 	///
 	/// @return		Graphics shader pipeline.
 	VkPipeline												GetComputePipeline_DEPRICATED(
-		const vulkan::ComputePipelineInfo				&	compute_pipeline_info
+		const vulkan::ComputePipelineCreateInfo			&	compute_pipeline_info
 	);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -630,8 +630,8 @@ private:
 	std::map<vulkan::GraphicsShaderListID_DEPRICATED, vulkan::GraphicsShaderList>graphics_shader_programs_DEPRICATED;
 	std::map<vulkan::ComputeShaderProgramID_DEPRICATED, VkShaderModule>compute_shader_programs_DEPRICATED;
 
-	std::map<vulkan::GraphicsPipelineInfo, VkPipeline>		vk_graphics_pipelines_DEPRICATED;
-	std::map<vulkan::ComputePipelineInfo, VkPipeline>		vk_compute_pipelines_DEPRICATED;
+	std::map<vulkan::GraphicsPipelineCreateInfo, vulkan::PipelineHandle>vk_graphics_pipelines_DEPRICATED;
+	std::map<vulkan::ComputePipelineCreateInfo, vulkan::PipelineHandle>	vk_compute_pipelines_DEPRICATED;
 
 	VkPipelineLayout										vk_graphics_primary_render_pipeline_layout_MOVE	= {};
 	VkPipelineLayout										vk_graphics_blur_pipeline_layout_DEPRICATED			= {};

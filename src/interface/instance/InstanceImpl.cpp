@@ -646,8 +646,6 @@ vk2d::Multisamples vk2d::vk2d_internal::InstanceImpl::GetAllSupportedMultisampli
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 vk2d::PFN_VK2D_ReportFunction vk2d::vk2d_internal::InstanceImpl::GetReportFunction() const
 {
-	VK2D_ASSERT_MAIN_THREAD( *this );
-
 	return report_function;
 }
 
@@ -854,7 +852,7 @@ vk2d::vulkan::GraphicsShaderList vk2d::vk2d_internal::InstanceImpl::GetCompatibl
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 VkPipeline vk2d::vk2d_internal::InstanceImpl::GetGraphicsPipeline_DEPRICATED(
-	const vulkan::GraphicsPipelineInfo & graphics_pipeline_info
+	const vulkan::GraphicsPipelineCreateInfo & graphics_pipeline_info
 )
 {
 	// DEPRICATED: Remove this function later.
@@ -875,14 +873,14 @@ VkPipeline vk2d::vk2d_internal::InstanceImpl::GetGraphicsPipeline_DEPRICATED(
 	if( p_it != vk_graphics_pipelines_DEPRICATED.end() ) {
 		return p_it->second;
 	}
-	auto pipeline = vulkan_device->GetPipelineManager().CreateGraphicsPipeline( graphics_pipeline_info );
+	auto pipeline = vulkan_device->GetPipelineManager().GetGraphicsPipeline( graphics_pipeline_info );
 	vk_graphics_pipelines_DEPRICATED[ graphics_pipeline_info ] = pipeline;
-	return pipeline;
+	return pipeline.GetVulkanPipeline();
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 VkPipeline vk2d::vk2d_internal::InstanceImpl::GetComputePipeline_DEPRICATED(
-	const vulkan::ComputePipelineInfo & compute_pipeline_info
+	const vulkan::ComputePipelineCreateInfo & compute_pipeline_info
 )
 {
 	// DEPRICATED: Remove this function later.
@@ -904,9 +902,9 @@ VkPipeline vk2d::vk2d_internal::InstanceImpl::GetComputePipeline_DEPRICATED(
 		return p_it->second;
 	}
 
-	auto pipeline = vulkan_device->GetPipelineManager().CreateComputePipeline( compute_pipeline_info );
+	auto pipeline = vulkan_device->GetPipelineManager().GetComputePipeline( compute_pipeline_info );
 	vk_compute_pipelines_DEPRICATED[ compute_pipeline_info ] = pipeline;
-	return pipeline;
+	return pipeline.GetVulkanPipeline();
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

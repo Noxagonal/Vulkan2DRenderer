@@ -2,15 +2,18 @@
 
 #include <core/SourceCommon.hpp>
 
-#include "GraphicsPipelineInfo.hpp"
-#include "ComputePipelineInfo.hpp"
+#include "GraphicsPipelineCreateInfo.hpp"
+#include "ComputePipelineCreateInfo.hpp"
+
+#include "PipelineHandle.hpp"
 
 
 
 namespace vk2d {
-
 namespace vk2d_internal {
+
 class InstanceImpl;
+
 } // vk2d_internal
 
 namespace vulkan {
@@ -22,7 +25,16 @@ class Device;
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 class PipelineManager
 {
+	friend class PipelineHandle;
+
 public:
+
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	struct PipelineEntry
+	{
+		VkPipeline									vulkan_pipeline					= {};
+		size_t										reference_count					= {};
+	};
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	PipelineManager(
@@ -44,54 +56,106 @@ public:
 	~PipelineManager();
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	VkPipeline											FindPipeline(
-		const vulkan::GraphicsPipelineInfo			&	graphics_pipeline_info
+	/// @brief		Tries to find a graphics pipeline and return a handle to it if it exists.
+	///
+	/// @param		graphics_pipeline_create_info
+	///				Pipeline create info structure describing the pipeline we want to find.
+	///
+	/// @return		Handle to existing pipeline or empty handle if pipeline was not found.
+	PipelineHandle									FindGraphicsPipeline(
+		const GraphicsPipelineCreateInfo		&	graphics_pipeline_create_info
 	);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	VkPipeline											FindPipeline(
-		const vulkan::ComputePipelineInfo			&	compute_pipeline_info
+	/// @brief		Tries to find a compute pipeline and return a handle to it if it exists.
+	///
+	/// @param		compute_pipeline_create_info
+	///				Pipeline create info structure describing the pipeline we want to find.
+	///
+	/// @return		Handle to existing pipeline or empty handle if pipeline was not found.
+	PipelineHandle									FindComputePipeline(
+		const ComputePipelineCreateInfo			&	compute_pipeline_create_info
 	);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	VkPipeline											FindPipeline(
-		size_t											hash
+	/// @brief		Tries to find a graphics or compute pipeline and return a handle to it if it exists.
+	///
+	/// @param		pipeline_hash
+	///				Hash of the pipeline we wish to find.
+	///
+	/// @return		Handle to existing pipeline or empty handle if pipeline was not found.
+	PipelineHandle									FindPipeline(
+		size_t										pipeline_hash
 	);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	/// @brief		Create graphics pipeline.
+	/// @brief		Gets a graphics pipeline if it exists or creates a new graphics pipeline if it does not exist.
 	///
-	/// @warning	It is an error to create two or more pipelines with exactly the same pipeline info.
+	/// @param[in]	graphics_pipeline_create_info
+	///				Pipeline create info structure describing the pipeline we want to find or create.
 	///
-	/// @note		Multithreading: Any thread.
-	///
-	/// @param[in]	graphics_pipeline_info
-	///				Pipeline info which tells what kind of pipeline should be created.
-	///
-	/// @return		New graphics pipeline.
-	VkPipeline											CreateGraphicsPipeline(
-		const vulkan::GraphicsPipelineInfo			&	graphics_pipeline_info
+	/// @return		Handle to pipeline.
+	PipelineHandle									GetGraphicsPipeline(
+		const GraphicsPipelineCreateInfo		&	graphics_pipeline_create_info
 	);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	/// @brief		Create compute pipeline.
+	/// @brief		Gets a compute pipeline if it exists or creates a new compute pipeline if it does not exist.
 	///
-	/// @warning	It is an error to create two or more pipelines with exactly the same pipeline info.
+	/// @param[in]	compute_pipeline_create_info
+	///				Pipeline create info structure describing the pipeline we want to find or create.
 	///
-	/// @note		Multithreading: Any thread.
+	/// @return		Handle to pipeline.
+	PipelineHandle									GetComputePipeline(
+		const ComputePipelineCreateInfo			&	compute_pipeline_create_info
+	);
+
+private:
+
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	/// @brief		Creates a new graphics pipeline.
 	///
-	/// @param[in]	compute_pipeline_info
-	///				Pipeline info which tells what kind of pipeline should be created.
+	/// @param[in]	graphics_pipeline_create_info
+	///				Pipeline create info structure describing the pipeline we want to create.
 	///
-	/// @return		New compute pipeline.
-	VkPipeline											CreateComputePipeline(
-		const vulkan::ComputePipelineInfo			&	compute_pipeline_info
+	/// @return		Handle to pipeline.
+	PipelineHandle									CreateGraphicsPipeline(
+		const GraphicsPipelineCreateInfo		&	graphics_pipeline_create_info
 	);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	void												DestroyPipeline(
-		VkPipeline										pipeline
+	/// @brief		Creates a new compute pipeline.
+	///
+	/// @param[in]	compute_pipeline_create_info
+	///				Pipeline create info structure describing the pipeline we want to create.
+	///
+	/// @return		Handle to pipeline.
+	PipelineHandle									CreateComputePipeline(
+		const ComputePipelineCreateInfo			&	compute_pipeline_create_info
 	);
+
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	void											IncrementReferenceCount(
+		size_t										pipeline_hash
+	);
+
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	void											DecrementReferenceCount(
+		size_t										pipeline_hash
+	);
+
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	void											DestroyPipeline(
+		size_t										pipeline_hash
+	);
+
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	void											DestroyPipeline(
+		std::map<size_t, PipelineEntry>::iterator	pipeline_list_iterator
+	);
+
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	void											DestroyAllPipelines();
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Get graphics pipeline cache.
@@ -101,7 +165,7 @@ public:
 	/// @note		Multithreading: Any thread.
 	///
 	/// @return		Graphics pipeline cache.
-	VkPipelineCache										GetGraphicsPipelineCache() const;
+	VkPipelineCache									GetGraphicsPipelineCache() const;
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Get compute pipeline cache.
@@ -111,34 +175,32 @@ public:
 	/// @note		Multithreading: Any thread.
 	///
 	/// @return		Graphics pipeline cache.
-	VkPipelineCache										GetComputePipelineCache() const;
+	VkPipelineCache									GetComputePipelineCache() const;
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	bool												IsGood();
+	bool											IsGood() const;
 
 private:
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	bool												CreateGraphicsPipelineCache();
-	bool												CreateComputePipelineCache();
+	bool											CreateGraphicsPipelineCache();
+	bool											CreateComputePipelineCache();
 
-	void												DestroyGraphicsPipelineCache();
-	void												DestroyComputePipelineCache();
-
-	void												DestroyPipelines();
+	void											DestroyGraphicsPipelineCache();
+	void											DestroyComputePipelineCache();
 
 private:
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	vk2d_internal::InstanceImpl						&	instance;
-	Device											&	vulkan_device;
+	vk2d_internal::InstanceImpl					&	instance;
+	Device										&	vulkan_device;
 
-	std::map<size_t, VkPipeline>						pipeline_list;
+	std::map<size_t, PipelineEntry>					pipeline_list;
 
-	VkPipelineCache										vulkan_graphics_pipeline_cache				= {};
-	VkPipelineCache										vulkan_compute_pipeline_cache				= {};
+	VkPipelineCache									vulkan_graphics_pipeline_cache				= {};
+	VkPipelineCache									vulkan_compute_pipeline_cache				= {};
 
-	bool												is_good										= {};
+	bool											is_good										= {};
 };
 
 

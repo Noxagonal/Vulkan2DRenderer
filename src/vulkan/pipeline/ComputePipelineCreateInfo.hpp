@@ -14,17 +14,18 @@ namespace vulkan {
 
 
 
-class ComputePipelineInfo
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+class ComputePipelineCreateInfo
 {
 public:
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	inline 									ComputePipelineInfo() = default;
+	inline 										ComputePipelineCreateInfo() = default;
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	inline 									ComputePipelineInfo(
-		VkPipelineLayout					vulkan_pipeline_layout,
-		VkShaderModule						vulkan_compute_shader
+	inline 										ComputePipelineCreateInfo(
+		VkPipelineLayout						vulkan_pipeline_layout,
+		VkShaderModule							vulkan_compute_shader
 	) :
 		vulkan_pipeline_layout( vulkan_pipeline_layout ),
 		vulkan_compute_shader( vulkan_compute_shader )
@@ -33,34 +34,37 @@ public:
 	}
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	inline 									ComputePipelineInfo(
-		const ComputePipelineInfo		&	other
+	inline 										ComputePipelineCreateInfo(
+		const ComputePipelineCreateInfo		&	other
 	) = default;
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	inline ComputePipelineInfo			&	operator=(
-		const ComputePipelineInfo		&	other
+	inline ComputePipelineCreateInfo		&	operator=(
+		const ComputePipelineCreateInfo		&	other
 	) = default;
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	inline bool								operator<(
-		const ComputePipelineInfo		&	other
+	inline bool									operator<(
+		const ComputePipelineCreateInfo		&	other
 	) const
 	{
 		return hash < other.GetHash();
 	}
 
-	inline VkPipelineLayout					GetVulkanPipelineLayout() const
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	inline VkPipelineLayout						GetVulkanPipelineLayout() const
 	{
 		return vulkan_pipeline_layout;
 	}
 
-	inline VkShaderModule					GetVulkanComputeShader() const
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	inline VkShaderModule						GetVulkanComputeShader() const
 	{
 		return vulkan_compute_shader;
 	}
 
-	inline size_t							GetHash() const
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	inline size_t								GetHash() const
 	{
 		return hash;
 	}
@@ -68,7 +72,7 @@ public:
 private:
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	inline constexpr size_t					CalculateHash() const
+	inline constexpr size_t						CalculateHash() const
 	{
 		Hasher hasher;
 		hasher.Hash( reinterpret_cast<size_t>( vulkan_pipeline_layout ) );
@@ -76,10 +80,11 @@ private:
 		return hasher.GetHash();
 	}
 
-	VkPipelineLayout						vulkan_pipeline_layout			= {};
-	VkShaderModule							vulkan_compute_shader			= {};
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	VkPipelineLayout							vulkan_pipeline_layout			= {};
+	VkShaderModule								vulkan_compute_shader			= {};
 
-	size_t									hash;
+	size_t										hash;
 };
 
 

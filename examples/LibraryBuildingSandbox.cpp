@@ -104,6 +104,7 @@ int main()
 	auto resource_manager	= instance->GetResourceManager();
 
 	/// !!! TESTING !!!
+	auto material = vk2d::MaterialResourceHandle<vk2d::StandardVertex>();
 	{
 		auto material_create_info = vk2d::MaterialCreateInfo();
 		material_create_info.shader_create_infos.push_back(
@@ -114,7 +115,7 @@ int main()
 			)
 		);
 
-		auto material = resource_manager->CreateMaterialResource<vk2d::StandardVertex>(
+		material = resource_manager->CreateMaterialResource<vk2d::StandardVertex>(
 			{ "test1", "test2", "test3", "test4", "test5" },
 			material_create_info
 		);

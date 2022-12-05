@@ -123,7 +123,6 @@ vk2d::vk2d_internal::ResourceMTLoadResult vk2d::vk2d_internal::MaterialResourceI
 	if( !loader_thread_resource ) return ResourceMTLoadResult::FAILED;
 
 	auto & instance = loader_thread_resource->GetInstance();
-	auto memory_pool = loader_thread_resource->GetThreadLocalDeviceMemoryPool();
 
 	auto AssignShaders = [ this, &instance ]() -> bool
 	{
@@ -178,7 +177,28 @@ vk2d::vk2d_internal::ResourceMTLoadResult vk2d::vk2d_internal::MaterialResourceI
 		return true;
 	};
 
+	auto AssignPipeline = [ this, &instance ]() -> bool
+	{
+		auto pipeline_create_info = vulkan::GraphicsPipelineCreateInfo(
+		//	instance.GetGraphicsPrimaryRenderPipelineLayout_MOVE(),
+		//	render_pass,
+		//	VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, // as an example
+		//	VK_POLYGON_MODE_FILL, // as an example
+		//	vulkan::GraphicsShaderList(
+		//		vertex_shader.GetVulkanShaderModule(),
+		//		fragment_shader.GetVulkanShaderModule()
+		//	),
+		//	VK_SAMPLE_COUNT_1_BIT, // as an example
+		//	true // as an example "enable_blending"
+		);
+
+		auto & pipeline_manager = loader_thread_resource->GetVulkanDevice().GetPipelineManager();
+		//pipeline = pipeline_manager.GetGraphicsPipeline( pipeline_create_info );
+		return true;
+	};
+
 	if( !AssignShaders() ) return ResourceMTLoadResult::FAILED;
+	if( !AssignPipeline() ) return ResourceMTLoadResult::FAILED;
 
 	return ResourceMTLoadResult::SUCCESS;
 }
@@ -203,6 +223,12 @@ vk2d::vk2d_internal::ResourceMTUnloadResult vk2d::vk2d_internal::MaterialResourc
 		fragment_shader = {};
 	};
 
+	auto DestroyPipeline = [ this ]()
+	{
+		pipeline = {};
+	};
+
+	DestroyPipeline();
 	DestroyShaders();
 
 	return ResourceMTUnloadResult::SUCCESS;

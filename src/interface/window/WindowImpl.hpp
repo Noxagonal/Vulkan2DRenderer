@@ -254,7 +254,7 @@ private:
 
 	void														CmdBindGraphicsPipelineIfDifferent(
 		VkCommandBuffer											command_buffer,
-		const vulkan::GraphicsPipelineInfo					&	graphics_pipeline_info );
+		const vulkan::GraphicsPipelineCreateInfo			&	graphics_pipeline_info );
 
 	void														CmdBindSamplerIfDifferent(
 		VkCommandBuffer											command_buffer,
@@ -339,7 +339,7 @@ private:
 	bool														should_reconstruct							= {};
 	bool														should_close								= {};
 
-	vulkan::GraphicsPipelineInfo								previous_graphics_pipeline_info				= {};
+	vulkan::GraphicsPipelineCreateInfo							previous_graphics_pipeline_info				= {};
 	Texture													*	previous_texture							= {};
 	Sampler													*	previous_sampler							= {};
 	float														previous_line_width							= {};

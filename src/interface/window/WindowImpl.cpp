@@ -1519,7 +1519,7 @@ void vk2d::vk2d_internal::WindowImpl::DrawPointList_DEPRICATED(
 			1
 		);
 
-		auto pipeline_info = vulkan::GraphicsPipelineInfo(
+		auto pipeline_info = vulkan::GraphicsPipelineCreateInfo(
 			instance.GetGraphicsPrimaryRenderPipelineLayout_MOVE(),
 			vk_render_pass,
 			VK_PRIMITIVE_TOPOLOGY_POINT_LIST,
@@ -1626,7 +1626,7 @@ void vk2d::vk2d_internal::WindowImpl::DrawLineList_DEPRICATED(
 			2
 		);
 
-		auto pipeline_info = vulkan::GraphicsPipelineInfo(
+		auto pipeline_info = vulkan::GraphicsPipelineCreateInfo(
 			instance.GetGraphicsPrimaryRenderPipelineLayout_MOVE(),
 			vk_render_pass,
 			VK_PRIMITIVE_TOPOLOGY_LINE_LIST,
@@ -1737,7 +1737,7 @@ void vk2d::vk2d_internal::WindowImpl::DrawTriangleList_DEPRICATED(
 			3
 		);
 
-		auto pipeline_info = vulkan::GraphicsPipelineInfo(
+		auto pipeline_info = vulkan::GraphicsPipelineCreateInfo(
 			instance.GetGraphicsPrimaryRenderPipelineLayout_MOVE(),
 			vk_render_pass,
 			VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
@@ -3049,8 +3049,8 @@ void vk2d::vk2d_internal::WindowImpl::HandleScreenshotEvent()
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void vk2d::vk2d_internal::WindowImpl::CmdBindGraphicsPipelineIfDifferent(
-	VkCommandBuffer							command_buffer,
-	const vulkan::GraphicsPipelineInfo	&	graphics_pipeline_info
+	VkCommandBuffer									command_buffer,
+	const vulkan::GraphicsPipelineCreateInfo	&	graphics_pipeline_info
 )
 {
 	if( previous_graphics_pipeline_info.GetHash() != graphics_pipeline_info.GetHash() ) {

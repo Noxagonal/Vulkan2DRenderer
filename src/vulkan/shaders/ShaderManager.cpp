@@ -40,6 +40,7 @@ vk2d::vulkan::ShaderHandle vk2d::vulkan::ShaderManager::FindShader(
 	auto shader = shader_list.find( shader_hash );
 	if( shader == shader_list.end() ) return {};
 	shader->second.reference_count += 1; // <- Add 1 as ShaderHandle constructor will not increment the reference count.
+
 	return ShaderHandle(
 		this,
 		shader->second.vulkan_shader_module,
@@ -74,7 +75,7 @@ vk2d::vulkan::ShaderHandle vk2d::vulkan::ShaderManager::CreateShader(
 		shader_module,
 		1 // <- Start with 1 as ShaderHandle constructor will not increment the reference count.
 	};
-	auto result = shader_list.emplace( shader_create_info.GetHash(), new_entry );
+	shader_list.emplace( shader_create_info.GetHash(), new_entry );
 
 	return ShaderHandle(
 		this,

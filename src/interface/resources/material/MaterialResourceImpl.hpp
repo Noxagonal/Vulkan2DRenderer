@@ -8,6 +8,7 @@
 
 #include <system/ThreadLoaderResource.hpp>
 #include <vulkan/shaders/ShaderHandle.hpp>
+#include <vulkan/pipeline/PipelineHandle.hpp>
 
 
 
@@ -74,6 +75,7 @@ private:
 
 	vulkan::ShaderHandle									vertex_shader;
 	vulkan::ShaderHandle									fragment_shader;
+	vulkan::PipelineHandle									pipeline;
 
 	MaterialCreateInfo										create_info_copy							= {};
 

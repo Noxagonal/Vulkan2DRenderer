@@ -19,47 +19,83 @@ vk2d::vulkan::PipelineManager::PipelineManager(
 	is_good = true;
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 vk2d::vulkan::PipelineManager::~PipelineManager()
 {
-	DestroyPipelines();
+	DestroyAllPipelines();
 	DestroyComputePipelineCache();
 	DestroyGraphicsPipelineCache();
 }
 
-VkPipeline vk2d::vulkan::PipelineManager::FindPipeline(
-	const vulkan::GraphicsPipelineInfo & graphics_pipeline_info
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+vk2d::vulkan::PipelineHandle vk2d::vulkan::PipelineManager::FindGraphicsPipeline(
+	const vulkan::GraphicsPipelineCreateInfo & graphics_pipeline_create_info
 )
 {
-	return FindPipeline( graphics_pipeline_info.GetHash() );
-}
-
-VkPipeline vk2d::vulkan::PipelineManager::FindPipeline(
-	const vulkan::ComputePipelineInfo & compute_pipeline_info
-)
-{
-	return FindPipeline( compute_pipeline_info.GetHash() );
-}
-
-VkPipeline vk2d::vulkan::PipelineManager::FindPipeline(
-	size_t hash
-)
-{
-	auto it = pipeline_list.find( hash );
-	if( it == pipeline_list.end() ) return {};
-	return it->second;
+	return FindPipeline( graphics_pipeline_create_info.GetHash() );
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-VkPipeline vk2d::vulkan::PipelineManager::CreateGraphicsPipeline(
-	const vulkan::GraphicsPipelineInfo & graphics_pipeline_info
+vk2d::vulkan::PipelineHandle vk2d::vulkan::PipelineManager::FindComputePipeline(
+	const vulkan::ComputePipelineCreateInfo & compute_pipeline_create_info
 )
 {
+	return FindPipeline( compute_pipeline_create_info.GetHash() );
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+vk2d::vulkan::PipelineHandle vk2d::vulkan::PipelineManager::FindPipeline(
+	size_t pipeline_hash
+)
+{
+	VK2D_ASSERT_SINGLE_THREAD_ACCESS_SCOPE();
+
+	auto pipeline = pipeline_list.find( pipeline_hash );
+	if( pipeline == pipeline_list.end() ) return {};
+	pipeline->second.reference_count += 1; // <- Add 1 as PipelineHandle constructor will not increment the reference count.
+
+	return PipelineHandle(
+		this,
+		pipeline->second.vulkan_pipeline,
+		pipeline->first
+	);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+vk2d::vulkan::PipelineHandle vk2d::vulkan::PipelineManager::GetGraphicsPipeline(
+	const GraphicsPipelineCreateInfo & graphics_pipeline_create_info
+)
+{
+	auto existing_pipeline = FindGraphicsPipeline( graphics_pipeline_create_info );
+	if( existing_pipeline ) return existing_pipeline;
+
+	return CreateGraphicsPipeline( graphics_pipeline_create_info );
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+vk2d::vulkan::PipelineHandle vk2d::vulkan::PipelineManager::GetComputePipeline(
+	const ComputePipelineCreateInfo & compute_pipeline_create_info
+)
+{
+	auto existing_pipeline = FindComputePipeline( compute_pipeline_create_info );
+	if( existing_pipeline ) return existing_pipeline;
+
+	return CreateComputePipeline( compute_pipeline_create_info );
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+vk2d::vulkan::PipelineHandle vk2d::vulkan::PipelineManager::CreateGraphicsPipeline(
+	const vulkan::GraphicsPipelineCreateInfo & graphics_pipeline_create_info
+)
+{
+	VK2D_ASSERT_SINGLE_THREAD_ACCESS_SCOPE();
+
 	std::array<VkPipelineShaderStageCreateInfo, 2> shader_stage_create_infos {};
 	shader_stage_create_infos[ 0 ].sType				= VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
 	shader_stage_create_infos[ 0 ].pNext				= nullptr;
 	shader_stage_create_infos[ 0 ].flags				= 0;
 	shader_stage_create_infos[ 0 ].stage				= VK_SHADER_STAGE_VERTEX_BIT;
-	shader_stage_create_infos[ 0 ].module				= graphics_pipeline_info.GetGraphicsShaderList_DEPRICATED().GetVertexShader();
+	shader_stage_create_infos[ 0 ].module				= graphics_pipeline_create_info.GetGraphicsShaderList().GetVertexShader();
 	shader_stage_create_infos[ 0 ].pName				= "main";
 	shader_stage_create_infos[ 0 ].pSpecializationInfo	= nullptr;
 
@@ -67,7 +103,7 @@ VkPipeline vk2d::vulkan::PipelineManager::CreateGraphicsPipeline(
 	shader_stage_create_infos[ 1 ].pNext				= nullptr;
 	shader_stage_create_infos[ 1 ].flags				= 0;
 	shader_stage_create_infos[ 1 ].stage				= VK_SHADER_STAGE_FRAGMENT_BIT;
-	shader_stage_create_infos[ 1 ].module				= graphics_pipeline_info.GetGraphicsShaderList_DEPRICATED().GetFragmentShader();
+	shader_stage_create_infos[ 1 ].module				= graphics_pipeline_create_info.GetGraphicsShaderList().GetFragmentShader();
 	shader_stage_create_infos[ 1 ].pName				= "main";
 	shader_stage_create_infos[ 1 ].pSpecializationInfo	= nullptr;
 
@@ -111,7 +147,7 @@ VkPipeline vk2d::vulkan::PipelineManager::CreateGraphicsPipeline(
 	input_assembly_state_create_info.sType						= VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
 	input_assembly_state_create_info.pNext						= nullptr;
 	input_assembly_state_create_info.flags						= 0;
-	input_assembly_state_create_info.topology					= graphics_pipeline_info.GetPrimitiveTopology();
+	input_assembly_state_create_info.topology					= graphics_pipeline_create_info.GetPrimitiveTopology();
 	input_assembly_state_create_info.primitiveRestartEnable		= VK_FALSE;
 
 	VkViewport viewport {};
@@ -142,7 +178,7 @@ VkPipeline vk2d::vulkan::PipelineManager::CreateGraphicsPipeline(
 	rasterization_state_create_info.flags						= 0;
 	rasterization_state_create_info.depthClampEnable			= VK_FALSE;
 	rasterization_state_create_info.rasterizerDiscardEnable		= VK_FALSE;
-	rasterization_state_create_info.polygonMode					= graphics_pipeline_info.GetPolygonMode();
+	rasterization_state_create_info.polygonMode					= graphics_pipeline_create_info.GetPolygonMode();
 	rasterization_state_create_info.cullMode					= VK_CULL_MODE_NONE;
 	rasterization_state_create_info.frontFace					= VK_FRONT_FACE_COUNTER_CLOCKWISE;
 	rasterization_state_create_info.depthBiasEnable				= VK_FALSE;
@@ -155,7 +191,7 @@ VkPipeline vk2d::vulkan::PipelineManager::CreateGraphicsPipeline(
 	multisample_state_create_info.sType						= VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
 	multisample_state_create_info.pNext						= nullptr;
 	multisample_state_create_info.flags						= 0;
-	multisample_state_create_info.rasterizationSamples		= VkSampleCountFlagBits( graphics_pipeline_info.GetSampleCount() );
+	multisample_state_create_info.rasterizationSamples		= VkSampleCountFlagBits( graphics_pipeline_create_info.GetSampleCount() );
 	multisample_state_create_info.sampleShadingEnable		= VK_FALSE;
 	multisample_state_create_info.minSampleShading			= 1.0f;
 	multisample_state_create_info.pSampleMask				= nullptr;
@@ -183,7 +219,7 @@ VkPipeline vk2d::vulkan::PipelineManager::CreateGraphicsPipeline(
 	depth_stencil_state_create_info.maxDepthBounds			= 1.0f;
 
 	std::array<VkPipelineColorBlendAttachmentState, 1> color_blend_attachment_states {};
-	color_blend_attachment_states[ 0 ].blendEnable			= graphics_pipeline_info.GetEnableBlending();
+	color_blend_attachment_states[ 0 ].blendEnable			= graphics_pipeline_create_info.GetEnableBlending();
 	color_blend_attachment_states[ 0 ].srcColorBlendFactor	= VK_BLEND_FACTOR_SRC_ALPHA;
 	color_blend_attachment_states[ 0 ].dstColorBlendFactor	= VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
 	color_blend_attachment_states[ 0 ].colorBlendOp			= VK_BLEND_OP_ADD;
@@ -237,8 +273,8 @@ VkPipeline vk2d::vulkan::PipelineManager::CreateGraphicsPipeline(
 	pipeline_create_info.pDepthStencilState		= &depth_stencil_state_create_info;
 	pipeline_create_info.pColorBlendState		= &color_blend_state_create_info;
 	pipeline_create_info.pDynamicState			= &dynamic_state_create_info;
-	pipeline_create_info.layout					= graphics_pipeline_info.GetVulkanPipelineLayout();
-	pipeline_create_info.renderPass				= graphics_pipeline_info.GetVulkanRenderPass();
+	pipeline_create_info.layout					= graphics_pipeline_create_info.GetVulkanPipelineLayout();
+	pipeline_create_info.renderPass				= graphics_pipeline_create_info.GetVulkanRenderPass();
 	pipeline_create_info.subpass				= 0;
 	pipeline_create_info.basePipelineHandle		= VK_NULL_HANDLE;
 	pipeline_create_info.basePipelineIndex		= 0;
@@ -256,22 +292,32 @@ VkPipeline vk2d::vulkan::PipelineManager::CreateGraphicsPipeline(
 		instance.Report( result, "Internal error: Cannot create Vulkan graphics pipeline!" );
 		return {};
 	}
+	auto new_entry = PipelineEntry {
+		pipeline,
+		1 // <- Start with 1 as PipelineHandle constructor will not increment the reference count.
+	};
+	pipeline_list.emplace( graphics_pipeline_create_info.GetHash(), new_entry );
 
-	pipeline_list.emplace( graphics_pipeline_info.GetHash(), pipeline);
-	return pipeline;
+	return PipelineHandle(
+		this,
+		pipeline,
+		graphics_pipeline_create_info.GetHash()
+	);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-VkPipeline vk2d::vulkan::PipelineManager::CreateComputePipeline(
-	const vulkan::ComputePipelineInfo & compute_pipeline_info
+vk2d::vulkan::PipelineHandle vk2d::vulkan::PipelineManager::CreateComputePipeline(
+	const vulkan::ComputePipelineCreateInfo & compute_pipeline_create_info
 )
 {
+	VK2D_ASSERT_SINGLE_THREAD_ACCESS_SCOPE();
+
 	VkPipelineShaderStageCreateInfo stage_create_info {};
 	stage_create_info.sType						= VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
 	stage_create_info.pNext						= nullptr;
 	stage_create_info.flags						= 0;
 	stage_create_info.stage						= VK_SHADER_STAGE_COMPUTE_BIT;
-	stage_create_info.module					= compute_pipeline_info.GetVulkanComputeShader();
+	stage_create_info.module					= compute_pipeline_create_info.GetVulkanComputeShader();
 	stage_create_info.pName						= "main";
 	stage_create_info.pSpecializationInfo		= nullptr;
 
@@ -280,7 +326,7 @@ VkPipeline vk2d::vulkan::PipelineManager::CreateComputePipeline(
 	pipeline_create_info.pNext					= nullptr;
 	pipeline_create_info.flags					= 0;
 	pipeline_create_info.stage					= stage_create_info;
-	pipeline_create_info.layout					= compute_pipeline_info.GetVulkanPipelineLayout();
+	pipeline_create_info.layout					= compute_pipeline_create_info.GetVulkanPipelineLayout();
 	pipeline_create_info.basePipelineHandle		= VK_NULL_HANDLE;
 	pipeline_create_info.basePipelineIndex		= 0;
 
@@ -293,35 +339,80 @@ VkPipeline vk2d::vulkan::PipelineManager::CreateComputePipeline(
 		nullptr,
 		&pipeline
 	);
-	if( result != VK_SUCCESS ) {
+	if( result != VK_SUCCESS )
+	{
 		instance.Report( result, "Internal error: Cannot create Vulkan compute pipeline!" );
 		return {};
 	}
 
-	pipeline_list.emplace( compute_pipeline_info.GetHash(), pipeline);
-	return pipeline;
+	auto new_entry = PipelineEntry {
+		pipeline,
+		1 // <- Start with 1 as PipelineHandle constructor will not increment the reference count.
+	};
+	pipeline_list.emplace( compute_pipeline_create_info.GetHash(), new_entry );
+
+	return PipelineHandle(
+		this,
+		pipeline,
+		compute_pipeline_create_info.GetHash()
+	);
 }
 
-void vk2d::vulkan::PipelineManager::DestroyPipeline(
-	VkPipeline pipeline
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+void vk2d::vulkan::PipelineManager::IncrementReferenceCount(
+	size_t pipeline_hash
 )
 {
-	for( auto it = pipeline_list.begin(); it != pipeline_list.end(); )
+	VK2D_ASSERT_SINGLE_THREAD_ACCESS_SCOPE();
+
+	auto it = pipeline_list.find( pipeline_hash );
+	assert( it != pipeline_list.end() );
+
+	it->second.reference_count += 1;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+void vk2d::vulkan::PipelineManager::DecrementReferenceCount(
+	size_t pipeline_hash
+)
+{
+	VK2D_ASSERT_SINGLE_THREAD_ACCESS_SCOPE();
+
+	auto it = pipeline_list.find( pipeline_hash );
+	assert( it != pipeline_list.end() );
+	assert( it->second.reference_count > 0 );
+
+	it->second.reference_count -= 1;
+	if( it->second.reference_count == 0 )
 	{
-		if( it->second == pipeline )
-		{
-			pipeline_list.erase( it );
+		DestroyPipeline( it );
+	}
+}
 
-			vkDestroyPipeline(
-				vulkan_device,
-				pipeline,
-				nullptr
-			);
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+void vk2d::vulkan::PipelineManager::DestroyPipeline(
+	size_t pipeline_hash
+)
+{
+	DestroyPipeline( pipeline_list.find( pipeline_hash ) );
+}
 
-			return;
-		}
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+void vk2d::vulkan::PipelineManager::DestroyPipeline(
+	std::map<size_t, PipelineEntry>::iterator pipeline_list_iterator
+)
+{
+	VK2D_ASSERT_SINGLE_THREAD_ACCESS_SCOPE();
 
-		++it;
+	if( pipeline_list_iterator != pipeline_list.end() )
+	{
+		vkDestroyPipeline(
+			vulkan_device,
+			pipeline_list_iterator->second.vulkan_pipeline,
+			nullptr
+		);
+
+		pipeline_list.erase( pipeline_list_iterator );
 	}
 }
 
@@ -337,7 +428,7 @@ VkPipelineCache vk2d::vulkan::PipelineManager::GetComputePipelineCache() const
 	return vulkan_compute_pipeline_cache;
 }
 
-bool vk2d::vulkan::PipelineManager::IsGood()
+bool vk2d::vulkan::PipelineManager::IsGood() const
 {
 	return is_good;
 }
@@ -412,13 +503,13 @@ void vk2d::vulkan::PipelineManager::DestroyComputePipelineCache()
 	vulkan_compute_pipeline_cache = {};
 }
 
-void vk2d::vulkan::PipelineManager::DestroyPipelines()
+void vk2d::vulkan::PipelineManager::DestroyAllPipelines()
 {
 	for( auto & o : pipeline_list )
 	{
 		vkDestroyPipeline(
 			vulkan_device,
-			o.second,
+			o.second.vulkan_pipeline,
 			nullptr
 		);
 	}
