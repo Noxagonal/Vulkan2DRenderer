@@ -17,13 +17,13 @@ namespace vk2d {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 enum class ShaderStage : uint32_t
 {
-	NONE					= 0,
-	VERTEX,
-	TESSELLATION_CONTROL,
-	TESSELLATION_EVALUATION,
-	GEOMETRY,
-	FRAGMENT,
-	COMPUTE,
+	NONE						= 0x00,
+	VERTEX						= 0x10,
+	//	TESSELLATION_CONTROL		= 0x20,
+	//	TESSELLATION_EVALUATION		= 0x30,
+	//	GEOMETRY					= 0x40,
+	FRAGMENT					= 0x50,
+	//	COMPUTE						= 0x1000,
 };
 
 

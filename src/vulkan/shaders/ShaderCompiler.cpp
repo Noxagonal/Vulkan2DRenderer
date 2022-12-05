@@ -71,16 +71,16 @@ std::vector<uint32_t> vk2d::vulkan::ShaderCompiler::CompileSpirV(
 		{
 		case vk2d::ShaderStage::VERTEX:
 			return EShLanguage::EShLangVertex;
-		case vk2d::ShaderStage::TESSELLATION_CONTROL:
-			return EShLanguage::EShLangTessControl;
-		case vk2d::ShaderStage::TESSELLATION_EVALUATION:
-			return EShLanguage::EShLangTessEvaluation;
-		case vk2d::ShaderStage::GEOMETRY:
-			return EShLanguage::EShLangGeometry;
+		//case vk2d::ShaderStage::TESSELLATION_CONTROL:
+		//	return EShLanguage::EShLangTessControl;
+		//case vk2d::ShaderStage::TESSELLATION_EVALUATION:
+		//	return EShLanguage::EShLangTessEvaluation;
+		//case vk2d::ShaderStage::GEOMETRY:
+		//	return EShLanguage::EShLangGeometry;
 		case vk2d::ShaderStage::FRAGMENT:
 			return EShLanguage::EShLangFragment;
-		case vk2d::ShaderStage::COMPUTE:
-			return EShLanguage::EShLangCompute;
+		//case vk2d::ShaderStage::COMPUTE:
+		//	return EShLanguage::EShLangCompute;
 		default:
 			assert( 0 && "Invalid stage." );
 			return {};

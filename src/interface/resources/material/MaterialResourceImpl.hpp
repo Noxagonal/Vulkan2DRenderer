@@ -7,6 +7,7 @@
 #include <interface/resources/resource_base/ResourceImplBase.hpp>
 
 #include <system/ThreadPrivateResources.hpp>
+#include <vulkan/shaders/ShaderHandle.hpp>
 
 
 
@@ -70,6 +71,9 @@ private:
 	ThreadMaterialLoaderResource						*	loader_thread_resource						= {};
 
 	std::vector<ShaderMemberInfo>							vertex_members;
+
+	vulkan::ShaderHandle									vertex_shader;
+	vulkan::ShaderHandle									fragment_shader;
 
 	MaterialCreateInfo										create_info_copy							= {};
 

@@ -72,6 +72,32 @@ public:
 
 
 
+const auto test_vertex_shader_glsl = std::string_view {
+R"glsl(
+
+void main()
+{
+	vec4 raw_vertex_coords			= vec4( vertex_buffer.data[ gl_VertexIndex ].coords, 0.0, 1.0 );
+	vertex_output_UV				= vertex_buffer.data[ gl_VertexIndex ].UVs;
+	vertex_output_color				= vertex_buffer.data[ gl_VertexIndex ].color;
+	vertex_output_original_coords	= raw_vertex_coords.xy;
+	vertex_output_vertex_index		= gl_VertexIndex;
+	vertex_output_texture_channel	= vertex_buffer.data[ gl_VertexIndex ].single_texture_channel;
+
+	mat4 transformation_matrix		= transformation_buffer.data[ gl_InstanceIndex + push_constants.transformation_offset ];
+
+	vec2 transformed_vertex_coords	= ( transformation_matrix * raw_vertex_coords ).xy;
+	vec2 viewport_vertex_coords		= transformed_vertex_coords * window_frame_data.multiplier + window_frame_data.offset;
+
+	gl_Position						= vec4( viewport_vertex_coords, 0.5, 1.0 );
+	gl_PointSize					= vertex_buffer.data[ gl_VertexIndex ].point_size;
+}
+
+)glsl"
+};
+
+
+
 int main()
 {
 	auto instance			= vk2d::CreateInstance();
@@ -79,7 +105,19 @@ int main()
 
 	/// !!! TESTING !!!
 	{
-		auto material = resource_manager->CreateMaterialResource<vk2d::StandardVertex>( { "test1", "test2", "test3", "test4", "test5" } );
+		auto material_create_info = vk2d::MaterialCreateInfo();
+		material_create_info.shader_create_infos.push_back(
+			vk2d::ShaderCreateInfo(
+				vk2d::ShaderStage::VERTEX,
+				"Test Vertex shader",
+				test_vertex_shader_glsl
+			)
+		);
+
+		auto material = resource_manager->CreateMaterialResource<vk2d::StandardVertex>(
+			{ "test1", "test2", "test3", "test4", "test5" },
+			material_create_info
+		);
 	}
 
 	EventHandler event_handler;

@@ -5,6 +5,7 @@
 #include "MaterialResourceImpl.hpp"
 
 #include <interface/resource_manager/ResourceManagerImpl.hpp>
+#include <interface/instance/InstanceImpl.hpp>
 
 #include <vulkan/Device.hpp>
 
@@ -121,11 +122,63 @@ bool vk2d::vk2d_internal::MaterialResourceImpl::MTLoad(
 	assert( loader_thread_resource );
 	if( !loader_thread_resource ) return false;
 
+	auto & instance = loader_thread_resource->GetInstance();
 	auto memory_pool = loader_thread_resource->GetThreadLocalDeviceMemoryPool();
 
+	auto AssignShaders = [ this, &instance ]() -> bool
+	{
+		auto & shader_manager = loader_thread_resource->GetVulkanDevice().GetShaderManager();
+		for( auto & shader_create_info : create_info_copy.shader_create_infos )
+		{
+			// If more shader types are added, eg. Geometry shaders and tessellation shaders... They need to be added here.
+			switch( shader_create_info.GetStage() )
+			{
+			case ShaderStage::VERTEX:
+			{
+				if( vertex_shader )
+				{
+					instance.Report(
+						ReportSeverity::NON_CRITICAL_ERROR,
+						"Introduced multiple vertex shaders to material, must be exactly 1"
+					);
+				}
+				vertex_shader = shader_manager.GetShader( shader_create_info );
 
+				break;
+			}
 
-	loader_thread_resource->GetVulkanDevice().GetShaderManager().CreateShader();
+			case ShaderStage::FRAGMENT:
+			{
+				if( fragment_shader )
+				{
+					instance.Report(
+						ReportSeverity::NON_CRITICAL_ERROR,
+						"Introduced multiple vertex shaders to material, must be exactly 1"
+					);
+				}
+				fragment_shader = shader_manager.GetShader( shader_create_info );
+
+				break;
+			}
+
+			default:
+			{
+				// TODO: Throw here.
+				instance.Report(
+					ReportSeverity::NON_CRITICAL_ERROR,
+					"Inroduced unsupported or unknown shader type to material, currently supported shader types are VERTEX and FRAGMENT."
+				);
+				return false;
+			}
+			}
+		}
+
+		// TODO: Assign default shaders to all shaders that have not been assigned above.
+
+		return true;
+	};
+
+	if( !AssignShaders() ) return false;
 
 	return true;
 }
@@ -147,6 +200,13 @@ void vk2d::vk2d_internal::MaterialResourceImpl::MTUnload(
 	// definitely be either or. MTUnload() does not ever get called before MTLoad().
 	WaitUntilLoaded( std::chrono::nanoseconds::max() );
 
+	auto DestroyShaders = [ this ]()
+	{
+		vertex_shader = {};
+		fragment_shader = {};
+	};
+
+	DestroyShaders();
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
