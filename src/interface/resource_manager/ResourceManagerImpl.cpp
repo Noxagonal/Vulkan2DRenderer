@@ -31,7 +31,7 @@ void vk2d::vk2d_internal::ResourceThreadLoadTask::operator()(
 )
 {
 	// Because Vulkan often needs to do more processing afterwards resource status
-	// is not set to "LOADED" here, it'll be determined by the resource itself.
+	// is not set to "AVAILABLE" here, it'll be determined by the resource itself.
 	// However we can set resource status to "FAILED_TO_LOAD" at any time.
 
 	auto load_result = resource->resource_impl->MTLoad( thread_resource );
@@ -42,19 +42,19 @@ void vk2d::vk2d_internal::ResourceThreadLoadTask::operator()(
 
 	case vk2d::vk2d_internal::ResourceMTLoadResult::SUCCESS_CONTINUED:
 	{
-		// TODO.
+		// TODO, Reschedule loading operation.
 		break;
 	}
 
 	case vk2d::vk2d_internal::ResourceMTLoadResult::POSTPONED:
 	{
-		// TODO.
+		// TODO, Reschedule loading operation.
 		break;
 	}
 
 	case vk2d::vk2d_internal::ResourceMTLoadResult::FAILED:
 	{
-		resource->resource_impl->status = ResourceStatus::FAILED_TO_LOAD;
+		resource->resource_impl->status = ResourceStatus::FAILED;
 		resource_manager.GetInstance().Report(
 			ReportSeverity::WARNING,
 			"Resource loading failed!"

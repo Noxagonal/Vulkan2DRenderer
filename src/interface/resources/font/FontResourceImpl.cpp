@@ -67,12 +67,11 @@ vk2d::vk2d_internal::FontResourceImpl::~FontResourceImpl()
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 vk2d::ResourceStatus vk2d::vk2d_internal::FontResourceImpl::GetStatus()
 {
-	if( !is_good )				return ResourceStatus::FAILED_TO_LOAD;
+	if( !is_good )				return ResourceStatus::FAILED;
 
 	auto local_status = status.load();
 	if( local_status == ResourceStatus::UNDETERMINED )
 	{
-
 		if( load_function_run_fence.IsSet() )
 		{
 			// "texture_resource" is set by the MTLoad() function so we can access it
@@ -104,7 +103,7 @@ vk2d::ResourceStatus vk2d::vk2d_internal::FontResourceImpl::WaitUntilLoaded(
 	assert( timeout == std::chrono::steady_clock::time_point::max() ||
 		timeout + std::chrono::seconds( 5 ) >= std::chrono::steady_clock::now() );
 
-	if( !is_good ) return ResourceStatus::FAILED_TO_LOAD;
+	if( !is_good ) return ResourceStatus::FAILED;
 
 	auto local_status = status.load();
 	if( local_status == ResourceStatus::UNDETERMINED ) {
@@ -601,7 +600,7 @@ bool vk2d::vk2d_internal::FontResourceImpl::FaceExists(
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 vk2d::TextureResource *vk2d::vk2d_internal::FontResourceImpl::GetTextureResource()
 {
-	if( GetStatus() == ResourceStatus::LOADED ) {
+	if( GetStatus() == ResourceStatus::AVAILABLE ) {
 		return texture_resource;
 	}
 	return {};

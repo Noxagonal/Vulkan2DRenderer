@@ -22,18 +22,23 @@ class ResourceThreadUnloadTask;
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /// @brief		Status of vk2d resource in multithreaded loader.
 ///
-///				Since VK2D resources are loaded on the background, they will not be immediately available to be used, in this
-///				case ResourceStatus will tell if the resource has been loaded, failed to load or still undetermined.
-enum class ResourceStatus
+///				Since VK2D resources are loaded on the background, they will not be immediately available to be used.
+///				This enum will tell if the resource is ready to be used or not.
+enum class ResourceStatus : uint32_t
 {
-	/// @brief		Resource is still being loaded by the background thread or not yet started to load.
-	UNDETERMINED	= 0,
+	/// @brief		Resource state has yet to be determined.
+	///
+	///				This is the case when the resource loading has not yet been attempted.
+	UNDETERMINED,
 
-	/// @brief		Resource has been fully loaded and is ready to be used.
-	LOADED,
+	/// @brief		Resource is not available yet.
+	UNAVAILABLE,
+
+	/// @brief		Resource is available to be used either fully or partially.
+	AVAILABLE,
 
 	/// @brief		Attempt to load the resource has been made but something went wrong.
-	FAILED_TO_LOAD,
+	FAILED,
 };
 
 

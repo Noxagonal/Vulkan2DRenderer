@@ -212,7 +212,7 @@ void vk2d::vk2d_internal::MaterialResourceImpl::MTUnload(
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 vk2d::ResourceStatus vk2d::vk2d_internal::MaterialResourceImpl::GetStatus()
 {
-	if( !is_good ) return ResourceStatus::FAILED_TO_LOAD;
+	if( !is_good ) return ResourceStatus::FAILED;
 
 	auto local_status = status.load();
 	if( local_status == ResourceStatus::UNDETERMINED )
@@ -262,7 +262,7 @@ vk2d::ResourceStatus vk2d::vk2d_internal::MaterialResourceImpl::WaitUntilLoaded(
 		timeout + std::chrono::seconds( 5 ) >= std::chrono::steady_clock::now()
 	);
 
-	if( !is_good ) return ResourceStatus::FAILED_TO_LOAD;
+	if( !is_good ) return ResourceStatus::FAILED;
 
 	auto local_status = status.load();
 	if( local_status == ResourceStatus::UNDETERMINED )

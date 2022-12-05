@@ -862,7 +862,17 @@ void vk2d::vk2d_internal::TextureResourceImpl::MTUnload(
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 vk2d::ResourceStatus vk2d::vk2d_internal::TextureResourceImpl::GetStatus()
 {
-	if( !is_good ) return ResourceStatus::FAILED_TO_LOAD;
+	if( !is_good ) return ResourceStatus::FAILED;
+
+	// TODO: The "status" variable is an atomic variable but how it's used here and possibly everywhere else, is not
+	// multithreading safe.
+	// The SchedulePostLoadCleanup() may be called multiple times from multiple threads if the threads enter this function
+	// simultaneously.
+	//
+	// To fix this, either put all status checking behind a mutex, or rethink how resource loading is done, right now resource
+	// loading is mostly done inside MTLoad() but the loading leaks into GetStatus(). We could implement multiple stage loading
+	// where first stage is what MTLoad() currently does, it then returns a ResourceMTLoadResult::POSTPONED and gets rescheduled
+	// for later, where we finalize the resource or retry if needed.
 
 	auto local_status = status.load();
 	if( local_status == ResourceStatus::UNDETERMINED ) {
@@ -879,12 +889,12 @@ vk2d::ResourceStatus vk2d::vk2d_internal::TextureResourceImpl::GetStatus()
 			);
 			if( result == VK_SUCCESS ) {
 				// Loaded, free some resources used to load
-				status = local_status = ResourceStatus::LOADED;
+				status = local_status = ResourceStatus::AVAILABLE;
 				SchedulePostLoadCleanup();
 			} else if( result == VK_NOT_READY ) {
 				return local_status;
 			} else {
-				status = local_status = ResourceStatus::FAILED_TO_LOAD;
+				status = local_status = ResourceStatus::FAILED;
 			}
 		}
 	}
@@ -912,7 +922,7 @@ vk2d::ResourceStatus vk2d::vk2d_internal::TextureResourceImpl::WaitUntilLoaded(
 	assert( timeout == std::chrono::steady_clock::time_point::max() ||
 		timeout + std::chrono::seconds( 5 ) >= std::chrono::steady_clock::now() );
 
-	if( !is_good ) return ResourceStatus::FAILED_TO_LOAD;
+	if( !is_good ) return ResourceStatus::FAILED;
 
 	auto local_status = status.load();
 	if( local_status == ResourceStatus::UNDETERMINED ) {
@@ -934,15 +944,16 @@ vk2d::ResourceStatus vk2d::vk2d_internal::TextureResourceImpl::WaitUntilLoaded(
 				timeout_for_fences
 			);
 			if( result == VK_SUCCESS ) {
-				status = local_status = ResourceStatus::LOADED;
+				status = local_status = ResourceStatus::AVAILABLE;
 				SchedulePostLoadCleanup();
 			} else if( result == VK_TIMEOUT ) {
 				return local_status;
 			} else {
-				status = local_status = ResourceStatus::FAILED_TO_LOAD;
+				status = local_status = ResourceStatus::FAILED;
 				SchedulePostLoadCleanup();
 			}
-		} // Else timeout and return local_status.
+		}
+		// Else timeout and return local_status.
 	}
 
 	return local_status;
@@ -980,7 +991,7 @@ uint32_t vk2d::vk2d_internal::TextureResourceImpl::GetLayerCount() const
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 bool vk2d::vk2d_internal::TextureResourceImpl::IsTextureDataReady()
 {
-	return GetStatus() == ResourceStatus::LOADED;
+	return GetStatus() == ResourceStatus::AVAILABLE;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
