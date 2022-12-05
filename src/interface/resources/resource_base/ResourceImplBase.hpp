@@ -25,10 +25,17 @@ class ThreadPrivateResource;
 /// @brief		Result of the multithreaded load operation for a resource.
 enum class ResourceMTLoadResult
 {
-	SUCCESS,			///< Usable, loading completed successfully.
-	SUCCESS_CONTINUED,	///< Usable, was partially loaded but should be loaded further later.
-	POSTPONED,			///< Unusable, loading was postponed till later.
-	FAILED,				///< Unusable, failed to load and is unusable.
+	/// @brief		Usable, loading completed successfully.
+	SUCCESS,
+
+	/// @brief		Usable, was partially loaded but should be loaded further later.
+	SUCCESS_CONTINUED,
+
+	/// @brief		Unusable, loading was postponed till later.
+	POSTPONED,
+
+	/// @brief		Unusable, failed to load and is unusable.
+	FAILED,
 };
 
 

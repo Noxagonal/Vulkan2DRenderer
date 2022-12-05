@@ -750,6 +750,12 @@ vk2d::vk2d_internal::ResourceMTLoadResult vk2d::vk2d_internal::TextureResourceIm
 			}
 		}
 
+		// TODO: Texture resource command buffer submission should be postponed so that it can be submitted together with frame update.
+		// Current implementation may cause stutters as submitting a command buffer is a somewhat heavy task.
+
+		// TODO: Consider creating a command buffer submission manager of sorts where command buffers are collected for later submission.
+		// In addition remove Submit() from Queue class.
+
 		// Submit blit command buffer
 		{
 			VkPipelineStageFlags wait_semaphore_dst	= VK_PIPELINE_STAGE_ALL_COMMANDS_BIT;
