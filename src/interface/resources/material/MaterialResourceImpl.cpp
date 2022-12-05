@@ -114,13 +114,13 @@ vk2d::vk2d_internal::MaterialResourceImpl::~MaterialResourceImpl()
 {}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-bool vk2d::vk2d_internal::MaterialResourceImpl::MTLoad(
+vk2d::vk2d_internal::ResourceMTLoadResult vk2d::vk2d_internal::MaterialResourceImpl::MTLoad(
 	ThreadPrivateResource * thread_resource
 )
 {
 	loader_thread_resource	= dynamic_cast<ThreadMaterialLoaderResource*>( thread_resource );
 	assert( loader_thread_resource );
-	if( !loader_thread_resource ) return false;
+	if( !loader_thread_resource ) return ResourceMTLoadResult::FAILED;
 
 	auto & instance = loader_thread_resource->GetInstance();
 	auto memory_pool = loader_thread_resource->GetThreadLocalDeviceMemoryPool();
@@ -178,9 +178,9 @@ bool vk2d::vk2d_internal::MaterialResourceImpl::MTLoad(
 		return true;
 	};
 
-	if( !AssignShaders() ) return false;
+	if( !AssignShaders() ) return ResourceMTLoadResult::FAILED;
 
-	return true;
+	return ResourceMTLoadResult::SUCCESS;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

@@ -119,7 +119,7 @@ vk2d::ResourceStatus vk2d::vk2d_internal::FontResourceImpl::WaitUntilLoaded(
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-bool vk2d::vk2d_internal::FontResourceImpl::MTLoad(
+vk2d::vk2d_internal::ResourceMTLoadResult vk2d::vk2d_internal::FontResourceImpl::MTLoad(
 	ThreadPrivateResource * thread_resource
 )
 {
@@ -172,21 +172,21 @@ bool vk2d::vk2d_internal::FontResourceImpl::MTLoad(
 						ReportSeverity::NON_CRITICAL_ERROR,
 						std::string( "Cannot load font: File not found: " ) + path_str
 					);
-					return false;
+					return ResourceMTLoadResult::FAILED;
 				case FT_Err_Unknown_File_Format:
 					// Unknown file format error
 					instance.Report(
 						ReportSeverity::NON_CRITICAL_ERROR,
 						std::string( "Cannot load font: Unknown file format: " ) + path_str
 					);
-					return false;
+					return ResourceMTLoadResult::FAILED;
 				default:
 					// Other errors
 					instance.Report(
 						ReportSeverity::NON_CRITICAL_ERROR,
 						std::string( "Cannot load font: " ) + path_str
 					);
-					return false;
+					return ResourceMTLoadResult::FAILED;
 			}
 		}
 
@@ -207,7 +207,7 @@ bool vk2d::vk2d_internal::FontResourceImpl::MTLoad(
 						ReportSeverity::NON_CRITICAL_ERROR,
 						std::string( "Cannot load font: " ) + path_str
 					);
-					return false;
+					return ResourceMTLoadResult::FAILED;
 				}
 			}
 			{
@@ -221,7 +221,7 @@ bool vk2d::vk2d_internal::FontResourceImpl::MTLoad(
 						ReportSeverity::NON_CRITICAL_ERROR,
 						std::string( "Cannot load font: " ) + path_str
 					);
-					return false;
+					return ResourceMTLoadResult::FAILED;
 				}
 			}
 
@@ -232,7 +232,7 @@ bool vk2d::vk2d_internal::FontResourceImpl::MTLoad(
 				auto ft_load_error = FT_Load_Glyph( face, FT_UInt( i ), FT_LOAD_DEFAULT );
 				if( ft_load_error ) {
 					instance.Report( ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot load font, cannot load glyph for bitmap metrics!" );
-					return false;
+					return ResourceMTLoadResult::FAILED;
 				}
 
 				auto glyph_size =
@@ -276,7 +276,7 @@ bool vk2d::vk2d_internal::FontResourceImpl::MTLoad(
 
 	if( !total_glyph_count ) {
 		instance.Report( ReportSeverity::NON_CRITICAL_ERROR, "Cannot load font: Font contains no glyphs!" );
-		return false;
+		return ResourceMTLoadResult::FAILED;
 	}
 
 	// Estimate appropriate atlas size.
@@ -308,7 +308,7 @@ bool vk2d::vk2d_internal::FontResourceImpl::MTLoad(
 			ReportSeverity::NON_CRITICAL_ERROR,
 			std::string( "Internal error: Cannot load font: " ) + path_str
 		);
-		return false;
+		return ResourceMTLoadResult::FAILED;
 	}
 
 	current_atlas_texture = CreateNewAtlasTexture();
@@ -326,14 +326,14 @@ bool vk2d::vk2d_internal::FontResourceImpl::MTLoad(
 				auto ft_load_error = FT_Load_Glyph( face.face, glyph_index, FT_LOAD_DEFAULT );
 				if( ft_load_error ) {
 					instance.Report( ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot load font, cannot load glyph!" );
-					return false;
+					return ResourceMTLoadResult::FAILED;
 				}
 			}
 			{
 				auto ft_render_error = FT_Render_Glyph( face.face->glyph, use_alpha ? FT_RENDER_MODE_NORMAL : FT_RENDER_MODE_MONO );
 				if( ft_render_error ) {
 					instance.Report( ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot load font, cannot render glyph!" );
-					return false;
+					return ResourceMTLoadResult::FAILED;
 				}
 			}
 			auto	ft_glyph	= face.face->glyph;
@@ -397,7 +397,7 @@ bool vk2d::vk2d_internal::FontResourceImpl::MTLoad(
 				default:
 					// Unsupported
 					instance.Report( ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot load font, Unsupported pixel format!" );
-					return false;
+					return ResourceMTLoadResult::FAILED;
 					break;
 			}
 
@@ -412,7 +412,7 @@ bool vk2d::vk2d_internal::FontResourceImpl::MTLoad(
 					ReportSeverity::NON_CRITICAL_ERROR,
 					"Internal error: Cannot create font, cannot copy glyph image to font texture atlas!"
 				);
-				return false;
+				return ResourceMTLoadResult::FAILED;
 			}
 
 			// Create glyph info structure for the glyph
@@ -490,11 +490,11 @@ bool vk2d::vk2d_internal::FontResourceImpl::MTLoad(
 		);
 		if( !texture_resource ) {
 			instance.Report( ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot create font, cannot create texture resource for font!" );
-			return false;
+			return ResourceMTLoadResult::FAILED;
 		}
 	}
 
-	return true;
+	return ResourceMTLoadResult::SUCCESS;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

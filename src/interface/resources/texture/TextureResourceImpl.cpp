@@ -67,7 +67,7 @@ vk2d::vk2d_internal::TextureResourceImpl::TextureResourceImpl(
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-bool vk2d::vk2d_internal::TextureResourceImpl::MTLoad(
+vk2d::vk2d_internal::ResourceMTLoadResult vk2d::vk2d_internal::TextureResourceImpl::MTLoad(
 	ThreadPrivateResource	*	thread_resource
 )
 {
@@ -86,11 +86,11 @@ bool vk2d::vk2d_internal::TextureResourceImpl::MTLoad(
 	assert( thread_resource );
 	loader_thread_resource	= dynamic_cast<ThreadLoaderResource*>( thread_resource );
 	assert( loader_thread_resource );
-	if( !loader_thread_resource ) return false;
+	if( !loader_thread_resource ) return ResourceMTLoadResult::FAILED;
 
 	auto memory_pool		= loader_thread_resource->GetThreadLocalDeviceMemoryPool();
 
-	if( !loader_thread_resource ) return false;
+	if( !loader_thread_resource ) return ResourceMTLoadResult::FAILED;
 
 	// Get data into a staging buffer, and create staging buffer
 	struct
@@ -126,7 +126,7 @@ bool vk2d::vk2d_internal::TextureResourceImpl::MTLoad(
 				4 );
 			if( !stbi_image_data ) {
 				instance.Report( ReportSeverity::NON_CRITICAL_ERROR, "Cannot create texture: Cannot load image file: " + path.string() );
-				return false;
+				return ResourceMTLoadResult::FAILED;
 			}
 
 			// Check that file images have the same dimensions if we're creating array textures.
@@ -139,7 +139,7 @@ bool vk2d::vk2d_internal::TextureResourceImpl::MTLoad(
 					image_info.y != image_size_y ) {
 					instance.Report( ReportSeverity::NON_CRITICAL_ERROR, "Cannot create array texture: File images are different dimensions!" );
 					stbi_image_free( stbi_image_data );
-					return false;
+					return ResourceMTLoadResult::FAILED;
 				}
 			}
 
@@ -155,7 +155,7 @@ bool vk2d::vk2d_internal::TextureResourceImpl::MTLoad(
 
 			if( staging_buffer != VK_SUCCESS ) {
 				instance.Report( ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot create texture resource staging buffer!" );
-				return false;
+				return ResourceMTLoadResult::FAILED;
 			}
 			staging_buffers.push_back( std::move( staging_buffer ) );
 
@@ -177,7 +177,7 @@ bool vk2d::vk2d_internal::TextureResourceImpl::MTLoad(
 
 			if( texture_data[ i ].size() < size_t( image_info.x ) * size_t( image_info.y ) ) {
 				instance.Report( ReportSeverity::NON_CRITICAL_ERROR, "Cannot create texture: Texture data too small for texture" );
-				return false;
+				return ResourceMTLoadResult::FAILED;
 			}
 
 			auto staging_buffer = memory_pool->CreateCompleteHostBufferResourceWithData(
@@ -187,7 +187,7 @@ bool vk2d::vk2d_internal::TextureResourceImpl::MTLoad(
 
 			if( staging_buffer != VK_SUCCESS ) {
 				instance.Report( ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot create texture resource staging buffer!" );
-				return false;
+				return ResourceMTLoadResult::FAILED;
 			}
 			staging_buffers.push_back( std::move( staging_buffer ) );
 		}
@@ -196,7 +196,7 @@ bool vk2d::vk2d_internal::TextureResourceImpl::MTLoad(
 	image_layer_count		= uint32_t( staging_buffers.size() );
 	if( !image_layer_count ) {
 		instance.Report( ReportSeverity::NON_CRITICAL_ERROR, "Internal error: Cannot load texture, nothing to do!" );
-		return false;
+		return ResourceMTLoadResult::FAILED;
 	}
 
 	// 3. Create image and image view Vulkan objects.
@@ -247,7 +247,7 @@ bool vk2d::vk2d_internal::TextureResourceImpl::MTLoad(
 		);
 		if( image != VK_SUCCESS ) {
 			instance.Report( image.result, "Internal error: Cannot create texture resource image!" );
-			return false;
+			return ResourceMTLoadResult::FAILED;
 		}
 	}
 
@@ -268,7 +268,7 @@ bool vk2d::vk2d_internal::TextureResourceImpl::MTLoad(
 			);
 			if( result != VK_SUCCESS ) {
 				instance.Report( result, "Internal error: Cannot allocate command buffers for texture data upload!" );
-				return false;
+				return ResourceMTLoadResult::FAILED;
 			}
 
 			VkCommandBufferBeginInfo command_buffer_begin_info {};
@@ -282,7 +282,7 @@ bool vk2d::vk2d_internal::TextureResourceImpl::MTLoad(
 			);
 			if( result != VK_SUCCESS ) {
 				instance.Report( result, "Internal error: Cannot record command buffers for texture data upload!" );
-				return false;
+				return ResourceMTLoadResult::FAILED;
 			}
 		} else {
 			vk_primary_render_command_buffer	= VK_NULL_HANDLE;
@@ -303,7 +303,7 @@ bool vk2d::vk2d_internal::TextureResourceImpl::MTLoad(
 			);
 			if( result != VK_SUCCESS ) {
 				instance.Report( result, "Internal error: Cannot allocate blit command buffer for texture mip map processing!" );
-				return false;
+				return ResourceMTLoadResult::FAILED;
 			}
 
 			VkCommandBufferBeginInfo command_buffer_begin_info {};
@@ -317,7 +317,7 @@ bool vk2d::vk2d_internal::TextureResourceImpl::MTLoad(
 			);
 			if( result != VK_SUCCESS ) {
 				instance.Report( result, "Internal error: Cannot begin command buffer for texture data upload!" );
-				return false;
+				return ResourceMTLoadResult::FAILED;
 			}
 		}
 
@@ -336,7 +336,7 @@ bool vk2d::vk2d_internal::TextureResourceImpl::MTLoad(
 			);
 			if( result != VK_SUCCESS ) {
 				instance.Report( result, "Internal error: Cannot allocate command buffers for texture data upload!" );
-				return false;
+				return ResourceMTLoadResult::FAILED;
 			}
 
 			VkCommandBufferBeginInfo command_buffer_begin_info {};
@@ -350,7 +350,7 @@ bool vk2d::vk2d_internal::TextureResourceImpl::MTLoad(
 			);
 			if( result != VK_SUCCESS ) {
 				instance.Report( result, "Internal error: Cannot begin command buffers for texture data upload!" );
-				return false;
+				return ResourceMTLoadResult::FAILED;
 			}
 		}
 	}
@@ -673,7 +673,7 @@ bool vk2d::vk2d_internal::TextureResourceImpl::MTLoad(
 		);
 		if( result != VK_SUCCESS ) {
 			instance.Report( result, "Internal error: Cannot create semaphore for texture data upload synchronization!" );
-			return false;
+			return ResourceMTLoadResult::FAILED;
 		}
 
 		if( is_primary_render_needed ) {
@@ -685,7 +685,7 @@ bool vk2d::vk2d_internal::TextureResourceImpl::MTLoad(
 			);
 			if( result != VK_SUCCESS ) {
 				instance.Report( result, "Internal error: Cannot create semaphore for texture data upload synchronization!" );
-				return false;
+				return ResourceMTLoadResult::FAILED;
 			}
 		}
 
@@ -697,7 +697,7 @@ bool vk2d::vk2d_internal::TextureResourceImpl::MTLoad(
 		);
 		if( result != VK_SUCCESS ) {
 			instance.Report( result, "Internal error: Cannot create fence for texture data upload synchronization!" );
-			return false;
+			return ResourceMTLoadResult::FAILED;
 		}
 	}
 
@@ -708,14 +708,14 @@ bool vk2d::vk2d_internal::TextureResourceImpl::MTLoad(
 		);
 		if( result != VK_SUCCESS ) {
 			instance.Report( result, "Internal error: Cannot compile transfer command buffer for texture data upload!" );
-			return false;
+			return ResourceMTLoadResult::FAILED;
 		}
 		result = vkEndCommandBuffer(
 			vk_secondary_render_command_buffer
 		);
 		if( result != VK_SUCCESS ) {
 			instance.Report( result, "Internal error: Cannot compile secondary render queue command buffer for texture mipmap creation!" );
-			return false;
+			return ResourceMTLoadResult::FAILED;
 		}
 		if( is_primary_render_needed ) {
 			auto result = vkEndCommandBuffer(
@@ -723,7 +723,7 @@ bool vk2d::vk2d_internal::TextureResourceImpl::MTLoad(
 			);
 			if( result != VK_SUCCESS ) {
 				instance.Report( result, "Internal error: Cannot compile primary render queue command buffer for texture queue family handover finalization!" );
-				return false;
+				return ResourceMTLoadResult::FAILED;
 			}
 		}
 
@@ -746,7 +746,7 @@ bool vk2d::vk2d_internal::TextureResourceImpl::MTLoad(
 			);
 			if( result != VK_SUCCESS ) {
 				instance.Report( result, "Internal error: Cannot submit texture upload command buffer!" );
-				return false;
+				return ResourceMTLoadResult::FAILED;
 			}
 		}
 
@@ -769,7 +769,7 @@ bool vk2d::vk2d_internal::TextureResourceImpl::MTLoad(
 			);
 			if( result != VK_SUCCESS ) {
 				instance.Report( result, "Internal error: Cannot submit texture mipmap generation command buffer!" );
-				return false;
+				return ResourceMTLoadResult::FAILED;
 			}
 		}
 
@@ -792,14 +792,14 @@ bool vk2d::vk2d_internal::TextureResourceImpl::MTLoad(
 			);
 			if( result != VK_SUCCESS ) {
 				instance.Report( result, "Internal error: Cannot submit texture queue family handover command buffer!" );
-				return false;
+				return ResourceMTLoadResult::FAILED;
 			}
 		}
 	}
 
 	vk_image_layout		= VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 
-	return true;
+	return ResourceMTLoadResult::SUCCESS;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

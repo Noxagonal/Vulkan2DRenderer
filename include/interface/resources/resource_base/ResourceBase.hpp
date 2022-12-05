@@ -115,7 +115,7 @@ public:
 	/// @note		Multithreading: Any thread.
 	/// 
 	/// @return		Parent resource that owns this resource.
-	VK2D_API ResourceBase								*	GetParentResource();
+	VK2D_API ResourceBase								*	GetParentResource_DEPRECATED();
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/// @brief		Checks if the resource was loaded from a file or from data.

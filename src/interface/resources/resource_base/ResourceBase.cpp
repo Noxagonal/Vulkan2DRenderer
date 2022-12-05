@@ -36,10 +36,10 @@ VK2D_API vk2d::ResourceStatus vk2d::ResourceBase::WaitUntilLoaded(
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-VK2D_API vk2d::ResourceBase * vk2d::ResourceBase::GetParentResource()
+VK2D_API vk2d::ResourceBase * vk2d::ResourceBase::GetParentResource_DEPRECATED()
 {
 	assert( resource_impl );
-	return resource_impl->GetParentResource();
+	return resource_impl->GetParentResource_DEPRECATED();
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

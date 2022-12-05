@@ -34,10 +34,39 @@ void vk2d::vk2d_internal::ResourceThreadLoadTask::operator()(
 	// is not set to "LOADED" here, it'll be determined by the resource itself.
 	// However we can set resource status to "FAILED_TO_LOAD" at any time.
 
-	if( !resource->resource_impl->MTLoad( thread_resource ) ) {
-		resource->resource_impl->status = ResourceStatus::FAILED_TO_LOAD;
-		resource_manager.GetInstance().Report( ReportSeverity::WARNING, "Resource loading failed!" );
+	auto load_result = resource->resource_impl->MTLoad( thread_resource );
+	switch( load_result )
+	{
+	case vk2d::vk2d_internal::ResourceMTLoadResult::SUCCESS:
+		break;
+
+	case vk2d::vk2d_internal::ResourceMTLoadResult::SUCCESS_CONTINUED:
+	{
+		// TODO.
+		break;
 	}
+
+	case vk2d::vk2d_internal::ResourceMTLoadResult::POSTPONED:
+	{
+		// TODO.
+		break;
+	}
+
+	case vk2d::vk2d_internal::ResourceMTLoadResult::FAILED:
+	{
+		resource->resource_impl->status = ResourceStatus::FAILED_TO_LOAD;
+		resource_manager.GetInstance().Report(
+			ReportSeverity::WARNING,
+			"Resource loading failed!"
+		);
+		break;
+	}
+
+	default:
+		assert( 0 && "Unknown result value." );
+		break;
+	}
+
 	resource->resource_impl->load_function_run_fence.Set();
 }
 
@@ -295,7 +324,7 @@ void vk2d::vk2d_internal::ResourceManagerImpl::DestroyResource(
 
 	// We'll have to wait until the resource is definitely loaded, or encountered an error.
 	resource->resource_impl->WaitUntilLoaded();
-	resource->resource_impl->DestroySubresources();
+	resource->resource_impl->DestroySubresources_DEPRECATED();
 
 	std::lock_guard<std::recursive_mutex> lock_guard( resources_mutex );
 

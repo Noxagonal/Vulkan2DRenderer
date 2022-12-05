@@ -24,7 +24,7 @@ vk2d::vk2d_internal::ResourceImplBase::ResourceImplBase(
 	is_from_file( false )
 {
 	if( this->parent_resource ) {
-		this->parent_resource->resource_impl->AddSubresource( my_base_interface );
+		this->parent_resource->resource_impl->AddSubresource_DEPRECATED( my_base_interface );
 	}
 }
 
@@ -43,31 +43,31 @@ vk2d::vk2d_internal::ResourceImplBase::ResourceImplBase(
 	is_from_file( true )
 {
 	if( this->parent_resource ) {
-		this->parent_resource->resource_impl->AddSubresource( my_base_interface );
+		this->parent_resource->resource_impl->AddSubresource_DEPRECATED( my_base_interface );
 	}
 }
 
-void vk2d::vk2d_internal::ResourceImplBase::DestroySubresources()
+void vk2d::vk2d_internal::ResourceImplBase::DestroySubresources_DEPRECATED()
 {
-	std::lock_guard<std::mutex> lock_guard( subresources_mutex );
+	std::lock_guard<std::mutex> lock_guard( subresources_mutex_DEPRECATED );
 
-	for( auto s : subresources ) {
-		s->resource_impl->DestroySubresources();
+	for( auto s : subresources_DEPRECATED ) {
+		s->resource_impl->DestroySubresources_DEPRECATED();
 		resource_manager.DestroyResource( s );
 	}
-	subresources.clear();
+	subresources_DEPRECATED.clear();
 }
 
-void vk2d::vk2d_internal::ResourceImplBase::AddSubresource(
+void vk2d::vk2d_internal::ResourceImplBase::AddSubresource_DEPRECATED(
 	ResourceBase		&	subresource
 )
 {
-	std::lock_guard<std::mutex> lock_guard( subresources_mutex );
+	std::lock_guard<std::mutex> lock_guard( subresources_mutex_DEPRECATED );
 
-	subresources.push_back( &subresource );
+	subresources_DEPRECATED.push_back( &subresource );
 }
 
-vk2d::ResourceBase * vk2d::vk2d_internal::ResourceImplBase::GetParentResource()
+vk2d::ResourceBase * vk2d::vk2d_internal::ResourceImplBase::GetParentResource_DEPRECATED()
 {
 	return parent_resource;
 }
