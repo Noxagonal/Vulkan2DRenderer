@@ -185,7 +185,7 @@ vk2d::vk2d_internal::ResourceMTLoadResult vk2d::vk2d_internal::MaterialResourceI
 		// RenderTargetTexture, but will be a property of RenderPipeline later on.
 		// This basically means that material will be tied to a Window or RenderTargetTexture (RenderPipeline later) as it is
 		// created regardless if the material is created or loaded from disk.
-		// 
+		//
 		// Might be a good idea to create a bunch of other managers as well. Eg. RenderPassManager, RenderTargetManager...
 		// We will eventually need a RenderPipeline which will determine overall rendering operations for a Window or
 		// RenderTargetTexture. RenderPipeline defines multiple GBuffers where shaders can write to, as well as the intermediate

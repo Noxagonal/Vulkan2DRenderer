@@ -1,11 +1,10 @@
 #pragma once
 
 #include <core/SourceCommon.hpp>
-#include "ShaderCompiler.hpp"
-#include <interface/resources/material/ShaderCreateInfo.hpp>
-#include "ShaderHandle.hpp"
-#include "ShaderManagerShaderEntry.hpp"
+#include "RenderPassHandle.hpp"
+#include "RenderPassManagerRenderPassEntry.hpp"
 #include <types/Synchronization.hpp>
+#include "RenderPassCreateInfo.hpp"
 
 
 
@@ -23,107 +22,105 @@ class Device;
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-class ShaderManager
+class RenderPassManager
 {
-	friend class ShaderCompiler;
-	friend class ShaderHandle;
+	friend class RenderPassCompiler;
+	friend class RenderPassHandle;
 
 public:
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// TODO: Find better ways to implement a hash map. eg. std::flat_map. Mind pointer invalidation though.
-	using ShaderList = std::map<size_t, ShaderManagerShaderEntry>;
+	using RenderPassList = std::map<size_t, RenderPassManagerRenderPassEntry>;
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	ShaderManager(
-		vk2d_internal::InstanceImpl				&	instance,
-		Device									&	vulkan_device
+	RenderPassManager(
+		vk2d_internal::InstanceImpl					&	instance,
+		Device										&	vulkan_device
 	);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	ShaderManager(
-		const ShaderManager						&	other
+	RenderPassManager(
+		const RenderPassManager						&	other
 	) = delete;
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	ShaderManager(
-		ShaderManager							&&	other
+	RenderPassManager(
+		RenderPassManager							&&	other
 	) = delete;
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	~ShaderManager();
+	~RenderPassManager();
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	/// @brief		Tries to find a shader and return a handle to it if it exists.
+	/// @brief		Tries to find a render pass and return a handle to it if it exists.
 	///
-	/// @param		shader_create_info
-	///				Shader create info structure describing the shader we want to find.
+	/// @param		render_pass_create_info
+	///				Render pass create info structure describing the Vulkan render pass we want to find.
 	///
-	/// @return		Handle to existing shader or empty handle if shader was not found.
-	ShaderHandle									FindShader(
-		const ShaderCreateInfo					&	shader_create_info
+	/// @return		Handle to existing render pass or empty handle if render pass was not found.
+	RenderPassHandle									FindRenderPass(
+		const RenderPassCreateInfo					&	render_pass_create_info
 	);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	/// @brief		Tries to find a shader and return a handle to it if it exists.
+	/// @brief		Tries to find a render pass and return a handle to it if it exists.
 	///
-	/// @param		shader_hash
-	///				Hash of the shader we wish to find.
+	/// @param		render_pass_hash
+	///				Hash of the render pass we wish to find.
 	///
-	/// @return		Handle to existing shader or empty handle if shader was not found.
-	ShaderHandle									FindShader(
-		size_t										shader_hash
+	/// @return		Handle to existing render pass or empty handle if render pass was not found.
+	RenderPassHandle									FindRenderPass(
+		size_t											render_pass_hash
 	);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	/// @brief		Gets a shader if it exists or creates a new shader if it does not exist.
+	/// @brief		Gets a render pass if it exists or creates a new render pass if it does not exist.
 	///
-	/// @param[in]	shader_create_info
-	///				Shader create info structure describing the shader we want to find or create.
+	/// @param[in]	render_pass_create_info
+	///				RenderPass create info structure describing the render pass we want to find or create.
 	///
-	/// @return		Handle to shader.
-	ShaderHandle									GetShader(
-		const ShaderCreateInfo					&	shader_create_info
+	/// @return		Handle to render pass.
+	RenderPassHandle									GetRenderPass(
+		const RenderPassCreateInfo					&	render_pass_create_info
 	);
 
 private:
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	/// @brief		Creates a new shader.
+	/// @brief		Creates a new render pass.
 	///
-	/// @param[in]	shader_create_info
-	///				Shader create info structure describing the shader we want to create.
+	/// @param[in]	render_pass_create_info
+	///				RenderPass create info structure describing the render pass we want to create.
 	///
-	/// @return		Handle to shader.
-	ShaderHandle									CreateShader(
-		const ShaderCreateInfo					&	shader_create_info
+	/// @return		Handle to render pass.
+	RenderPassHandle									CreateRenderPass(
+		const RenderPassCreateInfo					&	render_pass_create_info
 	);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	void											IncrementReferenceCount(
-		ShaderManagerShaderEntry				*	shader_entry
+	void												IncrementReferenceCount(
+		RenderPassManagerRenderPassEntry			*	render_pass_entry
 	);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	void											DecrementReferenceCount(
-		ShaderManagerShaderEntry				*	shader_entry
+	void												DecrementReferenceCount(
+		RenderPassManagerRenderPassEntry			*	render_pass_entry
 	);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	void											DestroyShader(
-		size_t										shader_hash
+	void												DestroyRenderPass(
+		size_t											render_pass_hash
 	);
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	void											DestroyAllShaders();
+	void												DestroyAllRenderPasss();
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	vk2d_internal::InstanceImpl					&	instance;
-	Device										&	vulkan_device;
+	vk2d_internal::InstanceImpl						&	instance;
+	Device											&	vulkan_device;
 
-	ShaderCompiler									shader_compiler;
-
-	MutexObject<ShaderList>							shader_list;
+	MutexObject<RenderPassList>							render_pass_list;
 };
 
 
