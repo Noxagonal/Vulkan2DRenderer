@@ -1,0 +1,20 @@
+#pragma once
+
+#include <core/SourceCommon.hpp>
+
+
+
+namespace vk2d {
+namespace vulkan {
+
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+VkImageAspectFlags			GetImageAspectFromFormat(
+	VkFormat				format
+);
+
+
+
+} // vulkan
+} // vk2d
