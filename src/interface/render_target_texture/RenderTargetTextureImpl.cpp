@@ -1220,7 +1220,7 @@ bool vk2d::vk2d_internal::RenderTargetTextureImpl::CreateImages(
 {
 	auto CreateLocalImageResource =[ this ](
 		VkImageUsageFlags								usage,
-		const std::vector<vulkan::Queue*>	&	used_in_queues,
+		const std::vector<vulkan::Queue*>			&	used_in_queues,
 		VkSampleCountFlagBits							samples				= VK_SAMPLE_COUNT_1_BIT,
 		const std::vector<VkExtent2D>				&	mip_levels			= { { 1, 1 } },
 		bool											is_array_texture	= false
