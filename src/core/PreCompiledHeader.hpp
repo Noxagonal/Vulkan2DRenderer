@@ -27,6 +27,7 @@
 #include <string>
 #include <cstring>
 #include <tuple>
+#include <span>
 
 #include <thread>
 #include <mutex>

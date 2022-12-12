@@ -3,6 +3,8 @@
 #include <core/SourceCommon.hpp>
 #include "GBufferCreateInfo.hpp"
 
+#include <vulkan/utils/VulkanMemoryManagement.hpp>
+
 
 
 namespace vk2d {

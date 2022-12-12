@@ -4,6 +4,8 @@
 #include <core/Common.hpp>
 #include <core/Version.hpp>
 #include <core/SystemConsole.hpp>
+#include <core/ReportSeverity.hpp>
+#include <core/Exception.hpp>
 
 #include <containers/Array.hpp>
 #include <containers/Text.hpp>

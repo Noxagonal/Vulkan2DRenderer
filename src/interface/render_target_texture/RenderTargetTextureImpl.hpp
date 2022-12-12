@@ -6,7 +6,6 @@
 
 #include <containers/BlurType.hpp>
 
-#include <system/CommonTools.hpp>
 #include <vulkan/shaders/ShaderInterface.hpp>
 #include <system/MeshBuffer.hpp>
 #include <system/RenderTargetTextureDependecyGraphInfo.hpp>

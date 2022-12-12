@@ -18,6 +18,8 @@
 #include "../texture/TextureImpl.hpp"
 #include "../sampler/SamplerImpl.hpp"
 
+#include <vulkan/utils/MipMaps.hpp>
+
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1303,8 +1305,8 @@ bool vk2d::vk2d_internal::RenderTargetTextureImpl::CreateImages(
 		granularity_aligned = false;
 	}
 
-	mipmap_levels				= GenerateMipSizes(
-		create_info_copy.size
+	mipmap_levels				= vulkan::CalculateMipLevels(
+		VkExtent2D { create_info_copy.size.x, create_info_copy.size.y }
 	);
 
 	// Using switch to decouple different paths of what resources to create.
