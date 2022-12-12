@@ -81,7 +81,7 @@ public:
 	WindowImpl(
 		Window												&	window,
 		InstanceImpl										&	instance,
-		const WindowCreateInfo								&	window_create_info
+		const WindowCreateInfo								&	create_info
 	);
 	~WindowImpl();
 
@@ -273,7 +273,7 @@ private:
 
 	InstanceImpl											&	instance;
 	Window													&	my_interface;
-	WindowCreateInfo											create_info_copy							= {};
+	WindowCreateInfo											create_info									= {};
 
 	WindowEventHandler										*	event_handler								= {};
 	VkOffset2D													position									= {};

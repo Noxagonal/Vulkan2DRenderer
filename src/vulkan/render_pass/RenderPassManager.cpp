@@ -64,6 +64,7 @@ vk2d::vulkan::RenderPassHandle vk2d::vulkan::RenderPassManager::CreateRenderPass
 	const RenderPassCreateInfo	&	render_pass_create_info
 )
 {
+	/*
 	using MemoryPoolResource					= std::pmr::unsynchronized_pool_resource;
 	using MemoryPoolAllocator					= std::pmr::polymorphic_allocator<std::byte>;
 
@@ -170,12 +171,12 @@ vk2d::vulkan::RenderPassHandle vk2d::vulkan::RenderPassManager::CreateRenderPass
 
 			// THIS IS WASTED EFFORT, we're just adding a wrapper over render passes and only that.
 
-			auto has_depth_stencil = false;
-			if(  )
-			{
-				has_depth_stencil = true;
-				// TODO: depth stencil resolve attachment references
-			}
+			//auto has_depth_stencil = false;
+			//if(  )
+			//{
+			//	has_depth_stencil = true;
+			//	// TODO: depth stencil resolve attachment references
+			//}
 
 			// TODO: depth stencil attachment references
 			// TODO: preserve attachment references
@@ -209,8 +210,8 @@ vk2d::vulkan::RenderPassHandle vk2d::vulkan::RenderPassManager::CreateRenderPass
 	create_info.flags					= 0;
 	create_info.attachmentCount			= uint32_t( attachments.size() );
 	create_info.pAttachments			= attachments.data();
-	create_info.subpassCount			= uint32_t( subpass_infos.subpasses.size() );
-	create_info.pSubpasses				= subpass_infos.subpasses.data();
+	create_info.subpassCount			= uint32_t( subpass_infos.subpass.size() );
+	create_info.pSubpasses				= subpass_infos.subpass.data();
 	create_info.dependencyCount			= todo;
 	create_info.pDependencies			= todo;
 	create_info.correlatedViewMaskCount	= 0;	// Used mostly in VR, this tells which subpasses may be rendered simultaneously.
@@ -327,6 +328,7 @@ vk2d::vulkan::RenderPassHandle vk2d::vulkan::RenderPassManager::CreateRenderPass
 			);
 		}
 	);
+	*/
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

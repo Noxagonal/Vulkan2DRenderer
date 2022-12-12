@@ -306,7 +306,8 @@ struct WindowCreateInfo {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /// @brief		Represents an OS window and its render surface.
-class Window {
+class Window
+{
 	friend class vk2d_internal::InstanceImpl;
 
 private:
@@ -325,7 +326,7 @@ private:
 	///				Window creation parameters.
 	VK2D_API Window(
 		vk2d_internal::InstanceImpl				&	instance,
-		const WindowCreateInfo					&	window_create_info
+		const WindowCreateInfo					&	create_info
 	);
 
 public:

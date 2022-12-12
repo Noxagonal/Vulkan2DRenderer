@@ -5,7 +5,6 @@
 
 #include <system/ThreadLoaderResource.hpp>
 #include <vulkan/descriptor_set/DescriptorSet.hpp>
-#include <system/CommonTools.hpp>
 #include <system/ImageFormatConverter.hpp>
 
 #include <interface/instance/Instance.hpp>
@@ -13,6 +12,8 @@
 
 #include <interface/resource_manager/ResourceManager.hpp>
 #include <interface/resource_manager/ResourceManagerImpl.hpp>
+
+#include <vulkan/utils/MipMaps.hpp>
 
 #include <stb_image.h>
 
@@ -200,8 +201,8 @@ vk2d::vk2d_internal::ResourceMTLoadResult vk2d::vk2d_internal::TextureResourceIm
 	}
 
 	// 3. Create image and image view Vulkan objects.
-	auto mipmap_levels = GenerateMipSizes(
-		glm::uvec2( image_info.x, image_info.y )
+	auto mipmap_levels = vulkan::CalculateMipLevels(
+		VkExtent2D { image_info.x, image_info.y }
 	);
 	{
 		VkImageCreateInfo image_create_info {};

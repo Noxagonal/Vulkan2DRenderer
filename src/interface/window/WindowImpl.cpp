@@ -290,15 +290,15 @@ void vk2d::vk2d_internal::glfwFileDropCallback(
 vk2d::vk2d_internal::WindowImpl::WindowImpl(
 	Window					&	window,
 	InstanceImpl			&	instance,
-	const WindowCreateInfo	&	window_create_info
+	const WindowCreateInfo	&	create_info
 ) :
 	my_interface( window ),
 	instance( instance ),
-	create_info_copy( window_create_info ),
+	create_info( create_info ),
 	report_function( instance.GetReportFunction() ),
-	window_title( window_create_info.title ),
-	event_handler( window_create_info.event_handler ),
-	coordinate_space( window_create_info.coordinate_space ),
+	window_title( create_info.title ),
+	event_handler( create_info.event_handler ),
+	coordinate_space( create_info.coordinate_space ),
 	vk_instance( instance.GetVulkanInstance() ),
 	vk_physical_device( instance.GetVulkanDevice().GetVulkanPhysicalDevice() ),
 	vk_device( instance.GetVulkanDevice() ),
@@ -308,7 +308,7 @@ vk2d::vk2d_internal::WindowImpl::WindowImpl(
 {
 	VK2D_ASSERT_MAIN_THREAD( instance );
 
-	samples = CheckSupportedMultisampleCount( instance, create_info_copy.samples );
+	samples = CheckSupportedMultisampleCount( instance, create_info.samples );
 
 	if( !CreateGLFWWindow() ) return;
 	if( !CreateSurface() ) return;
@@ -1203,7 +1203,7 @@ void vk2d::vk2d_internal::WindowImpl::DisableEvents(
 	if( disable_events ) {
 		event_handler	= nullptr;
 	} else {
-		event_handler	= create_info_copy.event_handler;
+		event_handler	= create_info.event_handler;
 	}
 }
 
@@ -2116,27 +2116,27 @@ bool vk2d::vk2d_internal::WindowImpl::RecreateWindowSizeDependantResources()
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 bool vk2d::vk2d_internal::WindowImpl::CreateGLFWWindow()
 {
-	glfwWindowHint( GLFW_RESIZABLE, create_info_copy.resizeable );
-	glfwWindowHint( GLFW_VISIBLE, create_info_copy.visible );
-	glfwWindowHint( GLFW_DECORATED, create_info_copy.decorated );
-	glfwWindowHint( GLFW_FOCUSED, create_info_copy.focused );
+	glfwWindowHint( GLFW_RESIZABLE, create_info.resizeable );
+	glfwWindowHint( GLFW_VISIBLE, create_info.visible );
+	glfwWindowHint( GLFW_DECORATED, create_info.decorated );
+	glfwWindowHint( GLFW_FOCUSED, create_info.focused );
 	glfwWindowHint( GLFW_AUTO_ICONIFY, GLFW_FALSE );
-	glfwWindowHint( GLFW_MAXIMIZED, create_info_copy.maximized );
+	glfwWindowHint( GLFW_MAXIMIZED, create_info.maximized );
 	glfwWindowHint( GLFW_CENTER_CURSOR, GLFW_TRUE );
-	glfwWindowHint( GLFW_TRANSPARENT_FRAMEBUFFER, create_info_copy.transparent_framebuffer );
+	glfwWindowHint( GLFW_TRANSPARENT_FRAMEBUFFER, create_info.transparent_framebuffer );
 	glfwWindowHint( GLFW_FOCUS_ON_SHOW, GLFW_TRUE );
 	glfwWindowHint( GLFW_SCALE_TO_MONITOR, GLFW_FALSE );
 
 	GLFWmonitor * monitor = nullptr;
-	if( create_info_copy.fullscreen_monitor ) {
-		if( create_info_copy.fullscreen_monitor->impl ) {
-			monitor = create_info_copy.fullscreen_monitor->impl->monitor;
+	if( create_info.fullscreen_monitor ) {
+		if( create_info.fullscreen_monitor->impl ) {
+			monitor = create_info.fullscreen_monitor->impl->monitor;
 		}
 	}
 
 	glfw_window = glfwCreateWindow(
-		int( create_info_copy.size.x ),
-		int( create_info_copy.size.y ),
+		int( create_info.size.x ),
+		int( create_info.size.y ),
 		window_title.c_str(),
 		monitor,
 		nullptr );
@@ -2414,7 +2414,7 @@ bool vk2d::vk2d_internal::WindowImpl::ReCreateSwapchain()
 		// Figure out minimum image count
 		uint32_t swapchain_minimum_image_count = 0;
 		{
-			if( create_info_copy.vsync ) {
+			if( create_info.vsync ) {
 				swapchain_minimum_image_count = 2;	// Vsync enabled, we only need 2 swapchain images
 			} else {
 				swapchain_minimum_image_count = 3;	// Vsync disabled, we should use at least 3 images
@@ -2433,12 +2433,12 @@ bool vk2d::vk2d_internal::WindowImpl::ReCreateSwapchain()
 		// Figure out image dimensions and set window minimum and maximum sizes
 		{
 			min_extent		= {
-				create_info_copy.min_size.x,
-				create_info_copy.min_size.y
+				create_info.min_size.x,
+				create_info.min_size.y
 			};
 			max_extent		= {
-				create_info_copy.max_size.x,
-				create_info_copy.max_size.y
+				create_info.max_size.x,
+				create_info.max_size.y
 			};
 
 			// Set window size limits
@@ -2467,7 +2467,7 @@ bool vk2d::vk2d_internal::WindowImpl::ReCreateSwapchain()
 		// Figure out present mode
 		{
 			bool present_mode_found		= false;
-			if( create_info_copy.vsync ) {
+			if( create_info.vsync ) {
 				// Using VSync we should use FIFO, this mode is required to be supported so we can rely on that and just use it without checking
 				present_mode			= VK_PRESENT_MODE_FIFO_KHR;
 				present_mode_found		= true;
