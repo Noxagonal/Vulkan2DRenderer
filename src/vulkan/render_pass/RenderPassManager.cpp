@@ -64,9 +64,24 @@ vk2d::vulkan::RenderPassHandle vk2d::vulkan::RenderPassManager::CreateRenderPass
 	const RenderPassCreateInfo	&	render_pass_create_info
 )
 {
-	auto attachments = std::vector<VkAttachmentDescription2>( render_pass_create_info.GetAttachmentInfos().size());
+	using MemoryPoolResource					= std::pmr::unsynchronized_pool_resource;
+	using MemoryPoolAllocator					= std::pmr::polymorphic_allocator<std::byte>;
+
+	using AttachmentDescriptionList				= std::pmr::vector<VkAttachmentDescription2>;
+	using AttachmentReferenceListList			= std::pmr::vector<std::pmr::vector<VkAttachmentReference2>>;
+	using AttachmentReferenceList				= std::pmr::vector<VkAttachmentReference2>;
+	using PreserveAttachmentReferenceListList	= std::pmr::vector<std::pmr::vector<uint32_t>>;
+	using SubpassDepthStencilResolveList		= std::pmr::vector<VkSubpassDescriptionDepthStencilResolve>;
+	using SubpassDescriptionList				= std::pmr::vector<VkSubpassDescription2>;
+
+	auto memory_resource = MemoryPoolResource();
+	auto allocator = MemoryPoolAllocator( &memory_resource );
+
+	auto attachments = [ &render_pass_create_info, &allocator ]() -> AttachmentDescriptionList
 	{
-		auto & attachment_infos = render_pass_create_info.GetAttachmentInfos();
+		auto & attachment_infos = render_pass_create_info.GetAttachmentCreateInfos();
+		auto attachments = AttachmentDescriptionList( attachment_infos.size(), allocator );
+
 		for( size_t i = 0; i < attachment_infos.size(); i++ )
 		{
 			attachments[ i ].sType				= VK_STRUCTURE_TYPE_ATTACHMENT_DESCRIPTION_2;
@@ -81,7 +96,133 @@ vk2d::vulkan::RenderPassHandle vk2d::vulkan::RenderPassManager::CreateRenderPass
 			attachments[ i ].initialLayout		= attachment_infos[ i ].GetInitialLayout();
 			attachments[ i ].finalLayout		= attachment_infos[ i ].GetFinalLayout();
 		}
-	}
+		return attachments;
+	}( );
+
+	struct SubpassInfos
+	{
+		AttachmentReferenceListList				input_attachment_references;
+		AttachmentReferenceListList				color_attachment_references;
+		AttachmentReferenceListList				resolve_attachment_references;
+		AttachmentReferenceList					depth_stencil_resolve_attachment_reference;
+		AttachmentReferenceList					depth_stencil_attachment_reference;
+		PreserveAttachmentReferenceListList		preserve_attachment_references;
+		SubpassDepthStencilResolveList			depth_stencil_resolve;
+		SubpassDescriptionList					subpass;
+	};
+	auto subpass_infos = [ &render_pass_create_info, &allocator ]()
+	{
+		auto & subpass_create_infos = render_pass_create_info.GetSubpassCreateInfos();
+
+		SubpassInfos ret;
+		ret.input_attachment_references					= AttachmentReferenceListList( subpass_create_infos.size(), allocator );
+		ret.color_attachment_references					= AttachmentReferenceListList( subpass_create_infos.size(), allocator );
+		ret.resolve_attachment_references				= AttachmentReferenceListList( subpass_create_infos.size(), allocator );
+		ret.depth_stencil_resolve_attachment_reference	= AttachmentReferenceList( subpass_create_infos.size(), allocator );
+		ret.depth_stencil_attachment_reference			= AttachmentReferenceList( subpass_create_infos.size(), allocator );
+		ret.preserve_attachment_references				= PreserveAttachmentReferenceListList( subpass_create_infos.size(), allocator );
+		ret.depth_stencil_resolve						= SubpassDepthStencilResolveList( subpass_create_infos.size(), allocator );
+		ret.subpass										= SubpassDescriptionList( subpass_create_infos.size(), allocator );
+
+		for( size_t s = 0; s < subpass_create_infos.size(); s++ )
+		{
+			auto FillAttachment = [](
+				VkAttachmentReference2									&	attachment_out,
+				const RenderPassSubpassAttachmentReference				&	attachment_in
+			)
+			{
+				attachment_out.sType		= VK_STRUCTURE_TYPE_ATTACHMENT_REFERENCE_2;
+				attachment_out.pNext		= nullptr;
+				attachment_out.attachment	= attachment_in.GetAttachmentIndex();
+				attachment_out.layout		= attachment_in.GetAttachmentLayout();
+				attachment_out.aspectMask	= attachment_in.GetAttachmentAspectMask();
+			};
+
+			auto FillAttachments = [ FillAttachment, &allocator ](
+				AttachmentReferenceList									&	attachments_out,
+				std::span<const RenderPassSubpassAttachmentReference>		attachments_in
+			) -> size_t
+			{
+				attachments_out = AttachmentReferenceList( attachments_in.size(), allocator );
+				for( size_t i = 0; i < attachments_out.size(); i++ )
+				{
+					FillAttachment( attachments_out[ i ], attachments_in[ i ] );
+				}
+				return attachments_out.size();
+			};
+
+			auto & subpass_create_info = subpass_create_infos[ s ];
+
+			FillAttachments(
+				ret.input_attachment_references[ s ],
+				subpass_create_info.GetInputAttachmentReferences()
+			);
+
+			FillAttachments(
+				ret.color_attachment_references[ s ],
+				subpass_create_info.GetColorAttachmentReferences()
+			);
+
+			FillAttachments(
+				ret.resolve_attachment_references[ s ],
+				subpass_create_info.GetResolveAttachmentReferences()
+			);
+
+			// THIS IS WASTED EFFORT, we're just adding a wrapper over render passes and only that.
+
+			auto has_depth_stencil = false;
+			if(  )
+			{
+				has_depth_stencil = true;
+				// TODO: depth stencil resolve attachment references
+			}
+
+			// TODO: depth stencil attachment references
+			// TODO: preserve attachment references
+			// TODO: depth stencil resolves
+
+			assert(
+				ret.resolve_attachment_references[ s ].empty() ||
+				ret.resolve_attachment_references[ s ].size() == ret.color_attachment_references[ s ].size()
+			);
+			ret.subpass[ s ].sType						= VK_STRUCTURE_TYPE_SUBPASS_DESCRIPTION_2;
+			ret.subpass[ s ].pNext						= &ret.depth_stencil_resolve[ s ]; // TODO: Test if this subpass handles depth stencil attachment at all.
+			ret.subpass[ s ].flags						= 0;
+			ret.subpass[ s ].pipelineBindPoint			= subpass_create_info.GetPipelineBindPoint();
+			ret.subpass[ s ].viewMask					= 0;	// Used mostly in VR, where subpass description is assigned a "view".
+			ret.subpass[ s ].inputAttachmentCount		= uint32_t( ret.input_attachment_references[ s ].size() );
+			ret.subpass[ s ].pInputAttachments			= ret.input_attachment_references[ s ].data();
+			ret.subpass[ s ].colorAttachmentCount		= uint32_t( ret.color_attachment_references[ s ].size() );
+			ret.subpass[ s ].pColorAttachments			= ret.color_attachment_references[ s ].data();
+			ret.subpass[ s ].pResolveAttachments		= ret.resolve_attachment_references[ s ].data();
+			ret.subpass[ s ].pDepthStencilAttachment	= &ret.depth_stencil_attachment_reference[ s ]; // TODO: Test if this subpass handles depth stencil attachments at all.
+			ret.subpass[ s ].preserveAttachmentCount	= uint32_t( ret.preserve_attachment_references[ s ].size());
+			ret.subpass[ s ].pPreserveAttachments		= ret.preserve_attachment_references[ s ].data();
+		}
+
+		return ret;
+	}( );
+
+	auto create_info = VkRenderPassCreateInfo2();
+	create_info.sType					= VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO_2;
+	create_info.pNext					= nullptr;
+	create_info.flags					= 0;
+	create_info.attachmentCount			= uint32_t( attachments.size() );
+	create_info.pAttachments			= attachments.data();
+	create_info.subpassCount			= uint32_t( subpass_infos.subpasses.size() );
+	create_info.pSubpasses				= subpass_infos.subpasses.data();
+	create_info.dependencyCount			= todo;
+	create_info.pDependencies			= todo;
+	create_info.correlatedViewMaskCount	= 0;	// Used mostly in VR, this tells which subpasses may be rendered simultaneously.
+	create_info.pCorrelatedViewMasks	= nullptr;
+
+
+
+
+
+
+
+
 
 	// Subpasses
 	{

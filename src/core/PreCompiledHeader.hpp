@@ -11,6 +11,7 @@
 #include <numeric>
 #include <utility>
 #include <memory>
+#include <memory_resource>
 #include <algorithm>
 
 #include <sstream>
